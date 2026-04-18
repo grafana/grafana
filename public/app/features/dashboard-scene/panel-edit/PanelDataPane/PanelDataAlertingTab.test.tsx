@@ -2,9 +2,8 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { PromOptions } from '@grafana/prometheus';
+import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
@@ -12,21 +11,21 @@ import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/
 import {
   grantUserPermissions,
   mockDataSource,
-  mockFolder,
   mockPromAlert,
   mockPromAlertingRule,
   mockRulerAlertingRule,
   mockRulerRuleGroup,
 } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDataDTO } from 'app/types';
-import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { type configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type DashboardDataDTO } from 'app/types/dashboard';
+import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
@@ -41,14 +40,15 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
 jest.mock('app/features/alerting/unified/api/prometheus');
 jest.mock('app/features/alerting/unified/api/ruler');
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>(
@@ -144,6 +144,9 @@ const dashboard = {
     to: 'now',
   },
   timepicker: { refresh_intervals: ['5s', '30s', '1m'] },
+  templating: {
+    list: [],
+  },
   meta: {
     canSave: true,
     folderId: 1,
@@ -186,7 +189,6 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
 
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue(mockFolder());
     setupDataSources(...Object.values(dataSources));
 
     mocks.rulerBuilderMock.mockReturnValue({

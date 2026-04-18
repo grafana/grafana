@@ -10,7 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
 func TestRenderer(t *testing.T) {
@@ -19,11 +20,17 @@ func TestRenderer(t *testing.T) {
 
 		numLoaded := 0
 		numUnloaded := 0
-		loader := &fakes.FakeLoader{
+		loader := &pluginfakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				require.True(t, src.PluginClass(ctx) == plugins.ClassExternal)
-				require.Len(t, src.PluginURIs(ctx), 1)
-				require.True(t, strings.HasPrefix(src.PluginURIs(ctx)[0], testdataDir))
+
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					paths := localSrc.Paths()
+					require.Len(t, paths, 1)
+					require.True(t, strings.HasPrefix(paths[0], testdataDir))
+				} else {
+					t.Fatalf("Expected LocalSource, got %T", src)
+				}
 
 				numLoaded++
 				return []*plugins.Plugin{}, nil
@@ -33,7 +40,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.PluginManagementCfg{PluginsPath: filepath.Join(testdataDir)}
+		cfg := &config.PluginManagementCfg{PluginsPaths: []string{filepath.Join(testdataDir)}}
 
 		m := NewManager(cfg, loader)
 
@@ -52,12 +59,19 @@ func TestRenderer(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: "test"},
 		}
-		loader := &fakes.FakeLoader{
+		loader := &pluginfakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				numLoaded++
-				if strings.HasPrefix(src.PluginURIs(ctx)[0], filepath.Join(testdataDir, "renderer")) {
-					return []*plugins.Plugin{p}, nil
+
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					paths := localSrc.Paths()
+					if strings.HasPrefix(paths[0], filepath.Join(testdataDir, "renderer")) {
+						return []*plugins.Plugin{p}, nil
+					}
+				} else {
+					t.Fatalf("Expected LocalSource, got %T", src)
 				}
+
 				return []*plugins.Plugin{}, nil
 			},
 			UnloadFunc: func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error) {
@@ -65,7 +79,7 @@ func TestRenderer(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &config.PluginManagementCfg{PluginsPath: filepath.Join(testdataDir)}
+		cfg := &config.PluginManagementCfg{PluginsPaths: []string{filepath.Join(testdataDir)}}
 
 		m := NewManager(cfg, loader)
 

@@ -2,24 +2,22 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v1beta1"
 )
 
-routeTree: {
-	kind: "RoutingTree"
-	apiResource: {
-		groupOverride: "notifications.alerting.grafana.app"
-	}
+routingTreeKind: {
+	kind:       "RoutingTree"
 	pluralName: "RoutingTrees"
-	current:    "v0alpha1"
-	codegen: {
-		ts: {enabled: false}
-		go: {enabled: true}
+}
+
+routeTreev0alpha1: routingTreeKind & {
+	schema: {
+		spec: v0alpha1.RouteTreeSpec
 	}
-	versions: {
-		"v0alpha1": {
-			schema: {
-				spec: v0alpha1.RouteTreeSpec
-			}
-		}
+}
+
+routeTreev1beta1: routingTreeKind & {
+	schema: {
+		spec: v1beta1.RouteTreeSpec
 	}
 }

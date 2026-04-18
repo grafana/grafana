@@ -14,16 +14,16 @@
 
 import { css, cx } from '@emotion/css';
 import { get, maxBy, values } from 'lodash';
-import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
+import { memo, type Dispatch, type SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { getButtonStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
+import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { Trace } from '../../types';
+import { type Trace } from '../../types/trace';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 export type NextPrevResultProps = {
   trace: Trace;
@@ -114,14 +114,13 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
   };
 
   const buttonEnabled = (spanFilterMatches && spanFilterMatches?.size > 0) ?? false;
-  const buttonClass = buttonEnabled ? styles.button : cx(styles.button, styles.buttonDisabled);
 
   const getTooltip = useCallback(
     (content: PopoverContent) => {
       return (
         <Tooltip content={content} placement="top">
           <span className={styles.tooltip}>
-            <Icon name="info-circle" size="md" />
+            <Icon name="info-circle" size="sm" />
           </span>
         </Tooltip>
       );
@@ -169,7 +168,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           const matchedServices: string[] = [];
           spanFilterMatches.forEach((spanID) => {
             if (trace.processes[spanID]) {
-              matchedServices.push(trace.processes[spanID].serviceName);
+              matchedServices.push(getServiceDisplayName(trace.processes[spanID]));
             }
           });
 
@@ -201,64 +200,76 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
     [focusedSpanIndexForSearch, getTooltip, spanFilterMatches, trace.processes, trace.spans]
   );
 
-  const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
+  const services = new Set(values(trace.processes).map((p) => getServiceDisplayName(p))).size;
   const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
 
   return (
-    <>
-      <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
+    <div className={styles.container}>
       <div className={buttonEnabled ? styles.buttons : cx(styles.buttons, styles.buttonsDisabled)}>
-        <div
+        <Button
           aria-label={t('explore.next-prev-result.aria-label-prev', 'Prev result button')}
-          className={buttonClass}
+          variant="secondary"
+          size="md"
+          icon="arrow-up"
+          disabled={!buttonEnabled}
           onClick={(event) => prevResult(event, buttonEnabled)}
           onKeyDown={(event) => prevResultOnKeyDown(event, buttonEnabled)}
-          role="button"
           tabIndex={buttonEnabled ? 0 : -1}
-        >
-          <Trans i18nKey="explore.prev">Prev</Trans>
-        </div>
-        <div
+        />
+        <Button
           aria-label={t('explore.next-prev-result.aria-label-next', 'Next result button')}
-          className={buttonClass}
+          variant="secondary"
+          size="md"
+          icon="arrow-down"
+          disabled={!buttonEnabled}
           onClick={(event) => nextResult(event, buttonEnabled)}
           onKeyDown={(event) => nextResultOnKeyDown(event, buttonEnabled)}
           role="button"
           tabIndex={buttonEnabled ? 0 : -1}
-        >
-          <Trans i18nKey="explore.next">Next</Trans>
-        </div>
+        />
       </div>
-    </>
+      <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
+    </div>
   );
 });
 
 export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
-  const buttonStyles = getButtonStyles({
-    theme,
-    variant: 'secondary',
-    size: showSpanFilters ? 'md' : 'sm',
-    iconOnly: false,
-    fill: 'outline',
-  });
-
   return {
+    container: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
     buttons: css({
       display: 'inline-flex',
-      gap: '4px',
+      gap: 1,
     }),
     buttonsDisabled: css({
       cursor: 'not-allowed',
     }),
-    button: buttonStyles.button,
-    buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none' }),
+    button: {
+      padding: theme.spacing(0, 1),
+    },
+    iconButton: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
     matches: css({
-      marginRight: theme.spacing(2),
       textWrap: 'nowrap',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
     tooltip: css({
       color: '#aaa',
-      margin: '0 0 0 5px',
+      marginLeft: theme.spacing(0.5),
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
   };
 };

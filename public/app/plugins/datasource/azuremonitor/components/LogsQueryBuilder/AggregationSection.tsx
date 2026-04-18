@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
-import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { type BuilderQueryEditorReduceExpression, BuilderQueryEditorReduceParameterTypes } from '../../dataquery.gen';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import AggregateItem from './AggregateItem';
-import { BuildAndUpdateOptions } from './utils';
+import { type BuildAndUpdateOptions, isNumericColumn } from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
@@ -41,6 +43,10 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
     ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))
     : allColumns.map((col) => ({ label: col.name, value: col.name }));
+  const numericColumns: Array<SelectableValue<string>> = allColumns.filter(isNumericColumn).map((col) => ({
+    label: col.name,
+    value: col.name,
+  }));
 
   const onChange = (newItems: Array<Partial<BuilderQueryEditorReduceExpression>>) => {
     setAggregates(newItems);
@@ -70,14 +76,22 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       <EditorRow>
         <EditorFieldGroup>
           <EditorField
-            label="Aggregate"
+            label={t('components.aggregate-section.label-aggregate', 'Aggregate')}
             optional={true}
-            tooltip={`Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard deviation or percentiles.`}
+            tooltip={t(
+              'components.aggregate-section.tooltip-aggregate',
+              'Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard deviation or percentiles.'
+            )}
           >
             <EditorList
               items={aggregates}
               onChange={onChange}
-              renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, templateVariableOptions)}
+              renderItem={makeRenderAggregate(
+                availableColumns,
+                numericColumns,
+                onDeleteAggregate,
+                templateVariableOptions
+              )}
             />
           </EditorField>
         </EditorFieldGroup>
@@ -88,6 +102,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
 function makeRenderAggregate(
   availableColumns: Array<SelectableValue<string>>,
+  numericColumns: Array<SelectableValue<string>>,
   onDeleteAggregate: (aggregate: BuilderQueryEditorReduceExpression) => void,
   templateVariableOptions: SelectableValue<string>
 ) {
@@ -100,7 +115,11 @@ function makeRenderAggregate(
         aggregate={item}
         onChange={onChange}
         onDelete={() => onDeleteAggregate(item)}
-        columns={availableColumns}
+        columns={
+          item.reduce?.name && item.reduce.parameterType === BuilderQueryEditorReduceParameterTypes.Numeric
+            ? numericColumns
+            : availableColumns
+        }
         templateVariableOptions={templateVariableOptions}
       />
     );

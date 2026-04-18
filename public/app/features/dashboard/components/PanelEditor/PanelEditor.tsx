@@ -1,45 +1,50 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import {
+  type FieldConfigSource,
+  type GrafanaTheme2,
+  type NavModel,
+  type NavModelItem,
+  PageLayoutType,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
-  HorizontalGroup,
   InlineSwitch,
   ModalsController,
   RadioButtonGroup,
   stylesFactory,
-  Themeable2,
+  type Themeable2,
   ToolbarButton,
   ToolbarButtonRow,
   withTheme2,
   Stack,
 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
-import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { type PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { StoreState } from 'app/types';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { type StoreState } from 'app/types/store';
 
-import { notifyApp } from '../../../../core/actions';
 import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 
@@ -48,9 +53,9 @@ import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { VisualizationButton } from './VisualizationButton';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
-import { PanelEditorUIState, toggleTableView } from './state/reducers';
+import { type PanelEditorUIState, toggleTableView } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { type DisplayMode, displayModes, type PanelEditorTab } from './types';
 import { calculatePanelSize } from './utils';
 
 interface OwnProps {
@@ -302,7 +307,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.panelToolbar}>
-        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
+        <Stack justifyContent={variables.length > 0 ? 'space-between' : 'flex-end'} alignItems="flex-start">
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
@@ -317,7 +322,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </Stack>
-        </HorizontalGroup>
+        </Stack>
       </div>
     );
   }

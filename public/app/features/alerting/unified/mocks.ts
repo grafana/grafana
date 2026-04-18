@@ -2,60 +2,63 @@ import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  PluginExtensionLink,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type PluginExtensionLink,
   PluginExtensionTypes,
   ReducerID,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { DataQuery, defaultDashboard } from '@grafana/schema';
+import { type DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
-import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
-  AlertManagerCortexConfig,
+  type AlertManagerCortexConfig,
   AlertState,
-  AlertmanagerAlert,
-  AlertmanagerGroup,
-  AlertmanagerStatus,
-  GrafanaManagedReceiverConfig,
+  type AlertmanagerAlert,
+  type AlertmanagerGroup,
+  type AlertmanagerStatus,
+  type GrafanaManagedReceiverConfig,
   MatcherOperator,
-  Silence,
+  type Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDTO, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
+import { type AccessControlAction } from 'app/types/accessControl';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
+import { type StoreState } from 'app/types/store';
 import {
-  Alert,
-  AlertingRule,
-  CombinedRule,
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
-  RecordingRule,
-  RuleGroup,
-  RuleNamespace,
-  RuleWithLocation,
+  type Alert,
+  type AlertingRule,
+  type CombinedRule,
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
+  type RecordingRule,
+  type RuleGroup,
+  type RuleNamespace,
+  type RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
-  GrafanaAlertState,
+  type AlertDataQuery,
+  type AlertQuery,
+  type GrafanaAlertState,
   GrafanaAlertStateDecision,
-  GrafanaPromAlertingRuleDTO,
-  GrafanaRuleDefinition,
+  type GrafanaPromAlertingRuleDTO,
+  type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
+import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
@@ -232,6 +235,8 @@ export const mockGrafanaPromAlertingRule = (
     uid: 'mock-rule-uid-123',
     folderUid: 'NAMESPACE_UID',
     isPaused: false,
+    totals: { alerting: 1 },
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };
@@ -332,7 +337,7 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
     startsAt: new Date().toISOString(),
     endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: config.bootData.user.name || 'admin',
+    createdBy: contextSrv.user.name || 'admin',
     comment: 'Silence noisy alerts',
     status: {
       state: SilenceState.Active,
@@ -639,7 +644,7 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
 };
 
 export const grantUserRole = (role: string) => {
-  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasRole').mockImplementation((checkRole) => checkRole === role);
 };
 
 export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {

@@ -1,36 +1,36 @@
 import {
-  DataFrame,
-  DataLink,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataLink,
+  type DataLinkPostProcessor,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   dateTime,
-  Field,
-  LinkModel,
+  type Field,
+  type LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
-  ScopedVars,
-  SplitOpen,
-  TimeRange,
+  type ScopedVars,
+  type SplitOpen,
+  type TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
-  TraceToProfilesOptions,
-  TraceToMetricsOptions,
-  TraceToLogsOptionsV2,
-  TraceToLogsTag,
+  type TraceToProfilesOptions,
+  type TraceToMetricsOptions,
+  type TraceToLogsOptionsV2,
+  type TraceToLogsTag,
 } from '@grafana/o11y-ds-frontend';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { type LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
-import { SpanLinkType } from './components/types/links';
-import { TraceSpanReference } from './components/types/trace';
+import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
+import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -45,6 +45,7 @@ export function createSpanLinkFactory({
   dataFrame,
   createFocusSpanLink,
   trace,
+  dataLinkPostProcessor,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
@@ -53,6 +54,7 @@ export function createSpanLinkFactory({
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
     return undefined;
@@ -68,7 +70,9 @@ export function createSpanLinkFactory({
     traceToLogsOptions,
     traceToMetricsOptions,
     createFocusSpanLink,
-    scopedVars
+    scopedVars,
+    dataFrame,
+    dataLinkPostProcessor
   );
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
@@ -148,7 +152,9 @@ function legacyCreateSpanLinkFactory(
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
-  scopedVars?: ScopedVars
+  scopedVars?: ScopedVars,
+  dataFrame?: DataFrame,
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {
@@ -197,6 +203,13 @@ function legacyCreateSpanLinkFactory(
         case 'googlecloud-logging-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
           query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
+          break;
+        case 'victoriametrics-logs-datasource':
+          // Build tag selector using strict equality (":=") required by LogsQL
+          // See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
+          tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':=', joinBy: ' AND ' });
+          query = getQueryForVictoriaLogs(span, traceToLogsOptions, tags, customQuery);
+          break;
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -209,24 +222,6 @@ function legacyCreateSpanLinkFactory(
             datasourceUid: logsDataSourceSettings.uid,
             datasourceName: logsDataSourceSettings.name,
             query,
-          },
-        };
-
-        scopedVars = {
-          ...scopedVars,
-          __tags: {
-            text: 'Tags',
-            value: tags,
-          },
-        };
-
-        // Check if all variables are defined and don't show if they aren't. This is usually handled by the
-        // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
-          const link = mapInternalLinkToExplore({
-            link: dataLink,
-            internalLink: dataLink.internal!,
-            scopedVars: scopedVars,
             range: getTimeRangeFromSpan(
               span,
               {
@@ -239,14 +234,47 @@ function legacyCreateSpanLinkFactory(
               },
               isSplunkDS
             ),
+          },
+        };
+
+        scopedVars = {
+          ...scopedVars,
+          __tags: {
+            text: t('explore.legacy-create-span-link-factory.text.tags', 'Tags'),
+            value: tags,
+          },
+        };
+
+        // Check if all variables are defined and don't show if they aren't. This is usually handled by the
+        // getQueryFor* functions but this is for case of custom query supplied by the user.
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
+          let link = mapInternalLinkToExplore({
+            link: dataLink,
+            internalLink: dataLink.internal!,
+            scopedVars: scopedVars,
+            range: dataLink.internal!.range,
             field: {} as Field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
+          link =
+            (dataFrame &&
+              dataLinkPostProcessor?.({
+                frame: dataFrame,
+                field: field,
+                dataLinkScopedVars: scopedVars,
+                replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+                config: {},
+                link: dataLink,
+                linkModel: link,
+              })) ||
+            link;
+
           links.push({
             href: link.href,
-            title: 'Related logs',
+            linkModel: link,
+            title: t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
             onClick: link.onClick,
             content: (
               <Icon
@@ -291,7 +319,7 @@ function legacyCreateSpanLinkFactory(
         scopedVars = {
           ...scopedVars,
           __tags: {
-            text: 'Tags',
+            text: t('explore.legacy-create-span-link-factory.text.tags', 'Tags'),
             value: getFormattedTags(span, tagsToUse),
           },
         };
@@ -345,6 +373,7 @@ function legacyCreateSpanLinkFactory(
 
         links!.push({
           href: link.href,
+          linkModel: link,
           title,
           content: <Icon name="link" title={title} />,
           onClick: link.onClick,
@@ -374,7 +403,7 @@ function legacyCreateSpanLinkFactory(
     const feO11yLink = getLinkForFeO11y(span);
     if (feO11yLink) {
       links.push({
-        title: 'Session for this span',
+        title: t('explore.legacy-create-span-link-factory.title.session-for-this-span', 'Session for this span'),
         href: feO11yLink,
         content: (
           <Icon
@@ -418,11 +447,11 @@ function getQueryForLoki(
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
     expr +=
-      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="${__span.traceId}"';
+      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
     expr +=
-      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" OR span_id="${__span.spanId}"';
+      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"';
   }
 
   return {
@@ -570,6 +599,45 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
 }
 
 /**
+ * Builds a LogsQL expression for victoria‑metrics‑logs‑datasource.
+ * Uses := for exact‑match filters and joins parts with AND.
+ * See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
+ */
+function getQueryForVictoriaLogs(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  // Custom user query has priority
+  if (customQuery) {
+    return {
+      expr: customQuery,
+      refId: '',
+    };
+  }
+
+  const parts: string[] = [];
+
+  if (filterBySpanID && span.spanID) {
+    parts.push('span_id:="${__span.spanId}"');
+  }
+  if (filterByTraceID && span.traceID) {
+    parts.push('trace_id:="${__span.traceId}"');
+  }
+  if (tags) {
+    parts.push('${__tags}');
+  }
+
+  // Nothing to match against – do not create the link
+  if (!parts.length) {
+    return undefined;
+  }
+
+  return {
+    expr: parts.join(' AND '),
+    refId: '',
+  };
+}
+
+/**
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
  */
@@ -645,7 +713,7 @@ function getTimeRangeFromSpan(
 export function scopedVarsFromTrace(duration: number, name: string, traceId: string): ScopedVars {
   return {
     __trace: {
-      text: 'Trace',
+      text: t('explore.scoped-vars-from-trace.text.trace', 'Trace'),
       value: {
         duration,
         name,
@@ -673,7 +741,7 @@ export function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
 
   return {
     __span: {
-      text: 'Span',
+      text: t('explore.scoped-vars-from-span.text.span', 'Span'),
       value: {
         spanId: span.spanID,
         traceId: span.traceID,
@@ -703,7 +771,7 @@ export function scopedVarsFromTags(
 
     tags = {
       __tags: {
-        text: 'Tags',
+        text: t('explore.scoped-vars-from-tags.text.tags', 'Tags'),
         value: getFormattedTags(span, profileTags),
       },
     };

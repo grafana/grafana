@@ -3,20 +3,20 @@ import yaml from 'js-yaml';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { t, Trans } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import { ShareExportTab } from '../ShareExportTab';
 
-import { ExportMode, ResourceExport } from './ResourceExport';
+import { ResourceExport } from './ResourceExport';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
@@ -26,17 +26,21 @@ export class ExportAsCode extends ShareExportTab {
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
   }
+
+  public getSubtitle(): string | undefined {
+    return t('export.json.info-text', 'Copy or download a file containing the definition of your dashboard');
+  }
 }
 
 function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
   const styles = useStyles2(getStyles);
-  const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
+  const { isSharingExternally, isViewingYAML, exportFormat } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
 
     return json;
-  }, [isSharingExternally, exportMode]);
+  }, [isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
@@ -54,19 +58,13 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
 
   return (
     <div data-testid={selector.container} className={styles.container}>
-      <p>
-        <Trans i18nKey="export.json.info-text">
-          Copy or download a file containing the definition of your dashboard
-        </Trans>
-      </p>
-
       {config.featureToggles.kubernetesDashboards ? (
         <ResourceExport
           dashboardJson={dashboardJson}
           isSharingExternally={isSharingExternally ?? false}
-          exportMode={exportMode ?? ExportMode.Classic}
+          exportFormat={exportFormat ?? ExportFormat.Classic}
           isViewingYAML={isViewingYAML ?? false}
-          onExportModeChange={model.onExportModeChange}
+          onExportFormatChange={model.onExportFormatChange}
           onShareExternallyChange={model.onShareExternallyChange}
           onViewYAML={model.onViewYAML}
         />
@@ -84,8 +82,8 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
       )}
 
       <div className={styles.codeEditorBox}>
-        <AutoSizer data-testid={selector.codeEditor}>
-          {({ width, height }) => {
+        <AutoSizer data-testid={selector.codeEditor} disableWidth>
+          {({ height }) => {
             if (stringifiedDashboard) {
               return (
                 <CodeEditor
@@ -94,7 +92,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
                   showLineNumbers={true}
                   showMiniMap={false}
                   height={height}
-                  width={width}
+                  width="100%"
                   readOnly={true}
                 />
               );
@@ -120,9 +118,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
             icon="copy"
             disabled={dashboardJson.loading}
             getText={() => stringifiedDashboard ?? ''}
-            onClipboardCopy={() => {
-              DashboardInteractions.exportCopyJsonClicked();
-            }}
+            onClipboardCopy={model.onClipboardCopy}
           >
             <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
           </ClipboardButton>

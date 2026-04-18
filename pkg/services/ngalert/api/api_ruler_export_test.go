@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
@@ -200,6 +199,33 @@ func TestExportFromPayload(t *testing.T) {
 			require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
 			require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
 		})
+	})
+
+	t.Run("hcl body with simplified routing is as expected", func(t *testing.T) {
+		requestFile := "post-rulegroup-simplified-routing.json"
+
+		rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
+		require.NoError(t, err)
+
+		var buf bytes.Buffer
+		require.NoError(t, json.Compact(&buf, rawBody))
+
+		var body apimodels.PostableRuleGroupConfig
+		require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
+
+		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.hcl", 1)))
+		require.NoError(t, err)
+
+		rc := createRequest()
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
+
+		response := srv.ExportFromPayload(rc, body, folder.UID)
+		response.WriteTo(rc)
+
+		require.Equal(t, 200, response.Status())
+		require.Equal(t, string(expectedResponse), string(response.Body()))
+		require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
 	})
 }
 
@@ -393,8 +419,8 @@ func TestExportRules(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			rc := createRequestContextWithPerms(orgID, map[int64]map[string][]string{
 				orgID: {
-					dashboards.ActionFoldersRead:         []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
-					accesscontrol.ActionAlertingRuleRead: []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					folder2.ActionFoldersRead:            []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					accesscontrol.ActionAlertingRuleRead: []string{folder2.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder2.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
 					datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
 				},
 			}, nil)

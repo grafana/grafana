@@ -1,29 +1,29 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MutableDataFrame,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
-  FieldConfig,
+  type FieldConfig,
   formattedValueToString,
-  Field,
+  type Field,
 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { Button } from '../Button/Button';
 
 import { Table } from './Table';
 import mdx from './Table.mdx';
-import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
+import { type FooterItem, TableCellDisplayMode, type TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
-  title: 'Visualizations/Table',
+  title: 'Plugins/Table',
   component: Table,
   parameters: {
     controls: {
@@ -31,6 +31,34 @@ const meta: Meta<typeof Table> = {
     },
     docs: {
       page: mdx,
+    },
+    a11y: {
+      config: {
+        // TODO comment out rules that are currently failing in the story and fix them one by one
+        // see https://github.com/grafana/grafana/issues/117606
+        rules: [
+          {
+            id: 'aria-required-children',
+            enabled: false,
+          },
+          {
+            id: 'aria-required-parent',
+            enabled: false,
+          },
+          {
+            id: 'empty-table-header',
+            enabled: false,
+          },
+          {
+            // This does not need to be fixed! It is already specified in the storybook root preview.
+            // Once the other a11y issues are fixed, it can be removed.
+            // Unfortunately we have to duplicate it here because you can't inherit *and* append additional config rules...
+            id: 'scrollable-region-focusable',
+            selector: 'body',
+            enabled: false,
+          },
+        ],
+      },
     },
   },
   args: {
@@ -261,7 +289,16 @@ export const Footer: StoryFn<typeof Table> = (args) => {
   );
 };
 
-export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
+export const Pagination: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
+    </DashboardStoryCanvas>
+  );
+};
 Pagination.args = {
   enablePagination: true,
 };

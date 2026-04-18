@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -21,24 +22,26 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
 } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getDefaultOrFirstCompatibleDataSource,
+  getRulesDataSources,
+} from '../../../utils/datasource';
+import { type PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
@@ -74,7 +77,6 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
-  updateExpressionType,
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
@@ -100,7 +102,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     control,
   } = useFormContext<RuleFormValues>();
 
-  const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
+  const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading } = useAlertQueryRunner();
   const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
 
   const initialState = {
@@ -160,8 +162,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
   }, [simplifiedQueryStep, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
-
-  const { rulesSourcesWithRuler, isLoading: rulerSourcesIsLoading } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -303,40 +303,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
-  // Using dataSourcesWithRuler[0] gives incorrect types - no undefined
-  // Using at(0) provides a safe type with undefined
-  const recordingRuleDefaultDatasource = rulesSourcesWithRuler.at(0);
-
-  useEffect(() => {
-    clearPreviewData();
-    if (type === RuleFormType.cloudRecording) {
-      const expr = getValues('expression');
-
-      if (!recordingRuleDefaultDatasource) {
-        return;
-      }
-
-      const datasourceUid =
-        (editingExistingRule && getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid) ||
-        recordingRuleDefaultDatasource.uid;
-
-      const defaultQuery = {
-        refId: 'A',
-        datasourceUid,
-        queryType: '',
-        relativeTimeRange: getDefaultRelativeTimeRange(),
-        expr,
-        instant: true,
-        model: {
-          refId: 'A',
-          hide: false,
-          expr,
-        },
-      };
-      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: expr }));
-    }
-  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName, clearPreviewData]);
-
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));
   }, []);
@@ -422,7 +388,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
-      setValue('dataSourceName', null); // set data source name back to "null"
+      setValue('dataSourceName', GRAFANA_RULES_SOURCE_NAME);
 
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
@@ -455,7 +421,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   ]);
 
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
-
+  // Only show the data source managed option if there are data sources with manageAlerts enabled
+  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
   if (!type) {
     return null;
   }
@@ -474,11 +444,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           },
         }
       : undefined;
-
-  const canSelectDataSourceManaged =
-    onlyOneDSInQueries(queries) &&
-    Boolean(rulesSourcesWithRuler.length) &&
-    queries.some((query) => rulesSourcesWithRuler.some((source) => source.uid === query.datasourceUid));
 
   return (
     <>
@@ -508,7 +473,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
         {/* This is the PromQL Editor for recording rules */}
         {isRecordingRuleType && dataSourceName && (
-          <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+          <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
             <RecordingRuleEditor
               dataSourceName={dataSourceName}
               queries={queries}
@@ -519,16 +484,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </Field>
         )}
 
-        {rulerSourcesIsLoading && (
-          <Text>
-            <Trans i18nKey="alerting.query-and-expressions-step.loading-data-sources">Loading data sources...</Trans>
-          </Text>
-        )}
-
         {/* This is the PromQL Editor for Cloud rules */}
-        {!rulerSourcesIsLoading && isCloudAlertRuleType && dataSourceName && (
+        {isCloudAlertRuleType && dataSourceName && (
           <Stack direction="column">
-            <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+            <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
               <Controller
                 name="expression"
                 render={({ field: { ref, ...field } }) => {
@@ -543,17 +502,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
                 control={control}
                 rules={{
-                  required: { value: true, message: 'A valid expression is required' },
+                  required: {
+                    value: true,
+                    message: t(
+                      'alerting.query-and-expressions-step.message.a-valid-expression-is-required',
+                      'A valid expression is required'
+                    ),
+                  },
                 }}
               />
             </Field>
-            {mode === 'edit' && (
+            {mode === 'edit' && hasAlertEnabledDataSources && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector
                   editingExistingRule={editingExistingRule}
                   queries={queries}
-                  rulesSourcesWithRuler={rulesSourcesWithRuler}
                   onClickSwitch={onClickSwitch}
                 />
               </>
@@ -562,7 +526,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-        {!rulerSourcesIsLoading && isGrafanaManagedRuleByType(type) && (
+        {isGrafanaManagedRuleByType(type) && (
           <Stack direction="column">
             {/* Data Queries */}
             <QueryEditor
@@ -603,7 +567,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 <Divider />
                 <SmartAlertTypeDetector
                   editingExistingRule={editingExistingRule}
-                  rulesSourcesWithRuler={rulesSourcesWithRuler}
                   queries={queries}
                   onClickSwitch={onClickSwitch}
                 />
@@ -633,9 +596,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                     dispatch(removeExpression(refId));
                   }}
                   onUpdateRefId={onUpdateRefId}
-                  onUpdateExpressionType={(refId, type) => {
-                    dispatch(updateExpressionType({ refId, type }));
-                  }}
                   onUpdateQueryExpression={(model) => {
                     dispatch(updateExpression(model));
                   }}
@@ -712,8 +672,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
             <br />
           </div>
         }
-        confirmText="Deactivate"
-        icon="exclamation-triangle"
+        confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);

@@ -5,15 +5,17 @@ import Skeleton from 'react-loading-skeleton';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2, Text } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { Trans } from 'app/core/internationalization';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector } from 'app/types';
+import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
+import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { useSelector } from 'app/types/store';
 
+import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
 
 const ROW_HEIGHT = 40;
@@ -21,7 +23,7 @@ const CHEVRON_SIZE = 'md';
 
 export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id || 'root'}`;
 
-interface NestedFolderListProps {
+export interface NestedFolderListProps {
   items: DashboardsTreeItem[];
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
@@ -31,6 +33,8 @@ interface NestedFolderListProps {
   onFolderSelect: (item: DashboardViewItem) => void;
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
+  emptyFolders: Set<string>;
+  teamFolderOwnersByUid?: Record<string, { name: string; avatarUrl?: string }>;
 }
 
 export function NestedFolderList({
@@ -43,6 +47,8 @@ export function NestedFolderList({
   onFolderSelect,
   isItemLoaded,
   requestLoadMore,
+  emptyFolders,
+  teamFolderOwnersByUid,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -56,8 +62,20 @@ export function NestedFolderList({
       onFolderExpand,
       onFolderSelect,
       idPrefix,
+      emptyFolders,
+      teamFolderOwnersByUid,
     }),
-    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix]
+    [
+      items,
+      focusedItemIndex,
+      foldersAreOpenable,
+      selectedFolder,
+      onFolderExpand,
+      onFolderSelect,
+      idPrefix,
+      emptyFolders,
+      teamFolderOwnersByUid,
+    ]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -118,9 +136,18 @@ interface RowProps {
 const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix } =
-    data;
-  const { item, isOpen, level, parentUID } = items[index];
+  const {
+    items,
+    focusedItemIndex,
+    foldersAreOpenable,
+    selectedFolder,
+    onFolderExpand,
+    onFolderSelect,
+    idPrefix,
+    emptyFolders,
+    teamFolderOwnersByUid,
+  } = data;
+  const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
@@ -146,10 +173,16 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder') {
+    if (item.kind === 'folder' && !disabled) {
       onFolderSelect(item);
+      const folderType = teamFolderOwnersByUid?.[item.uid]
+        ? 'team folder'
+        : item.parentUID === 'sharedwithme'
+          ? 'shared folder'
+          : 'regular folder';
+      reportInteraction('grafana_folder_picker folder_selected', { folderType: folderType });
     }
-  }, [item, onFolderSelect]);
+  }, [item, onFolderSelect, disabled, teamFolderOwnersByUid]);
 
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
@@ -172,6 +205,12 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     ) : null;
   }
 
+  // We don't have a direct value of whether things are coming from user searching but this seems to be a good
+  // approximation as when searching all items will be at top level, while things that are actually in the top level
+  // when just looking at a folders tree should not have parent.
+  const isSearchItem = level === 0 && item.parentUID !== undefined;
+  const teamOwner = teamFolderOwnersByUid?.[item.uid];
+
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -189,6 +228,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
+      aria-disabled={disabled}
       aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.uid)).join(' ') : undefined}
       aria-setsize={children.length}
       aria-posinset={siblings.findIndex((i) => i.uid === item.uid) + 1}
@@ -197,12 +237,17 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       <div className={styles.rowBody}>
         <Indent level={level} spacing={2} />
 
-        {foldersAreOpenable ? (
+        {foldersAreOpenable && !emptyFolders.has(item.uid) ? (
           <IconButton
             size={CHEVRON_SIZE}
             // by using onMouseDown here instead of onClick we can stop focus moving
             // to the button when the user clicks it (via preventDefault + stopPropagation)
             onMouseDown={handleExpand}
+            // Additionally, prevent the click event from bubbling to the row, which would select the folder
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
             // tabIndex not needed here because we handle keyboard navigation at the input level
             tabIndex={-1}
             aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
@@ -216,6 +261,15 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
+        {teamOwner && (
+          <div className={styles.teamOwner}>
+            {teamOwner.avatarUrl && <Avatar src={teamOwner.avatarUrl} alt={teamOwner.name} />}
+            <Text truncate color="secondary" variant="bodySmall">
+              {teamOwner.name}
+            </Text>
+          </div>
+        )}
+        {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
   );
@@ -223,6 +277,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowBody = css({
+    label: 'rowBody',
     height: ROW_HEIGHT,
     display: 'flex',
     position: 'relative',
@@ -245,7 +300,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     folderButtonSpacer: css({
-      paddingLeft: theme.spacing(0.5),
+      paddingLeft: theme.spacing(2.5),
     }),
 
     row: css({
@@ -278,11 +333,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      label: 'label',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
       lineHeight: ROW_HEIGHT + 'px',
-      flexGrow: 1,
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -291,6 +346,18 @@ const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
         cursor: 'pointer',
       },
+    }),
+    teamOwner: css({
+      label: 'teamOwner',
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
+      pointerEvents: 'none', // avoid interfering with folder selection
     }),
   };
 };

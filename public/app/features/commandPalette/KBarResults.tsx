@@ -1,9 +1,9 @@
-import { ActionImpl, getListboxItemId, KBAR_LISTBOX, useKBar } from 'kbar';
+import { type ActionImpl, getListboxItemId, KBAR_LISTBOX, useKBar } from 'kbar';
 import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
-import { URLCallback } from './types';
+import { type URLCallback } from './types';
 
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
 // TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
@@ -19,7 +19,7 @@ interface RenderParams<T = ActionImpl | string> {
 interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
-  onRender: (params: RenderParams) => React.ReactElement;
+  onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
 }
 
@@ -121,6 +121,10 @@ export const KBarResults = (props: KBarResultsProps) => {
       const url = (item as ActionImpl & { url?: string }).url;
 
       if (item.command) {
+        if (url) {
+          // If the item also has a url we should block navigation.
+          ev.preventDefault();
+        }
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
         if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {

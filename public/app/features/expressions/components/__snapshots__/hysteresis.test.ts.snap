@@ -73,7 +73,6 @@ exports[`thresholdReducer should update Threshold Type, and unloadEvaluator para
       "evaluator": {
         "params": [
           10,
-          0,
         ],
         "type": "lt",
       },
@@ -91,7 +90,6 @@ exports[`thresholdReducer should update Threshold Type, and unloadEvaluator para
       "unloadEvaluator": {
         "params": [
           10,
-          0,
         ],
         "type": "gt",
       },

@@ -3,15 +3,16 @@ import { useToggle } from 'react-use';
 import { mergeMap } from 'rxjs';
 
 import {
-  DataTransformerConfig,
-  TransformerRegistryItem,
+  type DataTransformerConfig,
+  type TransformerRegistryItem,
   FrameMatcherID,
-  DataTransformContext,
+  type DataTransformContext,
   getFrameMatchers,
   transformDataFrame,
-  DataFrame,
+  type DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -19,15 +20,13 @@ import {
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
-import { TransformationData } from './TransformationsEditor';
-import { TransformationsEditorTransformation } from './types';
+import { type TransformationData } from './TransformationsEditor';
+import { type TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
@@ -89,10 +88,7 @@ export const TransformationOperationRow = ({
   const instrumentToggleCallback = useCallback(
     (callback: (e: React.MouseEvent) => void, toggleId: string, active: boolean | undefined) =>
       (e: React.MouseEvent) => {
-        let eventName = 'panel_editor_tabs_transformations_toggle';
-        if (config.featureToggles.transformationsRedesign) {
-          eventName = 'transformations_redesign_' + eventName;
-        }
+        let eventName = 'transformations_redesign_panel_editor_tabs_transformations_toggle';
 
         reportInteraction(eventName, {
           action: active ? 'off' : 'on',
@@ -138,7 +134,17 @@ export const TransformationOperationRow = ({
       .subscribe(setOutput);
     const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe(setPrevOutput);
+      .subscribe((result) => {
+        let mergedResult = [...result];
+        // add refIds that were requested even if they did not return a result
+        data.request?.targets.forEach((series) => {
+          const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
+          if (!refIdInResult) {
+            mergedResult.push({ refId: series.refId, fields: [], length: 0 });
+          }
+        });
+        setPrevOutput(mergedResult);
+      });
 
     return function unsubscribe() {
       inputSubscription.unsubscribe();
@@ -188,24 +194,25 @@ export const TransformationOperationRow = ({
         <QueryOperationAction
           title={t('dashboard.transformation-operation-row.render-actions.title-remove', 'Remove')}
           icon="trash-alt"
-          onClick={() => (config.featureToggles.transformationsRedesign ? setShowDeleteModal(true) : onRemove(index))}
+          onClick={() => setShowDeleteModal(true)}
         />
 
-        {config.featureToggles.transformationsRedesign && (
-          <ConfirmModal
-            isOpen={showDeleteModal}
-            title={t('dashboard.transformation-operation-row.title-delete', 'Delete {{name}}?', {
-              name: uiConfig.name,
-            })}
-            body="Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen."
-            confirmText="Delete"
-            onConfirm={() => {
-              setShowDeleteModal(false);
-              onRemove(index);
-            }}
-            onDismiss={() => setShowDeleteModal(false)}
-          />
-        )}
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title={t('dashboard.transformation-operation-row.title-delete', 'Delete {{name}}?', {
+            name: uiConfig.name,
+          })}
+          body={t(
+            'dashboard.transformation-operation-row.body-delete',
+            'Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.'
+          )}
+          confirmText={t('dashboard.transformation-operation-row.render-actions.confirmText-delete', 'Delete')}
+          onConfirm={() => {
+            setShowDeleteModal(false);
+            onRemove(index);
+          }}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
       </>
     );
   };
@@ -215,7 +222,7 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}

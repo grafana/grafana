@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.ts
 import { size } from 'lodash';
 
-import { QueryFix, QueryHint } from '@grafana/data';
+import { type QueryFix, type QueryHint } from '@grafana/data';
 
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
-import { PromVisualQuery } from './querybuilder/types';
-import { PromMetricsMetadata, RecordingRuleIdentifier, RuleQueryMapping } from './types';
+import { type QueryBuilderLabelFilter } from './querybuilder/shared/types';
+import { type PromVisualQuery } from './querybuilder/types';
+import { type PromMetricsMetadata, type RecordingRuleIdentifier, type RuleQueryMapping } from './types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -17,7 +17,7 @@ export const SUM_HINT_THRESHOLD_COUNT = 20;
 export function getQueryHints(query: string, series?: unknown[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
-  const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
+  const metricsMetadata = datasource?.languageProvider?.retrieveMetricsMetadata();
 
   // ..._bucket metric needs a histogram_quantile()
   // this regex also prevents hints from being shown when a query already has a function

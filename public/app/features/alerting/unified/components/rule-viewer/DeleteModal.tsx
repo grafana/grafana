@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
-import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type EditableRuleIdentifier, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { shouldAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
@@ -82,8 +82,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
                 'Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?'
               )
         }
-        confirmText="Yes, delete"
-        icon="exclamation-triangle"
+        confirmText={t('alerting.use-delete-modal.modal.confirmText-yes-delete', 'Yes, delete')}
         onConfirm={deleteRule}
         onDismiss={dismissModal}
       />

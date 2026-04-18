@@ -1,29 +1,30 @@
 import { capitalize } from 'lodash';
-import { map, Observable, scan, takeWhile } from 'rxjs';
+import { map, type Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameFromJSON,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrameJSON,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   FieldCache,
   FieldType,
   LiveChannelScope,
   LoadingState,
-  MutableDataFrame,
+  type MutableDataFrame,
   sortDataFrame,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
-import { SearchStreamingState } from './dataquery.gen';
-import { DEFAULT_SPSS, TempoDatasource } from './datasource';
+import { MetricsQueryType, SearchStreamingState } from './dataquery.gen';
+import { DEFAULT_SPSS, type TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
-import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
+import { type SearchMetrics, type TempoJsonData, type TempoQuery } from './types';
 import { stepToNanos } from './utils';
 
 function getLiveStreamKey(): string {
@@ -45,7 +46,7 @@ export function doTempoSearchStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `search/${getLiveStreamKey()}`,
       data: {
         ...query,
@@ -122,7 +123,7 @@ export function doTempoMetricsStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `metrics/${key}`,
       data: {
         ...query,
@@ -165,7 +166,15 @@ export function doTempoMetricsStreaming(
           }
 
           newResult = {
-            data: data?.map(dataFrameFromJSON) ?? [],
+            data:
+              data?.map((frame: DataFrameJSON) => {
+                const df = dataFrameFromJSON(frame);
+                // preserve the query's refId to prevent conflation of series from different queries
+                if (query.refId) {
+                  df.refId = query.refId;
+                }
+                return df;
+              }) ?? [],
             state,
           };
         }
@@ -177,7 +186,8 @@ export function doTempoMetricsStreaming(
         if (!curr) {
           return acc;
         }
-        if (!acc) {
+        // If the query is an instant query, we always want the latest result.
+        if (!acc || query.metricsQueryType === MetricsQueryType.Instant) {
           return cloneQueryResponse(curr);
         }
         return mergeFrames(acc, curr);

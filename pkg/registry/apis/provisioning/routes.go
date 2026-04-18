@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -53,7 +53,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -67,7 +67,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleStats, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleStats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -101,7 +101,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -115,7 +115,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleSettings, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
 		},
 	}
@@ -149,29 +149,48 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: check if lister could list too many repositories or resources
-	all, err := b.repositoryLister.Repositories(u.GetNamespace()).List(labels.Everything())
+	ns := u.GetNamespace()
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	ctx = request.WithNamespace(ctx, ns)
+
+	// TODO: check if lister could list too many repositories or resources
+	all, err := b.repoLister.List(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	quotaStatus, err := b.quotaGetter.GetQuotaStatus(ctx, ns)
+	if err != nil {
+		errhttp.Write(ctx, fmt.Errorf("failed to get quota status: %w", err), w)
 		return
 	}
 
 	settings := provisioning.RepositoryViewList{
-		Items: make([]provisioning.RepositoryView, len(all)),
-		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		Items:                    make([]provisioning.RepositoryView, len(all)),
+		AllowedTargets:           b.allowedTargets,
+		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AllowImageRendering:      b.allowImageRendering,
+		MaxRepositories:          quotaStatus.MaxRepositories,
 	}
+
 	for i, val := range all {
-		branch := ""
-		if val.Spec.GitHub != nil {
-			branch = val.Spec.GitHub.Branch
-		}
+		branch := val.Branch()
+		url := val.URL()
+		path := val.Path()
+
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:      val.Name,
 			Title:     val.Spec.Title,
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,
 			Branch:    branch,
+			URL:       url,
+			Path:      path,
 			Workflows: val.Spec.Workflows,
 		}
 	}

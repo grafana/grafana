@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { GroupByVariableForm, GroupByVariableFormProps } from './GroupByVariableForm';
+import { GroupByVariableForm, type GroupByVariableFormProps } from './GroupByVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -36,6 +36,21 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('GroupByVariableForm', () => {
+  beforeAll(() => {
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 200,
+        height: 200,
+        x: 0,
+        y: 0,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      })),
+    });
+  });
+
   const onDataSourceChangeMock = jest.fn();
   const onDefaultOptionsChangeMock = jest.fn();
   const onAllowCustomValueChangeMock = jest.fn();
@@ -45,6 +60,7 @@ describe('GroupByVariableForm', () => {
     onAllowCustomValueChange: onAllowCustomValueChangeMock,
     onDataSourceChange: onDataSourceChangeMock,
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
+    datasourceSupported: true,
   };
 
   function setup(props?: Partial<GroupByVariableFormProps>) {
@@ -129,5 +145,78 @@ describe('GroupByVariableForm', () => {
     await userEvent.click(toggle);
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledTimes(1);
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith(undefined);
+  });
+
+  it('should call onDefaultValueChange when selecting a default value', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: [],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+    await user.click(await screen.findByRole('option', { name: 'job' }));
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([expect.objectContaining({ label: 'job', value: 'job' })]);
+  });
+
+  it('should call onDefaultValueChange when removing a default value via pill', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: [{ value: 'job', label: 'job' }],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should show defaultValueOptions in combobox dropdown', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: [],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByRole('option', { name: 'job' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'instance' })).toBeInTheDocument();
+  });
+
+  it('should render only datasource picker and alert when not supported', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      datasourceSupported: false,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const dataSourcePicker = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
+    );
+
+    const allowCustomValueCheckbox = renderer.queryByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    const alertText = renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText);
+
+    expect(dataSourcePicker).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).not.toBeInTheDocument();
+    expect(alertText).toBeInTheDocument();
   });
 });

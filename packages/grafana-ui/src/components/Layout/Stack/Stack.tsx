@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
-import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types';
-import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
-import { getSizeStyles, SizeProps } from '../utils/styles';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { type AlignItems, type Direction, type FlexProps, type JustifyContent, type Wrap } from '../types';
+import { type ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, type SizeProps } from '../utils/styles';
 
 interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
@@ -19,6 +19,11 @@ interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTM
   children?: React.ReactNode;
 }
 
+/**
+ * The Stack component is a simple wrapper around the flexbox layout model that allows to easily create responsive and flexible layouts. It provides a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-stack--docs
+ */
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>((props, ref) => {
   const {
     gap = 1,

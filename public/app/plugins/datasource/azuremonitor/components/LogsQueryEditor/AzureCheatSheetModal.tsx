@@ -1,8 +1,9 @@
-import { CoreApp } from '@grafana/data';
+import { type CoreApp } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 
-import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery } from '../../dataquery.gen';
+import type AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+import { type AzureMonitorQuery } from '../../dataquery.gen';
 
 import AzureCheatSheet from './AzureCheatSheet';
 
@@ -19,7 +20,12 @@ export const AzureCheatSheetModal = (props: Props) => {
   const { isOpen, onClose, datasource, onChange } = props;
 
   return (
-    <Modal aria-label="Kick start your query modal" isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
+    <Modal
+      aria-label={t('components.azure-cheat-sheet-modal.aria-label-kick-start', 'Kick start your query modal')}
+      isOpen={isOpen}
+      title={t('components.azure-cheat-sheet-modal.title-kick-start', 'Kick start your query')}
+      onDismiss={onClose}
+    >
       <AzureCheatSheet
         onChange={(a) => {
           onChange(a);

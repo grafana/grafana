@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { SpacingTokenControl } from '../../utils/storybook/themeStorybookControls';
 
@@ -7,7 +7,7 @@ import { Space } from './Space';
 import mdx from './Space.mdx';
 
 const meta: Meta<typeof Space> = {
-  title: 'General/Layout/Space',
+  title: 'Layout/Space',
   component: Space,
   parameters: {
     docs: {

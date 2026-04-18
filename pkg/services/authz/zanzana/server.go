@@ -1,30 +1,39 @@
 package zanzana
 
 import (
-	"net/http"
+	"context"
 
-	openfgaserver "github.com/openfga/openfga/pkg/server"
-	openfgastorage "github.com/openfga/openfga/pkg/storage"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*server.Server, error) {
-	return server.NewServer(cfg, openfga, logger, tracer)
+type StoreInfo struct {
+	ID      string
+	Name    string
+	ModelID string
 }
 
-func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
-	return server.NewHealthServer(target)
+type Server interface {
+	authzv1.AuthzServiceServer
+	authzextv1.AuthzExtentionServiceServer
+	Close()
 }
 
-func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore, logger log.Logger) (*openfgaserver.Server, error) {
-	return server.NewOpenFGAServer(cfg, store, logger)
+type MTReconciler interface {
+	Run(ctx context.Context) error
+	// EnsureNamespace checks if namespace is not exists, and if not, it reconciles it.
+	EnsureNamespace(ctx context.Context, namespace string) error
 }
 
-func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
-	return server.NewOpenFGAHttpServer(cfg, srv)
+type ServerInternal interface {
+	Server
+	RunReconciler(ctx context.Context) error
+	GetStore(ctx context.Context, namespace string) (*StoreInfo, error)
+	GetOrCreateStore(ctx context.Context, namespace string) (*StoreInfo, error)
+	DeleteStore(ctx context.Context, namespace string) error
+	ListAllStores(ctx context.Context) ([]StoreInfo, error)
+	WriteTuples(ctx context.Context, store *StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error
+	GetOpenFGAServer() openfgav1.OpenFGAServiceServer
 }

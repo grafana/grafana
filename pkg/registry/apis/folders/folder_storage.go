@@ -8,9 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -19,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -34,16 +36,20 @@ var (
 )
 
 type folderStorage struct {
-	tableConverter       rest.TableConvertor
-	cfg                  *setting.Cfg
+	resourceInfo utils.ResourceInfo
+
+	// Wrapped storage
+	store          grafanarest.Storage
+	tableConverter rest.TableConvertor
+
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
-	store                grafanarest.Storage
 }
 
 func (s *folderStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *folderStorage) Destroy() {}
@@ -53,11 +59,11 @@ func (s *folderStorage) NamespaceScoped() bool {
 }
 
 func (s *folderStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *folderStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -79,7 +85,18 @@ func (s *folderStorage) Create(ctx context.Context,
 ) (runtime.Object, error) {
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
+	}
+
+	// Skip permission side effects during dry-run
+	if dryrun.IsDryRun(options.DryRun) {
+		return obj, nil
+	}
+
+	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled
+	if !s.permissionsOnCreate {
+		return obj, err
 	}
 
 	info, err := request.NamespaceInfoFrom(ctx, true)
@@ -104,6 +121,10 @@ func (s *folderStorage) Create(ctx context.Context,
 
 	parentUid := accessor.GetFolder()
 
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed AND the frontend is calling
+	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
+	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
+	// and rely on StorageOptions.Permissions.
 	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
@@ -125,7 +146,12 @@ func (s *folderStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.store.Delete(ctx, name, deleteValidation, options)
+	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		return obj, async, err
+	}
+
+	return obj, async, err
 }
 
 // GracefulDeleter
@@ -133,30 +159,34 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
 }
 
-func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	isNested := parentUID != ""
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if isNested {
+		// No permissions on nested folders when kubernetesDashboards is enabled
 		return nil
 	}
 
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
+	// Creator permissions always set with the legacy behaviour and set on root level folders for new behaviour
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
 		}
-
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := parentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
+
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err

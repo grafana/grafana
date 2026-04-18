@@ -11,6 +11,9 @@ import (
 	"github.com/go-logfmt/logfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/utils"
 )
 
 type JaegerClient struct {
@@ -18,34 +21,6 @@ type JaegerClient struct {
 	url        string
 	httpClient *http.Client
 	settings   backend.DataSourceInstanceSettings
-}
-
-type ServicesResponse struct {
-	Data   []string    `json:"data"`
-	Errors interface{} `json:"errors"`
-	Limit  int         `json:"limit"`
-	Offset int         `json:"offset"`
-	Total  int         `json:"total"`
-}
-
-type SettingsJSONData struct {
-	TraceIdTimeParams struct {
-		Enabled bool `json:"enabled"`
-	} `json:"traceIdTimeParams"`
-}
-
-type DependenciesResponse struct {
-	Data   []ServiceDependency `json:"data"`
-	Errors []struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-	} `json:"errors"`
-}
-
-type ServiceDependency struct {
-	Parent    string `json:"parent"`
-	Child     string `json:"child"`
-	CallCount int    `json:"callCount"`
 }
 
 func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings) (JaegerClient, error) {
@@ -58,68 +33,116 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 	return client, nil
 }
 
-func (j *JaegerClient) Services() ([]string, error) {
-	var response ServicesResponse
+// doGet performs a GET request with the given context so that contextual HTTP middleware
+// (e.g. Forward OAuth Identity, x-grafana-id) can attach headers to the outgoing request.
+func (j *JaegerClient) doGet(ctx context.Context, rawURL string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := j.httpClient.Do(req)
+	if err != nil {
+		j.logger.Error("Jaeger request failed", "error", err)
+		return nil, err
+	}
+	if res != nil && res.StatusCode/100 != 2 {
+		j.logger.Warn("Jaeger request returned non-2xx status", "status", res.StatusCode, "statusText", res.Status)
+	}
+	return res, nil
+}
+
+// readResponseBody reads the response body and decompresses it based on Content-Encoding.
+func readResponseBody(res *http.Response) ([]byte, error) {
+	encoding := res.Header.Get("Content-Encoding")
+	body, err := utils.Decode(encoding, res.Body)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to read response body: %w", err)
+	}
+	return body, nil
+}
+
+func (j *JaegerClient) Services(ctx context.Context) ([]string, error) {
+	var response types.ServicesResponse
 	services := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/services")
 	if err != nil {
-		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return services, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		return services, err
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Warn("Failed to close response body", "error", closeErr)
 		}
 	}()
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	if res.StatusCode/100 != 2 {
+		return services, backend.DownstreamErrorf("request failed: %s", res.Status)
+	}
+
+	body, err := readResponseBody(res)
+	if err != nil {
 		return services, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return services, backend.DownstreamErrorf("failed to unmarshal Jaeger response: %w", err)
 	}
 
 	services = response.Data
 	return services, err
 }
 
-func (j *JaegerClient) Operations(s string) ([]string, error) {
-	var response ServicesResponse
+func (j *JaegerClient) Operations(ctx context.Context, s string) ([]string, error) {
+	var response types.ServicesResponse
 	operations := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
 	if err != nil {
-		return operations, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return operations, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		return operations, err
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Warn("Failed to close response body", "error", closeErr)
 		}
 	}()
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	if res.StatusCode/100 != 2 {
+		return operations, backend.DownstreamErrorf("request failed: %s", res.Status)
+	}
+
+	body, err := readResponseBody(res)
+	if err != nil {
 		return operations, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return operations, backend.DownstreamErrorf("failed to unmarshal Jaeger response: %w", err)
 	}
 
 	operations = response.Data
 	return operations, err
 }
 
-func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
-	jaegerURL, err := url.Parse(j.url)
+func (j *JaegerClient) Search(ctx context.Context, query *JaegerQuery, start, end int64) (*data.Frame, error) {
+	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
-		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
+		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
-	jaegerURL.Path = "/api/traces"
+
+	jaegerURL, err := url.Parse(u)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to parse Jaeger URL: %w", err)
+	}
 
 	var queryTags string
 	if query.Tags != "" {
@@ -135,7 +158,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 
 		marshaledTags, err := json.Marshal(tagMap)
 		if err != nil {
-			return []TraceResponse{}, fmt.Errorf("failed to convert tags to JSON: %w", err)
+			return nil, backend.DownstreamErrorf("failed to convert tags to JSON: %w", err)
 		}
 
 		queryTags = string(marshaledTags)
@@ -168,53 +191,57 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 	}
 
 	jaegerURL.RawQuery = urlQuery.Encode()
-	resp, err := j.httpClient.Get(jaegerURL.String())
+	resp, err := j.doGet(ctx, jaegerURL.String())
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return []TraceResponse{}, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return []TraceResponse{}, err
+		return nil, err
 	}
 
 	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			j.logger.Warn("Failed to close response body", "error", closeErr)
 		}
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
+		err := fmt.Errorf("request failed: %s", resp.Status)
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
-			return []TraceResponse{}, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return []TraceResponse{}, err
+		return nil, err
 	}
 
-	var result TracesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return []TraceResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
+	body, err := readResponseBody(resp)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to read response: %w", err)
+	}
+	var result types.TracesResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, backend.DownstreamErrorf("failed to unmarshal Jaeger response: %w", err)
 	}
 
-	return result.Data, nil
+	frames := utils.TransformSearchResponse(result.Data, j.settings.UID, j.settings.Name)
+	return frames, nil
 }
 
-func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {
+func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64, refID string) (*data.Frame, error) {
 	logger := j.logger.FromContext(ctx)
-	var response TracesResponse
-	trace := TraceResponse{}
+	var response types.TracesResponse
 
 	if traceID == "" {
-		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+		return nil, backend.DownstreamErrorf("traceID is empty")
 	}
 
 	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
 	if err != nil {
-		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
-	var jsonData SettingsJSONData
+	var jsonData types.SettingsJSONData
 	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
-		return trace, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+		return nil, backend.DownstreamErrorf("failed to parse settings JSON data: %w", err)
 	}
 
 	// Add time parameters if trace ID time is enabled and time range is provided
@@ -222,7 +249,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		if start > 0 || end > 0 {
 			parsedURL, err := url.Parse(traceUrl)
 			if err != nil {
-				return trace, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+				return nil, backend.DownstreamErrorf("failed to parse url: %w", err)
 			}
 
 			query := parsedURL.Query()
@@ -238,51 +265,58 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		}
 	}
 
-	res, err := j.httpClient.Get(traceUrl)
+	res, err := j.doGet(ctx, traceUrl)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return trace, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return trace, err
+		return nil, err
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			logger.Warn("Failed to close response body", "error", closeErr)
 		}
 	}()
 
 	if res != nil && res.StatusCode/100 != 2 {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
-			return trace, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return trace, err
+		return nil, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return trace, err
+	body, err := readResponseBody(res)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, backend.DownstreamErrorf("failed to unmarshal Jaeger response: %w", err)
 	}
 
 	// We only support one trace at a time
 	// this is how it was implemented in the frontend before
-	trace = response.Data[0]
-	return trace, err
+	// Handle empty result set to avoid index out of range panic (e.g. trace not found or empty search)
+	if len(response.Data) == 0 {
+		return utils.TransformTraceResponse(types.TraceResponse{}, refID), nil
+	}
+	return utils.TransformTraceResponse(response.Data[0], refID), nil
 }
 
-func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (DependenciesResponse, error) {
+func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (types.DependenciesResponse, error) {
 	logger := j.logger.FromContext(ctx)
-	var dependencies DependenciesResponse
+	var dependencies types.DependenciesResponse
 
 	u, err := url.JoinPath(j.url, "/api/dependencies")
 	if err != nil {
-		return dependencies, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return dependencies, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
 	// Add time parameters
 	parsedURL, err := url.Parse(u)
 	if err != nil {
-		return dependencies, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+		return dependencies, backend.DownstreamErrorf("failed to parse url: %w", err)
 	}
 
 	query := parsedURL.Query()
@@ -297,7 +331,7 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (Depe
 	parsedURL.RawQuery = query.Encode()
 	u = parsedURL.String()
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			return dependencies, backend.DownstreamError(err)
@@ -306,21 +340,25 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (Depe
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			logger.Warn("Failed to close response body", "error", closeErr)
 		}
 	}()
 
 	if res != nil && res.StatusCode/100 != 2 {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return dependencies, backend.DownstreamError(err)
 		}
 		return dependencies, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&dependencies); err != nil {
+	body, err := readResponseBody(res)
+	if err != nil {
 		return dependencies, err
+	}
+	if err := json.Unmarshal(body, &dependencies); err != nil {
+		return dependencies, backend.DownstreamErrorf("failed to unmarshal Jaeger response: %w", err)
 	}
 
 	return dependencies, nil

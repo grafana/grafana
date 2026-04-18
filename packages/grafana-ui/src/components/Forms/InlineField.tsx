@@ -1,15 +1,16 @@
 import { cx, css } from '@emotion/css';
-import { cloneElement, ReactNode } from 'react';
+import { cloneElement, type ReactNode, useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
-import { PopoverContent } from '../Tooltip';
+import { type PopoverContent } from '../Tooltip/types';
 
-import { FieldProps } from './Field';
+import { type FieldProps } from './Field';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { InlineLabel } from './InlineLabel';
+import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
@@ -29,6 +30,11 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   interactive?: boolean;
 }
 
+/**
+ * A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinefield--docs
+ */
 export const InlineField = ({
   children,
   label,
@@ -51,6 +57,8 @@ export const InlineField = ({
   const theme = useTheme2();
   const styles = getStyles(theme, grow, shrink);
   const inputId = htmlFor ?? getChildId(children);
+  const useFieldset = children.type === RadioButtonGroup;
+  const labelId = useId();
 
   const labelElement =
     typeof label === 'string' ? (
@@ -60,6 +68,8 @@ export const InlineField = ({
         tooltip={tooltip}
         htmlFor={inputId}
         transparent={transparent}
+        id={labelId}
+        as={useFieldset ? 'span' : 'label'}
       >
         {`${label}${required ? ' *' : ''}`}
       </InlineLabel>
@@ -67,11 +77,13 @@ export const InlineField = ({
       label
     );
 
+  const Wrapper = useFieldset ? 'fieldset' : 'div';
+
   return (
-    <div className={cx(styles.container, className)} {...htmlProps}>
+    <Wrapper className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
       <div className={styles.childContainer}>
-        {cloneElement(children, { invalid, disabled, loading })}
+        {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
         {invalid && error && (
           <div
             className={cx(styles.fieldValidationWrapper, {
@@ -82,7 +94,7 @@ export const InlineField = ({
           </div>
         )}
       </div>
-    </div>
+    </Wrapper>
   );
 };
 

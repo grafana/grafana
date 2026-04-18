@@ -1,23 +1,24 @@
 import {
-  AdHocVariableModel,
-  BaseVariableModel,
-  ConstantVariableModel,
-  CustomVariableModel,
-  DashboardVariableModel,
-  DataSourceVariableModel,
-  GroupByVariableModel,
-  IntervalVariableModel,
+  type AdHocVariableModel,
+  type BaseVariableModel,
+  type ConstantVariableModel,
+  type CustomVariableModel,
+  type DashboardVariableModel,
+  type DataSourceVariableModel,
+  type GroupByVariableModel,
+  type IntervalVariableModel,
   LoadingState,
-  OrgVariableModel,
-  QueryVariableModel,
-  SnapshotVariableModel,
-  TextBoxVariableModel,
-  UserVariableModel,
+  type OrgVariableModel,
+  type QueryVariableModel,
+  type SnapshotVariableModel,
+  type SwitchVariableModel,
+  type TextBoxVariableModel,
+  type UserVariableModel,
   VariableHide,
-  VariableOption,
+  type VariableOption,
   VariableRefresh,
   VariableSort,
-  VariableType,
+  type VariableType,
 } from '@grafana/data';
 
 function createBaseVariableModel<T extends VariableType>(type: T): BaseVariableModel & { type: T } {
@@ -206,6 +207,31 @@ export function createSnapshotVariable(input: Partial<SnapshotVariableModel> = {
     query: '',
     current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [],
+    ...input,
+  };
+}
+
+export function createSwitchVariable(input: Partial<SwitchVariableModel> = {}): SwitchVariableModel {
+  return {
+    ...createBaseVariableModel('switch'),
+    current: {
+      value: 'true',
+      text: 'true',
+      selected: true,
+    },
+    options: [
+      {
+        value: 'true',
+        text: 'true',
+        selected: true,
+      },
+      {
+        value: 'false',
+        text: 'false',
+        selected: false,
+      },
+    ],
+    query: '',
     ...input,
   };
 }

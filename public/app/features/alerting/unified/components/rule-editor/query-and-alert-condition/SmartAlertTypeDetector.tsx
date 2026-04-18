@@ -1,32 +1,26 @@
 import { useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceJsonData } from '@grafana/schema';
+import { Trans, t } from '@grafana/i18n';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { DOCS_URL_ALERT_RULE_TYPES } from '../../../utils/docs';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
-import { getCanSwitch } from './utils';
+import { useGetCanSwitch } from './utils';
 
 interface SmartAlertTypeDetectorProps {
   editingExistingRule: boolean;
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
   onClickSwitch: () => void;
 }
 
-export function SmartAlertTypeDetector({
-  editingExistingRule,
-  rulesSourcesWithRuler,
-  queries,
-  onClickSwitch,
-}: SmartAlertTypeDetectorProps) {
+export function SmartAlertTypeDetector({ editingExistingRule, queries, onClickSwitch }: SmartAlertTypeDetectorProps) {
   const { getValues } = useFormContext<RuleFormValues>();
+
   const [ruleFormType] = getValues(['type']);
-  const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
+  const canSwitch = useGetCanSwitch({ queries, ruleFormType });
 
   const options = [
     { label: t('alerting.smart-alert-type-detector.grafana-managed', 'Grafana-managed'), value: RuleFormType.grafana },
@@ -82,7 +76,7 @@ export function SmartAlertTypeDetector({
                 </p>
               </>
             }
-            externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/"
+            externalLink={DOCS_URL_ALERT_RULE_TYPES}
             linkText="Read about alert rule types"
             title={t('alerting.smart-alert-type-detector.title-alert-rule-types', 'Alert rule types')}
           />

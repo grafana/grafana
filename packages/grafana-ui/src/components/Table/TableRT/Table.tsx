@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAbsoluteLayout,
   useExpanded,
@@ -8,27 +8,21 @@ import {
   useSortBy,
   useTable,
 } from 'react-table';
-import { VariableSizeList } from 'react-window';
+import { type VariableSizeList } from 'react-window';
 
 import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import {
-  CellRangeSelection,
-  FooterItem,
-  GrafanaTableColumn,
-  GrafanaTableState,
-  InspectCell,
-  TableRTProps as Props,
-} from '../types';
+import { type CellRangeSelection, type FooterItem, type GrafanaTableColumn, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -47,6 +41,11 @@ const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
+/**
+ * Used for displaying tabular data
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-table--docs
+ */
 export const Table = memo((props: Props) => {
   const {
     ariaLabel,
@@ -167,7 +166,7 @@ export const Table = memo((props: Props) => {
   // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
   // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
   // we initialize `useTableStateReducer`.
-  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+  const toggleAllRowsExpandedRef = useRef<((value?: boolean) => void) | undefined>(undefined);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({
@@ -185,6 +184,7 @@ export const Table = memo((props: Props) => {
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
+  const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
   const options: any = useMemo(() => {
     // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
@@ -422,7 +422,7 @@ export const Table = memo((props: Props) => {
     });
   }
 
-  return (
+  const rendered = (
     <>
       <div
         {...getTableProps()}
@@ -504,6 +504,16 @@ export const Table = memo((props: Props) => {
         />
       )}
     </>
+  );
+
+  if (!tableHasGeoCell) {
+    return rendered;
+  }
+
+  return (
+    <Suspense fallback={rendered}>
+      <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
+    </Suspense>
   );
 });
 

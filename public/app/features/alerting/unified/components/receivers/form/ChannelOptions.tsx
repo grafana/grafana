@@ -1,32 +1,37 @@
 import * as React from 'react';
-import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
+import type { JSX } from 'react';
+import { type DeepMap, type FieldError, type FieldErrors, useFormContext } from 'react-hook-form';
 
-import { Field, SecretInput } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import { Field } from '@grafana/ui';
+import {
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import {
-  ChannelValues,
-  CloudChannelValues,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelValues,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../../../types/receiver-form';
 
-import { OptionField } from './fields/OptionField';
+import { ConfiguredSecretInput, OptionField } from './fields/OptionField';
 
 export interface Props<R extends ChannelValues> {
   defaultValues: R;
   selectedChannelOptions: NotificationChannelOption[];
 
   onResetSecureField: (key: string) => void;
-  onDeleteSubform?: (propertyName: string) => void;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
   errors?: FieldErrors<R>;
   /**
    * The path for the integration in the array of integrations.
    * This is used to access the settings and secure fields for the integration in a type-safe way.
    */
   integrationPrefix: `items.${number}`;
+  canEditProtectedFields: boolean;
   readOnly?: boolean;
-
   customValidators?: Record<string, React.ComponentProps<typeof OptionField>['customValidator']>;
 }
 
@@ -39,6 +44,7 @@ export function ChannelOptions<R extends ChannelValues>({
   integrationPrefix,
   readOnly = false,
   customValidators = {},
+  canEditProtectedFields,
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
@@ -49,7 +55,7 @@ export function ChannelOptions<R extends ChannelValues>({
 
   const getOptionMeta = (option: NotificationChannelOption): OptionMeta => ({
     required: determineRequired(option, settings, secureFields),
-    readOnly: determineReadOnly(option, settings, secureFields),
+    readOnly: determineReadOnly(option, settings, secureFields, canEditProtectedFields),
   });
 
   return (
@@ -66,26 +72,30 @@ export function ChannelOptions<R extends ChannelValues>({
           return null;
         }
 
-        if (secureFields && secureFields[option.propertyName]) {
+        if (secureFields && secureFields[option.secureFieldKey ?? option.propertyName]) {
           return (
             <Field
               key={key}
               label={option.label}
               description={option.description}
               htmlFor={`${settingsPath}${option.propertyName}`}
+              noMargin
             >
-              <SecretInput
+              <ConfiguredSecretInput
                 id={`${settingsPath}${option.propertyName}`}
-                onReset={() => onResetSecureField(option.propertyName)}
-                isConfigured
+                readOnly={readOnly}
+                onReset={() => onResetSecureField(option.secureFieldKey ?? option.propertyName)}
               />
             </Field>
           );
         }
 
-        const error: FieldError | DeepMap<any, FieldError> | undefined = (
-          (option.secure ? errors?.secureFields : errors?.settings) as DeepMap<any, FieldError> | undefined
-        )?.[option.propertyName];
+        const errorSource = option.secure ? errors?.secureFields : errors?.settings;
+        const propertyKey = option.secureFieldKey ?? option.propertyName;
+        const error = // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (errorSource as Record<string, FieldError | DeepMap<Record<string, unknown>, FieldError>> | undefined)?.[
+            propertyKey
+          ];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
@@ -122,6 +132,7 @@ const determineRequired = (
     return option.required ? 'Required' : false;
   }
 
+  // TODO: This doesn't work with nested secureFields.
   const dependentOn = Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
 
   if (dependentOn) {
@@ -134,11 +145,18 @@ const determineRequired = (
 const determineReadOnly = (
   option: NotificationChannelOption,
   settings: Record<string, unknown>,
-  secureFields: NotificationChannelSecureFields
+  secureFields: NotificationChannelSecureFields,
+  canEditProtectedFields: boolean
 ) => {
+  if (option.protected && !canEditProtectedFields) {
+    return true;
+  }
+
+  // Handle fields with dependencies (e.g., field B depends on field A being set)
   if (!option.dependsOn) {
     return false;
   }
 
+  // TODO: This doesn't work with nested secureFields.
   return Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
 };

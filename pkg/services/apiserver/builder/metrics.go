@@ -6,13 +6,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type builderMetrics struct {
+type BuilderMetrics struct {
 	dualWriterTargetMode  *prometheus.GaugeVec
 	dualWriterCurrentMode *prometheus.GaugeVec
 }
 
-func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
-	return &builderMetrics{
+func ProvideBuilderMetrics(reg prometheus.Registerer) *BuilderMetrics {
+	return &BuilderMetrics{
 		dualWriterTargetMode: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "unified_storage_dual_writer_target_mode",
 			Help: "Unified Storage dual writer target mode",
@@ -24,7 +24,7 @@ func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
 	}
 }
 
-func (m *builderMetrics) recordDualWriterModes(resource, group string, targetMode, currentMode grafanarest.DualWriterMode) {
-	m.dualWriterTargetMode.WithLabelValues(resource, group).Set(float64(targetMode))
-	m.dualWriterCurrentMode.WithLabelValues(resource, group).Set(float64(currentMode))
+func (m *BuilderMetrics) RecordDualWriterModes(resource, group string, mode grafanarest.DualWriterMode) {
+	m.dualWriterTargetMode.WithLabelValues(resource, group).Set(float64(mode))
+	m.dualWriterCurrentMode.WithLabelValues(resource, group).Set(float64(mode))
 }

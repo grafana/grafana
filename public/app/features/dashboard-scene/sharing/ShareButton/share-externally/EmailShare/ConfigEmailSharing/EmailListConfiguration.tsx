@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Dropdown, Field, Icon, IconButton, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
   publicDashboardApi,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
@@ -97,6 +97,7 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
+
   return (
     <Field
       label={t('public-dashboard.email-sharing.recipient-list-title', 'People with access')}

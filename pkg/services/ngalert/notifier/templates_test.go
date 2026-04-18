@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var (
@@ -57,7 +58,9 @@ var (
 	}
 )
 
-func TestTemplateDefaultData(t *testing.T) {
+func TestIntegrationTemplateDefaultData(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	am := setupAMTest(t)
 
 	tests := []struct {

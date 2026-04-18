@@ -1,7 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.ts
-import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { type SyntaxNode, type TreeCursor } from '@lezer/common';
+import { AggregateExpr, FunctionCallBody } from '@prometheus-io/lezer-promql';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';
+import { type QueryBuilderOperation, type QueryBuilderOperationParamValue } from './shared/types';
 
 // Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;
@@ -36,7 +37,8 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
  * parsable and at the same time we can get the variable and its format back from it.
  */
 export function replaceVariables(expr: string) {
-  return expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+  const replacedVariables: Record<string, string> = {};
+  const replacedExpr = expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
     const fmt = fmt2 || fmt3;
     let variable = var1;
     let varType = '0';
@@ -51,8 +53,12 @@ export function replaceVariables(expr: string) {
       varType = '2';
     }
 
-    return `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
+    const replacement = `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
+    replacedVariables[replacement] = match;
+    return replacement;
   });
+
+  return { replacedExpr, replacedVariables };
 }
 
 const varTypeFunc = [
@@ -65,7 +71,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-export function returnVariables(expr: string) {
+function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });
@@ -188,4 +194,8 @@ export function replaceBuiltInVariable(expr: string): string {
  */
 export function returnBuiltInVariable(expr: string): string {
   return expr.replace(builtInReplacementRegex, (match) => replacementToVariable[match]);
+}
+
+export function isFunctionOrAggregation(node: SyntaxNode): boolean {
+  return node.type.id === AggregateExpr || node.type.id === FunctionCallBody;
 }

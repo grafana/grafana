@@ -1,0 +1,86 @@
+name: Run Storybook a11y tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/storybook-a11y.yml
+
+  test-storybook-a11y:
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+      id-token: write
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        STORYBOOK_THEME:
+          - light
+          - dark
+          - deuteranopia_protanopia_light
+          - deuteranopia_protanopia_dark
+          - tritanopia_light
+          - tritanopia_dark
+    name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }} theme)"
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Install Playwright browsers
+      run: yarn playwright install chromium --with-deps
+    - name: Start Storybook
+      run: STORYBOOK_THEME=${{ matrix.STORYBOOK_THEME }} yarn storybook &
+    - name: Run tests
+      # the chromium browser used by Playwright sets its locale to "en_US@posix" by default
+      # this is not a valid language code, and causes some stories to fail to load!
+      # instead, we set the LANG environment variable to en_US to override this
+      # see https://github.com/microsoft/playwright/issues/34046
+      env:
+        LANG: en_US
+      run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+
+  storybook-a11y-result:
+    name: "Storybook a11y tests"
+    runs-on: ubuntu-x64-small
+    if: always()
+    needs:
+      - detect-changes
+      - test-storybook-a11y
+    steps:
+      - name: No frontend changes detected
+        if: needs.detect-changes.outputs.changed != 'true'
+        run: echo "No frontend changes detected, skipping storybook a11y tests"
+      - name: Check test suites
+        if: needs.detect-changes.outputs.changed == 'true'
+        uses: grafana/grafana/.github/actions/check-jobs@main
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more storybook a11y test suites have failed"
+          success-message: "All storybook a11y test suites completed successfully"

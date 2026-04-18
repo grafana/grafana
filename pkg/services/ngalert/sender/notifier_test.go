@@ -1,6 +1,6 @@
 // THIS FILE IS COPIED FROM UPSTREAM
 //
-// https://github.com/prometheus/prometheus/blob/293f0c9185260165fd7dabbf8a9e8758b32abeae/notifier/notifier_test.go
+// https://github.com/prometheus/prometheus/blob/bd5b2ea95ce14fba11db871b4068313408465207/notifier/notifier_test.go
 //
 // Copyright 2013 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,16 +39,17 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
-	"gopkg.in/yaml.v2"
-
-	"github.com/prometheus/prometheus/discovery"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/discovery"
 	_ "github.com/prometheus/prometheus/discovery/file"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
 )
+
+const maxBatchSize = 256
 
 func TestPostPath(t *testing.T) {
 	cases := []struct {
@@ -411,7 +413,7 @@ func TestCustomDo(t *testing.T) {
 		},
 	}, nil)
 
-	h.sendOne(context.Background(), nil, testURL, []byte(testBody), http.Header{})
+	h.sendOne(context.Background(), nil, testURL, []byte(testBody), nil)
 
 	require.True(t, received, "Expected to receive an alert, but didn't")
 }
@@ -419,6 +421,7 @@ func TestCustomDo(t *testing.T) {
 func TestExternalLabels(t *testing.T) {
 	h := NewManager(&Options{
 		QueueCapacity:  3 * maxBatchSize,
+		MaxBatchSize:   maxBatchSize,
 		ExternalLabels: labels.FromStrings("a", "b"),
 		RelabelConfigs: []*relabel.Config{
 			{
@@ -453,6 +456,7 @@ func TestExternalLabels(t *testing.T) {
 func TestHandlerRelabel(t *testing.T) {
 	h := NewManager(&Options{
 		QueueCapacity: 3 * maxBatchSize,
+		MaxBatchSize:  maxBatchSize,
 		RelabelConfigs: []*relabel.Config{
 			{
 				SourceLabels: model.LabelNames{"alertname"},
@@ -531,6 +535,7 @@ func TestHandlerQueuing(t *testing.T) {
 	h := NewManager(
 		&Options{
 			QueueCapacity: 3 * maxBatchSize,
+			MaxBatchSize:  maxBatchSize,
 		},
 		nil,
 	)
@@ -656,11 +661,10 @@ alerting:
   alertmanagers:
   - static_configs:
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
-	require.NoError(t, err, "Unable to load YAML config.")
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err = n.ApplyConfig(cfg, map[string]http.Header{})
+	err := n.ApplyConfig(cfg, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -707,11 +711,10 @@ alerting:
         regex: 'alertmanager:9093'
         action: drop
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
-	require.NoError(t, err, "Unable to load YAML config.")
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
-	err = n.ApplyConfig(cfg, map[string]http.Header{})
+	err := n.ApplyConfig(cfg, nil)
 	require.NoError(t, err, "Error applying the config.")
 
 	tgs := make(map[string][]*targetgroup.Group)
@@ -1087,18 +1090,18 @@ alerting:
       - foo.json
 `
 	// 1. Ensure known alertmanagers are not dropped during ApplyConfig.
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
 	// First, apply the config and reload.
-	require.NoError(t, n.ApplyConfig(cfg, map[string]http.Header{}))
+	require.NoError(t, n.ApplyConfig(cfg, nil))
 	tgs := map[string][]*targetgroup.Group{"config-0": {targetGroup}}
 	n.reload(tgs)
 	require.Len(t, n.Alertmanagers(), 1)
 	require.Equal(t, alertmanagerURL, n.Alertmanagers()[0].String())
 
 	// Reapply the config.
-	require.NoError(t, n.ApplyConfig(cfg, map[string]http.Header{}))
+	require.NoError(t, n.ApplyConfig(cfg, nil))
 	// Ensure the known alertmanagers are not dropped.
 	require.Len(t, n.Alertmanagers(), 1)
 	require.Equal(t, alertmanagerURL, n.Alertmanagers()[0].String())
@@ -1113,10 +1116,10 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, map[string]http.Header{}))
+	require.NoError(t, n.ApplyConfig(cfg, nil))
 	require.Len(t, n.Alertmanagers(), 1)
 	// Ensure no unnecessary alertmanagers are injected.
 	require.Empty(t, n.alertmanagers["config-0"].ams)
@@ -1136,10 +1139,10 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, map[string]http.Header{}))
+	require.NoError(t, n.ApplyConfig(cfg, nil))
 	require.Len(t, n.Alertmanagers(), 2)
 	for cfgIdx := range 2 {
 		ams := n.alertmanagers[fmt.Sprintf("config-%d", cfgIdx)].ams
@@ -1163,9 +1166,22 @@ alerting:
       regex: 'doesntmatter:1234'
       action: drop
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	mustStrictlyDecodeConfig(t, strings.NewReader(s), cfg)
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
-	require.NoError(t, n.ApplyConfig(cfg, map[string]http.Header{}))
+	require.NoError(t, n.ApplyConfig(cfg, nil))
 	require.Empty(t, n.Alertmanagers())
+}
+
+// Maintain strict yaml decode behavior from v2: https://github.com/go-yaml/yaml/issues/639#issuecomment-666935833
+func mustStrictlyDecodeConfig(t testing.TB, r io.Reader, cfg *config.Config) {
+	t.Helper()
+
+	dec := yaml.NewDecoder(r)
+	dec.KnownFields(true)
+
+	err := dec.Decode(cfg)
+	if err != nil {
+		require.Equal(t, io.EOF, err, "Unable to load YAML config.")
+	}
 }

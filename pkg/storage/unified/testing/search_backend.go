@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -23,10 +24,6 @@ type NewSearchBackendFunc func(ctx context.Context) resource.SearchBackend
 
 // RunSearchBackendTest runs the search backend test suite
 func RunSearchBackendTest(t *testing.T, newBackend NewSearchBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &TestOptions{}
 	}
@@ -62,19 +59,18 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	}
 
 	// Get the index should return nil if the index does not exist
-	index, err := backend.GetIndex(ctx, ns)
-	require.NoError(t, err)
+	index := backend.GetIndex(ns)
 	require.Nil(t, index)
 
 	// Build the index
-	index, err = backend.BuildIndex(ctx, ns, 0, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -89,13 +85,12 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 			return 0, err
 		}
 		return 1, nil
-	})
+	}, nil, false, time.Time{})
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
 	// Get the index should now return the index
-	index, err = backend.GetIndex(ctx, ns)
-	require.NoError(t, err)
+	index = backend.GetIndex(ns)
 	require.NotNil(t, index)
 }
 
@@ -106,21 +101,23 @@ func runTestSearchBackendTotalDocs(t *testing.T, backend resource.SearchBackend,
 }
 
 func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
 	ns := resource.NamespacedResource{
 		Namespace: nsPrefix + "-ns1",
 		Group:     "group",
 		Resource:  "resource",
 	}
 
+	const resourceVersion = 23
+
 	// Build initial index with some test documents
-	index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -137,7 +134,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -154,32 +151,39 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			},
 		})
 		require.NoError(t, err)
-		return int64(2), nil
-	})
+		return resourceVersion, nil
+	}, nil, false, time.Time{})
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
 	t.Run("Search", func(t *testing.T) {
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
 				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"tag3"},
+				}},
 			},
 			Fields: []string{"title", "folder", "tags"},
-			Query:  "tag3",
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
+		require.Equal(t, int64(1), resp.TotalHits) // Only doc2 should have tag3 now
+		require.Equal(t, int64(resourceVersion), resp.ResourceVersion)
+	})
 
-		// Search for Document
-		resp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+	t.Run("Search Before and After", func(t *testing.T) {
+		// Search for Document, matching both doc1 and doc2
+		request := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -188,10 +192,41 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "Document",
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil)
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: "title"}},
+		}
+		respAll, err := index.Search(ctx, nil, request, nil, nil)
 		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, int64(2), resp.TotalHits) // Both doc1 and doc2 should have doc now
+		require.NotNil(t, respAll)
+		require.Equal(t, int64(2), respAll.TotalHits)
+		require.Equal(t, int64(resourceVersion), respAll.ResourceVersion)
+		require.Len(t, respAll.Results.Rows, 2)
+		require.NotEmpty(t, respAll.Results.Rows[0].SortFields)
+		require.NotEmpty(t, respAll.Results.Rows[1].SortFields)
+
+		// Search for Document, starting after first match -- we should get second match only.
+		request.SearchAfter = respAll.Results.Rows[0].SortFields
+		{
+			respAfter, err := index.Search(ctx, nil, request, nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, respAfter)
+			require.Equal(t, int64(2), respAfter.TotalHits)
+			require.Len(t, respAfter.Results.Rows, 1)
+			// Verify it's the second match from "all" response.
+			require.Equal(t, respAll.Results.Rows[1].Key.Name, respAfter.Results.Rows[0].Key.Name)
+		}
+
+		// Search for document starting before second match -- we should get first match only.
+		request.SearchAfter = nil
+		request.SearchBefore = respAll.Results.Rows[1].SortFields
+		{
+			respBefore, err := index.Search(ctx, nil, request, nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, respBefore)
+			require.Equal(t, int64(2), respBefore.TotalHits)
+			require.Len(t, respBefore.Results.Rows, 1)
+			// Verify it's the first match from "all" response.
+			require.Equal(t, respAll.Results.Rows[0].Key.Name, respBefore.Results.Rows[0].Key.Name)
+		}
 	})
 
 	t.Run("Add a new document", func(t *testing.T) {
@@ -201,7 +236,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -219,9 +254,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		// Search for Document
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -230,9 +265,109 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "Document",
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
+		require.Equal(t, int64(3), resp.TotalHits)                     // Both doc1, doc2, and doc3 should have doc now
+		require.Equal(t, int64(resourceVersion), resp.ResourceVersion) // Calling bulk index doesn't change resource version stored in index.
+	})
+
+	t.Run("Search by LibraryPanel reference", func(t *testing.T) {
+		const newResourceVersion = 444
+
+		// Build index with dashboards that have LibraryPanel references
+		index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash1",
+							},
+							Title: "Dashboard with Library Panel 1",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-1",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash2",
+							},
+							Title: "Dashboard with Library Panel 2",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-2",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash3",
+							},
+							Title: "Dashboard without Library Panel",
+						},
+					},
+				},
+			})
+			require.NoError(t, err)
+			return newResourceVersion, nil
+		}, nil, false, time.Time{})
+		require.NoError(t, err)
+		require.NotNil(t, index)
+
+		// Search for dashboards with specific LibraryPanel reference
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: ns.Namespace,
+					Group:     ns.Group,
+					Resource:  ns.Resource,
+				},
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      "reference.LibraryPanel",
+						Operator: "=",
+						Values:   []string{"lib-panel-1"},
+					},
+				},
+			},
+			Query:  "",
+			Fields: []string{"title"},
+			Limit:  10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(1), resp.TotalHits)                        // Only dash1 should have lib-panel-1
+		require.Equal(t, int64(newResourceVersion), resp.ResourceVersion) // Calling bulk index doesn't change resource version stored in index.
+
+		// Verify the result
+		require.Len(t, resp.Results.Rows, 1)
+		row := resp.Results.Rows[0]
+		require.Equal(t, "dash1", row.Key.Name)
+		require.Equal(t, "Dashboard with Library Panel 1", string(row.Cells[0])) // title field
 	})
 }

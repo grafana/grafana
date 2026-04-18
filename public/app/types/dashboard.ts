@@ -1,8 +1,8 @@
-import { DataQuery } from '@grafana/data';
-import { Dashboard, DataSourceRef } from '@grafana/schema';
-import { ObjectMeta } from 'app/features/apiserver/types';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { ProvisioningPreview } from 'app/features/provisioning/types';
+import { type DataQuery } from '@grafana/data';
+import { type Dashboard, type DataSourceRef } from '@grafana/schema';
+import { type ObjectMeta } from 'app/features/apiserver/types';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type ProvisioningPreview } from 'app/features/provisioning/types';
 
 export interface HomeDashboardRedirectDTO {
   redirectUri: string;
@@ -31,7 +31,6 @@ export interface ImportDashboardResponseDTO {
 }
 
 export interface SaveDashboardResponseDTO {
-  id: number;
   slug: string;
   status: string;
   uid: string;
@@ -53,11 +52,11 @@ export interface DashboardMeta {
   canMakeEditable?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
   isFolder?: boolean;
   isSnapshot?: boolean;
+  snapshotKey?: string;
   folderTitle?: string;
   folderUrl?: string;
   folderId?: number;
@@ -85,6 +84,13 @@ export interface DashboardMeta {
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
+
+  // Conversion status from the API response, indicating if the dashboard was converted from another version
+  conversionStatus?: {
+    storedVersion?: string;
+    failed: boolean;
+    error?: string;
+  };
 }
 
 export interface AnnotationActions {
@@ -95,7 +101,10 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
+}
+
+export interface SnapshotSpec {
+  dashboard: DashboardDataDTO;
 }
 
 // FIXME: This should not override Dashboard types
@@ -108,12 +117,14 @@ export interface DashboardDataDTO extends Dashboard {
 export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
+  Template = 'template-dashboard',
   Normal = 'normal-dashboard',
   Provisioning = 'provisioning-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  AssistantPreview = 'assistant-preview',
 }
 
 export enum DashboardInitPhase {

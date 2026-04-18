@@ -3,13 +3,13 @@ import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, DataFrame, dateTime, LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, type DataFrame, dateTime, LoadingState, type PanelData } from '@grafana/data';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 import * as queryHints from '../query_hints';
 
 import { PromQueryField } from './PromQueryField';
-import { Props } from './monaco-query-field/MonacoQueryFieldProps';
+import { type Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
@@ -28,8 +28,8 @@ const defaultProps = {
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      // getLabelKeys: () => [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource,
   query: {
@@ -78,6 +78,19 @@ describe('PromQueryField', () => {
 
     const bcButton = queryField.getByRole('button');
     expect(bcButton).toBeDisabled();
+  });
+
+  it('renders no metrics chooser if hidden by props', async () => {
+    const props = {
+      ...defaultProps,
+      hideMetricsBrowser: true,
+    };
+    const queryField = render(<PromQueryField {...props} />);
+
+    // wait for component to render
+    await screen.findByTestId('dummy-code-input');
+
+    expect(queryField.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders an initial hint if no data and initial hint provided', async () => {

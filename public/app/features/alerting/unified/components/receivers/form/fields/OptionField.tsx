@@ -1,20 +1,28 @@
 import { css } from '@emotion/css';
-import { FC, useEffect } from 'react';
-import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
+import { type FC } from 'react';
+import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   Checkbox,
   Field,
+  Icon,
   Input,
   RadioButtonList,
   SecretInput,
   SecretTextArea,
   Select,
+  Stack,
   TextArea,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import {
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -26,21 +34,18 @@ interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
-  // this is defined if the option is rendered inside a subform
-  parentOption?: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
   customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
   onResetSecureField?: (propertyName: string) => void;
-  onDeleteSubform?: (propertyName: string) => void;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
   secureFields: NotificationChannelSecureFields;
 }
 
 export const OptionField: FC<Props> = ({
   option,
-  parentOption,
   invalid,
   pathPrefix,
   error,
@@ -63,6 +68,7 @@ export const OptionField: FC<Props> = ({
         errors={error}
         pathPrefix={pathPrefix}
         onDelete={onDeleteSubform}
+        getOptionMeta={getOptionMeta}
       />
     );
   }
@@ -75,13 +81,34 @@ export const OptionField: FC<Props> = ({
         option={option}
         pathPrefix={pathPrefix}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
+        getOptionMeta={getOptionMeta}
       />
     );
   }
 
+  const shouldShowProtectedIndicator = option.protected && getOptionMeta?.(option).readOnly;
+
+  const labelText = option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined;
+
+  const label = shouldShowProtectedIndicator ? (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <Tooltip
+        content={t(
+          'alerting.receivers.protected.field.description',
+          'This field is protected and can only be edited by users with elevated permissions'
+        )}
+      >
+        <Icon size="sm" name="lock" data-testid="lock-icon" />
+      </Tooltip>
+      {labelText}
+    </Stack>
+  ) : (
+    labelText
+  );
+
   return (
     <Field
-      label={option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined}
+      label={label}
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
@@ -94,7 +121,6 @@ export const OptionField: FC<Props> = ({
         invalid={invalid}
         pathPrefix={pathPrefix}
         readOnly={readOnly}
-        parentOption={parentOption}
         customValidator={customValidator}
         onResetSecureField={onResetSecureField}
         secureFields={secureFields}
@@ -103,6 +129,26 @@ export const OptionField: FC<Props> = ({
     </Field>
   );
 };
+
+export interface ConfiguredSecureFieldProps {
+  id: string;
+  readOnly: boolean;
+  onReset: () => void;
+}
+
+export function ConfiguredSecretInput({ id, readOnly, onReset }: ConfiguredSecureFieldProps) {
+  if (readOnly) {
+    return <Input id={id} disabled={true} value="configured" />;
+  }
+  return <SecretInput id={id} onReset={onReset} isConfigured />;
+}
+
+function ConfiguredSecretTextArea({ id, readOnly, onReset }: ConfiguredSecureFieldProps) {
+  if (readOnly) {
+    return <TextArea id={id} disabled={true} value="configured" />;
+  }
+  return <SecretTextArea id={id} onReset={onReset} isConfigured />;
+}
 
 const OptionInput: FC<Props & { id: string }> = ({
   option,
@@ -113,26 +159,17 @@ const OptionInput: FC<Props & { id: string }> = ({
   customValidator,
   onResetSecureField,
   secureFields = {},
-  parentOption,
   getOptionMeta,
 }) => {
   const styles = useStyles2(getStyles);
-  const { control, register, unregister, setValue } = useFormContext();
+  const { control, register, setValue } = useFormContext();
 
   const optionMeta = getOptionMeta?.(option);
 
   const name = `${pathPrefix}${option.propertyName}`;
-  const nestedKey = parentOption ? `${parentOption.propertyName}.${option.propertyName}` : option.propertyName;
 
-  const isEncryptedInput = secureFields?.[nestedKey];
-
-  // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
-  useEffect(
-    () => () => {
-      unregister(name, { keepValue: false });
-    },
-    [unregister, name]
-  );
+  const secureFieldKey = option.secure && option.secureFieldKey ? option.secureFieldKey : '';
+  const isSecureFieldConfigured = secureFieldKey && secureFields?.[secureFieldKey];
 
   const useTemplates = option.placeholder.includes('{{ template');
 
@@ -160,9 +197,10 @@ const OptionInput: FC<Props & { id: string }> = ({
           option={option}
           name={name}
           onSelectTemplate={onSelectTemplate}
+          readOnly={readOnly}
         >
-          {isEncryptedInput ? (
-            <SecretInput id={id} onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+          {isSecureFieldConfigured ? (
+            <ConfiguredSecretInput id={id} readOnly={readOnly} onReset={() => onResetSecureField?.(secureFieldKey)} />
           ) : (
             <Input
               id={id}
@@ -235,9 +273,14 @@ const OptionInput: FC<Props & { id: string }> = ({
           option={option}
           name={name}
           onSelectTemplate={onSelectTemplate}
+          readOnly={readOnly}
         >
-          {isEncryptedInput ? (
-            <SecretTextArea id={id} onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+          {isSecureFieldConfigured ? (
+            <ConfiguredSecretTextArea
+              id={id}
+              readOnly={readOnly}
+              onReset={() => onResetSecureField?.(secureFieldKey)}
+            />
           ) : (
             <TextArea
               id={id}

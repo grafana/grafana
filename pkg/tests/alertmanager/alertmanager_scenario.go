@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/e2e"
 	gapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,6 +44,7 @@ type AlertmanagerScenario struct {
 	Webhook  *WebhookService
 	Postgres *PostgresService
 	Loki     *LokiService
+	Mimir    *MimirService
 }
 
 func NewAlertmanagerScenario() (*AlertmanagerScenario, error) {
@@ -268,16 +270,9 @@ func (s *AlertmanagerScenario) Provision(t *testing.T, cfg ProvisionCfg) { //}*G
 func (s *AlertmanagerScenario) NewGrafanaService(name string, peers []string, peerTimeout string, stopOnExtraDedup bool) *GrafanaService {
 	flags := map[string]string{}
 
-	ft := []string{
-		"alertingAlertmanagerExtraDedupStage",
-	}
-	if stopOnExtraDedup {
-		ft = append(ft, "alertingAlertmanagerExtraDedupStageStopPipeline")
-	}
 	envVars := map[string]string{
 		//"GF_LOG_MODE":                                       "file", // disable console logging
 		"GF_LOG_LEVEL":                                      "warn",
-		"GF_FEATURE_TOGGLES_ENABLE":                         strings.Join(ft, ","),
 		"GF_UNIFIED_ALERTING_ENABLED":                       "true",
 		"GF_UNIFIED_ALERTING_EXECUTE_ALERTS":                "true",
 		"GF_UNIFIED_ALERTING_HA_PEER_TIMEOUT":               peerTimeout,
@@ -293,6 +288,11 @@ func (s *AlertmanagerScenario) NewGrafanaService(name string, peers []string, pe
 		"GF_DATABASE_USER":                                  "postgres",
 		"GF_DATABASE_PASSWORD":                              "password",
 		"GF_DATABASE_SSL_MODE":                              "disable",
+
+		"GF_FEATURE_TOGGLES_alertingAlertmanagerExtraDedupStage": "true",
+	}
+	if stopOnExtraDedup {
+		envVars["GF_FEATURE_TOGGLES_alertingAlertmanagerExtraDedupStageStopPipeline"] = "true"
 	}
 
 	g := NewGrafanaService(name, flags, envVars)
@@ -380,4 +380,11 @@ func mapInstancePeers(is []string) map[string][]string {
 	}
 
 	return mIs
+}
+
+func (s *AlertmanagerScenario) NewMimirClient(tenantID string) (client.MimirClient, error) {
+	if s.Mimir == nil {
+		return nil, fmt.Errorf("mimir service not started")
+	}
+	return NewMimirClient("http://"+s.Mimir.HTTPEndpoint(), tenantID)
 }

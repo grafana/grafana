@@ -1,14 +1,32 @@
-import { Map as OpenLayersMap } from 'ol';
+import type Feature from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
+import type Geometry from 'ol/geom/Geometry';
+import type Point from 'ol/geom/Point';
 import { defaults as interactionDefaults } from 'ol/interaction';
+import type BaseLayer from 'ol/layer/Base';
+import LayerGroup from 'ol/layer/Group';
+import ImageLayer from 'ol/layer/Image';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
+import type ImageSource from 'ol/source/Image';
+import type TileSource from 'ol/source/Tile';
+import type VectorSource from 'ol/source/Vector';
 
-import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
+import { getColorDimension } from 'app/features/dimensions/color';
+import { getScalarDimension } from 'app/features/dimensions/scalar';
+import { getScaledDimension } from 'app/features/dimensions/scale';
+import { getTextDimension } from 'app/features/dimensions/text';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
-import { GeomapPanel } from '../GeomapPanel';
-import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
-import { Options, MapLayerState } from '../types';
+import { type GeomapPanel } from '../GeomapPanel';
+import { type Options } from '../panelcfg.gen';
+import { defaultStyleConfig, type StyleConfig, type StyleConfigState, type StyleDimensions } from '../style/types';
+import { type MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,
@@ -87,7 +105,7 @@ export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: H
   const view = panel.initMapView(options.view);
   return (panel.map = new OpenLayersMap({
     view: view,
-    pixelRatio: 1, // or zoom?
+    pixelRatio: window.devicePixelRatio, // or zoom?
     layers: [], // loaded explicitly below
     controls: [],
     target: div,
@@ -117,13 +135,13 @@ export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerStat
 export const getNextLayerName = (panel: GeomapPanel) => {
   let idx = panel.layers.length; // since basemap is 0, this looks right
   while (true && idx < 100) {
-    const name = `Layer ${idx++}`;
+    const name = t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: idx++ });
     if (!panel.byName.has(name)) {
       return name;
     }
   }
 
-  return `Layer ${Date.now()}`;
+  return t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: Date.now() });
 };
 
 export function isSegmentVisible(
@@ -145,11 +163,38 @@ export function isSegmentVisible(
   return false;
 }
 
-export const isUrl = (url: string) => {
-  try {
-    const newUrl = new URL(url);
-    return newUrl.protocol.includes('http');
-  } catch (_) {
-    return false;
+/**
+ * Checks if a layer has data to display
+ * @param layer The OpenLayers layer to check
+ * @returns boolean indicating if the layer has data
+ */
+export function hasLayerData(
+  layer:
+    | LayerGroup
+    | VectorLayer<VectorSource<Feature<Geometry>>>
+    | VectorImage<VectorSource<Feature<Geometry>>>
+    | WebGLPointsLayer<VectorSource<Feature<Point>>>
+    | TileLayer<TileSource>
+    | ImageLayer<ImageSource>
+    | BaseLayer
+): boolean {
+  if (layer instanceof LayerGroup) {
+    return layer
+      .getLayers()
+      .getArray()
+      .some((subLayer) => hasLayerData(subLayer));
   }
-};
+  if (layer instanceof VectorLayer || layer instanceof VectorImage) {
+    const source = layer.getSource();
+    return source != null && source.getFeatures().length > 0;
+  }
+  if (layer instanceof WebGLPointsLayer) {
+    const source = layer.getSource();
+    return source != null && source.getFeatures().length > 0;
+  }
+  if (layer instanceof TileLayer || layer instanceof ImageLayer) {
+    // For tile/image layers, check if they have a source
+    return Boolean(layer.getSource());
+  }
+  return false;
+}

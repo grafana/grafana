@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorProps, type SelectableValue, toOption } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchDatasource } from '../../datasource';
 import {
   useAccountOptions,
   useDimensionKeys,
@@ -15,7 +15,7 @@ import {
   useEnsureVariableHasSingleSelection,
 } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
-import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery, type VariableQuery, VariableQueryType } from '../../types';
 import { ALL_ACCOUNTS_OPTION } from '../shared/Account';
 import { Dimensions } from '../shared/Dimensions/Dimensions';
 
@@ -39,6 +39,37 @@ const queryTypes: Array<{ value: string; label: string }> = [
   ...(config.featureToggles.cloudWatchCrossAccountQuerying
     ? [{ value: VariableQueryType.Accounts, label: 'Accounts' }]
     : []),
+];
+
+const attributeNames: string[] = [
+  'AmiLaunchIndex',
+  'Architecture',
+  'ClientToken',
+  'EbsOptimized',
+  'EnaSupport',
+  'Hypervisor',
+  'IamInstanceProfile',
+  'ImageId',
+  'InstanceId',
+  'InstanceLifecycle',
+  'InstanceType',
+  'KernelId',
+  'KeyName',
+  'LaunchTime',
+  'Platform',
+  'PrivateDnsName',
+  'PrivateIpAddress',
+  'PublicDnsName',
+  'PublicIpAddress',
+  'RamdiskId',
+  'RootDeviceName',
+  'RootDeviceType',
+  'SourceDestCheck',
+  'SpotInstanceRequestId',
+  'SriovNetSupport',
+  'SubnetId',
+  'VirtualizationType',
+  'VpcId',
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -98,6 +129,10 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     }
     return { ...query, metricName, dimensionKey, dimensionFilters };
   };
+  const allAttributeNames = attributeNames.includes(parsedQuery.attributeName)
+    ? attributeNames
+    : [...attributeNames, parsedQuery.attributeName];
+  const attributeOptions = allAttributeNames.map(toOption);
 
   const hasRegionField = [
     VariableQueryType.Metrics,
@@ -211,21 +246,23 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {parsedQuery.queryType === VariableQueryType.EC2InstanceAttributes && (
         <>
-          <VariableTextField
+          <VariableQueryField
             value={parsedQuery.attributeName}
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
+            options={attributeOptions}
+            onChange={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute name"
+            inputId={`variable-query-instance-attribute-${query.refId}`}
+            allowCustomValue
             interactive={true}
             tooltip={
               <>
                 {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
-                <a
+                <TextLink
                   href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
-                  target="_blank"
-                  rel="noreferrer"
+                  external
                 >
                   See the documentation for more details
-                </a>
+                </TextLink>
               </>
             }
           />
@@ -234,13 +271,12 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             tooltipInteractive
             tooltip={
               <>
-                <a
+                <TextLink
                   href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
-                  target="_blank"
-                  rel="noreferrer"
+                  external
                 >
                   Pre-defined ec2:DescribeInstances filters/tags
-                </a>
+                </TextLink>
                 {' and the values to filter on. Tags should be formatted tag:<name>.'}
               </>
             }

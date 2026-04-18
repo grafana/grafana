@@ -51,11 +51,13 @@ type AlertsRouter struct {
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
 	featureManager    featuremgmt.FeatureToggles
+	broadcastAlerts   bool
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -75,6 +77,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		datasourceService: datasourceService,
 		secretService:     secretService,
 		featureManager:    featureManager,
+		broadcastAlerts:   broadcastAlerts,
 	}
 	return d
 }
@@ -89,6 +92,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 
 	d.logger.Debug("Attempting to sync admin configs", "count", len(cfgs))
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	disableExternal := d.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal)
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 
@@ -101,20 +105,25 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 			continue
 		}
 
-		if disableExternal && cfg.SendAlertsTo != models.InternalAlertmanager {
-			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", cfg.SendAlertsTo)
-			cfg.SendAlertsTo = models.InternalAlertmanager
+		var sendAlertsTo models.AlertmanagersChoice
+		if cfg.SendAlertsTo != nil {
+			sendAlertsTo = *cfg.SendAlertsTo
+		}
+
+		if disableExternal && sendAlertsTo != models.InternalAlertmanager {
+			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", sendAlertsTo)
+			sendAlertsTo = models.InternalAlertmanager
 		}
 
 		// Update the Alertmanagers choice for the organization.
-		d.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
+		d.sendAlertsTo[cfg.OrgID] = sendAlertsTo
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagers we need to keep.
 
 		existing, ok := d.externalAlertmanagers[cfg.OrgID]
 
 		//  We have no running sender and alerts are handled internally, no-op.
-		if !ok && cfg.SendAlertsTo == models.InternalAlertmanager {
+		if !ok && sendAlertsTo == models.InternalAlertmanager {
 			d.logger.Debug("Grafana is configured to send alerts to the internal alertmanager only. Skipping synchronization with external alertmanager", "org", cfg.OrgID)
 			continue
 		}
@@ -249,32 +258,65 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
 		}
-		amURL, err := d.buildExternalURL(ds)
+
+		cfg, err := d.datasourceToExternalAMcfg(ds)
 		if err != nil {
-			d.logger.Error("Failed to build external alertmanager URL",
-				"org", ds.OrgID,
-				"uid", ds.UID,
-				"error", err)
-			continue
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		headers, err := d.datasourceService.CustomHeaders(ctx, ds)
-		cancel()
-		if err != nil {
-			d.logger.Error("Failed to get headers for external alertmanager",
+			d.logger.Error("Failed to convert datasource to external alertmanager config",
 				"org", ds.OrgID,
 				"uid", ds.UID,
 				"error", err)
 			continue
 		}
 
-		alertmanagers = append(alertmanagers, ExternalAMcfg{
-			URL:     amURL,
-			Headers: headers,
-		})
+		alertmanagers = append(alertmanagers, cfg)
 	}
 
 	return alertmanagers, nil
+}
+
+// datasourceToExternalAMcfg converts a datasource to an ExternalAMcfg.
+func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (ExternalAMcfg, error) {
+	amURL, err := d.buildExternalURL(ds)
+	if err != nil {
+		return ExternalAMcfg{}, fmt.Errorf("failed to build external alertmanager URL: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	headers, err := d.datasourceService.CustomHeaders(ctx, ds)
+	cancel()
+	if err != nil {
+		return ExternalAMcfg{}, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+
+	insecureSkipVerify := false
+
+	var tlsAuthEnabled bool
+	if ds.JsonData != nil {
+		insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		tlsAuthEnabled = ds.JsonData.Get("tlsAuth").MustBool(false)
+	}
+
+	var tlsClientCert, tlsClientKey string
+	if tlsAuthEnabled {
+		if ds.SecureJsonData == nil {
+			return ExternalAMcfg{}, errors.New("tlsAuth is enabled but TLS client certificate and key are not configured")
+		}
+
+		tlsClientKey = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientKey", "")
+		tlsClientCert = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsClientCert", "")
+
+		if tlsClientCert == "" || tlsClientKey == "" {
+			return ExternalAMcfg{}, errors.New("tlsAuth is enabled but TLS client certificate or key is empty")
+		}
+	}
+
+	return ExternalAMcfg{
+		URL:                amURL,
+		Headers:            headers,
+		InsecureSkipVerify: insecureSkipVerify,
+		TLSClientCert:      tlsClientCert,
+		TLSClientKey:       tlsClientKey,
+	}, nil
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
@@ -333,6 +375,9 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 			localNotifierExist = true
 			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
+			}
+			if d.broadcastAlerts {
+				d.multiOrgNotifier.BroadcastAlerts(key.OrgID, alerts)
 			}
 		} else {
 			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {

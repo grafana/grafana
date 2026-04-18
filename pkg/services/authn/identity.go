@@ -74,6 +74,8 @@ type Identity struct {
 	ClientParams ClientParams
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
+	// AccessToken is the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
+	AccessToken string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
 	// ExternalUID is the unique identifier for the entity in the external system.
@@ -156,6 +158,9 @@ func (i *Identity) GetExtra() map[string][]string {
 	if i.GetOrgRole().IsValid() {
 		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
 	}
+	if i.AccessTokenClaims != nil && i.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		extra[authn.ServiceIdentityKey] = []string{i.AccessTokenClaims.Rest.ServiceIdentity}
+	}
 	return extra
 }
 
@@ -194,6 +199,10 @@ func (i *Identity) GetEmail() string {
 
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
+}
+
+func (i *Identity) GetAccessToken() string {
+	return i.AccessToken
 }
 
 func (i *Identity) GetIsGrafanaAdmin() bool {
@@ -305,6 +314,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDToken:           i.IDToken,
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
+		AccessToken:       i.AccessToken,
 		FallbackType:      i.Type,
 	}
 

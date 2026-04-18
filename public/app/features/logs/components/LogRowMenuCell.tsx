@@ -1,23 +1,23 @@
 import {
   memo,
-  FocusEvent,
-  SyntheticEvent,
+  type FocusEvent,
+  type SyntheticEvent,
   useCallback,
-  ReactNode,
+  type ReactNode,
   useMemo,
   cloneElement,
   isValidElement,
-  MouseEvent,
+  type MouseEvent,
 } from 'react';
 
-import { LogRowContextOptions, LogRowModel } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
-import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type DataQuery } from '@grafana/schema';
+import { ClipboardButton, IconButton, type PopoverContent } from '@grafana/ui';
 
 import { handleOpenLogsContextClick } from '../utils';
 
-import { LogRowStyles } from './getLogRowStyles';
+import { type LogRowStyles } from './getLogRowStyles';
 
 interface Props {
   logText: string;
@@ -185,16 +185,16 @@ export const LogRowMenuCell = memo(
   }
 );
 
-type AddonOnClickListener = (event: MouseEvent, row: LogRowModel) => void | undefined;
+type AddonOnClickListener = (event: MouseEvent<HTMLElement>, row: LogRowModel) => void | undefined;
+type ChildElementProps = Record<string, unknown> & { onClick: AddonOnClickListener };
 function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
   return nodes.map((node, index) => {
-    if (isValidElement(node)) {
-      const onClick: AddonOnClickListener = node.props.onClick;
+    if (isValidElement<ChildElementProps>(node)) {
+      const onClick = node.props.onClick;
       if (!onClick) {
         return node;
       }
       return cloneElement(node, {
-        // @ts-expect-error
         onClick: (event: MouseEvent<HTMLElement>) => {
           onClick(event, row);
         },

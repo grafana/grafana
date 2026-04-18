@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,6 +22,8 @@ type CDKBucket interface {
 	ReadAll(context.Context, string) ([]byte, error)
 	Delete(context.Context, string) error
 	SignedURL(context.Context, string, *blob.SignedURLOptions) (string, error)
+	Upload(context.Context, string, io.Reader, *blob.WriterOptions) error
+	Download(context.Context, string, io.Writer, *blob.ReaderOptions) error
 }
 
 var _ CDKBucket = (*blob.Bucket)(nil)
@@ -34,57 +37,38 @@ const (
 )
 
 type InstrumentedBucket struct {
-	requests *prometheus.CounterVec
-	latency  *prometheus.HistogramVec
-	tracer   trace.Tracer
-	bucket   CDKBucket
+	latency *prometheus.HistogramVec
+	bucket  CDKBucket
 }
 
-func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer, tracer trace.Tracer) *InstrumentedBucket {
+func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer) *InstrumentedBucket {
 	b := &InstrumentedBucket{
 		bucket: bucket,
-		tracer: tracer,
+		latency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "cdk_blobstorage_latency_seconds",
+			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
+		}, []string{cdkBucketOperationLabel, cdkBucketStatusLabel}),
 	}
-	b.initMetrics(reg)
 	return b
 }
 
-func (b *InstrumentedBucket) initMetrics(reg prometheus.Registerer) {
-	b.requests = promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-		Name: "cdk_blobstorage_requests_total",
-	}, []string{
-		cdkBucketOperationLabel,
-		cdkBucketStatusLabel,
-	})
-	b.latency = promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "cdk_blobstorage_latency_seconds",
-		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
-	}, []string{
-		cdkBucketOperationLabel,
-		cdkBucketStatusLabel,
-	})
+// observe records latency and, on error, marks the span as failed.
+func (b *InstrumentedBucket) observe(span trace.Span, operation string, duration float64, err error) {
+	status := cdkBucketStatusSuccess
+	if err != nil {
+		status = cdkBucketStatusError
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	b.latency.WithLabelValues(operation, status).Observe(duration)
 }
 
 func (b *InstrumentedBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Attributes")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Attributes")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.Attributes(ctx, key)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "Attributes",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.requests.With(labels).Inc()
-		b.latency.With(labels).Observe(end)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return retVal, err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
+	b.observe(span, "Attributes", time.Since(start).Seconds(), err)
 	return retVal, err
 }
 
@@ -94,115 +78,64 @@ func (b *InstrumentedBucket) List(opts *blob.ListOptions) *blob.ListIterator {
 }
 
 func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ListPage")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.ListPage")
 	defer span.End()
 	start := time.Now()
 	retVal, nextPageToken, err := b.bucket.ListPage(ctx, pageToken, pageSize, opts)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "ListPage",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.latency.With(labels).Observe(end)
-		b.requests.With(labels).Inc()
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return retVal, nextPageToken, err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
+	b.observe(span, "ListPage", time.Since(start).Seconds(), err)
 	return retVal, nextPageToken, err
 }
 
 func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ReadAll")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.ReadAll")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.ReadAll(ctx, key)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "ReadAll",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.requests.With(labels).Inc()
-		b.latency.With(labels).Observe(end)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return retVal, err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
+	b.observe(span, "ReadAll", time.Since(start).Seconds(), err)
 	return retVal, err
 }
 
 func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/WriteAll")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.WriteAll")
 	defer span.End()
 	start := time.Now()
 	err := b.bucket.WriteAll(ctx, key, p, opts)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "WriteAll",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.requests.With(labels).Inc()
-		b.latency.With(labels).Observe(end)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
+	b.observe(span, "WriteAll", time.Since(start).Seconds(), err)
 	return err
 }
 
 func (b *InstrumentedBucket) Delete(ctx context.Context, key string) error {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Delete")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Delete")
 	defer span.End()
 	start := time.Now()
 	err := b.bucket.Delete(ctx, key)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "Delete",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.requests.With(labels).Inc()
-		b.latency.With(labels).Observe(end)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
-	return nil
+	b.observe(span, "Delete", time.Since(start).Seconds(), err)
+	return err
+}
+
+func (b *InstrumentedBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Upload")
+	defer span.End()
+	start := time.Now()
+	err := b.bucket.Upload(ctx, key, r, opts)
+	b.observe(span, "Upload", time.Since(start).Seconds(), err)
+	return err
+}
+
+func (b *InstrumentedBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Download")
+	defer span.End()
+	start := time.Now()
+	err := b.bucket.Download(ctx, key, w, opts)
+	b.observe(span, "Download", time.Since(start).Seconds(), err)
+	return err
 }
 
 func (b *InstrumentedBucket) SignedURL(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/SignedURL")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.SignedURL")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.SignedURL(ctx, key, opts)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "SignedURL",
-	}
-	if err != nil {
-		labels[cdkBucketStatusLabel] = cdkBucketStatusError
-		b.requests.With(labels).Inc()
-		b.latency.With(labels).Observe(end)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return retVal, err
-	}
-	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
+	b.observe(span, "SignedURL", time.Since(start).Seconds(), err)
 	return retVal, err
 }

@@ -5,10 +5,14 @@ import (
 	"strconv"
 
 	authlib "github.com/grafana/authlib/types"
+
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // OptonalFormatInt formats num as a string. If num is less or equal than 0
@@ -20,33 +24,35 @@ func OptionalFormatInt(num int64) string {
 	return ""
 }
 
-func MapTeamPermission(p team.PermissionType) iamv0.TeamPermission {
+func MapTeamPermission(p team.PermissionType) iamv0alpha1.TeamBindingTeamPermission {
 	if p == team.PermissionTypeAdmin {
-		return iamv0.TeamPermissionAdmin
+		return iamv0alpha1.TeamBindingTeamPermissionAdmin
 	} else {
-		return iamv0.TeamPermissionMember
+		return iamv0alpha1.TeamBindingTeamPermissionMember
 	}
 }
 
-// Resource is required to be implemented for list return types so we can
-// perform authorization.
-type Resource interface {
-	AuthID() string
+func MapUserTeamPermission(p team.PermissionType) legacyiamv0.TeamPermission {
+	if p == team.PermissionTypeAdmin {
+		return legacyiamv0.TeamPermissionAdmin
+	} else {
+		return legacyiamv0.TeamPermissionMember
+	}
 }
 
-type ListResponse[T Resource] struct {
+type ListResponse[T metav1.Object] struct {
 	Items    []T
 	RV       int64
 	Continue int64
 }
 
-type ListFunc[T Resource] func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[T], error)
+type ListFunc[T metav1.Object] func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[T], error)
 
 // List is a helper function that will perform access check on resources if
 // prvovided with a authlib.AccessClient.
-func List[T Resource](
+func List[T metav1.Object](
 	ctx context.Context,
-	resourceName string,
+	resource utils.ResourceInfo,
 	ac authlib.AccessClient,
 	p Pagination,
 	fn ListFunc[T],
@@ -64,8 +70,11 @@ func List[T Resource](
 	check := func(_, _ string) bool { return true }
 	if ac != nil {
 		var err error
-		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
-			Resource:  resourceName,
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		check, _, err = ac.Compile(ctx, ident, authlib.ListRequest{
+			Resource:  resource.GroupResource().Resource,
+			Group:     resource.GroupResource().Group,
+			Verb:      utils.VerbList,
 			Namespace: ns.Value,
 		})
 
@@ -82,7 +91,7 @@ func List[T Resource](
 	}
 
 	for _, item := range first.Items {
-		if !check(item.AuthID(), "") {
+		if !check(item.GetName(), "") {
 			continue
 		}
 		res.Items = append(res.Items, item)
@@ -105,7 +114,7 @@ outer:
 				break outer
 			}
 
-			if !check(item.AuthID(), "") {
+			if !check(item.GetName(), "") {
 				continue
 			}
 

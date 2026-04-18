@@ -2,12 +2,12 @@ import * as React from 'react';
 import { BehaviorSubject } from 'rxjs';
 
 import { config } from '@grafana/runtime';
-import { CanvasConnection, ConnectionCoordinates, ConnectionPath } from 'app/features/canvas/element';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type CanvasConnection, type ConnectionCoordinates, ConnectionPath } from 'app/features/canvas/element';
+import { type ElementState } from 'app/features/canvas/runtime/element';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
-import { ConnectionState } from '../../types';
+import { type ConnectionState } from '../../types';
 import {
   calculateAngle,
   calculateCoordinates,
@@ -43,6 +43,8 @@ export class Connections {
   connectionVertex?: SVGCircleElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
+  // for back compatibility with Connections2
+  connectionsSVG?: SVGElement;
   isDrawingConnection?: boolean;
   selectedVertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
@@ -677,7 +679,7 @@ export class Connections {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
-  render() {
+  renderElement() {
     return (
       <>
         <ConnectionAnchors

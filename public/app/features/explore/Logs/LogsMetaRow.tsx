@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels, store, shallowCompare } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Button, useStyles2 } from '@grafana/ui';
 
-import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
-import { DownloadFormat, downloadLogs } from '../../logs/utils';
-import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
+import { LogLabels, LogLabelsList, type Props as LogLabelsProps } from '../../logs/components/LogLabels';
+import { MetaInfoText, type MetaItemProps } from '../MetaInfoText';
 
+import { type LogsVisualisationType } from './constants';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
@@ -29,12 +28,21 @@ export type Props = {
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
   displayedFields: string[];
-  logRows: LogRowModel[];
-  clearDetectedFields: () => void;
+  clearDisplayedFields: () => void;
+  defaultDisplayedFields: string[];
+  visualisationType: LogsVisualisationType;
 };
 
 export const LogsMetaRow = memo(
-  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
+  ({
+    meta,
+    dedupStrategy,
+    dedupCount,
+    displayedFields,
+    clearDisplayedFields,
+    defaultDisplayedFields,
+    visualisationType,
+  }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -42,49 +50,33 @@ export const LogsMetaRow = memo(
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
       logsMetaItem.push({
-        label: 'Deduplication count',
+        label: t('explore.logs-meta-row.label.deduplication-count', 'Deduplication count'),
         value: dedupCount,
         kind: LogsMetaKind.Number,
       });
     }
 
     // Add detected fields info
-    if (displayedFields?.length > 0) {
+    if (
+      visualisationType === 'logs' &&
+      displayedFields?.length > 0 &&
+      shallowCompare(displayedFields, defaultDisplayedFields) === false
+    ) {
       logsMetaItem.push(
         {
-          label: 'Showing only selected fields',
+          label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
           value: <LogLabelsList labels={displayedFields} />,
         },
         {
           label: '',
           value: (
-            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
-              <Trans i18nKey="explore.logs-meta-row.show-original-line">Show original line</Trans>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDisplayedFields}>
+              {t('explore.logs-meta-row.show-original-line', 'Show original line')}
             </Button>
           ),
         }
       );
     }
-
-    function download(format: DownloadFormat) {
-      reportInteraction('grafana_logs_download_logs_clicked', {
-        app: CoreApp.Explore,
-        format,
-        area: 'logs-meta-row',
-      });
-      downloadLogs(format, logRows, meta);
-    }
-
-    const downloadMenu = (
-      <Menu>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="txt" onClick={() => download(DownloadFormat.Text)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="json" onClick={() => download(DownloadFormat.Json)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
-      </Menu>
-    );
 
     const onCommonLabelsToggle = (state: boolean) => {
       store.set(SETTINGS_KEYS.commonLabels, state);
@@ -108,13 +100,6 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls && !config.exploreHideLogsDownload && (
-              <Dropdown overlay={downloadMenu}>
-                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                </ToolbarButton>
-              </Dropdown>
-            )}
           </div>
         )}
       </>

@@ -1,0 +1,1175 @@
+import { act, renderHook } from '@testing-library/react';
+
+import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
+
+import { TABLE } from './constants';
+import {
+  useFilteredRows,
+  usePaginatedRows,
+  useSortedRows,
+  useHeaderHeight,
+  useRowHeight,
+  useReducerEntries,
+  useManagedSort,
+  useNestedRows,
+} from './hooks';
+import { type TableRow } from './types';
+import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+
+const emptyFilterResult = applyFilter([], {}, []);
+
+describe('TableNG hooks', () => {
+  function setupData() {
+    // Mock data for testing
+    const fields: Field[] = [
+      {
+        name: 'name',
+        type: FieldType.string,
+        display: (v) => ({ text: v as string, numeric: NaN }),
+        config: {},
+        values: ['Alice', 'Bob', 'Charlie'],
+      },
+      {
+        name: 'age',
+        type: FieldType.number,
+        display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
+        config: {},
+        values: [30, 25, 35],
+      },
+      {
+        name: 'active',
+        type: FieldType.boolean,
+        display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
+        config: {},
+        values: [true, false, true],
+      },
+    ];
+
+    const rows = [
+      { name: 'Alice', age: 30, active: true, __depth: 0, __index: 0 },
+      { name: 'Bob', age: 25, active: false, __depth: 0, __index: 1 },
+      { name: 'Charlie', age: 35, active: true, __depth: 0, __index: 2 },
+    ];
+
+    return { fields, rows };
+  }
+
+  describe('useFilteredRows', () => {
+    it('should correctly initialize with provided fields and rows', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
+      expect(result.current.rows[0].name).toBe('Alice');
+    });
+
+    it('should apply filters correctly', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
+
+      act(() => {
+        result.current.setFilter({
+          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
+        });
+      });
+
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].name).toBe('Alice');
+    });
+
+    it('should clear filters correctly', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
+
+      act(() => {
+        result.current.setFilter({
+          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
+        });
+      });
+
+      expect(result.current.rows.length).toBe(1);
+
+      act(() => {
+        result.current.setFilter({});
+      });
+
+      expect(result.current.rows.length).toBe(3);
+    });
+  });
+
+  describe('useManagedSort', () => {
+    it('Should not update if sortBy is undefined', () => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: undefined,
+          sortByBehavior: 'managed',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(0);
+    });
+
+    it.each([true, false])('Should not update if behavior is managed', (desc) => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: [
+            {
+              displayName: 'Alice',
+              desc,
+            },
+          ],
+          sortByBehavior: 'managed',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(1);
+      expect(setSortColumns).toHaveBeenCalledWith([
+        {
+          columnKey: 'Alice',
+          direction: desc ? 'DESC' : 'ASC',
+        },
+      ]);
+    });
+
+    it.each([true, false])('Should not update if behavior is initial', (desc) => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: [
+            {
+              displayName: 'Alice',
+              desc,
+            },
+          ],
+          sortByBehavior: 'initial',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('useSortedRows', () => {
+    it('should correctly set up the table with an initial sort', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() =>
+        useSortedRows(rows, fields, [], {
+          initialSortBy: [{ displayName: 'age', desc: false }],
+          hasNestedFrames: false,
+        })
+      );
+
+      // Initial state checks
+      expect(result.current.sortColumns).toEqual([{ columnKey: 'age', direction: 'ASC' }]);
+      expect(result.current.rows[0].name).toBe('Bob');
+    });
+
+    it('should change the sort on setSortColumns', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() =>
+        useSortedRows(rows, fields, [], {
+          initialSortBy: [{ displayName: 'age', desc: false }],
+          hasNestedFrames: false,
+        })
+      );
+
+      expect(result.current.rows[0].name).toBe('Bob');
+
+      act(() => {
+        result.current.setSortColumns([{ columnKey: 'age', direction: 'DESC' }]);
+      });
+
+      expect(result.current.rows[0].name).toBe('Charlie');
+
+      act(() => {
+        result.current.setSortColumns([{ columnKey: 'name', direction: 'ASC' }]);
+      });
+
+      expect(result.current.rows[0].name).toBe('Alice');
+    });
+
+    it('should allow initial sort by nested fields', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.number, values: [1, 3, 2], config: {} },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: [[createDataFrame({ fields })], [createDataFrame({ fields })], [createDataFrame({ fields })]],
+            config: {},
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const rows = frameToRecords(frame);
+      const { result } = renderHook(() =>
+        useSortedRows(rows, frame.fields, fields, {
+          initialSortBy: [
+            { displayName: 'id', desc: false },
+            { displayName: 'age', desc: false },
+            { displayName: 'some-fake-name', desc: false },
+          ],
+          hasNestedFrames: true,
+        })
+      );
+      expect(result.current.rows[0].id).toBe(1);
+      expect(result.current.rows[2].id).toBe(2);
+      expect(result.current.rows[4].id).toBe(3);
+
+      // sort for the nested rows is handled elsewhere, and tested elsewhere. the most important thing is that the sort columns are set correctly
+      // and that `age` is permitted as a sort column since it's from a nested field, and that `some-fake-name` is not permitted and is ignored.
+      expect(result.current.sortColumns).toEqual([
+        { columnKey: 'id', direction: 'ASC' },
+        { columnKey: 'age', direction: 'ASC' },
+      ]);
+    });
+  });
+
+  describe('usePaginatedRows', () => {
+    it('should return defaults for pagination values when pagination is disabled', () => {
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          rowHeight: 30,
+          height: 300,
+          width: 800,
+          enabled: false,
+          headerHeight: TABLE.HEADER_HEIGHT,
+          footerHeight: 0,
+        })
+      );
+
+      expect(result.current.page).toBe(-1);
+      expect(result.current.rowsPerPage).toBe(0);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(3);
+    });
+
+    it('should handle pagination correctly', () => {
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 60,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+        })
+      );
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
+    it('should handle header and footer correctly', () => {
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 140,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: TABLE.HEADER_HEIGHT,
+          footerHeight: 45,
+        })
+      );
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
+    it('should handle nested frames correctly', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['1', '2', '3', '4', '5'], config: {} },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: Array(5).fill([[createDataFrame({ fields })]]),
+            config: {},
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const rows = frameToRecords(frame);
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 140,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: TABLE.HEADER_HEIGHT,
+          footerHeight: 45,
+          hasNestedFrames: true,
+        })
+      );
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.rows.length).toBe(4);
+      expect(result.current.rows[0].__index).toBe(0);
+      expect(result.current.rows[1].__index).toBe(0);
+      expect(result.current.rows[2].__index).toBe(1);
+      expect(result.current.rows[3].__index).toBe(1);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rowsPerPage).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.rows.length).toBe(4);
+      expect(result.current.rows[0].__index).toBe(2);
+      expect(result.current.rows[1].__index).toBe(2);
+      expect(result.current.rows[2].__index).toBe(3);
+      expect(result.current.rows[3].__index).toBe(3);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(4);
+      expect(result.current.rowsPerPage).toBe(2);
+
+      act(() => {
+        result.current.setPage(2);
+      });
+
+      expect(result.current.page).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+      expect(result.current.rows[0].__index).toBe(4);
+      expect(result.current.rows[1].__index).toBe(4);
+      expect(result.current.pageRangeStart).toBe(5);
+      expect(result.current.pageRangeEnd).toBe(5);
+      expect(result.current.rowsPerPage).toBe(2);
+    });
+  });
+
+  describe('useNestedRows', () => {
+    it('should return the nested rows', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[createDataFrame({ fields })]], config: {} },
+        ],
+      });
+
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const parentRows = frameToRecords(frame);
+      const { result } = renderHook(() =>
+        useNestedRows(
+          parentRows,
+          frame.fields[1].values.map((v) => v[0]),
+          true,
+          'nested',
+          {},
+          []
+        )
+      );
+      expect(result.current).toMatchSnapshot();
+    });
+
+    it('should apply sorting and filtering', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[createDataFrame({ fields })]], config: {} },
+        ],
+      });
+
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+
+      // parentIndex must be set on the filter entry — this is how the UI always scopes filters
+      // for nested tables. Without it the filter is silently skipped (regression test).
+      const { result } = renderHook(() =>
+        useNestedRows(
+          frameToRecords(frame),
+          frame.fields[1].values[0],
+          true,
+          'nested',
+          { 'name-0': { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name', parentIndex: 0 } },
+          [{ columnKey: 'age', direction: 'ASC' }]
+        )
+      );
+
+      // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
+      expect(result.current[0].raw).toHaveLength(3);
+      expect(result.current[0].final).toHaveLength(2);
+      expect(result.current[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
+    });
+  });
+
+  describe('useHeaderHeight', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+
+    it('should return 0 when no header is present', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [],
+          enabled: false,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(0);
+    });
+
+    it('should return the default height when wrap is disabled', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(TABLE.HEADER_HEIGHT);
+    });
+
+    it('should return the appropriate height for wrapped text', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields: fields.map((field) => {
+            if (field.name === 'name') {
+              return {
+                ...field,
+                name: 'Longer name that needs wrapping',
+                config: {
+                  ...field.config,
+                  custom: {
+                    ...field.config?.custom,
+                    wrapHeaderText: true,
+                  },
+                },
+              };
+            }
+            return field;
+          }),
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
+          sortColumns: [],
+        });
+      });
+
+      expect(result.current).toBe(50);
+    });
+
+    it('should calculate the available width for a header cell based on the icons rendered within it', () => {
+      const heightFn = jest.fn(() => 20);
+
+      const { fields } = setupData();
+
+      let modifiedFields = fields.map((field) => {
+        if (field.name === 'name') {
+          return {
+            ...field,
+            name: 'Longer name that needs wrapping',
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config?.custom,
+                wrapHeaderText: true,
+              },
+            },
+          };
+        }
+        return field;
+      });
+
+      renderHook(() => {
+        return useHeaderHeight({
+          fields: modifiedFields,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
+          sortColumns: [],
+          showTypeIcons: false,
+        });
+      });
+
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
+
+      modifiedFields = fields.map((field) => {
+        if (field.name === 'name') {
+          return {
+            ...field,
+            name: 'Longer name that needs wrapping',
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config?.custom,
+                filterable: true,
+                wrapHeaderText: true,
+              },
+            },
+          };
+        }
+        return field;
+      });
+
+      renderHook(() => {
+        return useHeaderHeight({
+          fields: modifiedFields,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
+          sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
+          showTypeIcons: true,
+        });
+      });
+
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+    });
+
+    it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [100, 100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(TABLE.HEADER_HEIGHT);
+    });
+  });
+
+  describe('useRowHeight', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+
+    it('returns the default height if there are no wrapped columns or nested frames', () => {
+      const { fields } = setupData();
+
+      const defaultHeight = 40;
+
+      expect(
+        renderHook(() => {
+          return useRowHeight({
+            fields,
+            columnWidths: [100, 100, 100],
+            defaultHeight,
+            defaultNestedHeight: defaultHeight,
+            typographyCtx: typographyCtx,
+            hasNestedFrames: false,
+            nestedRows: [],
+            nestedFields: [],
+            nestedColWidths: [],
+            visibleNestedRowCounts: [],
+          });
+        }).result.current
+      ).toBe(defaultHeight);
+    });
+
+    describe('nested frames', () => {
+      it('returns 0 if the parent row is not expanded', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [null],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: frame, __index: 0 });
+          }).result.current
+        ).toBe(0);
+      });
+
+      it('returns a static height if there are no rows in the nested frame', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [0],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __depth: 1,
+              data: undefined,
+              __index: 0,
+            });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
+      });
+
+      it('calculates the height to return using default height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: frame,
+            });
+          }).result.current
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
+      });
+
+      it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const defaultNonNestedHeight = 60;
+        const defaultNestedHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: defaultNonNestedHeight,
+              defaultNestedHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: frame,
+            });
+          }).result.current
+          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
+      });
+
+      it('uses a string-based default height for the nested rows', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRows = frameToRecords(frame);
+
+        expect(
+          renderHook(() => {
+            return useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 'min-content',
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+            });
+          }).result.current
+        ).toBe('min-content');
+      });
+
+      it('removes the header if configured', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields, meta: { custom: { noHeader: true } } });
+        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const nestedRecords = frameToRecords(frame);
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [{ name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} }],
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              visibleNestedRowCounts: [1],
+              nestedRows: [
+                {
+                  raw: nestedRecords,
+                  final: nestedRecords,
+                  filterResult: emptyFilterResult,
+                },
+              ],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: frame,
+            });
+          }).result.current
+        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 2); // 3 rows + padding (no header)
+      });
+    });
+
+    // we test the cell height measurerers and getRowHeight directly to check
+    //that all of that  math is working correctly. we mainly want to confirm that
+    // the cache is clearing and that the local logic in this hook works.
+    describe('wrapped columns', () => {
+      let rows: TableRow[];
+      let fieldsWithWrappedText: Field[];
+
+      beforeEach(() => {
+        const { fields, rows: _rows } = setupData();
+
+        rows = _rows;
+        fieldsWithWrappedText = fields.map((field) => {
+          if (field.name === 'name') {
+            return {
+              ...field,
+              name: 'Longer name that needs wrapping',
+              config: {
+                ...field.config,
+                custom: {
+                  ...field.config?.custom,
+                  wrapText: true,
+                  cellOptions: {
+                    cellType: TableCellDisplayMode.Auto,
+                  },
+                },
+              },
+            };
+          }
+          return field;
+        });
+      });
+
+      it('handles changes to default height on re-render', () => {
+        const { result, rerender } = renderHook(
+          ({ defaultHeight }) => {
+            const rowHeight = useRowHeight({
+              fields: fieldsWithWrappedText,
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: false,
+              visibleNestedRowCounts: [],
+              nestedRows: [],
+              nestedFields: [],
+              nestedColWidths: [],
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight;
+          },
+          {
+            initialProps: { defaultHeight: 40 },
+          }
+        );
+
+        expect(result.current(rows[0])).toBe(40);
+
+        // change the column widths
+        rerender({ defaultHeight: 50 });
+
+        expect(result.current(rows[0])).toBe(50);
+      });
+
+      it('adjusts the width of the columns based on the cell padding and border', () => {
+        fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+        const frame = createDataFrame({ fields: fieldsWithWrappedText });
+        const frameToRecords = compileFrameToRecords(frame);
+        rows = frameToRecords(frame);
+
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            fields: fieldsWithWrappedText,
+            columnWidths: [100, 100, 100],
+            defaultHeight: 40,
+            defaultNestedHeight: 40,
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
+            hasNestedFrames: false,
+            visibleNestedRowCounts: [],
+            nestedRows: [],
+            nestedFields: [],
+            nestedColWidths: [],
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        expect(result.current(rows[0])).toEqual(expect.any(Number));
+
+        expect(measureHeightFn).toHaveBeenCalledWith(
+          'Annie Lennox',
+          100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          fieldsWithWrappedText[0],
+          0,
+          22
+        );
+      });
+
+      it('handles wrapped text in nested frames', () => {
+        fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+        const topFrame = createDataFrame({
+          fields: [
+            { name: 'foo', type: FieldType.string, values: ['1'] },
+            {
+              name: 'nested',
+              type: FieldType.nestedFrames,
+              values: [[createDataFrame({ fields: fieldsWithWrappedText })]],
+            },
+          ],
+        });
+        const frameToRecords = compileFrameToRecords(topFrame, 'nested');
+        rows = frameToRecords(topFrame);
+        const nestedFrame = createDataFrame({ fields: fieldsWithWrappedText });
+        const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
+        const nestedRows = nestedFrameToRecords(nestedFrame, 0);
+
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            nestedData: [nestedFrame],
+            fields: topFrame.fields,
+            columnWidths: [330],
+            defaultHeight: 40,
+            defaultNestedHeight: 40,
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
+            hasNestedFrames: true,
+            visibleNestedRowCounts: [3],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+            nestedFields: fieldsWithWrappedText,
+            nestedColWidths: [100, 100, 100],
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        expect(result.current(nestedRows[0])).toEqual(expect.any(Number));
+
+        expect(measureHeightFn).toHaveBeenCalledWith(
+          'Annie Lennox',
+          100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          fieldsWithWrappedText[0],
+          0,
+          22
+        );
+      });
+
+      it('handles wrapped Time fields in nested frames (uses display-formatted value)', () => {
+        const FORMATTED_TIME = '2024-03-26 14:30:00';
+        const EPOCH_MS = 1711462200000;
+
+        const nestedFieldsWithTime: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS, EPOCH_MS, EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: FORMATTED_TIME, numeric: EPOCH_MS, color: undefined, title: undefined })),
+          },
+        ];
+
+        const topFrame = createDataFrame({
+          fields: [
+            { name: 'foo', type: FieldType.string, values: ['1'] },
+            {
+              name: 'nested',
+              type: FieldType.nestedFrames,
+              values: [[createDataFrame({ fields: nestedFieldsWithTime })]],
+            },
+          ],
+        });
+        const nestedFrame = createDataFrame({ fields: nestedFieldsWithTime });
+        const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
+        const nestedRows = nestedFrameToRecords(nestedFrame, 0);
+
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            nestedData: [nestedFrame],
+            fields: topFrame.fields,
+            columnWidths: [330],
+            defaultHeight: 40,
+            defaultNestedHeight: 40,
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
+            hasNestedFrames: true,
+            visibleNestedRowCounts: [3],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+            nestedFields: nestedFieldsWithTime,
+            nestedColWidths: [200],
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        result.current(nestedRows[0]);
+
+        // The measurer must receive the display-formatted string, not the raw epoch timestamp
+        expect(measureHeightFn).toHaveBeenCalledWith(
+          FORMATTED_TIME,
+          200 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          nestedFieldsWithTime[0],
+          0,
+          22
+        );
+      });
+
+      it('uses a string-based default height when set', () => {
+        const { fields } = setupData();
+        const { result } = renderHook(() => {
+          return useRowHeight({
+            fields,
+            columnWidths: [100, 100, 100],
+            defaultHeight: 'min-content',
+            defaultNestedHeight: 40,
+            typographyCtx: typographyCtx,
+            hasNestedFrames: false,
+            visibleNestedRowCounts: [],
+            nestedRows: [],
+            nestedFields: [],
+            nestedColWidths: [],
+          });
+        });
+        expect(result.current).toBe('min-content');
+      });
+    });
+  });
+
+  describe('useReducerEntries', () => {
+    it('should return the correct reducers for a field', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.first],
+        },
+      };
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, 'max', 'min', ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([[ReducerID.first, 'Alice']]);
+
+      const { result: result2 } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result2.current).toEqual([
+        [ReducerID.mean, '30'],
+        ['max', '35'],
+        ['min', '25'],
+        [ReducerID.first, '30'],
+      ]);
+    });
+
+    it('should return an empty array if no reducers are configured', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([]);
+    });
+
+    it('should return an empty array if all of the reducers are numeric and the field non-numeric', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, 'max'],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([]);
+    });
+
+    it('should return null for non-numeric fields for numeric reducers', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, ReducerID.first],
+        },
+      };
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([
+        [ReducerID.mean, null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should return null when the colIdx is not 0 for the countAll reducer', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: [ReducerID.countAll, ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 1));
+      expect(result.current).toEqual([
+        [ReducerID.countAll, null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should return null (and should not throw) for an unknown reducer', () => {
+      const { fields, rows } = setupData();
+      fields[0].config.custom = {
+        footer: {
+          reducers: ['unknownReducer', ReducerID.first],
+        },
+      };
+
+      const { result } = renderHook(() => useReducerEntries(fields[0], rows, 'name', 0));
+      expect(result.current).toEqual([
+        ['unknownReducer', null],
+        [ReducerID.first, 'Alice'],
+      ]);
+    });
+
+    it('should format the value for most reducers', () => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.mean, ReducerID.first],
+        },
+      };
+      fields[1].display = (v) => ({ text: `$${v}`, numeric: v as number });
+      const { result } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result.current).toEqual([
+        [ReducerID.mean, '$30'],
+        [ReducerID.first, '$30'],
+      ]);
+    });
+
+    it.each([ReducerID.count, ReducerID.countAll])('should not format the value for the %s reducer', (reducerId) => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [reducerId, ReducerID.first],
+        },
+      };
+      fields[1].display = (v) => ({ text: `${v} years`, numeric: v as number });
+
+      const { result } = renderHook(() => useReducerEntries(fields[1], rows, 'age', 0));
+      expect(result.current).toEqual([
+        [reducerId, '3'],
+        [ReducerID.first, '30 years'],
+      ]);
+    });
+  });
+});

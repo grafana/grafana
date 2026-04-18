@@ -1,8 +1,8 @@
-import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
-import { Coordinate } from 'ol/coordinate';
-import { Geometry, LineString, Point, Polygon } from 'ol/geom';
-import { Type } from 'ol/geom/Geometry';
+import { type FeatureLike } from 'ol/Feature';
+import type Map from 'ol/Map';
+import { type Coordinate } from 'ol/coordinate';
+import { type Geometry, LineString, Point, Polygon } from 'ol/geom';
+import { type Type } from 'ol/geom/Geometry';
 import { Draw, Modify } from 'ol/interaction';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -11,7 +11,7 @@ import { Circle as CircleStyle, Fill, RegularShape, Stroke, Style, Text } from '
 
 import { formattedValueToString } from '@grafana/data';
 
-import { MapMeasureOptions, measures } from '../utils/measure';
+import { type MapMeasureOptions, measures } from '../utils/measure';
 
 export class MeasureVectorLayer extends VectorLayer<VectorSource> {
   opts: MapMeasureOptions = {
@@ -200,24 +200,24 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
           }
           const segmentPoint = new Point(segment.getCoordinateAt(0.5));
           this.segmentStyles[count].setGeometry(segmentPoint);
-          this.segmentStyles[count].getText().setText(label);
+          this.segmentStyles[count].getText()?.setText(label);
           styles.push(this.segmentStyles[count]);
           count++;
         });
       }
       if (label!) {
         this.labelStyle.setGeometry(point!);
-        this.labelStyle.getText().setText(label);
+        this.labelStyle.getText()?.setText(label);
         styles.push(this.labelStyle);
       }
       if (
         tip &&
         type === 'Point' &&
         geometry instanceof Point &&
-        !this.modify.getOverlay().getSource().getFeatures().length
+        !this.modify.getOverlay().getSource()?.getFeatures().length
       ) {
         this.tipPoint = geometry;
-        this.tipStyle.getText().setText(tip);
+        this.tipStyle.getText()?.setText(tip);
         styles.push(this.tipStyle);
       }
     }

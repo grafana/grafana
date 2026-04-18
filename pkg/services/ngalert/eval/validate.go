@@ -50,7 +50,7 @@ func (e *ConditionValidator) Validate(ctx EvaluationContext, condition models.Co
 		case expr.TypeCMDNode:
 		}
 	}
-	pipeline, err := e.expressionService.BuildPipeline(req)
+	pipeline, err := e.expressionService.BuildPipeline(ctx.Ctx, req)
 	if err != nil {
 		return err
 	}

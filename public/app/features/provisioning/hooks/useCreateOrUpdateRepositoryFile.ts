@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
 import {
-  ReplaceRepositoryFilesWithPathApiArg,
+  type ReplaceRepositoryFilesWithPathApiArg,
   useCreateRepositoryFilesWithPathMutation,
   useReplaceRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning';
+} from 'app/api/clients/provisioning/v0alpha1';
 
 export function useCreateOrUpdateRepositoryFile(name?: string) {
   const [create, createRequest] = useCreateRepositoryFilesWithPathMutation();

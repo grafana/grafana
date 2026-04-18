@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
@@ -8,7 +8,7 @@ import { TextLink } from './TextLink';
 import mdx from './TextLink.mdx';
 
 const meta: Meta = {
-  title: 'General/TextLink',
+  title: 'Foundations/TextLink',
   component: TextLink,
   parameters: {
     docs: {

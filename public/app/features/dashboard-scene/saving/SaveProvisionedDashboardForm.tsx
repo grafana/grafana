@@ -3,14 +3,14 @@ import { saveAs } from 'file-saver';
 import { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { Trans } from '@grafana/i18n';
 import { Button, ClipboardButton, Stack, CodeEditor, Box, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
-import { DashboardChangeInfo } from './shared';
+import { type DashboardChangeInfo } from './shared';
 
 export interface Props {
   dashboard: DashboardScene;

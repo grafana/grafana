@@ -1,21 +1,25 @@
-import { Property } from 'csstype';
-import { Column } from 'react-data-grid';
+import { type FC, type SyntheticEvent } from 'react';
+import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  KeyValue,
-  TimeRange,
-  FieldConfigSource,
-  ActionModel,
-  InterpolateFunction,
-  FieldType,
-  DataFrameWithValue,
+  type DataFrame,
+  type Field,
+  type GrafanaTheme2,
+  type KeyValue,
+  type TimeRange,
+  type FieldConfigSource,
+  type ActionModel,
+  type FieldType,
+  type DataFrameWithValue,
+  type SelectableValue,
+  type FieldState,
 } from '@grafana/data';
-import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../TableCellInspector';
+import { type TableCellInspectorMode } from '../TableCellInspector';
+import { type TableCellOptions } from '../types';
+
+import { type ApplyFilterResult, type TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -27,23 +31,37 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
-export type FilterType = {
-  [key: string]: {
+export enum FilterOperator {
+  CONTAINS = 'Contains',
+  EQUALS = '=',
+  NOT_EQUALS = '!=',
+  GREATER = '>',
+  GREATER_OR_EQUAL = '>=',
+  LESS = '<',
+  LESS_OR_EQUAL = '<=',
+  EXPRESSION = 'Expression',
+}
+
+export type FilterType = Record<
+  string,
+  {
     filteredSet: Set<string>;
-  };
-};
+    displayName: string;
+    filtered?: Array<SelectableValue<unknown>>;
+    searchFilter?: string;
+    operator?: SelectableValue<FilterOperator>;
+    parentIndex?: number;
+  }
+>;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {
@@ -51,12 +69,9 @@ export interface TableSummaryRow {
 }
 
 export interface TableColumn extends Column<TableRow, TableSummaryRow> {
-  key: string; // Unique identifier used by DataGrid
-  name: string; // Display name in header
   field: Field; // Grafana field data/config
   width?: number | string; // Column width
   minWidth?: number; // Min width constraint
-  cellClass?: string; // CSS styling
 }
 
 // Possible values for table cells based on field types
@@ -77,7 +92,8 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  'Nested frames'?: DataFrame[];
+  __expanded?: boolean; // For row expansion state
+  __parentIndex?: number; // For nested table parent tracking
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
@@ -102,13 +118,12 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableFooterCalc {
-  show: boolean;
-  reducer?: string[]; // Make this optional
-  fields?: string[];
-  enablePagination?: boolean;
-  countRows?: boolean;
-}
+/**
+ * Controls how the `sortBy` prop is applied.
+ * `initial` will only read from the options on initial render,
+ * while `managed` will update the sort order whenever the sortBy array is changed.
+ */
+export type SortByBehavior = 'initial' | 'managed';
 
 export interface BaseTableProps {
   ariaLabel?: string;
@@ -121,60 +136,88 @@ export interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
-  initialSortBy?: TableSortByFieldState[];
+  sortBy?: TableSortByFieldState[];
+  sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
-  /** @alpha Used by SparklineCell when provided */
+  maxRowHeight?: number;
+  structureRev?: number;
+  transparent?: boolean;
+  /* message to show when no rows are present */
+  noValue?: string;
+  /** used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
+  // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+  disableKeyboardEvents?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export interface TableCellNGProps {
-  field: Field;
-  frame: DataFrame;
-  getActions?: GetActionsFunction;
-  height: number;
-  justifyContent: Property.JustifyContent;
+export type TableCellRenderer = FC<TableCellRendererProps>;
+
+export interface TableCellRendererProps {
   rowIdx: number;
-  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setIsInspecting: (isInspecting: boolean) => void;
-  shouldTextOverflow: () => boolean;
-  theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  frame: DataFrame;
+  timeRange?: TimeRange;
   value: TableCellValue;
-  rowBg: Function | undefined;
+  height: number;
+  // flags that are static per column
+  field: Field;
+  cellOptions: TableCellOptions;
+  width: number;
+  theme: GrafanaTheme2;
+  cellInspect: boolean;
+  showFilters: boolean;
+  getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
+}
+
+export type InspectCellProps = {
+  rowIdx?: number;
+  value: string;
+  mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  preformatted?: boolean;
+};
+
+export interface TableCellActionsProps {
+  field: Field;
+  value: TableCellValue;
+  displayName: string;
+  cellInspect: boolean;
+  showFilters: boolean;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
+  className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
-  replaceVariables?: InterpolateFunction;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
-  onCellExpand: () => void;
+  onCellExpand: (e: SyntheticEvent) => void;
+  rowId: string;
   isExpanded?: boolean;
 }
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
   value: TableCellValue;
   width: number;
 }
@@ -186,22 +229,12 @@ export interface BarGaugeCellProps {
   theme: GrafanaTheme2;
   value: TableCellValue;
   width: number;
-  timeRange: TimeRange;
 }
 
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
-  rowIdx: number;
-}
-
-export interface JSONCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
   rowIdx: number;
 }
 
@@ -212,33 +245,54 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
 }
 
-export interface ActionCellProps {
-  actions?: ActionModel[];
-}
-
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
-}
-
 export interface AutoCellProps {
-  value: TableCellValue;
   field: Field;
-  justifyContent: Property.JustifyContent;
+  value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
+
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
+}
+
+export interface ActionCellProps {
+  field: Field;
+  rowIdx: number;
+  getActions: GetActionsFunctionLocal;
+}
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
+}
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+  maxHeight?: number;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
 // Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
+export type FrameToRowsConverter = (frame: DataFrame, nestedRowIndex?: number) => TableRow[];
+
+export interface NestedRowEntry {
+  raw: TableRow[];
+  final: TableRow[];
+  filterResult: ApplyFilterResult;
+}
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
@@ -246,4 +300,48 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  fontFamily: string;
+  letterSpacing: number;
+  avgCharWidth: number;
+  estimateHeight: MeasureCellHeight;
+  measureHeight: MeasureCellHeight;
+}
+
+export type MeasureCellHeight = (
+  value: unknown,
+  width: number,
+  field: Field,
+  rowIdx: number,
+  lineHeight: number
+) => number;
+export interface MeasureCellHeightEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  measure: MeasureCellHeight;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: MeasureCellHeight;
+  /**
+   * indicates which field indexes of the visible fields this measurer applies to.
+   */
+  fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+}
+
+export interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
 }

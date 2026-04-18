@@ -1,9 +1,9 @@
-import { ScopedVars } from '@grafana/data';
+import { type ScopedVars } from '@grafana/data';
 import config from 'app/core/config';
 
-import InfluxDatasource from './datasource';
+import type InfluxDatasource from './datasource';
 import { buildMetadataQuery } from './influxql_query_builder';
-import { InfluxQuery, InfluxQueryTag, MetadataQueryType } from './types';
+import { type InfluxQuery, type InfluxQueryTag, type MetadataQueryType } from './types';
 
 type MetadataQueryOptions = {
   type: MetadataQueryType;
@@ -14,6 +14,7 @@ type MetadataQueryOptions = {
   tags?: InfluxQueryTag[];
   withKey?: string;
   withMeasurementFilter?: string;
+  withTimeFilter?: string;
 };
 
 const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
@@ -26,6 +27,7 @@ const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ t
     tags,
     withKey,
     withMeasurementFilter,
+    withTimeFilter: datasource.showTagTime,
     templateService: datasource.templateSrv,
     database: datasource.database,
   });

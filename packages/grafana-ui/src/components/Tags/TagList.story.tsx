@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { TagList } from './TagList';
 import mdx from './TagList.mdx';
 
 const meta: Meta<typeof TagList> = {
-  title: 'Forms/Tags/TagList',
+  title: 'Information/TagList',
   component: TagList,
   parameters: {
     docs: {

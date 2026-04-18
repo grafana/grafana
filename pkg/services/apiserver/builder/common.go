@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"net/http"
 
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -37,7 +40,14 @@ type APIGroupBuilder interface {
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
+
+	// Do not return anything unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1, with AllResourcesAllowed allowing all in the group.
+	// This is to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources() []string
 }
+
+const AllResourcesAllowed = "*"
 
 type APIGroupVersionProvider interface {
 	GetGroupVersion() schema.GroupVersion
@@ -49,6 +59,13 @@ type APIGroupVersionsProvider interface {
 
 type APIGroupAuthorizer interface {
 	GetAuthorizer() authorizer.Authorizer
+}
+
+// APIGroupAuditor allows different API groups to opt-in and provide their own auditing policy evaluator function.
+// Auditing is only enabled if this is implemented. If no customization is needed, you can use the default evaluator,
+// `pkg/apiserver/auditing.NewDefaultGrafanaPolicyRuleEvaluator()`.
+type APIGroupAuditor interface {
+	GetPolicyRuleEvaluator() audit.PolicyRuleEvaluator
 }
 
 type APIGroupMutation interface {
@@ -106,6 +123,16 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
+	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
+}
+
+// HTTPRouteRegistrar can be implemented by builders that need to register
+// routes directly on Grafana's HTTP router (not the k8s apiserver's GoRestful
+// container). This is useful for cluster-global endpoints that don't fit the
+// k8s namespace model. RegisterHTTPRoutes is called automatically by
+// service.RegisterAPI when a builder implements this interface.
+type HTTPRouteRegistrar interface {
+	RegisterHTTPRoutes(rr routing.RouteRegister)
 }
 
 func getGroup(builder APIGroupBuilder) (string, error) {

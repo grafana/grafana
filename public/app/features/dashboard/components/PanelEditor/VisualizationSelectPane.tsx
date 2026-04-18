@@ -2,19 +2,19 @@ import { css } from '@emotion/css';
 import { useCallback, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-import { useDispatch, useSelector } from 'app/types';
+import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 
 import { toggleVizPicker } from './state/reducers';
@@ -59,12 +59,21 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   }
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
-    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
     {
-      label: 'Library panels',
+      label: t('dashboard.visualization-select-pane.radio-options.label.visualizations', 'Visualizations'),
+      value: VisualizationSelectPaneTab.Visualizations,
+    },
+    {
+      label: t('dashboard.visualization-select-pane.radio-options.label.suggestions', 'Suggestions'),
+      value: VisualizationSelectPaneTab.Suggestions,
+    },
+    {
+      label: t('dashboard.visualization-select-pane.radio-options.label.library-panels', 'Library panels'),
       value: VisualizationSelectPaneTab.LibraryPanels,
-      description: 'Reusable panels you can share between multiple dashboards.',
+      description: t(
+        'dashboard.visualization-select-pane.radio-options.description.reusable-panels-share-between-multiple-dashboards',
+        'Reusable panels you can share between multiple dashboards.'
+      ),
     },
   ];
 
@@ -80,11 +89,11 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             placeholder={t('dashboard.visualization-select-pane.placeholder-search-for', 'Search for...')}
           />
           <Button
-            title={t('dashboard.visualization-select-pane.title-close', 'Close')}
+            aria-label={t('dashboard.visualization-select-pane.title-close', 'Close')}
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
-            aria-label={selectors.components.PanelEditor.toggleVizPicker}
+            data-testid={selectors.components.PanelEditor.toggleVizPicker}
             onClick={onCloseVizPicker}
           />
         </div>
@@ -99,7 +108,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
             )}
             {listMode === VisualizationSelectPaneTab.Suggestions && (
-              <VisualizationSuggestions onChange={onVizChange} searchQuery={searchQuery} panel={panel} data={data} />
+              <VisualizationSuggestions onChange={onVizChange} panel={panel} data={data} />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />

@@ -1,16 +1,15 @@
 import { validate as uuidValidate } from 'uuid';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-
-import { t, Trans } from '../../core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
-import { FieldData, SSOProvider, SSOSettingsField } from './types';
-import { isSelectableValue } from './utils/guards';
-import { isUrlValid } from './utils/url';
+import { type FieldData, type SSOProvider, type SSOSettingsField } from './types';
+import { isSelectableValue, isSelectableValueArray } from './utils/guards';
+import { isUrlValid, isValidDomain } from './utils/url';
 
 type Section = Record<
   SSOProvider['provider'],
@@ -45,6 +44,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -53,19 +53,21 @@ export const getSectionFields = (): Section => {
         fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
       },
       {
-        name: 'Extra security measures',
+        name: extraSecurityLabel,
         id: 'extra',
         fields: [
           'allowedOrganizations',
           'allowedDomains',
           'allowedGroups',
           'forceUseGraphApi',
+          'domainHint',
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
           'tlsClientCert',
           'tlsClientKey',
           'tlsClientCa',
+          'workloadIdentityTokenFile',
         ],
       },
     ],
@@ -86,6 +88,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -118,6 +121,8 @@ export const getSectionFields = (): Section => {
           { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
           { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
           { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -131,7 +136,23 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          {
+            name: 'loginPrompt',
+            disabledWhen: {
+              field: 'useRefreshToken',
+              is: true,
+              disabledValue: { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+            },
+          },
+        ],
       },
       {
         name: userMappingLabel,
@@ -152,6 +173,8 @@ export const getSectionFields = (): Section => {
           'hostedDomain',
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -165,7 +188,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -198,7 +230,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -217,6 +258,8 @@ export const getSectionFields = (): Section => {
         fields: [
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -261,6 +304,8 @@ export const getSectionFields = (): Section => {
         fields: [
           'allowedDomains',
           'allowedGroups',
+          'validateIdToken',
+          { name: 'jwkSetUrl', dependsOn: 'validateIdToken' },
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -284,6 +329,7 @@ const authURLLabel = 'Auth URL';
 const tokenURLLabel = 'Token URL';
 const apiURLLabel = 'API URL';
 const jmesPathLabel = 'JMESPath';
+const workloadIdentityLabel = 'Workload identity';
 
 /**
  * List all the fields that can be used in the form
@@ -313,7 +359,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: clientAuthenticationOptions(provider),
-      defaultValue: { value: 'none', label: 'None' },
+      defaultValue: { value: 'none', label: t('auth-config.field-map.label.none', 'None') },
       validation: {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
@@ -356,6 +402,32 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'auth-config.fields.federated-credential-audience-description',
         'The audience of the federated identity credential of your OAuth2 app.'
       ),
+    },
+    workloadIdentityTokenFile: {
+      label: t('auth-config.fields.workload-identity-token-file-label', '{{ workloadIdentityLabel }} token file', {
+        workloadIdentityLabel,
+      }),
+      type: 'text',
+      description: t(
+        'auth-config.fields.workload-identity-token-file-description',
+        'The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to "workload_identity". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.'
+      ),
+      validation: {
+        validate: (value, formValues) => {
+          let clientAuth = formValues.clientAuthentication;
+          if (isSelectableValue<string>(clientAuth)) {
+            clientAuth = clientAuth.value;
+          }
+          if (clientAuth === 'workload_identity') {
+            return !!value;
+          }
+          return true;
+        },
+        message: t(
+          'auth-config.fields.workload-identity-token-file-required',
+          'This field must be set when client authentication is set to "Workload identity".'
+        ),
+      },
     },
     allowedOrganizations: {
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
@@ -405,11 +477,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: [
+        /* eslint-disable @grafana/i18n/no-untranslated-strings */
         { value: 'AutoDetect', label: 'AutoDetect' },
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
       ],
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
+      /* eslint-enable @grafana/i18n/no-untranslated-strings */
     },
     tokenUrl: {
       label: tokenURLLabel,
@@ -463,7 +537,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return uuidValidate(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && uuidValidate(v.value));
                 }
                 return true;
@@ -670,11 +744,47 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     useRefreshToken: {
       label: t('auth-config.fields.use-refresh-token-label', 'Use refresh token'),
+      description:
+        provider === 'google'
+          ? t(
+              'auth-config.fields.use-refresh-token-description-google',
+              'If enabled, Grafana will fetch a new access token using the refresh token provided by Google. This forces the login prompt to "Consent" to ensure Google returns a refresh token.'
+            )
+          : t(
+              'auth-config.fields.use-refresh-token-description',
+              'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+            ),
+      type: 'checkbox',
+    },
+    validateIdToken: {
+      label: t('auth-config.fields.validate-id-token-label', 'Validate ID token'),
       description: t(
-        'auth-config.fields.use-refresh-token-description',
-        'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+        'auth-config.fields.validate-id-token-description',
+        'If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.'
       ),
       type: 'checkbox',
+    },
+    jwkSetUrl: {
+      label: t('auth-config.fields.jwk-set-url-label', 'JWK Set URL'),
+      description: t(
+        'auth-config.fields.jwk-set-url-description',
+        'URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when ID token validation is enabled. Common locations include: .well-known/jwks.json for OIDC providers.'
+      ),
+      type: 'text',
+      validation: {
+        validate: (value, formValues) => {
+          if (formValues.validateIdToken && !value) {
+            return t(
+              'auth-config.fields.jwk-set-url-required',
+              'JWK Set URL is required when ID token validation is enabled.'
+            );
+          }
+          if (value && !isUrlValid(value)) {
+            return t('auth-config.fields.jwk-set-url-invalid', 'JWK Set URL must be a valid URL.');
+          }
+          return true;
+        },
+      },
     },
     tlsClientCa: {
       label: t('auth-config.fields.tls-client-ca-label', 'TLS client CA'),
@@ -807,7 +917,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return isNumeric(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && isNumeric(v.value));
                 }
                 return true;
@@ -842,6 +952,45 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
+    domainHint: {
+      label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
+      description: t(
+        'auth-config.fields.domain-hint-description',
+        'Parameter to indicate the realm of the user in the Entra ID tenant and streamline the login process.'
+      ),
+      type: 'text',
+      validation: {
+        validate: (value) => {
+          if (typeof value === 'string' && value.length) {
+            return isValidDomain(value);
+          }
+          return true;
+        },
+        message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
+      },
+    },
+    loginPrompt: {
+      label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
+      type: 'select',
+      description:
+        provider === 'google'
+          ? t(
+              'auth-config.fields.login-prompt-description-google',
+              'Indicates the type of user interaction when the user logs in with Google. This is forced to "Consent" when "Use refresh token" is enabled.'
+            )
+          : t(
+              'auth-config.fields.login-prompt-description',
+              'Indicates the type of user interaction when the user logs in with the IdP.'
+            ),
+      multi: false,
+      options: [
+        { value: '', label: '' },
+        { value: 'login', label: t('auth-config.fields.login-prompt-login', 'Login') },
+        { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+        { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
+      ],
+      defaultValue: { value: '', label: '' },
     },
   };
 }
@@ -884,12 +1033,14 @@ function orgMappingDescription(provider: string): string {
 
 function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
   // Other options are purposefully not translated
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   switch (provider) {
     case 'azuread':
       return [
         { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
         { value: 'client_secret_post', label: 'Client secret' },
         { value: 'managed_identity', label: 'Managed identity' },
+        { value: 'workload_identity', label: 'Workload identity' },
       ];
     // Other providers ...
     default:
@@ -898,4 +1049,5 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
         { value: 'client_secret_post', label: 'Client secret' },
       ];
   }
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }

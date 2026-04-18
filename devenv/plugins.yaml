@@ -21,3 +21,7 @@ apps:
     org_id: 1
     org_name: Main Org.
     disabled: false
+panels:
+  - type: grafana-e2etest-panel
+    org_id: 1
+    org_name: Main Org.

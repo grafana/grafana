@@ -1,14 +1,17 @@
+import { t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { DashboardCodePane } from 'app/features/dashboard-scene/edit-pane/DashboardCodePane';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
-export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => (
-  <Button
-    size="sm"
-    variant="secondary"
-    tooltip={t('dashboard.toolbar.new.edit-dashboard-v2-schema.tooltip', 'Edit dashboard v2 schema')}
-    icon={<Icon name="brackets-curly" size="lg" type="default" />}
-    onClick={() => dashboard.openV2SchemaEditor()}
-  />
-);
+export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => {
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      tooltip={t('dashboard.toolbar.new.edit-dashboard-v2-schema.tooltip', 'Edit dashboard v2 schema')}
+      icon={<Icon name="brackets-curly" size="lg" type="default" />}
+      onClick={() => dashboard.state.editPane.openPane(new DashboardCodePane({}))}
+    />
+  );
+};

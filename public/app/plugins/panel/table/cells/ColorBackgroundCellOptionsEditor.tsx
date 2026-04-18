@@ -1,60 +1,56 @@
-import { SelectableValue } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
-import { Field, RadioButtonGroup, Switch, Label, Badge } from '@grafana/ui';
+import { useId } from 'react';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { TableCellBackgroundDisplayMode, type TableColoredBackgroundCellOptions } from '@grafana/schema';
+import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
+
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
-
 export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
-  // Set the display mode on change
-  const onCellOptionsChange = (v: TableCellBackgroundDisplayMode) => {
-    cellOptions.mode = v;
-    onChange(cellOptions);
-  };
-
-  // Handle row coloring changes
-  const onColorRowChange = () => {
-    cellOptions.applyToRow = !cellOptions.applyToRow;
-    onChange(cellOptions);
-  };
-
-  // Handle row coloring changes
-  const onWrapTextChange = () => {
-    cellOptions.wrapText = !cellOptions.wrapText;
-    onChange(cellOptions);
-  };
-
-  const label = (
-    <Label description="If selected text will be wrapped to the width of text in the configured column">
-      {'Wrap text '}
-      <Badge text="Alpha" color="blue" style={{ fontSize: '11px', marginLeft: '5px', lineHeight: '1.2' }} />
-    </Label>
-  );
+  const applyToRowSwitchId = useId();
 
   return (
     <>
-      <Field label="Background display mode">
-        <RadioButtonGroup
+      <Field
+        noMargin
+        label={t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode')}
+      >
+        <RadioButtonGroup<TableCellBackgroundDisplayMode>
           value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
-          onChange={onCellOptionsChange}
+          onChange={(v) => {
+            cellOptions.mode = v;
+            onChange(cellOptions);
+          }}
           options={colorBackgroundOpts}
         />
       </Field>
+
       <Field
-        label="Apply to entire row"
-        description="If selected the entire row will be colored as this cell would be."
+        noMargin
+        label={t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row')}
+        description={t(
+          'table.color-background-cell-options-editor.description-apply-to-entire-row',
+          'If selected the entire row will be colored as this cell would be.'
+        )}
       >
-        <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
-      </Field>
-      <Field label={label}>
-        <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
+        <Switch
+          id={applyToRowSwitchId}
+          label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Apply to entire row`)}
+          value={cellOptions.applyToRow}
+          onChange={() => {
+            cellOptions.applyToRow = !cellOptions.applyToRow;
+            onChange(cellOptions);
+          }}
+        />
       </Field>
     </>
   );

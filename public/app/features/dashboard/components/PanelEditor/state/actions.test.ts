@@ -1,6 +1,6 @@
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { LibraryElementDTOMeta } from '@grafana/schema';
+import { type LibraryElementDTOMeta } from '@grafana/schema';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 
@@ -8,7 +8,7 @@ import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { PanelModel } from '../../../state/PanelModel';
 
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
-import { closeEditor, initialState, PanelEditorState } from './reducers';
+import { closeEditor, initialState, type PanelEditorState } from './reducers';
 
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
@@ -139,7 +139,6 @@ describe('panelEditor actions', () => {
     it('should not increment configRev when no changes made and leaving panel edit', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
@@ -169,7 +168,6 @@ describe('panelEditor actions', () => {
     it('should apply changes when dashboard was saved from panel edit', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = undefined;
 
       const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
@@ -203,41 +201,6 @@ describe('panelEditor actions', () => {
 
       // expect configRev to be reset to 0 as it was saved
       expect(sourcePanel.hasChanged).toEqual(false);
-    });
-
-    it('should apply changes when leaving panel edit with angular panel', async () => {
-      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
-      sourcePanel.plugin = getPanelPlugin({});
-      sourcePanel.plugin.angularPanelCtrl = {};
-
-      const dashboard = createDashboardModelFixture({
-        panels: [{ id: 12, type: 'graph' }],
-      });
-
-      const panel = dashboard.initEditPanel(sourcePanel);
-
-      const state: PanelEditorState = {
-        ...initialState(),
-        getPanel: () => panel,
-        getSourcePanel: () => sourcePanel,
-      };
-
-      // not using panel.setProperty here to simulate any prop change done from angular
-      panel.title = 'Changed title';
-
-      await thunkTester({
-        panelEditor: state,
-        panels: {},
-        dashboard: {
-          getModel: () => dashboard,
-        },
-      })
-        .givenThunk(exitPanelEditor)
-        .whenThunkIsDispatched();
-
-      expect(sourcePanel.isAngularPlugin()).toBe(true);
-      expect(sourcePanel.title).toEqual('Changed title');
-      expect(sourcePanel.configRev).toEqual(1);
     });
   });
 

@@ -5,7 +5,7 @@ import { lastValueFrom, of } from 'rxjs';
 
 import {
   VariableSupportType,
-  PanelData,
+  type PanelData,
   LoadingState,
   toDataFrame,
   getDefaultTimeRange,
@@ -33,6 +33,12 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      multiPropsVariables: true,
+    },
+  },
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -73,6 +79,7 @@ describe('QueryVariableEditor', () => {
       },
       query: 'my-query',
       regex: '.*',
+      regexApplyTo: 'value',
       sort: VariableSort.alphabeticalAsc,
       refresh: VariableRefresh.onDashboardLoad,
       isMulti: true,
@@ -123,6 +130,10 @@ describe('QueryVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
+    const staticOptionsToggle = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
@@ -141,6 +152,23 @@ describe('QueryVariableEditor', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
+    expect(staticOptionsToggle).toBeInTheDocument();
+  });
+
+  it('should update the variable with default datasource when opening editor', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: undefined, query: '' });
+
+    await act(() =>
+      setup({
+        variable,
+        onRunQuery: onRunQueryMock,
+      })
+    );
+
+    await waitFor(async () => {
+      expect(variable.state.datasource).not.toBe(undefined);
+    });
   });
 
   it('should update the variable with default query for the selected DS', async () => {
@@ -362,6 +390,57 @@ describe('QueryVariableEditor', () => {
     expect(variable.state.allValue).toBe('custom all value and another value');
   });
 
+  it('should update the variable state when adding two static options', async () => {
+    const {
+      variable,
+      renderer: { getByTestId, getAllByPlaceholderText },
+      user,
+    } = await setup();
+
+    // Initially no static options
+    expect(variable.state.staticOptions).toBeUndefined();
+
+    // First enable static options
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
+
+    // Add first static option
+    const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
+    await user.click(addButton);
+
+    // Enter label and value for first option
+    await user.type(getAllByPlaceholderText('text')[0], 'First Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[0], 'first-value[Tab]');
+    await screen.findByDisplayValue('first-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+    ]);
+
+    // Add second static option
+    await user.click(addButton);
+
+    // Enter label and value for second option
+    await user.type(getAllByPlaceholderText('text')[1], 'Second Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[1], 'second-value[Tab]');
+    await screen.findByDisplayValue('second-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+      { label: 'Second Option', value: 'second-value', properties: { text: 'Second Option', value: 'second-value' } },
+    ]);
+  });
+
   it('should return an empty array if variable is not a QueryVariable', () => {
     const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const variable = new TextBoxVariable({ name: 'test', value: 'test value' });
@@ -383,7 +462,6 @@ describe('QueryVariableEditor', () => {
 
     expect(result.length).toBe(1);
     const descriptor = result[0];
-    expect(descriptor.props.title).toBe('Query Editor');
 
     // Mock the parent property that OptionsPaneItem expects
     descriptor.parent = new OptionsPaneCategoryDescriptor({
@@ -391,7 +469,7 @@ describe('QueryVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    const { queryByRole } = render(descriptor.render());
+    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
 
     // 1. Initial state: "Open variable editor" button is visible, Modal is not.
@@ -407,7 +485,7 @@ describe('QueryVariableEditor', () => {
 
     // 3. Assert Editor's key elements are rendered
     // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Data source')).toBeInTheDocument();
+    expect(within(modal).getByLabelText('Target data source')).toBeInTheDocument();
     // Regex input placeholder
     expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
     // Sort select (check for its current value display)
@@ -452,7 +530,7 @@ describe('Editor', () => {
       render(<Editor variable={variable} />);
     });
 
-    const dataSourcePicker = screen.getByLabelText('Data source');
+    const dataSourcePicker = screen.getByLabelText('Target data source');
     expect(dataSourcePicker).toBeInTheDocument();
 
     const user = userEvent.setup();

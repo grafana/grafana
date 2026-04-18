@@ -1,11 +1,20 @@
-import { DataFrameView, IconName } from '@grafana/data';
-import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
-import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
+import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
+import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
+import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardViewItem, DashboardViewItemKind } from '../types';
+import { AnnoKeyFolder, type ManagerKind, type ResourceList } from '../../apiserver/types';
+import {
+  type DashboardSearchHit,
+  DashboardSearchItemType,
+  type DashboardViewItem,
+  type DashboardViewItemKind,
+} from '../types';
 
-import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
+import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
+import { type SearchHit } from './unified';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -58,30 +67,15 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
-  } else {
-    return getIconForKind(item.kind, isOpen);
+    return 'user-arrows';
   }
+
+  if (item && isVirtualTeamFolder(item.uid)) {
+    return 'users-alt';
+  }
+
+  return getIconForKind(item.kind, isOpen);
 }
-
-// export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
-//   const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
-//   const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
-
-//   if (kind === 'dashboard') {
-//     return 'apps';
-//   }
-
-//   if (item && isSharedWithMe(item.uid)) {
-//     return 'users-alt';
-//   }
-
-//   if (kind === 'folder') {
-//     return isOpen ? 'folder-open' : 'folder';
-//   }
-
-//   return 'question-circle';
-// }
 
 function parseKindString(kind: string): DashboardViewItemKind {
   switch (kind) {
@@ -94,11 +88,22 @@ function parseKindString(kind: string): DashboardViewItemKind {
   }
 }
 
+function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
+  return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
+}
+
+export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): ManagerKind | undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
-  const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
+  const customMeta = view?.dataFrame.meta?.custom;
+  const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
+  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -106,7 +111,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: item.managedBy,
+    managedBy: managedByStr,
   };
 
   // Set enterprise sort value property
@@ -131,4 +136,140 @@ export function queryResultToViewItem(
   }
 
   return viewItem;
+}
+
+export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+  return resource.items.map((item) => {
+    const field: Record<string, string | number> = {};
+    if (item.metadata.deletionTimestamp) {
+      field.deletionTimestamp = item.metadata.deletionTimestamp;
+    }
+
+    const hit = {
+      resource: 'dashboards',
+      name: item.metadata.name,
+      title: item.spec?.title,
+      location: 'general',
+      folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
+      tags: item.spec?.tags || [],
+      field,
+      url: '',
+    };
+    if (!hit.folder) {
+      return { ...hit, location: 'general', folder: 'general' };
+    }
+
+    return hit;
+  });
+}
+
+export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
+  return searchHits.map((hit) => {
+    const dashboardHit: DashboardSearchHit = {
+      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      title: hit.title,
+      uid: hit.name, // k8s name is the uid
+      url: hit.url,
+      tags: hit.tags || [],
+      isDeleted: true, // All results from trash are deleted
+      sortMeta: 0, // Default value for deleted items
+    };
+
+    if (hit.folder && hit.folder !== 'general') {
+      dashboardHit.folderUid = hit.folder;
+    }
+
+    return dashboardHit;
+  });
+}
+
+/**
+ * Filters search results based on query parameters
+ * This is used when backend filtering is not available (e.g., for deleted dashboards)
+ * Supports fuzzy search for tags and titles, alphabetical sorting, and deletion timestamp sorting
+ */
+export function filterSearchResults(
+  results: SearchHit[],
+  query: {
+    query?: string;
+    tag?: string[];
+    sort?: string;
+  }
+): SearchHit[] {
+  let filtered = results;
+
+  if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
+    const searchString = query.query || query.tag?.join(',') || '';
+    const haystack = results.map((hit) => `${hit.title},${hit.tags.join(',')}`);
+    const indices = fuzzySearch(haystack, searchString);
+    filtered = indices.map((index) => results[index]);
+  }
+
+  if (query.sort) {
+    if (query.sort === 'deleted-asc' || query.sort === 'deleted-desc') {
+      const mult = query.sort === 'deleted-desc' ? -1 : 1;
+      filtered.sort((a, b) => {
+        const timestampA = a.field.deletionTimestamp;
+        const timestampB = b.field.deletionTimestamp;
+
+        // Handle missing or invalid timestamps - items without timestamps go to the end
+        if (typeof timestampA !== 'string' && typeof timestampB !== 'string') {
+          return 0;
+        }
+        if (typeof timestampA !== 'string') {
+          return 1;
+        }
+        if (typeof timestampB !== 'string') {
+          return -1;
+        }
+
+        const timeA = Date.parse(timestampA);
+        const timeB = Date.parse(timestampB);
+        return mult * (timeA - timeB);
+      });
+    } else {
+      // Alphabetical sorting
+      const collator = new Intl.Collator();
+      const mult = query.sort === 'alpha-desc' ? -1 : 1;
+      filtered.sort((a, b) => mult * collator.compare(a.title, b.title));
+    }
+  }
+
+  return filtered;
+}
+
+/**
+ * Appends rows from `frame` into `target`, aligning fields that may differ between frames.
+ * New fields are backfilled with null for existing rows; missing fields are padded with null for new rows.
+ */
+export function appendFrame(target: DataFrame, frame: DataFrame): void {
+  const existingLength = target.length;
+  const newLength = existingLength + frame.length;
+
+  // Add new fields from the incoming frame that don't exist in the target yet
+  for (const f of frame.fields) {
+    if (!target.fields.find((vf) => vf.name === f.name)) {
+      target.fields.push({
+        ...f,
+        values: new Array(existingLength).fill(null).concat(f.values),
+      });
+    }
+  }
+
+  // Append values from matching fields
+  for (const f of frame.fields) {
+    const field = target.fields.find((vf) => vf.name === f.name);
+    if (field && field.values.length === existingLength) {
+      field.values.push(...f.values);
+    }
+  }
+
+  // Pad fields that don't exist in the incoming frame with null
+  for (const field of target.fields) {
+    while (field.values.length < newLength) {
+      field.values.push(null);
+    }
+  }
+
+  target.length = newLength;
 }

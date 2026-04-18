@@ -1,7 +1,8 @@
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery, type LogsSortOrder } from '@grafana/schema';
 
-import { PreferredVisualisationType } from './data';
-import { TimeRange } from './time';
+import { type PreferredVisualisationType } from './data';
+import { type SelectableValue } from './select';
+import { type TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
 
@@ -18,12 +19,39 @@ export type URLRange = {
   to: URLRangeValue;
 };
 
+/**
+ * @internal
+ */
+export interface TraceSearchProps {
+  serviceName?: string;
+  serviceNameOperator: string;
+  spanName?: string;
+  spanNameOperator: string;
+  from?: string;
+  fromOperator: string;
+  to?: string;
+  toOperator: string;
+  tags: TraceSearchTag[];
+  adhocFilters?: Array<SelectableValue<string>>;
+  query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
+}
+
+export interface TraceSearchTag {
+  id: string;
+  key?: string;
+  operator: string;
+  value?: string;
+}
+
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
   queries: T[];
   range: URLRange;
   panelsState?: ExplorePanelsState;
+  compact?: boolean;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
@@ -45,16 +73,22 @@ export interface ExploreCorrelationHelperData {
 
 export interface ExploreTracePanelState {
   spanId?: string;
+  spanFilters?: TraceSearchProps;
 }
 
 export interface ExploreLogsPanelState {
   id?: string;
+  // @deprecated - only used in tableRT
   columns?: Record<number, string>;
   visualisationType?: 'table' | 'logs';
   labelFieldName?: string;
   // Used for logs table visualisation, contains the refId of the dataFrame that is currently visualized
   refId?: string;
   displayedFields?: string[];
+  sortOrder?: LogsSortOrder;
+  // Column sort state for table view. Persists between query changes.
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
@@ -63,6 +97,7 @@ export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
   range?: TimeRange;
   panelsState?: ExplorePanelsState;
   correlationHelperData?: ExploreCorrelationHelperData;
+  compact?: boolean;
 }
 
 /**

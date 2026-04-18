@@ -59,14 +59,13 @@ func (l *loggerImpl) Middleware() web.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			// we have to init the context with the counter here to update the request
+			// we have to init the context with the counter and timer here to update the request
 			r = r.WithContext(log.InitCounter(r.Context()))
+			r = r.WithContext(log.InitDBQueryTimer(r.Context()))
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
-			if l.flags.IsEnabled(r.Context(), featuremgmt.FlagUnifiedRequestLog) {
-				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
-			}
+			r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
 
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)
@@ -123,6 +122,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 
 	if l.cfg.DatabaseInstrumentQueries {
 		logParams = append(logParams, "db_call_count", log.TotalDBCallCount(c.Req.Context()))
+		logParams = append(logParams, "db_query_time", log.TotalDBQueryTime(c.Req.Context()))
 	}
 
 	if handler, exist := middleware.RouteOperationName(c.Req); exist {

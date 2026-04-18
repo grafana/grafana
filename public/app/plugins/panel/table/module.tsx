@@ -1,24 +1,23 @@
+import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
-  FieldOverrideContext,
-  FieldType,
-  getFieldDisplayName,
-  PanelPlugin,
-  ReducerID,
-  standardEditorsRegistry,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-} from '@grafana/data';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+  TableCellDisplayMode,
+  type TableCellOptions,
+  TableCellTooltipPlacement,
+  defaultTableFieldOptions,
+} from '@grafana/schema';
+import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
+import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
-import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { Options, defaultOptions, FieldConfig } from './panelcfg.gen';
-import { TableSuggestionsSupplier } from './suggestions';
+import { type FieldConfig, type Options } from './panelcfg.gen';
+import { tableSuggestionsSupplier } from './suggestions';
 
-const footerCategory = 'Table footer';
-const cellCategory = ['Cell options'];
+function getTableNoValuePlaceholder(): string {
+  return t('table.no-value-placeholder', 'No rows');
+}
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -28,49 +27,42 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
       },
+      [FieldConfigProperty.NoValue]: {
+        settings: {
+          placeholder: getTableNoValuePlaceholder(),
+        },
+      },
     },
     useCustomConfig: (builder) => {
+      addTableCustomConfig(builder, {
+        filters: true,
+        wrapHeaderText: true,
+        hideFields: true,
+      });
+
+      const cellCategory = [t('table.category-cell-options', 'Cell options')];
+
+      builder.addCustomEditor({
+        id: 'footer.reducers',
+        category: [t('table.category-table-footer', 'Table footer')],
+        path: 'footer.reducers',
+        name: t('table.name-calculation', 'Calculation'),
+        description: t('table.description-calculation', 'Choose a reducer function / calculation'),
+        editor: standardEditorsRegistry.get('stats-picker').editor,
+        override: standardEditorsRegistry.get('stats-picker').editor,
+        defaultValue: [],
+        process: identityOverrideProcessor,
+        shouldApply: () => true,
+        settings: {
+          allowMultiple: true,
+        },
+      });
+
       builder
-        .addNumberInput({
-          path: 'minWidth',
-          name: 'Minimum column width',
-          description: 'The minimum width for column auto resizing',
-          settings: {
-            placeholder: '150',
-            min: 50,
-            max: 500,
-          },
-          shouldApply: () => true,
-          defaultValue: defaultTableFieldOptions.minWidth,
-        })
-        .addNumberInput({
-          path: 'width',
-          name: 'Column width',
-          settings: {
-            placeholder: 'auto',
-            min: 20,
-            max: 300,
-          },
-          shouldApply: () => true,
-          defaultValue: defaultTableFieldOptions.width,
-        })
-        .addRadio({
-          path: 'align',
-          name: 'Column alignment',
-          settings: {
-            options: [
-              { label: 'Auto', value: 'auto' },
-              { label: 'Left', value: 'left' },
-              { label: 'Center', value: 'center' },
-              { label: 'Right', value: 'right' },
-            ],
-          },
-          defaultValue: defaultTableFieldOptions.align,
-        })
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell type',
+          name: t('table.name-cell-type', 'Cell type'),
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
@@ -80,8 +72,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addBooleanSwitch({
           path: 'inspect',
-          name: 'Cell value inspect',
-          description: 'Enable cell value inspection in a modal window',
+          name: t('table.name-cell-value-inspect', 'Cell value inspect'),
+          description: t('table.description-cell-value-inspect', 'Enable cell value inspection in a modal window'),
           defaultValue: false,
           category: cellCategory,
           showIf: (cfg) => {
@@ -93,95 +85,54 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             );
           },
         })
-        .addBooleanSwitch({
-          path: 'filterable',
-          name: 'Column filter',
-          description: 'Enables/disables field filters in table',
-          defaultValue: defaultTableFieldOptions.filterable,
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table.name-tooltip-from-field', 'Tooltip from field'),
+          description: t(
+            'table.description-tooltip-from-field',
+            'Render a cell from a field (hidden or visible) in a tooltip'
+          ),
+          category: cellCategory,
         })
-        .addBooleanSwitch({
-          path: 'hidden',
-          name: 'Hide in table',
-          defaultValue: undefined,
-          hideFromDefaults: true,
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              {
+                label: t('table.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
+            ],
+          },
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
+        })
+        .addFieldNamePicker({
+          path: 'styleField',
+          name: t('table.name-styling-from-field', 'Styling from field'),
+          description: t('table.description-styling-from-field', 'A field containing JSON objects with CSS properties'),
+          category: cellCategory,
         });
     },
   })
   .setPanelOptions((builder) => {
-    builder
-      .addBooleanSwitch({
-        path: 'showHeader',
-        name: 'Show table header',
-        defaultValue: defaultOptions.showHeader,
-      })
-      .addRadio({
-        path: 'cellHeight',
-        name: 'Cell height',
-        defaultValue: defaultOptions.cellHeight,
-        settings: {
-          options: [
-            { value: TableCellHeight.Sm, label: 'Small' },
-            { value: TableCellHeight.Md, label: 'Medium' },
-            { value: TableCellHeight.Lg, label: 'Large' },
-          ],
-        },
-      })
-      .addBooleanSwitch({
-        path: 'footer.show',
-        category: [footerCategory],
-        name: 'Show table footer',
-        defaultValue: defaultOptions.footer?.show,
-      })
-      .addCustomEditor({
-        id: 'footer.reducer',
-        category: [footerCategory],
-        path: 'footer.reducer',
-        name: 'Calculation',
-        description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footer?.show,
-      })
-      .addBooleanSwitch({
-        path: 'footer.countRows',
-        category: [footerCategory],
-        name: 'Count rows',
-        description: 'Display a single count for all data rows',
-        defaultValue: defaultOptions.footer?.countRows,
-        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
-      })
-      .addMultiSelect({
-        path: 'footer.fields',
-        category: [footerCategory],
-        name: 'Fields',
-        description: 'Select the fields that should be calculated',
-        settings: {
-          allowCustomValue: false,
-          options: [],
-          placeholder: 'All Numeric Fields',
-          getOptions: async (context: FieldOverrideContext) => {
-            const options = [];
-            if (context && context.data && context.data.length > 0) {
-              const frame = context.data[0];
-              for (const field of frame.fields) {
-                if (field.type === FieldType.number) {
-                  const name = getFieldDisplayName(field, frame, context.data);
-                  const value = field.name;
-                  options.push({ value, label: name });
-                }
-              }
-            }
-            return options;
-          },
-        },
-        defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !(cfg.footer?.countRows && cfg.footer?.reducer.includes(ReducerID.count)),
-      })
-      .addCustomEditor({
-        id: 'footer.enablePagination',
-        path: 'footer.enablePagination',
-        name: 'Enable pagination',
-        editor: PaginationEditor,
-      });
+    addTableCustomPanelOptions(builder);
   })
-  .setSuggestionsSupplier(new TableSuggestionsSupplier());
+  .setSuggestionsSupplier(tableSuggestionsSupplier);

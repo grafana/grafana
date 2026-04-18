@@ -1,6 +1,7 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { type DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -26,11 +27,12 @@ import {
   VectorOp,
   BinOpExpr,
 } from '@grafana/lezer-logql';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LabelType, type LokiQuery } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -310,6 +312,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
+    .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-chunk'))
     .filter((query) => query.expr);
 
@@ -424,4 +427,22 @@ export const getSelectorForShardValues = (query: string) => {
     return query.substring(selector[0].from, selector[0].to);
   }
   return '';
+};
+
+/**
+ * Adds query plan to shard/split queries
+ * Must be called after interpolation step!
+ *
+ * @param lokiQuery
+ * @param request
+ */
+export const addQueryLimitsContext = (lokiQuery: LokiQuery, request: DataQueryRequest<LokiQuery>) => {
+  return {
+    ...lokiQuery,
+    limitsContext: {
+      expr: lokiQuery.expr,
+      from: request.range.from.toDate().getTime(),
+      to: request.range.to.toDate().getTime(),
+    },
+  };
 };

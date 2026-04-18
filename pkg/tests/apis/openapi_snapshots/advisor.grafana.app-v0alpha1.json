@@ -20,11 +20,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -148,16 +143,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList"
@@ -215,11 +200,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
@@ -233,11 +213,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -257,11 +232,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
@@ -273,11 +243,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -431,11 +396,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -485,11 +445,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -551,11 +506,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
@@ -573,11 +523,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
@@ -589,11 +534,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -675,11 +615,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -691,11 +626,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -793,7 +723,154 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Check"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Check",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status": {
+      "get": {
+        "tags": [
+          "Check"
+        ],
+        "description": "read status of the specified Check",
+        "operationId": "getCheckStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Check"
+        }
+      },
+      "put": {
+        "tags": [
+          "Check"
+        ],
+        "description": "replace status of the specified Check",
+        "operationId": "replaceCheckStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -813,7 +890,110 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Check"
+        }
+      },
+      "patch": {
+        "tags": [
+          "Check"
+        ],
+        "description": "partially update status of the specified Check",
+        "operationId": "updateCheckStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
                 }
@@ -978,16 +1158,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
@@ -1045,11 +1215,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
@@ -1063,11 +1228,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
@@ -1087,11 +1247,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
@@ -1103,11 +1258,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
@@ -1261,11 +1411,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -1315,11 +1460,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
@@ -1381,11 +1521,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
@@ -1403,11 +1538,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
@@ -1419,11 +1549,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
@@ -1505,11 +1630,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -1521,11 +1641,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -1623,11 +1738,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
@@ -1639,11 +1749,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
                 }
@@ -1694,6 +1799,305 @@
           }
         }
       ]
+    },
+    "/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status": {
+      "get": {
+        "tags": [
+          "CheckType"
+        ],
+        "description": "read status of the specified CheckType",
+        "operationId": "getCheckTypeStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "CheckType"
+        }
+      },
+      "put": {
+        "tags": [
+          "CheckType"
+        ],
+        "description": "replace status of the specified CheckType",
+        "operationId": "replaceCheckTypeStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "CheckType"
+        }
+      },
+      "patch": {
+        "tags": [
+          "CheckType"
+        ],
+        "description": "partially update status of the specified CheckType",
+        "operationId": "updateCheckTypeStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "advisor.grafana.app",
+          "version": "v0alpha1",
+          "kind": "CheckType"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the CheckType",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register": {
+      "post": {
+        "operationId": "createRegister",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -1701,9 +2105,10 @@
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -1723,28 +2128,13 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "advisor.grafana.app",
-            "kind": "Check",
-            "version": "__internal"
-          },
           {
             "group": "advisor.grafana.app",
             "kind": "Check",
@@ -1761,15 +2151,14 @@
         "properties": {
           "message": {
             "description": "Human readable error message",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "url": {
             "description": "URL to a page with more information about the error",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList": {
         "type": "object",
@@ -1810,14 +2199,62 @@
           {
             "group": "advisor.grafana.app",
             "kind": "CheckList",
-            "version": "__internal"
-          },
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckList",
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport": {
+        "type": "object",
+        "required": [
+          "count",
+          "failures"
+        ],
+        "properties": {
+          "count": {
+            "description": "Number of elements analyzed",
+            "type": "integer"
+          },
+          "failures": {
+            "description": "List of failures",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure": {
         "type": "object",
@@ -1831,37 +2268,37 @@
         "properties": {
           "item": {
             "description": "Human readable identifier of the item that failed",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "itemID": {
             "description": "ID of the item that failed",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "links": {
             "description": "Links to actions that can be taken to resolve the failure",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckErrorLink"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckErrorLink"
             }
+          },
+          "moreInfo": {
+            "description": "More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.",
+            "type": "string"
           },
           "severity": {
             "description": "Severity of the failure",
             "type": "string",
-            "default": ""
+            "enum": [
+              "high",
+              "low"
+            ]
           },
           "stepID": {
             "description": "Step ID that the failure is associated with",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec": {
         "type": "object",
@@ -1870,11 +2307,11 @@
             "description": "Generic data input that a check can receive",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus": {
         "type": "object",
@@ -1885,38 +2322,28 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": true
           },
           "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckstatusOperatorState"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckOperatorState"
             }
           },
           "report": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckV0alpha1StatusReport"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -1936,28 +2363,13 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckType",
-            "version": "__internal"
-          },
           {
             "group": "advisor.grafana.app",
             "kind": "CheckType",
@@ -2004,14 +2416,41 @@
           {
             "group": "advisor.grafana.app",
             "kind": "CheckTypeList",
-            "version": "__internal"
-          },
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckTypeList",
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec": {
         "type": "object",
@@ -2021,21 +2460,16 @@
         ],
         "properties": {
           "name": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus": {
         "type": "object",
@@ -2043,23 +2477,17 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": true
           },
           "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep": {
         "type": "object",
@@ -2071,107 +2499,38 @@
         ],
         "properties": {
           "description": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "resolution": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "stepID": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "title": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState": {
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse": {
         "type": "object",
         "required": [
-          "lastEvaluation",
-          "state"
+          "message",
+          "apiVersion",
+          "kind"
         ],
         "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckV0alpha1StatusReport": {
-        "type": "object",
-        "required": [
-          "count",
-          "failures"
-        ],
-        "properties": {
-          "count": {
-            "description": "Number of elements analyzed",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "failures": {
-            "description": "List of failures",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
+          "message": {
+            "type": "string"
           }
         }
       },
@@ -2590,8 +2949,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

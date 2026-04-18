@@ -9,21 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -31,7 +30,9 @@ const (
 	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
 )
 
-func TestDuplicatesValidator(t *testing.T) {
+func TestIntegrationDuplicatesValidator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
@@ -44,16 +45,15 @@ func TestDuplicatesValidator(t *testing.T) {
 	}
 	logger := log.New("test.logger")
 
-	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	fStore := folderimpl.ProvideStore(sql)
-	tagService := tagimpl.ProvideService(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
-	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
+	_, cfgT := db.InitTestDBWithCfg(t)
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{},
+		nil, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, grafanasort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
@@ -64,7 +64,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeStore := &fakeDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
 		require.NoError(t, err)
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(6)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(6)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, fakeService, folderName)
@@ -181,7 +181,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	})
 
 	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(5)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(5)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(3)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		fakeStore := &fakeDashboardStore{}

@@ -1,24 +1,26 @@
 // Libraries
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t, Trans } from 'app/core/internationalization';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 
-import { useSoloPanel } from './useSoloPanel';
+import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {}
+export interface Props
+  extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: UrlQueryValue }> {}
 
 /**
  * Used for iframe embedding and image rendering of single panels
@@ -31,7 +33,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid, type, slug]);
+  }, [stateManager, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
@@ -52,52 +54,100 @@ export function SoloPanelPage({ queryParams }: Props) {
   }
 
   return (
-    <UrlSyncContextProvider scene={dashboard}>
-      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true}>
+      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={queryParams.hideLogo} />
     </UrlSyncContextProvider>
   );
 }
 
 export default SoloPanelPage;
 
-export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
-  const [panel, error] = useSoloPanel(dashboard, panelId);
-  const { controls } = dashboard.useState();
+export function SoloPanelRenderer({
+  dashboard,
+  panelId,
+  hideLogo,
+  children,
+}: {
+  dashboard: DashboardScene;
+  panelId: string;
+  hideLogo?: UrlQueryValue;
+  children?: ReactNode;
+}) {
+  const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
+  const soloPanelContext = useDefineSoloPanelContext(panelId)!;
+  const [isHovered, setIsHovered] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    return refreshPicker?.activate();
-  }, [refreshPicker]);
+    const dashDeactivate = dashboard.activate();
+    const refreshDeactivate = refreshPicker?.activate();
 
-  if (error) {
-    return <Alert title={error} />;
-  }
-
-  if (!panel) {
-    return (
-      <span>
-        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
-      </span>
-    );
-  }
+    return () => {
+      dashDeactivate();
+      refreshDeactivate?.();
+    };
+  }, [dashboard, refreshPicker]);
 
   return (
-    <div className={styles.container}>
-      <panel.Component model={panel} />
+    <div
+      ref={containerRef}
+      className={styles.container}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} hideLogo={hideLogo} />
+      {renderHiddenVariables(dashboard)}
+      <div className={styles.panelWrapper}>
+        <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
+          <body.Component model={body} />
+          {children}
+        </SoloPanelContextProvider>
+      </div>
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    position: 'fixed',
-    bottom: 0,
-    right: 0,
-    margin: 0,
-    left: 0,
-    top: 0,
+// Some variables like ScopesVariable needs
+// to be rendered for their logic to work even if hidden
+function renderHiddenVariables(dashboard: DashboardScene) {
+  if (!dashboard.state.$variables) {
+    return null;
+  }
+
+  const variables = dashboard.state.$variables.state.variables;
+
+  return (
+    <>
+      {variables.map((variable) => {
+        if (variable.UNSAFE_renderAsHidden) {
+          return <variable.Component model={variable} key={variable.state.key} />;
+        }
+
+        return null;
+      })}
+    </>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const panelWrapper = css({
     width: '100%',
     height: '100%',
-  }),
-});
+  });
+
+  return {
+    container: css({
+      position: 'fixed',
+      bottom: 0,
+      right: 0,
+      margin: 0,
+      left: 0,
+      top: 0,
+      width: '100%',
+      height: '100%',
+    }),
+    panelWrapper,
+  };
+};

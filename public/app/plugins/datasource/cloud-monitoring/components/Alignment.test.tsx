@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 
-import { CustomVariableModel } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
 
-import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
-import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../types/query';
+import { MetricKind, ValueTypes } from '../dataquery.gen';
+import { createMockDatasource } from '../mocks/cloudMonitoringDatasource';
+import { createMockMetricDescriptor } from '../mocks/cloudMonitoringMetricDescriptor';
+import { createMockTimeSeriesList } from '../mocks/cloudMonitoringQuery';
 
 import { Alignment } from './Alignment';
 

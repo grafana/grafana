@@ -1,16 +1,17 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationList.tsx
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useState } from 'react';
 import { useMountedState, usePrevious } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
+import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Button, Cascader, type CascaderOption, useStyles2, Stack } from '@grafana/ui';
 
 import { OperationEditor } from './OperationEditor';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
+import { type QueryBuilderOperation, type QueryWithOperations, type VisualQueryModeller } from './types';
 
-export interface Props<T extends QueryWithOperations> {
+interface Props<T extends QueryWithOperations> {
   query: T;
   datasource: DataSourceApi;
   onChange: (query: T) => void;
@@ -126,11 +127,16 @@ export function OperationList<T extends QueryWithOperations>({
               autoFocus={true}
               alwaysOpen={true}
               hideActiveLevelLabel={true}
-              placeholder={'Search'}
+              placeholder={t('grafana-prometheus.querybuilder.operation-list.placeholder-search', 'Search')}
             />
           ) : (
-            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'}>
-              Operations
+            <Button
+              icon={'plus'}
+              variant={'secondary'}
+              onClick={() => setCascaderOpen(true)}
+              title={t('grafana-prometheus.querybuilder.operation-list.title-add-operation', 'Add operation')}
+            >
+              <Trans i18nKey="grafana-prometheus.querybuilder.operation-list.operations">Operations</Trans>
             </Button>
           )}
         </div>

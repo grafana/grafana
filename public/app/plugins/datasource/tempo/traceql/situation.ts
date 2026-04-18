@@ -1,4 +1,4 @@
-import { SyntaxNode, Tree } from '@lezer/common';
+import { type SyntaxNode, type Tree } from '@lezer/common';
 
 import {
   Aggregate,
@@ -82,6 +82,12 @@ export type SituationType =
     }
   | {
       type: 'SPANSET_COMPARISON_OPERATORS';
+    }
+  | {
+      type: 'QUERY_HINT_NAME';
+    }
+  | {
+      type: 'QUERY_HINT_VALUE';
     };
 
 type Path = Array<[Direction, NodeType[]]>;
@@ -147,6 +153,25 @@ export function getSituation(text: string, offset: number): Situation | null {
     return {
       query: text,
       type: 'EMPTY',
+    };
+  }
+
+  // Check for with clause hint situations first
+  const textUpToOffset = text.substring(0, offset);
+
+  // Check if we're inside with(...) waiting for parameter names
+  if (/\bwith\s*\(\s*$/.test(textUpToOffset)) {
+    return {
+      query: text,
+      type: 'QUERY_HINT_NAME',
+    };
+  }
+
+  // Check if we're after parameter= waiting for values
+  if (/\bwith\s*\(\s*\w+\s*=\s*[\w]*$/.test(textUpToOffset)) {
+    return {
+      query: text,
+      type: 'QUERY_HINT_VALUE',
     };
   }
 

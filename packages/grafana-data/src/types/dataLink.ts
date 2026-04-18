@@ -1,8 +1,9 @@
-import { ScopedVars } from './ScopedVars';
-import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
-import { InterpolateFunction } from './panel';
-import { DataQuery } from './query';
-import { TimeRange } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type ExploreCorrelationHelperData, type ExplorePanelsState } from './explore';
+import { type LinkTarget } from './linkTarget';
+import { type InterpolateFunction } from './panel';
+import { type DataQuery } from './query';
+import { type TimeRange } from './time';
 
 /**
  * Callback info for DataLink click events
@@ -88,8 +89,6 @@ export interface InternalDataLink<T extends DataQuery = any> {
   range?: TimeRange;
 }
 
-export type LinkTarget = '_blank' | '_self' | undefined;
-
 /**
  * Processed Link Model. The values are ready to use
  */
@@ -102,6 +101,14 @@ export interface LinkModel<T = any> {
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
   oneClick?: boolean;
+
+  /**
+   * @alpha
+   */
+  interpolatedParams?: {
+    query?: DataQuery;
+    timeRange?: TimeRange;
+  };
 }
 
 /**

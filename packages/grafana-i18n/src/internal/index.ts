@@ -9,12 +9,13 @@
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
+
 export {
   addResourceBundle,
   changeLanguage,
   getI18nInstance,
   getLanguage,
   getResolvedLanguage,
-  initTranslations,
-  t,
+  initializeI18n,
+  loadNamespacedResources,
 } from '../i18n';

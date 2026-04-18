@@ -3,16 +3,22 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/exp/maps"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -48,6 +54,9 @@ type Node interface {
 	RefID() string
 	String() string
 	NeedsVars() []string
+	SetInputTo(refID string)
+	IsInputTo() map[string]struct{}
+	DisabledErr() error
 }
 
 type ExecutableNode interface {
@@ -62,7 +71,7 @@ type DataPipeline []Node
 // map of the refId of the of each command
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	groupByDSFlag := s.features.IsEnabled(c, featuremgmt.FlagSseGroupByDatasource)
 	// Execute datasource nodes first, and grouped by datasource.
 	if groupByDSFlag {
@@ -82,13 +91,45 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			continue // already executed via executeDSNodesGrouped
 		}
 
+		// Skip disabled nodes (e.g. missing dependency). Injecting the error
+		// into vars causes downstream dependents to fail via the existing
+		// dependency-error path — no separate transitive propagation needed.
+		if disabledErr := node.DisabledErr(); disabledErr != nil {
+			if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
+				var sqlErr *sql.ErrorWithCategory
+				if errors.As(disabledErr, &sqlErr) {
+					s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+				}
+			}
+			vars[node.RefID()] = mathexp.Results{Error: disabledErr}
+			continue
+		}
+
 		// Don't execute nodes that have dependent nodes that have failed
 		var hasDepError bool
 		for _, neededVar := range node.NeedsVars() {
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
+					var depErr error
+					// IF SQL expression dependency error
+					if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
+						e := sql.MakeSQLDependencyError(node.RefID(), neededVar)
+
+						// although the SQL expression won't be executed,
+						// we track a dependency error on the metric.
+						eType := e.Category()
+						var errWithType *sql.ErrorWithCategory
+						if errors.As(res.Error, &errWithType) {
+							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
+							eType = errWithType.Category()
+						}
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType).Inc()
+						depErr = e
+					} else { // general SSE dependency error
+						depErr = MakeDependencyError(node.RefID(), neededVar)
+					}
 					errResult := mathexp.Results{
-						Error: MakeDependencyError(node.RefID(), neededVar),
+						Error: depErr,
 					}
 					vars[node.RefID()] = errResult
 					hasDepError = true
@@ -144,9 +185,7 @@ func (dp *DataPipeline) GetDatasourceTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
 // GetCommandTypes returns a sorted unique list of all server-side expression commands used in the pipeline.
@@ -168,19 +207,40 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
-// BuildPipeline builds a graph of the nodes, and returns the nodes in an
-// executable order.
-func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
+// buildPipeline builds a graph of the nodes and returns them in executable
+// order. When the sseExpressionErrorIsolation feature toggle is enabled,
+// nodes with missing dependencies are marked as disabled on the node itself
+// rather than failing the entire pipeline.
+func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
 
-	graph, err := s.buildDependencyGraph(req)
+	instrumentSQLError := func(err error, span trace.Span) {
+		var sqlErr *sql.ErrorWithCategory
+		if errors.As(err, &sqlErr) {
+			// The SQL expression (and the entire pipeline) will not be executed, so we
+			// track the attempt to execute here.
+			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+	}
+
+	_, span := s.tracer.Start(ctx, "SSE.BuildPipeline")
+	var err error
+	defer func() {
+		instrumentSQLError(err, span)
+		span.End()
+	}()
+
+	degraded := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSseExpressionErrorIsolation, false, openfeature.TransactionContext(ctx))
+	graph, err := s.buildDependencyGraph(ctx, req, degraded)
 	if err != nil {
 		return nil, err
 	}
@@ -194,15 +254,17 @@ func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, error) {
-	graph, err := s.buildGraph(req)
+// When degraded is true, nodes with missing dependencies are marked as
+// disabled on the node itself rather than causing a hard error.
+func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degraded bool) (*simple.DirectedGraph, error) {
+	graph, err := s.buildGraph(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
 	registry := buildNodeRegistry(graph)
 
-	if err := buildGraphEdges(graph, registry); err != nil {
+	if err := s.buildGraphEdges(graph, registry, degraded); err != nil {
 		return nil, err
 	}
 
@@ -211,19 +273,29 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.
 // Note: During execution, Datasource query nodes for the same datasource will
-// be grouped into one request and executed first as phase after this call.
+// be grouped into one request and executed first as phase after this call
+// If the groupByDSFlag is enabled.
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
 	sortedNodes, err := topo.SortStabilized(graph, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := make([]Node, len(sortedNodes))
-	for i, v := range sortedNodes {
-		nodes[i] = v.(Node)
+	var dsNodes []Node
+	var otherNodes []Node
+
+	for _, v := range sortedNodes {
+		n := v.(Node)
+		switch n.NodeType() {
+		case TypeDatasourceNode, TypeMLNode:
+			dsNodes = append(dsNodes, n)
+		default:
+			otherNodes = append(otherNodes, n)
+		}
 	}
 
-	return nodes, nil
+	// Datasource/ML nodes come first, followed by all others, in original topo order
+	return append(dsNodes, otherNodes...), nil
 }
 
 // buildNodeRegistry returns a lookup table for reference IDs to respective node.
@@ -242,7 +314,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for i, query := range req.Queries {
@@ -277,8 +349,9 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(rn, s.features, s.cfg.SQLExpressionCellLimit)
+			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
 		case TypeMLNode:
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {
@@ -301,9 +374,13 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 }
 
 // buildGraphEdges generates graph edges based on each node's dependencies.
-func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
+// When degraded is true, nodes with missing dependencies are marked as
+// disabled (rather than causing a hard error) so that valid nodes can
+// still execute.
+func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node, degraded bool) error {
 	nodeIt := dp.Nodes()
 
+nextNode:
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
 
@@ -318,15 +395,20 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				_, ok := cmdNode.Command.(*SQLCommand)
-				// If the SSE is a SQL expression, and the node can't be found, it might be a CTE table name
-				// CTEs are calculated during the evaluation of the SQL, so we won't have a node for them
-				// So we `continue` in order to support CTE functionality
-				// TODO: remove CTE table names from the list of table names during parsing of the SQL
-				if ok {
-					continue
+				if degraded {
+					var nodeErr error
+					if cmdNode.CMDType == TypeSQL {
+						nodeErr = sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+					} else {
+						nodeErr = MakeMissingDependentNodeError(cmdNode.refID, neededVar)
+					}
+					cmdNode.Disable(nodeErr)
+					continue nextNode
 				}
-				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				if cmdNode.CMDType == TypeSQL {
+					return sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+				}
+				return MakeMissingDependentNodeError(cmdNode.refID, neededVar)
 			}
 
 			// If the input is SQL, conversion is handled differently
@@ -363,6 +445,7 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)
+			neededNode.SetInputTo(cmdNode.RefID())
 
 			dp.SetEdge(edge)
 		}

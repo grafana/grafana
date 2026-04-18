@@ -1,18 +1,19 @@
-import { Observable, scan } from 'rxjs';
+import { type Observable, scan } from 'rxjs';
 
 import {
   createDataFrame,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   FieldType,
   LoadingState,
-  TestDataSourceResponse,
+  type TestDataSourceResponse,
 } from '@grafana/data';
-import { RuntimeDataSource, SceneDataQuery } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { RuntimeDataSource, type SceneDataQuery } from '@grafana/scenes';
 
-import { ExtensionsLog, ExtensionsLogItem } from './log';
+import { type ExtensionsLog, type ExtensionsLogItem } from './log';
 
 export class ExtensionsLogDataSource extends RuntimeDataSource {
   constructor(
@@ -47,7 +48,7 @@ export class ExtensionsLogDataSource extends RuntimeDataSource {
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({ status: 'success', message: 'OK' });
+    return Promise.resolve({ status: 'success', message: t('plugins.extensions-log-data-source.message.ok', 'OK') });
   }
 }
 

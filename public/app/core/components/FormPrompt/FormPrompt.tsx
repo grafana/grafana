@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import history from 'history';
+import type history from 'history';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Prompt } from './Prompt';
 
@@ -101,7 +101,6 @@ const UnsavedChangesModal = ({ onDiscard, onBackToForm, isOpen }: UnsavedChanges
       isOpen={isOpen}
       title={t('form-prompt.title', 'Leave page?')}
       onDismiss={onBackToForm}
-      icon="exclamation-triangle"
       className={css({ width: '500px' })}
     >
       <h5>

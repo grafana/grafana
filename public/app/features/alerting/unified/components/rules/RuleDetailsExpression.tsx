@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { t } from 'app/core/internationalization';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { t } from '@grafana/i18n';
+import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
 import { DetailsField } from '../DetailsField';

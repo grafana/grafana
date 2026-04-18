@@ -5,17 +5,21 @@ import (
 	"strings"
 )
 
+//go:generate mockery --name AuthInfoService --structname MockAuthInfoService --outpkg authinfotest --filename auth_info_service_mock.go --output ./authinfotest/
 type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
+//go:generate mockery --name Store --structname MockAuthInfoStore --outpkg authinfotest --filename auth_info_store_mock.go --output ./authinfotest/
 type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUserAuthModules(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
@@ -23,15 +27,14 @@ type Store interface {
 
 const (
 	// modules
-	PasswordAuthModule     = "password"
-	PasswordlessAuthModule = "passwordless"
-	APIKeyAuthModule       = "apikey"
-	SAMLAuthModule         = "auth.saml"
-	LDAPAuthModule         = "ldap"
-	AuthProxyAuthModule    = "authproxy"
-	JWTModule              = "jwt"
-	ExtendedJWTModule      = "extendedjwt"
-	RenderModule           = "render"
+	PasswordAuthModule  = "password"
+	APIKeyAuthModule    = "apikey"
+	SAMLAuthModule      = "auth.saml"
+	LDAPAuthModule      = "ldap"
+	AuthProxyAuthModule = "authproxy"
+	JWTModule           = "jwt"
+	ExtendedJWTModule   = "extendedjwt"
+	RenderModule        = "render"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
 	GoogleAuthModule     = "oauth_google"

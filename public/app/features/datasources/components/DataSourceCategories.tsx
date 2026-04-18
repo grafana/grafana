@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginMeta, type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { DataSourcePluginCategory } from 'app/types';
+import { type DataSourcePluginCategory } from 'app/types/datasources';
 
 import { ROUTES } from '../../connections/constants';
 

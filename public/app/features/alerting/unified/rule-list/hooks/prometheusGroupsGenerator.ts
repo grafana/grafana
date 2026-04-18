@@ -1,96 +1,104 @@
 import { useCallback } from 'react';
+import { type MergeExclusive } from 'type-fest';
 
-import { useDispatch } from 'app/types/store';
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type DataSourceRulesSourceIdentifier, type RuleHealth } from 'app/types/unified-alerting';
+import { type PromAlertingRuleState, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
+import { type PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
 interface UseGeneratorHookOptions {
+  /**
+   * Whether to populate the RTKQ cache with the groups.
+   * Populating cache might harm performance when fetching a lot of groups or fetching multiple pages
+   */
   populateCache?: boolean;
+  limitAlerts?: number;
 }
 
-interface FetchGroupsOptions {
-  groupLimit?: number;
-  groupNextToken?: string;
-}
-
-export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
-  const dispatch = useDispatch();
+export function usePrometheusGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
-      const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
+      const getRuleSourceGroupsWithCache = async (fetchOptions: GroupsNextPageOptions) => {
         const response = await getGroups({
           ruleSource: { uid: ruleSource.uid },
           notificationOptions: { showErrorAlert: false },
+          groupLimit,
           ...fetchOptions,
         }).unwrap();
-
-        if (hookOptions.populateCache) {
-          response.data.groups.forEach((group) => {
-            dispatch(
-              prometheusApi.util.upsertQueryData(
-                'getGroups',
-                { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
-                { data: { groups: [group] }, status: 'success' }
-              )
-            );
-          });
-        }
 
         return response;
       };
 
-      yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
+      yield* genericGroupsGenerator(getRuleSourceGroupsWithCache);
     },
-    [getGroups, dispatch, hookOptions.populateCache]
+    [getGroups]
   );
 }
 
+interface GrafanaPromApiFilter {
+  state?: PromAlertingRuleState[];
+  health?: RuleHealth[];
+  contactPoint?: string;
+  title?: string;
+  searchGroupName?: string;
+  searchFolder?: string;
+  type?: 'alerting' | 'recording';
+  dashboardUid?: string;
+}
+
+interface GrafanaFetchGroupsOptions extends GroupsNextPageOptions {
+  filter?: GrafanaPromApiFilter;
+  groupLimit?: number;
+  // Limits the number of total rules returned across all groups
+  // Rounds up to full groups, so the response may contain more rules than the group limit
+  ruleLimit?: number;
+}
+
+export type GrafanaFetchGroupsLimit = MergeExclusive<{ groupLimit: number }, { ruleLimit: number }>;
+
+export type DataSourceFetchGroupsLimit = { groupLimit: number };
+
+export interface FetchGroupsLimitOptions {
+  grafanaManagedLimit: GrafanaFetchGroupsLimit;
+  datasourceManagedLimit: DataSourceFetchGroupsLimit;
+}
+
 export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
-  const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+  const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: FetchGroupsOptions) => {
-      const response = await getGrafanaGroups(fetchOptions).unwrap();
+    async (fetchOptions: GrafanaFetchGroupsOptions) => {
+      const response = await getGrafanaGroups({
+        ...fetchOptions,
+        limitAlerts: hookOptions.limitAlerts,
+        ...fetchOptions.filter,
+      }).unwrap();
 
-      // This is not mandatory to preload ruler rules, but it improves the UX
-      // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
       if (hookOptions.populateCache) {
-        const cacheAndRulerPreload = response.data.groups.map(async (group) => {
-          dispatch(
-            alertRuleApi.util.prefetch(
-              'getGrafanaRulerGroup',
-              { folderUid: group.folderUid, groupName: group.name },
-              { force: true }
-            )
-          );
-          await dispatch(
-            prometheusApi.util.upsertQueryData(
-              'getGrafanaGroups',
-              { folderUid: group.folderUid, groupName: group.name },
-              { data: { groups: [group] }, status: 'success' }
-            )
-          );
-        });
-
-        await Promise.allSettled(cacheAndRulerPreload);
+        populateGroupsResponseCache(response.data.groups);
       }
 
       return response;
     },
-    [getGrafanaGroups, dispatch, hookOptions.populateCache]
+    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
   );
 
   return useCallback(
-    async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
+    async function* (limit: GrafanaFetchGroupsLimit, filter?: GrafanaPromApiFilter) {
+      const fetchGroups = (fetchOptions: GroupsNextPageOptions) =>
+        getGroupsAndProvideCache({
+          ...fetchOptions,
+          filter,
+          groupLimit: 'groupLimit' in limit ? limit.groupLimit : undefined,
+          ruleLimit: 'ruleLimit' in limit ? limit.ruleLimit : undefined,
+        });
+
+      yield* genericGroupsGenerator(fetchGroups);
     },
     [getGroupsAndProvideCache]
   );
@@ -113,21 +121,24 @@ export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO>(
   })();
 }
 
+interface GroupsNextPageOptions {
+  groupNextToken?: string;
+}
+
 // Generator lazily provides groups one by one only when needed
 // This might look a bit complex but it allows us to have one API for paginated and non-paginated Prometheus data sources
 // For unpaginated data sources we fetch everything in one go
 // For paginated we fetch the next page when needed
 async function* genericGroupsGenerator<TGroup>(
-  fetchGroups: (options: FetchGroupsOptions) => Promise<PromRulesResponse<TGroup>>,
-  groupLimit: number
+  fetchGroups: (options: GroupsNextPageOptions) => Promise<PromRulesResponse<TGroup>>
 ) {
-  let response = await fetchGroups({ groupLimit });
+  let response = await fetchGroups({ groupNextToken: undefined });
   yield response.data.groups;
 
   let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
-    response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
+    response = await fetchGroups({ groupNextToken: lastToken });
     yield response.data.groups;
     lastToken = response.data?.groupNextToken;
   }

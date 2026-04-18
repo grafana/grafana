@@ -1,14 +1,14 @@
-import uPlot, { Axis } from 'uplot';
+import { type default as uPlot, type Axis } from 'uplot';
 
 import {
   dateTimeFormat,
-  DecimalCount,
-  GrafanaTheme2,
+  type DecimalCount,
+  type GrafanaTheme2,
   guessDecimals,
   isBooleanUnit,
   roundDecimals,
   systemDateFormats,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 
@@ -163,8 +163,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     if (values) {
       config.values = values;
-    } else if (isTime) {
-      config.values = formatTime;
     } else if (formatValue) {
       config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
         let decimals = guessDecimals(roundDecimals(tickIncr, 6));
@@ -176,6 +174,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
           }
         });
       };
+    } else if (isTime) {
+      config.values = formatTime;
     }
 
     // store timezone

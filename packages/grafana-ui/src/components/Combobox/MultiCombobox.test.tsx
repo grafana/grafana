@@ -1,9 +1,13 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
-import { ComboboxOption } from './types';
+import { Drawer } from '../Drawer/Drawer';
+import { Modal } from '../Modal/Modal';
+
+import { MultiCombobox, type MultiComboboxProps } from './MultiCombobox';
+import { type ComboboxOption } from './types';
+import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
@@ -117,6 +121,39 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenNthCalledWith(3, [{ label: 'C', value: third }]);
   });
 
+  it('should allow for options to be deselected', async () => {
+    // This test ensures that our fix for async options doesn't break sync options
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = (props: MultiComboboxProps<string>) => {
+      const [value, setValue] = React.useState<string[]>(['a']);
+      return (
+        <MultiCombobox
+          {...props}
+          value={value}
+          onChange={(val) => {
+            setValue(val.map((v) => v.value));
+            onChange(val);
+          }}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox options={options} value={[]} onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+
+    // Click on option A to deselect it (it should be selected initially)
+    await user.click(await screen.findByRole('option', { name: 'A' }));
+
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+
   it('should be able to render a value that is not in the options', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -173,6 +210,22 @@ describe('MultiCombobox', () => {
     const fistPillRemoveButton = await screen.findByRole('button', { name: 'Remove A' });
     await user.click(fistPillRemoveButton);
     expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'a'));
+  });
+
+  it('should remove value when clicking on the close icon of the pill when pills are collapsed due to width constraint', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+      { label: 'D', value: 'd' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox width={40} options={options} value={['a', 'b', 'c', 'd']} onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    const removeButton = await screen.findByRole('button', { name: 'Remove D' });
+    await user.click(removeButton);
+    expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'd'));
   });
 
   it('should remove all selected items when clicking on clear all button', async () => {
@@ -248,6 +301,51 @@ describe('MultiCombobox', () => {
       await user.type(input, 'b');
       expect(screen.getByText('A')).toBeInTheDocument();
     });
+
+    it('should not render All when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
+    });
+
+    it('should not select option when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      const checkbox = screen.getByTestId(`combobox-option-${options[0].value}-checkbox`);
+      expect(checkbox).toBeInTheDocument();
+      expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  describe('duplicate and undefined values', () => {
+    it('should render only unique pills when value array contains duplicates', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a', 'a', 'b']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.getByText('B')).toBeInTheDocument();
+      expect(screen.queryByText('C')).not.toBeInTheDocument();
+      expect(screen.getAllByText('A')).toHaveLength(1);
+    });
+
+    it('should render fallback pills for duplicate values not present in options', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['d', 'd', 'a']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      // 'd' is not in options but should appear once as a fallback pill, not twice
+      expect(screen.getAllByText('d')).toHaveLength(1);
+    });
   });
 
   describe('async', () => {
@@ -278,7 +376,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
@@ -328,10 +426,10 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       await user.keyboard('a');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('b');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('c');
       act(() => jest.advanceTimersByTime(500)); // Resolve the second request, should be ignored
@@ -370,13 +468,148 @@ describe('MultiCombobox', () => {
       act(() => jest.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      act(() => jest.advanceTimersByTime(200));
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
       expect(item).toBeInTheDocument();
 
       expect(asyncOptions).toHaveBeenCalledTimes(1);
       expect(asyncOptions).toHaveBeenCalledWith('abc');
+    });
+
+    it('should allow deselecting items', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      // Debounce
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      // Click on Option 1 to deselect it (it should already be selected via value prop)
+      const item = await screen.findByRole('option', { name: 'Option 1' });
+      await user.click(item);
+
+      // Verify onChange was called to remove the item
+      expect(onChangeHandler).toHaveBeenCalledWith([]);
+    });
+
+    it('should allow deselecting items with async options using ComboboxOption value format', async () => {
+      // This test reproduces the bug where deselection doesn't work with async options
+      // when the value is passed as ComboboxOption objects
+      const asyncOptionsData = [
+        { label: 'Integration A', value: 'a' },
+        { label: 'Integration B', value: 'b' },
+        { label: 'Integration C', value: 'c' },
+      ];
+
+      const asyncOptions = jest.fn(() => Promise.resolve(asyncOptionsData));
+
+      // Use a controlled component to simulate the user's scenario
+      const ControlledComponent = () => {
+        const [selectedValue, setSelectedValue] = React.useState<Array<ComboboxOption<string>>>([
+          { label: 'Integration A', value: 'a' },
+        ]);
+
+        return (
+          <MultiCombobox
+            options={asyncOptions}
+            value={selectedValue}
+            onChange={(options) => {
+              onChangeHandler(options);
+              setSelectedValue(options);
+            }}
+          />
+        );
+      };
+
+      render(<ControlledComponent />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      // Wait for async options to load
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      // Integration A should be selected (shown as pill)
+      const pillRemoveButton = screen.getByRole('button', { name: 'Remove Integration A' });
+      expect(pillRemoveButton).toBeInTheDocument();
+
+      // Click on Integration A in the dropdown to deselect it
+      const item = await screen.findByRole('option', { name: 'Integration A' });
+      await user.click(item);
+
+      // Verify onChange was called to remove the item
+      expect(onChangeHandler).toHaveBeenCalledWith([]);
+
+      // The pill should be removed
+      expect(screen.queryByRole('button', { name: 'Remove Integration A' })).not.toBeInTheDocument();
+    });
+
+    it('shows loading message', async () => {
+      const loadingMessage = 'Loading options...';
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      await act(async () => jest.advanceTimersByTime(0));
+
+      expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
+
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    const options = [
+      { label: 'Option 1', value: 'a' },
+      { label: 'Option 2', value: 'b' },
+      { label: 'Option 3', value: 'c' },
+    ];
+
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <MultiCombobox options={options} value={[]} onChange={jest.fn()} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <MultiCombobox options={options} value={[]} onChange={jest.fn()} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

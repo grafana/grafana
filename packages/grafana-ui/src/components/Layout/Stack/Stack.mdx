@@ -7,9 +7,11 @@ import { Stack } from './Stack';
 
 The Stack component is a simple wrapper around the flexbox layout model that allows to easily create responsive and flexible layouts. It provides a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
 
-### Usage
+The Stack component intentionally does not allow you to pass in a className, and if you need to customize the styles beyond what the props allow, you should instead copy the styles needed from Stack into your own custom styled div (or relevant semantic component).
 
-#### When to use
+## Usage
+
+### When to use
 
 - For creating responsive and flexible layouts that can adapt to different screen sizes and orientations.
 - When needing a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
@@ -17,11 +19,41 @@ The Stack component is a simple wrapper around the flexbox layout model that all
 - When aiming to create equal height columns.
 - To create a grid-like structure with automatic wrapping and sizing of items based on the available space.
 
-#### When not to use
+### When not to use
 
 - For complex multi-dimensional layouts with intricate requirements that are better suited for CSS frameworks or grid systems.
-- When precise control over spacing and positioning of elements is necessary.
+- When precise control over spacing and positioning of elements is necessary. If you need more than the simple controls that Stack offers, you should use custom styles on a plain element.
 
-### Props
+## Display props
+
+There are 5 different props related to how the content is displayed:
+
+- `direction`, with possible values: `row`, `row-reverse`, `column`, `column-reverse`
+- `wrap`, with possible values: `nowrap`, `wrap`, `wrap-reverse`
+- `alignItems`, with possible values: `stretch`, `flex-start`, `flex-end`, `center`, `baseline`, `start`, `end`, `self-start`, `self-end`
+- `justifyContent`, with possible values: `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly`, `start`, `end`, `left`, `right`
+- `gap`, with possible values: ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)
+
+## Responsiveness
+
+All of the above props can be defined in a responsive way, meaning that different values will be set depending on the window size.
+
+To define any of them responsively, simply pass in an object with responsive breakpoints as keys. For instance, instead of defining direction in this way `direction='row'`
+define it like `direction={{ xs: 'column', md: 'row' }}`.
+This means that from the `xs` breakpoint up, direction is set to `column`, while from the `md` breakpoint up, it is set to `row`.
+
+The possible breakpoints in the theme can be found [here](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/themes/breakpoints.ts#L28).
+
+## Further Reading
+
+- [Storybook docs and props table](https://developers.grafana.com/ui/canary/index.html?path=/docs/general-layout-stack--docs)
+
+## Props
 
 <ArgTypes of={Stack} />
+
+## Design decisions
+
+Stack is designed for the common simple cases where it's faster to write `<Stack direction="column">...</Stack>` than it is to set up the styles hooks. If you are writing custom styles anyway, you should add the flex styles there instead of using a Stack. You can use `theme.spacing(number)` in your styles to match how numbers are used in props like `gap` and `width`.
+
+The style-related props that Stack supports are intentionally limited to the flex and sizing props. It's not expected that there would be changes needed to Stack unless browsers add new css properties related to flex.

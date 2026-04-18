@@ -1,22 +1,26 @@
-import { useMemo } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Input, Field, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
-import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
+import { dashboardEditActions } from '../../edit-pane/shared';
+import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
-import { TabItem } from './TabItem';
+import { type TabItem } from './TabItem';
 
-export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
 
   const tabCategory = useMemo(
@@ -24,10 +28,11 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
       new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          render: () => <TabTitleInput tab={model} isNewElement={isNewElement} />,
+          id: 'tab-options-title',
+          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement]
+    [isNewElement, model]
   );
 
   const repeatCategory = useMemo(
@@ -39,11 +44,12 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
+          id: 'tab-options-repeat-variable',
           description: t(
             'dashboard.tabs-layout.tab-options.repeat.variable.description',
             'Repeat this tab for each value in the selected variable.'
           ),
-          render: () => <TabRepeatSelect tab={model} />,
+          render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={model} />,
         })
       ),
     [model]
@@ -51,7 +57,32 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
+      id: 'tab-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'tab-section-variables-list',
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [tabCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory]
+    : [tabCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -65,8 +96,10 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
   return editOptions;
 }
 
-function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: boolean }) {
+function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: boolean; id?: string }) {
   const { title } = tab.useState();
+  const prevTitle = useRef('');
+
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = tab.hasUniqueTitle();
 
@@ -78,18 +111,21 @@ function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: bool
       }
     >
       <Input
+        id={id}
         ref={ref}
         title={t('dashboard.tabs-layout.tab-options.title-option', 'Title')}
         value={title}
+        onFocus={() => (prevTitle.current = title || '')}
+        onBlur={() => editTabTitleAction(tab, title || '', prevTitle.current || '')}
         onChange={(e) => tab.onChangeTitle(e.currentTarget.value)}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput}
       />
     </Field>
   );
 }
 
-function TabRepeatSelect({ tab }: { tab: TabItem }) {
+function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
   const { layout } = tab.useState();
-  const dashboard = useDashboard(tab);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -103,8 +139,9 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
   return (
     <>
       <RepeatRowSelect2
-        sceneContext={dashboard}
-        repeat={tab.getRepeatVariable()}
+        id={id}
+        sceneContext={tab}
+        repeat={tab.state.repeatByVariable}
         onChange={(repeat) => tab.onChangeRepeat(repeat)}
       />
       {isAnyPanelUsingDashboardDS ? (
@@ -124,7 +161,7 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
           <TextLink
             external
             href={
-              'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-tabs'
+              'https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard/#repeating-rows-and-tabs-and-the-dashboard-special-data-source'
             }
           >
             <Trans i18nKey="dashboard.tabs-layout.tab.repeat.learn-more">Learn more</Trans>
@@ -133,4 +170,23 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
       ) : undefined}
     </>
   );
+}
+
+function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
+  if (title !== '' && title === prevTitle) {
+    return;
+  }
+
+  if (title === '') {
+    const tabs = tab.getParentLayout().getTabsIncludingRepeats();
+    const existingNames = new Set(tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
+    title = generateUniqueTitle('New tab', existingNames);
+  }
+
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.tab-title', 'Change tab title'),
+    source: tab,
+    perform: () => tab.onChangeTitle(title),
+    undo: () => tab.onChangeTitle(prevTitle),
+  });
 }

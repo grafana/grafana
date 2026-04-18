@@ -1,15 +1,15 @@
-import configureMockStore, { MockStore } from 'redux-mock-store';
+import configureMockStore, { type MockStore } from 'redux-mock-store';
 import { thunk } from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { BackendSrv, FetchError, locationService, setEchoSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { type BackendSrv, type FetchError, locationService, setEchoSrv } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { type KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types/dashboard';
 
 import { Echo } from '../../../core/services/echo/Echo';
 import {
@@ -20,11 +20,11 @@ import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 import { getPreloadedState } from '../../variables/state/helpers';
 import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { TransactionStatus } from '../../variables/types';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
-import { DashboardSrv, getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
+import { type DashboardSrv, getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { getTimeSrv, setTimeSrv, type TimeSrv } from '../services/TimeSrv';
 
-import { initDashboard, InitDashboardArgs } from './initDashboard';
+import { initDashboard, type InitDashboardArgs } from './initDashboard';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 jest.mock('app/core/services/backend_srv');
@@ -62,6 +62,13 @@ jest.mock('@grafana/data', () => {
     })),
   };
 });
+jest.mock('app/core/app_events', () => ({
+  ...jest.requireActual('app/core/app_events'),
+  appEvents: {
+    publish: jest.fn(),
+    subscribe: jest.fn(),
+  },
+}));
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -289,6 +296,27 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
   it('Should redirect to custom home dashboard', () => {
     const location = locationService.getLocation();
     expect(location.pathname).toBe('/u/123/my-home');
+  });
+});
+
+describeInitScenario('Initializing home dashboard with query params', (ctx) => {
+  ctx.setup(() => {
+    // Set initial location with query params
+    locationService.push('/?doc=some-query-value');
+
+    ctx.args.routeName = DashboardRoutes.Home;
+    ctx.backendSrv.get.mockResolvedValue({
+      redirectUri: '/a/custom-home-plugin?tab=recent',
+    });
+  });
+
+  it('Should preserve query params when redirecting to custom home dashboard', () => {
+    const location = locationService.getLocation();
+    expect(location.pathname).toBe('/a/custom-home-plugin');
+
+    const search = locationService.getSearch();
+    expect(search.get('doc')).toBe('some-query-value');
+    expect(search.get('tab')).toBe('recent');
   });
 });
 

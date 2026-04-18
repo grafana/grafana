@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -13,17 +14,74 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  setPanelTitle,
+  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+
+function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const panel = this.panel;
+  const layoutElement = panel.parent!;
+  const rootId = useId();
+  const titleId = useId();
+  const descriptionId = useId();
+  const backgroundId = useId();
+
+  const panelOptions = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: rootId,
+          render: () => <OpenPanelEditViz panel={this.panel} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.title-option', 'Title'),
+          id: titleId,
+          value: panel.state.title,
+          popularRank: 1,
+          render: (descriptor) => (
+            <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
+          ),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.description', 'Description'),
+          id: descriptionId,
+          value: panel.state.description,
+          render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
+          id: backgroundId,
+          render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
+        })
+      );
+  }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
+
+  const layoutCategories = useMemo(
+    () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
+    [layoutElement]
+  );
+
+  return [panelOptions, ...layoutCategories];
+}
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -32,57 +90,30 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public panel: VizPanel) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const parent = this.panel.parent;
+    let isHidden: boolean | undefined;
+
+    if (parent instanceof AutoGridItem) {
+      const repeatIndex = parent.state.repeatedPanels?.indexOf(this.panel) ?? -1;
+      if (repeatIndex >= 0) {
+        isHidden = !parent.state.repeatedConditionalRendering![repeatIndex].state.result;
+      } else {
+        isHidden = !parent.state.conditionalRendering?.state.result;
+      }
+    }
+
     return {
       typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
       icon: 'chart-line',
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+      isHidden,
     };
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    const panel = this.panel;
-    const layoutElement = panel.parent!;
-
-    const panelOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            render: () => <OpenPanelEditViz panel={this.panel} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.title-option', 'Title'),
-            value: panel.state.title,
-            popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.description', 'Description'),
-            value: panel.state.description,
-            render: () => <PanelDescriptionTextArea panel={panel} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: () => <PanelBackgroundSwitch panel={panel} />,
-          })
-        );
-    }, [panel, isNewElement]);
-
-    const layoutCategories = useMemo(
-      () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
-      [layoutElement]
-    );
-
-    return [panelOptions, ...layoutCategories];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public onDelete() {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
@@ -104,17 +135,19 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
   }
 
   public onCopy() {
+    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
 
   public onChangeName(name: string) {
-    setPanelTitle(this.panel, name);
+    editPanelTitleAction(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
@@ -122,30 +155,28 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof AutoGridItem) {
-      this.panel.parent.scrollIntoView();
-    }
-    if (this.panel.parent instanceof DashboardGridItem) {
+    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
       this.panel.parent.scrollIntoView();
     }
   }
 }
 
-type OpenPanelEditVizProps = {
-  panel: VizPanel;
-};
+type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
+          const panelId = getPanelIdForVizPanel(panel);
+          locationService.partial({ editPanel: panelId });
+          DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
         }}
         icon="sliders-v-alt"
         fullWidth
         size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+        data-testid={selectors.components.Sidebar.configurePanelButton}
       >
         <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>

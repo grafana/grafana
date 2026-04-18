@@ -1,14 +1,14 @@
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { notTimeFieldMatcher } from '../matchers/predicates';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
+import { reduceFields, reduceTransformer, ReduceTransformerMode, type ReduceTransformerOptions } from './reduce';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -576,6 +576,64 @@ describe('Reducer Transformer', () => {
               6,
               6,
               6,
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  it('reduce fields mode keeps distinct label values with multiple reducers', async () => {
+    const cfg: DataTransformerConfig<ReduceTransformerOptions> = {
+      id: DataTransformerID.reduce,
+      options: {
+        mode: ReduceTransformerMode.ReduceFields,
+        reducers: [ReducerID.max, ReducerID.count],
+        labelsToFields: false,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      length: 3,
+      fields: [{ name: 'value', config: {}, labels: { category: 'apple' }, type: FieldType.number, values: [3, 4, 5] }],
+    });
+
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'value', config: {}, labels: { category: 'orange' }, type: FieldType.number, values: [6, 7, 8] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(2);
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        [
+          {
+            "config": {},
+            "labels": {
+              "category": "apple",
+              "reducer": "Max",
+            },
+            "name": "value",
+            "state": undefined,
+            "type": "number",
+            "values": [
+              5,
+            ],
+          },
+          {
+            "config": {},
+            "labels": {
+              "category": "apple",
+              "reducer": "Count",
+            },
+            "name": "value",
+            "state": undefined,
+            "type": "number",
+            "values": [
+              3,
             ],
           },
         ]

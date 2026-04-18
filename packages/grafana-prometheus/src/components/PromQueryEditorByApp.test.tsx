@@ -4,11 +4,11 @@ import { noop } from 'lodash';
 
 import { CoreApp } from '@grafana/data';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { alertingTestIds } from './PromQueryEditorForAlerting';
-import { Props } from './monaco-query-field/MonacoQueryFieldProps';
+import { type Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
@@ -26,12 +26,9 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   const dataSource = {
     getPrometheusTime: jest.fn((date, roundup) => 123),
     getQueryHints: jest.fn(() => []),
-    getDebounceTimeInMilliseconds: jest.fn(() => 300),
     languageProvider: {
       start: () => Promise.resolve([]),
-      syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();

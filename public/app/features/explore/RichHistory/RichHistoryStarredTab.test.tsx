@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { SortOrder } from 'app/core/utils/richHistory';
+import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
-import { RichHistoryStarredTab, RichHistoryStarredTabProps } from './RichHistoryStarredTab';
+import { RichHistoryStarredTab, type RichHistoryStarredTabProps } from './RichHistoryStarredTab';
 
 jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 

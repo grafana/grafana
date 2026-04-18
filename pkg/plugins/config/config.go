@@ -1,17 +1,15 @@
 package config
 
-import (
-	"github.com/grafana/grafana/pkg/setting"
-)
-
 // PluginManagementCfg is the configuration for the plugin management system.
 // It includes settings which are used to configure different components of plugin management.
 type PluginManagementCfg struct {
 	DevMode bool
 
-	PluginsPath string
+	// PluginsPaths: list of paths where Grafana will look for plugins.
+	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
+	PluginsPaths []string
 
-	PluginSettings       setting.PluginSettings
+	PluginSettings       PluginSettings
 	PluginsAllowUnsigned []string
 	DisablePlugins       []string
 	ForwardHostEnvVars   []string
@@ -24,36 +22,36 @@ type PluginManagementCfg struct {
 	GrafanaAppURL string
 
 	Features Features
-
-	HideAngularDeprecation []string
 }
 
 // Features contains the feature toggles used for the plugin management system.
 type Features struct {
-	ExternalCorePluginsEnabled  bool
-	SkipHostEnvVarsEnabled      bool
-	SriChecksEnabled            bool
-	PluginsCDNSyncLoaderEnabled bool
-	LocalizationForPlugins      bool
+	SriChecksEnabled       bool
+	LocalizationForPlugins bool
+	// Needed only until Tempo Alerting / metrics TraceQL is stable
+	// https://github.com/grafana/grafana/issues/106888
+	TempoAlertingEnabled bool
 }
 
+// PluginSettings maps plugin id to map of key/value settings.
+type PluginSettings map[string]map[string]string
+
 // NewPluginManagementCfg returns a new PluginManagementCfg.
-func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+func NewPluginManagementCfg(devMode bool, pluginsPaths []string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
-	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, grafanaComAPIToken string,
+	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPath:            pluginsPath,
-		DevMode:                devMode,
-		PluginSettings:         pluginSettings,
-		PluginsAllowUnsigned:   pluginsAllowUnsigned,
-		DisablePlugins:         disablePlugins,
-		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
-		GrafanaComAPIURL:       grafanaComAPIURL,
-		GrafanaAppURL:          appURL,
-		Features:               features,
-		HideAngularDeprecation: hideAngularDeprecation,
-		ForwardHostEnvVars:     forwardHostEnvVars,
-		GrafanaComAPIToken:     grafanaComAPIToken,
+		PluginsPaths:          pluginsPaths,
+		DevMode:               devMode,
+		PluginSettings:        pluginSettings,
+		PluginsAllowUnsigned:  pluginsAllowUnsigned,
+		DisablePlugins:        disablePlugins,
+		PluginsCDNURLTemplate: pluginsCDNURLTemplate,
+		GrafanaComAPIURL:      grafanaComAPIURL,
+		GrafanaAppURL:         appURL,
+		Features:              features,
+		ForwardHostEnvVars:    forwardHostEnvVars,
+		GrafanaComAPIToken:    grafanaComAPIToken,
 	}
 }

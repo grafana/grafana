@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config, type FetchError } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardAsButton } from './SaveDashboardButton';
-import { SaveDashboardModalProps } from './types';
+import { type SaveDashboardModalProps } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 interface SaveDashboardErrorProxyProps {
@@ -31,7 +31,9 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-  const isRestoreDashboardsEnabled = false;
+
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
+
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (
@@ -47,7 +49,7 @@ export const SaveDashboardErrorProxy = ({
               </Trans>
             </div>
           }
-          confirmText="Save and overwrite"
+          confirmText={t('dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite', 'Save and overwrite')}
           onConfirm={async () => {
             await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
@@ -88,7 +90,10 @@ export const SaveDashboardErrorProxy = ({
                   </Trans>
                 </div>
               }
-              confirmText="Save and overwrite"
+              confirmText={t(
+                'dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite',
+                'Save and overwrite'
+              )}
               onConfirm={async () => {
                 await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
                 onDismiss();
@@ -113,13 +118,13 @@ export const SaveDashboardErrorProxy = ({
 
 const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboardModalProps) => {
   const { onDashboardSave } = useDashboardSave();
+
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (
     <Modal
       className={styles.modal}
       title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard')}
-      icon="copy"
       isOpen={true}
       onDismiss={onDismiss}
     >

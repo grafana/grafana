@@ -2,8 +2,12 @@ import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types/accessControl';
+import {
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
+  type RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
@@ -175,6 +179,34 @@ describe('Rules group tests', () => {
       expect(mocks.useHasRuler).toHaveBeenCalled();
       expect(ui.detailsButton.query()).toBeInTheDocument();
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Ungrouped rules', () => {
+    const ungroupedGroup: CombinedRuleGroup = {
+      name: 'no_group_for_rule_TestRule',
+      rules: [
+        mockCombinedRule({
+          name: 'TestRule',
+          rulerRule: mockGrafanaRulerRule({ namespace_uid: 'folder-123' }),
+        }),
+      ],
+      totals: {},
+    };
+
+    const namespace: CombinedRuleNamespace = {
+      name: 'TestNamespace',
+      rulesSource: 'grafana',
+      groups: [ungroupedGroup],
+    };
+
+    beforeEach(() => {
+      mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
+    });
+
+    it('Should display rule name with (Ungrouped) suffix in grouped view', async () => {
+      renderRulesGroup(namespace, ungroupedGroup);
+      expect(await screen.findByText(/TestRule \(Ungrouped\)/)).toBeInTheDocument();
     });
   });
 });

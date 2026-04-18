@@ -1,88 +1,92 @@
-import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { defaultsDeep } from 'lodash';
 
-import { Options } from './panelcfg.gen';
+import {
+  FieldColorModeId,
+  type FieldConfigSource,
+  FieldType,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type GraphFieldConfig } from '@grafana/ui';
+import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-export class GaugeSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
+import { type Options } from './panelcfg.gen';
 
-    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
-      return;
-    }
-
-    // for many fields / series this is probably not a good fit
-    if (dataSummary.numberFieldCount >= 50) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, {}>({
-      name: SuggestionName.Gauge,
-      pluginId: 'gauge',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          thresholds: {
-            steps: [
-              { value: -Infinity, color: 'green' },
-              { value: 70, color: 'orange' },
-              { value: 85, color: 'red' },
-            ],
-            mode: ThresholdsMode.Percentage,
-          },
-          custom: {},
-        },
-        overrides: [],
+const withDefaults = (
+  suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
+): VisualizationSuggestion<Options, GraphFieldConfig> =>
+  defaultsDeep(suggestion, {
+    options: {
+      barWidthFactor: 0.3,
+      showThresholdMarkers: false,
+    },
+    cardOptions: {
+      previewModifier: (s) => {
+        if (s.options?.reduceOptions) {
+          s.options.reduceOptions.limit = 4;
+        }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
+        }
       },
-      cardOptions: {
-        previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 2;
-          }
-        },
-      },
-    });
+    },
+  } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          showThresholdMarkers: false,
-        },
-      });
-    } else {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-          showThresholdMarkers: false,
-        },
-      });
-    }
+const MAX_GAUGES = 10;
+
+export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (dataSummary) => {
+  if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return;
   }
-}
+
+  // for many fields / series this is probably not a good fit
+  if (dataSummary.fieldCountByType(FieldType.number) > MAX_GAUGES) {
+    return;
+  }
+
+  const fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> = {
+    defaults: {},
+    overrides: [],
+  };
+
+  const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
+    {
+      name: t('gauge.suggestions.arc', 'Gauge'),
+      fieldConfig,
+      options: { shape: 'gauge' },
+    },
+    {
+      name: t('gauge.suggestions.circular', 'Circular gauge'),
+      fieldConfig,
+      options: { shape: 'circle' },
+    },
+  ];
+
+  const shouldUseRawValues =
+    dataSummary.hasFieldType(FieldType.string) &&
+    dataSummary.frameCount === 1 &&
+    dataSummary.rowCountTotal <= MAX_GAUGES;
+
+  const showSparkline =
+    !shouldUseRawValues && dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
+
+  return suggestions.map((s) => {
+    const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
+
+    suggestion.options = suggestion.options ?? {};
+    suggestion.options.sparkline = showSparkline;
+
+    if (shouldUseRawValues) {
+      suggestion.fieldConfig = suggestion.fieldConfig ?? {
+        defaults: {},
+        overrides: [],
+      };
+      suggestion.fieldConfig.defaults.color = suggestion.fieldConfig.defaults.color ?? {
+        mode: FieldColorModeId.PaletteClassic,
+      };
+    }
+
+    return suggestion;
+  });
+};

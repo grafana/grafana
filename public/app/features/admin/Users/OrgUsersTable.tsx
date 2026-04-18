@@ -1,31 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Avatar,
   Box,
   Button,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   ConfirmModal,
-  FetchDataFunc,
+  type FetchDataFunc,
   Icon,
   InteractiveTable,
   Pagination,
   Stack,
   Tag,
   Text,
+  TextLink,
   Tooltip,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { AccessControlAction, OrgUser, Role } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
+import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
@@ -113,12 +115,15 @@ export const OrgUsersTable = ({
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'lastSeenAtAge'>) => {
+          // If lastSeenAt is before created, user has never logged in
+          const neverLoggedIn =
+            original.lastSeenAt && original.created && new Date(original.lastSeenAt) < new Date(original.created);
           return (
             <>
               {value && (
                 <>
-                  {value === '10 years' ? (
+                  {neverLoggedIn ? (
                     <Text color={'disabled'}>
                       <Trans i18nKey="admin.org-uers.last-seen-never">Never</Trans>
                     </Text>
@@ -188,15 +193,14 @@ export const OrgUsersTable = ({
                       <Trans i18nKey="admin.org-users.not-editable">
                         This user&apos;s role is not editable because it is synchronized from your auth provider. Refer
                         to the&nbsp;
-                        <a
+                        <TextLink
                           href={
                             'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
                           }
-                          rel="noreferrer"
-                          target="_blank"
+                          external
                         >
                           Grafana authentication docs
-                        </a>
+                        </TextLink>
                         &nbsp;for details.
                       </Trans>
                     </div>
@@ -261,8 +265,10 @@ export const OrgUsersTable = ({
       </Stack>
       {Boolean(userToRemove) && (
         <ConfirmModal
-          body={`Are you sure you want to delete user ${userToRemove?.login}?`}
-          confirmText="Delete"
+          body={t('admin.org-users-table.body-delete', 'Are you sure you want to delete user {{user}}?', {
+            user: userToRemove?.login,
+          })}
+          confirmText={t('admin.org-users-table.confirmText-delete', 'Delete')}
           title={t('admin.org-users-table.title-delete', 'Delete')}
           onDismiss={() => {
             setUserToRemove(null);

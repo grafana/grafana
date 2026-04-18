@@ -20,11 +20,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -40,7 +35,7 @@
         "tags": [
           "Playlist"
         ],
-        "description": "list objects of kind Playlist",
+        "description": "list or watch objects of kind Playlist",
         "operationId": "listPlaylist",
         "parameters": [
           {
@@ -148,16 +143,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
@@ -215,11 +200,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
@@ -233,11 +213,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -257,11 +232,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
@@ -273,11 +243,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -431,11 +396,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -485,11 +445,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -551,11 +506,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
@@ -573,11 +523,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
@@ -589,11 +534,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -675,11 +615,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -691,11 +626,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -793,7 +723,154 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "playlist.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Playlist"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Playlist",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists/{name}/status": {
+      "get": {
+        "tags": [
+          "Playlist"
+        ],
+        "description": "read status of the specified Playlist",
+        "operationId": "getPlaylistStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "playlist.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Playlist"
+        }
+      },
+      "put": {
+        "tags": [
+          "Playlist"
+        ],
+        "description": "replace status of the specified Playlist",
+        "operationId": "replacePlaylistStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -813,7 +890,110 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "playlist.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Playlist"
+        }
+      },
+      "patch": {
+        "tags": [
+          "Playlist"
+        ],
+        "description": "partially update status of the specified Playlist",
+        "operationId": "updatePlaylistStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
@@ -871,9 +1051,10 @@
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -893,28 +1074,13 @@
             ]
           },
           "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "playlist.grafana.app",
-            "kind": "Playlist",
-            "version": "__internal"
-          },
           {
             "group": "playlist.grafana.app",
             "kind": "Playlist",
@@ -923,23 +1089,7 @@
         ]
       },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem": {
-        "type": "object",
-        "required": [
-          "type",
-          "value"
-        ],
-        "properties": {
-          "type": {
-            "description": "type of the item.",
-            "type": "string",
-            "default": ""
-          },
-          "value": {
-            "description": "Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID",
-            "type": "string",
-            "default": ""
-          }
-        }
+        "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistItem"
       },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList": {
         "type": "object",
@@ -980,69 +1130,11 @@
           {
             "group": "playlist.grafana.app",
             "kind": "PlaylistList",
-            "version": "__internal"
-          },
-          {
-            "group": "playlist.grafana.app",
-            "kind": "PlaylistList",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "interval",
-          "items"
-        ],
-        "properties": {
-          "interval": {
-            "type": "string",
-            "default": ""
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem"
-                }
-              ]
-            }
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlayliststatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlayliststatusOperatorState": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -1056,21 +1148,88 @@
           "details": {
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": true
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
           }
-        }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistItem": {
+        "description": "Shared item definition for all versions",
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "description": "type of the item.",
+            "type": "string",
+            "enum": [
+              "dashboard_by_tag",
+              "dashboard_by_uid",
+              "dashboard_by_id"
+            ]
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec": {
+        "type": "object",
+        "required": [
+          "title",
+          "interval",
+          "items"
+        ],
+        "properties": {
+          "interval": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem"
+            }
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
@@ -1487,8 +1646,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -1579,6 +1737,32 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
+        "description": "Event represents a single event to a watched resource.",
+        "type": "object",
+        "required": [
+          "type",
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.runtime.RawExtension"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.runtime.RawExtension": {
+        "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
       }
     }
   }

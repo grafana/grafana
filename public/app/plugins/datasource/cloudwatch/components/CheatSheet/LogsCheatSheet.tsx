@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import Prism from 'prismjs';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Collapse, useStyles2, Text } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Collapse, useStyles2, Text, TextLink } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/internal';
 
+import { type CloudWatchLogsQuery, LogsQueryLanguage } from '../../dataquery.gen';
 import { trackSampleQuerySelection } from '../../tracking';
-import { CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../types';
+import { type CloudWatchQuery } from '../../types';
 
 import * as sampleQueries from './sampleQueries';
 import { cwliTokenizer, pplTokenizer, sqlTokenizer } from './tokenizer';
@@ -80,7 +81,7 @@ interface CollapseProps {
 const CheatSheetCollapse = (props: CollapseProps) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <Collapse label={props.label} isOpen={isOpen} onToggle={setIsOpen} key={props.key} collapsible>
+    <Collapse label={props.label} isOpen={isOpen} onToggle={setIsOpen} key={props.key}>
       {props.children}
     </Collapse>
   );
@@ -145,14 +146,12 @@ const LogsCheatSheet = (props: Props) => {
       ))}
       <div>
         Note: If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
-        <a
-          className={styles.link}
+        <TextLink
           href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
-          target="_blank"
-          rel="noreferrer"
+          external
         >
           See documentation for details
-        </a>
+        </TextLink>
         .
       </div>
     </div>
@@ -164,9 +163,6 @@ export default LogsCheatSheet;
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
     marginBottom: theme.spacing(2),
-  }),
-  link: css({
-    textDecoration: 'underline',
   }),
   cheatSheetExample: css({
     margin: theme.spacing(0.5, 0),

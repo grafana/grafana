@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
-import { Location } from 'history';
+import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -25,22 +26,29 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
+import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { ALERTING_PATHS } from '../../utils/navigation';
+import { EditorColumnHeader } from '../EditorColumnHeader';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useCreateNotificationTemplate,
   useNotificationTemplateMetadata,
   useUpdateNotificationTemplate,
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -99,6 +107,16 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
+  // Check if user has permission to test templates
+  const canTestTemplates =
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
+
+  // Only show preview and payload panels if both conditions are met:
+  // 1. It's a Grafana Alertmanager
+  // 2. User has the test permission
+  const showPreviewAndPayload = isGrafanaAlertManager && canTestTemplates;
+
   const error = updateTemplateError ?? createTemplateError;
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
@@ -106,7 +124,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
+  // AI feedback state
+  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
+
+  const { provenance } = useNotificationTemplateMetadata(originalTemplate);
+  const isProvisioned = isProvisionedResource(provenance);
+  const isImported = provenance === KnownProvenance.ConvertedPrometheus;
+  const isLegacy = originalTemplate ? isLegacyTemplate(originalTemplate) : false;
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
@@ -114,16 +138,16 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   // splitter for template and payload editor
   const columnSplitter = useSplitter({
     direction: 'column',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
-    initialSize: isGrafanaAlertManager ? 0.5 : 1,
+    // if showing preview/payload panels, split 50/50, otherwise 100/0 because there is no payload editor
+    initialSize: showPreviewAndPayload ? 0.5 : 1,
     dragPosition: 'middle',
   });
 
   // splitter for template editor and preview
   const rowSplitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 60/40, otherwise 100/0 because there is no preview
-    initialSize: isGrafanaAlertManager ? 0.6 : 1,
+    // if showing preview/payload panels, split 60/40, otherwise 100/0 because there is no preview
+    initialSize: showPreviewAndPayload ? 0.6 : 1,
     dragPosition: 'middle',
   });
 
@@ -141,9 +165,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
-    const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
-      tab: ContactPointsActiveTabs.NotificationTemplates,
-    });
+    // V2 nav has dedicated templates page, legacy nav uses tab parameter
+    const useV2Nav = config.featureToggles.alertingNavigationV2;
+    const returnLink = useV2Nav
+      ? makeAMLink(ALERTING_PATHS.TEMPLATES, alertmanager)
+      : makeAMLink(ALERTING_PATHS.NOTIFICATIONS, alertmanager, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        });
 
     try {
       if (!originalTemplate) {
@@ -162,6 +190,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     const content = getValues('content'),
       newValue = !content ? example : `${content}\n${example}`;
     setValue('content', newValue);
+  };
+
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+    setAiGeneratedTemplate(true);
   };
 
   return (
@@ -183,9 +216,26 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
             </Alert>
           )}
           {/* warning about provisioned template */}
-          {isProvisioned && (
+          {isProvisioned && isImported && (
+            <Box grow={0}>
+              <ImportedResourceAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isProvisioned && !isImported && (
             <Box grow={0}>
               <ProvisioningAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isLegacy && (
+            <Box grow={0}>
+              <Alert
+                title={t('alerting.template-form.title-legacy', 'This template uses a legacy format')}
+                severity="warning"
+              >
+                <Trans i18nKey="alerting.template-form.body-legacy">
+                  This template was imported from a Mimir Alertmanager and uses a legacy format.
+                </Trans>
+              </Alert>
             </Box>
           )}
 
@@ -202,7 +252,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                 >
                   <Input
                     {...register('title', {
-                      required: { value: true, message: 'Required.' },
+                      required: { value: true, message: t('alerting.template-form.message.required', 'Required.') },
                       validate: { titleIsUnique },
                     })}
                     placeholder={t(
@@ -263,7 +313,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                             'alerting.template-form.label-examples-documentation',
                                             'Examples documentation'
                                           )}
-                                          url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                          url={DOCS_URL_TEMPLATE_EXAMPLES}
                                           target="_blank"
                                           icon="external-link-alt"
                                         />
@@ -274,6 +324,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                       <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
                                     </Button>
                                   </Dropdown>
+                                )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
                                 )}
                                 <Button
                                   icon="question-circle"
@@ -290,7 +347,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </div>
                         <Box flex={1}>
                           <AutoSizer>
-                            {({ width, height }) => (
+                            {({ width, height }: Size) => (
                               <TemplateEditor
                                 value={getValues('content')}
                                 onBlur={(value) => setValue('content', value)}
@@ -303,8 +360,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </Box>
                       </div>
                     </div>
-                    {/* payload editor – only available for Grafana Alertmanager */}
-                    {isGrafanaAlertManager && (
+                    {/* payload editor – only shown if user has test permission */}
+                    {showPreviewAndPayload && (
                       <>
                         <div {...columnSplitter.splitterProps} />
                         <div {...columnSplitter.secondaryProps}>
@@ -329,8 +386,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                     )}
                   </div>
                 </div>
-                {/* preview column – full height and half-width */}
-                {isGrafanaAlertManager && (
+                {/* preview column – only shown if user has test permission */}
+                {showPreviewAndPayload && (
                   <div {...rowSplitter.secondaryProps}>
                     <div {...rowSplitter.splitterProps} />
                     <TemplatePreview
@@ -340,6 +397,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
+                      aiGeneratedTemplate={aiGeneratedTemplate}
+                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                     />
                   </div>
                 )}
@@ -380,7 +439,7 @@ For detailed information about notification templates, refer to our documentatio
           <div style={{ whiteSpace: 'pre' }}>{intro}</div>
           <div>
             <LinkButton
-              href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+              href={DOCS_URL_TEMPLATE_NOTIFICATIONS}
               target="_blank"
               icon="external-link-alt"
               variant="secondary"
@@ -493,10 +552,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'firing',
     annotations: {
       summary: 'Instance instance1 has been down for more than 5 minutes',
+      description:
+        'The instance instance1 has been unreachable for more than 5 minutes, indicating a potential service outage.',
     },
     labels: {
       alertname: 'InstanceDown',
       instance: 'instance1',
+      severity: 'critical',
+      service: 'service1',
+      environment: 'production',
     },
     startsAt: subDays(new Date(), 1).toISOString(),
     endsAt: addMinutes(new Date(), 5).toISOString(),
@@ -507,10 +571,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'resolved',
     annotations: {
       summary: 'CPU usage above 90%',
+      description:
+        'The CPU usage on instance1 has exceeded 90% for an extended period, which may indicate performance issues or resource constraints.',
     },
     labels: {
       alertname: 'CpuUsage',
       instance: 'instance1',
+      severity: 'warning',
+      service: 'service1',
+      environment: 'dev',
     },
     startsAt: subHours(new Date(), 4).toISOString(),
     endsAt: new Date().toISOString(),

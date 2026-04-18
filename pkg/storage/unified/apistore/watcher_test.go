@@ -8,15 +8,14 @@ package apistore_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
+	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -37,9 +36,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type StorageType string
@@ -103,24 +104,23 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Resource: "pods",
 	}
 
-	bucket := memblob.OpenBucket(nil)
-	if true {
-		tmp, err := os.MkdirTemp("", "xxx-*")
-		require.NoError(t, err)
-
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-	}
 	ctx := storagetesting.NewContext()
 
 	var server resource.ResourceServer
 	switch setupOpts.storageType {
 	case StorageTypeFile:
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
+		// Create in-memory BadgerDB for testing
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
+			WatchOptions: resource.WatchOptions{
+				SettleDelay: 1 * time.Millisecond,
+			},
 		})
 		require.NoError(t, err)
 
@@ -130,12 +130,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resource.HealthCheckRequest{})
+		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err)
 	case StorageTypeUnified:
-		if testing.Short() {
-			t.Skip("skipping integration test")
-		}
+		testutil.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
@@ -146,17 +144,18 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		ret, err := sql.NewBackend(sql.BackendOptions{
 			DBProvider:      eDB,
 			PollingInterval: time.Millisecond, // Keep this fast
+			DisablePruner:   infraDB.IsTestDbSQLite(),
 		})
 		require.NoError(t, err)
 		require.NotNil(t, ret)
 		ctx := storagetesting.NewContext()
-		err = ret.Init(ctx)
-		require.NoError(t, err)
+		svc, ok := ret.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:     ret,
 			Diagnostics: ret,
-			Lifecycle:   ret,
 		})
 		require.NoError(t, err)
 	default:
@@ -189,7 +188,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, store, destroyFunc, nil
 }
 
-func TestWatch(t *testing.T) {
+func TestIntegrationWatch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
@@ -377,7 +378,7 @@ func newPodList() runtime.Object {
 	return &example.PodList{}
 }
 
-func testKeyParser(val string) (*resource.ResourceKey, error) {
+func testKeyParser(val string) (*resourcepb.ResourceKey, error) {
 	k, err := grafanaregistry.ParseKey(val)
 	if err != nil {
 		if strings.HasPrefix(val, "pods/") {
@@ -407,7 +408,7 @@ func testKeyParser(val string) (*resource.ResourceKey, error) {
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}
-	return &resource.ResourceKey{
+	return &resourcepb.ResourceKey{
 		Namespace: k.Namespace,
 		Group:     k.Group,
 		Resource:  k.Resource,

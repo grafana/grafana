@@ -3,17 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
-import { Button, ButtonVariant } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Button, type ButtonVariant } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
-import { JustifyContent } from '../Layout/types';
-import { ResponsiveProp } from '../Layout/utils/responsiveness';
+import { type JustifyContent } from '../Layout/types';
+import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 
 export interface ConfirmContentProps {
   /** Modal content */
@@ -103,7 +103,11 @@ export const ConfirmContent = ({
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
-                <Input placeholder={placeholder} onChange={onConfirmationTextChange} />
+                <Input
+                  placeholder={placeholder}
+                  onChange={onConfirmationTextChange}
+                  data-testid={selectors.pages.ConfirmModal.input}
+                />
               </Field>
             </Stack>
           </div>

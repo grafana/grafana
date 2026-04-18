@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 
 import { Tab } from './Tab';
 import { TabsBar } from './TabsBar';
@@ -14,6 +15,9 @@ const setup = (jsx: JSX.Element) => {
 const onChangeTab = jest.fn();
 
 describe('Tabs', () => {
+  beforeEach(() => {
+    onChangeTab.mockClear();
+  });
   it('should call onChangeTab when clicking a tab', async () => {
     const { user } = setup(
       <TabsBar>
@@ -95,5 +99,29 @@ describe('Tabs', () => {
     );
 
     expect(screen.getByTestId('tab-suffix')).toBeInTheDocument();
+  });
+
+  it('should render disabled tab correctly', () => {
+    render(
+      <TabsBar>
+        <Tab label="Disabled Tab" active={false} onChangeTab={onChangeTab} disabled={true} />
+      </TabsBar>
+    );
+
+    const disabledTab = screen.getByRole('tab', { name: 'Disabled Tab' });
+    expect(disabledTab).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('should not call onChangeTab when disabled tab is clicked', async () => {
+    const { user } = setup(
+      <TabsBar>
+        <Tab label="Disabled Tab" active={false} onChangeTab={onChangeTab} disabled={true} />
+      </TabsBar>
+    );
+
+    const disabledTab = screen.getByRole('tab', { name: 'Disabled Tab' });
+    await user.click(disabledTab);
+
+    expect(onChangeTab).not.toHaveBeenCalled();
   });
 });

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataQuery, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
@@ -89,10 +89,9 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
-            aria-label={selectors.components.QueryEditorRow.title(query.refId)}
+            data-testid={selectors.components.QueryEditorRow.title(query.refId)}
             title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit query name')}
             onClick={onEditQuery}
-            data-testid="query-name-div"
             type="button"
           >
             <span className={styles.queryName}>{query.refId}</span>
@@ -138,7 +137,6 @@ const renderDataSource = <TQuery extends DataQuery>(
   const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
-    // eslint-disable-next-line @grafana/no-untranslated-strings
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 

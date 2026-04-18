@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
-import { FileListItem as FileListItemComponent, FileListItemProps } from './FileListItem';
+import { FileListItem as FileListItemComponent, type FileListItemProps } from './FileListItem';
 import mdx from './FileListItem.mdx';
 
 const meta: Meta = {
-  title: 'Forms/FileListItem',
+  title: 'Inputs/FileListItem',
   component: FileListItemComponent,
   parameters: {
     docs: {

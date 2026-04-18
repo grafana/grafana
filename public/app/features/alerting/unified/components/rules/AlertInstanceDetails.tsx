@@ -1,5 +1,5 @@
-import { t } from 'app/core/internationalization';
-import { Alert } from 'app/types/unified-alerting';
+import { t } from '@grafana/i18n';
+import { type Alert } from 'app/types/unified-alerting';
 
 import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';

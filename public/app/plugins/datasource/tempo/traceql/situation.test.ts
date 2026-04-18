@@ -1,4 +1,4 @@
-import { getSituation, SituationType } from './situation';
+import { getSituation, type SituationType } from './situation';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -71,6 +71,42 @@ describe('situation', () => {
       query: '{ .sla && span.http.status_code && span.http.status_code  = 200 }',
       cursorPos: 57,
       expected: { type: 'SPANSET_EXPRESSION_OPERATORS' },
+    },
+    // Query hint situations
+    {
+      query: '{.foo=300} with(',
+      cursorPos: 16,
+      expected: { type: 'QUERY_HINT_NAME' },
+    },
+    {
+      query: '{.foo=300} with( ',
+      cursorPos: 17,
+      expected: { type: 'QUERY_HINT_NAME' },
+    },
+    {
+      query: '{.foo=300} with(most_recent=',
+      cursorPos: 28,
+      expected: { type: 'QUERY_HINT_VALUE' },
+    },
+    {
+      query: '{.foo=300} with(most_recent= ',
+      cursorPos: 29,
+      expected: { type: 'QUERY_HINT_VALUE' },
+    },
+    {
+      query: '{.foo=300} with(most_recent=true',
+      cursorPos: 32,
+      expected: { type: 'QUERY_HINT_VALUE' },
+    },
+    {
+      query: '{} with(',
+      cursorPos: 8,
+      expected: { type: 'QUERY_HINT_NAME' },
+    },
+    {
+      query: '{} with(most_recent=',
+      cursorPos: 20,
+      expected: { type: 'QUERY_HINT_VALUE' },
     },
   ];
 

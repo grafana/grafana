@@ -304,7 +304,8 @@ When things go bad, it often helps if you understand the context in which the fa
 
 In the next part of the tutorial, we simulate some common use cases that someone would add annotations for.
 
-1. To manually add an annotation, click anywhere in your graph, then click **Add annotation**.
+1. To manually add an annotation, click anywhere on a graph line to open the data tooltip, then click **Add annotation**.
+   You can also press `Ctrl` or `Command` and click anywhere in the graph to open the **Add annotation** dialog box.
    Note: you might need to save the dashboard first.
 1. In **Description**, enter **Migrated user database**.
 1. Click **Save**.
@@ -375,7 +376,6 @@ The most basic alert rule consists of two parts:
    > {{< /docs/ignore >}}
 
    Some popular channels include:
-
    - [Email](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-email/)
    - [Webhooks](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/)
    - [Telegram](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/)

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Card, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -11,7 +11,7 @@ import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { FormDTO } from './types';
+import { type FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -76,7 +76,7 @@ export const ConfigureCorrelationSourceForm = () => {
           <span className={styles.variable} key={i}>
             {name}
             {i < variables.length - 1
-              ? // eslint-disable-next-line @grafana/no-untranslated-strings
+              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 ', '
               : ''}
           </span>
@@ -94,74 +94,78 @@ export const ConfigureCorrelationSourceForm = () => {
             variables.
           </p>
         </Trans>
-        <Controller
-          control={control}
-          name="sourceUID"
-          rules={{
-            required: {
-              value: true,
-              message: t('correlations.source-form.control-required', 'This field is required.'),
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Field
-              label={t('correlations.source-form.source-label', 'Source')}
-              description={t(
-                'correlations.source-form.source-description',
-                'Results from selected source data source have links displayed in the panel'
-              )}
-              htmlFor="source"
-              invalid={!!formState.errors.sourceUID}
-              error={formState.errors.sourceUID?.message}
-            >
-              <DataSourcePicker
-                onChange={withDsUID(onChange)}
-                noDefault
-                current={value}
-                inputId="source"
-                width={32}
-                disabled={correlation !== undefined}
-              />
-            </Field>
-          )}
-        />
-
-        <Field
-          label={t('correlations.source-form.results-label', 'Results field')}
-          description={t(
-            'correlations.source-form.results-description',
-            'The link will be shown next to the value of this field'
-          )}
-          className={styles.label}
-          invalid={!!formState.errors?.config?.field}
-          error={formState.errors?.config?.field?.message}
-        >
-          <Input
-            id={getInputId('field', correlation)}
-            {...register('config.field', {
-              required: t('correlations.source-form.results-required', 'This field is required.'),
-            })}
-            readOnly={readOnly}
+        <Stack direction="column" gap={2}>
+          <Controller
+            control={control}
+            name="sourceUID"
+            rules={{
+              required: {
+                value: true,
+                message: t('correlations.source-form.control-required', 'This field is required.'),
+              },
+            }}
+            render={({ field: { onChange, value } }) => (
+              <Field
+                noMargin
+                label={t('correlations.source-form.source-label', 'Source')}
+                description={t(
+                  'correlations.source-form.source-description',
+                  'Results from selected source data source have links displayed in the panel'
+                )}
+                htmlFor="source"
+                invalid={!!formState.errors.sourceUID}
+                error={formState.errors.sourceUID?.message}
+              >
+                <DataSourcePicker
+                  onChange={withDsUID(onChange)}
+                  noDefault
+                  current={value}
+                  inputId="source"
+                  width={32}
+                  disabled={correlation !== undefined}
+                />
+              </Field>
+            )}
           />
-        </Field>
-        {variables.length > 0 && (
-          <Card>
-            <Card.Heading>{formText.heading}</Card.Heading>
-            <Card.Description>
-              {formText.descriptionPre}
-              <VariableList />
-              <br />
-              <Trans i18nKey="correlations.source-form.description">
-                A data point needs to provide values to all variables as fields or as transformations output to make the
-                correlation button appear in the visualization.
+
+          <Field
+            noMargin
+            label={t('correlations.source-form.results-label', 'Results field')}
+            description={t(
+              'correlations.source-form.results-description',
+              'The link will be shown next to the value of this field'
+            )}
+            className={styles.label}
+            invalid={!!formState.errors?.config?.field}
+            error={formState.errors?.config?.field?.message}
+          >
+            <Input
+              id={getInputId('field', correlation)}
+              {...register('config.field', {
+                required: t('correlations.source-form.results-required', 'This field is required.'),
+              })}
+              readOnly={readOnly}
+            />
+          </Field>
+          {variables.length > 0 && (
+            <Card noMargin>
+              <Card.Heading>{formText.heading}</Card.Heading>
+              <Card.Description>
+                {formText.descriptionPre}
+                <VariableList />
                 <br />
-                Note: Not every variable needs to be explicitly defined below. A transformation such as{' '}
-                <span className={styles.variable}>logfmt</span> will create variables for every key/value pair.
-              </Trans>
-            </Card.Description>
-          </Card>
-        )}
-        <TransformationsEditor readOnly={readOnly} />
+                <Trans i18nKey="correlations.source-form.description">
+                  A data point needs to provide values to all variables as fields or as transformations output to make
+                  the correlation button appear in the visualization.
+                  <br />
+                  Note: Not every variable needs to be explicitly defined below. A transformation such as{' '}
+                  <span className={styles.variable}>logfmt</span> will create variables for every key/value pair.
+                </Trans>
+              </Card.Description>
+            </Card>
+          )}
+          <TransformationsEditor readOnly={readOnly} />
+        </Stack>
       </FieldSet>
     </>
   );

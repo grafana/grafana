@@ -3,23 +3,25 @@ import { useEffect } from 'react';
 
 import {
   DataTransformerID,
-  GrafanaTheme2,
-  PanelOptionsEditorBuilder,
+  type GrafanaTheme2,
+  type PanelOptionsEditorBuilder,
   PluginState,
-  StandardEditorContext,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type StandardEditorContext,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/spatial.svg';
+import lightImage from '../images/light/spatial.svg';
 
-import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
+import { SpatialCalculation, SpatialOperation, SpatialAction, type SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
-import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
+import { isLineBuilderOption, getSpatialTransformer } from './spatialTransformer';
 
 // Nothing defined in state
 const supplier = (
@@ -37,15 +39,25 @@ const supplier = (
       options: [
         {
           value: SpatialAction.Prepare,
-          label: 'Prepare spatial field',
+          label: t('transformers.supplier.label.prepare-spatial-field', 'Prepare spatial field'),
           description: 'Set a geometry field based on the results of other fields',
         },
         {
           value: SpatialAction.Calculate,
-          label: 'Calculate value',
-          description: 'Use the geometry to define a new field (heading/distance/area)',
+          label: t('transformers.supplier.label.calculate-value', 'Calculate value'),
+          description: t(
+            'transformers.supplier.description.geometry-define-field-headingdistancearea',
+            'Use the geometry to define a new field (heading/distance/area)'
+          ),
         },
-        { value: SpatialAction.Modify, label: 'Transform', description: 'Apply spatial operations to the geometry' },
+        {
+          value: SpatialAction.Modify,
+          label: t('transformers.supplier.label.transform', 'Transform'),
+          description: t(
+            'transformers.supplier.description.apply-spatial-operations-to-the-geometry',
+            'Apply spatial operations to the geometry'
+          ),
+        },
       ],
     },
   });
@@ -58,9 +70,9 @@ const supplier = (
       defaultValue: SpatialCalculation.Heading,
       settings: {
         options: [
-          { value: SpatialCalculation.Heading, label: 'Heading' },
-          { value: SpatialCalculation.Area, label: 'Area' },
-          { value: SpatialCalculation.Distance, label: 'Distance' },
+          { value: SpatialCalculation.Heading, label: t('transformers.supplier.label.heading', 'Heading') },
+          { value: SpatialCalculation.Area, label: t('transformers.supplier.label.area', 'Area') },
+          { value: SpatialCalculation.Distance, label: t('transformers.supplier.label.distance', 'Distance') },
         ],
       },
     });
@@ -74,13 +86,16 @@ const supplier = (
         options: [
           {
             value: SpatialOperation.AsLine,
-            label: 'As line',
+            label: t('transformers.supplier.label.as-line', 'As line'),
             description: 'Create a single line feature with a vertex at each row',
           },
           {
             value: SpatialOperation.LineBuilder,
-            label: 'Line builder',
-            description: 'Create a line between two points',
+            label: t('transformers.supplier.label.line-builder', 'Line builder'),
+            description: t(
+              'transformers.supplier.description.create-a-line-between-two-points',
+              'Create a line between two points'
+            ),
           },
         ],
       },
@@ -132,13 +147,13 @@ export const SetGeometryTransformerEditor = (props: Props) => {
   const pane = getTransformerOptionPane<SpatialTransformOptions>(props, supplier);
   return (
     <div>
-      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.items.map((v) => v.renderElement())}</div>
       <div>
         {pane.categories.map((c) => {
           return (
             <div key={c.props.id} className={styles.wrap}>
               <h5>{c.props.title}</h5>
-              <div className={styles.item}>{c.items.map((s) => s.render())}</div>
+              <div className={styles.item}>{c.items.map((s) => s.renderElement())}</div>
             </div>
           );
         })}
@@ -159,13 +174,17 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransformOptions> = {
-  id: DataTransformerID.spatial,
-  editor: SetGeometryTransformerEditor,
-  transformation: spatialTransformer,
-  name: spatialTransformer.name,
-  description: spatialTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+export const getSpatialTransformRegistryItem: () => TransformerRegistryItem<SpatialTransformOptions> = () => {
+  const spatialTransformer = getSpatialTransformer();
+  return {
+    id: DataTransformerID.spatial,
+    editor: SetGeometryTransformerEditor,
+    transformation: spatialTransformer,
+    name: spatialTransformer.name,
+    description: spatialTransformer.description,
+    state: PluginState.alpha,
+    categories: new Set([TransformerCategory.PerformSpatialOperations]),
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

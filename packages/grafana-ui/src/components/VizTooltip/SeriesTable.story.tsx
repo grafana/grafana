@@ -1,9 +1,9 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { SeriesTable } from './SeriesTable';
 
 const meta: Meta<typeof SeriesTable> = {
-  title: 'Visualizations/VizTooltip/SeriesTable',
+  title: 'Plugins/SeriesTable',
   component: SeriesTable,
   argTypes: {
     timestamp: {

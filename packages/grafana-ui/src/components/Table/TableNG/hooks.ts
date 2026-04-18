@@ -1,0 +1,760 @@
+import { debounce } from 'lodash';
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useLayoutEffect,
+  type RefObject,
+  type CSSProperties,
+  useEffect,
+} from 'react';
+import { type Column, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
+
+import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+
+import { type TableColumnResizeActionCallback } from '../types';
+
+import { TABLE } from './constants';
+import {
+  type FilterType,
+  type FooterFieldState,
+  type NestedRowEntry,
+  type SortByBehavior,
+  type TableRow,
+  type TableSortByFieldState,
+  type TableSummaryRow,
+  type TypographyCtx,
+} from './types';
+import {
+  getDisplayName,
+  applySort,
+  getColumnTypes,
+  getRowHeight,
+  computeColWidths,
+  buildHeaderHeightMeasurers,
+  buildCellHeightMeasurers,
+  IS_SAFARI_26,
+  applyFilter,
+  compileFrameToRecords,
+} from './utils';
+
+export interface FilteredRowsOptions {
+  hasNestedFrames: boolean;
+}
+
+export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
+  const [filter, setFilter] = useState<FilterType>({});
+  const filterResult = useMemo(
+    () => applyFilter(rows, filter, fields, hasNestedFrames),
+    [rows, filter, fields, hasNestedFrames]
+  );
+  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
+}
+
+export interface SortedRowsOptions {
+  hasNestedFrames: boolean;
+  initialSortBy?: TableSortByFieldState[];
+}
+
+export interface SortedRowsResult {
+  rows: TableRow[];
+  sortColumns: SortColumn[];
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+}
+
+interface ManagedSortProps {
+  sortByBehavior: SortByBehavior;
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+  sortBy?: TableSortByFieldState[];
+}
+
+export function useManagedSort({ sortByBehavior, setSortColumns, sortBy }: ManagedSortProps) {
+  useEffect(() => {
+    if (sortByBehavior === 'managed' && sortBy) {
+      setSortColumns(
+        sortBy.map(({ displayName, desc }) => ({
+          columnKey: displayName,
+          direction: desc === true ? 'DESC' : 'ASC',
+        }))
+      );
+    }
+  }, [setSortColumns, sortBy, sortByBehavior]);
+}
+
+export function useSortedRows(
+  rows: TableRow[],
+  fields: Field[],
+  nestedFields: Field[],
+  { initialSortBy, hasNestedFrames }: SortedRowsOptions
+): SortedRowsResult {
+  const allFields = useMemo(() => [...fields, ...nestedFields], [fields, nestedFields]);
+  const initialSortColumns = useMemo<SortColumn[]>(
+    () =>
+      initialSortBy?.flatMap(({ displayName, desc }) => {
+        if (!allFields.some((f) => getDisplayName(f) === displayName)) {
+          return [];
+        }
+        return [
+          {
+            columnKey: displayName,
+            direction: desc ? ('DESC' as const) : ('ASC' as const),
+          },
+        ];
+      }) ?? [],
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
+
+  const sortedRows = useMemo(
+    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
+    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
+  );
+
+  return {
+    rows: sortedRows,
+    sortColumns,
+    setSortColumns,
+  };
+}
+
+export interface PaginatedRowsOptions {
+  height: number;
+  width: number;
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
+  headerHeight: number;
+  footerHeight: number;
+  paginationHeight?: number;
+  enabled: boolean;
+  hasNestedFrames?: boolean;
+}
+
+export interface PaginatedRowsResult {
+  rows: TableRow[];
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  numPages: number;
+  numRows: number;
+  rowsPerPage: number;
+  pageRangeStart: number;
+  pageRangeEnd: number;
+  smallPagination: boolean;
+}
+
+// hand-measured. pagination height is 30px, plus 8px top margin
+const PAGINATION_HEIGHT = 38;
+
+export function usePaginatedRows(
+  rows: TableRow[],
+  { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames }: PaginatedRowsOptions
+): PaginatedRowsResult {
+  // TODO: allow persisted page selection via url
+  const [page, setPage] = useState(0);
+  const numRows = useMemo(() => rows.filter((r) => r.__depth === 0).length, [rows]);
+
+  // calculate average row height if row height is variable.
+  const avgRowHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+
+    if (typeof rowHeight === 'number') {
+      return rowHeight;
+    }
+
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
+    }
+
+    // we'll just measure 100 rows to estimate (skipping nested rows. we don't want to consider nested rows to avoid hiding and showing
+    // them as they are collapsed and expanded)
+    let sum = 0;
+    let count = 0;
+    for (let i = 0; i < Math.min(100, rows.length); i++) {
+      const row = rows[i];
+      if (row.__depth > 0) {
+        continue;
+      }
+      sum += rowHeight(rows[i]);
+      count++;
+    }
+    return sum / count;
+  }, [rows, rowHeight, enabled]);
+
+  const smallPagination = useMemo(() => enabled && width < TABLE.PAGINATION_LIMIT, [enabled, width]);
+
+  // using dimensions of the panel, calculate pagination parameters
+  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd } = useMemo((): {
+    numPages: number;
+    rowsPerPage: number;
+    pageRangeStart: number;
+    pageRangeEnd: number;
+  } => {
+    if (!enabled) {
+      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
+    }
+
+    // calculate number of rowsPerPage based on height stack
+    const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
+    const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
+    // ensure at least one row per page is displayed
+    let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
+
+    // calculate row range for pagination summary display
+    const pageRangeStart = page * rowsPerPage + 1;
+    let pageRangeEnd = pageRangeStart + rowsPerPage - 1;
+    if (pageRangeEnd > numRows) {
+      pageRangeEnd = numRows;
+    }
+
+    const numPages = Math.ceil(numRows / rowsPerPage);
+    return {
+      numPages,
+      rowsPerPage,
+      pageRangeStart,
+      pageRangeEnd,
+    };
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
+
+  // safeguard against page overflow on panel resize or other factors
+  useLayoutEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    if (page > numPages) {
+      // resets pagination to end
+      setPage(numPages - 1);
+    }
+  }, [numPages, enabled, page, setPage]);
+
+  // apply pagination to the sorted rows
+  const paginatedRows = useMemo(() => {
+    if (!enabled) {
+      return rows;
+    }
+
+    const result = [];
+    const pageOffset = page * rowsPerPage;
+
+    let count = hasNestedFrames ? -1 * pageOffset : 0;
+    let i = hasNestedFrames ? 0 : pageOffset;
+    while (count <= rowsPerPage && i < rows.length) {
+      const currRow = rows[i];
+      i++;
+
+      if (currRow.__depth === 0) {
+        count++;
+      }
+      if (count >= 1 && count <= rowsPerPage) {
+        result.push(currRow);
+      }
+    }
+
+    return result;
+  }, [page, rowsPerPage, rows, enabled, hasNestedFrames]);
+
+  return {
+    rows: paginatedRows,
+    page: enabled ? page : -1,
+    numRows,
+    setPage,
+    numPages,
+    rowsPerPage,
+    pageRangeStart,
+    pageRangeEnd,
+    smallPagination,
+  };
+}
+
+export const useNestedRows = (
+  rows: TableRow[],
+  nestedData: DataFrame[] | undefined,
+  hasNestedFrames: boolean,
+  nestedFramesFieldName: string | undefined,
+  filter: FilterType,
+  sortColumns: SortColumn[]
+): NestedRowEntry[] => {
+  const frameToRecords = useMemo(() => {
+    if (!hasNestedFrames || !nestedFramesFieldName || !nestedData?.[0]) {
+      return;
+    }
+    return compileFrameToRecords(nestedData[0]);
+  }, [hasNestedFrames, nestedFramesFieldName, nestedData]);
+
+  return useMemo(() => {
+    const result: NestedRowEntry[] = [];
+    if (!hasNestedFrames || !nestedFramesFieldName || !frameToRecords || !nestedData) {
+      return result;
+    }
+
+    for (const parentRow of rows) {
+      // Type guard to check if data exists as it's optional
+      const nestedFrame = nestedData[parentRow.__index];
+      if (!nestedFrame) {
+        continue;
+      }
+
+      const rawRows = frameToRecords(nestedFrame, parentRow.__index);
+      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const sortedRows = applySort(
+        filterResult.filteredRows,
+        nestedFrame.fields,
+        sortColumns,
+        getColumnTypes(nestedFrame.fields)
+      );
+      result[parentRow.__index] = { raw: rawRows, final: sortedRows, filterResult };
+    }
+
+    return result;
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
+};
+
+const ICON_WIDTH = 16;
+const ICON_GAP = 4;
+
+interface UseHeaderHeightOptions {
+  enabled: boolean;
+  fields: Field[];
+  columnWidths: number[];
+  sortColumns: SortColumn[];
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+}
+
+export function useHeaderHeight({
+  fields,
+  enabled,
+  columnWidths,
+  sortColumns,
+  typographyCtx,
+  showTypeIcons = false,
+}: UseHeaderHeightOptions): number {
+  const perIconSpace = ICON_WIDTH + ICON_GAP;
+
+  const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+
+  const columnAvailableWidths = useMemo(
+    () =>
+      columnWidths.map((c, idx) => {
+        if (idx >= fields.length) {
+          return 0; // no width available for this column yet
+        }
+
+        let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        const field = fields[idx];
+
+        // filtering icon
+        if (field.config?.custom?.filterable) {
+          width -= perIconSpace;
+        }
+        // sorting icon
+        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
+          width -= perIconSpace;
+        }
+        // type icon
+        if (showTypeIcons) {
+          width -= perIconSpace;
+        }
+        // sadly, the math for this is off by exactly 1 pixel. shrug.
+        return Math.floor(width) - 1;
+      }),
+    [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
+  );
+
+  const headerHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+    return getRowHeight(
+      fields,
+      { __index: -1, __depth: 0 },
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      measurers,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
+  }, [fields, enabled, columnAvailableWidths, measurers]);
+
+  return headerHeight;
+}
+
+interface UseRowHeightOptions {
+  columnWidths: number[];
+  fields: Field[];
+  hasNestedFrames: boolean;
+  defaultHeight: NonNullable<CSSProperties['height']>;
+  defaultNestedHeight: NonNullable<CSSProperties['height']>;
+  visibleNestedRowCounts: Array<number | null>;
+  typographyCtx: TypographyCtx;
+  maxHeight?: number;
+  nestedData?: DataFrame[] | undefined;
+  nestedRows: NestedRowEntry[];
+  nestedFields: Field[];
+  nestedColWidths: number[];
+}
+
+const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - (2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT));
+
+// TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
+export function useRowHeight({
+  columnWidths,
+  fields,
+  defaultHeight,
+  defaultNestedHeight,
+  typographyCtx,
+  maxHeight,
+  hasNestedFrames,
+  nestedData,
+  nestedRows,
+  nestedFields,
+  nestedColWidths,
+  visibleNestedRowCounts,
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const nestedMeasurers = useMemo(
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
+    [nestedFields, typographyCtx, maxHeight]
+  );
+
+  const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
+  const totalNestedWidth = useMemo(() => nestedColWidths.reduce((acc, width) => acc + width, 0), [nestedColWidths]);
+  const nestedHasOverflow = useMemo(() => totalParentWidth < totalNestedWidth, [totalParentWidth, totalNestedWidth]);
+
+  const getNestedRowHeightWithCache = useMemo(() => {
+    if (typeof defaultNestedHeight === 'string') {
+      return () => 0;
+    }
+
+    if ((nestedMeasurers?.length ?? 0) === 0) {
+      return () => defaultNestedHeight;
+    }
+
+    const nestedRowCache: Array<number[] | undefined> = visibleNestedRowCounts.map((count) =>
+      count == null ? undefined : Array(count)
+    );
+
+    return (row: TableRow) => {
+      if (row.__parentIndex == null) {
+        return 0;
+      }
+
+      const nestedRowCacheEntry = nestedRowCache[row.__parentIndex];
+      if (nestedRowCacheEntry == null) {
+        return 0;
+      }
+
+      const trueNestedColWidths = getTrueColWidths(nestedColWidths);
+      let result = nestedRowCacheEntry[row.__index];
+      if (result == null) {
+        result = nestedRowCacheEntry[row.__index] = getRowHeight(
+          nestedFields,
+          row,
+          trueNestedColWidths,
+          defaultNestedHeight,
+          nestedMeasurers
+        );
+      }
+      return result;
+    };
+  }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
+
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
+  const hasWrappedCols = (measurers?.length ?? 0) > 0;
+
+  const getRowHeightWithCache = useMemo(() => {
+    if (typeof defaultHeight === 'string') {
+      return () => 0;
+    }
+
+    if (!hasWrappedCols) {
+      return () => defaultHeight;
+    }
+
+    const trueColWidths = getTrueColWidths(columnWidths);
+    const cache: Array<number | undefined> = Array(fields[0].values.length);
+    return (row: TableRow) => {
+      let result = cache[row.__index];
+      if (result == null) {
+        result = cache[row.__index] = getRowHeight(fields, row, trueColWidths, defaultHeight, measurers);
+      }
+      return result;
+    };
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+
+  const rowHeight = useMemo(() => {
+    // row height is only complicated when there are nested frames or wrapped columns.
+    if (typeof defaultHeight === 'string' || !(hasWrappedCols || hasNestedFrames)) {
+      return defaultHeight;
+    }
+
+    if (typeof defaultNestedHeight === 'string') {
+      return defaultNestedHeight;
+    }
+
+    return (row: TableRow): number => {
+      // nested rows
+      if (row.__depth > 0) {
+        // if unexpanded, height === 0
+        const visibleNestedRowCount = visibleNestedRowCounts[row.__index];
+        if (visibleNestedRowCount == null) {
+          return 0;
+        }
+
+        // if expanded with no rows, height === no data height
+        if (visibleNestedRowCount === 0) {
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+        }
+
+        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
+        const nestedRowsHeight = nestedRows[row.__index].final.reduce(
+          (acc, row) => acc + getNestedRowHeightWithCache(row),
+          0
+        );
+        const scrollbarHeight = nestedHasOverflow ? 16 : 0;
+        return nestedRowsHeight + nestedHeaderHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
+      }
+
+      return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
+    };
+  }, [
+    getNestedRowHeightWithCache,
+    getRowHeightWithCache,
+    defaultHeight,
+    defaultNestedHeight,
+    hasNestedFrames,
+    hasWrappedCols,
+    nestedHasOverflow,
+    nestedRows,
+    nestedData,
+    visibleNestedRowCounts,
+  ]);
+
+  return rowHeight;
+}
+
+/**
+ * react-data-grid is a little unwieldy when it comes to column resize events.
+ * we want to detect a few different column resize signals:
+ *   - dragging the handle (only want to dispatch when handle is released)
+ *   - double-clicking the handle (sets the column to the minimum width to fit content)
+ * `onColumnResize` dispatches events throughout a dragged resize, and `onColumnWidthsChanged` doesn't
+ * emit an event when double-click resizing occurs, so we have to build something custom on top of these
+ * behaviors in order to get everything working.
+ */
+interface UseColumnResizeState {
+  columnKey: string | undefined;
+  width: number;
+}
+
+const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 }) satisfies UseColumnResizeState;
+
+export function useColumnResize(
+  onColumnResize: TableColumnResizeActionCallback = () => {}
+): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
+  // these must be refs. if we used setState, we would run into race conditions with these event listeners
+  const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
+  const pointerIsDown = useRef(false);
+
+  // to detect whether we got a double-click resize, we track whether the pointer is currently down
+  useLayoutEffect(() => {
+    function pointerDown(_event: PointerEvent) {
+      pointerIsDown.current = true;
+    }
+
+    function pointerUp(_event: PointerEvent) {
+      pointerIsDown.current = false;
+    }
+
+    window.addEventListener('pointerdown', pointerDown);
+    window.addEventListener('pointerup', pointerUp);
+
+    return () => {
+      window.removeEventListener('pointerdown', pointerDown);
+      window.removeEventListener('pointerup', pointerUp);
+    };
+  });
+
+  const dispatchEvent = useCallback(() => {
+    if (colResizeState.current.columnKey) {
+      onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width));
+      colResizeState.current = { ...INITIAL_COL_RESIZE_STATE };
+    }
+    window.removeEventListener('click', dispatchEvent, { capture: true });
+  }, [onColumnResize]);
+
+  // this is the callback that gets passed to react-data-grid
+  const dataGridResizeHandler = useCallback(
+    (column: Column<TableRow, TableSummaryRow>, width: number) => {
+      if (!colResizeState.current.columnKey) {
+        window.addEventListener('click', dispatchEvent, { capture: true });
+      }
+
+      colResizeState.current.columnKey = column.key;
+      colResizeState.current.width = width;
+
+      // when double clicking to resize, this handler will fire, but the pointer will not be down,
+      // meaning that we should immediately flush the new width
+      if (!pointerIsDown.current) {
+        dispatchEvent();
+      }
+    },
+    [dispatchEvent]
+  );
+
+  return dataGridResizeHandler;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  const updateScrollbarDimensions = debounce(() => {
+    const el = ref.current?.element;
+    if (el) {
+      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
+    }
+  }, 150);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+    if (!el || IS_SAFARI_26) {
+      return;
+    }
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height, updateScrollbarDimensions]);
+
+  return scrollbarWidth;
+}
+
+export function useColWidths(
+  visibleFields: Field[],
+  availableWidth: number,
+  frozenColumns?: number
+): [number[], number] {
+  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
+
+  // this is to avoid buggy situations where all visible columns are frozen
+  const numFrozenColsFullyInView = useMemo(() => {
+    if (!frozenColumns || frozenColumns <= 0) {
+      return -1;
+    }
+
+    const fullyVisibleCols = widths.reduce(
+      ([count, remainingWidth], nextWidth) => {
+        if (remainingWidth - nextWidth >= 0) {
+          return [count + 1, remainingWidth - nextWidth];
+        }
+        return [count, 0];
+      },
+      [0, availableWidth]
+    )[0];
+
+    // de-noise memoized changes to the columns array, and only change this
+    // number when the number of frozen columns changes or once there are fewer
+    // visible columns than the number of frozen columns.
+    return Math.min(fullyVisibleCols, frozenColumns);
+  }, [widths, availableWidth, frozenColumns]);
+
+  return [widths, numFrozenColsFullyInView];
+}
+
+const isReducer = (maybeReducer: string): maybeReducer is ReducerID => maybeReducer in ReducerID;
+const nonMathReducers = new Set<ReducerID>([
+  ReducerID.allValues,
+  ReducerID.changeCount,
+  ReducerID.count,
+  ReducerID.countAll,
+  ReducerID.distinctCount,
+  ReducerID.first,
+  ReducerID.firstNotNull,
+  ReducerID.last,
+  ReducerID.lastNotNull,
+  ReducerID.uniqueValues,
+]);
+const isNonMathReducer = (reducer: string) => isReducer(reducer) && nonMathReducers.has(reducer);
+const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
+const shouldReducerSkipFormatting = (reducer: string) => isReducer(reducer) && noFormattingReducers.has(reducer);
+
+export const useReducerEntries = (
+  field: Field,
+  rows: TableRow[],
+  displayName: string,
+  colIdx: number
+): Array<[string, string | null]> => {
+  return useMemo(() => {
+    const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
+
+    if (
+      reducers.length === 0 ||
+      (field.type !== FieldType.number && reducers.every((reducerId) => !isNonMathReducer(reducerId)))
+    ) {
+      return [];
+    }
+
+    // Create a new state object that matches the original behavior exactly
+    const newState: FooterFieldState = {
+      lastProcessedRowCount: 0,
+      ...(field.state || {}), // Preserve any existing state properties
+    };
+
+    // Assign back to field
+    field.state = newState;
+
+    const currentRowCount = rows.length;
+    const lastRowCount = newState.lastProcessedRowCount;
+
+    // Check if we need to invalidate the cache
+    if (lastRowCount !== currentRowCount) {
+      // Cache should be invalidated as row count has changed
+      if (newState.calcs) {
+        delete newState.calcs;
+      }
+      // Update the row count tracker
+      newState.lastProcessedRowCount = currentRowCount;
+    }
+
+    // Calculate all specified reducers
+    const results: Record<string, number | null> = reduceField({
+      field: {
+        ...field,
+        values: rows.map((row) => row[displayName]),
+      },
+      reducers,
+    });
+
+    return reducers.map((reducerId) => {
+      if (
+        results[reducerId] === undefined ||
+        // For non-number fields, only show special count reducers
+        (field.type !== FieldType.number && !isNonMathReducer(reducerId)) ||
+        // for countAll, only show the reducer in the first column
+        (reducerId === ReducerID.countAll && colIdx !== 0)
+      ) {
+        return [reducerId, null];
+      }
+
+      const value = results[reducerId];
+      let result = null;
+      if (!shouldReducerSkipFormatting(reducerId) && field.display) {
+        result = formattedValueToString(field.display(value));
+      } else if (value != null) {
+        result = String(value);
+      }
+
+      return [reducerId, result];
+    });
+  }, [field, rows, displayName, colIdx]);
+};

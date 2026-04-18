@@ -1,26 +1,17 @@
 import { cx } from '@emotion/css';
-import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { PropsWithChildren, useRef } from 'react';
-import * as React from 'react';
+import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { ModalBase } from './ModalBase';
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
 
-export interface Props {
-  /** @deprecated no longer used */
-  icon?: IconName;
-  /** @deprecated no longer used */
-  iconTooltip?: string;
-  /** Title for the modal or custom header element */
-  title: string | JSX.Element;
+interface BaseProps {
   className?: string;
   contentClassName?: string;
   closeOnEscape?: boolean;
@@ -34,9 +25,28 @@ export interface Props {
   onClickBackdrop?: () => void;
 }
 
+interface WithStringTitleProps extends BaseProps {
+  /** Title for the modal or custom header element */
+  title: string;
+  ariaLabel?: never;
+}
+
+interface WithCustomTitleProps extends BaseProps {
+  /** Title for the modal or custom header element */
+  title: JSX.Element;
+  /** aria-label for the dialog. only needed when passing a custom title element */
+  ariaLabel: string;
+}
+
+export type Props = WithStringTitleProps | WithCustomTitleProps;
+
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-modal--docs
+ */
 export function Modal(props: PropsWithChildren<Props>) {
   const {
     title,
+    ariaLabel,
     children,
     isOpen = false,
     closeOnEscape = true,
@@ -48,59 +58,44 @@ export function Modal(props: PropsWithChildren<Props>) {
     trapFocus = true,
   } = props;
   const styles = useStyles2(getModalStyles);
-
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Handle interacting outside the dialog and pressing
-  // the Escape key to close the modal.
-  const { overlayProps, underlayProps } = useOverlay(
-    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
-    ref
-  );
-
-  // Get props for the dialog and its title
-  const { dialogProps, titleProps } = useDialog({}, ref);
-
-  if (!isOpen) {
-    return null;
-  }
+  const titleId = useId();
 
   const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
 
   return (
-    <OverlayContainer>
-      <div
-        role="presentation"
-        className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-        {...underlayProps}
-      />
-      <FocusScope contain={trapFocus} autoFocus restoreFocus>
-        <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
-          <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
-            {
-              // FIXME: custom title components won't get an accessible title.
-              // Do we really want to support them or shall we just limit this ModalTabsHeader?
-              typeof title !== 'string' && title
-            }
-            <div className={styles.modalHeaderClose}>
-              <IconButton
-                name="times"
-                size="xl"
-                onClick={onDismiss}
-                aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
-              />
-            </div>
-          </div>
-          <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
+    <ModalBase
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      closeOnEscape={closeOnEscape}
+      closeOnBackdropClick={closeOnBackdropClick}
+      trapFocus={trapFocus}
+      className={className}
+      onClickBackdrop={onClickBackdrop}
+      aria-label={ariaLabel}
+      aria-labelledby={typeof title === 'string' ? titleId : undefined}
+    >
+      <div className={headerClass}>
+        {typeof title === 'string' && <ModalHeader title={title} id={titleId} />}
+        {
+          // FIXME: custom title components won't get an accessible title.
+          // Do we really want to support them or shall we just limit this ModalTabsHeader?
+          typeof title !== 'string' && title
+        }
+        <div className={styles.modalHeaderClose}>
+          <IconButton
+            name="times"
+            size="xl"
+            onClick={onDismiss}
+            aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
+          />
         </div>
-      </FocusScope>
-    </OverlayContainer>
+      </div>
+      <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
+    </ModalBase>
   );
 }
 
-function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
+function ModalButtonRow({ leftItems, children }: { leftItems?: ReactNode; children: ReactNode }) {
   const styles = useStyles2(getModalStyles);
 
   if (leftItems) {
@@ -128,14 +123,3 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
 }
 
 Modal.ButtonRow = ModalButtonRow;
-
-interface DefaultModalHeaderProps {
-  id?: string;
-  title: string;
-  icon?: IconName;
-  iconTooltip?: string;
-}
-
-function DefaultModalHeader({ icon, iconTooltip, title, id }: DefaultModalHeaderProps): JSX.Element {
-  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} id={id} />;
-}

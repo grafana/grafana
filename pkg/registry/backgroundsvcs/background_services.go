@@ -9,18 +9,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
@@ -29,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -36,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -44,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
@@ -57,7 +58,7 @@ func ProvideBackgroundServiceRegistry(
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService,
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboardsmetric.Service,
@@ -71,10 +72,14 @@ func ProvideBackgroundServiceRegistry(
 	appRegistry *appregistry.Service,
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
 	dashboardServiceImpl *service.DashboardServiceImpl,
+	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
+	fixedRolesLoader *accesscontrol.FixedRolesLoader,
+	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
+	installSync installsync.Syncer,
+	zanzanaService *authz.EmbeddedZanzanaService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
-	_ serviceaccounts.Service, _ *guardian.Provider,
-	_ *sanitizer.Provider,
+	_ serviceaccounts.Service,
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration,
@@ -98,8 +103,6 @@ func ProvideBackgroundServiceRegistry(
 		remoteCache,
 		secretsService,
 		StorageService,
-		searchService,
-		entityEventsService,
 		grpcServerProvider,
 		saService,
 		pluginStore,
@@ -118,6 +121,11 @@ func ProvideBackgroundServiceRegistry(
 		appRegistry,
 		pluginDashboardUpdater,
 		dashboardServiceImpl,
+		secretsGarbageCollectionWorker,
+		fixedRolesLoader,
+		noopIAMRolesSyncer,
+		installSync,
+		zanzanaService,
 	)
 }
 

@@ -18,9 +18,14 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
+  hideLogo?: string | true;
   scenes?: boolean;
   shareView?: string;
   ref?: string; // used for repo preview
+  // Used by template dashboards to identify the specific dashboard file
+  path?: string;
+  // Used by community template dashboards to identify the Grafana.com dashboard
+  gnetId?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

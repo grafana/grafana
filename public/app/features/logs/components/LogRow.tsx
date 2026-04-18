@@ -1,12 +1,20 @@
 import { debounce } from 'lodash';
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder } from '@grafana/data';
+import {
+  type CoreApp,
+  type DataFrame,
+  dateTimeFormat,
+  type LogRowContextOptions,
+  type LogRowModel,
+  type LogsSortOrder,
+  type TimeRange,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
-import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
+import { Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -14,7 +22,7 @@ import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, type LogRowStyles } from './getLogRowStyles';
 
 export interface Props {
   row: LogRowModel;
@@ -56,6 +64,7 @@ export interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  timeRange: TimeRange;
 }
 
 export const LogRow = ({
@@ -105,10 +114,7 @@ export const LogRow = ({
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
-    () =>
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row,
+    () => (row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row),
     [forceEscape, row]
   );
   const errorMessage = checkLogsError(row);
@@ -292,6 +298,7 @@ export const LogRow = ({
             mouseIsOver={mouseIsOver}
             onBlur={onMouseLeave}
             expanded={showDetails}
+            forceEscape={forceEscape}
             logRowMenuIconsBefore={logRowMenuIconsBefore}
             logRowMenuIconsAfter={logRowMenuIconsAfter}
           />
@@ -316,6 +323,7 @@ export const LogRow = ({
           styles={styles}
           isFilterLabelActive={props.isFilterLabelActive}
           pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+          timeRange={props.timeRange}
         />
       )}
     </>

@@ -1,23 +1,24 @@
 import { isString } from 'lodash';
-import { Observable, of, OperatorFunction } from 'rxjs';
+import { type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
+  type AnnotationEvent,
   AnnotationEventFieldSource,
-  AnnotationEventMappings,
-  AnnotationQuery,
-  AnnotationSupport,
-  DataFrame,
-  DataSourceApi,
-  DataTransformContext,
-  Field,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type AnnotationSupport,
+  type DataFrame,
+  type DataSourceApi,
+  type DataTransformContext,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  KeyValue,
+  type KeyValue,
   standardTransformers,
 } from '@grafana/data';
-import { config } from 'app/core/config';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -97,22 +98,44 @@ export interface AnnotationFieldInfo {
 }
 
 // These fields get added to the standard UI
-export const annotationEventNames: AnnotationFieldInfo[] = [
+export const getAnnotationEventNames: () => AnnotationFieldInfo[] = () => [
   {
     key: 'time',
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
-    placeholder: 'time, or the first time field',
+    placeholder: t(
+      'annotations.get-annotation-event-names.placeholder.time-or-the-first-field',
+      '{{defaultField}}, or the first time field',
+      { defaultField: 'time' }
+    ),
   },
-  { key: 'timeEnd', label: 'end time', help: 'When this field is defined, the annotation will be treated as a range' },
+  {
+    key: 'timeEnd',
+    // label: 'end time',
+    help: t(
+      'annotations.get-annotation-event-names.help.annotation-treated-as-range',
+      'When this field is defined, the annotation will be treated as a range'
+    ),
+  },
   {
     key: 'title',
   },
   {
     key: 'text',
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.string),
-    placeholder: 'text, or the first text field',
+    placeholder: t(
+      'annotations.get-annotation-event-names.placeholder.text-or-the-first-field',
+      '{{defaultField}}, or the first text field',
+      { defaultField: 'text' }
+    ),
   },
-  { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
+  {
+    key: 'tags',
+    split: ',',
+    help: t(
+      'annotations.get-annotation-event-names.help.results-split-on-comma',
+      'The results will be split on comma (,)'
+    ),
+  },
   {
     key: 'id',
   },
@@ -134,7 +157,7 @@ export const publicDashboardEventNames: AnnotationFieldInfo[] = [
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   ...(config.publicDashboardAccessToken ? publicDashboardEventNames : []),
-  ...annotationEventNames,
+  ...getAnnotationEventNames(),
   { key: 'userId' },
   { key: 'login' },
   { key: 'email' },
@@ -253,7 +276,6 @@ export function getAnnotationsFromData(
 // polluting public API.
 
 const legacyRunner = [
-  'prometheus',
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // This does not check if you have permissions!
@@ -14,6 +14,13 @@ type DashboardQuery struct {
 	OrgID int64
 	UID   string // to select a single dashboard
 	Limit int
+
+	DeprecatedInternalID int64 // to select a single dashboard
+
+	// MaxRows is used internally by the iterator to fetch data in batches
+	// When set, the SQL query will include LIMIT MaxRows
+	// If Limit is smaller, that will be used instead
+	MaxRows int
 
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
@@ -26,11 +33,15 @@ type DashboardQuery struct {
 	GetHistory bool
 	Version    int64
 
+	// Allow fallback to dashboard table when version data is missing
+	// Used during migration to handle dashboards without version entries
+	AllowFallback bool
+
 	// Only folders
 	GetFolders bool
 
 	// The label requirements
-	Labels []*resource.Requirement
+	Labels []*resourcepb.Requirement
 
 	// DESC|ASC, how to order the IDs
 	Order string // asc required to use lastID, desc required for export with history
@@ -50,15 +61,12 @@ type LibraryPanelQuery struct {
 	LastID int64
 }
 
-type DashboardAccess interface {
-	resource.StorageBackend
-	resource.ResourceIndexServer
-	LegacyMigrator
-
-	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboardV1.Dashboard, int64, error)
-	SaveDashboard(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard, failOnExisting bool) (*dashboardV1.Dashboard, bool, error)
-	DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardV1.Dashboard, bool, error)
-
-	// Get a typed list
+type DashboardAccessor interface {
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error)
+}
+
+type Migrator interface {
+	MigrateDashboards(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+	MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+	MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }

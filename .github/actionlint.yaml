@@ -1,0 +1,28 @@
+# These are just aliases to github-hosted runners
+self-hosted-runner:
+  labels:
+    - github-hosted-ubuntu-arm64
+    - github-hosted-ubuntu-arm64-large
+    - github-hosted-ubuntu-x64-small
+    - github-hosted-ubuntu-x64-large
+    - github-hosted-windows-x64-large
+    - ubuntu-x64
+    - ubuntu-x64-io
+    - ubuntu-x64-small
+    - ubuntu-x64-small-io
+    - ubuntu-x64-large
+    - ubuntu-x64-large-io
+    - ubuntu-x64-xlarge
+    - ubuntu-x64-xlarge-io
+    - ubuntu-x64-2xlarge
+    - ubuntu-x64-2xlarge-io
+    - ubuntu-arm64
+    - ubuntu-arm64-io
+    - ubuntu-arm64-small
+    - ubuntu-arm64-small-io
+    - ubuntu-arm64-large
+    - ubuntu-arm64-large-io
+    - ubuntu-arm64-xlarge
+    - ubuntu-arm64-xlarge-io
+    - ubuntu-arm64-2xlarge
+    - ubuntu-arm64-2xlarge-io

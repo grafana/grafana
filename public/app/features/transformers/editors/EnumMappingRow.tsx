@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
+import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
 
 type EnumMappingRowProps = {
   transformIndex: number;
@@ -89,7 +89,11 @@ const EnumMappingRow = ({
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row')}
+              />
             </div>
           </td>
           {isEditing ? (
@@ -112,7 +116,7 @@ const EnumMappingRow = ({
             </td>
           )}
           <td className={styles.textAlignCenter}>
-            <HorizontalGroup spacing="sm">
+            <Stack gap={1}>
               <IconButton
                 name="trash-alt"
                 onClick={onRemoveButtonClick}
@@ -123,7 +127,7 @@ const EnumMappingRow = ({
                 )}
                 tooltip={t('transformers.enum-mapping-row.remove-enum-row-tooltip-delete', 'Delete')}
               />
-            </HorizontalGroup>
+            </Stack>
           </td>
         </tr>
       )}

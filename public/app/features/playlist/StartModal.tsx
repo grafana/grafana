@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
-import { Playlist } from '../../api/clients/playlist';
+import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { PlaylistMode } from './types';
+import { type PlaylistMode } from './types';
 
 export interface Props {
   playlist: Playlist;
@@ -17,13 +17,15 @@ export interface Props {
 export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
+  const [hideLogo, setHideLogo] = useState(false);
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
+  const [displayPlaylistNav, setDisplayPlaylistNav] = useState(true);
 
   const modes: Array<SelectableValue<PlaylistMode>> = [
-    { label: 'Normal', value: false },
-    { label: 'Kiosk', value: true },
+    { label: t('playlist.start-modal.modes.label.normal', 'Normal'), value: false },
+    { label: t('playlist.start-modal.modes.label.kiosk', 'Kiosk'), value: true },
   ];
 
   const onStart = () => {
@@ -33,6 +35,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     }
     if (autoFit) {
       params.autofitpanels = true;
+    }
+    if (hideLogo) {
+      params.hideLogo = '1';
     }
 
     if (!displayTimePicker) {
@@ -44,8 +49,11 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     if (!displayLinks) {
       params['_dash.hideLinks'] = true;
     }
+    if (!displayPlaylistNav) {
+      params['_dash.hidePlaylistNav'] = true;
+    }
 
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata.name}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata?.name}`, params));
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       mode: mode,
@@ -53,30 +61,63 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   };
 
   return (
-    <Modal
-      isOpen={true}
-      icon="play"
-      title={t('playlist.start-modal.title-start-playlist', 'Start playlist')}
-      onDismiss={onDismiss}
-    >
+    <Modal isOpen={true} title={t('playlist.start-modal.title-start-playlist', 'Start playlist')} onDismiss={onDismiss}>
       <FieldSet>
-        <Field label={t('playlist.start-modal.label-mode', 'Mode')}>
-          <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
-        </Field>
-        <Field>
-          <Checkbox
-            label={t('playlist.start-modal.label-autofit', 'Autofit')}
-            description={t(
-              'playlist.start-modal.description-panel-heights-adjusted-screen',
-              'Panel heights will be adjusted to fit screen size'
-            )}
-            name="autofix"
-            value={autoFit}
-            onChange={(e) => setAutofit(e.currentTarget.checked)}
-          />
-        </Field>
-        {config.featureToggles.dashboardScene && (
+        <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
+          <Field noMargin label={t('playlist.start-modal.label-mode', 'Mode')}>
+            <RadioButtonGroup
+              value={mode}
+              options={modes}
+              onChange={(v) => {
+                setMode(v);
+                if (!v) {
+                  setHideLogo(false);
+                }
+              }}
+            />
+          </Field>
+          <Field noMargin>
+            <Checkbox
+              label={t('playlist.start-modal.label-autofit', 'Autofit')}
+              description={t(
+                'playlist.start-modal.description-panel-heights-adjusted-screen',
+                'Panel heights will be adjusted to fit screen size'
+              )}
+              name="autofix"
+              value={autoFit}
+              onChange={(e) => setAutofit(e.currentTarget.checked)}
+            />
+          </Field>
+          {mode && (
+            <Field noMargin>
+              <Checkbox
+                label={t('playlist.start-modal.label-hide-logo', 'Hide logo')}
+                description={t(
+                  'playlist.start-modal.description-hide-logo',
+                  'Hide the branding footer from the dashboard'
+                )}
+                name="hideLogo"
+                value={hideLogo}
+                onChange={(e) => setHideLogo(e.currentTarget.checked)}
+              />
+            </Field>
+          )}
+          {config.featureToggles.dashboardNewLayouts && (
+            <Field noMargin>
+              <Checkbox
+                label={t('playlist.start-modal.label-playlist-nav', 'Navigation buttons')}
+                description={t(
+                  'playlist.start-modal.description-playlist-nav',
+                  'Show previous and next buttons to manually navigate between dashboards'
+                )}
+                name="displayPlaylistNav"
+                value={displayPlaylistNav}
+                onChange={(e) => setDisplayPlaylistNav(e.currentTarget.checked)}
+              />
+            </Field>
+          )}
           <Field
+            noMargin
             label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
             description={t(
               'playlist.start-modal.description-customize-dashboard-elements-visibility',
@@ -106,11 +147,11 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
               </Stack>
             </Box>
           </Field>
-        )}
+        </Stack>
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec.title }}>
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec?.title }}>
             Start {'{{title}}'}
           </Trans>
         </Button>

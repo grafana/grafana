@@ -5,20 +5,20 @@ import { useDebounce } from 'react-use';
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
   rangeUtil,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/plugin-ui';
+import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
-import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
+import { Alert, Input, type FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
-import { SelectableResourceValue } from '../../resources/types';
-import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../../types';
+import { type SelectableResourceValue } from '../../resources/types';
+import { type CloudWatchJsonData, type CloudWatchSecureJsonData } from '../../types';
 import { LogGroupsFieldWrapper } from '../shared/LogGroups/LogGroupsField';
 
 import { SecureSocksProxySettingsNewStyling } from './SecureSocksProxySettingsNewStyling';
@@ -94,8 +94,14 @@ export const ConfigEditor = (props: Props) => {
           {warning}
         </Alert>
       )}
+      <DataSourceDescription
+        dataSourceName="Amazon CloudWatch"
+        docsLink="https://grafana.com/docs/plugins/cloudwatch/latest/"
+      />
+      <Divider />
       <ConnectionConfig
         {...props}
+        showHttpProxySettings
         loadRegions={
           datasource &&
           (async () => {
@@ -177,6 +183,7 @@ export const ConfigEditor = (props: Props) => {
                 });
               }}
               maxNoOfVisibleLogGroups={2}
+              showQueryScopeSelector={false}
               //legacy props
               legacyOnChange={(logGroups) => {
                 updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);

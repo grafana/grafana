@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
@@ -7,7 +7,7 @@ import { ToolbarButtonRow } from './ToolbarButtonRow';
 import mdx from './ToolbarButtonRow.mdx';
 
 const meta: Meta<typeof ToolbarButtonRow> = {
-  title: 'Buttons/ToolbarButton/ToolbarButtonRow',
+  title: 'Navigation/ToolbarButtonRow',
   component: ToolbarButtonRow,
   parameters: {
     docs: {

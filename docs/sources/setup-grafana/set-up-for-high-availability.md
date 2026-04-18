@@ -50,7 +50,7 @@ Once you have a Postgres or MySQL database available, you can configure your mul
 If you're using Grafana Enterprise:
 
 1. Get a license token in the name of your cluster's shared hostname.
-1. Edit the [`host_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) setting in each node's `grafana.ini` configuration file to reflect the cluster's shared hostname.
+1. Edit the [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) setting in each node's `grafana.ini` configuration file to reflect the cluster's shared hostname.
 1. Install the license key as normal. For more information on installing your license key, refer to [Add your license to a Grafana instance](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/enterprise-licensing/#step-2-add-your-license-to-a-grafana-instance).
 
 ## Alerting high availability

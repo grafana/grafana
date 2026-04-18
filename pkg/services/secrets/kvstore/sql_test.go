@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type TestCase struct {
@@ -30,7 +31,9 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSecretsKVStoreSQL(t *testing.T) {
+func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))

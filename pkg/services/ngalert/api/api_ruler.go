@@ -47,7 +47,7 @@ type AMConfigStore interface {
 }
 
 type AMRefresher interface {
-	ApplyConfig(ctx context.Context, orgId int64, dbConfig *ngmodels.AlertConfiguration) error
+	ApplyConfig(ctx context.Context, orgId int64, dbConfig *ngmodels.AlertConfiguration) (bool, error)
 }
 
 type RulerSrv struct {
@@ -71,7 +71,7 @@ var (
 )
 
 // ignore fields that are not part of the rule definition
-var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
+var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
@@ -264,6 +264,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
 			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
 		}
@@ -277,9 +278,13 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		result := apimodels.NamespaceConfigResponse{}
 		userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 		if len(rules) > 0 {
-			result[""] = []apimodels.GettableRuleGroupConfig{
-				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping),
-			}
+			group := toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping)
+			// toGettableRuleGroupConfig sorts by group index, which is not meaningful for deleted rules.
+			// Re-sort by deletion time (Updated) descending so the most recently deleted rules appear first.
+			slices.SortStableFunc(group.Rules, func(a, b apimodels.GettableExtendedRuleNode) int {
+				return b.GrafanaManagedAlert.Updated.Compare(a.GrafanaManagedAlert.Updated)
+			})
+			result[""] = []apimodels.GettableRuleGroupConfig{group}
 		}
 		return response.JSON(http.StatusOK, result)
 	}
@@ -384,12 +389,22 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 	}
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID > rules[j].ID })
 	result := make(apimodels.GettableRuleVersions, 0, len(rules))
-	userUIDmapping := srv.getUserUIDmapping(ctx, rules)
+	userUIDmapping := srv.getUserUIDmapping(ctx, alertRuleVersionsToAlertRules(rules))
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
-		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, userUIDmapping))
+		ruleNode := toGettableExtendedRuleNode(rule.AlertRule, map[string]ngmodels.Provenance{}, userUIDmapping)
+		ruleNode.GrafanaManagedAlert.Message = rule.Message
+		result = append(result, ruleNode)
 	}
 	return response.JSON(http.StatusOK, result)
+}
+
+func alertRuleVersionsToAlertRules(vs []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRule {
+	result := make([]*ngmodels.AlertRule, len(vs))
+	for i := range vs {
+		result[i] = &vs[i].AlertRule
+	}
+	return result
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
@@ -401,9 +416,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		deletePermanently = true
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
@@ -452,9 +472,38 @@ func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) er
 //
 //nolint:gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) response.Response {
+	finalChanges, amConfig, err := srv.performUpdateAlertRules(c.Req.Context(), c, groupKey, rules, deletePermanently)
+
+	if err != nil {
+		if errors.As(err, &errutil.Error{}) {
+			return response.Err(err)
+		} else if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
+			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
+		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
+			return ErrResp(http.StatusForbidden, err, "")
+		} else if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+	}
+
+	if amConfig != nil {
+		// This isn't strictly necessary since the alertmanager config is periodically synced.
+		_, err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, amConfig)
+		if err != nil {
+			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.GetOrgID(), "error", err)
+		}
+	}
+
+	return changesToResponse(finalChanges)
+}
+
+func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*store.GroupDelta, *ngmodels.AlertConfiguration, error) {
 	var finalChanges *store.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
-	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
+	err := srv.xactManager.InTransaction(ctx, func(tranCtx context.Context) error {
 		id, _ := c.GetInternalID()
 		userNamespace := c.GetIdentityType()
 
@@ -471,34 +520,42 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return nil
 		}
 
-		err = srv.authz.AuthorizeRuleChanges(c.Req.Context(), c.SignedInUser, groupChanges)
+		err = srv.authz.AuthorizeRuleChanges(tranCtx, c.SignedInUser, groupChanges)
 		if err != nil {
 			return err
 		}
 
-		if err := validateQueries(c.Req.Context(), groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
+		if err := validateQueries(tranCtx, groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
 			return err
 		}
 
 		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
 		if len(newOrUpdatedNotificationSettings) > 0 {
-			dbConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(c.Req.Context(), groupChanges.GroupKey.OrgID)
+			amConfig, err := srv.amConfigStore.GetLatestAlertmanagerConfiguration(tranCtx, groupChanges.GroupKey.OrgID)
 			if err != nil {
 				return fmt.Errorf("failed to get latest configuration: %w", err)
 			}
-			cfg, err := notifier.Load([]byte(dbConfig.AlertmanagerConfiguration))
+			cfg, err := notifier.Load([]byte(amConfig.AlertmanagerConfiguration))
 			if err != nil {
 				return fmt.Errorf("failed to parse configuration: %w", err)
 			}
-			validator := notifier.NewNotificationSettingsValidator(&cfg.AlertmanagerConfig)
+			validator := notifier.NewNotificationSettingsValidator(cfg)
+			contactPointRoutingChanged := false
 			for _, s := range newOrUpdatedNotificationSettings {
 				if err := validator.Validate(s); err != nil {
 					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
 				}
+				contactPointRoutingChanged = contactPointRoutingChanged || s.ContactPointRouting != nil
+			}
+			if contactPointRoutingChanged {
+				// Modified contact point routing has implications for how autogenerated routes are created.
+				// So, we flag for the am config to be refreshed at the end of this request.
+				// This is not strictly necessary but allows for a smoother synchronous update experience.
+				dbConfig = amConfig
 			}
 		}
 
-		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.GetOrgID(), groupChanges); err != nil {
+		if err := verifyProvisionedRulesNotAffected(tranCtx, srv.provenanceStore, c.GetOrgID(), groupChanges); err != nil {
 			return err
 		}
 
@@ -521,6 +578,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			for _, update := range finalChanges.Update {
 				logger.Debug("Updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				if ngmodels.IsNoGroupRuleGroup(update.Existing.RuleGroup) && !ngmodels.IsNoGroupRuleGroup(update.New.RuleGroup) {
+					return fmt.Errorf("%w: cannot move rule out of this group", ngmodels.ErrAlertRuleFailedValidation)
+				}
 				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
@@ -533,9 +593,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 
 		if len(finalChanges.New) > 0 {
-			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			inserts := make([]ngmodels.InsertRule, 0, len(finalChanges.New))
 			for _, rule := range finalChanges.New {
-				inserts = append(inserts, *rule)
+				inserts = append(inserts, ngmodels.InsertRule{AlertRule: *rule})
 			}
 			added, err := srv.store.InsertAlertRules(tranCtx, ngmodels.NewUserUID(c.SignedInUser), inserts)
 			if err != nil {
@@ -568,29 +628,10 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	})
 
 	if err != nil {
-		if errors.As(err, &errutil.Error{}) {
-			return response.Err(err)
-		} else if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
-		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
-			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
-		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
-			return ErrResp(http.StatusForbidden, err, "")
-		} else if errors.Is(err, store.ErrOptimisticLock) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+		return nil, nil, err
 	}
 
-	if dbConfig != nil {
-		// This isn't strictly necessary since the alertmanager config is periodically synced.
-		err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, dbConfig)
-		if err != nil {
-			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.GetOrgID(), "error", err)
-		}
-	}
-
-	return changesToResponse(finalChanges)
+	return finalChanges, dbConfig, nil
 }
 
 func changesToResponse(finalChanges *store.GroupDelta) response.Response {
@@ -809,6 +850,73 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 		}
 	}
 	return byGroupKey, totalGroups, nil
+}
+
+// RouteUpdateNamespaceRules updates all alert rules in a namespace.
+func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body apimodels.UpdateNamespaceRulesRequest, namespaceUID string) response.Response {
+	if body == (apimodels.UpdateNamespaceRulesRequest{}) {
+		return ErrResp(http.StatusBadRequest, errors.New("missing request body"), "")
+	}
+
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return toNamespaceErrorResponse(err)
+	}
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
+	}
+
+	ruleGroups, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
+		User:          c.SignedInUser,
+		NamespaceUIDs: []string{namespace.UID},
+	})
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	if len(ruleGroups) == 0 {
+		return response.JSON(http.StatusAccepted, apimodels.UpdateNamespaceRulesResponse{
+			Message: "no rules to update in namespace",
+		})
+	}
+
+	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		for groupKey, rules := range ruleGroups {
+			rulesToUpdate := make([]*ngmodels.AlertRuleWithOptionals, 0, len(rules))
+
+			for _, rule := range rules {
+				r := ngmodels.AlertRuleWithOptionals{
+					AlertRule:         *rule,
+					HasPause:          true,
+					HasEditorSettings: true,
+				}
+				if body.IsPaused != nil {
+					paused := *body.IsPaused
+					r.IsPaused = paused
+				}
+
+				rulesToUpdate = append(rulesToUpdate, &r)
+			}
+			_, _, err := srv.performUpdateAlertRules(ctx, c, groupKey, rulesToUpdate, false)
+			if errors.Is(err, errProvisionedResource) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	return response.JSON(http.StatusAccepted, apimodels.UpdateNamespaceRulesResponse{
+		Message: "rules updated successfully",
+	})
 }
 
 // getUserUIDmaping returns a UserUID->UserInfo mapping from the UpdatedBy users in the RulesGroup

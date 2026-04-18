@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
   ALL_MUTE_TIMINGS,
@@ -15,12 +13,12 @@ import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/c
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { makeAMLink } from '../../utils/misc';
-import { DynamicTable, DynamicTableColumnProps } from '../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { MuteTiming, useMuteTimings } from './useMuteTimings';
+import { type MuteTiming, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
 
 type TableItem = {
@@ -31,7 +29,6 @@ type TableItem = {
 export const TimeIntervalsTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '', hasConfigurationAPI } = useAlertmanager();
   const hideActions = !hasConfigurationAPI;
-  const styles = useStyles2(getStyles);
   const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
   const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName ?? '' });
@@ -73,22 +70,23 @@ export const TimeIntervalsTable = () => {
   }
 
   return (
-    <div className={styles.container}>
+    <Stack direction="column" gap={1}>
       <Stack direction="row" alignItems="center">
-        <Trans i18nKey="alerting.time-intervals.description">
-          Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of
-          time.
-        </Trans>
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="alerting.time-intervals.description">
+            Enter specific time intervals when not to send notifications or freeze notifications for recurring periods
+            of time.
+          </Trans>
+        </Text>
         <Spacer />
         {!hideActions && items.length > 0 && (
           <Authorize actions={[AlertmanagerAction.CreateTimeInterval]}>
             <LinkButton
-              className={styles.muteTimingsButtons}
               icon="plus"
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
             >
-              <Trans i18nKey="alerting.time-interval.add-time-interval">Add time interval</Trans>
+              <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
             </LinkButton>
           </Authorize>
         )}
@@ -96,7 +94,6 @@ export const TimeIntervalsTable = () => {
           <>
             <Button
               icon="download-alt"
-              className={styles.muteTimingsButtons}
               variant="secondary"
               disabled={!exportMuteTimingsAllowed}
               onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
@@ -116,7 +113,7 @@ export const TimeIntervalsTable = () => {
                 'alerting.time-intervals-table.text-havent-created-time-intervals',
                 "You haven't created any time intervals yet"
               )}
-              buttonLabel="Add time interval"
+              buttonLabel="New time interval"
               buttonIcon="plus"
               buttonSize="lg"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
@@ -134,7 +131,7 @@ export const TimeIntervalsTable = () => {
           )}
         </>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -149,7 +146,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     const columns: Array<DynamicTableColumnProps<MuteTiming>> = [
       {
         id: 'name',
-        label: 'Name',
+        label: t('alerting.use-columns.columns.label.name', 'Name'),
         renderCell: function renderName({ data }) {
           return (
             <div>
@@ -164,7 +161,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
       },
       {
         id: 'timeRange',
-        label: 'Time range',
+        label: t('alerting.use-columns.columns.label.time-range', 'Time range'),
         renderCell: ({ data }) => {
           return renderTimeIntervals(data);
         },
@@ -174,7 +171,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     if (showActions) {
       columns.push({
         id: 'actions',
-        label: 'Actions',
+        label: t('alerting.use-columns.label.actions', 'Actions'),
         alignColumn: 'end',
         renderCell: ({ data }) => (
           <MuteTimingActionsButtons muteTiming={data} alertManagerSourceName={alertManagerSourceName} />
@@ -185,13 +182,3 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     return columns;
   }, [showActions, alertManagerSourceName]);
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexFlow: 'column nowrap',
-  }),
-  muteTimingsButtons: css({
-    marginBottom: theme.spacing(2),
-  }),
-});

@@ -1,26 +1,26 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../datasource';
-import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
-import useMigratedMetricsQuery from '../../../migrations/useMigratedMetricsQuery';
 import {
-  CloudWatchJsonData,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
+  type CloudWatchMetricsQuery,
   MetricEditorMode,
   MetricQueryType,
-  MetricStat,
-} from '../../../types';
-import { MetricStatEditor } from '../../shared/MetricStatEditor';
+  type MetricStat,
+} from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
+import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
+import useMigratedMetricsQuery from '../../../migrations/useMigratedMetricsQuery';
+import { type CloudWatchQuery, type CloudWatchJsonData } from '../../../types';
+import { MetricStatEditor } from '../../shared/MetricStatEditor/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
-import { SQLBuilderEditor } from './SQLBuilderEditor';
+import { SQLBuilderEditor } from './SQLBuilderEditor/SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
@@ -59,6 +59,17 @@ export const MetricsQueryEditor = (props: Props) => {
     [setShowConfirm, onChange, codeEditorIsDirty, query]
   );
 
+  const updateAccounIdOnMount = () => {
+    if (config.featureToggles.cloudWatchCrossAccountQuerying && query.accountId) {
+      datasource.resources.isMonitoringAccount(query.region).then((isMonitoring) => {
+        if (!isMonitoring && query.accountId) {
+          onChange({ ...query, accountId: undefined });
+        }
+      });
+    }
+  };
+  useEffect(updateAccounIdOnMount, [datasource, onChange, query]);
+
   useEffect(() => {
     extraHeaderElementLeft?.(
       <InlineSelect
@@ -93,7 +104,6 @@ export const MetricsQueryEditor = (props: Props) => {
           body="You will lose changes made to the query if you change to Metric Insights Builder mode."
           confirmText="Yes, I am sure."
           dismissText="No, continue editing the query."
-          icon="exclamation-triangle"
           onConfirm={() => {
             setShowConfirm(false);
             setCodeEditorIsDirty(false);
@@ -127,7 +137,6 @@ export const MetricsQueryEditor = (props: Props) => {
   return (
     <>
       <Space v={0.5} />
-
       {query.metricQueryType === MetricQueryType.Search && (
         <>
           {query.metricEditorMode === MetricEditorMode.Builder && (

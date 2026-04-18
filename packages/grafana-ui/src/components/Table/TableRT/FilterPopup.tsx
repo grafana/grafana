@@ -1,16 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../..';
-import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Button } from '../../Button/Button';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { Label } from '../../Forms/Label';
+import { IconButton } from '../../IconButton/IconButton';
+import { Stack } from '../../Layout/Stack/Stack';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from '../utils';
 
 import { FilterList } from './FilterList';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 interface Props {
   column: any;
@@ -38,8 +42,9 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
+  const onCancel = useCallback(() => onClose(), [onClose]);
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
@@ -66,7 +71,7 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
+      <div ref={ref} className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <Stack direction="column" gap={3}>
           <Stack direction="column" gap={0.5}>
             <Stack justifyContent="space-between" alignItems="center">
@@ -83,17 +88,20 @@ export const FilterPopup = ({
               />
             </Stack>
             <div className={cx(styles.listDivider)} />
-            <FilterList
-              onChange={setValues}
-              values={values}
-              options={options}
-              caseSensitive={matchCase}
-              showOperators={true}
-              searchFilter={searchFilter}
-              setSearchFilter={setSearchFilter}
-              operator={operator}
-              setOperator={setOperator}
-            />
+            {ref.current && (
+              <FilterList
+                referenceElement={ref.current}
+                onChange={setValues}
+                values={values}
+                options={options}
+                caseSensitive={matchCase}
+                showOperators={true}
+                searchFilter={searchFilter}
+                setSearchFilter={setSearchFilter}
+                operator={operator}
+                setOperator={setOperator}
+              />
+            )}
           </Stack>
           <Stack gap={3}>
             <Stack>

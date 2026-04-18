@@ -1,30 +1,78 @@
-import { groupBy } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { groupBy, isEmpty } from 'lodash';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { config } from '@grafana/runtime';
-import { Icon, Stack, Text } from '@grafana/ui';
-import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { Trans, t } from '@grafana/i18n';
+import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
+import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import MoreButton from '../components/MoreButton';
+import { WithReturnButton } from '../components/WithReturnButton';
+import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
+import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
+import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
+import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
-import { LazyPagination } from './components/LazyPagination';
+import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
+import { LoadMoreButton } from './components/LoadMoreButton';
+import { NoRulesFound } from './components/NoRulesFound';
+import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
+import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
+import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
+import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
-const GRAFANA_GROUP_PAGE_SIZE = 40;
+interface LoaderProps {
+  groupFilter?: string;
+  namespaceFilter?: string;
+  onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+}
 
-export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+  const key = `${groupFilter}-${namespaceFilter}`;
 
-  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
+  // Key is crucial. It resets the generator when filters change.
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+      onLoadingStateChange={onLoadingStateChange}
+    />
+  );
+}
+
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+  // When backend filters are enabled, groupFilter is handled on the backend
+  const filterState = { namespace: namespaceFilter, groupName: groupFilter };
+  const { backendFilter } = getGrafanaFilter(filterState);
+
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
+  const needsClientSideFiltering = hasGrafanaClientSideFilters(filterState);
+
+  // If there are filters, we don't want to populate the cache to avoid performance issues
+  // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
+    populateCache: needsClientSideFiltering ? false : true,
+    limitAlerts: 0,
+  });
+
+  // If there are no filters we can match one frontend page to one API page.
+  // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
+  const apiGroupPageSize = getApiGroupPageSize(needsClientSideFiltering);
+
+  const groupsGenerator = useRef(
+    toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter))
+  );
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -33,37 +81,77 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const {
-    page: groupsPage,
-    nextPage,
-    previousPage,
-    canMoveForward,
-    canMoveBackward,
-    isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, GRAFANA_GROUP_PAGE_SIZE);
+  const filterFn = useMemo(() => {
+    const { frontendFilter } = getGrafanaFilter({
+      namespace: namespaceFilter,
+      groupName: groupFilter,
+      freeFormWords: [],
+      ruleName: '',
+      labels: [],
+      ruleType: undefined,
+      ruleState: undefined,
+      ruleHealth: undefined,
+      dashboardUid: undefined,
+      dataSourceNames: [],
+      plugins: undefined,
+      contactPoint: undefined,
+      ruleSource: undefined,
+    });
+    return (group: PromRuleGroupDTO) => frontendFilter.groupMatches(group);
+  }, [namespaceFilter, groupFilter]);
 
-  const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
+    groupsGenerator.current,
+    FRONTED_GROUPED_PAGE_SIZE,
+    filterFn
+  );
 
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+  // Report state changes to parent using custom hook
+  useDataSourceLoadingReporter(
+    GRAFANA_RULES_SOURCE_NAME,
+    { isLoading, rulesCount: groups.length, error },
+    onLoadingStateChange
+  );
+
+  const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
+  const hasNoRules = isEmpty(groups) && !isLoading;
+
+  // if we are loading and there are filters configured – we shouldn't show any data source headers
+  // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
+  if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
 
   return (
-    <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+    <DataSourceSection
+      name="Grafana-managed"
+      application="grafana"
+      uid={GrafanaRulesSourceSymbol}
+      isLoading={isLoading}
+      error={error}
+    >
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;
+
           return (
             <ListSection
               key={folderUid}
               title={
                 <Stack direction="row" gap={1} alignItems="center">
                   <Icon name="folder" />{' '}
-                  <Text variant="body" element="h3">
-                    {folderName}
-                  </Text>
+                  <WithReturnButton
+                    title={t('alerting.rule-list.return-button.title', 'Alert rules')}
+                    component={
+                      <TextLink href={makeFolderAlertsLink(folderUid, folderName)} inline={false} color="primary">
+                        {folderName}
+                      </TextLink>
+                    }
+                  />
                 </Stack>
               }
-              actions={isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
+              actions={<FolderActionsButton folderUID={folderUid} />}
             >
               {groups.map((group) => (
                 <GrafanaRuleGroupListItem
@@ -75,12 +163,15 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {/* only show the CTA if the user has no rules and this isn't the result of a filter / search query */}
+        {hasNoRules && !hasFilters && <GrafanaNoRulesCTA />}
+        {hasNoRules && hasFilters && <NoRulesFound />}
+        {hasMoreGroups && (
+          // this div will make the button not stretch
+          <div>
+            <LoadMoreButton loading={isLoading} onClick={fetchMoreGroups} />
+          </div>
+        )}
       </Stack>
     </DataSourceSection>
   );
@@ -103,15 +194,84 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     [group.name, group.folderUid]
   );
 
+  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+
+  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+  const groupDisplayName = isUngroupedRuleGroup(group.name)
+    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
+    : group.name;
+
   return (
     <ListGroup
       key={group.name}
-      name={group.name}
-      href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
+      name={groupDisplayName}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
+      href={detailsLink}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>
+  );
+}
+
+interface GrafanaGroupActionsProps {
+  folderUid: string;
+  groupName: string;
+}
+
+function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps) {
+  const [showExportDrawer, setShowExportDrawer] = useState(false);
+
+  const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+
+  const canEdit = editRuleSupported && editRuleAllowed;
+  const canExport = exportRulesSupported && exportRulesAllowed;
+
+  if (!canEdit && !canExport) {
+    return null;
+  }
+
+  const editLink = groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupName);
+
+  return (
+    <Stack gap={0} alignItems="center">
+      {canEdit && (
+        <LinkButton
+          title={t('alerting.rule-list.edit-group', 'Edit')}
+          size="sm"
+          variant="secondary"
+          fill="text"
+          href={editLink}
+        >
+          <Trans i18nKey="common.edit">Edit</Trans>
+        </LinkButton>
+      )}
+      {canExport && (
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  label={t('alerting.rule-list.export-group', 'Export rules group')}
+                  icon="download-alt"
+                  onClick={() => setShowExportDrawer(true)}
+                />
+              </Menu>
+            }
+          >
+            <MoreButton fill="text" size="sm" />
+          </Dropdown>
+          {showExportDrawer && (
+            <GrafanaRuleGroupExporter
+              folderUid={folderUid}
+              groupName={groupName}
+              onClose={() => setShowExportDrawer(false)}
+            />
+          )}
+        </>
+      )}
+    </Stack>
   );
 }

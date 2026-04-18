@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -206,7 +206,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logDetailsLabel: css({
       label: 'logs-row-details__label',
       maxWidth: '30em',
-      minWidth: '20em',
       padding: theme.spacing(0, 1),
       overflowWrap: 'break-word',
     }),

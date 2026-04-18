@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { ScrollContainer } from './ScrollContainer';
 import mdx from './ScrollContainer.mdx';
 
 const meta: Meta<typeof ScrollContainer> = {
-  title: 'General/Layout/ScrollContainer',
+  title: 'Layout/ScrollContainer',
   component: ScrollContainer,
   parameters: {
     controls: {

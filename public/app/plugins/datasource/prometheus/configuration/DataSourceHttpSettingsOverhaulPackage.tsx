@@ -1,13 +1,13 @@
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import * as React from 'react';
 
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/plugin-ui';
 import { docsTip, overhaulStyles } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
-import { AzureAuthSettings } from '@grafana/ui/internal';
+import { type AzureAuthSettings } from '@grafana/ui/internal';
 
-import { AzurePromDataSourceSettings } from './AzureCredentialsConfig';
+import { type AzurePromDataSourceSettings } from './AzureCredentialsConfig';
 
 type Props = {
   options: AzurePromDataSourceSettings;
@@ -139,6 +139,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         <Alert title="Deprecation Notice" severity="warning">
           The SigV4 authentication in the core Prometheus data source is deprecated. Please use the Amazon Managed
           Service for Prometheus data source to authenticate with SigV4.
+        </Alert>
+      )}
+      {azureAuthSelected && (
+        <Alert title="Deprecation Notice" severity="warning">
+          Azure authentication in the core Prometheus data source is deprecated. Please use the Azure Monitor Managed
+          Service for Prometheus data source to authenticate using Azure authentication.
         </Alert>
       )}
       <Auth

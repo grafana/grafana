@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
@@ -48,7 +48,7 @@ export const TagLimitSection = ({ options, onOptionsChange }: DataSourcePluginOp
       description={
         <ConfigDescriptionLink
           description="Specify the limit for tags and tag values."
-          suffix={'/#tag-limit'}
+          suffix={'tempo/configure-tempo-data-source/#tag-limit'}
           feature="the tag limit"
         />
       }

@@ -1,8 +1,8 @@
 import config from 'app/core/config';
 
-import { getMockInfluxDS } from './__mocks__/datasource';
 import { getAllMeasurements, getAllPolicies, getFieldKeys, getTagKeys, getTagValues } from './influxql_metadata_query';
-import { InfluxQuery, InfluxVariableQuery } from './types';
+import { getMockInfluxDS } from './mocks/datasource';
+import { type InfluxQuery, type InfluxVariableQuery } from './types';
 
 describe('influx_metadata_query', () => {
   let query: InfluxVariableQuery;

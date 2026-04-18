@@ -1,11 +1,11 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Drawer } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { ExportFormats, ExportProvider } from './providers';
+import { type ExportFormats, type ExportProvider } from './providers';
 
 interface GrafanaExportDrawerProps {
   activeTab: ExportFormats;

@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { ScalarDimensionConfig } from '@grafana/schema';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
+import { type DimensionContext } from 'app/features/dimensions/context';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
+import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
 
 interface DroneSideData {
   pitchAngle?: number;
@@ -108,12 +109,12 @@ export const droneSideItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Drone Side'];
+    const category = [t('canvas.drone-side-item.category-drone-side', 'Drone Side')];
     builder.addCustomEditor({
       category,
       id: 'pitchAngle',
       path: 'config.pitchAngle',
-      name: 'Pitch Angle',
+      name: t('canvas.drone-side-item.name-pitch-angle', 'Pitch Angle'),
       editor: ScalarDimensionEditor,
     });
   },

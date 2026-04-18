@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -13,6 +13,11 @@ export interface Props {
   hideBorder?: boolean;
 }
 
+/**
+ * A composition component for rendering a TabBar with Tabs for navigation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
   const styles = useStyles2(getStyles);
 

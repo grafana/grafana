@@ -2,13 +2,16 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // maybeNotifyProgress will only notify if a certain amount of time has passed
@@ -34,15 +37,6 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 }
 
 // FIXME: ProgressRecorder should be initialized in the queue
-type JobResourceResult struct {
-	Name     string
-	Resource string
-	Group    string
-	Path     string
-	Action   repository.FileAction
-	Error    error
-}
-
 type jobProgressRecorder struct {
 	mu                  sync.RWMutex
 	started             time.Time
@@ -53,52 +47,145 @@ type jobProgressRecorder struct {
 	resultCount         int
 	errorCount          int
 	errors              []string
+	refURLs             *provisioning.RepositoryURLs
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
+	failedCreations     []string // Tracks folder paths that failed to be created
+	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	failedUpdates       []string // Tracks resource paths that failed to be updated
+	resultReasons       map[string]struct{}
+	metrics             *JobMetrics
+	action              provisioning.JobAction
 }
 
-func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
+func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
-		maxErrors: 20,
-		started:   time.Now(),
-		// Have a faster notifier for messages and total
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
-		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
+		started:             time.Now(),
+		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
+		resultReasons:       make(map[string]struct{}),
+		metrics:             metrics,
+		action:              action,
 	}
 }
 
+func (r *jobProgressRecorder) Started() time.Time {
+	return r.started
+}
+
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+	var (
+		shouldLogError   bool
+		shouldLogWarning bool
+		logErr           error
+		logWarning       error
+	)
+
 	r.mu.Lock()
 	r.resultCount++
 
-	logger := logging.FromContext(ctx).With("path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
-	if result.Error != nil {
-		logger.Error("job resource operation failed", "err", result.Error)
-		if len(r.errors) < 20 {
-			r.errors = append(r.errors, result.Error.Error())
+	if result.Error() != nil {
+		shouldLogError = true
+		logErr = result.Error()
+
+		// Don't count ignored actions as errors in error count or error list
+		if result.Action() != repository.FileActionIgnored {
+			if len(r.errors) < 20 {
+				r.errors = append(r.errors, result.Error().Error())
+			}
+			r.errorCount++
 		}
-		r.errorCount++
-	} else {
-		logger.Info("job resource operation succeeded")
+
+		// Automatically track failed operations based on error type and action
+		// Check if this is a PathCreationError (folder creation failure)
+		var pathErr *resources.PathCreationError
+		if errors.As(result.Error(), &pathErr) {
+			r.failedCreations = append(r.failedCreations, pathErr.Path)
+		}
+
+		// Track failed deletions, any deletion will stop the deletion of the parent folder (as it won't be empty)
+		if result.Action() == repository.FileActionDeleted {
+			r.failedDeletions = append(r.failedDeletions, result.Path())
+		}
+
+		// Track failed updates/renames so we can block folder cleanup when child re-parenting fails.
+		// A rename is a move operation; if it fails the child stays under the old folder.
+		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
+		}
+	} else if result.Warning() != nil {
+		// Track failed deletions/updates/renames with warnings — these still represent
+		// operations that did not fully succeed and may block parent folder removal.
+		// Non-failing warnings (e.g. missing/invalid folder metadata) are excluded
+		// because the underlying resource operation succeeded.
+		if !isNonFailingWarning(result.Warning()) {
+			if result.Action() == repository.FileActionDeleted {
+				r.failedDeletions = append(r.failedDeletions, result.Path())
+			}
+			if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+				r.failedUpdates = append(r.failedUpdates, result.Path())
+				if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+					r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+				}
+			}
+		}
+
+		if reason := result.WarningReason(); reason != "" {
+			r.resultReasons[reason] = struct{}{}
+		}
+
+		shouldLogWarning = true
+		logWarning = result.Warning()
 	}
 
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	if r.metrics != nil {
+		r.metrics.RecordResourceOperation(r.action, result)
+	}
+
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
+	if shouldLogError {
+		logger.Error("job resource operation failed", "err", logErr)
+	} else if shouldLogWarning {
+		logger.Warn("job resource operation completed with warning", "err", logWarning)
+	} else {
+		logger.Info("job resource operation succeeded")
+	}
+
 	r.maybeNotify(ctx)
 }
 
-// ResetResults will reset the results of the job
-func (r *jobProgressRecorder) ResetResults() {
+// ResetResults will reset the results of the job.
+// If the keepWarnings flag is set to true, the summary will preserve the warnings in it.
+func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.resultCount = 0
 	r.errorCount = 0
 	r.errors = nil
-	r.summaries = make(map[string]*provisioning.JobResourceSummary)
+	r.failedCreations = nil
+	r.failedDeletions = nil
+	r.failedUpdates = nil
+
+	summaries := make(map[string]*provisioning.JobResourceSummary)
+	for k, summary := range r.summaries {
+		if len(summary.Warnings) > 0 && keepWarnings {
+			summaries[k] = summary
+		}
+	}
+	r.summaries = summaries
+
+	if !keepWarnings {
+		r.resultReasons = make(map[string]struct{})
+	}
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -118,6 +205,18 @@ func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	logging.FromContext(ctx).Info("job final message", "message", msg)
 }
 
+func (r *jobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs) {
+	r.mu.Lock()
+	r.refURLs = refURLs
+	r.mu.Unlock()
+
+	if refURLs != nil {
+		logging.FromContext(ctx).Debug("job ref URLs set", "sourceURL", refURLs.SourceURL, "compareURL", refURLs.CompareURL, "newPullRequestURL", refURLs.NewPullRequestURL)
+	} else {
+		logging.FromContext(ctx).Debug("job ref URLs cleared")
+	}
+}
+
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.mu.Lock()
 	r.total = total
@@ -126,27 +225,26 @@ func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.notifyImmediately(ctx)
 }
 
-func (r *jobProgressRecorder) Strict() {
+func (r *jobProgressRecorder) StrictMaxErrors(maxErrors int) {
 	r.mu.Lock()
-	r.maxErrors = 1
+	r.maxErrors = maxErrors
 	r.mu.Unlock()
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
 	r.mu.RLock()
-	defer r.mu.RUnlock()
+	maxErrors := r.maxErrors
+	errorCount := r.errorCount
+	r.mu.RUnlock()
 
-	if r.errorCount >= r.maxErrors {
-		return fmt.Errorf("too many errors: %d", r.errorCount)
+	if maxErrors > 0 && errorCount >= maxErrors {
+		return fmt.Errorf("too many errors: %d", errorCount)
 	}
 
 	return nil
 }
 
 func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	if len(r.summaries) == 0 {
 		return nil
 	}
@@ -161,21 +259,32 @@ func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 
 func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	// Note: This method is called from Record() which already holds the lock
-	key := result.Resource + ":" + result.Group
+	key := result.Group() + ":" + result.Kind()
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Resource: result.Resource,
-			Group:    result.Group,
+			Group: result.Group(),
+			Kind:  result.Kind(),
 		}
 		r.summaries[key] = summary
 	}
 
-	if result.Error != nil {
-		summary.Errors = append(summary.Errors, result.Error.Error())
+	fileInfo := fmt.Sprintf("(file: %s", result.Path())
+	if result.Name() != "" {
+		fileInfo = fmt.Sprintf("%s, name: %s", fileInfo, result.Name())
+	}
+	fileInfo = fmt.Sprintf("%s, action: %s)", fileInfo, result.Action())
+
+	if result.Error() != nil {
+		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
+		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
+	} else if result.Warning() != nil {
+		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
+		summary.Warnings = append(summary.Warnings, warningMsg)
+		summary.Warning++
 	} else {
-		switch result.Action {
+		switch result.Action() {
 		case repository.FileActionDeleted:
 			summary.Delete++
 		case repository.FileActionUpdated:
@@ -234,13 +343,9 @@ func (r *jobProgressRecorder) maybeNotify(ctx context.Context) {
 
 func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provisioning.JobStatus {
 	r.mu.RLock()
-	defer r.mu.RUnlock()
 
-	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
-		Started: r.started.UnixMilli(),
-		// FIXME: if we call this method twice, the state will be different
-		// This results in sync status to be different from job status
+		Started:  r.started.UnixMilli(),
 		Finished: time.Now().UnixMilli(),
 		State:    provisioning.JobStateSuccess,
 		Message:  "completed successfully",
@@ -251,19 +356,108 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		jobStatus.Message = err.Error()
 	}
 
-	jobStatus.Summary = r.summary()
+	summaries := r.summary()
+	jobStatus.Summary = summaries
 	jobStatus.Errors = r.errors
 
-	// Check for errors during execution
+	// Extract warnings from summaries
+	warnings := make([]string, 0) //nolint:prealloc
+	for _, summary := range summaries {
+		warnings = append(warnings, summary.Warnings...)
+	}
+	jobStatus.Warnings = warnings
+
+	jobStatus.URLs = r.refURLs
+
+	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
+	finalMessage := r.finalMessage
+
+	r.mu.RUnlock()
+
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
+		if tooManyErrors {
+			jobStatus.Message = "completed with too many errors"
+		} else {
+			jobStatus.Message = "completed with errors"
+		}
 		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = "completed with errors"
+	} else if len(jobStatus.Warnings) > 0 {
+		jobStatus.State = provisioning.JobStateWarning
+		jobStatus.Message = "completed with warnings"
 	}
 
 	// Override message if progress have a more explicit message
-	if r.finalMessage != "" && jobStatus.State != provisioning.JobStateError {
-		jobStatus.Message = r.finalMessage
+	if finalMessage != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = finalMessage
 	}
 
 	return jobStatus
+}
+
+func (r *jobProgressRecorder) ResultReasons() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.resultReasons) == 0 {
+		return nil
+	}
+	reasons := make([]string, 0, len(r.resultReasons))
+	for reason := range r.resultReasons {
+		reasons = append(reasons, reason)
+	}
+	return reasons
+}
+
+// HasDirPathFailedCreation checks if a path is nested under any failed folder creation
+func (r *jobProgressRecorder) HasDirPathFailedCreation(path string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(path, failedCreation) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasDirPathFailedDeletion checks if any resource deletions failed under a folder path
+func (r *jobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedDeletion := range r.failedDeletions {
+		if safepath.InDir(failedDeletion, folderPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasChildPathFailedCreation checks if any folder creation failed inside folderPath.
+// This is the descendant counterpart of HasDirPathFailedCreation (which checks ancestors).
+func (r *jobProgressRecorder) HasChildPathFailedCreation(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(failedCreation, folderPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasChildPathFailedUpdate checks if any resource update failed inside folderPath.
+// Used to block old-folder deletion when child re-parenting (synthetic updates) fails.
+func (r *jobProgressRecorder) HasChildPathFailedUpdate(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedUpdate := range r.failedUpdates {
+		if safepath.InDir(failedUpdate, folderPath) {
+			return true
+		}
+	}
+	return false
 }

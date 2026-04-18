@@ -9,135 +9,321 @@ on:
 permissions: {}
 
 jobs:
-  lint-frontend-verify-i18n:
-    name: Verify i18n
+  detect-changes:
+    name: Detect whether code changed
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+      prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
+      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
+      changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
-    - run: |
-        extract_error_message='::error::Extraction failed. Make sure that you have no dynamic translation phrases, such as "t(`preferences.theme.{themeID}`, themeName)" and that no translation key is used twice. Search the output for '[warning]' to find the offending file.'
-        make i18n-extract || (echo "${extract_error_message}" && false)
-    - run: |
-        uncommited_error_message="::error::Translation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
-        file_diff=$(git diff --dirstat public/locales)
-        if [ -n "$file_diff" ]; then
-            echo $file_diff
-            echo "${uncommited_error_message}"
-            exit 1
-        fi
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/frontend-lint.yml
+
   lint-frontend-prettier:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-prettier-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-prettier-enterprise:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-typecheck:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
   lint-frontend-typecheck-enterprise:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    name: Typecheck
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - run: yarn run typecheck
+  lint-frontend-api-clients:
+    permissions:
+      contents: read
+      id-token: write
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
+    # the `lint-frontend-api-clients-enterprise` workflow will run instead
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    name: Verify API clients
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Generate API clients
+      run: |
+        extract_error_message='ERROR! API client generation failed!'
+        yarn generate-apis || (echo "${extract_error_message}" && false)
+    - name: Verify generated clients
+      run: |
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  lint-frontend-openapi:
+    # Run this workflow for OSS only
+    permissions:
+      contents: read
+      id-token: write
+    name: Verify OpenAPI specs
+    runs-on: ubuntu-x64-large
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/local/lib/android || true
+        sudo rm -rf /usr/share/dotnet || true
+        sudo rm -rf /opt/ghc || true
+        sudo rm -rf /usr/local/.ghcup || true
+    - name: Generate OpenAPI specs
+      run: |
+        extract_error_message='ERROR! OpenAPI generation failed!'
+        yarn generate:openapi || (echo "${extract_error_message}" && false)
+    - name: Verify generated specs
+      run: |
+        git add -N .
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
+        file_diff="$(git diff --name-only ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  lint-frontend-api-clients-enterprise:
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    name: Typecheck
+    name: Verify API clients (enterprise)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
-    - run: yarn run typecheck
-  lint-frontend-betterer:
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Generate API clients
+      run: |
+        extract_error_message='ERROR! API client generation failed!'
+        yarn generate-apis || (echo "${extract_error_message}" && false)
+    - name: Verify generated clients
+      run: |
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  lint-frontend-packed-packages:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
-    name: Betterer
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    name: Verify packed frontend packages
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout build commit
+      uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Build and pack packages
+      run: |
+        yarn run packages:build
+        yarn run packages:pack
+    - name: Validate packages
+      run: ./scripts/validate-npm-packages.sh
+  lint-circular-dependencies:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    name: Check circular dependencies
+    runs-on: ubuntu-x64-small
+    steps:
+    - name: Checkout build commit
+      uses: actions/checkout@v5
       with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
-    - run: yarn run betterer:ci
+        persist-credentials: false
+        path: './pr'
+    - name: Setup Node
+      uses: ./pr/.github/actions/setup-node
+      with:
+        cwd: './pr'
+    - name: Install yarn dependencies
+      uses: ./pr/.github/actions/yarn-install
+      with:
+        cwd: './pr'
+    - name: Check circular dependencies on PR
+      # the first sed command is used to clean the output
+      working-directory: ./pr
+      run: |
+        yarn lint:circular &> /tmp/pr-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
+        echo "Circular dependencies on PR:"
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "$pr_count"
+    - name: Checkout main branch
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+        repository: 'grafana/grafana'
+        ref: 'main'
+        path: './main'
+    - name: Setup Node
+      uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
+      with:
+        cwd: './main'
+    - name: Install yarn dependencies
+      uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+      with:
+        cwd: './main'
+    - name: Check circular dependencies on main
+      working-directory: ./main
+      # the first sed command is used to clean the output
+      run: |
+        yarn lint:circular &> /tmp/main-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
+        echo "Circular dependencies on main:"
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        echo "$main_count"
+    - name: Compare circular dependencies
+      run: |
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "Main branch circular dependencies: $main_count lines"
+        echo "PR branch circular dependencies: $pr_count lines"
+        if [ "$pr_count" -gt "$main_count" ]; then
+          echo "🚨 ERROR: PR introduces new circular dependencies!"
+          echo "Diff between main and PR:"
+          diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
+          exit 1
+        fi
+
+  yarn-install-validation:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
+    runs-on: ubuntu-x64-small
+    name: Validate yarn install
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+
+    # Deliberately not using the yarn-install action for exact control over the command for extra checks
+    - name: Install yarn dependencies
+      run: yarn install --immutable --check-cache
+      env:
+        YARN_ENABLE_HARDENED_MODE: 1

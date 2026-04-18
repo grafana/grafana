@@ -9,9 +9,12 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -79,6 +82,13 @@ type contactPoint struct {
 }
 
 func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.SignedInUser) ([]contactPoint, error) {
+	userIsOrgAdmin := signedInUser.HasRole(org.RoleAdmin)
+	hasAccess, _ := s.accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, models.ScopeReceiversAll))
+	if !userIsOrgAdmin && !hasAccess {
+		msg := "user '%s' is not allowed to read contact point secrets, missing 'alert.notifications.receivers.secrets:read' permission, which can be granted through the 'Admin' or 'Alerting > Full admin access' roles"
+		return nil, fmt.Errorf(msg, signedInUser.UserUID)
+	}
+
 	query := provisioning.ContactPointQuery{
 		OrgID:   signedInUser.GetOrgID(),
 		Decrypt: true, // needed to recreate the settings in the target instance.
@@ -92,6 +102,12 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	contactPoints := make([]contactPoint, 0, len(embeddedContactPoints))
 
 	for _, embeddedContactPoint := range embeddedContactPoints {
+		// This happens in the default contact point, and would otherwise fail to migrate because it has no UID.
+		// If that contact point is edited in any way, an UID is generated.
+		if embeddedContactPoint.UID == "" {
+			continue
+		}
+
 		contactPoints = append(contactPoints, contactPoint{
 			UID:                   embeddedContactPoint.UID,
 			Name:                  embeddedContactPoint.Name,
@@ -135,7 +151,6 @@ type alertRule struct {
 	Title                string                                     `json:"title"`
 	ExecErrState         string                                     `json:"execErrState"`
 	Data                 []definitions.AlertQuery                   `json:"data"`
-	ID                   int64                                      `json:"id"`
 	For                  model.Duration                             `json:"for"`
 	OrgID                int64                                      `json:"orgID"`
 	IsPaused             bool                                       `json:"isPaused"`
@@ -158,7 +173,6 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 		}
 
 		provisionedAlertRules = append(provisionedAlertRules, alertRule{
-			ID:                   rule.ID,
 			UID:                  rule.UID,
 			OrgID:                rule.OrgID,
 			FolderUID:            rule.NamespaceUID,
@@ -208,7 +222,6 @@ func (s *Service) getAlertRuleGroups(ctx context.Context, signedInUser *user.Sig
 			}
 
 			provisionedAlertRules = append(provisionedAlertRules, alertRule{
-				ID:                   rule.ID,
 				UID:                  rule.UID,
 				OrgID:                rule.OrgID,
 				FolderUID:            rule.NamespaceUID,

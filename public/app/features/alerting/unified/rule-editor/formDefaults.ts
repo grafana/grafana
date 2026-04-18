@@ -1,14 +1,16 @@
 import { clamp } from 'lodash';
+import z from 'zod';
 
-import { config } from '@grafana/runtime';
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
+import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -34,9 +36,33 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
-export const getDefaultFormValues = (): RuleFormValues => {
+
+function getValidDefaultTargetDatasourceUid(): string | undefined {
+  const configuredDefaultUid = config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID;
+
+  if (!configuredDefaultUid) {
+    return undefined;
+  }
+
+  try {
+    const datasource = getDataSourceSrv().getInstanceSettings(configuredDefaultUid);
+    if (datasource && isValidRecordingRulesTarget(datasource)) {
+      return configuredDefaultUid;
+    }
+  } catch (error) {
+    // If datasource doesn't exist or can't be retrieved,
+    // just return undefined
+  }
+
+  return undefined;
+}
+
+export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
   const type = (() => {
+    if (ruleType === RuleFormType.grafanaRecording) {
+      return RuleFormType.grafanaRecording;
+    }
     if (canCreateGrafanaRules) {
       return RuleFormType.grafana;
     }
@@ -70,7 +96,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
-    editorSettings: getDefaultEditorSettings(),
+    editorSettings: getDefaultEditorSettings(ruleType),
+    targetDatasourceUid: getValidDefaultTargetDatasourceUid(),
 
     // cortex / loki
     namespace: '',
@@ -87,7 +114,11 @@ export const getDefautManualRouting = () => {
   return manualRouting !== 'false';
 };
 
-function getDefaultEditorSettings() {
+function getDefaultEditorSettings(ruleType?: RuleFormType) {
+  if (ruleType === RuleFormType.grafanaRecording) {
+    return undefined;
+  }
+
   const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
   if (!editorSettingsEnabled) {
     return undefined;
@@ -108,7 +139,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
     ruleFromQueryParams = JSON.parse(ruleDefinition);
   } catch (err) {
     return {
-      ...getDefaultFormValues(),
+      ...getDefaultFormValues(type),
       queries: getDefaultQueries(),
     };
   }
@@ -116,22 +147,116 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
   return setQueryEditorSettings(
     setInstantOrRange(
       revealHiddenQueries({
-        ...getDefaultFormValues(),
+        ...getDefaultFormValues(type),
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-        type: type || RuleFormType.grafana,
+        type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
         evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )
   );
 }
+// schema for cloud rule form values. This is necessary because the cloud rule form values are not the same as the grafana rule form values.
+// schema for grafana rule values is navigateToAlertFormSchema , shared in the restrictedGrafanaApis.
+// TODO: add this to the DMA new plugin.
+
+const cloudRuleFormValuesSchema = z.looseObject({
+  name: z.string().optional(),
+  type: z.enum(RuleFormType).catch(RuleFormType.grafana),
+  dataSourceName: z.string().optional().default(''),
+  group: z.string().optional(),
+  labels: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
+  annotations: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
+  queries: z.array(z.any()).optional(),
+  condition: z.string().optional(),
+  noDataState: z
+    .enum(GrafanaAlertStateDecision)
+    .optional()
+    .default(GrafanaAlertStateDecision.NoData)
+    .catch(GrafanaAlertStateDecision.NoData),
+  execErrState: z
+    .enum(GrafanaAlertStateDecision)
+    .optional()
+    .default(GrafanaAlertStateDecision.Error)
+    .catch(GrafanaAlertStateDecision.Error),
+  folder: z
+    .union([
+      z.object({
+        title: z.string(),
+        uid: z.string(),
+      }),
+      z.undefined(),
+    ])
+    .optional(),
+  evaluateEvery: z.string().optional(),
+  evaluateFor: z.string().optional().default('0s'),
+  keepFiringFor: z.string().optional(),
+  isPaused: z.boolean().optional().default(false),
+  manualRouting: z.boolean().optional(),
+  contactPoints: z
+    .record(
+      z.string(),
+      z.object({
+        selectedContactPoint: z.string(),
+        overrideGrouping: z.boolean(),
+        groupBy: z.array(z.string()),
+        overrideTimings: z.boolean(),
+        groupWaitValue: z.string(),
+        groupIntervalValue: z.string(),
+        repeatIntervalValue: z.string(),
+        muteTimeIntervals: z.array(z.string()),
+        activeTimeIntervals: z.array(z.string()),
+      })
+    )
+    .optional(),
+  editorSettings: z
+    .object({
+      simplifiedQueryEditor: z.boolean(),
+      simplifiedNotificationEditor: z.boolean(),
+    })
+    .optional(),
+  metric: z.string().optional(),
+  targetDatasourceUid: z.string().optional(),
+  namespace: z.string().optional(),
+  expression: z.string().optional(),
+  missingSeriesEvalsToResolve: z.number().optional(),
+});
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  return revealHiddenQueries({
-    ...getDefaultFormValues(),
-    ...rule,
-  });
+  let parsedRule: z.infer<typeof alertingAlertRuleFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
+  // differencitate between cloud and grafana prefill
+  if (rule.type === RuleFormType.cloudAlerting) {
+    // we use this schema to coerce prefilled query params into a valid "FormValues" interface
+    parsedRule = cloudRuleFormValuesSchema.parse(rule);
+  } else {
+    // grafana prefill
+    // coerce prefill params to a valid RuleFormValues interface
+    parsedRule = alertingAlertRuleFormSchema.parse(rule);
+  }
+
+  return setQueryEditorSettings(
+    revealHiddenQueries({
+      ...getDefaultFormValues(rule.type),
+      ...parsedRule,
+    })
+  );
 }
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
@@ -140,7 +265,7 @@ export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>)
 
 export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
   return {
-    ...getDefaultFormValues(),
+    ...getDefaultFormValues(ruleType),
     condition: 'C',
     queries: getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
     type: ruleType,

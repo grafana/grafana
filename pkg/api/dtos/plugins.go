@@ -32,6 +32,7 @@ type PluginSetting struct {
 	AngularDetected bool                    `json:"angularDetected"`
 	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
 	ModuleHash      string                  `json:"moduleHash,omitempty"`
+	Translations    map[string]string       `json:"translations,omitempty"`
 }
 
 type PluginListItem struct {

@@ -22,30 +22,6 @@
   },
   "basePath": "/api",
   "paths": {
-    "/access-control/assignments/search": {
-      "post": {
-        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "tags": [
-          "enterprise"
-        ],
-        "summary": "Debug permissions.",
-        "operationId": "searchResult",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/searchResultResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
@@ -64,6 +40,12 @@
           {
             "type": "boolean",
             "name": "includeHidden",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
             "in": "query"
           }
         ],
@@ -374,6 +356,12 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -406,6 +394,20 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamRolesCommand"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -564,6 +566,17 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -604,6 +617,12 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -718,7 +737,7 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
@@ -742,7 +761,8 @@
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
@@ -852,6 +872,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -878,6 +903,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           },
           {
             "name": "body",
@@ -945,6 +975,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -973,6 +1008,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1257,7 +1297,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `licensing:update`.",
+        "description": "You need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -1325,7 +1365,7 @@
     },
     "/licensing/token/renew": {
       "post": {
-        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -2254,8 +2294,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2299,8 +2338,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2341,8 +2379,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2363,6 +2400,69 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{teamId}/groups/search": {
+      "get": {
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
+        "summary": "Search for team groups with optional filtering and pagination.",
+        "operationId": "searchTeamGroups",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "description": "Number of items per page",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by exact name match",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchTeamGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2407,27 +2507,6 @@
           "format": "int64"
         },
         "active_viewers": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AddAPIKeyCommand": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
-        },
-        "secondsToLive": {
           "type": "integer",
           "format": "int64"
         }
@@ -2535,6 +2614,9 @@
     },
     "AddTeamMemberCommand": {
       "type": "object",
+      "required": [
+        "userId"
+      ],
       "properties": {
         "userId": {
           "type": "integer",
@@ -2755,6 +2837,7 @@
           "format": "int64"
         },
         "dashboardId": {
+          "description": "Deprecated: Use DashboardUID and OrgID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -2808,6 +2891,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -2835,6 +2921,9 @@
         "dashboardId": {
           "type": "integer",
           "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
         },
         "id": {
           "type": "integer",
@@ -2892,9 +2981,6 @@
       "properties": {
         "dashboard": {
           "$ref": "#/definitions/AnnotationActions"
-        },
-        "organization": {
-          "$ref": "#/definitions/AnnotationActions"
         }
       }
     },
@@ -2929,6 +3015,10 @@
           "description": "Name of annotation.",
           "type": "string"
         },
+        "placement": {
+          "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+          "type": "string"
+        },
         "target": {
           "$ref": "#/definitions/AnnotationTarget"
         },
@@ -2961,38 +3051,6 @@
         "type": {
           "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
           "type": "string"
-        }
-      }
-    },
-    "ApiKeyDTO": {
-      "type": "object",
-      "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
-        "expiration": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lastUsedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
         }
       }
     },
@@ -3504,17 +3562,6 @@
       "type": "number",
       "format": "double"
     },
-    "CookiePreferences": {
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
-      }
-    },
-    "CookieType": {
-      "type": "string"
-    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -3757,12 +3804,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -3900,10 +3946,6 @@
         },
         "uid": {
           "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -3964,6 +4006,9 @@
     },
     "CreateTeamCommand": {
       "type": "object",
+      "required": [
+        "name"
+      ],
       "properties": {
         "email": {
           "type": "string"
@@ -4192,9 +4237,6 @@
         "isSnapshot": {
           "type": "boolean"
         },
-        "isStarred": {
-          "type": "boolean"
-        },
         "provisioned": {
           "type": "boolean"
         },
@@ -4315,6 +4357,20 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
         }
       }
     },
@@ -4894,6 +4950,29 @@
         }
       }
     },
+    "FooterItem": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "string"
+        },
+        "fontStyle": {
+          "type": "string"
+        },
+        "fontWeight": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "Frame": {
       "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
       "type": "object",
@@ -5133,6 +5212,9 @@
     "Hit": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "folderId": {
           "type": "integer",
           "format": "int64"
@@ -5453,6 +5535,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
@@ -5729,6 +5812,8 @@
         "errorCode": {
           "type": "string",
           "enum": [
+            "ALERT_RULES_QUOTA_REACHED",
+            "ALERT_RULES_GROUP_QUOTA_REACHED",
             "DATASOURCE_NAME_CONFLICT",
             "DATASOURCE_INVALID_URL",
             "DATASOURCE_ALREADY_MANAGED",
@@ -5861,7 +5946,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -5961,6 +6046,10 @@
         "avatarUrl": {
           "type": "string"
         },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
         "email": {
           "type": "string"
         },
@@ -6048,12 +6137,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -6077,12 +6165,6 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -6095,14 +6177,14 @@
         "language": {
           "type": "string"
         },
-        "locale": {
-          "type": "string"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "type": "string"
         },
         "theme": {
           "type": "string",
@@ -6112,11 +6194,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -6134,8 +6213,8 @@
       }
     },
     "Permission": {
+      "description": "Permission is the model for access control permissions",
       "type": "object",
-      "title": "Permission is the model for access control permissions.",
       "properties": {
         "action": {
           "type": "string"
@@ -6349,13 +6428,32 @@
         }
       }
     },
-    "Preferences": {
-      "description": "Spec defines user, team or org Grafana preferences",
+    "PreferencesNavbarPreference": {
+      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
+        "bookmarkUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PreferencesQueryHistoryPreference": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "homeTab": {
+          "description": "one of: '' | 'query' | 'starred';",
+          "type": "string"
+        }
+      }
+    },
+    "PreferencesSpec": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
           "type": "string"
@@ -6364,15 +6462,15 @@
           "description": "Selected language (beta)",
           "type": "string"
         },
-        "locale": {
-          "description": "Selected locale (beta)",
-          "type": "string"
-        },
         "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
+          "$ref": "#/definitions/PreferencesNavbarPreference"
         },
         "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
+          "$ref": "#/definitions/PreferencesQueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "description": "Selected locale (beta)",
+          "type": "string"
         },
         "theme": {
           "description": "light, dark, empty is default",
@@ -6578,7 +6676,6 @@
       "type": "object",
       "properties": {
         "homeTab": {
-          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6920,6 +7017,9 @@
     "ReportOptions": {
       "type": "object",
       "properties": {
+        "csvEncoding": {
+          "type": "string"
+        },
         "layout": {
           "type": "string"
         },
@@ -6978,6 +7078,15 @@
         "embeddedImageTheme": {
           "type": "string"
         },
+        "footerFontFamily": {
+          "type": "string"
+        },
+        "footerItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FooterItem"
+          }
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -6986,8 +7095,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "pdfDashboardTitleEnabled": {
+          "type": "boolean"
+        },
+        "pdfHeaderEnabled": {
+          "type": "boolean"
+        },
         "pdfTheme": {
           "type": "string"
+        },
+        "pdfTimeRangeEnabled": {
+          "type": "boolean"
         },
         "userId": {
           "type": "integer",
@@ -7122,6 +7240,16 @@
     },
     "RoleDTO": {
       "type": "object",
+      "required": [
+        "version",
+        "uid",
+        "name",
+        "displayName",
+        "description",
+        "group",
+        "updated",
+        "created"
+      ],
       "properties": {
         "created": {
           "type": "string",
@@ -7229,32 +7357,6 @@
         }
       }
     },
-    "SearchDTO": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "onlyRoles": {
-          "type": "boolean"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        }
-      }
-    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -7326,45 +7428,24 @@
         }
       }
     },
-    "SearchResult": {
+    "SearchTeamGroupsQueryResult": {
       "type": "object",
       "properties": {
-        "result": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamGroups": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SearchResultItem"
+            "$ref": "#/definitions/TeamGroupDTO"
           }
-        }
-      }
-    },
-    "SearchResultItem": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
         },
-        "basicRole": {
-          "type": "string"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -7611,6 +7692,20 @@
         }
       }
     },
+    "SetTeamRolesCommand": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "roleUids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -7784,6 +7879,14 @@
     },
     "TeamDTO": {
       "type": "object",
+      "required": [
+        "id",
+        "uid",
+        "orgId",
+        "name",
+        "isProvisioned",
+        "memberCount"
+      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -7801,6 +7904,7 @@
           "type": "string"
         },
         "id": {
+          "description": "@deprecated Use UID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -7839,6 +7943,12 @@
         "teamId": {
           "type": "integer",
           "format": "int64"
+        },
+        "teamUid": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -7914,6 +8024,9 @@
           "format": "int64"
         },
         "teamUID": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -8217,52 +8330,16 @@
         }
       }
     },
-    "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
-      "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
-      "properties": {
-        "ForceQuery": {
-          "type": "boolean"
-        },
-        "Fragment": {
-          "type": "string"
-        },
-        "Host": {
-          "type": "string"
-        },
-        "OmitHost": {
-          "type": "boolean"
-        },
-        "Opaque": {
-          "type": "string"
-        },
-        "Path": {
-          "type": "string"
-        },
-        "RawFragment": {
-          "type": "string"
-        },
-        "RawPath": {
-          "type": "string"
-        },
-        "RawQuery": {
-          "type": "string"
-        },
-        "Scheme": {
-          "type": "string"
-        },
-        "User": {
-          "$ref": "#/definitions/Userinfo"
-        }
-      }
-    },
-    "Unstructured": {
+    "URL": { 
+			"type": "string", 
+			"format": "url" 
+		},
+		"Unstructured": {
       "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
         "Object": {
-          "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
+          "description": "Object is a JSON compatible map with string, float, int, bool, []any,\nor map[string]any children.",
           "type": "object",
           "additionalProperties": {}
         }
@@ -8386,6 +8463,7 @@
           "type": "string"
         },
         "version": {
+          "description": "The previous version -- used for optimistic locking",
           "type": "integer",
           "format": "int64"
         },
@@ -8485,12 +8563,6 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -8503,14 +8575,14 @@
         "language": {
           "type": "string"
         },
-        "locale": {
-          "type": "string"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "type": "string"
         },
         "theme": {
           "type": "string",
@@ -8521,11 +8593,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -8546,6 +8615,11 @@
     },
     "UpdateRoleCommand": {
       "type": "object",
+      "required": [
+        "displayName",
+        "description",
+        "group"
+      ],
       "properties": {
         "description": {
           "type": "string"
@@ -8570,10 +8644,6 @@
           "items": {
             "$ref": "#/definitions/Permission"
           }
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -8604,14 +8674,10 @@
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Name": {
+        "name": {
           "type": "string"
         }
       }
@@ -8772,6 +8838,10 @@
         "avatarUrl": {
           "type": "string"
         },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
         "email": {
           "type": "string"
         },
@@ -8926,6 +8996,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },
@@ -9348,10 +9421,7 @@
     "dashboardVersionsResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {
@@ -9477,15 +9547,6 @@
       "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "getAPIkeyResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/ApiKeyDTO"
-        }
       }
     },
     "getAccessControlStatusResponse": {
@@ -9751,7 +9812,7 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Preferences"
+        "$ref": "#/definitions/PreferencesSpec"
       }
     },
     "getPublicAnnotationsResponse": {
@@ -10004,6 +10065,10 @@
       "schema": {
         "$ref": "#/definitions/publicError"
       }
+    },
+    "interpolateDashboardResponse": {
+      "description": "",
+      "schema": {}
     },
     "jwksResponse": {
       "description": "",
@@ -10341,10 +10406,13 @@
         "$ref": "#/definitions/HitList"
       }
     },
-    "searchResultResponse": {
+    "searchTeamGroupsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SearchResult"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        }
       }
     },
     "searchTeamsResponse": {
@@ -10512,19 +10580,11 @@
     },
     {
       "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
-      "name": "folder_permissions"
+      "name": "permissions"
     },
     {
       "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
       "name": "admin"
-    },
-    {
-      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
-      "name": "legacy_alerts"
-    },
-    {
-      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
-      "name": "legacy_alerts_notification_channels"
     },
     {
       "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
@@ -10551,10 +10611,6 @@
       "name": "teams"
     },
     {
-      "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "datasource_permissions"
-    },
-    {
       "description": "These are only available in Grafana Enterprise",
       "name": "enterprise"
     },
@@ -10569,22 +10625,6 @@
     {
       "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
       "name": "reports"
-    },
-    {
-      "description": "Grafana Alerting Alertmanager-compatible endpoints",
-      "name": "alertmanager"
-    },
-    {
-      "description": "Grafana Alerting endpoints for managing rules",
-      "name": "ruler"
-    },
-    {
-      "description": "Grafana Alerting testing endpoints",
-      "name": "testing"
-    },
-    {
-      "description": "Grafana Alerting Prometheus-compatible endpoints",
-      "name": "prometheus"
     },
     {
       "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",

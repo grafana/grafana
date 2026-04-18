@@ -9,13 +9,15 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -106,7 +108,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 
 				// feature flag is enabled
 				result = StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt))
-				require.Equal(t, strfmt.DateTime(alertState.FiredAt), result.StartsAt)
+				require.Equal(t, strfmt.DateTime(*alertState.FiredAt), result.StartsAt)
 			})
 
 			t.Run("should copy annotations", func(t *testing.T) {
@@ -179,6 +181,29 @@ func Test_StateToPostableAlert(t *testing.T) {
 				alertState.StateReason = "TEST_STATE_REASON"
 				result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
 				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
+			})
+
+			t.Run("should propagate namespace UID label as annotation", func(t *testing.T) {
+				t.Run("when label is present and non-empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = "test-namespace-uid"
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.Equal(t, "test-namespace-uid", result.Annotations[alertingModels.NamespaceUIDLabel])
+				})
+
+				t.Run("when label is empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = ""
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
+
+				t.Run("when label is missing", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					delete(alertState.Labels, alertingModels.NamespaceUIDLabel)
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
 			})
 
 			switch tc.state {
@@ -361,7 +386,7 @@ func randomTransition(from, to eval.State) StateTransition {
 			State:              to,
 			AlertRuleUID:       util.GenerateShortUID(),
 			StartsAt:           time.Now(),
-			FiredAt:            randomTimeInPast(),
+			FiredAt:            util.Pointer(randomTimeInPast()),
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
@@ -371,4 +396,47 @@ func randomTransition(from, to eval.State) StateTransition {
 			Values:             make(map[string]float64),
 		},
 	}
+}
+
+func TestAlertInstanceToState(t *testing.T) {
+	instance := ngModels.AlertInstanceGen(
+		ngModels.InstanceMuts.WithState(ngModels.InstanceStateFiring),
+		ngModels.InstanceMuts.WithResultFingerprint("deadbeef"),
+		ngModels.InstanceMuts.WithLastError("some error"),
+		ngModels.InstanceMuts.WithLastResult(ngModels.LastResult{
+			Values:    map[string]float64{"A": 1.5},
+			Condition: "A",
+		}),
+	)
+
+	state := AlertInstanceToState(instance, log.NewNopLogger())
+
+	expected := &State{
+		AlertRuleUID:         instance.RuleUID,
+		OrgID:                instance.RuleOrgID,
+		CacheID:              instance.Labels.Fingerprint(),
+		Labels:               map[string]string(instance.Labels),
+		State:                eval.Alerting,
+		StateReason:          instance.CurrentReason,
+		LastEvaluationString: "",
+		StartsAt:             instance.CurrentStateSince,
+		EndsAt:               instance.CurrentStateEnd,
+		FiredAt:              instance.FiredAt,
+		LastEvaluationTime:   instance.LastEvalTime,
+		EvaluationDuration:   instance.EvaluationDuration,
+		Annotations:          instance.Annotations,
+		ResultFingerprint:    data.Fingerprint(0xdeadbeef),
+		ResolvedAt:           instance.ResolvedAt,
+		LastSentAt:           instance.LastSentAt,
+		Values:               instance.LastResult.Values,
+		LatestResult: &Evaluation{
+			EvaluationTime:  instance.LastEvalTime,
+			EvaluationState: eval.Alerting,
+			Values:          instance.LastResult.Values,
+			Condition:       instance.LastResult.Condition,
+		},
+	}
+
+	require.Empty(t, cmp.Diff(expected, state, cmpopts.IgnoreFields(State{}, "Error")))
+	require.EqualError(t, state.Error, "some error")
 }

@@ -1,17 +1,17 @@
 import { partial } from 'lodash';
-import { ReactElement, useEffect, useState } from 'react';
-import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
+import { type ReactElement, useEffect, useState } from 'react';
+import { Controller, type DeepMap, type FieldError, type FieldErrors, useForm } from 'react-hook-form';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { addToDashboard, SubmissionError } from './addToDashboard';
+import { addToDashboard, type SubmissionError } from './addToDashboard';
 
 enum SaveTarget {
   NewDashboard = 'new-dashboard',
@@ -41,7 +41,11 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions = undefined>({
+/**
+ * Internal implementation used by the exposed versioned wrapper.
+ * For stability/versioning guidance, refer to AddToDashboardFormExposedComponent.
+ */
+export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -65,14 +69,14 @@ export function AddToDashboardForm<TOptions = undefined>({
 
   if (canCreateDashboard) {
     saveTargets.push({
-      label: 'New dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.new-dashboard', 'New dashboard'),
       value: SaveTarget.NewDashboard,
     });
   }
 
   if (canWriteDashboard) {
     saveTargets.push({
-      label: 'Existing dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.existing-dashboard', 'Existing dashboard'),
       value: SaveTarget.ExistingDashboard,
     });
   }
@@ -91,7 +95,7 @@ export function AddToDashboardForm<TOptions = undefined>({
       queries: panel.targets,
     });
 
-    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
+    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange, options });
     if (error) {
       setSubmissionError(error);
       return;
@@ -153,7 +157,15 @@ export function AddToDashboardForm<TOptions = undefined>({
               control={control}
               name="dashboardUid"
               shouldUnregister
-              rules={{ required: { value: true, message: 'This field is required.' } }}
+              rules={{
+                required: {
+                  value: true,
+                  message: t(
+                    'dashboard-scene.add-to-dashboard-form.message.this-field-is-required',
+                    'This field is required.'
+                  ),
+                },
+              }}
             />
           );
         })()}
@@ -194,3 +206,9 @@ function assertIsSaveToExistingDashboardError(
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
   // when we use it in the form.
 }
+
+export interface AbsolutePathOptions {
+  useAbsolutePath: boolean;
+}
+
+export default AddToDashboardForm;

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { ReactNode, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange, rangeUtil } from '@grafana/data';
+import { type AbsoluteTimeRange, CoreApp, type LogRowModel, type TimeRange, rangeUtil } from '@grafana/data';
 // import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
-import { config, reportInteraction } from '@grafana/runtime';
-import { LogsSortOrder, TimeZone } from '@grafana/schema';
+import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -81,9 +81,12 @@ export const InfiniteScroll = ({
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
+    if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      return;
+    }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
@@ -227,10 +230,6 @@ export function shouldLoadMore(
   element: HTMLDivElement,
   lastScroll: number
 ): ScrollDirection {
-  // Disable behavior if there is no scroll
-  if (element.scrollHeight <= element.clientHeight) {
-    return ScrollDirection.NoScroll;
-  }
   const delta = event instanceof WheelEvent ? event.deltaY : element.scrollTop - lastScroll;
   if (delta === 0) {
     return ScrollDirection.NoScroll;
@@ -310,7 +309,7 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, 
 export const SCROLLING_THRESHOLD = 1e3;
 
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
-function canScrollTop(
+export function canScrollTop(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,

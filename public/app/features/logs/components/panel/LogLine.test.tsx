@@ -1,49 +1,102 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Grammar } from 'prismjs';
 
-import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine } from '../__mocks__/logRow';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
+import { createLogLine } from '../mocks/logRow';
+import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { getStyles, LogLine } from './LogLine';
-import { LogListContextProvider } from './LogListContext';
-import { LogListModel } from './processing';
-import { getTruncationLength } from './virtualization';
+import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
+import { getGridTemplateColumns, getStyles, LogLine, type Props } from './LogLine';
+import { type LogListFontSize } from './LogList';
+import { LogListContextProvider, LogListContext } from './LogListContext';
+import { LogListSearchContext } from './LogListSearchContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
+import { type LogListModel } from './processing';
+import { LogLineVirtualization } from './virtualization';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(createTempoDatasource()),
+    }),
+  };
+});
 
 jest.mock('./LogListContext');
-jest.mock('./virtualization');
+jest.mock('../LogDetails');
 
 const theme = createTheme();
-const styles = getStyles(theme);
+const virtualization = new LogLineVirtualization(theme, 'default');
+const styles = getStyles(theme, virtualization);
 const contextProps = {
+  ...defaultProps,
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
-  logs: [],
   showControls: false,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   wrapLogMessage: false,
 };
+const fontSizes: LogListFontSize[] = ['default', 'small'];
 
-describe('LogLine', () => {
-  let log: LogListModel;
+describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
+  let log: LogListModel, defaultProps: Props;
   beforeEach(() => {
-    log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
+    setBooleanFlags({});
+    log = createLogLine(
+      { labels: { place: 'luna' }, entry: `log message 1` },
+      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+    );
+    contextProps.logs = [log];
+    contextProps.fontSize = fontSize;
+    defaultProps = {
+      displayedFields: [],
+      index: 0,
+      log,
+      logs: [log],
+      onClick: jest.fn(),
+      showTime: true,
+      style: {},
+      styles: styles,
+      timeRange: getDefaultTimeRange(),
+      timeZone: 'browser',
+      wrapLogMessage: true,
+    };
   });
 
   test('Renders a log line', () => {
     render(
-      <LogLine
-        displayedFields={[]}
-        index={0}
-        log={log}
-        showTime={true}
-        style={{}}
-        styles={styles}
-        wrapLogMessage={false}
-      />
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
     );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
@@ -51,88 +104,212 @@ describe('LogLine', () => {
 
   test('Renders a log line with no timestamp', () => {
     render(
-      <LogLine
-        displayedFields={[]}
-        index={0}
-        log={log}
-        showTime={false}
-        style={{}}
-        styles={styles}
-        wrapLogMessage={false}
-      />
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} showTime={false} />
+      </LogListContextProvider>
     );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
-  test('Renders a log line with displayed fields', () => {
+  test('Renders a log line with no level when showLevel is false', () => {
     render(
-      <LogLine
-        displayedFields={['place']}
-        index={0}
-        log={log}
-        showTime={true}
-        style={{}}
-        styles={styles}
-        wrapLogMessage={false}
-      />
+      <LogListContextProvider {...contextProps} showLevel={false}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
     );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
-    expect(screen.queryByText(log.body)).not.toBeInTheDocument();
-    expect(screen.getByText('luna')).toBeInTheDocument();
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).not.toBeInTheDocument();
   });
 
-  test('Renders a log line with body displayed fields', () => {
+  test('Renders a log line with level by default', () => {
     render(
-      <LogLine
-        displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]}
-        index={0}
-        log={log}
-        showTime={true}
-        style={{}}
-        styles={styles}
-        wrapLogMessage={false}
-      />
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
     );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
-    expect(screen.getByText('luna')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).toBeInTheDocument();
+  });
+
+  test('Renders a log line with millisecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ms',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with nanosecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    log.timeEpochMs = 1754472919504;
+    log.timeEpochNs = '1754472919504133766';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ns',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504133766')).toBeInTheDocument();
+  });
+
+  describe('Displayed fields', () => {
+    test('Renders a log line with displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} displayedFields={['place']} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText(log.body)).not.toBeInTheDocument();
+      expect(screen.getByText('luna')).toBeInTheDocument();
+    });
+
+    test('Renders a log line with body displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('luna')).toBeInTheDocument();
+    });
+
+    test('Renders empty displayed fields when using unwrapped columns', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={true}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+      // 4 displayed fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(6);
+    });
+
+    test('Skips empty displayed fields when not using unwrapped columns', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={false}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+
+      // 4 displayed fields - 2 empty fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(4);
+    });
+
+    test('Skips empty displayed fields when using wrapped logs', () => {
+      const { container } = render(
+        <LogListContextProvider {...contextProps} wrapLogMessage={true}>
+          <LogLine {...defaultProps} displayedFields={['place', 'nothing', LOG_LINE_BODY_FIELD_NAME, 'empty']} />
+        </LogListContextProvider>
+      );
+
+      // 4 displayed fields - 2 empty fields + time + level
+      expect(container.querySelectorAll('.field')).toHaveLength(4);
+    });
   });
 
   test('Reports mouse over events', async () => {
     const onLogLineHover = jest.fn();
     render(
       <LogListContextProvider {...contextProps} onLogLineHover={onLogLineHover}>
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={false}
-        />
+        <LogLine {...defaultProps} />
       </LogListContextProvider>
     );
     await userEvent.hover(screen.getByText('log message 1'));
     expect(onLogLineHover).toHaveBeenCalledTimes(1);
   });
 
+  test('Listens to on click events', async () => {
+    const onClick = jest.fn();
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} onClick={onClick} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('Shows the deduplication count', async () => {
+    log.duplicates = 1;
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    expect(screen.getByText('2x')).toBeInTheDocument();
+  });
+
+  test('Shows log lines with errors', async () => {
+    log.hasError = true;
+    log.labels.__error__ = 'error message';
+    jest.spyOn(log, 'errorMessage', 'get').mockReturnValue('error message');
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    expect(screen.getByLabelText('Has errors')).toBeInTheDocument();
+  });
+
+  test('Shows sampled log lines', async () => {
+    log.isSampled = true;
+    log.labels.__adaptive_logs_sampled__ = 'true';
+    jest.spyOn(log, 'sampledMessage', 'get').mockReturnValue('sampled message');
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    expect(screen.getByLabelText('Is sampled')).toBeInTheDocument();
+  });
+
+  test('Does not falsely report sampled or errors in logs', async () => {
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    expect(screen.queryByLabelText('Has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Is sampled')).not.toBeInTheDocument();
+  });
+
   describe('Log line menu', () => {
     test('Renders a log line menu', async () => {
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={false}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
       );
       expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
       await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
+
+    test('The menu can be clicked', async () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
   });
@@ -144,15 +321,9 @@ describe('LogLine', () => {
 
     test('Highlights relevant tokens in the log line', () => {
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={false}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
       );
       expect(screen.getByText('place')).toBeInTheDocument();
       expect(screen.getByText('1ms')).toBeInTheDocument();
@@ -163,15 +334,7 @@ describe('LogLine', () => {
     test('Can be disabled', () => {
       render(
         <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
-          <LogLine
-            displayedFields={[]}
-            index={0}
-            log={log}
-            showTime={true}
-            style={{}}
-            styles={styles}
-            wrapLogMessage={false}
-          />
+          <LogLine {...defaultProps} log={log} />
         </LogListContextProvider>
       );
       expect(screen.getByText(`place="luna" 1ms 3 KB`)).toBeInTheDocument();
@@ -186,15 +349,138 @@ describe('LogLine', () => {
 
       render(
         <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
-          <LogLine
-            displayedFields={[]}
-            index={0}
-            log={log}
-            showTime={true}
-            style={{}}
-            styles={styles}
-            wrapLogMessage={false}
-          />
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
+      expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
+    });
+
+    test('Highlights the OTel attributes field when rendered', () => {
+      log = createLogLine(
+        {
+          labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+          entry: `place="luna" 1ms 3 KB`,
+        },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          virtualization,
+          wrapLogMessage: true,
+          otelLogsFormattingEnabled: true,
+        }
+      );
+      const displayedFields = getDisplayedFieldsForLogs([log]);
+
+      render(
+        <LogListContextProvider {...contextProps} displayedFields={displayedFields}>
+          <LogLine {...defaultProps} displayedFields={displayedFields} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText('service=')).toBeInTheDocument();
+      expect(screen.getByText('some service')).toBeInTheDocument();
+
+      expect(screen.getByText('place')).toBeInTheDocument();
+      expect(screen.getByText('1ms')).toBeInTheDocument();
+      expect(screen.getByText('3 KB')).toBeInTheDocument();
+      expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
+    });
+
+    test('OTel attributes field is not present when the flag is disabled', () => {
+      log = createLogLine(
+        {
+          labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+          entry: `place="luna" 1ms 3 KB`,
+        },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          virtualization,
+          wrapLogMessage: true,
+          otelLogsFormattingEnabled: false,
+        }
+      );
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('service')).not.toBeInTheDocument();
+      expect(screen.queryByText('some service')).not.toBeInTheDocument();
+
+      expect(screen.getByText('place')).toBeInTheDocument();
+      expect(screen.getByText('1ms')).toBeInTheDocument();
+      expect(screen.getByText('3 KB')).toBeInTheDocument();
+      expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Custom syntax highlighting', () => {
+    const entry = `{"place":"luna","count":3,"true":false}`;
+    const grammar: Grammar = {
+      property: {
+        pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?=\s*:)/,
+        lookbehind: true,
+        greedy: true,
+      },
+      string: {
+        pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?!\s*:)/,
+        lookbehind: true,
+        greedy: true,
+      },
+      number: /-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b/i,
+      punctuation: /[{}[\],]/,
+      operator: /:/,
+      boolean: /\b(?:false|true)\b/,
+    };
+    beforeEach(() => {
+      log = createLogLine({ labels: { place: 'luna' }, entry }, undefined, grammar);
+    });
+
+    test('Highlights relevant tokens in the log line', () => {
+      render(
+        <LogListContextProvider {...contextProps} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText('"place"')).toBeInTheDocument();
+      expect(screen.getByText('"luna"')).toBeInTheDocument();
+      expect(screen.getByText('"count"')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByText('"true"')).toBeInTheDocument();
+      expect(screen.getByText('false')).toBeInTheDocument();
+      expect(screen.queryByText(entry)).not.toBeInTheDocument();
+    });
+
+    test('Can be disabled', () => {
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(entry)).toBeInTheDocument();
+      expect(screen.queryByText('"place"')).not.toBeInTheDocument();
+      expect(screen.queryByText('"luna"')).not.toBeInTheDocument();
+      expect(screen.queryByText('"count"')).not.toBeInTheDocument();
+      expect(screen.queryByText('3')).not.toBeInTheDocument();
+      expect(screen.queryByText('"true"')).not.toBeInTheDocument();
+      expect(screen.queryByText('false')).not.toBeInTheDocument();
+    });
+
+    test('Does not alter ANSI log lines', () => {
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: 'Lorem \u001B[31mipsum\u001B[0m et dolor' },
+        undefined,
+        grammar
+      );
+      log.hasAnsi = true;
+
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
         </LogListContextProvider>
       );
       expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
@@ -204,21 +490,19 @@ describe('LogLine', () => {
 
   describe('Collapsible log lines', () => {
     beforeEach(() => {
-      log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
-      jest.mocked(getTruncationLength).mockReturnValue(5);
+      const virtualization = new LogLineVirtualization(theme, 'default');
+      jest.spyOn(virtualization, 'getTruncationLength').mockReturnValue(5);
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: `log message 1` },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+      );
     });
 
     test('Logs are not collapsed by default', () => {
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={true}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
       );
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
@@ -227,16 +511,13 @@ describe('LogLine', () => {
     test('Logs are not collapsible when unwrapped', () => {
       log.collapsed = true;
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          // Unwrapped logs
-          wrapLogMessage={false}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine
+            {...defaultProps}
+            // Unwrapped logs
+            wrapLogMessage={false}
+          />
+        </LogListContextProvider>
       );
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
@@ -245,15 +526,9 @@ describe('LogLine', () => {
     test('Long logs can be collapsed and expanded', async () => {
       log.collapsed = true;
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={true}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
       );
       expect(screen.getByText('show more')).toBeVisible();
       await userEvent.click(screen.getByText('show more'));
@@ -266,20 +541,464 @@ describe('LogLine', () => {
       log.collapsed = true;
       const onOverflow = jest.fn();
       render(
-        <LogLine
-          displayedFields={[]}
-          index={0}
-          log={log}
-          onOverflow={onOverflow}
-          showTime={true}
-          style={{}}
-          styles={styles}
-          wrapLogMessage={true}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} onOverflow={onOverflow} log={log} />
+        </LogListContextProvider>
       );
       await userEvent.click(await screen.findByText('show more'));
       await userEvent.click(await screen.findByText('show less'));
       expect(onOverflow).toHaveBeenCalledTimes(2);
+    });
+
+    test('When the collapsed state changes, the log line contents re-render', async () => {
+      log.collapsed = true;
+      log.raw = 'The full contents of the log line';
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText(log.raw)).not.toBeInTheDocument();
+
+      await userEvent.click(await screen.findByText('show more'));
+
+      expect(screen.getByText(log.raw)).toBeInTheDocument();
+    });
+
+    test('Syncs the collapsed state with collapsed status changes in the log', async () => {
+      log.collapsed = true;
+      const { rerender } = render(<LogLine {...defaultProps} log={log} />);
+      expect(screen.getByText('show more')).toBeVisible();
+
+      log.collapsed = undefined;
+      rerender(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText('show more')).not.toBeInTheDocument();
+      expect(screen.queryByText('show less')).not.toBeInTheDocument();
+    });
+
+    test('Syncs the collapsed state with wrapping changes', async () => {
+      log.collapsed = true;
+      const { rerender } = render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText('show more')).toBeVisible();
+
+      rerender(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} wrapLogMessage={false} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText('show more')).not.toBeInTheDocument();
+      expect(screen.queryByText('show less')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Text search support', () => {
+    test('Highlights search text in a highlighted log line', () => {
+      log.setCurrentSearch('message');
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={true}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'message',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in a non-highlighted log line', () => {
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'message',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in a ANSI log lines', () => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: 'Lorem \u001B[31mipsum\u001B[0m et dolor' });
+      log.hasAnsi = true;
+
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'olo',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} log={log} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
+      expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
+      expect(screen.getByText('olo')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps} displayedFields={['place']}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'un',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} displayedFields={['place']} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('luna')).not.toBeInTheDocument();
+      expect(screen.getByText('un')).toBeInTheDocument();
+    });
+  });
+
+  describe('Inline details', () => {
+    test('Details are not rendered if details mode is not inline', () => {
+      render(
+        <LogDetailsContext.Provider
+          value={{
+            ...emptyContextData,
+            showDetails: [log],
+            detailsMode: 'sidebar',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogDetailsContext.Provider>
+      );
+      expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
+    });
+
+    test('Details are rendered if details mode is inline', async () => {
+      render(
+        <LogDetailsContext.Provider
+          value={{
+            ...emptyContextData,
+            showDetails: [log],
+            detailsMode: 'inline',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogDetailsContext.Provider>
+      );
+      expect(await screen.findByPlaceholderText('Search field names and values')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('getGridTemplateColumns', () => {
+  describe('With unwrapped columns', () => {
+    test('Gets the template columns for the default visualization mode', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+          ],
+          [],
+          true
+        )
+      ).toBe('23px 4px 1fr');
+    });
+
+    test('Gets the template columns when displayed fields are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px 4px');
+    });
+
+    test('Gets the template columns when displayed fields including the log line body are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px 4px 20px');
+    });
+
+    test('Gets the template columns with unique labels', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: true,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          true
+        )
+      ).toBe('23px 4px max-content 4px 20px');
+    });
+  });
+
+  describe('Without unwrapped columns', () => {
+    test('Gets the template columns for the default visualization mode', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+          ],
+          [], // No displayed fields
+          false
+        )
+      ).toBe('23px 4px 1fr');
+    });
+
+    test('Gets the template columns when displayed fields are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content');
+    });
+
+    test('Gets the template columns when displayed fields including the log line body are used', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content max-content');
+    });
+
+    test('Gets the template columns with unique labels', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: true,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: true,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: true,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('23px 4px max-content max-content max-content');
+    });
+
+    test('Uses the "internal" flag and not names to identify internal fields', () => {
+      expect(
+        getGridTemplateColumns(
+          [
+            {
+              field: 'timestamp',
+              internal: undefined,
+              width: 23,
+            },
+            {
+              field: 'level',
+              internal: undefined,
+              width: 4,
+            },
+            {
+              field: 'unique-labels',
+              internal: undefined,
+              width: 0,
+            },
+            {
+              field: 'field',
+              width: 4,
+            },
+            {
+              field: LOG_LINE_BODY_FIELD_NAME,
+              width: 20,
+            },
+          ],
+          ['field'],
+          false
+        )
+      ).toBe('max-content max-content max-content max-content max-content');
     });
   });
 });

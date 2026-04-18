@@ -7,9 +7,9 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import getEnvConfig from '../../scripts/webpack/env-util';
+import { matchers } from '@grafana/test-utils';
 
-import { matchers } from './matchers';
+import getEnvConfig from '../../scripts/webpack/env-util';
 
 const config = getEnvConfig() as Record<string, string | boolean>;
 
@@ -29,10 +29,38 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
+// Pre-resolve dashboard API version resolver with beta defaults so tests
+// don't trigger real network requests via getDashboardAPI() -> resolve().
+// Tests that need to test the resolver itself should call reset() in beforeEach.
+jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => {
+  const actual = jest.requireActual('app/features/dashboard/api/DashboardAPIVersionResolver');
+  actual.dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
+  return actual;
+});
+
+// Pre-resolve folder app API to v1beta1 so tests using MSW folder handlers (v1beta1 paths) do not hit discovery.
+jest.mock('@grafana/api-clients/rtkq/folder/v1beta1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/folder/v1beta1');
+  actual.folderAPIVersionResolver.set('v1beta1');
+  return actual;
+});
+
 // mock out the worker that detects changes in the dashboard
 // The mock is needed because JSDOM does not support workers and
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
+
+// Mock useLoadAppPlugins to prevent async state updates in tests
+jest.mock('app/features/plugins/extensions/useLoadAppPlugins', () => ({
+  useLoadAppPlugins: jest.fn().mockReturnValue({ isLoading: false }),
+}));
+
+// Mock usePluginComponents to return empty components for all tests by default
+// Tests that need to test plugin components can override this mock
+jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
+  usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
+}));
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

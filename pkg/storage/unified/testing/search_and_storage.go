@@ -4,12 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -48,7 +52,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		}
 
 		for _, doc := range initialResources {
-			key := &resource.ResourceKey{
+			key := &resourcepb.ResourceKey{
 				Group:     "test.grafana.app",
 				Resource:  "testresources",
 				Namespace: nsPrefix,
@@ -80,16 +84,16 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 			// Create document
 			rv, err := backend.WriteEvent(ctx, resource.WriteEvent{
-				Type:   resource.WatchEvent_ADDED,
+				Type:   resourcepb.WatchEvent_ADDED,
 				Key:    key,
 				Value:  value,
 				Object: meta,
+				GUID:   uuid.New().String(),
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, int64(0))
 		}
 	})
-	ch := make(chan *resource.IndexEvent)
 
 	t.Run("Create a resource server with both backends", func(t *testing.T) {
 		// Create a resource server with both backends
@@ -98,12 +102,11 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			Backend: backend,
 			Search: resource.SearchOptions{
 				Backend: searchBackend,
-				Resources: &testDocumentBuilderSupplier{
-					groupsResources: map[string]string{
+				Resources: &resource.TestDocumentBuilderSupplier{
+					GroupsResources: map[string]string{
 						"test.grafana.app": "testresources",
 					},
 				},
-				IndexEventsChan: ch,
 			},
 		})
 		require.NoError(t, err)
@@ -111,9 +114,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 	t.Run("Search for initial resources", func(t *testing.T) {
 		// Test 1: Search for initial resources
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -152,7 +155,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		}
 
 		for _, doc := range testDocs {
-			key := &resource.ResourceKey{
+			key := &resourcepb.ResourceKey{
 				Group:     "test.grafana.app",
 				Resource:  "testresources",
 				Namespace: nsPrefix,
@@ -180,23 +183,20 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.NoError(t, err)
 
 			// Create document
-			createResp, err := server.Create(ctx, &resource.CreateRequest{
+			createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
 				Key:   key,
 				Value: value,
 			})
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
 			require.Nil(t, createResp.Error)
-
-			ev := <-ch
-			require.NotNil(t, ev)
 		}
 	})
 
 	t.Run("Search for documents", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -212,9 +212,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search with tags", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -226,19 +226,65 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
+		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
+		// https://github.com/grafana/grafana/pull/111842
+		require.Equal(t, int64(0), searchResp.TotalHits)
+
+		// this is the correct way of searching by tag
+		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "test.grafana.app",
+					Resource:  "testresources",
+					Namespace: nsPrefix,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"hello"},
+				}},
+			},
+			Limit: 10,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, searchResp)
+		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
 	t.Run("Search with specific tag", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
 				},
 			},
 			Query: "tag1",
+			Limit: 10,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, searchResp)
+		require.Nil(t, searchResp.Error)
+		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
+		// https://github.com/grafana/grafana/pull/111842
+		require.Equal(t, int64(0), searchResp.TotalHits)
+
+		// this is the correct way of searching by tag
+		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "test.grafana.app",
+					Resource:  "testresources",
+					Namespace: nsPrefix,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"tag1"},
+				}},
+			},
 			Limit: 10,
 		})
 		require.NoError(t, err)

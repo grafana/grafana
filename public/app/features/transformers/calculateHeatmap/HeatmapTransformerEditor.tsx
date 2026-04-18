@@ -1,19 +1,20 @@
 import { useEffect } from 'react';
 
 import {
-  PanelOptionsEditorBuilder,
+  type PanelOptionsEditorBuilder,
   PluginState,
-  StandardEditorContext,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type StandardEditorContext,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/heatmap.svg';
+import lightImage from '../images/light/heatmap.svg';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
 
 import { addHeatmapCalculationOptions } from './editor/helper';
-import { HeatmapTransformerOptions, heatmapTransformer } from './heatmap';
+import { type HeatmapTransformerOptions, getHeatmapTransformer } from './heatmap';
 
 // Nothing defined in state
 const supplier = (
@@ -37,18 +38,22 @@ export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransf
   const pane = getTransformerOptionPane<HeatmapTransformerOptions>(props, supplier);
   return (
     <div>
-      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.items.map((v) => v.renderElement())}</div>
     </div>
   );
 };
 
-export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransformerOptions> = {
-  id: heatmapTransformer.id,
-  editor: HeatmapTransformerEditor,
-  transformation: heatmapTransformer,
-  name: heatmapTransformer.name,
-  description: heatmapTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getTransformationContent(heatmapTransformer.id).helperDocs,
+export const getHeatmapTransformRegistryItem: () => TransformerRegistryItem<HeatmapTransformerOptions> = () => {
+  const heatmapTransformer = getHeatmapTransformer();
+  return {
+    id: heatmapTransformer.id,
+    editor: HeatmapTransformerEditor,
+    transformation: heatmapTransformer,
+    name: heatmapTransformer.name,
+    description: heatmapTransformer.description,
+    state: PluginState.alpha,
+    categories: new Set([TransformerCategory.CreateNewVisualization]),
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

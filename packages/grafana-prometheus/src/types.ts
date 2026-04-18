@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/types.ts
-import { DataSourceJsonData } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataSourceJsonData } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import { Prometheus as GenPromQuery } from './dataquery';
-import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
+import { type Prometheus as GenPromQuery } from './dataquery';
+import { type QueryBuilderLabelFilter, type QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
   /**
@@ -15,11 +15,6 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics explorer additional settings
-  useBackend?: boolean;
-  disableTextWrap?: boolean;
-  fullMetaSearch?: boolean;
-  includeNullMetadata?: boolean;
   fromExploreMetrics?: boolean;
 }
 
@@ -51,10 +46,11 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
-  codeModeMetricNamesSuggestionLimit?: number;
   seriesEndpoint?: boolean;
+  seriesLimit?: number;
 }
 
 export type ExemplarTraceIdDestination = {

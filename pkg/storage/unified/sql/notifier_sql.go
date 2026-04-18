@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -18,7 +17,6 @@ var (
 	errHistoryPollRequired    = fmt.Errorf("historyPoll is required")
 	errListLatestRVsRequired  = fmt.Errorf("listLatestRVs is required")
 	errBulkLockRequired       = fmt.Errorf("bulkLock is required")
-	errTracerRequired         = fmt.Errorf("tracer is required")
 	errLogRequired            = fmt.Errorf("log is required")
 	errInvalidWatchBufferSize = fmt.Errorf("watchBufferSize must be greater than 0")
 	errInvalidPollingInterval = fmt.Errorf("pollingInterval must be greater than 0")
@@ -33,7 +31,6 @@ type pollingNotifier struct {
 	watchBufferSize int
 
 	log            logging.Logger
-	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
@@ -49,7 +46,6 @@ type pollingNotifierConfig struct {
 	watchBufferSize int
 
 	log            logging.Logger
-	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
 	bulkLock      *bulkLock
@@ -68,9 +64,6 @@ func (cfg *pollingNotifierConfig) validate() error {
 	}
 	if cfg.bulkLock == nil {
 		return errBulkLockRequired
-	}
-	if cfg.tracer == nil {
-		return errTracerRequired
 	}
 	if cfg.log == nil {
 		return errLogRequired
@@ -99,7 +92,6 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		pollingInterval: cfg.pollingInterval,
 		watchBufferSize: cfg.watchBufferSize,
 		log:             cfg.log,
-		tracer:          cfg.tracer,
 		bulkLock:        cfg.bulkLock,
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
@@ -130,7 +122,7 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 		case <-p.done:
 			return
 		case <-t.C:
-			ctx, span := p.tracer.Start(ctx, tracePrefix+"poller")
+			ctx, span := tracer.Start(ctx, "sql.pollingNotifier.poller")
 			// List the latest RVs to see if any of those are not have been seen before.
 			grv, err := p.listLatestRVs(ctx)
 			if err != nil {
@@ -173,7 +165,7 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 }
 
 func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
-	ctx, span := p.tracer.Start(ctx, tracePrefix+"poll")
+	ctx, span := tracer.Start(ctx, "sql.pollingNotifier.poll")
 	defer span.End()
 
 	start := time.Now()
@@ -197,13 +189,13 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 		}
 		stream <- &resource.WrittenEvent{
 			Value: rec.Value,
-			Key: &resource.ResourceKey{
+			Key: &resourcepb.ResourceKey{
 				Namespace: rec.Key.Namespace,
 				Group:     rec.Key.Group,
 				Resource:  rec.Key.Resource,
 				Name:      rec.Key.Name,
 			},
-			Type:            resource.WatchEvent_Type(rec.Action),
+			Type:            resourcepb.WatchEvent_Type(rec.Action),
 			PreviousRV:      *prevRV,
 			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,

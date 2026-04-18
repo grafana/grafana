@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import Map from 'ol/Map';
+import type Map from 'ol/Map';
 import { useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
-import { config } from 'app/core/config';
 
-import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';
+import { type MapMeasure, type MapMeasureOptions, measures } from '../utils/measure';
 
 import { MeasureVectorLayer } from './MeasureVectorLayer';
 
@@ -82,7 +84,14 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
                 vector.current.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
-            <Button className={measureStyle.button} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
+            <Button
+              aria-label={t('geomap.measure-overlay.aria-label-close', 'Close measure tools')}
+              className={measureStyle.button}
+              icon="times"
+              variant="secondary"
+              size="sm"
+              onClick={toggleMenu}
+            />
           </div>
           <Select
             className={measureStyle.unitSelect}
@@ -99,8 +108,9 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
       ) : (
         <IconButton
           className={measureStyle.icon}
+          data-testid={selectors.components.PanelEditor.measureButton}
           name="ruler-combined"
-          tooltip="show measure tools"
+          tooltip={t('geomap.measure-overlay.tooltip-show-measure-tools', 'Show measure tools')}
           tooltipPlacement="left"
           onClick={toggleMenu}
         />

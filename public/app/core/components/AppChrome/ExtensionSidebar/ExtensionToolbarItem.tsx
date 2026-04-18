@@ -1,9 +1,5 @@
-import { css, cx } from '@emotion/css';
-import { useCallback } from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { type ExtensionInfo } from '@grafana/data';
+import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -12,141 +8,107 @@ import {
   getComponentMetaFromComponentId,
   useExtensionSidebarContext,
 } from './ExtensionSidebarProvider';
+import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
-export function ExtensionToolbarItem() {
-  const styles = getStyles(useTheme2());
-  const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
-    useExtensionSidebarContext();
+type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
-  let dockedComponentTitle = '';
-  if (dockedComponentId) {
-    const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
-    if (dockedComponent) {
-      dockedComponentTitle = dockedComponent.componentTitle;
-    }
-  }
+type Props = {
+  compact?: boolean;
+};
 
-  if (!isEnabled || availableComponents.size === 0) {
-    return null;
-  }
+const compactAllowedComponents = ['grafana-assistant-app'];
+const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
-  // get a flat list of all components with their pluginId
-  const components = Array.from(availableComponents.entries()).flatMap(([pluginId, { addedComponents }]) =>
-    addedComponents.map((c) => ({ ...c, pluginId }))
+export function ExtensionToolbarItem({ compact }: Props) {
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+
+  // Don't render the toolbar if the only available plugins are interactive learning plugins.
+  // They're opened by the interactive learning menu.
+  const nonInteractiveLearningPlugins = Array.from(availableComponents.keys()).filter(
+    (pluginId) => !interactiveLearningPluginIds.includes(pluginId)
   );
-
-  if (components.length === 0) {
+  if (nonInteractiveLearningPlugins.length === 0) {
     return null;
   }
 
-  // conditionally renders a button to open or close the sidebar
-  // not using a component to avoid passing refs with the `Dropdown` component
-  const renderButton = useCallback(
-    (isOpen: boolean, title?: string, onClick?: () => void) => {
-      if (isOpen) {
-        // render button to close the sidebar
-        return (
-          <ToolbarButton
-            className={cx(styles.button, styles.buttonActive)}
-            icon="ai-sparkle"
-            data-testid="extension-toolbar-button-close"
-            variant="default"
-            onClick={() => setDockedComponentId(undefined)}
-            tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })}
-          />
-        );
+  const dockedMeta = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId) : null;
+
+  const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
+    // Don't render any button for the interactive learning plugins.
+    // They're opened by the interactive learning button.
+    if (interactiveLearningPluginIds.includes(pluginId)) {
+      return null;
+    }
+
+    if (components.length === 1) {
+      const component = components[0];
+      const componentId = getComponentIdFromComponentMeta(pluginId, component.title);
+      const isActive = dockedComponentId === componentId;
+
+      // we now allow more components in the extension sidebar
+      // in compact mode we only want to allow the Assistant app right now
+      if (compact && !compactAllowedComponents.includes(pluginId)) {
+        return null;
       }
-      // if a title is provided, use it in the tooltip
-      let tooltip = t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
-      if (title) {
-        tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
-      }
+
       return (
-        <ToolbarButton
-          className={cx(styles.button)}
-          icon="ai-sparkle"
-          data-testid="extension-toolbar-button-open"
-          variant="default"
-          onClick={onClick}
-          tooltip={tooltip}
+        <ExtensionToolbarItemButton
+          key={pluginId}
+          isOpen={isActive}
+          title={component.title}
+          onClick={() => setDockedComponentId(isActive ? undefined : componentId)}
+          pluginId={pluginId}
         />
       );
-    },
-    [setDockedComponentId, styles.button, styles.buttonActive]
-  );
+    }
 
-  if (components.length === 1) {
-    return (
-      <>
-        {renderButton(isOpen, components[0].title, () => {
-          if (isOpen) {
-            setDockedComponentId(undefined);
-          } else {
-            setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
-          }
+    const isPluginActive = dockedMeta?.pluginId === pluginId;
+    const MenuItems = (
+      <Menu>
+        {components.map((c) => {
+          const id = getComponentIdFromComponentMeta(pluginId, c.title);
+          return (
+            <Menu.Item
+              key={id}
+              active={dockedComponentId === id}
+              label={c.title}
+              onClick={() => setDockedComponentId(dockedComponentId === id ? undefined : id)}
+            />
+          );
         })}
-        <NavToolbarSeparator />
-      </>
+      </Menu>
     );
-  }
 
-  const MenuItems = (
-    <Menu>
-      {components.map((c) => {
-        const id = getComponentIdFromComponentMeta(c.pluginId, c);
-        return (
-          <Menu.Item
-            key={id}
-            active={dockedComponentId === id}
-            label={c.title}
-            onClick={() => {
-              if (isOpen && dockedComponentId === id) {
-                setDockedComponentId(undefined);
-              } else {
-                setDockedComponentId(id);
-              }
-            }}
-          />
-        );
-      })}
-    </Menu>
-  );
+    return isPluginActive ? (
+      <ExtensionToolbarItemButton
+        key={pluginId}
+        isOpen
+        title={dockedMeta?.componentTitle}
+        onClick={() => setDockedComponentId(undefined)}
+        pluginId={pluginId}
+      />
+    ) : (
+      <Dropdown key={pluginId} overlay={MenuItems} placement="bottom-end">
+        <ExtensionToolbarItemButton isOpen={false} pluginId={pluginId} />
+      </Dropdown>
+    );
+  };
+
   return (
     <>
-      {isOpen &&
-        renderButton(isOpen, dockedComponentTitle, () => {
-          if (isOpen) {
-            setDockedComponentId(undefined);
-          }
-        })}
-      {!isOpen && (
-        <Dropdown overlay={MenuItems} placement="bottom-end">
-          {renderButton(isOpen)}
-        </Dropdown>
-      )}
+      {/* renders a single `ExtensionToolbarItemButton` for each plugin; if a plugin has multiple components, it renders them inside a `Dropdown` */}
+      {Array.from(availableComponents.entries())
+        .map(([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
+          renderPluginButton(
+            pluginId,
+            addedComponents.map((c: ExtensionInfo) => ({ ...c, pluginId }))
+          )
+        )
+        .filter(Boolean)
+        .flatMap((button, index, arr) =>
+          index < arr.length - 1 ? [button, <NavToolbarSeparator key={`sep-${index}`} />] : [button]
+        )}
       <NavToolbarSeparator />
     </>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    button: css({
-      // this is needed because with certain breakpoints the button will get `width: auto`
-      // and the icon will stretch
-      aspectRatio: '1 / 1 !important',
-      width: '28px',
-      height: '28px',
-      padding: 0,
-      justifyContent: 'center',
-      borderRadius: theme.shape.radius.circle,
-      margin: theme.spacing(0, 0.25),
-    }),
-    buttonActive: css({
-      borderRadius: theme.shape.radius.circle,
-      backgroundColor: theme.colors.primary.transparent,
-      border: `1px solid ${theme.colors.primary.borderTransparent}`,
-      color: theme.colors.text.primary,
-    }),
-  };
 }

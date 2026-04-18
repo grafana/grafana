@@ -2,16 +2,16 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { QueryVariableModel, VariableSupportType } from '@grafana/data';
+import { type QueryVariableModel, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { NEW_VARIABLE_ID } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 
-import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
+import { type Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
 
 const mockDS = mockDataSource({
@@ -29,7 +29,12 @@ ds.variables = {
 };
 
 const setupTestContext = async (options: Partial<Props>) => {
-  const variableDefaults: Partial<QueryVariableModel> = { rootStateKey: 'key' };
+  const variableDefaults: Partial<QueryVariableModel> = {
+    rootStateKey: 'key',
+    // adds a default datasource in old arch tests so they continue passing
+    // in new scenes arch the datasource will be calculated if not provided
+    datasource: { uid: 'uid', type: 'type' },
+  };
   const extended = {
     VariableQueryEditor: LegacyVariableQueryEditor,
     dataSource: ds,

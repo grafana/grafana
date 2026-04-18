@@ -1,35 +1,19 @@
-import { PureComponent } from 'react';
+import { memo, useState, useCallback, type JSX } from 'react';
 
-import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
 
-import { LoginDTO, AuthNRedirectDTO } from './types';
+import { type LoginDTO } from './types';
 
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;
-};
-
-const showPasswordlessConfirmation = () => {
-  const queryValues = locationService.getSearch();
-  return !!queryValues.get('code');
 };
 
 export interface FormModel {
   user: string;
   password: string;
   email: string;
-}
-
-export interface PasswordlessFormModel {
-  email: string;
-}
-
-export interface PasswordlessConfirmationFormModel {
-  code: string;
-  confirmationCode: string;
-  username?: string;
-  name?: string;
 }
 
 interface Props {
@@ -41,9 +25,6 @@ interface Props {
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
-    passwordlessStart: (data: PasswordlessFormModel) => void;
-    passwordlessConfirm: (data: PasswordlessConfirmationFormModel) => void;
-    showPasswordlessConfirmation: boolean;
     disableLoginForm: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
@@ -54,178 +35,118 @@ interface Props {
   }) => JSX.Element;
 }
 
-interface State {
-  isLoggingIn: boolean;
-  isChangingPassword: boolean;
-  showDefaultPasswordWarning: boolean;
-  loginErrorMessage?: string;
-}
+export const LoginCtrl = memo(({ resetCode, children }: Props) => {
+  const [result, setResult] = useState<LoginDTO | undefined>();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showDefaultPasswordWarning, setShowDefaultPasswordWarning] = useState(false);
+  // oAuth unauthorized sets the redirect error message in the bootdata, hence we need to check the key here
+  const [loginErrorMessage, setLoginErrorMessage] = useState<string | undefined>(
+    getBootDataErrMessage(config.loginError)
+  );
 
-export class LoginCtrl extends PureComponent<Props, State> {
-  result: LoginDTO | undefined;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      isLoggingIn: false,
-      isChangingPassword: false,
-      showDefaultPasswordWarning: false,
-      // oAuth unauthorized sets the redirect error message in the bootdata, hence we need to check the key here
-      loginErrorMessage: getBootDataErrMessage(config.loginError),
-    };
-  }
-
-  changePassword = (password: string) => {
-    const pw = {
-      newPassword: password,
-      confirmNew: password,
-      oldPassword: 'admin',
-    };
-
-    if (this.props.resetCode) {
-      const resetModel = {
-        code: this.props.resetCode,
-        newPassword: password,
-        confirmPassword: password,
-      };
-
-      getBackendSrv()
-        .post('/api/user/password/reset', resetModel)
-        .then(() => {
-          this.toGrafana();
-        });
-    } else {
-      getBackendSrv()
-        .put('/api/user/password', pw)
-        .then(() => {
-          this.toGrafana();
-        })
-        .catch((err) => console.error(err));
-    }
-  };
-
-  login = (formModel: FormModel) => {
-    this.setState({
-      loginErrorMessage: undefined,
-      isLoggingIn: true,
-    });
-
-    getBackendSrv()
-      .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
-      .then((result) => {
-        this.result = result;
-        if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
-          this.toGrafana();
-          return;
-        } else {
-          this.changeView(formModel.password === 'admin');
-        }
-      })
-      .catch((err) => {
-        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-        this.setState({
-          isLoggingIn: false,
-          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
-        });
-      });
-  };
-
-  passwordlessStart = (formModel: PasswordlessFormModel) => {
-    this.setState({
-      loginErrorMessage: undefined,
-      isLoggingIn: true,
-    });
-
-    getBackendSrv()
-      .post<AuthNRedirectDTO>('/api/login/passwordless/start', formModel, { showErrorAlert: false })
-      .then((result) => {
-        window.location.assign(result.URL);
-        return;
-      })
-      .catch((err) => {
-        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-        this.setState({
-          isLoggingIn: false,
-          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
-        });
-      });
-  };
-
-  passwordlessConfirm = (formModel: PasswordlessConfirmationFormModel) => {
-    this.setState({
-      loginErrorMessage: undefined,
-      isLoggingIn: true,
-    });
-
-    getBackendSrv()
-      .post<LoginDTO>('/api/login/passwordless/authenticate', formModel, { showErrorAlert: false })
-      .then((result) => {
-        this.result = result;
-        this.toGrafana();
-        return;
-      })
-      .catch((err) => {
-        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-        this.setState({
-          isLoggingIn: false,
-          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
-        });
-      });
-  };
-
-  changeView = (showDefaultPasswordWarning: boolean) => {
-    this.setState({
-      isChangingPassword: true,
-      showDefaultPasswordWarning,
-    });
-  };
-
-  toGrafana = () => {
+  const toGrafana = useCallback(() => {
     if (config.featureToggles.useSessionStorageForRedirection) {
       window.location.assign(config.appSubUrl + '/');
       return;
     }
 
-    if (this.result?.redirectUrl) {
-      if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
-        window.location.assign(config.appSubUrl + this.result.redirectUrl);
+    if (result?.redirectUrl) {
+      if (config.appSubUrl !== '' && !result.redirectUrl.startsWith(config.appSubUrl)) {
+        window.location.assign(config.appSubUrl + result.redirectUrl);
       } else {
-        window.location.assign(this.result.redirectUrl);
+        window.location.assign(result.redirectUrl);
       }
     } else {
       window.location.assign(config.appSubUrl + '/');
     }
-  };
+  }, [result]);
 
-  render() {
-    const { children } = this.props;
-    const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning, loginErrorMessage } = this.state;
-    const { login, toGrafana, changePassword, passwordlessStart, passwordlessConfirm } = this;
-    const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
+  const changePassword = useCallback(
+    (password: string) => {
+      const pw = {
+        newPassword: password,
+        confirmNew: password,
+        oldPassword: 'admin',
+      };
 
-    return (
-      <>
-        {children({
-          isOauthEnabled: isOauthEnabled(),
-          loginHint,
-          passwordHint,
-          disableLoginForm,
-          disableUserSignUp,
-          login,
-          passwordlessStart,
-          passwordlessConfirm,
-          showPasswordlessConfirmation: showPasswordlessConfirmation(),
-          isLoggingIn,
-          changePassword,
-          skipPasswordChange: toGrafana,
-          isChangingPassword,
-          showDefaultPasswordWarning,
-          loginErrorMessage,
-        })}
-      </>
-    );
-  }
-}
+      if (resetCode) {
+        const resetModel = {
+          code: resetCode,
+          newPassword: password,
+          confirmPassword: password,
+        };
+
+        getBackendSrv()
+          .post('/api/user/password/reset', resetModel)
+          .then(() => {
+            toGrafana();
+          });
+      } else {
+        getBackendSrv()
+          .put('/api/user/password', pw)
+          .then(() => {
+            toGrafana();
+          })
+          .catch((err) => console.error(err));
+      }
+    },
+    [resetCode, toGrafana]
+  );
+
+  const changeView = useCallback((showDefaultPasswordWarning: boolean) => {
+    setIsChangingPassword(true);
+    setShowDefaultPasswordWarning(showDefaultPasswordWarning);
+  }, []);
+
+  const login = useCallback(
+    async (formModel: FormModel) => {
+      setLoginErrorMessage(undefined);
+      setIsLoggingIn(true);
+
+      return getBackendSrv()
+        .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
+        .then((result) => {
+          setResult(result);
+          if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
+            toGrafana();
+            return;
+          } else {
+            changeView(formModel.password === 'admin');
+          }
+        })
+        .catch((err) => {
+          const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
+          setIsLoggingIn(false);
+          setLoginErrorMessage(fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'));
+        });
+    },
+    [toGrafana, changeView]
+  );
+
+  const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
+
+  return (
+    <>
+      {children({
+        isOauthEnabled: isOauthEnabled(),
+        loginHint,
+        passwordHint,
+        disableLoginForm,
+        disableUserSignUp,
+        login,
+        isLoggingIn,
+        changePassword,
+        skipPasswordChange: toGrafana,
+        isChangingPassword,
+        showDefaultPasswordWarning,
+        loginErrorMessage,
+      })}
+    </>
+  );
+});
+
+LoginCtrl.displayName = 'LoginCtrl';
 
 export default LoginCtrl;
 

@@ -1,17 +1,50 @@
 package definitions
 
 import (
+	"embed"
 	"encoding/json"
-	"os"
+	"path"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
+
+	"github.com/grafana/grafana/pkg/util"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
+
+func Test_GettableStatusUnmarshalJSON(t *testing.T) {
+	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
+	require.Nil(t, err)
+
+	var actual GettableStatus
+	require.NoError(t, json.Unmarshal(incoming, &actual))
+
+	actualJson, err := json.Marshal(actual)
+	require.NoError(t, err)
+
+	expected, err := testData.ReadFile(path.Join("test-data", "gettable-status-expected.json"))
+	require.NoError(t, err)
+	assert.JSONEq(t, string(expected), string(actualJson))
+
+	v := reflect.ValueOf(actual.Config.Config)
+	ty := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldName := ty.Field(i).Name
+		assert.False(t, field.IsZero(), "Field %s should not be zero value", fieldName)
+	}
+}
 
 func Test_GettableUserConfigUnmarshaling(t *testing.T) {
 	for _, tc := range []struct {
@@ -138,10 +171,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.yaml"))
 	require.Nil(t, err)
 
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -160,7 +193,7 @@ func Test_GettableUserConfigRoundtrip(t *testing.T) {
 }
 
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig
@@ -214,4 +247,468 @@ func Test_RawMessageMarshaling(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(data, &n))
 		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
 	})
+}
+
+func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
+	alertmanagerCfg := PostableApiAlertingConfig{
+		Config: Config{
+			Route: &Route{
+				Receiver: "default",
+			},
+		},
+		Receivers: []*PostableApiReceiver{
+			{
+				Receiver: definition.Receiver{
+					Name: "default",
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		config        PostableUserConfig
+		expectedError string
+		expected      MergeResult
+	}{
+		{
+			name: "no extra configs",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+							},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: definition.Receiver{
+									Name: "default",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{},
+				},
+			},
+		},
+		{
+			name: "valid mimir config",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "mimir-1",
+						MergeMatchers: config.Matchers{
+							{
+								Type:  labels.MatchEqual,
+								Name:  "cluster",
+								Value: "prod",
+							},
+						},
+						AlertmanagerConfig: `route:
+  receiver: mimir-receiver
+  group_by: ['alertname']
+  routes:
+    - receiver: default
+      matchers:
+        - severity="critical"
+receivers:
+  - name: mimir-receiver
+  - name: default`,
+					},
+				},
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+								Routes: []*Route{
+									{
+										Matchers: []*labels.Matcher{
+											{
+												Type:  labels.MatchEqual,
+												Name:  "cluster",
+												Value: "prod",
+											},
+										},
+										GroupInterval:  util.Pointer(model.Duration(5 * time.Minute)),
+										GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
+										RepeatInterval: util.Pointer(model.Duration(4 * time.Hour)),
+										Continue:       false,
+										Receiver:       "mimir-receiver",
+										GroupByStr:     []string{"alertname"},
+										GroupBy:        []model.LabelName{"alertname"},
+										Routes: []*Route{
+											{
+												Matchers: []*labels.Matcher{
+													{
+														Type:  labels.MatchEqual,
+														Name:  "severity",
+														Value: "critical",
+													},
+												},
+												Receiver: "defaultmimir-1",
+												Routes:   []*Route{},
+											},
+										},
+									},
+								},
+							},
+							InhibitRules:  []InhibitRule{},
+							TimeIntervals: []config.TimeInterval{},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: definition.Receiver{
+									Name: "default",
+								},
+							},
+							{
+								Receiver: definition.Receiver{
+									Name: "mimir-receiver",
+								},
+							},
+							{
+								Receiver: definition.Receiver{
+									Name: "defaultmimir-1",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{
+						Receivers: map[string]string{
+							"default": "defaultmimir-1",
+						},
+						TimeIntervals: map[string]string{},
+					},
+				},
+				Identifier: "mimir-1",
+				ExtraRoute: &Route{
+					Receiver:   "mimir-receiver",
+					GroupByStr: []string{"alertname"},
+					GroupBy:    []model.LabelName{"alertname"},
+					Routes: []*Route{
+						{
+							Matchers: []*labels.Matcher{
+								{
+									Type:  labels.MatchEqual,
+									Name:  "severity",
+									Value: "critical",
+								},
+							},
+							Receiver: "defaultmimir-1",
+							Routes:   []*Route{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid mimir config without merging matchers",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "mimir-1",
+						AlertmanagerConfig: `route:
+  receiver: mimir-receiver
+  group_by: ['alertname']
+  routes:
+    - receiver: default
+      matchers:
+        - severity="critical"
+receivers:
+  - name: mimir-receiver
+  - name: default`,
+					},
+				},
+			},
+			expected: MergeResult{
+				MergeResult: definition.MergeResult{
+					Config: definition.PostableApiAlertingConfig{
+						Config: Config{
+							Route: &Route{
+								Receiver: "default",
+							},
+							TimeIntervals: []config.TimeInterval{},
+						},
+						Receivers: []*PostableApiReceiver{
+							{
+								Receiver: definition.Receiver{
+									Name: "default",
+								},
+							},
+							{
+								Receiver: definition.Receiver{
+									Name: "mimir-receiver",
+								},
+							},
+							{
+								Receiver: definition.Receiver{
+									Name: "defaultmimir-1",
+								},
+							},
+						},
+					},
+					RenameResources: definition.RenameResources{
+						Receivers: map[string]string{
+							"default": "defaultmimir-1",
+						},
+						TimeIntervals: map[string]string{},
+					},
+				},
+				Identifier: "mimir-1",
+				ExtraRoute: &Route{
+					Receiver:   "mimir-receiver",
+					GroupByStr: []string{"alertname"},
+					GroupBy:    []model.LabelName{"alertname"},
+					Routes: []*Route{
+						{
+							Matchers: []*labels.Matcher{
+								{
+									Type:  labels.MatchEqual,
+									Name:  "severity",
+									Value: "critical",
+								},
+							},
+							Receiver: "defaultmimir-1",
+							Routes:   []*Route{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "empty matchers and identifier",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier:    "",
+						MergeMatchers: config.Matchers{},
+						AlertmanagerConfig: `{
+							"route": {
+								"receiver": "test"
+							}
+						}`,
+					},
+				},
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "bad matcher type",
+			config: PostableUserConfig{
+				AlertmanagerConfig: alertmanagerCfg,
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						Identifier: "test",
+						MergeMatchers: config.Matchers{
+							{
+								Type:  labels.MatchNotEqual,
+								Name:  "cluster",
+								Value: "prod",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "only matchers with type equal are supported",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.config.GetMergedAlertmanagerConfig()
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result.Config)
+				require.EqualValues(t, tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestPostableUserConfig_GetMergedTemplateDefinitions(t *testing.T) {
+	testCases := []struct {
+		name              string
+		config            PostableUserConfig
+		expectedTemplates int
+	}{
+		{
+			name: "no templates",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{},
+				ExtraConfigs:  []ExtraConfiguration{},
+			},
+			expectedTemplates: 0,
+		},
+		{
+			name: "grafana templates only",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{
+					"grafana-template1": "{{ define \"test\" }}Hello{{ end }}",
+					"grafana-template2": "{{ define \"test2\" }}World{{ end }}",
+				},
+				ExtraConfigs: []ExtraConfiguration{},
+			},
+			expectedTemplates: 2,
+		},
+		{
+			name: "mimir templates only",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{},
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						TemplateFiles: map[string]string{
+							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
+						},
+					},
+				},
+			},
+			expectedTemplates: 1,
+		},
+		{
+			name: "mixed templates",
+			config: PostableUserConfig{
+				TemplateFiles: map[string]string{
+					"grafana-template": "{{ define \"grafana\" }}Grafana{{ end }}",
+				},
+				ExtraConfigs: []ExtraConfiguration{
+					{
+						TemplateFiles: map[string]string{
+							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
+						},
+					},
+				},
+			},
+			expectedTemplates: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.config.GetMergedTemplateDefinitions()
+			require.Len(t, result, tc.expectedTemplates)
+
+			templateMap := make(map[string]string)
+			kindMap := make(map[string]definition.TemplateKind)
+			for _, tmpl := range result {
+				templateMap[tmpl.Name] = tmpl.Content
+				kindMap[tmpl.Name] = tmpl.Kind
+			}
+
+			for name, content := range tc.config.TemplateFiles {
+				require.Equal(t, content, templateMap[name])
+				require.Equal(t, definition.GrafanaTemplateKind, kindMap[name])
+			}
+
+			if len(tc.config.ExtraConfigs) > 0 {
+				for name, content := range tc.config.ExtraConfigs[0].TemplateFiles {
+					require.Equal(t, content, templateMap[name])
+					require.Equal(t, definition.MimirTemplateKind, kindMap[name])
+				}
+			}
+		})
+	}
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid matcher type",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchNotEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+			expectedError: "only matchers with type equal are supported",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
 }

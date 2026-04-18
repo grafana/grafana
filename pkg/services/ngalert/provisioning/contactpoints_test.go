@@ -4,16 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/email"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/slack"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,31 +26,48 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestContactPointService(t *testing.T) {
+func TestIntegrationContactPointService(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingReceiversCreate:  nil,
 		},
 	}}
 	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+		},
+	}}
+	// adminUser has all permissions including updating protected fields
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingProvisioningSetStatus:    nil,
+			accesscontrol.ActionAlertingReceiversUpdate:          nil,
+			accesscontrol.ActionAlertingReceiversUpdateProtected: nil,
 		},
 	}}
 
@@ -109,16 +130,6 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, customUID, cps[0].UID)
 	})
 
-	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
-		customUID := strings.Repeat("1", util.MaxUIDLength+1)
-		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp.UID = customUID
-
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-		require.ErrorIs(t, err, ErrValidation)
-	})
-
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(t, secretsService)
@@ -132,50 +143,124 @@ func TestContactPointService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("create rejects contact points that fail validation", func(t *testing.T) {
+	t.Run("create rejects invalid contact points", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp.Type = ""
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "invalid UID",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.UID = strings.Repeat("1", util.MaxUIDLength+1)
+				},
+			},
+		}
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				newCp := createTestContactPoint()
+				tc.cp(&newCp)
+				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
 	})
 
-	t.Run("update rejects contact points with no settings", func(t *testing.T) {
+	t.Run("create accepts contact point with type in different cases", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.Type = "Slack"
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.EqualValues(t, slack.Type, created.Type)
+
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
+	})
+
+	t.Run("update rejects invalid contact points", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "nil settings",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings = nil
+				},
+			},
+			{
+				name: "invalid settings after merge",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings, _ = simplejson.NewJson([]byte(`{}`))
+				},
+			},
+		}
+
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
-		newCp.Settings = nil
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				cp := definitions.EmbeddedContactPoint{
+					UID:                   newCp.UID,
+					Name:                  newCp.Name,
+					Type:                  newCp.Type,
+					Settings:              newCp.Settings.DeepCopy(),
+					DisableResolveMessage: newCp.DisableResolveMessage,
+					Provenance:            newCp.Provenance,
+				}
+				tc.cp(&cp)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
 	})
 
-	t.Run("update rejects contact points with no type", func(t *testing.T) {
+	t.Run("update accepts contact points with type in another case", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
-		newCp.Type = ""
+		newCp.Type = "Slack"
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
-	})
-
-	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
-		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
-		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
 	})
 
 	t.Run("update renames references when group is renamed", func(t *testing.T) {
@@ -195,12 +280,12 @@ func TestContactPointService(t *testing.T) {
 
 		newCp.Name = newName
 
-		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
-			legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
+			revision.RenameReceiverInRoutes(oldName, newName, false)
 			return nil
 		}
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
@@ -210,7 +295,8 @@ func TestContactPointService(t *testing.T) {
 		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
 		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
 		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
-		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, svc.Calls[0].Args[2])
+		revision := svc.Calls[0].Args[2].(*legacy_storage.ConfigRevision)
+		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, revision.Config.AlertmanagerConfig.Route)
 		assert.Equal(t, oldName, svc.Calls[0].Args[3])
 		assert.Equal(t, newName, svc.Calls[0].Args[4])
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
@@ -282,7 +368,7 @@ func TestContactPointService(t *testing.T) {
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
-				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
@@ -360,7 +446,9 @@ func TestContactPointService(t *testing.T) {
 	})
 }
 
-func TestContactPointServiceDecryptRedact(t *testing.T) {
+func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -418,46 +506,186 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 	})
 }
 
+func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+
+	// User with basic read/write permissions but without protected field update permission
+	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:   nil,
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingReceiversRead:      {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:    {models.ScopeReceiversAll},
+		},
+	}}
+
+	// User with all permissions including protected field update
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingReceiversRead:            {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:          {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {models.ScopeReceiversAll},
+		},
+	}}
+
+	t.Run("user without protected permission cannot modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point (webhook has 'url' as a protected field)
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update the protected field 'url'
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+
+	t.Run("user with protected permission can modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-admin",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update the protected field 'url' with admin user
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://newurl.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("user without protected permission can modify non-protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a slack contact point
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"#channel","token":"secret-token"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-slack",
+			Type:     "slack",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update non-protected field 'recipient' - keep token as redacted
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"recipient":"#new-channel","token":"[REDACTED]"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("update with nil user returns error", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-nil-user",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update with nil user (should fail for any protected field change)
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://new-url.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, nil, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is required")
+	})
+
+	t.Run("user without protected permission cannot rename and modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-rename",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to rename AND change protected field
+		created.Name = "renamed-webhook"
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+}
+
 func TestRemoveSecretsForContactPoint(t *testing.T) {
-	overrides := map[string]func(settings map[string]any){
+	overrides := map[schema.IntegrationType]func(settings map[string]any){
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["authorization_credentials"] = "test-authz-creds"
 		},
 		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["api_token"] = "test-token"
 		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
 	}
 
-	configs := notify.AllKnownConfigsForTesting
-	keys := maps.Keys(configs)
-	slices.Sort(keys)
+	configs := notifytest.AllKnownV1ConfigsForTesting
+	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
-		cfg := configs[integrationType]
-		var settings map[string]any
-		require.NoError(t, json.Unmarshal([]byte(cfg.Config), &settings))
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
-			f(settings)
+			f(integration.Settings)
 		}
-		settingsRaw, err := json.Marshal(settings)
+		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
+		typeSchema, _ := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		expectedFields := typeSchema.GetSecretFieldsPaths()
 
-		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
-		require.NoError(t, err)
-
-		t.Run(integrationType, func(t *testing.T) {
+		t.Run(string(integrationType), func(t *testing.T) {
 			cp := definitions.EmbeddedContactPoint{
-				Name:     "integration-" + integrationType,
-				Type:     integrationType,
+				Name:     "integration-" + string(integrationType),
+				Type:     string(integrationType),
 				Settings: simplejson.MustJson(settingsRaw),
 			}
 			secureFields, err := RemoveSecretsForContactPoint(&cp)
 			require.NoError(t, err)
 
 		FIELDS_ASSERT:
-			for _, field := range expectedFields {
+			for _, path := range expectedFields {
+				field := path.String()
 				assert.Contains(t, secureFields, field)
-				path := strings.Split(field, ".")
-				var expectedValue any = settings
+				var expectedValue any = integration.Settings
 				for _, segment := range path {
 					v, ok := expectedValue.(map[string]any)
 					if !ok {
@@ -475,6 +703,172 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	}
 }
 
+func TestIntegrationAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		sut := createContactPointServiceSut(t, secretsService)
+		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
+		sut.authz = authz
+		return sut, authz
+	}
+
+	user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	receiverA := "receiverA"
+	receiverB := "receiverB"
+	receiverC := "receiverC"
+	sut, authz := sutWithAuthz()
+	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	t.Run("CreateContactPoint", func(t *testing.T) {
+		t.Run("authorize create if receiver is new", func(t *testing.T) {
+			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+				assert.Equal(t, user, requester)
+				return nil
+			}
+			var err error
+			integration1, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration1, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Len(t, authz.Calls, 1)
+			assert.Equal(t, []string{"AuthorizeCreate"}, authz.Calls.Methods())
+		})
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			var err error
+			integration2, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration2, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration3, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration3, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+	})
+	t.Run("UpdateContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			newVersion := integration2
+			newVersion.Settings = integration2.Settings.DeepCopy()
+			newVersion.Settings.Set("message", "something else")
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration2 = newVersion
+		})
+		t.Run("when integration is moved between receivers", func(t *testing.T) {
+			t.Run("authorize update A and create B if receiver is not deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration1
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration1 = newVersion
+			})
+			t.Run("authorize update A and update B if integration is moved to existing receiver", func(t *testing.T) {
+				authz.Reset()
+				checked := make([]string, 0, 2)
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					checked = append(checked, uid)
+					return nil
+				}
+				newVersion := integration2
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				assert.ElementsMatch(t, []string{models.NameToUid(receiverA), models.NameToUid(receiverB)}, checked)
+				integration2 = newVersion
+			})
+
+			t.Run("authorize delete A and create B if receiver is deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverC
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+			t.Run("authorize delete A and update B if receivers are merged", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverC), uid)
+					return nil
+				}
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverB), uid)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+		})
+	})
+	t.Run("DeleteContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver is not deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
+			require.NoError(t, err)
+			err = sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration2.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+		t.Run("authorize delete if receiver is deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+		})
+	})
+}
+
 func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
@@ -488,26 +882,31 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		receiverAuthz,
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		secretService,
 		xact,
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
+		false,
 	)
 
 	return NewContactPointService(
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		receiverAuthz,
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		secretService,
 		provisioningStore,
 		xact,
 		receiverService,
 		log.NewNopLogger(),
-		nil,
+		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
 	)
 }
@@ -553,7 +952,7 @@ func TestStitchReceivers(t *testing.T) {
 		initial            *definitions.PostableUserConfig
 		new                *definitions.PostableGrafanaReceiver
 		expCfg             definitions.PostableApiAlertingConfig
-		expOldReceiver     string
+		expOldReceiver     *string
 		expCreatedReceiver bool
 		expFullRemoval     bool
 	}
@@ -564,7 +963,7 @@ func TestStitchReceivers(t *testing.T) {
 			new: &definitions.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
-			expOldReceiver: "",
+			expOldReceiver: nil,
 			expCfg:         createTestConfigWithReceivers().AlertmanagerConfig,
 		},
 		{
@@ -574,7 +973,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: "receiver-2",
+			expOldReceiver: util.Pointer("receiver-2"),
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -588,7 +987,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -602,7 +1001,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -635,7 +1034,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -651,7 +1050,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "new-receiver",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -665,7 +1064,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -698,7 +1097,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -713,7 +1112,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -732,7 +1131,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -769,7 +1168,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -788,7 +1187,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -819,7 +1218,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -834,7 +1233,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -848,7 +1247,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -895,7 +1294,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -914,7 +1313,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -928,7 +1327,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-3",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -942,7 +1341,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-4",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -963,7 +1362,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -978,7 +1377,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -992,7 +1391,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1006,7 +1405,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-3",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1020,7 +1419,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-4",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1048,7 +1447,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1063,7 +1462,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1077,7 +1476,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1096,7 +1495,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "brand-new-group",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1120,7 +1519,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     "receiver-2", // Not the inconsistent receiver-3?
+			expOldReceiver:     util.Pointer("receiver-2"), // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1135,7 +1534,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1149,7 +1548,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1168,7 +1567,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "brand-new-group",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1203,7 +1602,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1222,7 +1621,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: config.Receiver{
+							Receiver: definitions.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1243,7 +1642,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -1262,7 +1661,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1298,7 +1697,7 @@ func TestStitchReceivers(t *testing.T) {
 			}
 
 			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
-			assert.Equalf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %s, got %s", c.expOldReceiver, renamedReceiver)
+			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
@@ -1321,7 +1720,7 @@ func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: "receiver-1",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1335,7 +1734,7 @@ func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 					},
 				},
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: "receiver-2",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1379,7 +1778,7 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: "receiver-1",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1393,7 +1792,7 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 					},
 				},
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: "receiver-2",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{

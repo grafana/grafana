@@ -1,80 +1,60 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
+import { Box, ConfirmModal, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t } from 'app/core/internationalization';
 
 import { getDefaultValues } from '../Config/defaults';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { dataToSpec } from '../utils/data';
-import { getFormErrors } from '../utils/getFormErrors';
 
-import { BootstrapStep } from './BootstrapStep';
-import { ConnectStep } from './ConnectStep';
-import { FinishStep } from './FinishStep';
-import { Step, Stepper } from './Stepper';
-import { SynchronizeStep } from './SynchronizeStep';
-import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
+import { useStepStatus } from './StepStatusContext';
+import { Stepper } from './Stepper';
+import { WizardButtonBar } from './components/WizardButtonBar';
+import { WizardStepContent } from './components/WizardStepContent';
+import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
+import { useResourceStats } from './hooks/useResourceStats';
+import { useWizardButtons } from './hooks/useWizardButtons';
+import { useWizardCancellation } from './hooks/useWizardCancellation';
+import { useWizardNavigation } from './hooks/useWizardNavigation';
+import { useWizardSubmission } from './hooks/useWizardSubmission';
+import { type ConnectionCreationResult, type RepoType, type WizardFormData } from './types';
+import { getSteps } from './utils/getSteps';
 
 const appEvents = getAppEvents();
 
-const getSteps = (): Array<Step<WizardStep>> => {
-  return [
-    {
-      id: 'connection',
-      name: t('provisioning.wizard.step-connect', 'Connect'),
-      title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
-      submitOnNext: true,
-    },
-    {
-      id: 'bootstrap',
-      name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
-      title: t('provisioning.wizard.title-bootstrap', 'Choose what to synchronize'),
-      submitOnNext: true,
-    },
-    {
-      id: 'synchronize',
-      name: t('provisioning.wizard.step-synchronize', 'Synchronize with external storage'),
-      title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
-      submitOnNext: false,
-    },
-    {
-      id: 'finish',
-      name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
-      title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
-      submitOnNext: true,
-    },
-  ];
-};
-
-export function ProvisioningWizard({ type }: { type: RepoType }) {
-  const [activeStep, setActiveStep] = useState<WizardStep>('connection');
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const [requiresMigration, setRequiresMigration] = useState(false);
-  const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const settingsQuery = useGetFrontendSettingsQuery();
+export const ProvisioningWizard = memo(function ProvisioningWizard({
+  type,
+  settingsData,
+}: {
+  type: RepoType;
+  settingsData?: RepositoryViewList;
+}) {
   const navigate = useNavigate();
-  const steps = getSteps();
   const styles = useStyles2(getStyles);
 
-  const values = getDefaultValues();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
+    useStepStatus();
+
+  const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
   const methods = useForm<WizardFormData>({
+    reValidateMode: 'onBlur',
     defaultValues: {
       repository: { ...values, type },
       migrate: {
         history: true,
       },
+      githubAuthType: type === 'github' ? 'github-app' : 'pat',
+      githubAppMode: 'existing',
+      githubApp: {},
     },
   });
 
@@ -82,23 +62,109 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     watch,
     setValue,
     getValues,
-    trigger,
-    setError,
     formState: { isDirty },
     handleSubmit,
   } = methods;
 
-  const repoName = watch('repositoryName');
-  const [submitData] = useCreateOrUpdateRepository(repoName);
-  const [deleteRepository] = useDeleteRepositoryMutation();
+  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode] = watch([
+    'repositoryName',
+    'repository.type',
+    'repository.sync.target',
+    'githubAuthType',
+    'githubAppMode',
+  ]);
 
-  const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
-  const currentStepConfig = steps[currentStepIndex];
-  const isStepSuccess = stepStatusInfo.status === 'success';
+  const steps = useMemo(() => getSteps(repoType), [repoType]);
+  const [submitData] = useCreateOrUpdateRepository(repoName);
+  const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
+    isHealthy,
+    healthStatusNotReady,
+  });
+  const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
+    repoName,
+    setStepStatusInfo,
+  });
+
+  const canSkipSync = Boolean(repoName && !isResourceStatsLoading && shouldSkipSync);
+
+  // Navigation hook (must be first since other hooks depend on activeStep and completedSteps)
+  const {
+    activeStep,
+    completedSteps,
+    currentStepConfig,
+    steps: wizardSteps,
+    visibleStepIndex,
+    goToNextStep,
+    goToPreviousStep,
+    goToStep,
+  } = useWizardNavigation({
+    steps,
+    canSkipSync,
+    setStepStatusInfo,
+    createSyncJob,
+    getValues,
+    repoType,
+    syncTarget,
+    githubAuthType,
+  });
+
+  // Precompute cancel behavior state (used by both cancellation and buttons hooks)
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
+  const isFinishWithSyncCompleted =
+    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
+  const shouldUseCancelBehavior =
+    activeStep === 'authType' ||
+    (activeStep === 'connection' && repoType !== 'github') ||
+    isSyncCompleted ||
+    isFinishWithSyncCompleted;
+
+  const {
+    isCancelling,
+    showCancelConfirmation,
+    handlePrevious,
+    handleConfirmCancel,
+    handleDismissCancel,
+    handleRepositoryDeletion,
+    onDiscard,
+  } = useWizardCancellation({
+    repoName,
+    repoType,
+    activeStep,
+    handleBack: goToPreviousStep,
+    shouldUseCancelBehavior,
+  });
+
+  const { isSubmitting, handleSubmit: onFormSubmit } = useWizardSubmission({
+    activeStep,
+    currentStepConfig,
+    methods,
+    submitData,
+    setStepStatusInfo,
+    onSuccess: goToNextStep,
+  });
+
+  const { nextButtonText, previousButtonText, isNextDisabled, isPreviousDisabled } = useWizardButtons({
+    activeStep,
+    steps,
+    repoName,
+    canSkipSync,
+    isSubmitting,
+    isCancelling,
+    isStepRunning,
+    isStepSuccess,
+    hasStepError,
+    hasStepWarning,
+    isCreatingSkipJob,
+    showCancelConfirmation,
+    shouldUseCancelBehavior,
+    githubAppMode,
+    githubAuthType,
+  });
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (settingsData?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -108,178 +174,95 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, settingsQuery.data?.items]);
+  }, [navigate, repoName, settingsData?.items]);
 
-  const handleRepositoryDeletion = async (name: string) => {
-    try {
-      await deleteRepository({ name });
-      // Wait before redirecting to ensure deletion is processed
-      setTimeout(() => {
-        navigate(PROVISIONING_URL);
-      }, 1000);
-    } catch (error) {
-      setIsCancelling(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    // For the first step, do not delete anything — just go back.
-    if (activeStep === 'connection' || !repoName) {
-      navigate(PROVISIONING_URL);
-      return;
-    }
-    setIsCancelling(true);
-    handleRepositoryDeletion(repoName);
-  };
-
-  // Calculate button text based on current step position
-  const getNextButtonText = useCallback(
-    (currentStep: WizardStep) => {
-      const stepIndex = steps.findIndex((s) => s.id === currentStep);
-
-      // Guard against index out of bounds
-      if (stepIndex === -1 || stepIndex >= steps.length - 1) {
-        return t('provisioning.wizard.button-next', 'Finish');
+  const handleGitHubAppCreation = useCallback(
+    (result: ConnectionCreationResult) => {
+      if (result.success) {
+        setValue('githubApp.connectionName', result.connectionName);
+        // after successful creation, switch to existing mode so user can select
+        setValue('githubAppMode', 'existing');
+      } else {
+        setStepStatusInfo({
+          status: 'error',
+          error: {
+            title: t('provisioning.wizard.github-app-creation-failed', 'Failed to create GitHub App connection'),
+            message: result.error,
+          },
+        });
       }
-
-      return steps[stepIndex + 1].name;
     },
-    [steps]
+    [setValue, setStepStatusInfo]
   );
-
-  const handleNext = async () => {
-    const isLastStep = currentStepIndex === steps.length - 1;
-
-    // Only navigate to provisioning URL if we're on the actual last step
-    if (isLastStep) {
-      navigate(PROVISIONING_URL);
-    } else {
-      setActiveStep(steps[currentStepIndex + 1].id);
-      setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
-      setStepStatusInfo({ status: 'idle' });
-    }
-  };
-
-  const onSubmit = async () => {
-    if (currentStepConfig?.submitOnNext) {
-      // Validate form data before proceeding
-      if (activeStep === 'connection' || activeStep === 'bootstrap') {
-        const isValid = await trigger(['repository', 'repository.title']);
-        if (!isValid) {
-          return;
-        }
-      }
-
-      setIsSubmitting(true);
-      try {
-        const formData = getValues();
-        const spec = dataToSpec(formData.repository);
-        const rsp = await submitData(spec);
-        if (rsp.error) {
-          setStepStatusInfo({
-            status: 'error',
-            error: 'Repository request failed',
-          });
-          return;
-        }
-
-        // Fill in the k8s name from the initial POST response
-        const name = rsp.data?.metadata?.name;
-        if (name) {
-          setValue('repositoryName', name);
-          setStepStatusInfo({ status: 'success' });
-          handleNext();
-        } else {
-          console.error('Saved repository without a name:', rsp);
-        }
-      } catch (error) {
-        if (isFetchError(error)) {
-          const [field, errorMessage] = getFormErrors(error.data.errors);
-          if (field && errorMessage) {
-            setError(field, errorMessage);
-          }
-        } else {
-          setStepStatusInfo({
-            status: 'error',
-            error: 'Repository connection failed',
-          });
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      // only proceed if the job was successful
-      if (isStepSuccess) {
-        handleNext();
-      }
-    }
-  };
-
-  const isNextButtonDisabled = () => {
-    if (activeStep === 'synchronize') {
-      return stepStatusInfo.status !== 'success';
-    }
-    return (
-      isSubmitting ||
-      isCancelling ||
-      stepStatusInfo.status === 'running' ||
-      (activeStep !== 'connection' && stepStatusInfo.status === 'error')
-    );
-  };
 
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
-        <div className={styles.divider} />
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
+        <>
+          <Stepper steps={wizardSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+          <div className={styles.divider} />
+        </>
+        <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
+          <FormPrompt
+            onDiscard={onDiscard}
+            confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}
+          />
           <Stack direction="column">
             <Box marginBottom={2}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-              <Text element="h2">
-                {currentStepIndex + 1}. {currentStepConfig?.title}
-              </Text>
+              <Stack justifyContent="space-between">
+                <Text element="h2">{`${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}</Text>
+                <TextLink href={'https://forms.gle/fnT7HGvpa8ar2sKq6'} external>
+                  <Trans i18nKey="provisioning.wizard.give-feedback-link">Give feedback</Trans>
+                </TextLink>
+              </Stack>
             </Box>
 
-            {stepStatusInfo.status === 'error' && (
-              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
+            {hasStepError && 'error' in stepStatusInfo && (
+              <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
             )}
+            {'warning' in stepStatusInfo && stepStatusInfo.warning && (
+              <ProvisioningAlert warning={stepStatusInfo.warning} />
+            )}
+            {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
             <div className={styles.content}>
-              {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && (
-                <BootstrapStep
-                  onOptionSelect={setRequiresMigration}
-                  onStepStatusUpdate={setStepStatusInfo}
-                  settingsData={settingsQuery.data}
-                  repoName={repoName ?? ''}
-                />
-              )}
-              {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepStatusUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
-              )}
-              {activeStep === 'finish' && <FinishStep />}
+              <WizardStepContent
+                activeStep={activeStep}
+                settingsData={settingsData}
+                repoName={repoName}
+                onGitHubAppSubmit={handleGitHubAppCreation}
+                onRepositoryDeletion={handleRepositoryDeletion}
+                isCancelling={isCancelling}
+                goToStep={goToStep}
+              />
             </div>
 
-            <Stack gap={2} justifyContent="flex-end">
-              <Button variant={'secondary'} onClick={handleCancel} disabled={isSubmitting || isCancelling}>
-                {isCancelling
-                  ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
-                  : t('provisioning.wizard-content.button-cancel', 'Cancel')}
-              </Button>
-              <Button type={'submit'} disabled={isNextButtonDisabled()}>
-                {isSubmitting
-                  ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
-                  : getNextButtonText(activeStep)}
-              </Button>
-            </Stack>
+            <WizardButtonBar
+              previousText={previousButtonText}
+              nextText={nextButtonText}
+              isPreviousDisabled={isPreviousDisabled}
+              isNextDisabled={isNextDisabled}
+              isSubmitting={isSubmitting}
+              onPrevious={handlePrevious}
+            />
           </Stack>
         </form>
       </Stack>
+      <ConfirmModal
+        isOpen={showCancelConfirmation}
+        title={t('provisioning.wizard.discard-modal.title', 'Discard repository setup?')}
+        body={t(
+          'provisioning.wizard.discard-modal.body',
+          'This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?'
+        )}
+        confirmText={t('provisioning.wizard.discard-modal.confirm', 'Yes, discard')}
+        dismissText={t('provisioning.wizard.discard-modal.dismiss', 'Keep working')}
+        onConfirm={handleConfirmCancel}
+        onDismiss={handleDismissCancel}
+      />
     </FormProvider>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
@@ -290,8 +273,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 1,
     alignSelf: 'stretch',
     backgroundColor: theme.colors.border.weak,
-    // align with the button row
-    marginBottom: theme.spacing(13),
+
+    marginBottom: theme.spacing(13), // align with the button row
+  }),
+  stepperSpacer: css({
+    width: 201, // Stepper width (200px) + divider width (1px)
   }),
   content: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,

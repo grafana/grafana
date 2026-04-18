@@ -1,20 +1,20 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import { type MouseEvent, type ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 
 import {
-  TimeZone,
+  type TimeZone,
   LogsDedupStrategy,
-  LogRowModel,
-  LogsSortOrder,
-  CoreApp,
-  DataFrame,
-  LogRowContextOptions,
+  type LogRowModel,
+  type LogsSortOrder,
+  type CoreApp,
+  type DataFrame,
+  type LogRowContextOptions,
+  type TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { Trans, t } from '@grafana/i18n';
+import { type DataQuery } from '@grafana/schema';
+import { ConfirmModal, Icon, type PopoverContent, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -61,6 +61,7 @@ export interface Props {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedLogs?: string[];
+  timeRange: TimeRange;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
@@ -74,7 +75,7 @@ export interface Props {
   renderPreview?: boolean;
 }
 
-type PopoverStateType = {
+export type PopoverStateType = {
   selection: string;
   selectedRow: LogRowModel | null;
   popoverMenuCoordinates: { x: number; y: number };
@@ -167,7 +168,7 @@ export const LogRows = memo(
     );
 
     const popoverMenuSupported = useCallback(() => {
-      if (!config.featureToggles.logRowsPopoverMenu || isPopoverMenuDisabled()) {
+      if (isPopoverMenuDisabled()) {
         return false;
       }
       return Boolean(onClickFilterOutString || onClickFilterString);
@@ -280,7 +281,6 @@ export const LogRows = memo(
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />
@@ -328,3 +328,4 @@ export const LogRows = memo(
     );
   }
 );
+LogRows.displayName = 'LogRows';

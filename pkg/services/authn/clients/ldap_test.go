@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -35,6 +35,20 @@ type ldapTestCase struct {
 	expectedAuthInfoErr error
 	disableCalled       bool
 	expectDisable       bool
+}
+
+func TestLDAP_AuthenticateProxy_Disabled(t *testing.T) {
+	c := ProvideLDAP(
+		setting.NewCfg(),
+		&service.LDAPFakeService{ExpectedEnabled: false},
+		&usertest.FakeUserService{},
+		&authinfotest.FakeService{},
+		tracing.InitializeTracerForTest(),
+	)
+
+	identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, "test", nil)
+	assert.NoError(t, err)
+	assert.Nil(t, identity)
 }
 
 func TestLDAP_AuthenticateProxy(t *testing.T) {
@@ -103,6 +117,20 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 			assert.Equal(t, tt.expectDisable, tt.disableCalled)
 		})
 	}
+}
+
+func TestLDAP_AuthenticatePassword_Disabled(t *testing.T) {
+	c := ProvideLDAP(
+		setting.NewCfg(),
+		&service.LDAPFakeService{ExpectedEnabled: false},
+		&usertest.FakeUserService{},
+		&authinfotest.FakeService{},
+		tracing.InitializeTracerForTest(),
+	)
+
+	identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "test", "password")
+	assert.NoError(t, err)
+	assert.Nil(t, identity)
 }
 
 func TestLDAP_AuthenticatePassword(t *testing.T) {
@@ -197,13 +225,13 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 		ExpectedError:    tt.expectedAuthInfoErr,
 	}
 
-	c := &LDAP{
-		cfg:             setting.NewCfg(),
-		logger:          log.New("authn.ldap.test"),
-		service:         &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr},
-		userService:     userService,
-		authInfoService: authInfoService,
-	}
+	c := ProvideLDAP(
+		setting.NewCfg(),
+		&service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr, ExpectedEnabled: true},
+		userService,
+		authInfoService,
+		tracing.InitializeTracerForTest(),
+	)
 
 	return c
 }

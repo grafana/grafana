@@ -1,6 +1,7 @@
 import { calculateFieldTransformer } from './transformers/calculateField';
 import { concatenateTransformer } from './transformers/concat';
 import { convertFieldTypeTransformer } from './transformers/convertFieldType';
+import { convertFrameTypeTransformer } from './transformers/convertFrameType';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
@@ -53,6 +54,7 @@ export const standardTransformers = {
   renameByRegexTransformer,
   histogramTransformer,
   convertFieldTypeTransformer,
+  convertFrameTypeTransformer,
   groupingToMatrixTransformer,
   limitTransformer,
   groupToNestedTable,

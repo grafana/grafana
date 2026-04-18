@@ -1,8 +1,9 @@
-import { t } from '../../../utils/i18n';
-import { Icon } from '../../Icon/Icon';
-import { GrafanaTableRow } from '../types';
+import { t } from '@grafana/i18n';
 
-import { TableStyles } from './styles';
+import { Icon } from '../../Icon/Icon';
+import { type GrafanaTableRow } from '../types';
+
+import { type TableStyles } from './styles';
 
 export interface Props {
   row: GrafanaTableRow;

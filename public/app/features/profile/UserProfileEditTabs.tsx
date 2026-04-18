@@ -2,9 +2,9 @@ import React, { type ComponentType, Fragment, type ReactElement, useCallback, us
 
 import { type ComponentTypeWithExtensionMeta, type UrlQueryValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
 
 const TAB_QUERY_PARAM = 'tab';
 const GENERAL_SETTINGS_TAB = 'general';
@@ -43,7 +43,9 @@ export function UserProfileEditTabs(props: Props): ReactElement {
         <TabContent>
           {Boolean(activeTab) && (
             <Fragment key={activeTab?.tabId}>
-              {activeTab?.components.map((Component, index) => <Component key={`${activeTab?.tabId}-${index}`} />)}
+              {activeTab?.components.map((Component, index) => (
+                <Component key={`${activeTab?.tabId}-${index}`} />
+              ))}
             </Fragment>
           )}
         </TabContent>

@@ -7,17 +7,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,14 +28,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2"
 )
 
-const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+const (
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey       = "domain_hint"
+)
 
 var (
 	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
 		allowedOrganizationsKey: {Type: String},
+		domainHintKey:           {Type: String},
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
@@ -88,7 +94,7 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
-	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+	s := newSocialBaseWithCache(social.AzureADProviderName, orgRoleMapper, info, features, cfg, cache)
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
@@ -106,9 +112,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
 
 	return provider
 }
@@ -122,12 +126,12 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrIDTokenNotFound
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string))
-	if err != nil {
-		return nil, fmt.Errorf("error parsing id token: %w", err)
+	idTokenStr, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string")
 	}
 
-	claims, err := s.validateClaims(ctx, client, parsedToken)
+	claims, err := s.validateClaims(ctx, client, idTokenStr)
 	if err != nil {
 		return nil, err
 	}
@@ -213,14 +217,119 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
+func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	if s.info.ClientAuthentication == social.WorkloadIdentity {
+		return &azureADTokenSource{
+			log:                       s.log,
+			ctx:                       ctx,
+			conf:                      s.Config,
+			token:                     t,
+			clientId:                  s.info.ClientId,
+			workloadIdentityTokenFile: s.info.WorkloadIdentityTokenFile,
+		}
+	}
+
+	return s.Config.TokenSource(ctx, t)
+}
+
+type azureADTokenSource struct {
+	log                       log.Logger
+	ctx                       context.Context
+	conf                      *oauth2.Config
+	token                     *oauth2.Token
+	clientId                  string
+	workloadIdentityTokenFile string
+}
+
+func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
+	s.log.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
+	if s.token.Valid() {
+		return s.token, nil
+	}
+
+	if s.token.RefreshToken == "" {
+		s.log.Warn("AzureADToken fetchToken failed: no refresh token available")
+		return nil, fmt.Errorf("no refresh token available to refresh the access token")
+	}
+
+	// refresh the expired token using the refresh token
+	federatedToken, err := os.ReadFile(s.workloadIdentityTokenFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
+	}
+
+	v := url.Values{}
+	v.Set("client_id", s.clientId)
+	v.Set("grant_type", "refresh_token")
+	v.Set("refresh_token", s.token.RefreshToken)
+	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+	v.Set("client_assertion", strings.TrimSpace(string(federatedToken)))
+
+	return s.fetchToken(v)
+}
+
+func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
+	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Correct way to get HTTP client from context
+	httpClient, ok := s.ctx.Value(oauth2.HTTPClient).(*http.Client)
+	if !ok {
+		httpClient = http.DefaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.log.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		s.log.Debug("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
+	}
+
+	var rawResponse interface{}
+	if err := json.Unmarshal(body, &rawResponse); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
+	}
+
+	var token *oauth2.Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
+	}
+
+	if token.ExpiresIn > 0 {
+		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+	}
+
+	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
+	return token.WithExtra(rawResponse), nil
+}
+
 // ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
 func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
 	// Validate required fields for Managed Identity authentication
 	if s.info.ManagedIdentityClientID == "" {
-		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity or Workload Identity authentication")
 	}
 	if s.info.FederatedCredentialAudience == "" {
-		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity authentication")
+		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity or Workload Identity authentication")
 	}
 
 	// Prepare Managed Identity Credential
@@ -228,7 +337,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 		ID: azidentity.ClientID(s.info.ManagedIdentityClientID),
 	})
 	if err != nil {
-		return "", fmt.Errorf("error constructing managed identity credential: %w", err)
+		return "", fmt.Errorf("error constructing managed/workload identity credential: %w", err)
 	}
 
 	// Request token and return
@@ -236,7 +345,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 		Scopes: []string{fmt.Sprintf("%s/.default", s.info.FederatedCredentialAudience)},
 	})
 	if err != nil {
-		return "", fmt.Errorf("error getting managed identity token: %w", err)
+		return "", fmt.Errorf("error getting managed/workload identity token: %w", err)
 	}
 
 	return tk.Token, nil
@@ -290,7 +399,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
-		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.DomainValidator(info.Extra[domainHintKey], "Domain Hint"))
 }
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
@@ -303,10 +413,15 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 	return nil
 }
 
-func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
-	claims, err := s.validateIDTokenSignature(ctx, client, parsedToken)
+func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
+	rawJSON, err := s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, s.getAzureJWKSURLs())
 	if err != nil {
-		return nil, fmt.Errorf("error getting claims from id token: %w", err)
+		return nil, fmt.Errorf("error validating id token signature: %w", err)
+	}
+
+	var claims azureClaims
+	if err := json.Unmarshal(rawJSON, &claims); err != nil {
+		return nil, fmt.Errorf("error parsing id token claims: %w", err)
 	}
 
 	if claims.OAuthVersion == "1.0" {
@@ -322,44 +437,27 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 	if !s.isAllowedTenant(claims.TenantID) {
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
-	return claims, nil
+	return &claims, nil
 }
 
-func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
-	var claims azureClaims
+func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
-	jwksFuncs := []func(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error){
-		s.retrieveJWKSFromCache, s.retrieveSpecificJWKS, s.retrieveGeneralJWKS,
+	if domainHint, ok := s.info.Extra[domainHintKey]; ok && domainHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("domain_hint", domainHint))
 	}
 
-	keyID := parsedToken.Headers[0].KeyID
+	return s.getAuthCodeURL(state, opts...)
+}
 
-	for _, jwksFunc := range jwksFuncs {
-		keyset, expiry, err := jwksFunc(ctx, client, s.Endpoint.AuthURL)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving jwks: %w", err)
-		}
-		var errClaims error
-		keys := keyset.Key(keyID)
-		for _, key := range keys {
-			s.log.Debug("AzureAD OAuth: trying to parse token with key", "kid", key.KeyID)
-			if errClaims = parsedToken.Claims(key, &claims); errClaims == nil {
-				if expiry != 0 {
-					s.log.Debug("AzureAD OAuth: caching key set", "kid", key.KeyID, "expiry", expiry)
-					if err := s.cacheJWKS(ctx, keyset, expiry); err != nil {
-						s.log.Warn("Failed to set key set in cache", "err", err)
-					}
-				}
-				return &claims, nil
-			} else {
-				s.log.Warn("AzureAD OAuth: failed to parse token with key", "kid", key.KeyID, "err", errClaims)
-			}
-		}
+// getAzureJWKSURLs returns JWKS URLs for Azure AD (app-specific, then general discovery URL).
+func (s *SocialAzureAD) getAzureJWKSURLs() []string {
+	base := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
+	return []string{
+		base + "?appid=" + url.QueryEscape(s.ClientID),
+		base,
 	}
-
-	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
-
-	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
 }
 
 func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {
@@ -382,6 +480,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		if info.FederatedCredentialAudience == "" {
 			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
 		}
 		return nil
 
@@ -528,7 +632,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
 		if tenantID == "" {
-			parsedToken, err := jwt.ParseSigned(token.AccessToken)
+			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
 			if err != nil {
 				return "", fmt.Errorf("error parsing access token: %w", err)
 			}

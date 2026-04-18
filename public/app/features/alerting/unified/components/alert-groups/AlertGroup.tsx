@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertLabels } from '@grafana/alerting/unstable';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
+import { useCanViewContactPoints } from '../../hooks/useAbilities';
 import { createContactPointSearchLink } from '../../utils/misc';
-import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
 
@@ -22,6 +23,7 @@ interface Props {
 export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
+  const canViewContactPoint = useCanViewContactPoints();
 
   // When group is grouped, receiver.name is 'NONE' as it can contain multiple receivers
   const receiverInGroup = group.receiver.name !== 'NONE';
@@ -43,17 +45,32 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 
               {receiverInGroup && (
                 <MetaText icon="at">
-                  <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
-                    Delivered to{' '}
-                    <TextLink
-                      href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
-                      variant="bodySmall"
-                      color="primary"
-                      inline={false}
+                  {canViewContactPoint ? (
+                    <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                      Delivered to{' '}
+                      <TextLink
+                        href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
+                        variant="bodySmall"
+                        color="primary"
+                        inline={false}
+                      >
+                        {'{{name}}'}
+                      </TextLink>
+                    </Trans>
+                  ) : (
+                    <Tooltip
+                      content={t(
+                        'alerting.alert-group.view-contact-point-no-permission',
+                        'You do not have permission to view contact points'
+                      )}
                     >
-                      {'{{name}}'}
-                    </TextLink>
-                  </Trans>
+                      <span>
+                        {t('alerting.alert-group.delivered-to-disabled', 'Delivered to {{name}}', {
+                          name: contactPoint,
+                        })}
+                      </span>
+                    </Tooltip>
+                  )}
                 </MetaText>
               )}
             </Stack>
@@ -82,6 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
     backgroundColor: theme.colors.background.secondary,
     width: '100%',
@@ -90,5 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+  }),
+  disabledContactPointName: css({
+    opacity: 0.7,
+    cursor: 'not-allowed',
   }),
 });

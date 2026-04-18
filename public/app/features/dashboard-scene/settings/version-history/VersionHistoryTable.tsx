@@ -1,12 +1,12 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-
-import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -15,14 +15,21 @@ type VersionsTableProps = {
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
+  isLoadingUserDisplayNames?: boolean;
 };
 
-export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {
+export const VersionHistoryTable = ({
+  versions,
+  canCompare,
+  onCheck,
+  onRestore,
+  isLoadingUserDisplayNames,
+}: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.margin}>
-      <table className="filter-table">
+      <table className={cx('filter-table', styles.table)}>
         <thead>
           <tr>
             <th className="width-4"></th>
@@ -61,11 +68,11 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
               </td>
               <td>{version.version}</td>
               <td>{version.createdDateString}</td>
-              <td>{version.createdBy}</td>
+              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
-                  <Tag name="Latest" colorIndex={17} />
+                  <Tag name={t('dashboard-scene.version-history-table.name-latest', 'Latest')} colorIndex={17} />
                 ) : (
                   <ModalsController>
                     {({ showModal, hideModal }) => (
@@ -83,7 +90,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             version: version.version,
                             index: idx,
                             confirm: false,
-                            version_date: version.created,
+                            version_date: new Date(version.created),
                           });
                         }}
                       >
@@ -105,6 +112,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     margin: css({
       marginBottom: theme.spacing(4),
+    }),
+    table: css({
+      td: {
+        whiteSpace: 'normal !important',
+      },
     }),
   };
 }

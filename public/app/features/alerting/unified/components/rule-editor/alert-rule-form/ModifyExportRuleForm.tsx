@@ -2,27 +2,27 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 
 import {
-  PostableRulerRuleGroupDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type PostableRulerRuleGroupDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
 } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../utils/rule-form';
 import { rulerRuleType } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
+import { type ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
@@ -220,6 +220,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
   const exportingNewRule = !uid;
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
+
   const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (

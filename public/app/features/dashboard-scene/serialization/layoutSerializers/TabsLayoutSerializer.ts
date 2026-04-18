@@ -1,50 +1,49 @@
-import {
-  Spec as DashboardV2Spec,
-  TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { TabItemRepeaterBehavior } from '../../scene/layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
-export function serializeTabsLayout(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
+export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
   return {
     kind: 'TabsLayout',
     spec: {
-      tabs: layoutManager.state.tabs.filter((tab) => !isClonedKey(tab.state.key!)).map(serializeTab),
+      tabs: layoutManager.state.tabs
+        .filter((tab) => !tab.state.repeatSourceKey)
+        .map((tab) => serializeTab(tab, isSnapshot)),
     },
   };
 }
 
-export function serializeTab(tab: TabItem): TabsLayoutTabKind {
-  const layout = tab.state.layout.serialize();
+export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
+  const layout = tab.state.layout.serialize(isSnapshot);
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
       title: tab.state.title,
       layout: layout,
+      ...(tab.state.repeatByVariable && {
+        repeat: {
+          mode: 'variable',
+          value: tab.state.repeatByVariable,
+        },
+      }),
     },
   };
+
+  const sectionVariables = serializeSectionVariables(tab.state.$variables);
+  if (sectionVariables) {
+    tabKind.spec.variables = sectionVariables;
+  }
 
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
     tabKind.spec.conditionalRendering = conditionalRenderingRootGroup;
-  }
-
-  if (tab.state.$behaviors) {
-    for (const behavior of tab.state.$behaviors) {
-      if (behavior instanceof TabItemRepeaterBehavior) {
-        if (tabKind.spec.repeat) {
-          throw new Error('Multiple repeaters are not supported');
-        }
-        tabKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
   }
 
   return tabKind;
@@ -54,7 +53,7 @@ export function deserializeTabsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabsLayoutManager {
   if (layout.kind !== 'TabsLayout') {
     throw new Error('Invalid layout kind');
@@ -71,17 +70,15 @@ export function deserializeTab(
   tab: TabsLayoutTabKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabItem {
   const layout = tab.spec.layout;
-  const $behaviors = !tab.spec.repeat
-    ? undefined
-    : [new TabItemRepeaterBehavior({ variableName: tab.spec.repeat.value })];
 
   return new TabItem({
     title: tab.spec.title,
+    $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
-    $behaviors,
+    repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),
   });
 }

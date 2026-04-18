@@ -6,11 +6,10 @@ description: Learn about RBAC Grafana provisioning and view an example YAML prov
   file that configures Grafana role assignments.
 labels:
   products:
-    - cloud
     - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
-weight: 60
+weight: 300
 refs:
   api-rbac-create-and-manage-custom-roles:
     - pattern: /docs/grafana/
@@ -51,11 +50,13 @@ refs:
 
 # Provisioning RBAC with Grafana
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) for self-managed instances. This feature is not available in Grafana Cloud.
+{{< /admonition >}}
 
 You can create, change or remove [Custom roles](ref:manage-rbac-roles-create-custom-roles-using-provisioning) and create or remove [basic role assignments](ref:assign-rbac-roles-assign-a-fixed-role-to-a-basic-role-using-provisioning), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
+
+Because this method requires access to the file system where Grafana is running, it's only available for self-managed Grafana instances. To provision RBAC in Grafana Cloud, use [Terraform](ref:rbac-terraform-provisioning) or the [HTTP API](ref:api-rbac-create-and-manage-custom-roles).
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
 
@@ -106,7 +107,7 @@ roles:
     uid: customuserswriter1
     # <string> description of the role, informative purpose only.
     description: 'Create, read, write users'
-    # <int> version of the role, Grafana will update the role when increased.
+    # <int> version of the role. Has to be greater than the stored role version to apply updates. Increase by 1 when you change the role.
     version: 2
     # <int> org id. Defaults to Grafana's default if not specified.
     orgId: 1
@@ -119,6 +120,12 @@ roles:
       - action: 'users:write'
         scope: 'users:*'
       - action: 'users:create'
+      # Optional `datasourceType` for scopes `datasources:uid:<DATASOURCE_UID>`.
+      # If you omit it, Grafana resolves the plugin type from the data source when this file is provisioned.
+      # It is required if there are two datasources with the same uid.
+      - action: 'datasources:query'
+        scope: 'datasources:uid:loki-uid-here'
+        datasourceType: loki
   - name: 'custom:global:users:reader'
     # <bool> overwrite org id and creates a global role.
     global: true

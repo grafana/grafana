@@ -1,4 +1,4 @@
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../language_utils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../escaping';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
 /**
@@ -25,7 +25,8 @@ export function buildSelector(selectedMetric: string, selectedLabelValues: Recor
 
     // Use regex matcher for multiple values
     if (values.length > 1) {
-      selectorParts.push(`${utf8Support(key)}=~"${values.map(escapeLabelValueInRegexSelector).join('|')}"`);
+      // Wrap alternation in parentheses for better regex performance: (val1|val2|val3) instead of val1|val2|val3
+      selectorParts.push(`${utf8Support(key)}=~"(${values.map(escapeLabelValueInRegexSelector).join('|')})"`);
     } else {
       // Use exact matcher for single value
       selectorParts.push(`${utf8Support(key)}="${escapeLabelValueInExactSelector(values[0])}"`);

@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { t } from 'app/core/internationalization';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
-import { Trans } from '../../../../../core/internationalization/index';
-import { Folder, RuleFormValues } from '../../types/rule-form';
+import { type Folder, type RuleFormValues } from '../../types/rule-form';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 
 export function FolderSelector() {
@@ -49,8 +48,10 @@ export function FolderSelector() {
             <Controller
               render={({ field: { ref, ...field } }) => (
                 <div style={{ width: 420 }}>
-                  <NestedFolderPicker
+                  <ProvisioningAwareFolderPicker
+                    permission="view"
                     showRootFolder={false}
+                    repositoryName={undefined}
                     invalid={!!errors.folder?.message}
                     {...field}
                     value={folder?.uid}
@@ -68,7 +69,10 @@ export function FolderSelector() {
               )}
               name="folder"
               rules={{
-                required: { value: true, message: 'Select a folder' },
+                required: {
+                  value: true,
+                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
+                },
               }}
             />
             <CreateNewFolder onCreate={handleFolderCreation} />

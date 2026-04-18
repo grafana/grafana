@@ -1,14 +1,15 @@
 import { cx } from '@emotion/css';
+import type { JSX } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
-import { Role } from 'app/types';
+import { isNotDelegatable } from 'app/core/utils/roles';
+import { type Role } from 'app/types/accessControl';
 
 import { RoleMenuOption } from './RoleMenuOption';
 import { MENU_MAX_HEIGHT } from './constants';
 import { getStyles } from './styles';
-import { isNotDelegatable } from './utils';
 
 interface RolePickerSubMenuProps {
   options: Role[];

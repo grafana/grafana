@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { PluginSignatureStatus } from '@grafana/data';
 
@@ -6,7 +6,7 @@ import { PluginSignatureBadge } from './PluginSignatureBadge';
 import mdx from './PluginSignatureBadge.mdx';
 
 const meta: Meta<typeof PluginSignatureBadge> = {
-  title: 'Data Display/PluginSignatureBadge',
+  title: 'Information/PluginSignatureBadge',
   component: PluginSignatureBadge,
   argTypes: {
     status: {

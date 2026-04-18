@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
-import { Button, ButtonVariant } from '../Button';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Button, type ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -18,8 +19,15 @@ export interface Props {
   /** Small version only shows the current page and the navigation buttons. */
   showSmallVersion?: boolean;
   className?: string;
+  /** If we are using cursor based pagination, disable next page button when we have no cursor */
+  hasNextPage?: boolean;
 }
 
+/**
+ * Component used for rendering a page selector below paginated content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-pagination--docs
+ */
 export const Pagination = ({
   currentPage,
   numberOfPages,
@@ -27,6 +35,7 @@ export const Pagination = ({
   hideWhenSinglePage,
   showSmallVersion,
   className,
+  hasNextPage,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
@@ -102,7 +111,7 @@ export const Pagination = ({
   const nextPageLabel = t('grafana-ui.pagination.next-page', 'next page');
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div className={cx(styles.container, className)} role="navigation">
       <ol>
         <li className={styles.item}>
           <Button
@@ -116,13 +125,14 @@ export const Pagination = ({
           </Button>
         </li>
         {pageButtons}
+        {pageButtons.length === 0 && <li className={styles.item}>{currentPage}</li>}
         <li className={styles.item}>
           <Button
             aria-label={nextPageLabel}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
-            disabled={currentPage === numberOfPages}
+            disabled={hasNextPage === false || currentPage === numberOfPages}
           >
             <Icon name="angle-right" />
           </Button>

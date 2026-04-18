@@ -1,16 +1,16 @@
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { rulerRuleToFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
-import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { useRestoreVersion } from './useRestoreVersion';
 import { preprocessRuleForDiffDisplay } from './versions-utils';

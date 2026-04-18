@@ -1,5 +1,5 @@
-import { DataSourceApi } from '@grafana/data';
-import { config, setTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type DataSourceApi } from '@grafana/data';
+import { config, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -10,14 +10,16 @@ import {
   GroupByVariable,
   TextBoxVariable,
   SceneVariableSet,
-  SceneVariable,
+  type SceneVariable,
+  SceneFlexLayout,
+  SceneFlexItem,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData, VariableHide, type VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor } from './editors/CustomVariableEditor';
+import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
@@ -25,13 +27,13 @@ import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
-  EDITABLE_VARIABLES,
   EDITABLE_VARIABLES_SELECT_ORDER,
+  getEditableVariables,
   getVariableTypeSelectOptions,
   getVariableEditor,
   getVariableScene,
   hasVariableOptions,
-  EditableVariableType,
+  type EditableVariableType,
   getDefinition,
   getOptionDataSourceTypes,
   getNextAvailableId,
@@ -56,22 +58,22 @@ const dsMock: DataSourceApi = {
   },
 } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
+const defaultDsSettings = {
+  name: 'DataSourceInstance1',
+  uid: 'ds1',
+  type: 'dsTestDataSource',
+  meta: {
+    name: 'ds1',
+    id: 'dsTestDataSource',
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: async () => dsMock,
-    getList: () => {
-      return [
-        {
-          name: 'DataSourceInstance1',
-          uid: 'ds1',
-          meta: {
-            name: 'ds1',
-            id: 'dsTestDataSource',
-          },
-        },
-      ];
-    },
+    getInstanceSettings: (ref: string | null) => (ref === null ? defaultDsSettings : undefined),
+    getList: () => [defaultDsSettings],
   }),
 }));
 
@@ -93,7 +95,7 @@ describe('isEditableVariableType', () => {
   });
 
   it('should return false for non-editable variable types', () => {
-    const nonEditableTypes: VariableType[] = ['system'];
+    const nonEditableTypes: VariableType[] = ['system', 'snapshot'];
     nonEditableTypes.forEach((type) => {
       expect(isEditableVariableType(type)).toBe(false);
     });
@@ -136,20 +138,22 @@ describe('getVariableTypeSelectOptions', () => {
 
     it('should contain all editable variable types', () => {
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+      const editableVariables = getEditableVariables();
+      expect(options).toHaveLength(Object.keys(editableVariables).length);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(8);
+      expect(options).toHaveLength(9);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -160,21 +164,23 @@ describe('getVariableTypeSelectOptions', () => {
 
   describe('when groupByVariable is disabled', () => {
     it('should contain all editable variable types except groupby', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length - 1);
+      expect(options).toHaveLength(Object.keys(editableVariables).length - 1);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(7);
+      expect(options).toHaveLength(8);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -185,11 +191,12 @@ describe('getVariableTypeSelectOptions', () => {
 });
 
 describe('getVariableEditor', () => {
+  const editableVariables = getEditableVariables();
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define an editor for variable type "%s"',
     (type) => {
       const editor = getVariableEditor(type);
@@ -212,11 +219,12 @@ describe('getVariableEditor', () => {
 });
 
 describe('getVariableScene', () => {
+  const editableVariables = getEditableVariables();
   beforeAll(() => {
     setTemplateSrv(templateSrv);
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define a scene object for every variable type',
     (type) => {
       const variable = getVariableScene(type, { name: 'foo' });
@@ -328,10 +336,8 @@ describe('getDefinition', () => {
 describe('getOptionDataSourceTypes', () => {
   it('should return all data source types when no data source types are specified', () => {
     const optionTypes = getOptionDataSourceTypes();
-    expect(optionTypes).toHaveLength(2);
-    // in the old code we always had an empty option
-    expect(optionTypes[0].value).toBe('');
-    expect(optionTypes[1].label).toBe('ds1');
+    expect(optionTypes).toHaveLength(1);
+    expect(optionTypes[0].label).toBe('ds1');
   });
 });
 
@@ -426,5 +432,76 @@ describe('Variables name validation', () => {
 
   it('should return error if variable name is taken', () => {
     expect(validateVariableName(variable1, variable2.state.name).isValid).toBe(false);
+  });
+});
+
+describe('Cross-level variable name validation', () => {
+  it('should return warning when section variable shadows a dashboard variable', () => {
+    const dashboardVar = new CustomVariable({ name: 'myVar', query: 'a,b' });
+    const sectionVar = new CustomVariable({ name: 'other', query: 'c,d' });
+
+    new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      children: [
+        new SceneFlexItem({
+          $variables: new SceneVariableSet({ variables: [sectionVar] }),
+          body: undefined,
+        }),
+      ],
+    });
+
+    const result = validateVariableName(sectionVar, 'myVar');
+    expect(result.isValid).toBe(true);
+    expect(result.warningMessage).toBe(
+      'A variable with this name already exists at the dashboard level. This variable will overwrite it.'
+    );
+    expect(result.errorMessage).toBeUndefined();
+  });
+
+  it('should return warning when dashboard variable collides with a section variable', () => {
+    const dashboardVar = new CustomVariable({ name: 'other', query: 'a,b' });
+    const sectionVar = new CustomVariable({ name: 'myVar', query: 'c,d' });
+
+    new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      children: [
+        new SceneFlexItem({
+          $variables: new SceneVariableSet({ variables: [sectionVar] }),
+          body: undefined,
+        }),
+      ],
+    });
+
+    const result = validateVariableName(dashboardVar, 'myVar');
+    expect(result.isValid).toBe(true);
+    expect(result.warningMessage).toBe(
+      'A variable with this name already exists in a section. This variable will be ignored in that section.'
+    );
+    expect(result.errorMessage).toBeUndefined();
+  });
+
+  it('should not return warning when names do not conflict across levels', () => {
+    const dashboardVar = new CustomVariable({ name: 'dashVar', query: 'a,b' });
+    const sectionVar = new CustomVariable({ name: 'secVar', query: 'c,d' });
+
+    new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      children: [
+        new SceneFlexItem({
+          $variables: new SceneVariableSet({ variables: [sectionVar] }),
+          body: undefined,
+        }),
+      ],
+    });
+
+    const dashResult = validateVariableName(dashboardVar, 'dashVar');
+    expect(dashResult.isValid).toBe(true);
+    expect(dashResult.warningMessage).toBeUndefined();
+    expect(dashResult.errorMessage).toBeUndefined();
+
+    const secResult = validateVariableName(sectionVar, 'secVar');
+    expect(secResult.isValid).toBe(true);
+    expect(secResult.warningMessage).toBeUndefined();
+    expect(secResult.errorMessage).toBeUndefined();
   });
 });

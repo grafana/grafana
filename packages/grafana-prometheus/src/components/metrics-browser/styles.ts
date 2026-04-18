@@ -1,12 +1,19 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getStylesMetricsBrowser = (theme: GrafanaTheme2) => ({
   wrapper: css({
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(1),
     width: '100%',
+    borderRadius: theme.shape.radius.default,
+  }),
+  spinner: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
   }),
 });
 

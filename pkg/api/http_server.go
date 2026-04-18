@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	stdlog "log"
 	"math/big"
 	"net"
 	"net/http"
@@ -22,12 +23,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/youmark/pkcs8"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -35,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -77,7 +82,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
@@ -87,13 +91,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -158,19 +162,17 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	StorageService               store.StorageService
-	SearchV2HTTPService          searchV2.SearchHTTPService
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertNG                      *ngalert.AlertNG
-	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
 	SocialService                social.Service
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
 	secretsStore                 secretsKV.SecretsKVStore
-	secretsMigrator              secrets.Migrator
+	SecretsMigrator              secrets.Migrator
 	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -196,32 +198,37 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
-	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
 
-	userService          user.Service
-	tempUserService      tempUser.Service
-	loginAttemptService  loginAttempt.Service
-	orgService           org.Service
-	orgDeletionService   org.DeletionService
-	TeamService          team.Service
-	accesscontrolService accesscontrol.Service
-	annotationsRepo      annotations.Repository
-	tagService           tag.Service
-	oauthTokenService    oauthtoken.OAuthTokenService
-	statsService         stats.Service
-	authnService         authn.Service
-	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	namespacer           request.NamespaceMapper
-	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	userService                     user.Service
+	tempUserService                 tempUser.Service
+	loginAttemptService             loginAttempt.Service
+	orgService                      org.Service
+	orgDeletionService              org.DeletionService
+	TeamService                     team.Service
+	accesscontrolService            accesscontrol.Service
+	annotationsRepo                 annotations.Repository
+	tagService                      tag.Service
+	oauthTokenService               oauthtoken.OAuthTokenService
+	statsService                    stats.Service
+	authnService                    authn.Service
+	starApi                         *starApi.API
+	promRegister                    prometheus.Registerer
+	promGatherer                    prometheus.Gatherer
+	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	clientGenerator                 resource.ClientGenerator
+	namespacer                      request.NamespaceMapper
+	anonService                     anonymous.Service
+	userVerifier                    user.Verifier
+	tlsCerts                        TLSCerts
+	htmlHandlerRequestsDuration     *prometheus.HistogramVec
+	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsEndpointRedirects             *prometheus.CounterVec
+	dsConnectionClient              datasource.ConnectionClient
+	publicDashboardsService         publicdashboards.Service
 }
 
 type TLSCerts struct {
@@ -262,16 +269,17 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsService secrets.Service,
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
-	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
+	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
-	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
+	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -310,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ProvisioningService:          provisioningService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
-		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
@@ -318,7 +325,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
 		QuotaService:                 quotaService,
 		tracer:                       tracer,
@@ -328,7 +334,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
-		secretsMigrator:              secretsMigrator,
+		SecretsMigrator:              secretsMigrator,
 		secretMigrationProvider:      secretMigrationProvider,
 		secretsStore:                 secretsStore,
 		DataSourcesService:           dataSourcesService,
@@ -350,7 +356,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
-		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
@@ -373,10 +378,33 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
+		clientGenerator:              clientGenerator,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		publicDashboardsService:      publicDashboardsService,
+		htmlHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "html_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by the index.go HTML handler",
+		}, []string{"handler"}),
+		dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "ds_config_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by datasource configuration handlers",
+		}, []string{"handler"}),
+		dsEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "ds_endpoint_redirects_total",
+			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
+		}, []string{"route", "plugin_type", "target"}),
+		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
+
+	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsEndpointRedirects)
+
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
@@ -399,6 +427,26 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
+type customErrorLogger struct {
+	log log.Logger
+}
+
+const tlsHandshakeErrorPrefix = "http: TLS handshake error from"
+const tlsHandshakeErrorSuffix = "EOF"
+
+func (w *customErrorLogger) Write(msg []byte) (int, error) {
+	// checks if the error is a TLS handshake error that ends with EOF
+	if strings.Contains(string(msg), tlsHandshakeErrorPrefix) && strings.Contains(string(msg), tlsHandshakeErrorSuffix) {
+		// log at debug level and remove new lines
+		w.log.Debug(strings.ReplaceAll(string(msg), "\n", ""))
+	} else {
+		// log the error as is using the standard logger (the same way as the default http server does)
+		stdlog.Print(string(msg))
+	}
+
+	return len(msg), nil
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -411,8 +459,14 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
+
+	customErrorLogger := &customErrorLogger{
+		log: hs.log,
+	}
+	hs.httpSrv.ErrorLog = stdlog.New(customErrorLogger, "", 0)
+
 	switch hs.Cfg.Protocol {
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
+	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 		if err := hs.configureTLS(); err != nil {
 			return err
 		}
@@ -428,13 +482,15 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	default:
 	}
 
-	listener, err := hs.getListener()
+	listeners, err := hs.getListeners()
 	if err != nil {
 		return err
 	}
 
-	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+	for _, listener := range listeners {
+		hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
+			hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -449,25 +505,39 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	switch hs.Cfg.Protocol {
-	case setting.HTTPScheme, setting.SocketScheme:
-		if err := hs.httpSrv.Serve(listener); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
+	errg, _ := errgroup.WithContext(ctx)
+
+	for _, listener := range listeners {
+		errg.Go(func() error {
+			switch hs.Cfg.Protocol {
+			case setting.HTTPScheme, setting.SocketScheme:
+				// If serving on socket concurrently with HTTPScheme, the unix listener needs Serve too.
+				// Serve handles both tcp and unix listeners exactly the same.
+				if err := hs.httpSrv.Serve(listener); err != nil {
+					if errors.Is(err, http.ErrServerClosed) {
+						hs.log.Debug("server was shutdown gracefully")
+						return nil
+					}
+					return err
+				}
+			case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
+				// Similarly for ServeTLS
+				if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
+					if errors.Is(err, http.ErrServerClosed) {
+						hs.log.Debug("server was shutdown gracefully")
+						return nil
+					}
+					return err
+				}
+			default:
+				return fmt.Errorf("unhandled protocol %q", hs.Cfg.Protocol)
 			}
-			return err
-		}
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
-			}
-			return err
-		}
-	default:
-		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
+			return nil
+		})
+	}
+
+	if err := errg.Wait(); err != nil {
+		return err
 	}
 
 	wg.Wait()
@@ -475,10 +545,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	return nil
 }
 
-func (hs *HTTPServer) getListener() (net.Listener, error) {
+func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 	if hs.Listener != nil {
-		return hs.Listener, nil
+		return []net.Listener{hs.Listener}, nil
 	}
+
+	var listeners []net.Listener
 
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
@@ -486,8 +558,14 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
-		return listener, nil
-	case setting.SocketScheme:
+		listeners = append(listeners, listener)
+
+		// if `serve_on_socket` is configured, fall through and listen on a unix socket as well
+		if !hs.Cfg.ServeOnSocket {
+			break
+		}
+		fallthrough
+	case setting.SocketScheme, setting.SocketHTTP2Scheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
 			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
@@ -501,15 +579,19 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 		// golang.org/pkg/os does not have chgrp
 		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
-		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
-			return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+		if hs.Cfg.SocketGid != -1 {
+			if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
+				return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+			}
 		}
 
-		return listener, nil
+		listeners = append(listeners, listener)
 	default:
 		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
 		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
 	}
+
+	return listeners, nil
 }
 
 func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
@@ -596,7 +678,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestTracing(hs.tracer, middleware.ShouldTraceWithExceptions))
 	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
@@ -698,6 +780,7 @@ type healthResponse struct {
 	Version          string `json:"version,omitempty"`
 	Commit           string `json:"commit,omitempty"`
 	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+	APIServer        string `json:"apiserver,omitempty"`
 }
 
 // swagger:route GET /health health getHealth
@@ -726,13 +809,26 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		}
 	}
 
+	healthy := true
+
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Database = "failing"
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
-	} else {
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		healthy = false
+	}
+
+	// Check apiserver readiness. This gates the health endpoint on apiserver
+	// boot sequence completion, including remote APIService initialization —
+	// preventing Kubernetes from routing traffic before aggregated services are ready.
+	if hs.clientConfigProvider != nil && !hs.clientConfigProvider.IsReady() {
+		data.APIServer = "not ready"
+		healthy = false
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if healthy {
 		ctx.Resp.WriteHeader(http.StatusOK)
+	} else {
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	}
 
 	dataBytes, err := json.MarshalIndent(data, "", "  ")
@@ -799,7 +895,7 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
 		}
 	}
-	if protocol == "h2" {
+	if protocol == "h2" || protocol == "socket_h2" {
 		return []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -924,7 +1020,7 @@ func (hs *HTTPServer) configureTLS() error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	if hs.Cfg.Protocol == setting.HTTP2Scheme {
+	if hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme {
 		hs.httpSrv.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
 	}
 

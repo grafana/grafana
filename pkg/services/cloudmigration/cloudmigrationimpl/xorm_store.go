@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -29,6 +30,8 @@ const (
 	secretType                   = "cloudmigration-snapshot-encryption-key"
 	GetAllSnapshots              = -1
 	GetSnapshotListSortingLatest = "latest"
+
+	maxResourceBatchSize = 1000
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -118,6 +121,7 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 		SessionUID: uid,
 		Page:       1,
 		Limit:      GetAllSnapshots,
+		OrgID:      orgID,
 	}
 	snapshots, err := ss.GetSnapshotList(ctx, q)
 	if err != nil {
@@ -126,12 +130,13 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 
 	err = ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		for _, snapshot := range snapshots {
-			err := ss.deleteSnapshotResources(ctx, snapshot.UID)
-			if err != nil {
+			if err := ss.deleteSnapshotResources(ctx, snapshot.UID); err != nil {
 				return fmt.Errorf("deleting snapshot resource from db: %w", err)
 			}
-			err = ss.deleteSnapshot(ctx, snapshot.UID)
-			if err != nil {
+			if err := ss.deleteSnapshotPartitions(ctx, snapshot.UID); err != nil {
+				return fmt.Errorf("deleting snapshot partitions: %w", err)
+			}
+			if err := ss.deleteSnapshot(ctx, snapshot.UID); err != nil {
 				return fmt.Errorf("deleting snapshot from db: %w", err)
 			}
 		}
@@ -163,36 +168,38 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 	return &c, snapshots, nil
 }
 
-func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) error {
 	if snapshot.SessionUID == "" {
-		return "", fmt.Errorf("sessionUID is required")
+		return fmt.Errorf("sessionUID is required")
 	}
-
 	if snapshot.UID == "" {
-		snapshot.UID = util.GenerateShortUID()
+		return fmt.Errorf("snapshot uid is required")
 	}
 
-	if err := ss.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshot.UID, secretType, string(snapshot.EncryptionKey)); err != nil {
-		return "", err
+	if err := ss.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshot.UID, secretType, string(snapshot.GMSPublicKey)); err != nil {
+		return err
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		snapshot.Created = time.Now()
 		snapshot.Updated = time.Now()
 
-		_, err := sess.Insert(&snapshot)
+		_, err := sess.InsertOne(&snapshot)
 		if err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
-	return snapshot.UID, nil
+	return nil
 }
 
-// UpdateSnapshot takes a snapshot object containing a uid and updates a subset of features in the database.
+// UpdateSnapshot takes a command containing a snapshot uid and any updates to apply to the snapshot.
+// When performing multiple updates at once (e.g. updating the status and local resources), they are executed in separate transactions in order to batch insert large datasets.
+// The status is the last thing updated, as its status ultimately determines the behavior of the API.
 func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.UpdateSnapshotCmd) error {
 	if update.UID == "" {
 		return fmt.Errorf("missing snapshot uid")
@@ -200,46 +207,158 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	if update.SessionID == "" {
 		return fmt.Errorf("missing session uid")
 	}
+
+	// If local resources are set, it means we have to create them for the first time
+	if len(update.LocalResourcesToCreate) > 0 {
+		if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResourcesToCreate); err != nil {
+			return err
+		}
+	}
+
+	// If cloud resources are set, it means we have to update our resource local state
+	if len(update.CloudResourcesToUpdate) > 0 {
+		if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResourcesToUpdate); err != nil {
+			return err
+		}
+	}
+
+	// Update the snapshot status if set
+	if update.Status != "" {
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE session_uid=? AND uid=?"
+			if _, err := sess.Exec(rawSQL, update.Status, update.SessionID, update.UID); err != nil {
+				return fmt.Errorf("updating snapshot status for uid %s: %w", update.UID, err)
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+	if update.PublicKey != nil {
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := "UPDATE cloud_migration_snapshot SET public_key=? WHERE session_uid=? AND uid=?"
+			if _, err := sess.Exec(rawSQL, update.PublicKey, update.SessionID, update.UID); err != nil {
+				return fmt.Errorf("updating snapshot public key for uid %s: %w", update.UID, err)
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) StorePartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int, data []byte) error {
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Insert(cloudmigration.CloudMigrationSnapshotPartition{
+				SnapshotUID:     snapshotUID,
+				ResourceType:    resourceType,
+				PartitionNumber: partitionNumber,
+				Data:            data,
+			})
+			if err != nil {
+				return fmt.Errorf("inserting snapshot partition into database: %w", err)
+			}
+			return nil
+		})
+	})
+}
+
+func (ss *sqlStore) GetIndex(ctx context.Context, orgID int64, sessionUID string, snapshotUID string) (cloudmigration.CloudMigrationSnapshotIndex, error) {
+	var snap *cloudmigration.CloudMigrationSnapshot
+	partitions := make([]cloudmigration.CloudMigrationSnapshotPartition, 0)
+
+	if err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			s, err := ss.getSnapshotByUID(ctx, orgID, sessionUID, snapshotUID)
+			if err != nil {
+				return fmt.Errorf("fetching snapshot from database: %w", err)
+			}
+
+			snap = s
+			if err := sess.OrderBy("cloud_migration_snapshot_partition.resource_type,cloud_migration_snapshot_partition.partition_number ASC").Find(&partitions, &cloudmigration.CloudMigrationSnapshotPartition{SnapshotUID: snapshotUID}); err != nil {
+				return fmt.Errorf("fetching partition from database: %w", err)
+			}
+			if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snap.UID, secretType); err != nil {
+				return err
+			} else if !found {
+				return fmt.Errorf("encryption key not found for snapshot with UID %s", snap.UID)
+			} else {
+				snap.GMSPublicKey = []byte(secret)
+			}
+
+			return nil
+		})
+	}); err != nil {
+		return cloudmigration.CloudMigrationSnapshotIndex{}, err
+	}
+
+	partitionsByResourceType := make(map[string][]int)
+	for _, partition := range partitions {
+		partitionsByResourceType[partition.ResourceType] = append(partitionsByResourceType[partition.ResourceType], partition.PartitionNumber)
+	}
+
+	return cloudmigration.CloudMigrationSnapshotIndex{
+		EncryptionAlgo: snap.EncryptionAlgo,
+		PublicKey:      snap.PublicKey,
+		Metadata:       snap.Metadata,
+		Items:          partitionsByResourceType,
+	}, nil
+}
+
+func (ss *sqlStore) GetPartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int) (cloudmigration.CloudMigrationSnapshotPartition, error) {
+	var partition cloudmigration.CloudMigrationSnapshotPartition
+
 	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
-		// Update status if set
-		if update.Status != "" {
-			if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE session_uid=? AND uid=?"
-				if _, err := sess.Exec(rawSQL, update.Status, update.SessionID, update.UID); err != nil {
-					return fmt.Errorf("updating snapshot status for uid %s: %w", update.UID, err)
-				}
-				return nil
-			}); err != nil {
-				return err
+		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if _, err := sess.Where("snapshot_uid = ? AND resource_type = ?  AND partition_number = ?", snapshotUID, resourceType, partitionNumber).Get(&partition); err != nil {
+				return fmt.Errorf("fetching partition from database: %w", err)
 			}
-		}
-
-		// If local resources are set, it means we have to create them for the first time
-		if len(update.LocalResourcesToCreate) > 0 {
-			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResourcesToCreate); err != nil {
-				return err
-			}
-		}
-		// If cloud resources are set, it means we have to update our resource local state
-		if len(update.CloudResourcesToUpdate) > 0 {
-			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResourcesToUpdate); err != nil {
-				return err
-			}
-		}
-
-		return nil
+			return nil
+		})
 	})
 
-	return err
+	return partition, err
 }
 
 func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
-			UID: snapshotUid,
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if _, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
+				UID: snapshotUid,
+			}); err != nil {
+				return fmt.Errorf("deleting snapshot: %w", err)
+			}
+			return nil
 		})
-		return err
 	})
+}
+
+func (ss *sqlStore) getSnapshotByUID(ctx context.Context, orgID int64, sessionUID string, snapshotUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	session, err := ss.GetMigrationSessionByUID(ctx, orgID, sessionUID)
+	if err != nil || session == nil {
+		return nil, err
+	}
+
+	// now we get the snapshot
+	var snapshot cloudmigration.CloudMigrationSnapshot
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.Where("session_uid=? AND uid=?", sessionUID, snapshotUID).Get(&snapshot)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &snapshot, nil
 }
 
 func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUid, uid string, params cloudmigration.SnapshotResultQueryParams) (*cloudmigration.CloudMigrationSnapshot, error) {
@@ -270,7 +389,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUi
 	} else if !found {
 		return &snapshot, fmt.Errorf("encryption key not found for snapshot with UID %s", snapshot.UID)
 	} else {
-		snapshot.EncryptionKey = []byte(secret)
+		snapshot.GMSPublicKey = []byte(secret)
 	}
 
 	resources, err := ss.getSnapshotResources(ctx, uid, params)
@@ -288,6 +407,12 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUi
 // GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
 // passing GetAllSnapshots will return all the elements regardless of the page
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("org id is required")
+	}
+	if query.SessionUID == "" {
+		return nil, fmt.Errorf("session uid is required")
+	}
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Join("INNER", "cloud_migration_session",
@@ -307,13 +432,14 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	if err != nil {
 		return nil, err
 	}
+
 	for i, snapshot := range snapshots {
 		if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snapshot.UID, secretType); err != nil {
 			return nil, err
 		} else if !found {
 			return nil, fmt.Errorf("encryption key not found for snapshot with UID %s", snapshot.UID)
 		} else {
-			snapshot.EncryptionKey = []byte(secret)
+			snapshot.GMSPublicKey = []byte(secret)
 		}
 
 		if stats, err := ss.getSnapshotResourceStats(ctx, snapshot.UID); err != nil {
@@ -327,7 +453,18 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 }
 
 // CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
+// Inserting large enough datasets causes SQL errors, so we batch the inserts
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	for chunk := range slices.Chunk(resources, maxResourceBatchSize) {
+		if err := ss.createSnapshotResources(ctx, snapshotUid, chunk); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) createSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	for i := 0; i < len(resources); i++ {
 		resources[i].UID = util.GenerateShortUID()
 		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
@@ -350,7 +487,18 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 
 // UpdateSnapshotResources updates a migration resource for a snapshot, using snapshot_uid + resource_uid as a lookup
 // It does preprocessing on the results in order to minimize the sql queries executed.
+// Updating large enough datasets causes SQL errors, so we batch the updates
 func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	for chunk := range slices.Chunk(resources, maxResourceBatchSize) {
+		if err := ss.updateSnapshotResources(ctx, snapshotUid, chunk); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) updateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	// refIds of resources that migrated successfully in order to update in bulk
 	okIds := make([]any, 0, len(resources))
 
@@ -401,7 +549,6 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 
 	// Execute the minimum number of required statements!
-
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			if okUpdateStatement != nil {
@@ -504,6 +651,17 @@ func (ss *sqlStore) deleteSnapshotResources(ctx context.Context, snapshotUid str
 			SnapshotUID: snapshotUid,
 		})
 		return err
+	})
+}
+
+func (ss *sqlStore) deleteSnapshotPartitions(ctx context.Context, snapshotUid string) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Delete(cloudmigration.CloudMigrationSnapshotPartition{
+			SnapshotUID: snapshotUid,
+		}); err != nil {
+			return fmt.Errorf("deleting snapshot partitions: %w", err)
+		}
+		return nil
 	})
 }
 

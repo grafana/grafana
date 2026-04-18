@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,24 +18,28 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func TestIntegrationAnnotations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	sql := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
-	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql))
+	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql), prometheus.NewRegistry())
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -59,7 +64,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		mockDashSvc := testutil.NewMockDashboardService(t)
+
+		dashboard := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -67,7 +74,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			}),
 		})
 
-		dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		dashboard2 := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -78,14 +85,15 @@ func TestIntegrationAnnotations(t *testing.T) {
 		var err error
 
 		annotation := &annotations.Item{
-			OrgID:       1,
-			UserID:      1,
-			DashboardID: dashboard.ID,
-			Text:        "hello",
-			Type:        "alert",
-			Epoch:       10,
-			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-			Data:        simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
+			OrgID:        1,
+			UserID:       1,
+			DashboardID:  dashboard.ID, // nolint: staticcheck
+			DashboardUID: dashboard.UID,
+			Text:         "hello",
+			Type:         "alert",
+			Epoch:        10,
+			Tags:         []string{"outage", "error", "type:outage", "server:server-1"},
+			Data:         simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
 		}
 		err = store.Add(context.Background(), annotation)
 		require.NoError(t, err)
@@ -93,14 +101,15 @@ func TestIntegrationAnnotations(t *testing.T) {
 		assert.Equal(t, annotation.Epoch, annotation.EpochEnd)
 
 		annotation2 := &annotations.Item{
-			OrgID:       1,
-			UserID:      1,
-			DashboardID: dashboard2.ID,
-			Text:        "hello",
-			Type:        "alert",
-			Epoch:       21, // Should swap epoch & epochEnd
-			EpochEnd:    20,
-			Tags:        []string{"outage", "type:outage", "server:server-1", "error"},
+			OrgID:        1,
+			UserID:       1,
+			DashboardID:  dashboard2.ID, // nolint: staticcheck
+			DashboardUID: dashboard2.UID,
+			Text:         "hello",
+			Type:         "alert",
+			Epoch:        21, // Should swap epoch & epochEnd
+			EpochEnd:     20,
+			Tags:         []string{"outage", "type:outage", "server:server-1", "error"},
 		}
 		err = store.Add(context.Background(), annotation2)
 		require.NoError(t, err)
@@ -135,7 +144,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  dashboard.ID,
+				DashboardID:  dashboard.ID, // nolint: staticcheck
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -143,7 +152,29 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard.UID: dashboard.ID,
 				},
-				CanAccessDashAnnotations: true,
+			})
+
+			require.NoError(t, err)
+			assert.Len(t, items, 1)
+
+			assert.Equal(t, []string{"outage", "error", "type:outage", "server:server-1"}, items[0].Tags)
+
+			assert.GreaterOrEqual(t, items[0].Created, int64(0))
+			assert.GreaterOrEqual(t, items[0].Updated, int64(0))
+			assert.Equal(t, items[0].Updated, items[0].Created)
+		})
+
+		t.Run("Can query for annotation by dashboard uid", func(t *testing.T) {
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
+				OrgID:        1,
+				DashboardUID: dashboard.UID,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
+			}, &annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard.UID: dashboard.ID,
+				},
 			})
 
 			require.NoError(t, err)
@@ -225,7 +256,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -234,12 +264,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         12,
 				To:           15,
 				SignedInUser: testUser,
@@ -250,12 +280,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         1,
 				To:           15,
 				Tags:         []string{"asd"},
@@ -267,12 +297,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         1,
 				To:           15,
 				Type:         "alert",
@@ -284,12 +314,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         1,
 				To:           15, // this will exclude the second test annotation
 				Tags:         []string{"outage", "error"},
@@ -315,12 +345,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         1,
 				To:           15,
 				Tags:         []string{"type:outage", "server:server-1"},
@@ -333,14 +363,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can update annotation and remove all tags", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -368,14 +398,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -401,14 +431,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can update annotation with additional tags", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -434,14 +464,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can update annotations with data", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -470,14 +500,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can delete annotation", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:        1,
-				DashboardID:  1,
+				DashboardID:  1, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{"foo": 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -493,14 +523,15 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can delete annotation using dashboard id and panel id", func(t *testing.T) {
 			annotation3 := &annotations.Item{
-				OrgID:       1,
-				UserID:      1,
-				DashboardID: dashboard2.ID,
-				Text:        "toBeDeletedWithPanelId",
-				Type:        "alert",
-				Epoch:       11,
-				Tags:        []string{"test"},
-				PanelID:     20,
+				OrgID:        1,
+				UserID:       1,
+				DashboardID:  dashboard2.ID, // nolint: staticcheck
+				DashboardUID: dashboard2.UID,
+				Text:         "toBeDeletedWithPanelId",
+				Type:         "alert",
+				Epoch:        11,
+				Tags:         []string{"test"},
+				PanelID:      20,
 			}
 			err = store.Add(context.Background(), annotation3)
 			require.NoError(t, err)
@@ -509,7 +540,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				CanAccessDashAnnotations: true,
 			}
 
 			query := annotations.ItemQuery{
@@ -520,9 +550,45 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 
-			dashboardId := items[0].DashboardID
-			panelId := items[0].PanelID
-			err = store.Delete(context.Background(), &annotations.DeleteParams{DashboardID: dashboardId, PanelID: panelId, OrgID: 1})
+			// nolint:staticcheck
+			err = store.Delete(context.Background(), &annotations.DeleteParams{DashboardID: items[0].DashboardID, PanelID: items[0].PanelID, OrgID: 1})
+			require.NoError(t, err)
+
+			items, err = store.Get(context.Background(), query, accRes)
+			require.NoError(t, err)
+			assert.Empty(t, items)
+		})
+
+		t.Run("Can delete annotation using dashboard uid and panel id", func(t *testing.T) {
+			annotation3 := &annotations.Item{
+				OrgID:        1,
+				UserID:       1,
+				DashboardUID: dashboard2.UID,
+				Text:         "toBeDeletedWithPanelId",
+				Type:         "alert",
+				Epoch:        11,
+				Tags:         []string{"test"},
+				PanelID:      20,
+			}
+			err = store.Add(context.Background(), annotation3)
+			require.NoError(t, err)
+
+			accRes := &annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard2.UID: dashboard2.ID,
+				},
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:        1,
+				AnnotationID: annotation3.ID,
+				SignedInUser: testUser,
+			}
+			items, err := store.Get(context.Background(), query, accRes)
+			require.NoError(t, err)
+
+			// nolint:staticcheck
+			err = store.Delete(context.Background(), &annotations.DeleteParams{DashboardUID: *items[0].DashboardUID, PanelID: items[0].PanelID, OrgID: 1})
 			require.NoError(t, err)
 
 			items, err = store.Get(context.Background(), query, accRes)
@@ -635,15 +701,16 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	require.NoError(b, err)
 
 	annotationWithTheTag := annotations.Item{
-		ID:          int64(numAnnotations) + 1,
-		OrgID:       1,
-		UserID:      1,
-		DashboardID: int64(1),
-		Text:        "hello",
-		Type:        "alert",
-		Epoch:       10,
-		Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-		Data:        simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
+		ID:           int64(numAnnotations) + 1,
+		OrgID:        1,
+		UserID:       1,
+		DashboardID:  1, // nolint: staticcheck
+		DashboardUID: "uid",
+		Text:         "hello",
+		Type:         "alert",
+		Epoch:        10,
+		Tags:         []string{"outage", "error", "type:outage", "server:server-1"},
+		Data:         simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
 	}
 	err = store.Add(context.Background(), &annotationWithTheTag)
 	require.NoError(b, err)

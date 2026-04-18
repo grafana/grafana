@@ -2,21 +2,20 @@ import deepEqual from 'fast-deep-equal';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
+import { type QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { ConfirmModal } from '@grafana/ui';
 
-import CloudMonitoringDatasource from '../datasource';
+import { type PromQLQuery, QueryType, type SLOQuery } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
-import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
-import { CloudMonitoringOptions } from '../types/types';
+import { type CloudMonitoringQuery } from '../types/query';
+import { type CloudMonitoringOptions } from '../types/types';
 
-import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
+import { defaultTimeSeriesList, defaultTimeSeriesQuery, MetricQueryEditor } from './MetricQueryEditor';
 import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
-import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-
-import { MetricQueryEditor, SLOQueryEditor } from './';
+import { defaultQuery as defaultSLOQuery, SLOQueryEditor } from './SLOQueryEditor';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 

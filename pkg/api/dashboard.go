@@ -8,33 +8,34 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
-	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/components/dashdiffs"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -44,44 +45,18 @@ const (
 	anonString = "Anonymous"
 )
 
-func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashID int64) (bool, error) {
-	ctx, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	if !c.IsSignedIn {
-		return false, nil
-	}
-
-	if !c.IsIdentityType(claims.TypeUser) {
-		return false, nil
-	}
-
-	userID, err := c.GetInternalID()
-	if err != nil {
-		return false, err
-	}
-
-	query := star.IsStarredByUserQuery{UserID: userID, DashboardID: dashID}
-	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
-}
-
-func dashboardGuardianResponse(err error) response.Response {
-	if err != nil {
-		var dashboardErr dashboardaccess.DashboardErr
-		if ok := errors.As(err, &dashboardErr); ok {
-			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
-		}
-		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
-	}
-	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
-}
-
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
 // Get dashboard by uid.
 //
+// Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first
+// (for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.
+//
 // Will return the dashboard given the dashboard unique identifier (uid).
+//
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: dashboardResponse
@@ -98,21 +73,13 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	c.Req = c.Req.WithContext(ctx)
 
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), 0, uid)
+	apiVersion := strings.TrimSpace(c.Req.URL.Query().Get("apiVersion"))
+	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), uid, apiVersion)
 	if rsp != nil {
 		return rsp
 	}
 
-	// v2 is not supported in /api
-	if strings.HasPrefix(dash.APIVersion, "v2") {
-		url := fmt.Sprintf("/apis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", dash.APIVersion, hs.namespacer(c.GetOrgID()), dash.UID)
-		return response.Error(http.StatusNotAcceptable, "dashboard api version not supported, use "+url+" instead", nil)
-	}
-
-	var (
-		publicDashboardEnabled = false
-		err                    error
-	)
+	publicDashboardEnabled := false
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Cfg.PublicDashboardsEnabled {
@@ -158,10 +125,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
 	canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, adminEvaluator)
 
-	isStarred, err := hs.isDashboardStarredByUser(c, dash.ID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard was starred by user", err)
-	}
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
@@ -172,15 +135,9 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dashboardsV1.AnnotationPermission{}
-	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
-	} else {
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
-	}
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
+	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 
 	meta := dtos.DashboardMeta{
-		IsStarred:              isStarred,
 		Slug:                   dash.Slug,
 		Type:                   dashboards.DashTypeDB,
 		CanStar:                c.IsSignedIn,
@@ -204,7 +161,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 	// lookup folder title & url
-	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+	if dash.FolderUID != "" {
 		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        c.GetOrgID(),
 			UID:          &dash.FolderUID,
@@ -275,7 +232,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
 }
 
@@ -325,19 +281,15 @@ func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) stri
 	return ident.GetLogin()
 }
 
-func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid string, k8sGetAPIVersion string) (*dashboards.Dashboard, response.Response) {
 	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
 	defer span.End()
 
-	var query dashboards.GetDashboardQuery
-
-	if len(uid) > 0 {
-		query = dashboards.GetDashboardQuery{UID: uid, ID: id, OrgID: orgID}
-	} else {
-		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
-	}
-
-	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:              uid,
+		OrgID:            orgID,
+		K8sGetAPIVersion: k8sGetAPIVersion,
+	})
 	if err != nil {
 		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
 	}
@@ -345,11 +297,15 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-// DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
+// swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
 // Delete dashboard by uid.
 //
 // Will delete the dashboard given the specified unique identifier (uid).
+//
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: deleteDashboardResponse
@@ -369,7 +325,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	uid := web.Params(c.Req)[":uid"]
 
 	var rsp response.Response
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), uid, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -377,38 +333,9 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	// disconnect all library elements for this dashboard
-	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
+	err := hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
 	if err != nil {
-		hs.log.Error(
-			"Failed to disconnect library elements",
-			"dashboard", dash.ID,
-			"identity", c.GetID(),
-			"error", err)
-	}
-
-	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
-	if err != nil {
-		var dashboardErr dashboardaccess.DashboardErr
-		if ok := errors.As(err, &dashboardErr); ok {
-			if errors.Is(err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard) {
-				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
-			}
-		}
-
-		var statusErr *k8serrors.StatusError
-		if errors.As(err, &statusErr) {
-			return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
-	}
-
-	if hs.Live != nil {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.GetOrgID(), c.SignedInUser, dash.UID)
-		if err != nil {
-			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.UID, "error", err)
-		}
+		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -424,6 +351,10 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 //
 // Creates a new dashboard or updates an existing dashboard.
 // Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
+//
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse
@@ -455,8 +386,49 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for saving folders.", nil)
 	}
 
+	spec, err := cmd.Dashboard.Map()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to read dashboard", err)
+	}
+
+	// Check for v2 schema elements without a k8s style wrapper
+	if dashboards.LooksLikeV2Spec(spec) {
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage+
+			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
+	}
+
+	// Items with metadata, spec, etc
+	if dashboards.LooksLikeK8sResource(spec) {
+		obj := &unstructured.Unstructured{Object: spec}
+		apiVersion := obj.GetAPIVersion()
+		switch {
+		case strings.HasPrefix(apiVersion, dashboardsV1.GROUP):
+			if _, ok, err := unstructured.NestedInt64(spec, "id"); ok || err != nil {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must not include an id on the root element", nil)
+			}
+			if _, ok := spec["spec"]; !ok {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must include the dashboard contents in the spec property", nil)
+			}
+			uid, ok, _ := unstructured.NestedString(spec, "uid")
+			if ok {
+				delete(obj.Object, "uid")
+				obj.SetName(uid) // overwrite the incoming name -- this might happen from TF providers
+			}
+			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
+			return hs.saveDashboardViaK8s(c, cmd, obj)
+
+		case apiVersion == "":
+			return response.Error(http.StatusBadRequest, "Dashboard appears to be a k8s style resource, but is missing an explicit apiVersion.", nil)
+		}
+		return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
+	}
+
+	_, found := spec["title"]
+	if !found {
+		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+	}
+
 	ctx = c.Req.Context()
-	var err error
 
 	var userID int64
 	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
@@ -507,42 +479,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	dashboard, saveErr := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
-
-	if hs.Live != nil {
-		// Tell everyone listening that the dashboard changed
-		if dashboard == nil {
-			dashboard = dash // the original request
-		}
-
-		// This will broadcast all save requests only if a `gitops` observer exists.
-		// gitops is useful when trying to save dashboards in an environment where the user can not save
-		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(c.GetOrgID(), c.SignedInUser, cmd.Message, dashboard, saveErr)
-
-		// When an error exists, but the value broadcast to a gitops listener return 202
-		if liveerr == nil && saveErr != nil && channel.HasGitOpsObserver(c.GetOrgID()) {
-			return response.JSON(http.StatusAccepted, util.DynMap{
-				"status":  "pending",
-				"message": "changes were broadcast to the gitops listener",
-			})
-		}
-
-		if liveerr != nil {
-			hs.log.Warn("Unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
-		}
-	}
-
 	if saveErr != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	// connect library panels for this dashboard after the dashboard is stored and has an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while connecting library panels", err)
-	}
-
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      dashboard.Slug,
@@ -554,9 +494,158 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	})
 }
 
+func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand, obj *unstructured.Unstructured) response.Response {
+	gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", err)
+	}
+
+	title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+	if title == "" {
+		return response.Error(http.StatusBadRequest, "Dashboard spec is missing required title property", nil)
+	}
+
+	ctx := c.Req.Context()
+	namespace := hs.namespacer(c.GetOrgID())
+	tmp, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create k8s client", err)
+	}
+	client := tmp.Resource(gv.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(namespace)
+
+	obj.SetKind("Dashboard") // Writing to the dashboard API
+	obj.SetNamespace(namespace)
+	obj.SetAnnotations(map[string]string{}) // clear any annotations
+	obj.SetLabels(map[string]string{})      // clear any labels
+	delete(obj.Object, "status")
+	delete(obj.Object, "access") // can exist if you copied a /dto object
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
+	}
+	meta.SetResourceVersionInt64(0) // remove
+	meta.SetFolder(cmd.FolderUID)
+	meta.SetMessage(cmd.Message)
+	meta.SetUID("")
+	meta.SetResourceVersion("") // remove
+	meta.SetFinalizers(nil)
+	meta.SetManagedFields(nil)
+
+	name := obj.GetName()
+	if name == "" {
+		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
+	}
+
+	// Check (and remove) any legacy internal IDs
+	var old *unstructured.Unstructured
+	internalID, err := nestedInternalID(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	if internalID > 0 && name == "" {
+		found, err := client.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
+			Limit:         2,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
+		}
+		if len(found.Items) == 0 {
+			return response.Error(http.StatusBadRequest,
+				fmt.Sprintf("The payload includes an internal identifier (%d) that is not found", internalID), nil)
+		}
+
+		old = &found.Items[0]
+		name = old.GetName()
+		meta.SetName(name)
+		if !cmd.Overwrite {
+			return response.Error(http.StatusConflict,
+				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
+		}
+	}
+
+	// Never send internal ID or UID in the body
+	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+
+	isCreate := name == ""
+	if isCreate {
+		obj.SetGenerateName("a") // prefix
+	} else if old == nil {
+		// Read the old value first
+		old, err = client.Get(ctx, name, metav1.GetOptions{})
+		if err == nil && old != nil {
+			if !cmd.Overwrite {
+				return response.Error(http.StatusConflict,
+					"Dashboard already exists. Use overwrite flag to update.", nil)
+			}
+		} else if err != nil && k8serrors.IsNotFound(err) {
+			isCreate = true // but name exists
+		} else {
+			return response.Error(http.StatusInternalServerError,
+				"Failed to read existing dashboard", err)
+		}
+	}
+
+	validation := "Warn"
+	if strings.HasPrefix(gv.Version, "v0") {
+		validation = "Ignore" // v0 can be anything
+	}
+	var dash *unstructured.Unstructured
+	if isCreate {
+		dash, err = client.Create(ctx, obj, metav1.CreateOptions{
+			FieldValidation: validation,
+		})
+	} else {
+		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{
+			FieldValidation: validation,
+		})
+	}
+	if err != nil {
+		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
+	}
+
+	meta, err = utils.MetaAccessor(dash)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
+	}
+
+	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
+	slug := slugify.Slugify(title)
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"status":    "success",
+		"slug":      slug,
+		"version":   meta.GetGeneration(),
+		"id":        meta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":       meta.GetName(),
+		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
+		"folderUid": meta.GetFolder(),
+	})
+}
+
+func nestedInternalID(obj map[string]interface{}) (int64, error) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
+	if !found || err != nil {
+		return 0, nil
+	}
+	i, ok := val.(int64)
+	if ok {
+		return i, nil
+	}
+	n, ok := val.(json.Number)
+	if ok {
+		return n.Int64()
+	}
+	return 0, fmt.Errorf("unsupported ID type: %T", val)
+}
+
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
 //
-// Get home dashboard.
+// NOTE: the home dashboard is configured in preferences.  This API will be removed in G13
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getHomeDashboardResponse
@@ -580,16 +669,15 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	if preference.HomeDashboardID == 0 && len(homePage) > 0 {
+	if preference.HomeDashboardUID == "" && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(http.StatusOK, &homePageRedirect)
 	}
 
-	if preference.HomeDashboardID != 0 {
-		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
-		slugQueryResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+	if preference.HomeDashboardUID != "" {
+		slugQueryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: preference.HomeDashboardUID, OrgID: c.GetOrgID()})
 		if err == nil {
-			url := dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
+			url := dashboards.GetDashboardURL(preference.HomeDashboardUID, slugQueryResult.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}
@@ -659,24 +747,11 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	dash.Set("panels", panels)
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersionsByID
-//
-// Gets all existing versions for the dashboard.
-//
-// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionsResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route GET /dashboards/uid/{uid}/versions dashboard_versions getDashboardVersionsByUID
+// swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID
 //
 // Gets all existing versions for the dashboard using UID.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: dashboardVersionsResponse
@@ -688,20 +763,13 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboardVersions")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
-
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
-
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -769,24 +837,11 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	})
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
-//
-// Get a specific dashboard version.
-//
-// Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: dashboardVersionResponse
@@ -799,20 +854,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 
 	var dash *dashboards.Dashboard
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -854,123 +904,17 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-// swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
+// swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
 //
-// Perform diff on two dashboards.
-//
-// Produces:
-// - application/json
-// - text/html
-//
-// Responses:
-// 200: calculateDashboardDiffResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.CalculateDashboardDiff")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	apiOptions := dtos.CalculateDiffOptions{}
-	if err := web.Bind(c.Req, &apiOptions); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.Base.DashboardId, 10)))
-	if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-		return dashboardGuardianResponse(err)
-	}
-
-	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.New.DashboardId, 10)))
-		if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
-	options := dashdiffs.Options{
-		OrgId:    c.GetOrgID(),
-		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
-		Base: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.Base.DashboardId,
-			Version:          apiOptions.Base.Version,
-			UnsavedDashboard: apiOptions.Base.UnsavedDashboard,
-		},
-		New: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.New.DashboardId,
-			Version:          apiOptions.New.Version,
-			UnsavedDashboard: apiOptions.New.UnsavedDashboard,
-		},
-	}
-
-	baseVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.Base.DashboardId,
-		Version:     options.Base.Version,
-		OrgID:       options.OrgId,
-	}
-
-	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	newVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.New.DashboardId,
-		Version:     options.New.Version,
-		OrgID:       options.OrgId,
-	}
-
-	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	baseData := baseVersionRes.Data
-	newData := newVersionRes.Data
-
-	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "application/json")
-	}
-
-	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
-}
-
-// swagger:route POST /dashboards/id/{DashboardID}/restore dashboard_versions restoreDashboardVersionByID
-//
-// Restore a dashboard to a given dashboard version.
-//
-// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+// Restore a dashboard to a given dashboard version using UID.
+// This API will be removed when /apis/dashboards.grafana.app/v1 is released.
+// You can restore a dashboard by reading it from history, then creating it again.
 //
 // Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route POST /dashboards/uid/{uid}/restore dashboard_versions restoreDashboardVersionByUID
-//
-// Restore a dashboard to a given dashboard version using UID.
-//
-// Responses:
-// 200: postDashboardResponse
+// 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
@@ -978,78 +922,56 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "api.RestoreDashboardVersion")
 	defer span.End()
+
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
-
-	var err error
-	dashUID := web.Params(c.Req)[":uid"]
-
-	apiCmd := dtos.RestoreDashboardVersionCommand{}
+	var apiCmd dtos.RestoreDashboardVersionCommand
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		hs.log.Error("error restoring dashboard version: invalid request", "error", err)
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	var (
+		dashID int64
+		err    error
+	)
+
+	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
 		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
 		if err != nil {
+			hs.log.Error("error restoring dashboard version: invalid dashboardId", "error", err)
 			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
-	if rsp != nil {
-		return rsp
-	}
-
-	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.GetOrgID()}
-	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
+	res, err := hs.dashboardVersionService.RestoreVersion(ctx, &dashver.RestoreVersionCommand{
+		Requester:    c.SignedInUser,
+		DashboardUID: dashUID,
+		DashboardID:  dashID,
+		Version:      apiCmd.Version,
+	})
 	if err != nil {
-		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
+		hs.log.Error("error restoring dashboard version: service call failed", "error", err)
+		return dashboardErrResponse(err, "Failed to restore dashboard version")
 	}
 
-	// do not allow restores if the json data is identical
-	// this is needed for the k8s flow, as the generation id will be used on the
-	// version table, and the generation id only increments when the actual spec is changed
-	if compareDashboardData(version.Data.MustMap(), dash.Data.MustMap()) {
-		return response.Error(http.StatusBadRequest, "Current dashboard is identical to the specified version", nil)
-	}
-
-	var userID int64
-	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
-		userID = id
-	}
-
-	saveCmd := dashboards.SaveDashboardCommand{}
-	saveCmd.RestoredFrom = version.Version
-	saveCmd.OrgID = c.GetOrgID()
-	saveCmd.UserID = userID
-	saveCmd.Dashboard = version.Data
-	saveCmd.Dashboard.Set("version", dash.Version)
-	saveCmd.Dashboard.Set("uid", dash.UID)
-	saveCmd.Message = dashverimpl.DashboardRestoreMessage(version.Version)
-	// nolint:staticcheck
-	saveCmd.FolderID = dash.FolderID
-	metrics.MFolderIDsAPICount.WithLabelValues(metrics.RestoreDashboardVersion).Inc()
-	saveCmd.FolderUID = dash.FolderUID
-
-	return hs.postDashboard(c, saveCmd)
-}
-
-func compareDashboardData(versionData, dashData map[string]any) bool {
-	// these can be different but the actual data is the same
-	delete(versionData, "version")
-	delete(dashData, "version")
-	delete(versionData, "id")
-	delete(dashData, "id")
-	delete(versionData, "uid")
-	delete(dashData, "uid")
-
-	return reflect.DeepEqual(versionData, dashData)
+	return response.JSON(http.StatusOK, util.DynMap{
+		"status":    "success",
+		"slug":      res.Slug,
+		"version":   res.Version,
+		"id":        res.ID,
+		"uid":       res.UID,
+		"url":       res.GetURL(),
+		"folderUid": res.FolderUID,
+	})
 }
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
 //
-// Get all dashboards tags of an organisation.
+// Get all dashboards tags of an organization.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDashboardsTagsResponse
@@ -1093,6 +1015,20 @@ func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
+}
+
+func dashboardErrResponse(err error, fallbackMessage string) response.Response {
+	var dashboardErr dashboardaccess.DashboardErr
+	if ok := errors.As(err, &dashboardErr); ok {
+		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+	}
+
+	var statusErr *k8serrors.StatusError
+	if errors.As(err, &statusErr) {
+		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
+	}
+
+	return response.Error(http.StatusInternalServerError, fallbackMessage, err)
 }
 
 // swagger:parameters restoreDashboardVersionByID
@@ -1305,7 +1241,7 @@ type GetHomeDashboardResponseBody struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []dashver.DashboardVersionMeta `json:"body"`
+	Body *dashver.DashboardVersionResponseMeta `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse

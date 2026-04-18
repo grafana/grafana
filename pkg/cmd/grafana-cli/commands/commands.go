@@ -1,12 +1,14 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsconsolidation"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -18,7 +20,7 @@ import (
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+		runner, err := initializeRunner(context.Context, cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
@@ -33,7 +35,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+		runner, err := initializeRunner(context.Context, cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
@@ -49,7 +51,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, 
 	}
 }
 
-func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
+func initializeRunner(ctx context.Context, cmd *utils.ContextCommandLine) (server.Runner, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
@@ -61,7 +63,7 @@ func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
 		return server.Runner{}, err
 	}
 
-	runner, err := server.InitializeForCLI(cfg)
+	runner, err := server.InitializeForCLI(ctx, cfg)
 	if err != nil {
 		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
 	}
@@ -144,18 +146,6 @@ var adminCommands = []*cli.Command{
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
-			{
-				Name:   "to-unified-storage",
-				Usage:  "Migrates classic SQL data into unified storage",
-				Action: runDbCommand(datamigrations.ToUnifiedStorage),
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:  "non-interactive",
-						Usage: "Non interactive mode. Just run the migration.",
-						Value: false,
-					},
-				},
-			},
 		},
 	},
 	{
@@ -178,6 +168,66 @@ var adminCommands = []*cli.Command{
 				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
 			},
 		},
+	},
+	{
+		Name:  "secrets-consolidation",
+		Usage: "Runs an operation that re-encrypts all encrypted values in your database with new data keys",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "consolidate",
+				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "config",
+						Usage: "Path to config file",
+					},
+					&cli.StringFlag{
+						Name:  "homepath",
+						Usage: "Path to Grafana install/home path, defaults to working directory",
+					},
+					&cli.StringFlag{
+						Name:  "configOverrides",
+						Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+					},
+					&cli.IntFlag{
+						Name:  "chunk-size",
+						Usage: "Number of encrypted values per bulk update. Defaults to 100. Increase for fewer round-trips, decrease if hitting query size limits.",
+						Value: 100,
+					},
+					&cli.IntFlag{
+						Name:  "threads",
+						Usage: "Number of parallel namespaces to consolidate. For even better performance, increase your database connections alongside this. Defaults to 1.",
+						Value: 1,
+					},
+					&cli.BoolFlag{
+						Name:  "benchmark",
+						Usage: "Print duration and enable high CPU profile rate for profiling (use with --cpuprofile for bottleneck analysis)",
+						Value: false,
+					},
+					&cli.StringFlag{
+						Name:  "cpuprofile",
+						Usage: "Write CPU profile to this file during consolidation (recommended: use with --benchmark for high sample rate)",
+						Value: "",
+					},
+					&cli.StringFlag{
+						Name:  "memprofile",
+						Usage: "Write heap profile to this file after consolidation completes",
+						Value: "",
+					},
+					&cli.IntFlag{
+						Name:  "cpu-profile-rate",
+						Usage: "CPU profile sample rate (samples per second). Default 5000; use 10000+ for high sample rate. Only applies when --cpuprofile is set.",
+						Value: 5000,
+					},
+				},
+			},
+		},
+	},
+	{
+		Name:   "flush-rbac-seed-assignment",
+		Usage:  "Clears RBAC seeding to force re-seeding on next startup. Use after running an Enterprise build, then an OSS build, then an Enterprise build again.",
+		Action: runDbCommand(flushSeedAssignment),
 	},
 }
 

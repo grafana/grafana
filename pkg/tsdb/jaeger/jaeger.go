@@ -8,10 +8,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 var logger = backend.NewLoggerWith("logger", "tsdb.jaeger")
@@ -20,7 +19,7 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
@@ -36,7 +35,7 @@ type datasourceJSONData struct {
 	} `json:"traceIdTimeParams"`
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		httpClientOptions, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -60,6 +59,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 		logger := logger.FromContext(ctx)
 		jaegerClient, err := New(httpClient, logger, settings)
+		if err != nil {
+			return nil, fmt.Errorf("error creating jaeger client: %w", err)
+		}
+
 		return &datasourceInfo{JaegerClient: jaegerClient}, err
 	}
 }
@@ -80,6 +83,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	client, err := s.getDSInfo(ctx, backend.PluginConfigFromContext(ctx))
+	cfg := backend.GrafanaConfigFromContext(ctx)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -87,10 +91,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if _, err = client.JaegerClient.Services(); err != nil {
+	var servicesErr error
+	if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
+		_, servicesErr = client.JaegerClient.GrpcServices(ctx)
+	} else {
+		_, servicesErr = client.JaegerClient.Services(ctx)
+	}
+
+	if servicesErr != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: err.Error(),
+			Message: servicesErr.Error(),
 		}, nil
 	}
 

@@ -6,9 +6,14 @@ import (
 	"encoding/json"
 )
 
+//go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
+	//
+	// Deprecated: FeatureToggles.IsEnabled is deprecated and will be removed in a future release.
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client]), for example:
+	// openfeature.NewDefaultClient().Boolean(ctx, "your-flag", false, openfeature.TransactionContext(ctx))
 	IsEnabled(ctx context.Context, flag string) bool
 
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
@@ -16,6 +21,9 @@ type FeatureToggles interface {
 	// are configured by the operator and shared across all tenants.
 	// Use of global feature flags should be limited and careful as they require
 	// a full server restart for a change to take place.
+	//
+	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
+	// Toggles that must be reliably evaluated at the service startup should be changed to settings and/or removed entirely.
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
@@ -118,6 +126,13 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type Generate struct {
+	LegacyGo       bool
+	LegacyFrontend bool
+	Go             bool
+	React          bool
+}
+
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
@@ -125,20 +140,25 @@ type FeatureFlag struct {
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
 
-	// Recommended properties - control behavior of the feature toggle management page in the UI
-	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability, PublicPreview, and Deprecated toggles only)
-	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // GA, Deprecated, and PublicPreview toggles only: don't display this feature in the UI; if this is a GA toggle, add a comment with the reasoning
-
-	// CEL-GO expression.  Using the value "true" will mean this is on by default
-	Expression string `json:"expression,omitempty"`
+	// Expression defined by the feature_toggles configuration.
+	// Supports multiple types including boolean, string, integer, float,
+	// and structured values following the OpenFeature specification.
+	// Empty values are not allowed.
+	//
+	// Using the value "true" means the feature flag is enabled by default,
+	// Using the value "false" means the feature flag is disabled by default,
+	// Using the value "1.0" means the default value of the feature flag is 1.0
+	Expression string `json:"expression"`
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
 	// The server must be initialized with the value
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
+
+	// Generate instructs codegen on what clients to generate for this feature flag.
+	Generate Generate `json:"-"`
 }
 
 type FeatureToggleWebhookPayload struct {

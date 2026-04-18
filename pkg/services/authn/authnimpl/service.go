@@ -113,6 +113,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 	r.OrgID = orgID
+	ctx = identity.WithOrgID(ctx, orgID)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -121,7 +122,8 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			if err != nil {
 				// Note: special case for token rotation
 				// We don't want to fallthrough in this case
-				if errors.Is(err, authn.ErrTokenNeedsRotation) {
+				var tokenRotationErr authn.TokenNeedsRotationError
+				if errors.As(err, &tokenRotationErr) {
 					return nil, err
 				}
 
@@ -167,12 +169,20 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
+	if len(identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions", identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions))
+	}
+
 	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
 	}
 
 	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.K8s) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.K8sAllowedActions", identity.ClientParams.FetchPermissionsParams.K8s))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {

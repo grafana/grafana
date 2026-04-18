@@ -1,14 +1,14 @@
-import { DataLink, LinkModel } from '@grafana/data';
+import { type DataLink, type LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getPanelLinks } from './PanelMenuBehavior';
 

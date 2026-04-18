@@ -23,14 +23,18 @@ import (
 )
 
 type redisConfig struct {
-	addr        string
-	username    string
-	password    string
-	db          int
-	name        string
-	prefix      string
-	maxConns    int
-	clusterMode bool
+	addr             string
+	username         string
+	password         string
+	db               int
+	name             string
+	prefix           string
+	maxConns         int
+	clusterMode      bool
+	sentinelMode     bool
+	masterName       string
+	sentinelUsername string
+	sentinelPassword string
 
 	tlsEnabled bool
 	tls        dstls.ClientConfig
@@ -111,21 +115,19 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		}
 	}
 
-	opts := &redis.UniversalOptions{
+	rdb := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs:     addrs,
 		Username:  cfg.username,
 		Password:  cfg.password,
 		DB:        cfg.db,
 		PoolSize:  poolSize,
 		TLSConfig: tlsClientConfig,
-	}
 
-	var rdb redis.UniversalClient
-	if cfg.clusterMode {
-		rdb = redis.NewClusterClient(opts.Cluster())
-	} else {
-		rdb = redis.NewClient(opts.Simple())
-	}
+		// Options specific to Sentinel mode.
+		MasterName:       cfg.masterName,
+		SentinelUsername: cfg.sentinelUsername,
+		SentinelPassword: cfg.sentinelPassword,
+	})
 
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
@@ -457,7 +459,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	close(p.readyc)
 }
 
-func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
+func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
 	p.statesMtx.Lock()
 	defer p.statesMtx.Unlock()
 	p.states[key] = state
@@ -467,7 +469,8 @@ func (p *redisPeer) AddState(key string, state alertingCluster.State, _ promethe
 	p.subsMtx.Lock()
 	p.subs[key] = sub
 	p.subsMtx.Unlock()
-	return newRedisChannel(p, key, p.withPrefix(key), update)
+	resolved := alertingCluster.ResolveOptions(opts...)
+	return newRedisChannel(p, key, p.withPrefix(key), update, resolved.QueueSize)
 }
 
 func (p *redisPeer) receiveLoop(channel *redis.PubSub) {

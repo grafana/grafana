@@ -10,6 +10,35 @@ import (
 )
 
 type ctxUserKey struct{}
+type metadataIdentityUIDKey struct{}
+type ctxOrgIDKey struct{}
+
+// WithOrgID stores the org ID in context as a fallback when no requester is available.
+func WithOrgID(ctx context.Context, orgID int64) context.Context {
+	return context.WithValue(ctx, ctxOrgIDKey{}, orgID)
+}
+
+// OrgIDFrom returns the org ID stored by WithOrgID, and whether it was present.
+func OrgIDFrom(ctx context.Context) (int64, bool) {
+	orgID, ok := ctx.Value(ctxOrgIDKey{}).(int64)
+	return orgID, ok
+}
+
+// WithOriginalIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
+// context identity is overridden (e.g. by the store wrapper using service identity). Storage
+// that sets these annotations (e.g. unistore prepare) should call MetadataIdentityUIDFrom
+// and use it when present so the real acting user is recorded.
+func WithOriginalIdentityUID(ctx context.Context, uid string) context.Context {
+	return context.WithValue(ctx, metadataIdentityUIDKey{}, uid)
+}
+
+// MetadataIdentityUIDFrom returns the UID to use for createdBy/updatedBy when set by a
+// wrapper (e.g. store wrapper). If not set, the caller should use the identity from
+// AuthInfoFrom(ctx) for annotations.
+func MetadataIdentityUIDFrom(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(metadataIdentityUIDKey{}).(string)
+	return uid, ok && uid != ""
+}
 
 // WithRequester attaches the requester to the context.
 func WithRequester(ctx context.Context, usr Requester) context.Context {
@@ -36,8 +65,22 @@ const (
 	serviceNameForProvisioning = "provisioning"
 )
 
-func newInternalIdentity(name string, namespace string, orgID int64) Requester {
-	return &StaticRequester{
+type IdentityOpts func(*StaticRequester)
+
+// WithServiceIdentityName sets the `StaticRequester.AccessTokenClaims.Rest.ServiceIdentity` field to the provided name.
+// This is so far only used by Secrets Manager to identify and gate the service decrypting a secret.
+func WithServiceIdentityName(name string) IdentityOpts {
+	return func(r *StaticRequester) {
+		r.AccessTokenClaims.Rest.ServiceIdentity = name
+	}
+}
+
+func newInternalIdentity(name string, namespace string, orgID int64, opts ...IdentityOpts) Requester {
+	// Create a copy of the ServiceIdentityClaims to avoid modifying the global one.
+	// Some of the options might mutate it.
+	claimsCopy := *ServiceIdentityClaims
+
+	staticRequester := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
 		Name:           name,
 		UserUID:        name,
@@ -50,37 +93,58 @@ func newInternalIdentity(name string, namespace string, orgID int64) Requester {
 		Permissions: map[int64]map[string][]string{
 			orgID: serviceIdentityPermissions,
 		},
-		AccessTokenClaims: ServiceIdentityClaims,
+		AccessTokenClaims: &claimsCopy,
 	}
+
+	for _, opt := range opts {
+		opt(staticRequester)
+	}
+
+	return staticRequester
+}
+
+// WithServiceIdentityForSingleNamespace sets an identity representing the service itself in provided namespace and store it in context.
+// This is useful for background tasks that has to communicate with other services in the same namespace. It also returns a Requester with
+// static permissions so it can be used in legacy code paths.
+func WithServiceIdentityForSingleNamespace(ctx context.Context, namespace string, opts ...IdentityOpts) (context.Context, Requester) {
+	r := newInternalIdentity(serviceName, namespace, 1, opts...)
+	return WithRequester(ctx, r), r
+}
+
+// WithServiceIdentityForSingleNamespaceContext sets an identity representing the service itself in context, restricted to a namespace.
+// Use when using a middleware that signs tokens with the same restriction.
+func WithServiceIdentityForSingleNamespaceContext(ctx context.Context, namespace string, opts ...IdentityOpts) context.Context {
+	ctx, _ = WithServiceIdentityForSingleNamespace(ctx, namespace, opts...)
+	return ctx
 }
 
 // WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
-func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := newInternalIdentity(serviceName, "*", orgID)
+func WithServiceIdentity(ctx context.Context, orgID int64, opts ...IdentityOpts) (context.Context, Requester) {
+	r := newInternalIdentity(serviceName, "*", orgID, opts...)
 	return WithRequester(ctx, r), r
 }
 
-func WithProvisioningIdentity(ctx context.Context, namespace string) (context.Context, Requester, error) {
+func WithProvisioningIdentity(ctx context.Context, namespace string, opts ...IdentityOpts) (context.Context, Requester, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID)
+	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID, opts...)
 	return WithRequester(ctx, r), r, nil
 }
 
 // WithServiceIdentityContext sets an identity representing the service itself in context.
-func WithServiceIdentityContext(ctx context.Context, orgID int64) context.Context {
-	ctx, _ = WithServiceIdentity(ctx, orgID)
+func WithServiceIdentityContext(ctx context.Context, orgID int64, opts ...IdentityOpts) context.Context {
+	ctx, _ = WithServiceIdentity(ctx, orgID, opts...)
 	return ctx
 }
 
 // WithServiceIdentityFN calls provided closure with an context contaning the identity of the service.
-func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error)) (T, error) {
-	return fn(WithServiceIdentityContext(ctx, orgID))
+func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error), opts ...IdentityOpts) (T, error) {
+	return fn(WithServiceIdentityContext(ctx, orgID, opts...))
 }
 
 func getWildcardPermissions(actions ...string) map[string][]string {
@@ -89,14 +153,6 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 		permissions[a] = []string{"*"}
 	}
 	return permissions
-}
-
-func getTokenPermissions(groups ...string) []string {
-	out := make([]string, 0, len(groups))
-	for _, group := range groups {
-		out = append(out, group+":*")
-	}
-	return out
 }
 
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
@@ -113,19 +169,49 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"datasources:query",
 	"datasources:read",
 	"datasources:delete",
+	"library.panels:create", // ActionLibraryPanelsCreate
+	"library.panels:read",   // ActionLibraryPanelsRead
+	"library.panels:write",  // ActionLibraryPanelsWrite
+	"library.panels:delete", // ActionLibraryPanelsDelete
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"users:read",     // accesscontrol.ActionUsersRead,
-	"org.users:read", // accesscontrol.ActionOrgUsersRead,
-	"teams:read",     // accesscontrol.ActionTeamsRead,
+	"users:read",           // accesscontrol.ActionUsersRead,
+	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
+	"teams:read",           // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
-var serviceIdentityTokenPermissions = getTokenPermissions(
-	"folder.grafana.app",
-	"dashboard.grafana.app",
-	"secret.grafana.app",
-	"query.grafana.app",
-)
+// Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
+var serviceIdentityTokenPermissions = []string{
+	"folder.grafana.app:*",
+	"dashboard.grafana.app:*",
+	"secret.grafana.app:*",
+	"query.grafana.app:*",
+	"datasource.grafana.app:*",
+	"iam.grafana.app:*",
+	"provisioning.grafana.app/repositories:read",
+	"provisioning.grafana.app/repositories:watch",
+	"provisioning.grafana.app/settings:read",
+	"provisioning.grafana.app/settings:watch",
+	"preferences.grafana.app:*", // user, team, and org preferences
+	"collections.grafana.app:*", // user stars
+	"plugins.grafana.app:*",
+	"historian.alerting.grafana.app:*",
+	"advisor.grafana.app:*",
+	"annotation.grafana.app:*",
+
+	// allow access to all datasource types
+	"*.datasource.grafana.app:*",
+
+	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
+	"secret.grafana.app/securevalues:decrypt",
+
+	// Allow access to all apiextensions.k8s.io resources
+	"*.ext.grafana.app:*",
+
+	// Allow access to apps.grafana.app resources (e.g. AppManifest)
+	"apps.grafana.app:*",
+}
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
 	Rest: authn.AccessTokenClaims{

@@ -4,7 +4,7 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PanelPlugin,
   PluginType,
   standardTransformersRegistry,
@@ -12,14 +12,20 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  SceneCanvasText,
+  SceneDataTransformer,
+  type SceneGridLayout,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -73,18 +79,12 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      ...jest.requireActual('@grafana/runtime').config.bootData,
-      settings: {
-        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
-        defaultDatasource: 'ds1',
-        datasources: {
-          ds1: {
-            name: 'ds-uid',
-            meta: {
-              id: 'grafana',
-            },
-          },
+    defaultDatasource: 'ds1',
+    datasources: {
+      ds1: {
+        name: 'ds-uid',
+        meta: {
+          id: 'grafana',
         },
       },
     },
@@ -189,6 +189,51 @@ describe('InspectJsonTab', () => {
     expect(tab.state.onClose).toHaveBeenCalled();
   });
 
+  it('Can update gridPos and forces layout re-render', async () => {
+    const { tab, panel, scene } = await buildTestScene();
+
+    // Get the layout manager and spy on the grid's forceRender
+    const layoutManager = scene.state.body as DefaultGridLayoutManager;
+    const grid = layoutManager.state.grid as SceneGridLayout;
+    const forceRenderSpy = jest.spyOn(grid, 'forceRender');
+
+    const originalGridItem = panel.parent as DashboardGridItem;
+    expect(originalGridItem.state.x).toBe(0);
+    expect(originalGridItem.state.y).toBe(0);
+    expect(originalGridItem.state.width).toBe(8);
+    expect(originalGridItem.state.height).toBe(10);
+
+    tab.onCodeEditorBlur(`{
+      "id": 12,
+      "type": "table",
+      "title": "Panel A",
+      "gridPos": {
+        "x": 5,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
+
+    const panel2 = findVizPanelByKey(scene, panel.state.key)!;
+    const gridItem = panel2.parent as DashboardGridItem;
+
+    // Verify all gridPos properties are updated
+    expect(gridItem.state.x).toBe(5);
+    expect(gridItem.state.y).toBe(10);
+    expect(gridItem.state.width).toBe(12);
+    expect(gridItem.state.height).toBe(8);
+
+    // Verify forceRender was called on the layout to apply position changes
+    expect(forceRenderSpy).toHaveBeenCalled();
+  });
+
   it('Can show panel json for V2 dashboard specification', async () => {
     const { tab } = await buildTestSceneWithV2Spec();
 
@@ -196,7 +241,66 @@ describe('InspectJsonTab', () => {
     expect(obj.kind).toEqual('Panel');
     expect(obj.spec.id).toEqual(12);
     expect(obj.spec.data.kind).toEqual('QueryGroup');
-    expect(tab.isEditable()).toBe(false);
+    expect(tab.isEditable()).toBe(true);
+  });
+
+  describe('Panel Layout', () => {
+    it('does not show panel-layout option for non-v2 spec', async () => {
+      const { tab } = await buildTestScene();
+      const options = tab.getOptions();
+      expect(options.some((o) => o.value === 'panel-layout')).toBe(false);
+    });
+
+    it('can edit and apply layout changes', async () => {
+      const { tab, panel, scene } = await buildTestSceneWithV2Spec();
+      tab.onChangeSource({ value: 'panel-layout' });
+
+      const layoutManager = scene.state.body as DefaultGridLayoutManager;
+      const grid = layoutManager.state.grid as SceneGridLayout;
+      const forceRenderSpy = jest.spyOn(grid, 'forceRender');
+
+      tab.onCodeEditorBlur(`{
+        "kind": "GridLayoutItem",
+        "spec": {
+          "x": 5,
+          "y": 10,
+          "width": 12,
+          "height": 8,
+          "element": {
+            "kind": "ElementReference",
+            "name": "panel-12"
+          }
+        }
+      }`);
+
+      tab.onApplyChange();
+
+      const gridItem = panel.parent as DashboardGridItem;
+      expect(gridItem.state.x).toBe(5);
+      expect(gridItem.state.y).toBe(10);
+      expect(gridItem.state.width).toBe(12);
+      expect(gridItem.state.height).toBe(8);
+
+      expect(forceRenderSpy).toHaveBeenCalled();
+      expect(tab.state.onClose).toHaveBeenCalled();
+    });
+
+    it('shows error for invalid layout JSON', async () => {
+      const { tab } = await buildTestSceneWithV2Spec();
+      tab.onChangeSource({ value: 'panel-layout' });
+
+      tab.onCodeEditorBlur(`{
+        "kind": "GridLayoutItem",
+        "spec": {
+          "x": "not a number"
+        }
+      }`);
+
+      tab.onApplyChange();
+
+      expect(tab.state.error).toBeDefined();
+      expect(tab.state.onClose).not.toHaveBeenCalled();
+    });
   });
 });
 

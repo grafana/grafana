@@ -1,15 +1,25 @@
 SELECT
-  dashboard.org_id, dashboard.id,
-  dashboard.uid, dashboard.folder_uid,
-  dashboard.deleted, plugin_id,
+  dashboard.org_id,
+  dashboard.id,
+  dashboard.uid,
+  dashboard.title,
+  dashboard.folder_uid,
+  dashboard.deleted,
+  plugin_id,
   provisioning.name        as repo_name,
   provisioning.external_id as repo_path,
   provisioning.check_sum   as repo_hash,
   provisioning.updated     as repo_ts,
-  dashboard.created, created_user.uid as created_by, dashboard.created_by   as created_by_id,
-  dashboard_version.created, updated_user.uid as updated_by,updated_user.id as created_by_id,
-  dashboard_version.version, dashboard_version.message, 
-  dashboard_version.data, dashboard_version.api_version
+  dashboard.created,
+  created_user.uid         as created_by,
+  dashboard.created_by     as created_by_id,
+  dashboard_version.created as updated,
+  updated_user.uid       as updated_by,
+  dashboard_version.created_by as updated_by_id,
+  dashboard_version.version,
+  dashboard_version.message,
+  dashboard_version.data,
+  dashboard_version.api_version
 FROM "grafana"."dashboard" as dashboard
 LEFT OUTER JOIN "grafana"."dashboard_version" as dashboard_version ON dashboard.id = dashboard_version.dashboard_id
 LEFT OUTER JOIN "grafana"."dashboard_provisioning" as provisioning ON dashboard.id = provisioning.dashboard_id

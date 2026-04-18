@@ -92,7 +92,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
+	url := fmt.Sprintf("%s/v3/projects/%s/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -132,22 +132,28 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	id                 int64
-	updated            time.Time
-	url                string
-	authenticationType string
-	defaultProject     string
-	clientEmail        string
-	tokenUri           string
-	services           map[string]datasourceService
-	privateKey         string
+	id                          int64
+	updated                     time.Time
+	url                         string
+	authenticationType          string
+	defaultProject              string
+	clientEmail                 string
+	tokenUri                    string
+	universeDomain              string
+	services                    map[string]datasourceService
+	privateKey                  string
+	usingImpersonation          bool
+	serviceAccountToImpersonate string
 }
 
 type datasourceJSONData struct {
-	AuthenticationType string `json:"authenticationType"`
-	DefaultProject     string `json:"defaultProject"`
-	ClientEmail        string `json:"clientEmail"`
-	TokenURI           string `json:"tokenUri"`
+	AuthenticationType          string `json:"authenticationType"`
+	DefaultProject              string `json:"defaultProject"`
+	ClientEmail                 string `json:"clientEmail"`
+	TokenURI                    string `json:"tokenUri"`
+	UniverseDomain              string `json:"universeDomain"`
+	UsingImpersonation          bool   `json:"usingImpersonation"`
+	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
 }
 
 type datasourceService struct {
@@ -168,14 +174,17 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                 settings.ID,
-			updated:            settings.Updated,
-			url:                settings.URL,
-			authenticationType: jsonData.AuthenticationType,
-			defaultProject:     jsonData.DefaultProject,
-			clientEmail:        jsonData.ClientEmail,
-			tokenUri:           jsonData.TokenURI,
-			services:           map[string]datasourceService{},
+			id:                          settings.ID,
+			updated:                     settings.Updated,
+			url:                         settings.URL,
+			authenticationType:          jsonData.AuthenticationType,
+			defaultProject:              jsonData.DefaultProject,
+			clientEmail:                 jsonData.ClientEmail,
+			tokenUri:                    jsonData.TokenURI,
+			universeDomain:              jsonData.UniverseDomain,
+			usingImpersonation:          jsonData.UsingImpersonation,
+			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
+			services:                    map[string]datasourceService{},
 		}
 
 		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
@@ -188,13 +197,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		for name, info := range routes {
+		for name := range routes {
 			client, err := newHTTPClient(dsInfo, opts, &httpClientProvider, name)
 			if err != nil {
 				return nil, err
 			}
 			dsInfo.services[name] = datasourceService{
-				url:    info.url,
+				url:    buildURL(name, dsInfo.universeDomain),
 				client: client,
 			}
 		}
@@ -207,7 +216,7 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
 	if prevFilters != nil {
 		filtersIface := prevFilters.([]any)
-		filters := []string{}
+		filters := make([]string, 0, len(filtersIface))
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
 		}

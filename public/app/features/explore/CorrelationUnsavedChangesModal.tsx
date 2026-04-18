@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface UnsavedChangesModalProps {
   message: string;
@@ -19,7 +19,6 @@ export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel, me
         'Unsaved changes to correlation'
       )}
       onDismiss={onCancel}
-      icon="exclamation-triangle"
       className={css({ width: '600px' })}
     >
       <h5>{message}</h5>

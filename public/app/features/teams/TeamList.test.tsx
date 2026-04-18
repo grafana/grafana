@@ -1,88 +1,93 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
+import { ModalRoot } from '@grafana/ui';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { Team } from '../../types';
+import { appEvents } from '../../core/app_events';
+import { ShowModalReactEvent } from '../../types/events';
 
-import { Props, TeamList } from './TeamList';
-import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
+import { TeamDeleteModal } from './TeamDeleteModal';
+import TeamList from './TeamList';
 
-jest.mock('app/core/core', () => ({
-  contextSrv: {
-    hasPermission: (action: string) => true,
-    licensedAccessControlEnabled: () => false,
-  },
-}));
-
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    teams: [] as Team[],
-    noTeams: false,
-    loadTeams: jest.fn(),
-    deleteTeam: jest.fn(),
-    changePage: jest.fn(),
-    changeQuery: jest.fn(),
-    changeSort: jest.fn(),
-    query: '',
-    totalPages: 0,
-    page: 0,
-    hasFetched: false,
-    perPage: 10,
-    rolesLoading: false,
-  };
-
-  Object.assign(props, propOverrides);
-
-  render(
-    <TestProvider>
-      <TeamList {...props} />
-    </TestProvider>
-  );
-};
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('TeamList', () => {
-  it('should render teams table', () => {
-    setup({ teams: getMultipleMockTeams(5), teamsCount: 5, hasFetched: true });
-    expect(screen.getAllByRole('row')).toHaveLength(6); // 5 teams plus table header row
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'fetchUserPermissions').mockResolvedValue();
+  });
+
+  it('should render teams table', async () => {
+    render(<TeamList />);
+    await waitFor(() =>
+      expect(screen.getAllByRole('row'))
+        // Number of teams plus table header row
+        .toHaveLength(MOCK_TEAMS.length + 1)
+    );
+  });
+
+  it('clicks the delete button and opens the TeamDeleteModal', async () => {
+    const mockTeam = MOCK_TEAMS[0];
+    jest.spyOn(appEvents, 'publish');
+    render(<TeamList />);
+    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
+
+    expect(appEvents.publish).toHaveBeenCalledWith(
+      new ShowModalReactEvent(
+        expect.objectContaining({
+          component: TeamDeleteModal,
+        })
+      )
+    );
   });
 
   describe('when user has access to create a team', () => {
-    it('should enable the new team button', () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      setup({
-        teams: getMultipleMockTeams(1),
-        totalCount: 1,
-        hasFetched: true,
-      });
+    it('should enable the new team button', async () => {
+      render(<TeamList />);
 
-      expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
+      expect(await screen.findByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
   });
 
   describe('when user does not have access to create a team', () => {
-    it('should disable the new team button', () => {
+    it('should disable the new team button', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      setup({
-        teams: getMultipleMockTeams(1),
-        totalCount: 1,
-        hasFetched: true,
-      });
+      render(<TeamList />);
 
-      expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+      expect(await screen.findByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
   });
-});
 
-it('should call delete team', async () => {
-  const mockDelete = jest.fn();
-  const mockTeam = getMockTeam();
-  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
-  setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
-  await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-  await waitFor(() => {
-    expect(mockDelete).toHaveBeenCalledWith(mockTeam.uid);
+  it('should close the delete modal after confirming team deletion', async () => {
+    const mockTeam = MOCK_TEAMS[0];
+    render(
+      <>
+        <TeamList />
+        <ModalRoot />
+      </>
+    );
+
+    // Click the delete button to open the modal
+    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
+
+    // The modal should be visible with a Delete heading
+    const modalTitle = await screen.findByRole('heading', { name: /delete/i });
+    expect(modalTitle).toBeInTheDocument();
+
+    // Click the confirm delete button in the modal (the one inside the dialog, not the icon buttons)
+    const modal = screen.getByRole('dialog');
+    const confirmButton = within(modal).getByRole('button', { name: /delete/i });
+    await userEvent.click(confirmButton);
+
+    // The modal should close after deletion
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /delete/i })).not.toBeInTheDocument();
+    });
   });
 });

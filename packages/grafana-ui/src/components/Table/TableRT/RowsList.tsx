@@ -1,33 +1,33 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, type UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { Cell, Row, TableState, HeaderGroup } from 'react-table';
+import { type Cell, type Row, type TableState, type HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  Field,
+  type Field,
   FieldType,
-  TimeRange,
+  type TimeRange,
   hasTimeField,
-  InterpolateFunction,
+  type InterpolateFunction,
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';
 import {
-  CellColors,
-  CellRangeSelection,
-  GetActionsFunction,
-  TableFieldOptions,
-  TableFilterActionCallback,
-  TableInspectCellCallback,
+  type CellColors,
+  type CellRangeSelection,
+  type GetActionsFunction,
+  type TableFieldOptions,
+  type TableFilterActionCallback,
+  type TableInspectCellCallback,
 } from '../types';
 import {
   calculateAroundPointThreshold,
@@ -37,7 +37,7 @@ import {
 } from '../utils';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 interface RowsListProps {
   data: DataFrame;
@@ -270,7 +270,7 @@ export const RowsList = (props: RowsListProps) => {
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(rowIndex));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(tableStyles.theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -435,9 +435,6 @@ export const RowsList = (props: RowsListProps) => {
     }
   };
 
-  // Key the virtualizer for expanded rows
-  const expandedKey = Object.keys(tableState.expanded).join('|');
-
   // It's a hack for text wrapping.
   // VariableSizeList component didn't know that we manually set row height.
   // So we need to reset the list when the rows high changes.
@@ -450,8 +447,7 @@ export const RowsList = (props: RowsListProps) => {
   return (
     <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
       <VariableSizeList
-        // This component needs an unmount/remount when row height, page changes, or expanded rows change
-        key={`${rowHeight}${pageIndex}${expandedKey}`}
+        key={`${rowHeight}${pageIndex}`}
         height={listHeight}
         itemCount={itemCount}
         itemSize={getItemSize}

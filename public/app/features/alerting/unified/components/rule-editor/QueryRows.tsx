@@ -1,27 +1,27 @@
-import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   LoadingState,
-  PanelData,
-  RelativeTimeRange,
+  type PanelData,
+  type RelativeTimeRange,
   getDataSourceRef,
   rangeUtil,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Trans } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getInstantFromDataQuery } from '../../utils/rule-form';
 
-import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { type AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
 
 interface Props {
@@ -283,7 +283,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
   return (
     <EmptyQueryWrapper>
       <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
-        <Card>
+        <Card noMargin>
           <Card.Heading>
             <Trans i18nKey="alerting.datasource-not-found.this-datasource-has-been-removed">
               This datasource has been removed

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -19,38 +19,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test if the service is disabled
 func TestService_IsDisabled(t *testing.T) {
-	// Create a new service
-	s, err := ProvideService(
-		&setting.Cfg{
-			PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
-			PreinstallPluginsAsync: true,
+	tests := []struct {
+		name                   string
+		preinstallPluginsSync  []setting.InstallPlugin
+		preinstallPluginsAsync []setting.InstallPlugin
+		expectedDisabled       bool
+	}{
+		{
+			name:                   "enabled when async plugins are configured",
+			preinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:       false,
 		},
-		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
-		&fakes.FakePluginInstaller{},
-		prometheus.NewRegistry(),
-		&fakes.FakePluginRepo{},
-		featuremgmt.WithFeatures(),
-		&pluginchecker.FakePluginUpdateChecker{},
-	)
-	require.NoError(t, err)
+		{
+			name:                  "enabled when only sync plugins are configured",
+			preinstallPluginsSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:      false,
+		},
+		{
+			name:             "disabled when no plugins are configured",
+			expectedDisabled: true,
+		},
+	}
 
-	// Check if the service is disabled
-	if s.IsDisabled() {
-		t.Error("Service should be enabled")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := ProvideService(
+				&setting.Cfg{
+					PreinstallPluginsSync:  tt.preinstallPluginsSync,
+					PreinstallPluginsAsync: tt.preinstallPluginsAsync,
+				},
+				pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
+				&pluginfakes.FakePluginInstaller{},
+				prometheus.NewRegistry(),
+				&pluginfakes.FakePluginRepo{},
+				&pluginchecker.FakePluginUpdateChecker{},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedDisabled, s.IsDisabled())
+		})
 	}
 }
 
 func TestService_Run(t *testing.T) {
 	tests := []struct {
-		name             string
-		shouldInstall    bool
-		pluginsToInstall []setting.InstallPlugin
-		existingPlugins  []*plugins.Plugin
-		pluginsToFail    []string
-		blocking         bool
-		latestPlugin     *repo.PluginArchiveInfo
+		name                 string
+		shouldInstall        bool
+		shouldThrowError     bool
+		pluginsToInstall     []setting.InstallPlugin
+		pluginsToInstallSync []setting.InstallPlugin
+		existingPlugins      []*plugins.Plugin
+		pluginsToFail        []string
+		latestPlugin         *repo.PluginArchiveInfo
 	}{
 		{
 			name:             "Installs a plugin",
@@ -64,6 +84,7 @@ func TestService_Run(t *testing.T) {
 		},
 		{
 			name:             "Skips already installed plugin",
+			shouldThrowError: false,
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin"}}},
@@ -86,17 +107,16 @@ func TestService_Run(t *testing.T) {
 			pluginsToFail:    []string{"myplugin1"},
 		},
 		{
-			name:             "Install a blocking plugin",
-			shouldInstall:    true,
-			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			blocking:         true,
+			name:                 "Install a plugin from sync list",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
 		{
-			name:             "Fails to install a blocking plugin",
-			shouldInstall:    false,
-			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			blocking:         true,
-			pluginsToFail:    []string{"myplugin"},
+			name:                 "when installation fails in sync mode, it should throw an error",
+			shouldInstall:        false,
+			shouldThrowError:     true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			pluginsToFail:        []string{"myplugin"},
 		},
 		{
 			name:             "Updates a plugin",
@@ -138,6 +158,18 @@ func TestService_Run(t *testing.T) {
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0-rc.1"},
 		},
+		{
+			name:                 "should install all plugins - sync and async",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			pluginsToInstall:     []setting.InstallPlugin{{ID: "myplugin2"}},
+		},
+		{
+			name:                 "should install a plugin with a URL regardless of versioning",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "our-plugin-datasource", URL: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.1+linux.zip"}},
+			existingPlugins:      []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "our-plugin-datasource", Info: plugins.Info{Version: "1.2.2"}}}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,13 +180,16 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
+			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
-					PreinstallPlugins:      tt.pluginsToInstall,
-					PreinstallPluginsAsync: !tt.blocking,
+					PreinstallPluginsAsync: tt.pluginsToInstall,
+					PreinstallPluginsSync:  tt.pluginsToInstallSync,
+					PreinstallAutoUpdate:   true,
 				},
-				pluginstore.New(preg, &fakes.FakeLoader{}),
-				&fakes.FakePluginInstaller{
+				store,
+				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
@@ -165,7 +200,8 @@ func TestService_Run(t *testing.T) {
 							t.Fatal("Should not install plugin")
 							return errors.New("Should not install plugin")
 						}
-						for _, plugin := range tt.pluginsToInstall {
+						allPluginsToInstall := append(tt.pluginsToInstallSync, tt.pluginsToInstall...)
+						for _, plugin := range allPluginsToInstall {
 							if plugin.ID == pluginID && plugin.Version == version {
 								if opts.URL() != "" {
 									installedFromURL++
@@ -178,32 +214,47 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				prometheus.NewRegistry(),
-				&fakes.FakePluginRepo{
+				&pluginfakes.FakePluginRepo{
 					GetPluginArchiveInfoFunc: func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 						return tt.latestPlugin, nil
 					},
 				},
-				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
 				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),
 					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
-			if tt.blocking && !tt.shouldInstall {
-				require.ErrorContains(t, err, "Failed to install plugin")
-			} else {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 
-			if !tt.blocking {
-				err = s.Run(context.Background())
+			t.Cleanup(func() {
+				s.StopAsync()
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := s.AwaitTerminated(ctx)
+				if tt.shouldThrowError {
+					require.ErrorContains(t, err, "Failed to install plugin")
+					return
+				}
 				require.NoError(t, err)
+			})
+
+			err = s.StartAsync(context.Background())
+			require.NoError(t, err)
+			err = s.AwaitRunning(context.Background())
+			if tt.shouldThrowError {
+				require.ErrorContains(t, err, "Failed to install plugin")
+				return
 			}
+			require.NoError(t, err)
+
+			<-s.installComplete
+
 			if tt.shouldInstall {
 				expectedInstalled := 0
 				expectedInstalledFromURL := 0
-				for _, plugin := range tt.pluginsToInstall {
+				allPluginsToInstall := append(tt.pluginsToInstallSync, tt.pluginsToInstall...)
+				for _, plugin := range allPluginsToInstall {
 					expectedFailed := false
 					for _, pluginFail := range tt.pluginsToFail {
 						if plugin.ID == pluginFail {

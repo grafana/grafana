@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';

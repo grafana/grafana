@@ -31,6 +31,7 @@ type StaticRequester struct {
 	IsGrafanaAdmin  bool
 	// Permissions grouped by orgID and actions
 	Permissions       map[int64]map[string][]string
+	AccessToken       string
 	IDToken           string
 	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]
 	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims]
@@ -104,7 +105,12 @@ func (u *StaticRequester) GetExtra() map[string][]string {
 	if u.IDToken != "" {
 		return map[string][]string{"id-token": {u.IDToken}}
 	}
-	return map[string][]string{}
+
+	result := map[string][]string{}
+	if u.AccessTokenClaims != nil && u.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		result[authnlib.ServiceIdentityKey] = []string{u.AccessTokenClaims.Rest.ServiceIdentity}
+	}
+	return result
 }
 
 func (u *StaticRequester) GetGroups() []string {
@@ -227,6 +233,10 @@ func (u *StaticRequester) IsEmailVerified() bool {
 
 func (u *StaticRequester) GetCacheKey() string {
 	return u.CacheKey
+}
+
+func (u *StaticRequester) GetAccessToken() string {
+	return u.AccessToken
 }
 
 func (u *StaticRequester) GetIDToken() string {

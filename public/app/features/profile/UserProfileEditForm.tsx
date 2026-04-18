@@ -1,11 +1,11 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
-import { UserDTO } from 'app/types';
+import { type UserDTO } from 'app/types/user';
 
-import { ProfileUpdateFields } from './types';
+import { type ProfileUpdateFields } from './types';
 
 export interface Props {
   user: UserDTO | null;

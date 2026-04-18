@@ -1,39 +1,40 @@
-import { lastValueFrom, merge, Observable, of } from 'rxjs';
+import { lastValueFrom, merge, type Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameToJSON,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   getDataSourceRef,
   makeClassES5Compatible,
   parseLiveChannelAddress,
-  ScopedVars,
-  AdHocVariableFilter,
-  CoreApp,
+  type ScopedVars,
+  type AdHocVariableFilter,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { getFeatureFlagClient } from '../internal/openFeature';
 import {
-  BackendSrvRequest,
-  FetchResponse,
+  type BackendSrvRequest,
+  type FetchResponse,
   getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
   StreamingFrameAction,
-  StreamingFrameOptions,
+  type StreamingFrameOptions,
 } from '../services';
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { isQueryServiceCompatible } from './qscheck';
+import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
 /**
@@ -87,6 +88,8 @@ enum PluginRequestHeaders {
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
+  DashboardTitle = 'X-Dashboard-Title', // used by datasources to identify the dashboard title
+  PanelTitle = 'X-Panel-Title', // used by datasources to identify the panel title
 }
 
 /**
@@ -113,6 +116,33 @@ export interface HealthCheckResult {
 }
 
 /**
+ * Response shape from the /apis/{group}/v0alpha1/.../datasources/{uid}/health endpoint.
+ * Used when datasourcesApiServerEnableHealthEndpointFrontend is enabled.
+ *
+ * @internal
+ */
+export interface DatasourcesV0HealthCheckResult {
+  kind?: string;
+  apiVersion?: string;
+  status: string;
+  code?: number;
+  message: string;
+  details?: HealthCheckResultDetails;
+}
+
+function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResult {
+  const status: HealthStatus =
+    v.status === HealthStatus.OK || v.status === HealthStatus.Error || v.status === HealthStatus.Unknown
+      ? v.status
+      : HealthStatus.Unknown;
+  return {
+    status,
+    message: v.message,
+    details: v.details,
+  };
+}
+
+/**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
  *
@@ -122,7 +152,7 @@ class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
-  protected userStorage: UserStorage;
+  userStorage: UserStorage;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
@@ -143,6 +173,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
+    const datasources: DataSourceInstanceSettings[] = [];
     const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
@@ -163,6 +194,8 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
+        datasources.push(ds);
+
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
         const dsId = ds.id;
         if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
@@ -179,6 +212,7 @@ class DataSourceWithBackend<
       if (datasource.uid?.length) {
         dsUIDs.add(datasource.uid);
       }
+
       return {
         ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
         datasource,
@@ -206,27 +240,13 @@ class DataSourceWithBackend<
 
     let url = '/api/ds/query?ds_type=' + this.type;
 
-    // Use the new query service for explore
-    if (config.featureToggles.queryServiceFromExplore && request.app === CoreApp.Explore) {
-      // make sure query-service is enabled on the backend
-      const isQueryServiceEnabled = config.featureToggles.queryService;
-      const isExperimentalAPIsEnabled = config.featureToggles.grafanaAPIServerWithExperimentalAPIs;
-      if (!isQueryServiceEnabled && !isExperimentalAPIsEnabled) {
-        console.warn('feature toggle queryServiceFromExplore also requires the queryService to be running');
-      } else {
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
-      }
-    }
-
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
-        console.warn('feature toggle queryServiceFromUI also requires the queryService to be running');
-      } else {
-        if (!hasExpr && dsUIDs.size === 1) {
-          // TODO? can we talk directly to the apiserver?
-        }
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=' + this.type`;
+      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+        types: [],
+      });
+      if (isQueryServiceCompatible(datasources, allowedTypes)) {
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
       }
     }
 
@@ -242,8 +262,14 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
+      if (request.dashboardTitle) {
+        headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
+      }
       if (request.panelId) {
         headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
+      if (request.panelName) {
+        headers[PluginRequestHeaders.PanelTitle] = request.panelName;
       }
     }
     if (request.panelPluginId) {
@@ -327,7 +353,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
@@ -348,34 +374,78 @@ class DataSourceWithBackend<
         method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
   }
 
   /**
+   * Internal function to build the datasource URL based on the feature toggle
+   */
+  buildResourcesDatasourceUrl(path: string): string {
+    const enabledRedirect = getFeatureFlagClient().getBooleanValue(
+      'datasources.apiserver.useNewAPIsForDatasourceResources',
+      false
+    );
+    if (enabledRedirect) {
+      // example:
+      // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
+      const apiVersion = 'v0alpha1';
+      return `/apis/${this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
+    }
+    return `/api/datasources/uid/${this.uid}/resources/${path}`;
+  }
+
+  /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
+    const useNewApi = getFeatureFlagClient().getBooleanValue('datasourcesApiServerEnableHealthEndpointFrontend', false);
+    const healthCheckURL = useNewApi
+      ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
+      : `/api/datasources/uid/${this.uid}/health`;
+
+    if (useNewApi) {
+      return lastValueFrom(
+        getBackendSrv().fetch<DatasourcesV0HealthCheckResult>({
+          method: 'GET',
+          url: healthCheckURL,
+          showErrorAlert: false,
+          headers: this.getRequestHeaders(),
+        })
+      )
+        .then((v: FetchResponse<DatasourcesV0HealthCheckResult>) => toHealthCheckResult(v.data))
+        .catch((err) => {
+          const properties: Record<string, string> = {
+            plugin_id: this.meta?.id || '',
+            plugin_version: this.meta?.info?.version || '',
+            datasource_healthcheck_status: err?.data?.status || 'error',
+            datasource_healthcheck_message: err?.data?.message || '',
+          };
+          reportInteraction('datasource_health_check_completed', properties);
+          return err?.data;
+        });
+    }
+
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/uid/${this.uid}/health`,
+        url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)
       .catch((err) => {
-        let properties: Record<string, string> = {
+        const properties: Record<string, string> = {
           plugin_id: this.meta?.id || '',
           plugin_version: this.meta?.info?.version || '',
           datasource_healthcheck_status: err?.data?.status || 'error',
           datasource_healthcheck_message: err?.data?.message || '',
         };
         reportInteraction('datasource_health_check_completed', properties);
-        return err.data;
+        return err?.data;
       });
   }
 

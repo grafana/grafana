@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { renderGeneratedFileBanner } from './generatedFileBanner';
 
@@ -131,8 +131,8 @@ $headings-line-height: ${theme.typography.bodySmall.lineHeight} !default;
 $border-width: 1px !default;
 
 $border-radius: ${theme.shape.radius.default} !default;
-$border-radius-lg: ${theme.shape.borderRadius(3)} !default;
-$border-radius-sm: ${theme.shape.radius.default} !default;
+$border-radius-lg: ${theme.shape.radius.lg} !default;
+$border-radius-sm: ${theme.shape.radius.sm} !default;
 
 // Page
 

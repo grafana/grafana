@@ -18,17 +18,18 @@ import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../core/internationalization';
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import { TraceSpan, TNil, CriticalPathSection } from '../types';
+import type TNil from '../types/TNil';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { ViewedBoundsFunctionType } from './utils';
+import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -44,11 +45,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     bar: css({
       label: 'bar',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       minWidth: '2px',
       position: 'absolute',
-      height: '36%',
-      top: '32%',
+      height: '40%',
+      top: '30%',
     }),
     rpc: css({
       label: 'rpc',
@@ -92,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     criticalPath: css({
       position: 'absolute',
-      top: '45%',
+      top: '44%',
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',

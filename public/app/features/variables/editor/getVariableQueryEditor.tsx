@@ -1,16 +1,22 @@
 import { useCallback } from 'react';
 
-import { DataQuery, DataSourceApi, DataSourceJsonData, QueryEditorProps, StandardVariableQuery } from '@grafana/data';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type QueryEditorProps,
+  type StandardVariableQuery,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { importDataSourcePlugin } from '../../plugins/plugin_loader';
+import { pluginImporter } from '../../plugins/importer/pluginImporter';
 import {
   hasCustomVariableSupport,
   hasDatasourceVariableSupport,
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
 } from '../guard';
-import { VariableQueryEditorType } from '../types';
+import { type VariableQueryEditorType } from '../types';
 
 import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 
@@ -20,7 +26,7 @@ export async function getVariableQueryEditor<
   VariableQuery extends DataQuery = TQuery,
 >(
   datasource: DataSourceApi<TQuery, TOptions>,
-  importDataSourcePluginFunc = importDataSourcePlugin
+  importDataSourcePluginFunc = pluginImporter.importDataSource
 ): Promise<VariableQueryEditorType> {
   if (hasCustomVariableSupport(datasource)) {
     return datasource.variables.editor;

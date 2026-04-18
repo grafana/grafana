@@ -9,18 +9,22 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissionList
+// swagger:route GET /folders/{folder_uid}/permissions folders permissions getFolderPermissionList
 //
 // Gets all existing permissions for the folder with the given `uid`.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getFolderPermissionListResponse
@@ -67,7 +71,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /folders/{folder_uid}/permissions folder_permissions updateFolderPermissions
+// swagger:route POST /folders/{folder_uid}/permissions folders permissions updateFolderPermissions
 //
 // Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.
 //
@@ -90,6 +94,13 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	// Block permission changes for folders managed by provisioning,
+	// unless the provisioningFolderMetadata feature flag is enabled.
+	//nolint:staticcheck
+	if folder.ManagedBy == utils.ManagerKindRepo && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagProvisioningFolderMetadata) {
+		return response.Error(http.StatusForbidden, "Cannot update permissions for folders managed by provisioning.", nil)
 	}
 
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))

@@ -1,7 +1,7 @@
-import { CellProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { type CellProps } from '@grafana/ui';
 
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export function prettyTypeName(type: ResourceTableItem['type']) {
   switch (type) {

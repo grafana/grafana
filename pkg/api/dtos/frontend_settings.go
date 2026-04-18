@@ -33,7 +33,6 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
-	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
 }
 
@@ -78,7 +77,9 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled           bool  `json:"enabled"`
+	CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
+	DefaultTTLMs      int64 `json:"defaultTTLMs"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {
@@ -93,11 +94,22 @@ type FrontendSettingsAnalyticsDTO struct {
 	Enabled bool `json:"enabled"`
 }
 
+type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
+	Backend                       string `json:"backend,omitempty"`
+	Primary                       string `json:"primary,omitempty"`
+	PrometheusTargetDatasourceUID string `json:"prometheusTargetDatasourceUID,omitempty"`
+	PrometheusMetricName          string `json:"prometheusMetricName,omitempty"`
+}
+
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval              string `json:"minInterval"`
+	MinInterval                              string                                          `json:"minInterval"`
+	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
+	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
+
+	// Backward compatibility fields - deprecated
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
-	RecordingRulesEnabled    bool   `json:"recordingRulesEnabled"`
 }
 
 // Enterprise-only
@@ -140,6 +152,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	AppTitle           *string                                   `json:"appTitle,omitempty"`
 	LoginLogo          *string                                   `json:"loginLogo,omitempty"`
 	MenuLogo           *string                                   `json:"menuLogo,omitempty"`
+	FavIcon            *string                                   `json:"favIcon,omitempty"`
 	LoginBackground    *string                                   `json:"loginBackground,omitempty"`
 	LoginSubtitle      *string                                   `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
@@ -169,6 +182,7 @@ type FrontendSettingsDTO struct {
 	JwtUrlLogin          bool                             `json:"jwtUrlLogin"`
 	LiveEnabled          bool                             `json:"liveEnabled"`
 	LiveMessageSizeLimit int                              `json:"liveMessageSizeLimit"`
+	LiveNamespaced       bool                             `json:"liveNamespaced"`
 	AutoAssignOrg        bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
@@ -188,6 +202,7 @@ type FrontendSettingsDTO struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
@@ -196,25 +211,29 @@ type FrontendSettingsDTO struct {
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
 	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
 
-	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
-	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
-	ApplicationInsightsEndpointUrl      string   `json:"applicationInsightsEndpointUrl"`
-	DisableLoginForm                    bool     `json:"disableLoginForm"`
-	DisableUserSignUp                   bool     `json:"disableUserSignUp"`
-	LoginHint                           string   `json:"loginHint"`
-	PasswordHint                        string   `json:"passwordHint"`
-	ExternalUserMngInfo                 string   `json:"externalUserMngInfo"`
-	ExternalUserMngLinkUrl              string   `json:"externalUserMngLinkUrl"`
-	ExternalUserMngLinkName             string   `json:"externalUserMngLinkName"`
-	ExternalUserMngAnalytics            bool     `json:"externalUserMngAnalytics"`
-	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
-	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
-	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
-	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
-	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
-	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
-	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
-	ExploreHideLogsDownload             bool     `json:"exploreHideLogsDownload"`
+	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
+	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`
+	ApplicationInsightsEndpointUrl       string              `json:"applicationInsightsEndpointUrl"`
+	ApplicationInsightsAutoRouteTracking bool                `json:"applicationInsightsAutoRouteTracking"`
+	DisableLoginForm                     bool                `json:"disableLoginForm"`
+	DisableUserSignUp                    bool                `json:"disableUserSignUp"`
+	LoginHint                            string              `json:"loginHint"`
+	PasswordHint                         string              `json:"passwordHint"`
+	ExternalUserMngInfo                  string              `json:"externalUserMngInfo"`
+	ExternalUserMngLinkUrl               string              `json:"externalUserMngLinkUrl"`
+	ExternalUserMngLinkName              string              `json:"externalUserMngLinkName"`
+	ExternalUserMngAnalytics             bool                `json:"externalUserMngAnalytics"`
+	ExternalUserMngAnalyticsParams       string              `json:"externalUserMngAnalyticsParams"`
+	ExternalUserUpgradeLinkUrl           string              `json:"externalUserUpgradeLinkUrl"`
+	ViewersCanEdit                       bool                `json:"viewersCanEdit"`
+	DisableSanitizeHtml                  bool                `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled     bool                `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                 bool                `json:"cspReportOnlyEnabled"`
+	EnableFrontendSandboxForPlugins      []string            `json:"enableFrontendSandboxForPlugins"`
+	PluginRestrictedAPIsAllowList        map[string][]string `json:"pluginRestrictedAPIsAllowList"`
+	PluginRestrictedAPIsBlockList        map[string][]string `json:"pluginRestrictedAPIsBlockList"`
+	ExploreDefaultTimeOffset             string              `json:"exploreDefaultTimeOffset"`
+	ExploreHideLogsDownload              bool                `json:"exploreHideLogsDownload"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -222,33 +241,36 @@ type FrontendSettingsDTO struct {
 
 	LicenseInfo FrontendSettingsLicenseInfoDTO `json:"licenseInfo"`
 
-	FeatureToggles                   map[string]bool                `json:"featureToggles"`
-	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
-	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
-	RendererAvailable                bool                           `json:"rendererAvailable"`
-	RendererVersion                  string                         `json:"rendererVersion"`
-	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
-	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
-	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
-	Http2Enabled                     bool                           `json:"http2Enabled"`
-	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
-	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
-	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
-	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
-	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
-	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
-	PluginCatalogPreinstalledPlugins []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
-	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
-	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
-	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
-	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
-	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
-	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
-	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
+	FeatureToggles                      map[string]bool                `json:"featureToggles"`
+	AnonymousEnabled                    bool                           `json:"anonymousEnabled"`
+	AnonymousDeviceLimit                int64                          `json:"anonymousDeviceLimit"`
+	RendererAvailable                   bool                           `json:"rendererAvailable"`
+	RendererVersion                     string                         `json:"rendererVersion"`
+	RendererDefaultImageWidth           int                            `json:"rendererDefaultImageWidth"`
+	RendererDefaultImageHeight          int                            `json:"rendererDefaultImageHeight"`
+	RendererDefaultImageScale           float64                        `json:"rendererDefaultImageScale"`
+	Http2Enabled                        bool                           `json:"http2Enabled"`
+	GrafanaJavascriptAgent              setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
+	PluginCatalogURL                    string                         `json:"pluginCatalogURL"`
+	PluginAdminEnabled                  bool                           `json:"pluginAdminEnabled"`
+	PluginAdminExternalManageEnabled    bool                           `json:"pluginAdminExternalManageEnabled"`
+	PluginCatalogHiddenPlugins          []string                       `json:"pluginCatalogHiddenPlugins"`
+	PluginCatalogManagedPlugins         []string                       `json:"pluginCatalogManagedPlugins"`
+	PluginCatalogPreinstalledPlugins    []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
+	PluginCatalogPreinstalledAutoUpdate bool                           `json:"pluginCatalogPreinstalledAutoUpdate"`
+	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
+	AwsAllowedAuthProviders             []string                       `json:"awsAllowedAuthProviders"`
+	AwsAssumeRoleEnabled                bool                           `json:"awsAssumeRoleEnabled"`
+	AwsPerDatasourceHTTPProxyEnabled    bool                           `json:"awsPerDatasourceHTTPProxyEnabled"`
+	SupportBundlesEnabled               bool                           `json:"supportBundlesEnabled"`
+	SnapshotEnabled                     bool                           `json:"snapshotEnabled"`
+	SecureSocksDSProxyEnabled           bool                           `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext              map[string]string              `json:"reportingStaticContext"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
-	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultDatasourceManageAlertsUIToggle          bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool `json:"defaultAllowRecordingRulesTargetAlertsUiToggle"`
 
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
@@ -262,7 +284,6 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
-	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
@@ -270,10 +291,12 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
+	CloudMigrationEnabled        bool `json:"cloudMigrationEnabled"`
 	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
 	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
-	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
+	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
+	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
 
@@ -290,6 +313,7 @@ type FrontendSettingsDTO struct {
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 	// Experimental Scope settings
-	ListScopesEndpoint          string `json:"listScopesEndpoint"`
-	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
+	ListScopesEndpoint          string            `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string            `json:"listDashboardScopesEndpoint"`
+	OpenFeatureContext          map[string]string `json:"openFeatureContext"`
 }

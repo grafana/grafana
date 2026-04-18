@@ -1,0 +1,123 @@
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
+
+import { config } from '@grafana/runtime';
+import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { type RouteDescriptor } from 'app/core/navigation/types';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { checkRequiredFeatures } from '../GettingStarted/features';
+import {
+  CONNECTIONS_URL,
+  CONNECT_URL,
+  GETTING_STARTED_URL,
+  PROVISIONING_PREVIEW_URL,
+  PROVISIONING_URL,
+} from '../constants';
+
+export function getProvisioningRoutes(): RouteDescriptor[] {
+  const featureToggles = config.featureToggles || {};
+  if (!featureToggles.provisioning) {
+    return [];
+  }
+
+  if (!checkRequiredFeatures()) {
+    return [
+      {
+        path: PROVISIONING_URL,
+        component: SafeDynamicImport(
+          () =>
+            import(
+              /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+            )
+        ),
+      },
+    ];
+  }
+
+  return [
+    {
+      path: PROVISIONING_URL,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/HomePage')
+      ),
+    },
+    {
+      path: GETTING_STARTED_URL,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
+          )
+      ),
+    },
+    {
+      path: `${CONNECTIONS_URL}/:name/edit`,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
+      ),
+    },
+    {
+      path: `${CONNECTIONS_URL}/new`,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
+      ),
+    },
+    {
+      path: `${CONNECT_URL}/:type`,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/ConnectPage')
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/:name',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "RepositoryStatusPage"*/ 'app/features/provisioning/Repository/RepositoryStatusPage'
+          )
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/:name/edit',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/Repository/EditRepositoryPage')
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/:name/file/*',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FileStatusPage"*/ 'app/features/provisioning/File/FileStatusPage')
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/:name/history/*',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/File/FileHistoryPage')
+      ),
+    },
+    {
+      path: PROVISIONING_PREVIEW_URL + '/:slug/preview/*',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Provisioning,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "DashboardScenePage" */ 'app/features/dashboard-scene/pages/DashboardScenePage')
+      ),
+    },
+    {
+      // This is a temporary route to redirect from old preview to the new preview URL
+      path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
+      component: RedirectToProvisioningPreview,
+    },
+  ];
+}
+
+function RedirectToProvisioningPreview() {
+  const { slug = '', '*': rest = '' } = useParams();
+  const location = useLocation();
+  // Preserve query params (ref, pull_request_url) from old PR comment links
+  return <Navigate replace to={`${PROVISIONING_PREVIEW_URL}/${slug}/preview/${rest}${location.search}`} />;
+}

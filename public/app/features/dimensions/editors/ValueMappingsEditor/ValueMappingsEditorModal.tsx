@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { uniqueId } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  MappingType,
+  type SelectableValue,
+  SpecialValueMatch,
+  type ValueMapping,
+} from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
-import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
+import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 
 export interface Props {
   value: ValueMapping[];
@@ -49,10 +55,38 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   };
 
   const mappingTypes: Array<SelectableValue<MappingType>> = [
-    { label: 'Value', value: MappingType.ValueToText, description: 'Match a specific text value' },
-    { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
-    { label: 'Regex', value: MappingType.RegexToText, description: 'Match a regular expression with replacement' },
-    { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.value', 'Value'),
+      value: MappingType.ValueToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-specific-text-value',
+        'Match a specific text value'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.range', 'Range'),
+      value: MappingType.RangeToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-numerical-range-of-values',
+        'Match a numerical range of values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.regex', 'Regex'),
+      value: MappingType.RegexToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-regular-expression-with-replacement',
+        'Match a regular expression with replacement'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.special', 'Special'),
+      value: MappingType.SpecialValue,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-boolean-empty-values',
+        'Match on null, NaN, boolean and empty values'
+      ),
+    },
   ];
 
   const onAddValueMapping = (value: SelectableValue<MappingType>) => {
@@ -158,9 +192,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   tableWrap: css({
-    maxHeight: 'calc(80vh - 170px)',
     minHeight: '40px',
-    overflow: 'auto',
   }),
 
   editTable: css({

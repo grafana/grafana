@@ -37,17 +37,17 @@ For example, a team might run its own Alertmanager to manage notifications from 
 
 This setup avoids duplicating Alertmanager configurations for better maintenance.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To send all Grafana-managed alerts to an Alertmanager, add it as a data source and enable it to receive all alerts. With this setup, you can configure multiple Alertmanagers to receive all alerts.
 
 For setup instructions, refer to [Configure Alertmanagers](ref:configure-alertmanagers).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Configure an Alertmanager for a contact point
 
 To create a contact point with Alertmanager integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Alertmanager**.
@@ -59,9 +59,9 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Alertmanager settings
 
-| Option | Description           |
-| ------ | --------------------- |
-| URL    | The Alertmanager URL. |
+| Option | Description                                                                                                       |
+| ------ | ----------------------------------------------------------------------------------------------------------------- |
+| URL    | The Alertmanager URL. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
 #### Optional settings
 

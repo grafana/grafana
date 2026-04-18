@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { config, type GrafanaBootConfig } from '@grafana/runtime';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../core/services/context_srv';
 
 import { ServerStatsCard } from './ServerStatsCard';
-import { getServerStats, ServerStat } from './state/apis';
+import { getServerStats, type ServerStat } from './state/apis';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);

@@ -1,11 +1,11 @@
 import { cx, css } from '@emotion/css';
-import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
+import { type ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
+import { type IconName, isIconName, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
-import { TooltipPlacement } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
+import { type TooltipPlacement } from '@grafana/ui/internal';
 
 type CommonProps = {
   contentOutlineExpanded?: boolean;
@@ -92,6 +92,10 @@ export function ContentOutlineItemButton({
       </button>
       {onRemove && (
         <Button
+          aria-label={t(
+            'explore.content-outline-item-button.body.aria-label-content-outline-item-delete-button',
+            'Delete item'
+          )}
           variant="destructive"
           className={styles.deleteButton}
           icon="times"

@@ -1,9 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { ActionId, ActionImpl } from 'kbar';
+import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Badge, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -33,6 +36,13 @@ export const ResultItem = React.forwardRef(
 
     const styles = useStyles2(getResultItemStyles);
 
+    // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
+    // but its TS type doesn't reflect custom properties like managedBy or url.
+    // See the same pattern for `url` in KBarResults.tsx and below command url
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
+    const showProvisionedBadge = config.featureToggles.provisioning && managedBy === ManagerKind.Repo;
+
     let name = action.name;
 
     const hasCommandOrLink = (action: ActionImpl) =>
@@ -54,7 +64,6 @@ export const ResultItem = React.forwardRef(
                 {!hasCommandOrLink(ancestor) && (
                   <>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
                   </>
                 )}
@@ -63,6 +72,14 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {showProvisionedBadge && (
+            <Badge
+              color="purple"
+              icon="exchange-alt"
+              aria-label={t('command-palette.badge.provisioned', 'Provisioned')}
+              tooltip={t('command-palette.badge.provisioned', 'Provisioned')}
+            />
+          )}
         </div>
       </div>
     );

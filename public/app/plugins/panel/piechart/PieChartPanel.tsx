@@ -5,24 +5,25 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
-  FieldDisplay,
+  FieldColorModeId,
+  type FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { type HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
   VizLayout,
   VizLegend,
-  VizLegendItem,
+  type VizLegendItem,
 } from '@grafana/ui';
 
-import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { PieChart, computeGradientFills } from './PieChart';
+import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -56,8 +57,51 @@ export function PieChartPanel(props: Props) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
+  // Compute gradient fills once here so both the chart and the legend share
+  // the exact same color map (same rank order, same interpolated hex values).
+  //
+  // Items are grouped by their (fixedColor, gradientColorTo) gradient config.
+  // This handles three cases uniformly:
+  //   1. Panel default = Gradient → all non-overridden items share one group.
+  //   2. Per-field gradient override (e.g. byType, byRegexp) → items sharing
+  //      the same override colors form their own group and are ranked together.
+  //   3. Non-gradient items (fixed color, palette, etc.) → skipped entirely,
+  //      fall back to display.color in the arc renderer.
+  const allGradientFills = new Map<FieldDisplay, string>();
+  const gradientGroups = new Map<string, { items: FieldDisplay[]; from: string; to: string }>();
+
+  for (const item of fieldDisplayValues) {
+    if (!filterDisplayItems(item)) {
+      continue;
+    }
+    if (item.field.color?.mode !== FieldColorModeId.Gradient) {
+      continue;
+    }
+    const fixedColor = item.field.color.fixedColor ?? '#73BF69';
+    const gradientColorTo = item.field.color.gradientColorTo ?? '#F2495C';
+    const key = `${fixedColor}|${gradientColorTo}`;
+    let group = gradientGroups.get(key);
+    if (!group) {
+      group = {
+        items: [],
+        from: theme.visualization.getColorByName(fixedColor),
+        to: theme.visualization.getColorByName(gradientColorTo),
+      };
+      gradientGroups.set(key, group);
+    }
+    group.items.push(item);
+  }
+
+  for (const { items, from, to } of gradientGroups.values()) {
+    for (const [item, color] of computeGradientFills(items, from, to)) {
+      allGradientFills.set(item, color);
+    }
+  }
+
+  const gradientFills = allGradientFills.size > 0 ? allGradientFills : undefined;
+
   return (
-    <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
+    <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues, gradientFills)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
           <PieChart
@@ -67,7 +111,9 @@ export function PieChartPanel(props: Props) {
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
+            sort={options.sort}
             displayLabels={options.displayLabels}
+            gradientFills={gradientFills}
           />
         );
       }}
@@ -75,25 +121,18 @@ export function PieChartPanel(props: Props) {
   );
 }
 
-function getLegend(props: Props, displayValues: FieldDisplay[]) {
+function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: Map<FieldDisplay, string>) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
   if (legendOptions.showLegend === false) {
     return undefined;
   }
+
+  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.sort));
+
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
-    .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
-        return 1;
-      } else if (isNaN(b.display.numeric)) {
-        return -1;
-      } else {
-        return b.display.numeric - a.display.numeric;
-      }
-    })
+  const legendItems: VizLegendItem[] = sortedDisplayValues
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 
@@ -106,7 +145,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       const display = value.display;
       return {
         label: display.title ?? '',
-        color: display.color ?? FALLBACK_COLOR,
+        color: gradientFills?.get(value) ?? display.color ?? FALLBACK_COLOR,
         yAxis: 1,
         disabled: hideFromViz,
         getItemKey: () => (display.title ?? '') + idx,
@@ -149,6 +188,26 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       />
     </VizLayout.Legend>
   );
+}
+
+export function comparePieChartItemsByValue(sort: SortOrder): (a: FieldDisplay, b: FieldDisplay) => number {
+  return function (a: FieldDisplay, b: FieldDisplay) {
+    if (isNaN(a.display.numeric)) {
+      return 1;
+    }
+    if (isNaN(b.display.numeric)) {
+      return -1;
+    }
+
+    if (sort === SortOrder.Descending) {
+      return b.display.numeric - a.display.numeric;
+    }
+    if (sort === SortOrder.Ascending) {
+      return a.display.numeric - b.display.numeric;
+    }
+
+    return 0;
+  };
 }
 
 function hasFrames(fieldDisplayValues: FieldDisplay[]) {

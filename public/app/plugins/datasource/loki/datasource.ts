@@ -1,61 +1,69 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, type Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
-  AbstractQuery,
-  AnnotationEvent,
-  AnnotationQueryRequest,
+  type AbstractQuery,
+  type AnnotationEvent,
+  type AnnotationQueryRequest,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceWithLogsContextSupport,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceWithLogsContextSupport,
+  type DataSourceWithSupplementaryQueriesSupport,
   SupplementaryQueryType,
-  DataSourceWithQueryExportSupport,
-  DataSourceWithQueryImportSupport,
-  Labels,
+  type DataSourceWithQueryExportSupport,
+  type DataSourceWithQueryImportSupport,
+  type Labels,
   LoadingState,
-  LogRowModel,
-  QueryFixAction,
-  QueryHint,
+  type LogRowModel,
+  type QueryFixAction,
+  type QueryHint,
   rangeUtil,
-  ScopedVars,
-  SupplementaryQueryOptions,
-  TimeRange,
-  LogRowContextOptions,
-  DataSourceWithToggleableQueryFiltersSupport,
-  ToggleFilterAction,
-  QueryFilterOptions,
+  type ScopedVars,
+  type SupplementaryQueryOptions,
+  type TimeRange,
+  type LogRowContextOptions,
+  type DataSourceWithToggleableQueryFiltersSupport,
+  type ToggleFilterAction,
+  type QueryFilterOptions,
   renderLegendFormat,
-  LegacyMetricFindQueryOptions,
-  AdHocVariableFilter,
+  type LegacyMetricFindQueryOptions,
+  type AdHocVariableFilter,
   urlUtil,
-  MetricFindValue,
-  DataSourceGetTagValuesOptions,
-  DataSourceGetTagKeysOptions,
-  DataSourceWithQueryModificationSupport,
-  LogsVolumeOption,
-  LogsSampleOptions,
-  QueryVariableModel,
-  CustomVariableModel,
+  type MetricFindValue,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceWithQueryModificationSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  type LogsVolumeOption,
+  type LogsSampleOptions,
+  type QueryVariableModel,
+  type CustomVariableModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Duration } from '@grafana/lezer-logql';
-import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  type BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  getTemplateSrv,
+  type TemplateSrv,
+} from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
 import LanguageProvider from './LanguageProvider';
-import { LiveStreams, LokiLiveTarget } from './LiveStreams';
+import { LiveStreams, type LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
+import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
+import { escapeLabelValueInSelector, getLokiLabelTypeFromFrame, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -90,13 +98,12 @@ import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
-  LokiOptions,
-  LokiQuery,
-  LokiQueryType,
-  LokiVariableQuery,
+  LabelType,
+  type LokiOptions,
+  type LokiQuery,
+  type LokiVariableQuery,
   LokiVariableQueryType,
-  QueryStats,
-  SupportingQueryType,
+  type QueryStats,
 } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -142,16 +149,16 @@ export class LokiDatasource
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>,
     DataSourceWithToggleableQueryFiltersSupport<LokiQuery>,
-    DataSourceWithQueryModificationSupport<LokiQuery>
+    DataSourceWithQueryModificationSupport<LokiQuery>,
+    DataSourceWithLogsLabelTypesSupport
 {
   private streams = new LiveStreams();
   private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
   maxLines: number;
-  predefinedOperations: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
+    public readonly instanceSettings: DataSourceInstanceSettings<LokiOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -159,13 +166,16 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
+    this.supportsAdjustableWindow = true;
   }
+
+  // Flag marking datasource as supporting adjusting the time range window in the logs context window: https://github.com/grafana/grafana/pull/109901
+  public supportsAdjustableWindow;
 
   /**
    * Implemented for DataSourceWithSupplementaryQueriesSupport.
@@ -198,6 +208,28 @@ export class LokiDatasource
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
     return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
+  }
+
+  /**
+   * @todo add labelTypes to https://github.com/grafana/dataplane
+   * Example implementation, returns groupings for fields
+   * @param labelKey
+   * @param frame
+   * @param index
+   */
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null) {
+    const lokiLabelType = getLokiLabelTypeFromFrame(labelKey, frame, index);
+
+    switch (lokiLabelType) {
+      case LabelType.Indexed:
+        return t('logs.fields.type.loki.indexed-labels', 'Indexed labels');
+      case LabelType.Parsed:
+        return t('logs.fields.type.loki.parsed-labels', 'Parsed fields');
+      case LabelType.StructuredMetadata:
+        return t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
+      default:
+        return null;
+    }
   }
 
   /**
@@ -295,33 +327,6 @@ export class LokiDatasource
     return { ...logsSampleRequest, targets };
   }
 
-  private getQueryHeaders(request: DataQueryRequest<LokiQuery>): Record<string, string> {
-    const headers: Record<string, string> = {};
-    if (!config.featureToggles.lokiSendDashboardPanelNames) {
-      return headers;
-    }
-    // only add headers if we are in the context of a dashboard
-    if (
-      [CoreApp.Dashboard.toString(), CoreApp.PanelEditor.toString(), CoreApp.PanelViewer.toString()].includes(
-        request.app
-      ) === false
-    ) {
-      return headers;
-    }
-
-    const dashboard = getDashboardSrv().getCurrent();
-    const dashboardTitle = dashboard?.title;
-    const panelTitle = dashboard?.panels.find((p) => p.id === request?.panelId)?.title;
-    if (dashboardTitle) {
-      headers['X-Dashboard-Title'] = dashboardTitle;
-    }
-    if (panelTitle) {
-      headers['X-Panel-Title'] = panelTitle;
-    }
-
-    return headers;
-  }
-
   /**
    * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
    * @returns An Observable of DataQueryResponse containing the query results.
@@ -329,14 +334,19 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
+      .map((q) => ({
+        ...q,
+        maxLines: q.maxLines ?? this.maxLines,
+        scopes:
+          config.featureToggles.scopeFilters && config.featureToggles.logQLScope
+            ? request.scopes?.flatMap((scope) => scope.spec.filters)
+            : undefined,
+      }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
       targets: queries,
     };
-
-    fixedRequest.headers = this.getQueryHeaders(request);
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
     if (
@@ -372,11 +382,7 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(
-      tap((response) =>
-        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
-      )
-    );
+    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
   }
 
   /**
@@ -768,14 +774,28 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery, timeRange: TimeRange): Promise<DataFrame[]> {
-    // Currently works only for logs sample
-    if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
+  async getDataSamples(
+    query: LokiQuery,
+    timeRange: TimeRange,
+    options?: { convertMetricQueryToLogQuery?: boolean }
+  ): Promise<DataFrame[]> {
+    let queryExpr = query.expr;
+    if (isQueryWithError(this.interpolateString(queryExpr, placeHolderScopedVars))) {
       return [];
     }
 
+    if (!isLogsQuery(queryExpr)) {
+      // If it is not a logs query, we need to check if we need to convert it to a logs query
+      if (options?.convertMetricQueryToLogQuery) {
+        queryExpr = getLogQueryFromMetricsQuery(queryExpr);
+      } else {
+        // Otherwise, we return an empty array, as data samples are only supported for logs queries
+        return [];
+      }
+    }
+
     const lokiLogsQuery: LokiQuery = {
-      expr: query.expr,
+      expr: queryExpr,
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
       maxLines: query.maxLines || DEFAULT_MAX_LINES_SAMPLE,
@@ -797,6 +817,10 @@ export class LokiDatasource
     }
     const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange, streamSelector });
     return result.map((value: string) => ({ text: value }));
+  }
+
+  async getGroupByKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
   }
 
   /**
@@ -841,7 +865,7 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
-    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, 0);
+    const labelType = getLokiLabelTypeFromFrame(filter.options.key, filter.frame, null);
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -899,7 +923,7 @@ export class LokiDatasource
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
-          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
+          const labelType = getLokiLabelTypeFromFrame(action.options.key, action.frame, null);
           const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '=', value, labelType);
         }
@@ -907,7 +931,7 @@ export class LokiDatasource
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
-          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
+          const labelType = getLokiLabelTypeFromFrame(action.options.key, action.frame, null);
           const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '!=', value, labelType);
         }

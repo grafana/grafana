@@ -1,32 +1,34 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  GrafanaTheme2,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
-  RelativeTimeRange,
-  ThresholdsConfig,
+  type PanelData,
+  type RelativeTimeRange,
+  type ThresholdsConfig,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { type DataQuery } from '@grafana/schema';
+import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
+import { DOCS_URL_DATA_SOURCE_ALERTING } from '../../utils/docs';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
+import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -129,15 +131,7 @@ export const QueryWrapper = ({
             </Trans>
           }
         >
-          <Icon
-            name="info-circle"
-            onClick={() =>
-              window.open(
-                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
-                '_blank'
-              )
-            }
-          />
+          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
         </Tooltip>
       </div>
     );
@@ -169,6 +163,7 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
+        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}

@@ -1,16 +1,32 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, dateTime } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { type DataQueryRequest, dateTime } from '@grafana/data';
+import { type BackendSrv, type FetchResponse, type TemplateSrv } from '@grafana/runtime';
 
-import { createFetchResponse } from '../../../../../test/helpers/createFetchResponse';
 import OpenTsDatasource from '../datasource';
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
+
+export function createFetchResponse<T>(data: T): FetchResponse<T> {
+  return {
+    data,
+    status: 200,
+    url: 'http://localhost:3000/api/ds/query',
+    config: { url: 'http://localhost:3000/api/ds/query' },
+    type: 'basic',
+    statusText: 'Ok',
+    redirected: false,
+    headers: new Headers(),
+    ok: true,
+  };
+}
+
+const mockBackendSrv = {
+  fetch: jest.fn(),
+} as unknown as BackendSrv;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
+  getBackendSrv: () => mockBackendSrv,
 }));
 
 const metricFindQueryData = [
@@ -26,7 +42,7 @@ const metricFindQueryData = [
 describe('opentsdb', () => {
   function getTestcontext({ data = metricFindQueryData }: { data?: unknown } = {}) {
     jest.clearAllMocks();
-    const fetchMock = jest.spyOn(backendSrv, 'fetch');
+    const fetchMock = jest.spyOn(mockBackendSrv, 'fetch');
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
@@ -217,6 +233,110 @@ describe('opentsdb', () => {
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', scopedVars, 'pipe');
 
       expect(templateSrv.replace).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('When applying template variables', () => {
+    it('should interpolate filter values so no raw template variables are sent', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        aggregator: 'avg',
+        filters: [
+          {
+            type: 'regexp',
+            tagk: 'host',
+            filter: '${host}',
+            groupBy: true,
+          },
+        ],
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.filters?.[0].filter).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate tags when filters are not used', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        tags: {
+          host: '${host}',
+        },
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.tags?.host).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate additional query fields', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (typeof value !== 'string') {
+          return value as string;
+        }
+
+        return value.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(scopedVars?.[key]?.value ?? ''));
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: '${metric}',
+        alias: '${alias}',
+        downsampleInterval: '${interval}',
+        downsampleAggregator: '${downsampleAggregator}',
+        downsampleFillPolicy: '${downsampleFillPolicy}',
+        counterMax: '${counterMax}',
+        counterResetValue: '${counterResetValue}',
+      };
+
+      const scopedVars = {
+        metric: { text: 'cpu.usage', value: 'cpu.usage' },
+        aggregator: { text: 'sum', value: 'sum' },
+        alias: { text: 'CPU usage', value: 'CPU usage' },
+        interval: { text: '1m', value: '1m' },
+        downsampleAggregator: { text: 'avg', value: 'avg' },
+        downsampleFillPolicy: { text: 'zero', value: 'zero' },
+        counterMax: { text: '100', value: '100' },
+        counterResetValue: { text: '50', value: '50' },
+      };
+
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.metric).toBe('cpu.usage');
+      expect(interpolated.aggregator).toBe('avg');
+      expect(interpolated.alias).toBe('CPU usage');
+      expect(interpolated.downsampleInterval).toBe('1m');
+      expect(interpolated.downsampleAggregator).toBe('avg');
+      expect(interpolated.downsampleFillPolicy).toBe('zero');
+      expect(interpolated.counterMax).toBe('100');
+      expect(interpolated.counterResetValue).toBe('50');
+      expect(JSON.stringify(interpolated)).not.toContain('${');
     });
   });
 });

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
-import { CatalogPlugin, PluginStatus } from '../types';
+import { type CatalogPlugin, PluginStatus } from '../types';
 
 import { UpdateModalBody } from './UpdateAllModalBody';
 const PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME = 'plugins_update_all_clicked';

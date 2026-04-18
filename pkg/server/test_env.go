@@ -1,10 +1,15 @@
 package server
 
 import (
+	"github.com/stretchr/testify/mock"
+
+	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -13,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/mock"
 )
 
 func ProvideTestEnv(
@@ -32,22 +36,28 @@ func ProvideTestEnv(
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
-	githubFactory *github.Factory,
+	githubRepoFactory *github.Factory,
+	githubConnectionFactory githubconnection.GithubFactory,
+	decryptService decrypt.DecryptService,
+	quotaGetter quotas.QuotaGetter,
 ) (*TestEnv, error) {
 	return &TestEnv{
-		TestingT:            testingT,
-		Server:              server,
-		SQLStore:            db,
-		Cfg:                 cfg,
-		NotificationService: ns,
-		GRPCServer:          grpcServer,
-		PluginRegistry:      pluginRegistry,
-		HTTPClientProvider:  httpClientProvider,
-		OAuthTokenService:   oAuthTokenService,
-		FeatureToggles:      featureMgmt,
-		ResourceClient:      resourceClient,
-		IDService:           idService,
-		GitHubFactory:       githubFactory,
+		TestingT:                testingT,
+		Server:                  server,
+		SQLStore:                db,
+		Cfg:                     cfg,
+		NotificationService:     ns,
+		GRPCServer:              grpcServer,
+		PluginRegistry:          pluginRegistry,
+		HTTPClientProvider:      httpClientProvider,
+		OAuthTokenService:       oAuthTokenService,
+		FeatureToggles:          featureMgmt,
+		ResourceClient:          resourceClient,
+		IDService:               idService,
+		GithubRepoFactory:       githubRepoFactory,
+		GithubConnectionFactory: githubConnectionFactory,
+		DecryptService:          decryptService,
+		QuotaGetter:             quotaGetter,
 	}, nil
 }
 
@@ -56,17 +66,20 @@ type TestEnv struct {
 		mock.TestingT
 		Cleanup(func())
 	}
-	Server              *Server
-	SQLStore            db.DB
-	Cfg                 *setting.Cfg
-	NotificationService *notifications.NotificationServiceMock
-	GRPCServer          grpcserver.Provider
-	PluginRegistry      registry.Service
-	HTTPClientProvider  httpclient.Provider
-	OAuthTokenService   *oauthtokentest.Service
-	RequestMiddleware   web.Middleware
-	FeatureToggles      featuremgmt.FeatureToggles
-	ResourceClient      resource.ResourceClient
-	IDService           auth.IDService
-	GitHubFactory       *github.Factory
+	Server                  *Server
+	SQLStore                db.DB
+	Cfg                     *setting.Cfg
+	NotificationService     *notifications.NotificationServiceMock
+	GRPCServer              grpcserver.Provider
+	PluginRegistry          registry.Service
+	HTTPClientProvider      httpclient.Provider
+	OAuthTokenService       *oauthtokentest.Service
+	RequestMiddleware       web.Middleware
+	FeatureToggles          featuremgmt.FeatureToggles
+	ResourceClient          resource.ResourceClient
+	IDService               auth.IDService
+	GithubRepoFactory       *github.Factory
+	GithubConnectionFactory githubconnection.GithubFactory
+	DecryptService          decrypt.DecryptService
+	QuotaGetter             quotas.QuotaGetter
 }

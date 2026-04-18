@@ -1,6 +1,7 @@
+import { OrgRole } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole } from '../../../types';
-import { getMockTeam } from '../../teams/__mocks__/teamMocks';
+import { getMockTeam } from '../../teams/mocks/teamMocks';
 
 import {
   initialUserState,
@@ -13,7 +14,7 @@ import {
   userLoaded,
   userReducer,
   userSessionRevoked,
-  UserState,
+  type UserState,
 } from './reducers';
 
 describe('userReducer', () => {

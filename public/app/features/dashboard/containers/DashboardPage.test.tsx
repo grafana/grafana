@@ -1,6 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import { Component } from 'react';
 import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
@@ -8,20 +7,20 @@ import { render } from 'test/test-utils';
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setDataSourceSrv } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
+import { type Dashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { RouteDescriptor } from 'app/core/navigation/types';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
+import { type RouteDescriptor } from 'app/core/navigation/types';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
-import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
-import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { DashboardModel } from '../state/DashboardModel';
+import { type Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
+import { type DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { type DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-import { Props, UnthemedDashboardPage } from './DashboardPage';
+import { type Props, UnthemedDashboardPage } from './DashboardPage';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {
@@ -34,11 +33,9 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
-  class GeneralSettings extends Component<{}, {}> {
-    render() {
-      return <>general settings</>;
-    }
-  }
+  const GeneralSettings = () => {
+    return <>general settings</>;
+  };
 
   return { GeneralSettings };
 });
@@ -49,14 +46,11 @@ jest.mock('app/features/query/components/QueryGroup', () => {
   };
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
     },
-  },
-  contextSrv: {
-    user: { orgId: 1 },
   },
 }));
 
@@ -91,7 +85,7 @@ const mockCleanUpDashboardAndVariables = jest.fn();
 function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
     { text: 'Dashboards', id: 'dashboards/browse' },
-    { text: 'Home', id: HOME_NAV_ID },
+    { text: 'Home', id: HOME_NAV_ID, url: '/' },
     {
       text: 'Help',
       id: 'help',
@@ -107,9 +101,9 @@ function setup(propOverrides?: Partial<Props>) {
       'dashboards/browse': {
         text: 'Dashboards',
         id: 'dashboards/browse',
-        parentItem: { text: 'Home', id: HOME_NAV_ID },
+        parentItem: { text: 'Home', id: HOME_NAV_ID, url: '/' },
       },
-      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID, url: '/' },
     },
     initPhase: DashboardInitPhase.NotStarted,
     initError: null,
@@ -287,7 +281,7 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 
@@ -296,7 +290,7 @@ describe('DashboardPage', () => {
       setup({ dashboard: getTestDashboard(), queryParams: { kiosk: true } });
       await waitFor(() => {
         expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-        expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+        expect(screen.queryAllByTestId(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
       });
     });
   });

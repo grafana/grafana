@@ -1,5 +1,5 @@
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { type LibraryPanel } from '@grafana/schema';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -139,6 +139,7 @@ describe('AddLibraryPanelWidget', () => {
     expect(behavior.state.uid).toBe('new_uid');
     expect(behavior.state.name).toBe('new_name');
     expect(panels[0].state.title).toBe('model title');
+    expect(panels[0].state.key).toBe('panel-1'); // Key should be preserved from original panel
   });
 
   it('should set hoverHeader to true if the library panel title is empty', () => {

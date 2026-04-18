@@ -1,32 +1,38 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, Text, Box, LinkButton, useStyles2 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Box, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
+import { QuotaLimitMessage } from '../Shared/QuotaLimitMessage';
+import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
 
 interface FeaturesListProps {
-  repos?: Repository[];
   hasRequiredFeatures: boolean;
+  isConnectionLimitExceeded?: boolean;
+  maxRepositories?: number;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+export const FeaturesList = ({
+  hasRequiredFeatures,
+  isConnectionLimitExceeded,
+  maxRepositories = 0,
+  onSetupFeatures,
+}: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={3}>
       <Text variant="h2">
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
-          Get started with GitSync
+          Get started with Git Sync
         </Trans>
       </Text>
       <ul className={styles.featuresList}>
         <li>
           <Trans i18nKey="provisioning.features-list.manage-dashboards-provision-updates-automatically">
-            Manage dashboards as code in GitHub and provision updates automatically
+            Manage dashboards as code in Git and provision updates automatically
           </Trans>
         </li>
         <li>
@@ -34,7 +40,21 @@ export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: Fe
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
+        {!!maxRepositories && (
+          <li>
+            <QuotaLimitMessage maxRepositories={maxRepositories} showActionLink={false} />
+          </li>
+        )}
       </ul>
+      <Text>
+        <Trans i18nKey="provisioning.features-list.learn-more-documentation">
+          Want to learn more? See our{' '}
+          <TextLink external href={'https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/'}>
+            documentation
+          </TextLink>
+          .
+        </Trans>
+      </Text>
       {!hasRequiredFeatures ? (
         <Box>
           <LinkButton fill="outline" onClick={onSetupFeatures}>
@@ -45,7 +65,7 @@ export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: Fe
         </Box>
       ) : (
         <Stack direction="row" alignItems="center" gap={2}>
-          <ConnectRepositoryButton items={repos} />
+          <RepositoryTypeCards disabled={isConnectionLimitExceeded} />
         </Stack>
       )}
     </Stack>

@@ -1,11 +1,17 @@
 import { useCallback } from 'react';
 
-import { useDispatch } from 'app/types';
-import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { useDispatch } from 'app/types/store';
+import { type RuleHealth } from 'app/types/unified-alerting';
+import {
+  type GrafanaPromRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {
@@ -28,10 +34,22 @@ type PromRulesOptions = WithNotificationOptions<{
   groupNextToken?: string;
 }>;
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
+export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
+  datasources?: string[];
   panelId?: number;
+  limitAlerts?: number;
+  ruleLimit?: number;
+  contactPoint?: string;
+  health?: RuleHealth[];
+  state?: PromAlertingRuleState[];
+  title?: string;
+  searchGroupName?: string;
+  searchFolder?: string;
+  type?: 'alerting' | 'recording';
+  ruleMatchers?: string[];
+  plugins?: 'hide' | 'only';
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -71,15 +89,46 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ folderUid, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
+      query: ({
+        folderUid,
+        groupName,
+        ruleName,
+        contactPoint,
+        health,
+        state,
+        type,
+        groupLimit,
+        ruleLimit,
+        limitAlerts,
+        groupNextToken,
+        title,
+        datasources,
+        searchGroupName,
+        searchFolder,
+        dashboardUid,
+        ruleMatchers,
+        plugins,
+      }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
           folder_uid: folderUid,
           rule_group: groupName,
           rule_name: ruleName,
-          exclude_alerts: excludeAlerts?.toString(),
+          receiver_name: contactPoint,
+          health: health,
+          state: state,
+          rule_type: type,
+          limit_alerts: limitAlerts,
+          rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
+          datasource_uid: datasources,
+          'search.rule_name': title,
+          'search.rule_group': searchGroupName,
+          'search.folder': searchFolder,
+          dashboard_uid: dashboardUid,
+          rule_matcher: ruleMatchers,
+          plugins: plugins,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
@@ -95,18 +144,20 @@ export const prometheusApi = alertingApi.injectEndpoints({
 export function usePopulateGrafanaPrometheusApiCache() {
   const dispatch = useDispatch();
 
-  const populateGroupResponseCache = useCallback(
-    (group: GrafanaPromRuleGroupDTO) => {
+  const populateGroupsResponseCache = useCallback(
+    (groups: GrafanaPromRuleGroupDTO[]) => {
       dispatch(
-        prometheusApi.util.upsertQueryData(
-          'getGrafanaGroups',
-          { folderUid: group.folderUid, groupName: group.name },
-          { data: { groups: [group] }, status: 'success' }
+        prometheusApi.util.upsertQueryEntries(
+          groups.map((group) => ({
+            endpointName: 'getGrafanaGroups',
+            arg: { folderUid: group.folderUid, groupName: group.name, limitAlerts: 0 },
+            value: { data: { groups: [group] }, status: 'success' },
+          }))
         )
       );
     },
     [dispatch]
   );
 
-  return { populateGroupResponseCache };
+  return { populateGroupsResponseCache };
 }

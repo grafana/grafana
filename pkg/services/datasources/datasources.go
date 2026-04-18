@@ -5,15 +5,20 @@ import (
 	"net/http"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 // DataSourceService interface for interacting with datasources.
 type DataSourceService interface {
+	queryV0.DataSourceConnectionProvider
+
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *GetDataSourceQuery) (*DataSource, error)
+
+	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
+	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*DataSource, error)
 
 	// GetDataSources gets datasources.
 	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) ([]*DataSource, error)

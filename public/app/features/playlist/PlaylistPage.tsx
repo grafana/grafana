@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { Trans, t } from 'app/core/internationalization';
-import { contextSrv } from 'app/core/services/context_srv';
 
-import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
+import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { searchPlaylists } from './utils';
+import { canWritePlaylists, searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
@@ -29,7 +28,7 @@ export const PlaylistPage = () => {
       return;
     }
     deletePlaylist({
-      name: playlistToDelete.metadata.name ?? '',
+      name: playlistToDelete.metadata?.name ?? '',
     }).finally(() => {
       setPlaylistToDelete(undefined);
     });
@@ -40,7 +39,7 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        contextSrv.isEditor && showSearch ? (
+        canWritePlaylists() && showSearch ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -68,7 +67,7 @@ export const PlaylistPage = () => {
               <EmptyState
                 variant="call-to-action"
                 button={
-                  <LinkButton disabled={!contextSrv.isEditor} href="playlists/new" icon="plus" size="lg">
+                  <LinkButton disabled={!canWritePlaylists()} href="playlists/new" icon="plus" size="lg">
                     <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
                   </LinkButton>
                 }
@@ -84,10 +83,10 @@ export const PlaylistPage = () => {
             )}
             {playlistToDelete && (
               <ConfirmModal
-                title={playlistToDelete.spec.title}
+                title={playlistToDelete.spec?.title ?? ''}
                 confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
                 body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.spec.title,
+                  name: playlistToDelete.spec?.title,
                 })}
                 onConfirm={onDeletePlaylist}
                 isOpen={Boolean(playlistToDelete)}

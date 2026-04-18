@@ -1,33 +1,32 @@
 import { find } from 'lodash';
 
-import { AzureCredentials } from '@grafana/azure-sdk';
-import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type AzureCredentials } from '@grafana/azure-sdk';
+import { type ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
+import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
 import TimegrainConverter from '../time_grain_converter';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureAPIResponse,
-  AzureMetricQuery,
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorLocations,
-  AzureMonitorMetricsMetadataResponse,
-  AzureMonitorProvidersResponse,
-  AzureMonitorQuery,
-  AzureQueryType,
-  DatasourceValidationResult,
-  GetLogAnalyticsTableResponse,
-  GetMetricMetadataQuery,
-  GetMetricNamespacesQuery,
-  GetMetricNamesQuery,
+  type AzureAPIResponse,
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorLocations,
+  type AzureMonitorMetricsMetadataResponse,
+  type AzureMonitorProvidersResponse,
+  type DatasourceValidationResult,
+  type GetLogAnalyticsTableResponse,
+  type GetMetricMetadataQuery,
+  type GetMetricNamespacesQuery,
+  type GetMetricNamesQuery,
   instanceOfLogAnalyticsTableError,
-  Location,
-  Metric,
-  MetricNamespace,
-  Subscription,
+  type Location,
+  type Metric,
+  type MetricNamespace,
+  type Subscription,
   TablePlan,
-} from '../types';
+} from '../types/types';
 import { replaceTemplateVariables, routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 

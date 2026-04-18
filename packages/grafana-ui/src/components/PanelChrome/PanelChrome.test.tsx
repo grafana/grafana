@@ -5,7 +5,9 @@ import { useToggle } from 'react-use';
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PanelChrome, PanelChromeProps } from './PanelChrome';
+import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
+
+import { PanelChrome, type PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -195,4 +197,93 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   // aria-controls should be removed when panel is collapsed
   expect(button).not.toHaveAttribute('aria-controlls');
   expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
+});
+
+it('renders panel with a header if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
+});
+
+it('renders panel with sub-header content in place if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByText('This should be a sub-header node')).toBeInTheDocument();
+});
+
+it('does not render sub-header content when panel is collapsed', () => {
+  setup({
+    title: 'Test Panel',
+    collapsible: true,
+    collapsed: true,
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.queryByText('This should be a sub-header node')).not.toBeInTheDocument();
+});
+
+it('does not select the panel when clicking interactive content', async () => {
+  const onSelect = jest.fn();
+  const user = userEvent.setup();
+
+  render(
+    <ElementSelectionContext.Provider
+      value={{
+        enabled: true,
+        selected: [],
+        onSelect,
+        onClear: jest.fn(),
+      }}
+    >
+      <PanelChrome width={100} height={100} selectionId="panel-1">
+        {() => (
+          <div>
+            <button type="button">Button text</button>
+            <a href="#">Anchor text</a>
+            <canvas />
+            <svg />
+            <div className="u-over" />
+            <div className="u-axis" />
+            <div role="button" />
+            <div role="columnheader">Column header</div>
+            <div>Non-interactive</div>
+          </div>
+        )}
+      </PanelChrome>
+      <div id="grafana-portal-container">
+        <div />
+      </div>
+    </ElementSelectionContext.Provider>
+  );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('link', { name: 'Anchor text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('canvas')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('svg')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-over')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('div[role="button"]')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-axis')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('columnheader', { name: 'Column header' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByText('Non-interactive') });
+  expect(onSelect).toHaveBeenCalledTimes(1);
 });

@@ -1,32 +1,35 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  LiveChannelAddress,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelEvent,
+  type LiveChannelEvent,
   LiveChannelScope,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
-import { appEvents, contextSrv } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
 import { DashboardChangedModal } from './DashboardChangedModal';
-import { DashboardEvent, DashboardEventAction } from './types';
+import { type DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
 const sessionId = uuidv4();
 
 class DashboardWatcher {
+  private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
+
   channel?: LiveChannelAddress; // path to the channel
   uid?: string;
-  ignoreSave?: boolean;
+  ignoreSave = 0; // save any events until this time passes
   editing = false;
   lastEditing?: DashboardEvent;
   subscription?: Unsubscribable;
@@ -64,7 +67,7 @@ class DashboardWatcher {
     if (uid !== this.uid) {
       this.channel = {
         scope: LiveChannelScope.Grafana,
-        namespace: 'dashboard',
+        stream: 'dashboard',
         path: `uid/${uid}`,
       };
       this.leave();
@@ -83,8 +86,9 @@ class DashboardWatcher {
     this.uid = undefined;
   }
 
+  // ignore the next 5 seconds of save events
   ignoreNextSave() {
-    this.ignoreSave = true;
+    this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
   }
 
   getRecentEditingEvent() {
@@ -109,13 +113,16 @@ class DashboardWatcher {
           return; // skip internal messages
         }
 
-        const { action } = event.message;
+        const { action, message } = event.message;
         switch (action) {
           case DashboardEventAction.EditingStarted:
           case DashboardEventAction.Saved: {
             if (this.ignoreSave) {
-              this.ignoreSave = false;
-              return;
+              if (this.ignoreSave < Date.now()) {
+                this.ignoreSave = 0; // process the event
+              } else {
+                return;
+              }
             }
 
             const dash = getDashboardSrv().getCurrent();
@@ -124,7 +131,13 @@ class DashboardWatcher {
               return;
             }
 
-            const showPopup = this.editing || dash.hasUnsavedChanges();
+            let showPopup = this.editing || dash.hasUnsavedChanges();
+
+            // Dashboard could have unsaved changes but if user has already restored from a version
+            // the reloadPage should be called below
+            if (message?.includes('Restored from version')) {
+              showPopup = false;
+            }
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {

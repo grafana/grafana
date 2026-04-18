@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface SpanBarOptions {
   type?: string;
@@ -28,6 +28,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+
   const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (

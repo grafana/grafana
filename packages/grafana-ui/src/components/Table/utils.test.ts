@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { Row } from 'react-table';
+import { type Row } from 'react-table';
 
-import { Field, FieldConfigSource, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
+import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
 import {
   calculateUniqueFieldValues,
@@ -595,6 +595,25 @@ describe('Table utils', () => {
 
       const longestField = guessLongestField(config, data);
       expect(longestField).toBe(undefined);
+    });
+
+    it('should not throw an error if first entry in input data is missing a given field', () => {
+      const data = getWrappableData(10);
+      const config: FieldConfigSource = {
+        defaults: {
+          custom: {
+            cellOptions: {
+              wrapText: true,
+            },
+          },
+        },
+        overrides: [],
+      };
+
+      data.fields[1].values[0] = undefined; // Simulate missing value in the first row
+
+      const longestField = guessLongestField(config, data);
+      expect(longestField?.name).toBe('Lorem 10');
     });
   });
 });

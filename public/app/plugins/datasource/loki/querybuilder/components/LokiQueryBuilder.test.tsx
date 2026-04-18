@@ -2,12 +2,11 @@ import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
-import { LokiOperationId, LokiVisualQuery } from '../types';
+import { createLokiDatasource } from '../../mocks/datasource';
+import { LokiOperationId, type LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder, Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
+import { LokiQueryBuilder, type Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
@@ -40,14 +39,6 @@ const createDefaultProps = () => {
 };
 
 describe('LokiQueryBuilder', () => {
-  const originalLokiQueryHints = config.featureToggles.lokiQueryHints;
-  beforeEach(() => {
-    config.featureToggles.lokiQueryHints = true;
-  });
-
-  afterEach(() => {
-    config.featureToggles.lokiQueryHints = originalLokiQueryHints;
-  });
   it('tries to load label names', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);

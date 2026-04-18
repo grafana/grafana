@@ -12,90 +12,26 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure the Prometheus data source
+menuTitle: Configure
 title: Configure the Prometheus data source
 weight: 200
-refs:
-  intro-to-prometheus:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
-  exemplars:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
-  configure-data-links-value-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
-  alerting-alert-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
-  add-a-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
-  prom-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor
-  default-manage-alerts-ui-toggle:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
-  provision-grafana:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
-  manage-alerts-toggle:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-  azure-active-directory:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
-  configure-grafana-configuration-file-location:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
 ---
 
 # Configure the Prometheus data source
 
-This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](ref:add-a-data-source).
+This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
 
 ## Before you begin
 
-- You must have the `Organization administrator` role to add a data source. Administrators can also configure a data source via YAML files.
+- You need the `Organization administrator` role to configure the data source. You can also [configure it via YAML](#provision-the-prometheus-data-source) using Grafana provisioning.
 
-- Know which Prometheus-compatible database you are using.
+- Grafana includes a built-in Prometheus data source; no plugin installation is required.
 
-- Familiarize yourself with your Prometheus security configuration and gather any necessary security certificates and client keys.
+- Know which type of Prometheus-compatible database you're connecting to (Prometheus, Mimir, Cortex, or Thanos), as the configuration options vary by type.
 
-- Verify that data from Prometheus is being written to your Grafana instance.
+- Have your Prometheus server URL ready. If using TLS/SSL, gather any necessary security certificates and client keys.
+
+- If using Basic authentication, have your username and password ready.
 
 ## Configure the data source using the UI
 
@@ -138,7 +74,6 @@ Use the IP address of the Prometheus container, or the hostname if you are using
 There are three authentication options for the Prometheus data source.
 
 - **Basic authentication** - The most common authentication method.
-
   - **User** - The username you use to connect to the data source.
   - **Password** - The password you use to connect to the data source.
 
@@ -177,7 +112,9 @@ Following are optional configuration settings you can configure for more control
 
 **Alerting:**
 
-- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](ref:manage-alerts-toggle) option in the `grafana.ini` configuration file.
+- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the `grafana.ini` configuration file.
+
+- **Allow as recording rules target** - Toggled on by default. This allows the data source to be selected as a target destination for writing [Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/). When enabled, this data source will appear in the target data source list when creating or importing recording rules. When disabled, the data source will be filtered out from recording rules target selection. Change this by setting the [`default_allow_recording_rules_target_alerts_ui_toggle`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_allow_recording_rules_target_alerts_ui_toggle) option in the `grafana.ini` configuration file.
 
 **Interval behavior:**
 
@@ -186,7 +123,7 @@ Following are optional configuration settings you can configure for more control
 
 **Query editor:**
 
-- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](ref:prom-query-editor). You can switch easily code editors in the Query editor UI.
+- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor). You can switch easily code editors in the Query editor UI.
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric and label support in the query field's autocomplete. This can improve performance for large Prometheus instances.
 
 **Performance:**
@@ -202,16 +139,17 @@ Following are optional configuration settings you can configure for more control
 - **Custom query parameters** - Add custom parameters to the Prometheus query URL, which allow for more control over how queries are executed. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be joined using `&`.
 - **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST`is recommended and selected by default, as it supports larger queries. Select `GET` if you're using Prometheus version 2.1 or older, or if your network restricts `POST` requests.
   Toggle on
+- **Series limit** - Number of maximum returned series. The limit applies to all resources (metrics, labels, and values) for both endpoints (series and labels). Leave the field empty to use the default limit (40000). Set to 0 to disable the limit and fetch everything — this may cause performance issues. Default limit is 40000.
 - **Use series endpoint** - Enabling this option makes Grafana use the series endpoint (/api/v1/series) with the match[] parameter instead of the label values endpoint (/api/v1/label/<label_name>/values). While the label values endpoint is generally more performant, some users may prefer the series endpoint because it supports the `POST` method, whereas the label values endpoint only allows `GET` requests.
 
 **Exemplars:**
 
-Support for exemplars is available only for the Prometheus data source. For more information on exemplars refer to [Introduction to exemplars](ref:exemplars). An exemplar is a trace that represents a specific measurement taken within a given time interval.
+Support for exemplars is available only for the Prometheus data source. For more information on exemplars refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/). An exemplar is a trace that represents a specific measurement taken within a given time interval.
 
 Click the **+ sign** to add exemplars.
 
 - **Internal link** - Toggle on to enable an internal link. This will display the data source selector, where you can choose the backend tracing data store for your exemplar data.
-- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](ref:configure-data-links-value-variables).
+- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables).
 - **Data source** - _(Visible when`Internal link` is enabled.)_ Select the data source that the exemplar will link to from the drop-down.
 - **URL label** - Adds a custom display label to override the value of the `Label name` field.
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
@@ -219,9 +157,11 @@ Click the **+ sign** to add exemplars.
 
 You can add multiple exemplars.
 
-- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+  If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+
+  Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
 After you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection.
 
@@ -235,7 +175,7 @@ You can also remove a connection by clicking **Delete**.
 
 ## Provision the Prometheus data source
 
-You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provision-grafana).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< admonition type="note" >}}
 After you have provisioned a data source you cannot edit it.
@@ -243,39 +183,41 @@ After you have provisioned a data source you cannot edit it.
 
 **Example of a Prometheus data source configuration:**
 
-    ```yaml
-    apiVersion: 1
+```yaml
+apiVersion: 1
 
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://localhost:9090
-        jsonData:
-          httpMethod: POST
-          manageAlerts: true
-          prometheusType: Prometheus
-          prometheusVersion: 3.3.0
-          cacheLevel: 'High'
-          disableRecordingRules: false
-          timeInterval: 10s   # Prometheus scrape interval
-          incrementalQueryOverlapWindow: 10m
-          exemplarTraceIdDestinations:
-            # Field with internal link pointing to data source in Grafana.
-            # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-            - datasourceUid: my_jaeger_uid
-              name: traceID
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      allowAsRecordingRulesTarget: true
+      prometheusType: Prometheus
+      prometheusVersion: 3.3.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      seriesEndpoint: false
+      timeInterval: 10s # Prometheus scrape interval
+      incrementalQueryOverlapWindow: 10m
+      exemplarTraceIdDestinations:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          name: traceID
 
-            # Field with external link.
-            - name: traceID
-              url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
-    ```
+        # Field with external link.
+        - name: traceID
+          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
+```
 
 ## Azure authentication settings
 
-The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](ref:azure-active-directory).
+The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
 
-In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](ref:configure-grafana-configuration-file-location) to locate your .ini file.
+In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your .ini file.
 
 Add the following setting in the **[auth]** section of the .ini configuration file:
 
@@ -284,9 +226,9 @@ Add the following setting in the **[auth]** section of the .ini configuration fi
 azure_auth_enabled = true
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Recording rules (beta)
 

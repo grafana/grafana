@@ -1,5 +1,3 @@
-include ../.bingo/Variables.mk
-
 .PHONY: all
 all: dashboards
 

@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
-import { IconName } from './icon';
-import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
+import { type IconName } from './icon';
+import { type PanelData } from './panel';
+import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -29,7 +29,10 @@ export type PluginExtensionLink = PluginExtensionBase & {
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
+  /** @deprecated in favor of group property */
   category?: string;
+  group?: { name: string; icon?: IconName };
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
@@ -86,6 +89,7 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
    */
   component: React.ComponentType<Props>;
 };
+
 export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
   /**
    * The target extension points where the component will be added
@@ -105,7 +109,10 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
-      category: string;
+      /** @deprecated in favor of group property */
+      category?: string;
+      group: { name: string; icon?: IconName };
+      openInNewTab: boolean;
     }>
   | undefined;
 
@@ -135,8 +142,15 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
 
-  // (Optional) A category to be used when grouping the options in the ui
+  /** @deprecated in favor of group property */
   category?: string;
+
+  // (Optional) A group to be used when grouping the options in the ui.
+  group?: { name: string; icon?: IconName };
+
+  // (Optional) If true, opens the link in a new tab (renders with target="_blank")
+  // (Important: this is not guaranteed, depends on the extension point if it implements it.)
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
@@ -165,6 +179,8 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
@@ -174,6 +190,20 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * @param props The props to be passed to the component.
    */
   openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
+  /**
+   * @internal
+   * Closes the extension sidebar.
+   */
+  closeSidebar: () => void;
+  /**
+   * @internal
+   * Toggles the extension sidebar with the registered component.
+   * If the sidebar is open with the same component, it will be closed.
+   * If the sidebar is closed or open with a different component, it will be opened with the specified component.
+   * @param componentTitle The title of the component to be toggled in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  toggleSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
@@ -185,13 +215,49 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DashboardEmpty = 'grafana/dashboard/empty',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigActions = 'grafana/datasources/config/actions',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
+  DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
+  TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
+  TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
+  LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  AppChrome = 'grafana/app/chrome/v1',
+  ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  MegaMenuAction = 'grafana/megamenu/action',
+  SingleTopBarAction = 'grafana/singletopbar/action',
+  AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
+  AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
+  AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+}
+
+// Don't use directly in a plugin!
+// Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
+// (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+//
+// IMPORTANT: NavLandingPage and NavLandingPageCards are mutually exclusive.
+// If a plugin extends NavLandingPage, it will replace the entire page content and any NavLandingPageCards extensions will be ignored.
+// Only use NavLandingPageCards if you want to add additional cards to the default landing page layout.
+export enum PluginExtensionPointPatterns {
+  NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+  NavLandingPageCards = 'grafana/dynamic/nav-landing-page/nav-id-.*/cards/v1',
+}
+
+// Extension Points available in plugins
+export enum PluginExtensionExposedComponents {
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+  AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
+  CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
+  OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -204,6 +270,13 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type CentralAlertHistorySceneV1Props = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
+  hideAlertRuleColumn?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
@@ -235,6 +308,57 @@ export type PluginExtensionDataSourceConfigContext<
 };
 
 export type PluginExtensionCommandPaletteContext = {};
+
+export type PluginExtensionResourceAttributesContext = {
+  // Key-value pairs of resource attributes, attribute name is the key
+  attributes: Record<string, string[]>;
+  spanAttributes?: Record<string, string[]>;
+  timeRange: AbsoluteTimeRange;
+  datasource: {
+    type: string;
+    uid: string;
+  };
+  traceID?: string;
+  spanID?: string;
+  spanStartTime?: number;
+};
+
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
+  testingStatus: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+};
+
+export type PluginExtensionDataSourceConfigActionsContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+};
+
+export type PluginExtensionDataSourceConfigStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+  severity: 'success' | 'error' | 'warning' | 'info';
+};
 
 type Dashboard = {
   uid: string;

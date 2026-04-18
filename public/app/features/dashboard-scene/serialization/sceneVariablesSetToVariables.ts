@@ -1,29 +1,41 @@
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
 import {
-  VariableModel,
+  type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  type MultiValueVariable,
+  type SceneObject,
+  type SceneVariables,
+  sceneUtils,
+} from '@grafana/scenes';
+import {
+  type VariableModel,
   VariableRefresh as OldVariableRefresh,
   VariableHide as OldVariableHide,
   VariableSort as OldVariableSort,
 } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  DataQueryKind,
-  DatasourceVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type DataQueryKind,
+  type DatasourceVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
   defaultVariableHide,
-  VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  type VariableOption,
+  defaultDataQueryKind,
+  type AdHocFilterWithLabels,
+  type SwitchVariableKind,
+  defaultIntervalVariableSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
-import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
+import { getDataSourceForQuery } from './layoutSerializers/utils';
+import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -37,11 +49,29 @@ import {
  *                           This should be set to `false` when variables are saved in the dashboard model,
  *                           but should be set to `true` when variables are used in the templateSrv to keep them in sync.
  *                           If `true`, the options for query variables are kept.
+ * @param excludeVariable - (Optional) Scene variable instance to omit. Is used to avoid self-reference in that variable's editor.
+ *                          e.g when editing it as a section variable.
+ *
+ *
  *  */
 
-export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
+export function sceneVariablesSetToVariables(
+  set: SceneVariables,
+  keepQueryOptions?: boolean,
+  excludedVariable?: SceneObject
+) {
   const variables: VariableModel[] = [];
+
   for (const variable of set.state.variables) {
+    if (excludedVariable !== undefined && variable === excludedVariable) {
+      continue;
+    }
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -53,12 +83,11 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
 
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
-      // Not sure if we actually have to still support this option given
-      // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
+      if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
-      variables.push({
+      const datasource = getElementDatasource(set, variable, 'variable');
+      const variableObj: VariableModel = {
         ...commonProperties,
         current: {
           // @ts-expect-error
@@ -69,18 +98,33 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         options,
         query: variable.state.query,
         definition: variable.state.definition,
-        datasource: getElementDatasource(set, variable, 'variable'),
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
+        regexApplyTo: variable.state.regexApplyTo,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
-        allowCustomValue: variable.state.allowCustomValue,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
         skipUrlSync: variable.state.skipUrlSync,
-      });
+        staticOptions: variable.state.staticOptions?.map((option) => ({
+          text: option.label,
+          value: String(option.value),
+          ...(option.properties && { properties: option.properties }),
+        })),
+        staticOptionsOrder: variable.state.staticOptionsOrder,
+      };
+      // Only add datasource if it exists and is not empty
+      if (datasource && Object.keys(datasource).length > 0 && (datasource.uid || datasource.type)) {
+        variableObj.datasource = datasource;
+      }
+      variables.push(variableObj);
     } else if (sceneUtils.isCustomVariable(variable)) {
-      variables.push({
+      let options: VariableOption[] = [];
+      if (keepQueryOptions) {
+        options = variableValueOptionsToVariableOptions(variable.state);
+      }
+      const customVariable: VariableModel = {
         ...commonProperties,
         current: {
           // @ts-expect-error
@@ -88,13 +132,17 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
-        options: variableValueOptionsToVariableOptions(variable.state),
+        options,
         query: variable.state.query,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
-        allowCustomValue: variable.state.allowCustomValue,
-      });
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        // Ensure we persist the backend default when not specified to stay aligned with
+        // transformSaveModelSchemaV2ToScene which injects 'csv' on load.
+        valuesFormat: variable.state.valuesFormat ?? 'csv',
+      };
+      variables.push(customVariable);
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
         ...commonProperties,
@@ -111,11 +159,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
-        allowCustomValue: variable.state.allowCustomValue,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
         ...commonProperties,
+        type: 'constant', // Explicitly set type to constant
         current: {
           // @ts-expect-error
           value: variable.state.value,
@@ -135,7 +184,9 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           value: variable.state.value,
         },
         query: intervals,
-        refresh: variable.state.refresh,
+        // V2 schema mandates refresh: "onTimeRangeChanged" for interval variables,
+        // which maps to OldVariableRefresh.onTimeRangeChanged (2) in V1
+        refresh: variable.state.refresh ?? OldVariableRefresh.onTimeRangeChanged,
         options: variable.state.intervals.map((interval) => ({
           value: interval,
           text: interval,
@@ -159,6 +210,14 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         query: variable.state.value,
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       variables.push({
         ...commonProperties,
         datasource: variable.state.datasource,
@@ -173,18 +232,50 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
-        allowCustomValue: variable.state.allowCustomValue,
+        defaultValue: defaultVariableOption,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
-      variables.push({
+      const adhocVariable: VariableModel = {
         ...commonProperties,
         datasource: variable.state.datasource,
-        allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: variable.state.baseFilters,
-        filters: variable.state.filters,
+        baseFilters: variable.state.baseFilters || [],
+        filters: [
+          ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+            ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+              return { key, origin, value, values, valueLabels, keyLabel, operator };
+            }
+          ),
+          ...validateFiltersOrigin(variable.state.filters),
+        ],
         defaultKeys: variable.state.defaultKeys,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+          ? (variable.state.enableGroupBy ?? false)
+          : false,
+      };
+      variables.push(adhocVariable);
+    } else if (sceneUtils.isSwitchVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          value: variable.state.value,
+          text: variable.state.value,
+        },
+        options: [
+          {
+            value: variable.state.enabledValue,
+            text: variable.state.enabledValue,
+          },
+          {
+            value: variable.state.disabledValue,
+            text: variable.state.disabledValue,
+          },
+        ],
       });
+    } else if (variable.state.type === 'system') {
+      // Not persisted
     } else {
       throw new Error('Unsupported variable type');
     }
@@ -221,6 +312,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
     value: String(o.value),
     text: o.label,
     selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+    ...(o.properties && { properties: o.properties }),
   }));
 }
 
@@ -237,6 +329,7 @@ export function sceneVariablesSetToSchemaV2Variables(
   | ConstantVariableKind
   | GroupByVariableKind
   | AdhocVariableKind
+  | SwitchVariableKind
 > {
   let variables: Array<
     | QueryVariableKind
@@ -247,9 +340,16 @@ export function sceneVariablesSetToSchemaV2Variables(
     | ConstantVariableKind
     | GroupByVariableKind
     | AdhocVariableKind
+    | SwitchVariableKind
   > = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -267,25 +367,44 @@ export function sceneVariablesSetToSchemaV2Variables(
     };
 
     let options: VariableOption[] = [];
+
+    // Query variable
     if (sceneUtils.isQueryVariable(variable)) {
-      // Not sure if we actually have to still support this option given
-      // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
+      if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
-          spec: getDataQuerySpec(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type || getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
+          spec: query,
         };
       } else {
+        // Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+        const spec: Record<string, string> = {};
+        if (query) {
+          spec[LEGACY_STRING_VALUE_KEY] = query;
+        }
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
-          spec: {
-            [LEGACY_STRING_VALUE_KEY]: query,
-          },
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type || getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
+          spec,
         };
       }
       const queryVariable: QueryVariableKind = {
@@ -296,32 +415,44 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
-          regex: variable.state.regex,
+          regex: variable.state.regex ?? '',
+          regexApplyTo: variable.state.regexApplyTo ?? 'value',
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
+          staticOptions: variable.state.staticOptions?.map((option) => ({
+            text: option.label,
+            value: String(option.value),
+            ...(option.properties && { properties: option.properties }),
+          })),
+          staticOptionsOrder: variable.state.staticOptionsOrder,
         },
       };
       variables.push(queryVariable);
+
+      // Custom variable
     } else if (sceneUtils.isCustomVariable(variable)) {
-      options = variableValueOptionsToVariableOptions(variable.state);
       const customVariable: CustomVariableKind = {
         kind: 'CustomVariable',
         spec: {
           ...commonProperties,
           current: currentVariableOption,
-          options,
+          options: [],
           query: variable.state.query,
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
+          valuesFormat: variable.state.valuesFormat ?? 'csv',
         },
       };
       variables.push(customVariable);
+
+      // Datasource variable
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       const datasourceVariable: DatasourceVariableKind = {
         kind: 'DatasourceVariable',
@@ -329,11 +460,12 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           current: currentVariableOption,
           options: [],
-          regex: variable.state.regex,
+          regex: variable.state.regex ?? '',
           refresh: 'onDashboardLoad',
-          pluginId: variable.state.pluginId,
+          pluginId: variable.state.pluginId ?? getDefaultDatasource().type,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
 
@@ -342,21 +474,24 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
 
       variables.push(datasourceVariable);
+
+      // Constant variable
     } else if (sceneUtils.isConstantVariable(variable)) {
+      const value = variable.state.value ? String(variable.state.value) : '';
       const constantVariable: ConstantVariableKind = {
         kind: 'ConstantVariable',
         spec: {
           ...commonProperties,
           current: {
-            ...currentVariableOption,
-            // Constant variable doesn't use text state
-            text: String(variable.state.value),
+            text: value,
+            value: value,
           },
-          // @ts-expect-error
-          query: variable.state.value,
+          query: value,
         },
       };
       variables.push(constantVariable);
+
+      // Interval variable
     } else if (sceneUtils.isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
       const intervalVariable: IntervalVariableKind = {
@@ -369,22 +504,24 @@ export function sceneVariablesSetToSchemaV2Variables(
             text: variable.state.value,
           },
           query: intervals,
-          refresh: 'onTimeRangeChanged',
+          refresh: defaultIntervalVariableSpec().refresh,
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
             selected: interval === variable.state.value,
           })),
-          auto: variable.state.autoEnabled,
-          auto_min: variable.state.autoMinInterval,
-          auto_count: variable.state.autoStepCount,
+          auto: variable.state.autoEnabled ?? defaultIntervalVariableSpec().auto,
+          auto_min: variable.state.autoMinInterval ?? defaultIntervalVariableSpec().auto_min,
+          auto_count: variable.state.autoStepCount ?? defaultIntervalVariableSpec().auto_count,
         },
       };
       variables.push(intervalVariable);
+
+      // Textbox variable
     } else if (sceneUtils.isTextBoxVariable(variable)) {
       const current = {
-        text: variable.state.value,
-        value: variable.state.value,
+        text: variable.state.value ?? '',
+        value: variable.state.value ?? '',
       };
 
       const textBoxVariable: TextVariableKind = {
@@ -392,19 +529,37 @@ export function sceneVariablesSetToSchemaV2Variables(
         spec: {
           ...commonProperties,
           current,
-          query: variable.state.value,
+          query: variable.state.value ?? '',
         },
       };
 
       variables.push(textBoxVariable);
+
+      // Groupby variable
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
-          datasource: variable.state.datasource || {}, // FIXME what is the default value?,
           // Only persist the statically defined options
           options:
             variable.state.defaultOptions?.map((option) => ({
@@ -412,27 +567,69 @@ export function sceneVariablesSetToSchemaV2Variables(
               value: String(option.value),
             })) || [],
           current: currentVariableOption,
+          defaultValue: defaultVariableOption,
           multi: variable.state.isMulti || false,
         },
       };
       variables.push(groupVariable);
+
+      // Adhoc variable
     } else if (sceneUtils.isAdHocVariable(variable)) {
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
       const adhocVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
           name: variable.state.name,
-          datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: variable.state.baseFilters || [],
-          filters: variable.state.filters,
-          defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
+          filters: [
+            ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+              ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+                return { key, origin, value, values, valueLabels, keyLabel, operator };
+              }
+            ),
+            ...validateFiltersOrigin(variable.state.filters),
+          ],
+          defaultKeys: variable.state.defaultKeys || [],
+          allowCustomValue: variable.state.allowCustomValue ?? true,
+          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+            ? (variable.state.enableGroupBy ?? false)
+            : false,
         },
       };
       variables.push(adhocVariable);
+
+      // Switch variable
+    } else if (sceneUtils.isSwitchVariable(variable)) {
+      const switchVariable: SwitchVariableKind = {
+        kind: 'SwitchVariable',
+        spec: {
+          ...commonProperties,
+          current: variable.state.value,
+          enabledValue: variable.state.enabledValue,
+          disabledValue: variable.state.disabledValue,
+        },
+      };
+      variables.push(switchVariable);
+    } else if (variable.state.type === 'system') {
+      // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
   return variables;
+}
+
+export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  // Only keep dashboard originated filters in the schema
+  return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
 }

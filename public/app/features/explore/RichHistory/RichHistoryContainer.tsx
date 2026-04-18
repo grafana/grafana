@@ -1,12 +1,12 @@
 // Libraries
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
+import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 // Types
-import { StoreState } from 'app/types';
+import { type StoreState } from 'app/types/store';
 
 // Components, enums
 import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';

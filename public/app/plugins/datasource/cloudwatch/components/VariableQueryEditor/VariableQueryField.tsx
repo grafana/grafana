@@ -1,8 +1,8 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
-import { Alert, Select } from '@grafana/ui';
+import { Alert, type PopoverContent, Select } from '@grafana/ui';
 
-import { VariableQueryType } from '../../types';
+import { type VariableQueryType } from '../../types';
 import { removeMarginBottom } from '../styles';
 
 interface VariableQueryFieldProps<T> {
@@ -13,6 +13,8 @@ interface VariableQueryFieldProps<T> {
   inputId?: string;
   allowCustomValue?: boolean;
   isLoading?: boolean;
+  tooltip?: PopoverContent;
+  interactive?: boolean;
   error?: string;
 }
 
@@ -24,11 +26,19 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   allowCustomValue = false,
   isLoading = false,
   inputId = label,
+  tooltip,
+  interactive,
   error,
 }: VariableQueryFieldProps<T>) => {
   return (
     <>
-      <EditorField label={label} htmlFor={inputId} className={removeMarginBottom}>
+      <EditorField
+        label={label}
+        tooltip={tooltip}
+        tooltipInteractive={interactive}
+        htmlFor={inputId}
+        className={removeMarginBottom}
+      >
         <Select
           aria-label={label}
           allowCustomValue={allowCustomValue}

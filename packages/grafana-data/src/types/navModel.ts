@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { LinkTarget } from './dataLink';
-import { IconName } from './icon';
+import { type IconName } from './icon';
+import { type LinkTarget } from './linkTarget';
 
 export interface NavLinkDTO {
   id?: string;

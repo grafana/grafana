@@ -14,7 +14,6 @@ package dataquery
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 type MetricStat struct {
@@ -207,7 +206,9 @@ type QueryEditorProperty struct {
 
 // NewQueryEditorProperty creates a new QueryEditorProperty object.
 func NewQueryEditorProperty() *QueryEditorProperty {
-	return &QueryEditorProperty{}
+	return &QueryEditorProperty{
+		Type: QueryEditorPropertyTypeString,
+	}
 }
 
 type QueryEditorPropertyType string
@@ -284,6 +285,13 @@ func NewQueryEditorOperatorValueType() *QueryEditorOperatorValueType {
 	return NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType()
 }
 
+type LogsMode string
+
+const (
+	LogsModeInsights  LogsMode = "Insights"
+	LogsModeAnomalies LogsMode = "Anomalies"
+)
+
 type LogsQueryLanguage string
 
 const (
@@ -292,11 +300,30 @@ const (
 	LogsQueryLanguagePPL  LogsQueryLanguage = "PPL"
 )
 
+// Log group selection scope - determines how log groups are selected for the query
+type LogsQueryScope string
+
+const (
+	LogsQueryScopeLogGroupName LogsQueryScope = "logGroupName"
+	LogsQueryScopeNamePrefix   LogsQueryScope = "namePrefix"
+	LogsQueryScopeAllLogGroups LogsQueryScope = "allLogGroups"
+)
+
+// Log group class filter
+type LogGroupClass string
+
+const (
+	LogGroupClassSTANDARD         LogGroupClass = "STANDARD"
+	LogGroupClassINFREQUENTACCESS LogGroupClass = "INFREQUENT_ACCESS"
+)
+
 // Shape of a CloudWatch Logs query
 type CloudWatchLogsQuery struct {
 	// Whether a query is a Metrics, Logs, or Annotations query
 	QueryMode CloudWatchQueryMode `json:"queryMode"`
-	Id        string              `json:"id"`
+	// Whether a query is a Logs Insights or Log Anomalies query
+	LogsMode *LogsMode `json:"logsMode,omitempty"`
+	Id       string    `json:"id"`
 	// AWS region to query for the logs
 	Region string `json:"region"`
 	// The CloudWatch Logs Insights query to execute
@@ -307,6 +334,14 @@ type CloudWatchLogsQuery struct {
 	LogGroups []LogGroup `json:"logGroups,omitempty"`
 	// @deprecated use logGroups
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
+	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
+	// Log group selection scope - determines how log groups are selected for the query
+	LogsQueryScope *LogsQueryScope `json:"logsQueryScope,omitempty"`
+	// Log group name prefixes for namePrefix scope mode (max 5)
+	LogGroupPrefixes []string `json:"logGroupPrefixes,omitempty"`
+	// Log group class filter for namePrefix and allLogGroups scope modes
+	LogGroupClass *LogGroupClass `json:"logGroupClass,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -316,8 +351,8 @@ type CloudWatchLogsQuery struct {
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
-	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
-	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
+	// Selected account IDs for cross-account queries (max 20)
+	SelectedAccountIds []string `json:"selectedAccountIds,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -344,6 +379,40 @@ type LogGroup struct {
 // NewLogGroup creates a new LogGroup object.
 func NewLogGroup() *LogGroup {
 	return &LogGroup{}
+}
+
+// Shape of a Cloudwatch Log Anomalies query
+type CloudWatchLogsAnomaliesQuery struct {
+	Id string `json:"id"`
+	// AWS region to query for the logs
+	Region string `json:"region"`
+	// Whether a query is a Metrics, Logs or Annotations query
+	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
+	// Whether a query is a Logs Insights or Log Anomalies query
+	LogsMode *LogsMode `json:"logsMode,omitempty"`
+	// Filter to return only anomalies that are 'SUPPRESSED', 'UNSUPPRESSED', or 'ALL' (default)
+	SuppressionState *string `json:"suppressionState,omitempty"`
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// Used to filter only the anomalies found by a certain anomaly detector
+	AnomalyDetectionARN *string `json:"anomalyDetectionARN,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
+}
+
+// NewCloudWatchLogsAnomaliesQuery creates a new CloudWatchLogsAnomaliesQuery object.
+func NewCloudWatchLogsAnomaliesQuery() *CloudWatchLogsAnomaliesQuery {
+	return &CloudWatchLogsAnomaliesQuery{}
 }
 
 // Shape of a CloudWatch Annotation query
@@ -430,7 +499,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
@@ -482,7 +551,8 @@ func (resource QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Mar
 	if resource.QueryEditorFunctionExpression != nil {
 		return json.Marshal(resource.QueryEditorFunctionExpression)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` from JSON.
@@ -499,7 +569,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -521,7 +591,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression struct {
@@ -544,7 +614,7 @@ func (resource ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) 
 		return json.Marshal(resource.ArrayOfQueryEditorArrayExpression)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` from JSON.
@@ -608,7 +678,7 @@ func (resource StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) MarshalJSON(
 		return json.Marshal(resource.ArrayOfQueryEditorOperatorType)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` from JSON.
@@ -687,7 +757,7 @@ func (resource StringOrBoolOrInt64) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Int64)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64` from JSON.

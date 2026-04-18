@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/piechart/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
 /**
@@ -52,6 +54,7 @@ export interface Options extends common.OptionsWithTooltip, common.SingleStatBas
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
+  sort: common.SortOrder;
 }
 
 export const defaultOptions: Partial<Options> = {

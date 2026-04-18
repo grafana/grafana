@@ -26,9 +26,9 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Name of contributor -->
 <!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
-{{% /admonition %}}
+{{< /admonition >}}
 -->
 
 ## Breaking changes
@@ -109,7 +109,6 @@ _Experimental in all editions of Grafana_
 
 Datagrid is a new panel that allows you to edit your data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a data source or create your own dataset from scratch and use it within your dashboard to update your panels in real time. That's what Datagrid provides. You can also use the Datagrid panel as a data source used by other panels to augment other data.
 
-To use this new panel editing functionality, enable the `enableDatagridEditing` feature toggle.
 Currently, the Datagrid Panel supports the following features in Grafana version 10.0:
 
 - Creating and deleting rows and columns
@@ -119,8 +118,6 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 - Grid selection actions (copy/paste/delete)
 - Draggable columns and rows
 - Series selection when pulling data from a data source
-
-To learn more, refer to the [Datagrid documentation](../../panels-visualizations/visualizations/datagrid/).
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
 
@@ -249,11 +246,11 @@ We've also added a **Public dashboard users** tab in **Administration > Users** 
 
 To try it out, please contact customer support.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 This feature will have a cost by active users after being promoted into general availability.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 To learn more, refer to our [public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
@@ -270,7 +267,7 @@ With the new user interface (UI), you can now configure SAML without needing to 
 
 The SAML UI is available in Grafana Enterprise, Cloud Pro, and Advanced. It's user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
-For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface](../../setup-grafana/configure-security/configure-authentication/saml-ui/).
+For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface](../../setup-grafana/configure-access/configure-authentication/saml-ui/).
 
 ### Case-insensitive usernames and email addresses
 
@@ -284,11 +281,11 @@ From now on, whether you type your username or email address in uppercase, lower
 
 To help you deal with potential user identity conflicts, we've built a [Grafana CLI user identity conflict resolver tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/), which is available from Grafana version 9.3.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you're running Grafana with MySQL as a database, this change doesn't have any impact as MySQL users were already treated as case-insensitive.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Tracing
 

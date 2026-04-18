@@ -1,20 +1,24 @@
 import { useEffect, useRef } from 'react';
 
-import { Alert, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Spinner, Stack, Text } from '@grafana/ui';
+import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { JobContent } from './JobContent';
+import { getJobMessages } from './getJobMessage';
 
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  onStatusChange: (status: StepStatusInfo, error?: string) => void;
+  jobType: JobType;
+  onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -35,8 +39,59 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
       }, 1000);
     }
 
-    if (finishedQuery.isSuccess) {
-      onStatusChange({ status: 'success' });
+    if (retryFailed) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.no-job-found', 'No job found'),
+          message: t(
+            'provisioning.job-status.no-job-found-message',
+            'The job may have been deleted or could not be retrieved. Cancel the current process and start again.'
+          ),
+        },
+      });
+      return;
+    }
+
+    if (finishedQuery.isSuccess && job?.status) {
+      const { state } = job.status;
+      const messages = getJobMessages(job.status);
+
+      if (state === 'error') {
+        const warningInfo = messages.warning
+          ? {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: messages.warning,
+            }
+          : undefined;
+        onStatusChange?.({
+          status: 'error',
+          error: {
+            title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
+            message: messages.error,
+          },
+          warning: warningInfo,
+          action: onRetry && {
+            label: t('provisioning.job-status.retry-action', 'Retry'),
+            onClick: onRetry,
+          },
+        });
+      } else if (state === 'success') {
+        onStatusChange?.({
+          status: 'success',
+          success: {
+            title: t('provisioning.job-status.status.title-success-running-job', 'Job completed successfully'),
+          },
+        });
+      } else if (state === 'warning') {
+        onStatusChange?.({
+          status: 'warning',
+          warning: {
+            title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+            message: messages.warning,
+          },
+        });
+      }
     }
 
     return () => {
@@ -44,17 +99,11 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange]);
+  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
 
+  // If retry failed, return null - parent handles the error via onStatusChange
   if (retryFailed) {
-    onStatusChange({ status: 'error' });
-    return (
-      <Alert severity="error" title={t('provisioning.job-status.no-job-found', 'No job found')}>
-        <Trans i18nKey="provisioning.job-status.no-job-found-message">
-          The job may have been deleted or could not be retrieved. Cancel the current process and start again.
-        </Trans>
-      </Alert>
-    );
+    return null;
   }
 
   if (!job || finishedQuery.isLoading || finishedQuery.isFetching) {
@@ -68,5 +117,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
     );
   }
 
-  return <JobContent job={job} isFinishedJob={true} />;
+  return (
+    <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} onRetry={onRetry} />
+  );
 }

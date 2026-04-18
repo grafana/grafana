@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export type FilterProgressState = 'searching' | 'done' | 'aborted';
 interface FilterStatusProps {
@@ -10,7 +10,7 @@ interface FilterStatusProps {
 
 export function FilterStatus({ state, numberOfRules, onCancel }: FilterStatusProps) {
   return (
-    <Card>
+    <Card noMargin>
       <Text color="secondary">
         {/* done searching everything and found some results */}
         {state === 'done' && (

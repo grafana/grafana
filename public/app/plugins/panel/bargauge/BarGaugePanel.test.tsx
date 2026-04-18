@@ -1,12 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
-import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
+import {
+  dateMath,
+  dateTime,
+  type EventBus,
+  LoadingState,
+  type TimeRange,
+  toDataFrame,
+  VizOrientation,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeValueMode, LegendDisplayMode, LegendPlacement } from '@grafana/schema';
-import { BarGaugeNamePlacement, BarGaugeSizing } from '@grafana/schema/dist/esm/common/common.gen';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeValueMode,
+  BarGaugeNamePlacement,
+  BarGaugeSizing,
+  LegendDisplayMode,
+  type LegendPlacement,
+} from '@grafana/schema';
 
-import { BarGaugePanel, BarGaugePanelProps } from './BarGaugePanel';
+import { BarGaugePanel, type BarGaugePanelProps } from './BarGaugePanel';
 
 const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 

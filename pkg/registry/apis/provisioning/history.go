@@ -11,9 +11,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
 type historySubresource struct {
@@ -54,13 +54,13 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "history-subresource")
 	ctx = logging.Context(ctx, logger)
-	repo, err := h.repoGetter.GetHealthyRepository(ctx, name)
+	repo, err := h.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
 	}
 
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		versioned, ok := repo.(repository.Versioned)
 		if !ok {
 			responder.Error(apierrors.NewBadRequest("this repository does not support history"))

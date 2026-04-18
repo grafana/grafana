@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { type UseFormSetValue } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
-import { Trans } from '../../../core/internationalization';
-import { ServerDiscoveryFormData, SSOProviderDTO } from '../types';
+import { type ServerDiscoveryFormData, type SSOProviderDTO } from '../types';
 
 import { ServerDiscoveryModal } from './ServerDiscoveryModal';
 

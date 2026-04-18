@@ -1,19 +1,19 @@
 import {
-  DataSourceApi,
-  DataSourceRef,
+  type DataSourceApi,
+  type DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  QueryVariableModel,
+  type QueryVariableModel,
   VariableHide,
   VariableRefresh,
   VariableSort,
 } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { notifyApp } from '../../../core/reducers/appNotification';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getTimeSrv, setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
@@ -25,7 +25,7 @@ import {
   variableEditorMounted,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
-import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import {
   addVariable,
@@ -36,7 +36,7 @@ import {
   variableStateFetching,
 } from '../state/sharedReducer';
 import { variablesInitTransaction } from '../state/transactionReducer';
-import { VariableQueryEditorProps } from '../types';
+import { type VariableQueryEditorProps } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
@@ -60,7 +60,7 @@ const mocks: Record<string, any> = {
     getList: jest.fn().mockReturnValue([]),
   },
   pluginLoader: {
-    importDataSourcePlugin: jest.fn().mockResolvedValue({ components: {} }),
+    importDataSource: jest.fn().mockResolvedValue({ components: {} }),
   },
   VariableQueryEditor(props: VariableQueryEditorProps) {
     return <div>this is a variable query editor</div>;
@@ -69,8 +69,8 @@ const mocks: Record<string, any> = {
 
 setDataSourceSrv(mocks.dataSourceSrv as DataSourceSrv);
 
-jest.mock('../../plugins/plugin_loader', () => ({
-  importDataSourcePlugin: () => mocks.pluginLoader.importDataSourcePlugin(),
+jest.mock('../../plugins/importer/pluginImporter', () => ({
+  pluginImporter: { importDataSource: () => mocks.pluginLoader.importDataSource() },
 }));
 
 jest.mock('../../templating/template_srv', () => ({
@@ -252,7 +252,7 @@ describe('query actions', () => {
       const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
-      mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+      mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
 
@@ -280,7 +280,7 @@ describe('query actions', () => {
       const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
-      mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+      mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
 
@@ -307,7 +307,7 @@ describe('query actions', () => {
       const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([]);
-      mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+      mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
 
@@ -333,7 +333,7 @@ describe('query actions', () => {
       const variable = createVariable({ datasource: { uid: 'other' } });
       const editor = mocks.VariableQueryEditor;
 
-      mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+      mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
 
@@ -369,7 +369,7 @@ describe('query actions', () => {
         };
         const preloadedState = getPreloadedState('key', templatingState);
 
-        mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+        mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
           components: { VariableQueryEditor: editor },
         });
 
@@ -400,7 +400,7 @@ describe('query actions', () => {
       const variable = createVariable({ datasource: { uid: 'other' } });
       const editor = LegacyVariableQueryEditor;
 
-      mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+      mocks.pluginLoader.importDataSource = jest.fn().mockResolvedValue({
         components: {},
       });
 

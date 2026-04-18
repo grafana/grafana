@@ -4,4 +4,5 @@ export const INTERACTION_ITEM = {
   SELECT_PANEL_PLUGIN: 'select_panel_plugin',
   CHANGE_TAB: 'change_tab', // for ref - PanelVizTypePicker
   SEARCH: 'search', // for ref - PanelVizTypePicker
+  BACK_BUTTON: 'back_button', // for ref - PanelVizTypePicker
 };

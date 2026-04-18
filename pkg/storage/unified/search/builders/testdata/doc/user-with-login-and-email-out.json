@@ -1,0 +1,20 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "with-login-and-email"
+  },
+  "name": "with-login-and-email",
+  "rv": 1234,
+  "fields": {
+    "email": "user.one@test.com",
+    "lastSeenAt": 0,
+    "login": "user.one",
+    "role": "Viewer"
+  },
+  "selectableFields": {
+    "spec.email": "user.one@test.com",
+    "spec.login": "user.one"
+  }
+}

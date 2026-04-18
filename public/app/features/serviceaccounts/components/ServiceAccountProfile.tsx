@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
-import { GrafanaTheme2, OrgRole, TimeZone, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, type OrgRole, type TimeZone, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';

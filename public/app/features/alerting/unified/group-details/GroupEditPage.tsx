@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
 import { useCallback, useEffect, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -19,10 +20,13 @@ import {
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
-import { useDispatch } from 'app/types';
-import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { useDispatch } from 'app/types/store';
+import {
+  GrafanaRulesSourceSymbol,
+  type RuleGroupIdentifierV2,
+  type RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -30,12 +34,13 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
 import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
-import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
+import { type UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../hooks/useReturnTo';
-import { SwapOperation } from '../reducers/ruler/ruleGroups';
+import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
+import { type SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
@@ -99,7 +104,7 @@ function GroupEditPage() {
 
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
-      <AlertingPageWrapper pageNav={pageNav} title={groupName} navId="alert-list" isLoading={isLoadingGroup}>
+      <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()} isLoading={isLoadingGroup}>
         <Alert title={t('alerting.group-edit.group-not-editable', 'Selected group cannot be edited')}>
           <Trans i18nKey="alerting.group-edit.group-not-editable-description">
             This group belongs to a data source that does not support editing.
@@ -124,12 +129,7 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper
-      pageNav={pageNav}
-      title={t('alerting.group-edit.title', 'Edit evaluation group')}
-      navId="alert-list"
-      isLoading={isLoadingGroup}
-    >
+    <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()} isLoading={isLoadingGroup}>
       <>
         {Boolean(dsFeaturesError) && (
           <Alert

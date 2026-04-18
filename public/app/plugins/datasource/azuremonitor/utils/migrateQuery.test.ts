@@ -1,4 +1,5 @@
-import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types';
+import { type AzureMetricDimension, AzureQueryType, ResultFormat } from '../dataquery.gen';
+import { type AzureMonitorQuery } from '../types/query';
 
 import migrateQuery from './migrateQuery';
 

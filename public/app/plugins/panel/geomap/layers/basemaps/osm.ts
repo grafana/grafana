@@ -1,8 +1,8 @@
-import Map from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 
-import { MapLayerRegistryItem, MapLayerOptions, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type EventBus } from '@grafana/data';
 
 export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
@@ -14,10 +14,12 @@ export const standard: MapLayerRegistryItem = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions, eventBus: EventBus) => ({
+  create: async (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus) => ({
     init: () => {
+      const noRepeat = options.noRepeat ?? false;
+
       return new TileLayer({
-        source: new OSM(),
+        source: new OSM({ wrapX: !noRepeat }),
       });
     },
   }),

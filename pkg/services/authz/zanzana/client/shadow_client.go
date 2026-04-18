@@ -2,32 +2,40 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var _ authlib.AccessClient = (*ShadowClient)(nil)
+
+const zanzanaTimeout = 30 * time.Second
 
 type ShadowClient struct {
 	logger        log.Logger
 	accessClient  authlib.AccessClient
 	zanzanaClient authlib.AccessClient
-	metrics       *metrics
+	metrics       *shadowClientMetrics
 }
 
 // WithShadowClient returns a new access client that runs zanzana checks in the background.
-func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) authlib.AccessClient {
+func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
 	client := &ShadowClient{
 		logger:        log.New("zanzana-shadow-client"),
 		accessClient:  accessClient,
 		zanzanaClient: zanzanaClient,
 		metrics:       newShadowClientMetrics(reg),
 	}
-	return client
+	return client, nil
 }
 
-func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	acResChan := make(chan authlib.CheckResponse, 1)
 	acErrChan := make(chan error, 1)
 
@@ -36,30 +44,32 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 			return
 		}
 
-		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
-		defer timer.ObserveDuration()
-
 		zanzanaCtx := context.WithoutCancel(ctx)
-		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
+		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
+		res, err := c.zanzanaClient.Check(zanzanaCtxTimeout, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
+		timer.ObserveDuration()
 
 		acRes := <-acResChan
 		acErr := <-acErrChan
 
 		if acErr == nil {
 			if res.Allowed != acRes.Allowed {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("error", "check", formatCheck(req), req.Namespace).Inc()
 				c.logger.Warn("Zanzana check result does not match", "expected", acRes.Allowed, "actual", res.Allowed, "user", id.GetUID(), "request", req)
 			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("success", "check", formatCheck(req), req.Namespace).Inc()
 			}
 		}
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("rbac"))
-	res, err := c.accessClient.Check(ctx, id, req)
+	res, err := c.accessClient.Check(ctx, id, req, folder)
 	timer.ObserveDuration()
 	acResChan <- res
 	acErrChan <- err
@@ -67,16 +77,24 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 	return res, err
 }
 
-func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
+func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	zanzanaItemCheckerChan := make(chan authlib.ItemChecker, 1)
+	var zanzanaItemChecker authlib.ItemChecker
+	var once sync.Once
+
 	go func() {
 		if c.zanzanaClient == nil {
 			zanzanaItemCheckerChan <- nil
 			return
 		}
 
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, err := c.zanzanaClient.Compile(ctx, id, req)
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtxTimeout, id, req) //nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
@@ -85,27 +103,119 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("rbac"))
-	rbacItemChecker, err := c.accessClient.Compile(ctx, id, req)
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+	rbacItemChecker, _, err := c.accessClient.Compile(ctx, id, req)
 	timer.ObserveDuration()
 	if err != nil {
-		return nil, err
+		return nil, authlib.NoopZookie{}, err
 	}
-
-	zanzanaItemChecker := <-zanzanaItemCheckerChan
 
 	shadowItemChecker := func(name, folder string) bool {
 		rbacRes := rbacItemChecker(name, folder)
-		if zanzanaItemChecker != nil {
-			zanzanaRes := zanzanaItemChecker(name, folder)
-			if zanzanaRes != rbacRes {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-				c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
-			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+
+		go func() {
+			// Wait for zanzana result to be ready and then use it to compare against RBAC
+			once.Do(func() {
+				zanzanaItemChecker = <-zanzanaItemCheckerChan
+			})
+
+			if zanzanaItemChecker != nil {
+				zanzanaRes := zanzanaItemChecker(name, folder)
+				if zanzanaRes != rbacRes {
+					c.metrics.evaluationStatusTotal.WithLabelValues("error", "compile", "other", req.Namespace).Inc()
+					c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
+				} else {
+					c.metrics.evaluationStatusTotal.WithLabelValues("success", "compile", "other", req.Namespace).Inc()
+				}
 			}
-		}
+		}()
+
 		return rbacRes
 	}
 
-	return shadowItemChecker, err
+	return shadowItemChecker, authlib.NoopZookie{}, err
+}
+
+func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	acResChan := make(chan authlib.BatchCheckResponse, 1)
+	acErrChan := make(chan error, 1)
+
+	go func() {
+		if c.zanzanaClient == nil {
+			return
+		}
+
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
+		defer cancel()
+
+		timer := prometheus.NewTimer(c.metrics.batchCheckSeconds.WithLabelValues("zanzana"))
+		res, err := c.zanzanaClient.BatchCheck(zanzanaCtxTimeout, id, req)
+		if err != nil {
+			c.logger.Error("Failed to run zanzana batch check", "error", err)
+		}
+		timer.ObserveDuration()
+
+		acRes := <-acResChan
+		acErr := <-acErrChan
+
+		if acErr == nil {
+			c.compareBatchCheckResults(acRes, res, id, req)
+		}
+	}()
+
+	timer := prometheus.NewTimer(c.metrics.batchCheckSeconds.WithLabelValues("rbac"))
+	res, err := c.accessClient.BatchCheck(ctx, id, req)
+	timer.ObserveDuration()
+	acResChan <- res
+	acErrChan <- err
+
+	return res, err
+}
+
+// compareBatchCheckResults compares the results from RBAC and Zanzana batch checks
+// and logs any discrepancies.
+func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchCheckResponse, id authlib.AuthInfo, req authlib.BatchCheckRequest) {
+	checkItems := make(map[string]authlib.BatchCheckItem, len(req.Checks))
+	for _, checkItem := range req.Checks {
+		checkItems[checkItem.CorrelationID] = checkItem
+	}
+
+	for correlationID, acResult := range acRes.Results {
+		zanzanaResult, ok := zanzanaRes.Results[correlationID]
+		checkItem := checkItems[correlationID]
+
+		if !ok {
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
+			continue
+		}
+
+		if acResult.Allowed != zanzanaResult.Allowed {
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
+		} else {
+			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+		}
+	}
+}
+
+func formatCheck(req authlib.CheckRequest) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatBatchCheck(req authlib.BatchCheckItem) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatResource(group, resource, subresource string) string {
+	res := ""
+	if group == "" && resource == "" {
+		return "other"
+	}
+	res = fmt.Sprintf("%s/%s", group, resource)
+	if subresource != "" {
+		res = fmt.Sprintf("%s/%s", res, subresource)
+	}
+	return res
 }

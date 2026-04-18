@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, ReactUtils, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface Props {
   onRowToggle: () => void;

@@ -29,7 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -49,10 +49,7 @@
             },
             "lineInterpolation": "linear",
             "lineStyle": {
-              "dash": [
-                10,
-                10
-              ],
+              "dash": [10, 10],
               "fill": "dash"
             },
             "lineWidth": 1,
@@ -106,10 +103,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    0,
-                    20
-                  ],
+                  "dash": [0, 20],
                   "fill": "dot"
                 }
               }
@@ -174,7 +168,7 @@
       "type": "candlestick"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -260,7 +254,7 @@
       "type": "candlestick"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -346,7 +340,7 @@
       "type": "candlestick"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -467,11 +461,7 @@
   ],
   "refresh": false,
   "schemaVersion": 36,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

@@ -1,10 +1,10 @@
+import { Trans } from '@grafana/i18n';
 import mimirLogoRecordingSvg from 'img/alerting/mimir_logo_recording.svg';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';
-import { RuleType, SharedProps } from './RuleType';
+import { RuleType, type SharedProps } from './RuleType';
 
 const RecordingRuleType = ({ selected = false, disabled = false, onClick }: SharedProps) => {
   return (

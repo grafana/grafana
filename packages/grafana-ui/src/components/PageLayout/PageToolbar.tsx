@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { memo, Children, ReactNode } from 'react';
+import { memo, Children, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
+import { type IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
@@ -32,9 +32,14 @@ export interface Props {
    * By default left items are hidden on small screens.
    */
   forceShowLeftItems?: boolean;
+  'data-testid'?: string;
 }
 
-/** @alpha */
+/**
+ * @deprecated Use Page instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-deprecated-pagetoolbar--docs
+ */
 export const PageToolbar = memo(
   ({
     title,
@@ -52,6 +57,7 @@ export const PageToolbar = memo(
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
+    'data-testid': testId,
   }: Props) => {
     const styles = useStyles2(getStyles);
 
@@ -93,7 +99,7 @@ export const PageToolbar = memo(
     const searchLinksLabel = t('grafana-ui.page-toolbar.search-links', 'Search links');
 
     return (
-      <nav className={mainStyle} aria-label={ariaLabel}>
+      <nav className={mainStyle} aria-label={ariaLabel} data-testid={testId}>
         <div className={styles.leftWrapper}>
           {pageIcon && !onGoBack && (
             <div className={styles.pageIcon}>
@@ -185,7 +191,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(2, 2),
 
       [theme.breakpoints.down('md')]: {
         paddingLeft: '53px',

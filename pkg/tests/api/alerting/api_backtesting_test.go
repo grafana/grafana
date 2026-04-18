@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -34,12 +33,6 @@ func TestBacktesting(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, grafanaPath)
-
-	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -61,7 +54,7 @@ func TestBacktesting(t *testing.T) {
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
 			UID:    query.DatasourceUID,
-			UserID: userId,
+			UserID: 1,
 			OrgID:  1,
 		}
 		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
@@ -75,7 +68,7 @@ func TestBacktesting(t *testing.T) {
 			require.Truef(t, ok, "The data file does not contain a field `data`")
 
 			status, body := apiCli.SubmitRuleForBacktesting(t, request)
-			require.Equal(t, http.StatusOK, status)
+			require.Equalf(t, http.StatusOK, status, "Response: %s", body)
 			var result data.Frame
 			require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		})
@@ -114,6 +107,7 @@ func TestBacktesting(t *testing.T) {
 			resourcepermissions.SetResourcePermissionCommand{
 				Actions: []string{
 					accesscontrol.ActionAlertingRuleRead,
+					accesscontrol.ActionAlertingRuleUpdate,
 				},
 				Resource:          "folders",
 				ResourceID:        "*",

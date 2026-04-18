@@ -1,16 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useReducer, type CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { useStyles2 } from '../../../themes';
-import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
+import { type AdHocFilterModel } from '../../../internal';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
@@ -28,6 +29,7 @@ export const enum TooltipHoverMode {
 }
 
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetAdHocFiltersCallback = (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -43,6 +45,7 @@ interface TooltipPlugin2Props {
 
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
+  getAdHocFilters?: GetAdHocFiltersCallback;
 
   render: (
     u: uPlot,
@@ -53,14 +56,14 @@ interface TooltipPlugin2Props {
     // selected time range (for annotation triggering)
     timeRange: TimeRange2 | null,
     viaSync: boolean,
-    dataLinks: LinkModel[]
+    dataLinks: LinkModel[],
+    adHocFilters: AdHocFilterModel[]
   ) => React.ReactNode;
 
   maxWidth?: number;
 }
 
 interface TooltipContainerState {
-  plot?: uPlot | null;
   style: Partial<CSSProperties>;
   isHovering: boolean;
   isPinned: boolean;
@@ -96,7 +99,6 @@ function initState(): TooltipContainerState {
     isHovering: false,
     isPinned: false,
     contents: null,
-    plot: null,
     dismiss: () => {},
   };
 }
@@ -107,12 +109,10 @@ const MIN_ZOOM_DIST = 5;
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
 const getDataLinksFallback: GetDataLinksCallback = () => [];
+const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
 
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-/**
- * @alpha
- */
 export const TooltipPlugin2 = ({
   config,
   hoverMode,
@@ -124,17 +124,19 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
+  getAdHocFilters = getAdHocFiltersFallback,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
+  const plotRef = useRef<uPlot | null>(null);
 
   if (portalRoot.current == null) {
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
+  const [{ isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
-  const sizeRef = useRef<TooltipContainerSize>();
+  const sizeRef = useRef<TooltipContainerSize | undefined>(undefined);
   const styles = useStyles2(getStyles, maxWidth);
 
   const renderRef = useRef(render);
@@ -143,7 +145,12 @@ export const TooltipPlugin2 = ({
   const getLinksRef = useRef(getDataLinks);
   getLinksRef.current = getDataLinks;
 
+  const getAdHocFiltersRef = useRef(getAdHocFilters);
+  getAdHocFiltersRef.current = getAdHocFilters;
+
   useLayoutEffect(() => {
+    sizeRef.current?.observer.disconnect();
+
     sizeRef.current = {
       width: 0,
       height: 0,
@@ -165,7 +172,7 @@ export const TooltipPlugin2 = ({
     let yZoomed = false;
     let yDrag = false;
 
-    let _plot = plot;
+    let _plot = plotRef.current;
     let _isHovering = isHovering;
     let _someSeriesIdx = false;
     let _isPinned = isPinned;
@@ -200,6 +207,7 @@ export const TooltipPlugin2 = ({
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
     let dataLinks: LinkModel[] = [];
+    let adHocFilters: AdHocFilterModel[] = [];
 
     // for onceClick link rendering during mousemoves we use these pre-generated first links or actions
     // these will be wrong if the titles have interpolation using the hovered *value*
@@ -228,8 +236,20 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          dismiss();
+        }
+        return;
+      }
+
+      // this tooltip is Portaled, but actions inside it create forms in Modals
+      const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
+
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if (!domRef.current!.contains(e.target as Node)) {
+      if ((e.target as HTMLElement).closest(isModalOrPortaled) == null) {
         dismiss();
       }
     };
@@ -268,7 +288,8 @@ export const TooltipPlugin2 = ({
                 dismiss,
                 selectedRange,
                 viaSync,
-                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : []
+                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : [],
+                _isPinned ? adHocFilters : []
               )
             : null,
         dismiss,
@@ -288,12 +309,13 @@ export const TooltipPlugin2 = ({
       _isHovering = false;
       _plot!.setCursor({ left: -10, top: -10 });
       dataLinks = [];
+      adHocFilters = [];
 
       scheduleRender(prevIsPinned);
     };
 
     config.addHook('init', (u) => {
-      setState({ plot: (_plot = u) });
+      plotRef.current = _plot = u;
 
       // detect shiftKey and mutate drag mode from x-only to y-only
       if (clientZoom) {
@@ -313,6 +335,30 @@ export const TooltipPlugin2 = ({
               let onUp = (e: MouseEvent) => {
                 u.cursor.drag!.x = true;
                 u.cursor.drag!.y = false;
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      }
+
+      // add zoom-in cursor during drag-to-zoom interaction
+      if (queryZoom != null || clientZoom) {
+        u.over.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0) {
+              u.over.classList.add('zoom-drag');
+
+              let onUp = () => {
+                u.over.classList.remove('zoom-drag');
                 document.removeEventListener('mouseup', onUp, true);
               };
 
@@ -346,6 +392,7 @@ export const TooltipPlugin2 = ({
           // if tooltip visible, not pinned, and within proximity to a series/point
           else if (_isHovering && !_isPinned && closestSeriesIdx != null) {
             dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
+            adHocFilters = getAdHocFiltersRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {
@@ -643,6 +690,8 @@ export const TooltipPlugin2 = ({
     window.addEventListener('scroll', onscroll, true);
 
     return () => {
+      sizeRef.current?.observer.disconnect();
+
       window.removeEventListener('resize', updateWinSize);
       window.removeEventListener('scroll', onscroll, true);
 
@@ -654,8 +703,10 @@ export const TooltipPlugin2 = ({
 
   useLayoutEffect(() => {
     const size = sizeRef.current!;
+    const _plot = plotRef.current;
 
     if (domRef.current != null) {
+      size.observer.disconnect();
       size.observer.observe(domRef.current);
 
       // since the above observer is attached after container is in DOM, we need to manually update sizeRef
@@ -664,7 +715,7 @@ export const TooltipPlugin2 = ({
       size.width = width;
       size.height = height;
 
-      let event = plot!.cursor.event;
+      let event = _plot?.cursor.event;
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
@@ -689,12 +740,12 @@ export const TooltipPlugin2 = ({
         // it would end up re-dispatching mouseleave
         const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
 
-        !isStaleEvent && plot!.over.dispatchEvent(event);
+        !isStaleEvent && _plot?.over.dispatchEvent(event);
       } else {
-        plot!.setCursor(
+        _plot?.setCursor(
           {
-            left: plot!.cursor.left!,
-            top: plot!.cursor.top!,
+            left: _plot.cursor.left!,
+            top: _plot.cursor.top!,
           },
           true
         );
@@ -705,7 +756,7 @@ export const TooltipPlugin2 = ({
     }
   }, [isHovering]);
 
-  if (plot && isHovering) {
+  if (plotRef.current && isHovering) {
     return createPortal(
       <div
         className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
@@ -728,7 +779,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.portal,
+    zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',

@@ -4,7 +4,7 @@
 PACKAGES=$(ls -d ./packages/*/)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
-SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs" "grafana-o11y-ds-frontend" "grafana-sql")
+SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs" "grafana-o11y-ds-frontend" "grafana-sql" "grafana-openapi")
 
 # Loop through the packages
 while IFS=" " read -r -a package; do
@@ -31,6 +31,11 @@ while IFS=" " read -r -a package; do
 
   # Skip packages that are marked as private in their package.json (private: true)
   if [[ $(jq -r '.private' "./packages/$PACKAGE_PATH/package.json") == "true" ]]; then
+    continue
+  fi
+
+  # Skip packages that don't exist in the base (packages introduced in PR)
+  if [[ ! -f "./base/@$PACKAGE_PATH.tgz" ]]; then
     continue
   fi
 
@@ -66,6 +71,11 @@ echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
+
+if [[ "$IS_FORK" == "true" ]]; then
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
+  exit $EXIT_CODE
+fi
 
 # We will exit the workflow accordingly at another step
 exit 0

@@ -1,10 +1,10 @@
-import { Fragment } from 'react';
+import { Fragment, type JSX } from 'react';
 
 import { textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';

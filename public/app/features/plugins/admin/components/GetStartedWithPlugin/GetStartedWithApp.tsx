@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import { PluginMeta } from '@grafana/data';
+import { type PluginMeta } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;

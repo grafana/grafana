@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { Authorize } from '../../components/Authorize';
@@ -11,7 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 
-import { MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
+import { type MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
 
 interface MuteTimingActionsButtonsProps {
   muteTiming: MuteTiming;
@@ -87,7 +87,11 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
       <ConfirmModal
         isOpen={showDeleteDrawer}
         title={t('alerting.mute-timing-actions-buttons.title-delete-mute-timing', 'Delete mute timing')}
-        body={`Are you sure you would like to delete "${muteTiming.name}"?`}
+        body={t(
+          'alerting.mute-timing-actions-button.body-delete-mute-timing',
+          'Are you sure you would like to delete "{{muteTiming}}"?',
+          { muteTiming: muteTiming.name }
+        )}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
           await deleteMuteTiming.execute({

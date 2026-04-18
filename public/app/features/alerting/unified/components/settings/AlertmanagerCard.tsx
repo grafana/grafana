@@ -1,10 +1,10 @@
 import { capitalize } from 'lodash';
 
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 
-import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
+import { type ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
 
@@ -43,7 +43,7 @@ export function AlertmanagerCard({
   const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
 
   return (
-    <Card data-testid={`alertmanager-card-${name}`}>
+    <Card noMargin data-testid={`alertmanager-card-${name}`}>
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           {href ? (

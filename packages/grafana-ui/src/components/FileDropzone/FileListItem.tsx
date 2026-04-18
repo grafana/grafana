@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 
-import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { trimFileName } from '../../utils/file';
-import { t, Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 
-import { DropzoneFile } from './FileDropzone';
+import { type DropzoneFile } from './FileDropzone';
 
 export const REMOVE_FILE = 'Remove file';
 export interface FileListItemProps {
@@ -17,6 +17,11 @@ export interface FileListItemProps {
   removeFile?: (file: DropzoneFile) => void;
 }
 
+/**
+ * A FileListItem component used for the FileDropzone component to show uploaded files.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filelistitem--docs
+ */
 export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
   const styles = useStyles2(getStyles);
   const { file, progress, error, abortUpload, retryUpload } = customFile;

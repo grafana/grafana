@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -10,6 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var redirectAllowRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_./]*$`)
+
+// Do not allow redirect URLs that contain "//" or ".."
+var redirectDenyRe = regexp.MustCompile(`(//|\.\.)`)
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
@@ -28,6 +34,11 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 		}
 
 		if orgId == ctx.OrgID {
+			return
+		}
+
+		if !validRedirectPath(c.Req.URL.Path) {
+			// Do not switch orgs or perform the redirect because the new path is not valid
 			return
 		}
 
@@ -53,4 +64,12 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 
 		c.Redirect(newURL, 302)
 	}
+}
+
+func validRedirectPath(p string) bool {
+	if redirectDenyRe.MatchString(p) {
+		return false
+	}
+
+	return p == "" || p == "/" || redirectAllowRe.MatchString(p)
 }

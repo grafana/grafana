@@ -1,16 +1,19 @@
-import '@formatjs/intl-durationformat/polyfill';
 import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 
 import { getLanguage } from '@grafana/i18n/internal';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
 const isLocaleEnabled = config.featureToggles.localeFormatPreference;
 
 const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
-  return new Intl.DateTimeFormat(locale, options);
+  try {
+    return new Intl.DateTimeFormat(locale, options);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', options);
+  }
 });
 
 const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {
@@ -23,7 +26,7 @@ export const formatDate = deepMemoize(
       return formatDate(new Date(value), format);
     }
 
-    const currentLocale = isLocaleEnabled ? config.locale : getLanguage();
+    const currentLocale = isLocaleEnabled ? config.regionalFormat : getLanguage();
 
     const dateFormatter = createDateTimeFormatter(currentLocale, format);
     return dateFormatter.format(value);
@@ -32,7 +35,7 @@ export const formatDate = deepMemoize(
 
 export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const currentLocale = isLocaleEnabled ? config.locale : getLanguage();
+    const currentLocale = isLocaleEnabled ? config.regionalFormat : getLanguage();
 
     const dateFormatter = createDurationFormatter(currentLocale, options);
     return dateFormatter.format(duration);

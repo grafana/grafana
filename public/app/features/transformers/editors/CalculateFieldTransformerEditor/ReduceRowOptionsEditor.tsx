@@ -1,7 +1,7 @@
 import { ReducerID } from '@grafana/data';
-import { CalculateFieldTransformerOptions, ReduceOptions } from '@grafana/data/internal';
+import { type CalculateFieldTransformerOptions, type ReduceOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { FilterPill, InlineField, Stack, StatsPicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -71,7 +71,6 @@ export const ReduceRowOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[reduce?.reducer || ReducerID.sum]}
           onChange={onStatsChange}
           defaultStat={ReducerID.sum}

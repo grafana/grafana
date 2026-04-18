@@ -87,21 +87,21 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Create Public Dashboard
 	api.routeRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
 	api.routeRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
 	api.routeRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// swagger:route GET /dashboards/public-dashboards dashboard_public listPublicDashboards
+// swagger:route GET /dashboards/public-dashboards dashboards dashboard_public listPublicDashboards
 //
 //	Get list of public dashboards
 //
@@ -135,7 +135,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public getPublicDashboard
+// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboards dashboard_public getPublicDashboard
 //
 //	Get public dashboard by dashboardUid
 //
@@ -165,7 +165,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public createPublicDashboard
+// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboards dashboard_public createPublicDashboard
 //
 //	Create public dashboard for a dashboard
 //
@@ -219,7 +219,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public updatePublicDashboard
+// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboards dashboard_public updatePublicDashboard
 //
 //	Update public dashboard for a dashboard
 //
@@ -267,7 +267,7 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public deletePublicDashboard
+// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboards dashboard_public deletePublicDashboard
 //
 //	Delete public dashboard for a dashboard
 //
@@ -288,7 +288,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), uid, dashboardUid)
+	err := api.PublicDashboardService.Delete(c.Req.Context(), c.GetOrgID(), uid, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}

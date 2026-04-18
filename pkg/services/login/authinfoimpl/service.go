@@ -67,11 +67,28 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 	return authInfo, nil
 }
 
-func (s *Service) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+// GetUserAuthModuleLabels returns all auth modules for a user ordered by most recent first.
+func (s *Service) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error) {
+	modules, err := s.authInfoStore.GetUserAuthModules(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]string, 0, len(modules))
+	// modules should be unique and should not contain empty strings
+	for _, m := range modules {
+		label := login.GetAuthProviderLabel(m)
+		result = append(result, label)
+	}
+
+	return result, nil
+}
+
+func (s *Service) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	if len(query.UserIDs) == 0 {
 		return map[int64]string{}, nil
 	}
-	return s.authInfoStore.GetUserLabels(ctx, query)
+	return s.authInfoStore.GetUsersRecentlyUsedLabel(ctx, query)
 }
 
 func (s *Service) setAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery, info *login.UserAuth) error {
@@ -138,8 +155,8 @@ func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoC
 }
 
 func (s *Service) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	// Only set auth info if we have an (user id + auth module)
-	if cmd.UserId == 0 || cmd.AuthModule == "" {
+	// Only set auth info if we have an (user id + user uid + auth module)
+	if cmd.UserId == 0 || cmd.UserUID == "" || cmd.AuthModule == "" {
 		return errMissingParameters.Errorf("missing parameters for auth info %v", cmd)
 	}
 

@@ -1,12 +1,12 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isExposedComponentMetaInfoMissing } from '../validators';
 
-import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
+import { Registry, type RegistryType, type PluginExtensionConfigs } from './Registry';
 
 const logPrefix = 'Could not register exposed component. Reason:';
 
@@ -22,12 +22,13 @@ export class ExposedComponentsRegistry extends Registry<
   PluginExtensionExposedComponentConfig
 > {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<ExposedComponentRegistryItem>>;
       initialState?: RegistryType<ExposedComponentRegistryItem>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -65,7 +66,7 @@ export class ExposedComponentsRegistry extends Registry<
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
+        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog, this.apps)
       ) {
         continue;
       }
@@ -80,7 +81,7 @@ export class ExposedComponentsRegistry extends Registry<
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new ExposedComponentsRegistry({
+    return new ExposedComponentsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

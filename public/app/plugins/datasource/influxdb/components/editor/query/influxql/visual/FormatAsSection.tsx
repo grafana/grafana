@@ -1,8 +1,9 @@
 import { cx } from '@emotion/css';
+import type { JSX } from 'react';
 
 import { Select } from '@grafana/ui';
 
-import { ResultFormat } from '../../../../../types';
+import { type ResultFormat } from '../../../../../types';
 import { RESULT_FORMATS } from '../../../constants';
 import { unwrap } from '../utils/unwrap';
 

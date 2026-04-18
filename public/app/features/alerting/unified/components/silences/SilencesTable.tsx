@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { type GrafanaTheme2, dateMath } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   CollapsableSection,
@@ -14,12 +15,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
-import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -29,8 +29,8 @@ import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Authorize } from '../Authorize';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { Matchers } from './Matchers';
 import { NoSilencesSplash } from './NoSilencesCTA';
@@ -56,7 +56,7 @@ const SilencesTable = () => {
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
-      { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
+      { amSourceName: alertManagerSourceName, filter: { silenced: true, active: false, inhibited: false } },
       { ...API_QUERY_OPTIONS, skip: !canPreview }
     );
 
@@ -146,10 +146,10 @@ const SilencesTable = () => {
 
   return (
     <div data-testid="silences-table">
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
       {!!silences.length && (
         <Stack direction="column">
-          <SilencesFilter />
+          <SilencesFilter silences={silences} />
           <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
@@ -282,6 +282,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
+
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   return useMemo((): SilenceTableColumnProps[] => {
@@ -291,7 +292,7 @@ function useColumns(alertManagerSourceName: string) {
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
-        label: 'State',
+        label: t('alerting.use-columns.columns.label.state', 'State'),
         renderCell: function renderStateTag({ data: { status } }) {
           return <SilenceStateTag state={status.state} />;
         },
@@ -299,7 +300,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'alert-rule',
-        label: 'Alert rule targeted',
+        label: t('alerting.use-columns.columns.label.alert-rule-targeted', 'Alert rule targeted'),
         renderCell: function renderAlertRuleLink({ data: { metadata } }) {
           return metadata?.rule_title ? (
             <Link
@@ -315,7 +316,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'matchers',
-        label: 'Matching labels',
+        label: t('alerting.use-columns.columns.label.matching-labels', 'Matching labels'),
         renderCell: function renderMatchers({ data: { matchers } }) {
           const filteredMatchers = matchers?.filter((matcher) => matcher.name !== MATCHER_ALERT_RULE_UID) || [];
           return <Matchers matchers={filteredMatchers} />;
@@ -324,13 +325,13 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'alerts',
-        label: 'Alerts silenced',
+        label: t('alerting.use-columns.columns.label.alerts-silenced', 'Alerts silenced'),
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
           return (
             <span data-testid="alerts">
               {Array.isArray(silencedAlerts)
                 ? silencedAlerts.length
-                : // eslint-disable-next-line @grafana/no-untranslated-strings
+                : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   '-'}
             </span>
           );
@@ -339,7 +340,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'schedule',
-        label: 'Schedule',
+        label: t('alerting.use-columns.columns.label.schedule', 'Schedule'),
         renderCell: function renderSchedule({ data: { startsAt, endsAt } }) {
           const startsAtDate = dateMath.parse(startsAt);
           const endsAtDate = dateMath.parse(endsAt);
@@ -349,60 +350,67 @@ function useColumns(alertManagerSourceName: string) {
         size: 7,
       },
     ];
-    if (updateSupported) {
-      columns.push({
-        id: 'actions',
-        label: 'Actions',
-        renderCell: function renderActions({ data: silence }) {
-          const isExpired = silence.status.state === SilenceState.Expired;
+    columns.push({
+      id: 'actions',
+      label: t('alerting.use-columns.label.actions', 'Actions'),
+      renderCell: function renderActions({ data: silence }) {
+        const isExpired = silence.status.state === SilenceState.Expired;
 
-          const canCreate = silence?.accessControl?.create;
-          const canWrite = silence?.accessControl?.write;
+        const canCreate = silence?.accessControl?.create;
+        const canWrite = silence?.accessControl?.write;
 
-          const canRecreate = isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
-          const canEdit = !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);
+        const canRecreate = updateSupported && isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
+        const canEdit = updateSupported && !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);
 
-          return (
-            <Stack gap={0.5} wrap="wrap">
-              {canRecreate && (
+        return (
+          <Stack gap={0.5} wrap="wrap">
+            <LinkButton
+              title={t('alerting.use-columns.title-view', 'View')}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+              href={makeAMLink(`/alerting/silence/${silence.id}/view`, alertManagerSourceName)}
+            >
+              <Trans i18nKey="silences.table.view-button">View</Trans>
+            </LinkButton>
+            {canRecreate && (
+              <LinkButton
+                title={t('alerting.use-columns.title-recreate', 'Recreate')}
+                size="sm"
+                variant="secondary"
+                icon="sync"
+                href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
+              >
+                <Trans i18nKey="silences.table.recreate-button">Recreate</Trans>
+              </LinkButton>
+            )}
+            {canEdit && (
+              <>
                 <LinkButton
-                  title={t('alerting.use-columns.title-recreate', 'Recreate')}
+                  title={t('alerting.use-columns.title-unsilence', 'Unsilence')}
                   size="sm"
                   variant="secondary"
-                  icon="sync"
+                  icon="bell"
+                  onClick={() => handleExpireSilenceClick(silence.id)}
+                >
+                  <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
+                </LinkButton>
+                <LinkButton
+                  title={t('alerting.use-columns.title-edit', 'Edit')}
+                  size="sm"
+                  variant="secondary"
+                  icon="pen"
                   href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
                 >
-                  <Trans i18nKey="silences.table.recreate-button">Recreate</Trans>
+                  <Trans i18nKey="silences.table.edit-button">Edit</Trans>
                 </LinkButton>
-              )}
-              {canEdit && (
-                <>
-                  <LinkButton
-                    title={t('alerting.use-columns.title-unsilence', 'Unsilence')}
-                    size="sm"
-                    variant="secondary"
-                    icon="bell"
-                    onClick={() => handleExpireSilenceClick(silence.id)}
-                  >
-                    <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
-                  </LinkButton>
-                  <LinkButton
-                    title={t('alerting.use-columns.title-edit', 'Edit')}
-                    size="sm"
-                    variant="secondary"
-                    icon="pen"
-                    href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
-                  >
-                    <Trans i18nKey="silences.table.edit-button">Edit</Trans>
-                  </LinkButton>
-                </>
-              )}
-            </Stack>
-          );
-        },
-        size: 5,
-      });
-    }
+              </>
+            )}
+          </Stack>
+        );
+      },
+      size: 5,
+    });
     return columns;
   }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
 }

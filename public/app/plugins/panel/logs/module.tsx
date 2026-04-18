@@ -1,74 +1,229 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
+import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
-import { Options } from './panelcfg.gen';
-import { LogsPanelSuggestionsSupplier } from './suggestions';
+import { type Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
-  .setPanelOptions((builder) => {
-    builder
-      .addBooleanSwitch({
-        path: 'showTime',
-        name: 'Time',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'showLabels',
-        name: 'Unique labels',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
+  .setPanelOptions((builder, context) => {
+    const category = [t('logs.category-logs', 'Logs')];
+    builder.addBooleanSwitch({
+      path: 'showTime',
+      name: t('logs.name-time', 'Show timestamps'),
+      category,
+      description: '',
+      defaultValue: false,
+    });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder
+        .addRadio({
+          path: 'timestampResolution',
+          name: t('logs.timestamp-format', 'Timestamp resolution'),
+          category,
+          description: '',
+          defaultValue: 'ms',
+          showIf: (currentOptions) => Boolean(currentOptions.showTime),
+          settings: {
+            options: [
+              { value: 'ms', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
+              {
+                value: 'ns',
+                label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
+              },
+            ],
+          },
+        })
+        .addBooleanSwitch({
+          path: 'showLevel',
+          name: t('logs.name-show-level', 'Display log level'),
+          category,
+          defaultValue: true,
+          description: '',
+        });
+    }
+
+    if (!config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
         path: 'showCommonLabels',
-        name: 'Common labels',
+        name: t('logs.name-common-labels', 'Common labels'),
+        category,
         description: '',
         defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'wrapLogMessage',
-        name: 'Wrap lines',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'prettifyLogMessage',
-        name: 'Prettify JSON',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'enableLogDetails',
-        name: 'Enable log details',
-        description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'enableInfiniteScrolling',
-        name: 'Enable infinite scrolling',
-        description: 'Experimental. Request more results by scrolling to the bottom of the logs list.',
-        defaultValue: false,
-      })
-      .addRadio({
-        path: 'dedupStrategy',
-        name: 'Deduplication',
+      });
+    } else {
+      builder.addRadio({
+        path: 'fontSize',
+        name: t('logs.name-font-size', 'Font size'),
+        category,
         description: '',
         settings: {
           options: [
-            { value: LogsDedupStrategy.none, label: 'None', description: LogsDedupDescription[LogsDedupStrategy.none] },
+            { value: 'default', label: t('logs.font-size-options.label-default', 'Default') },
+            {
+              value: 'small',
+              label: t('logs.font-size-options.label-small', 'Small'),
+            },
+          ],
+        },
+      });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'wrapLogMessage',
+      name: t('logs.name-wrap-lines', 'Wrap lines'),
+      category,
+      description: t(
+        'logs.description-wrap-lines',
+        'Display logs as a single line or wrap long log entries to fit the panel.'
+      ),
+      defaultValue: false,
+    });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'unwrappedColumns',
+        name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
+        category,
+        description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields.'),
+        defaultValue: false,
+        showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
+      });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'prettifyLogMessage',
+      name: t('logs.name-prettify-json', 'Prettify JSON'),
+      category,
+      description: t('logs.description-prettify-json', 'Format JSON log entries with indentation and line breaks.'),
+      showIf: (currentOptions) => !config.featureToggles.newLogsPanel || Boolean(currentOptions.wrapLogMessage),
+      defaultValue: config.featureToggles.newLogsPanel ? true : false,
+    });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'syntaxHighlighting',
+        name: t('logs.name-enable-logs-highlighting', 'Enable logs highlighting'),
+        category,
+        description: t(
+          'logs.description-enable-logs-highlighting',
+          'Use a predefined coloring scheme to highlight relevant parts of the log lines.'
+        ),
+      });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'enableLogDetails',
+      name: t('logs.name-enable-log-details', 'Enable log details'),
+      category,
+      description: '',
+      defaultValue: true,
+    });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addRadio({
+        path: 'detailsMode',
+        name: t('logs.name-details-mode', 'Log details panel mode'),
+        category,
+        description: '',
+        showIf: (currentOptions) => Boolean(currentOptions.enableLogDetails),
+        settings: {
+          options: [
+            { value: 'inline', label: t('logs.name-details-options.label-inline', 'Inline') },
+            {
+              value: 'sidebar',
+              label: t('logs.name-details-options.label-sidebar', 'Sidebar'),
+            },
+          ],
+        },
+      });
+    }
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showFieldSelector',
+        name: t('logs.name-enable-field-selector', 'Enable field selector'),
+        category,
+        description: t(
+          'logs.description-enable-field-selector',
+          'Experimental. Show a component to manage the displayed fields from the logs.'
+        ),
+        defaultValue: false,
+      });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'enableInfiniteScrolling',
+      name: t('logs.name-enable-infinite-scrolling', 'Enable infinite scrolling'),
+      category,
+      description: t(
+        'logs.description-enable-infinite-scrolling',
+        'Experimental. Request more results by scrolling to the bottom of the logs list.'
+      ),
+      defaultValue: false,
+    });
+
+    if (config.featureToggles.otelLogsFormatting && config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showLogAttributes',
+        name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
+        category,
+        description: t(
+          'logs.description-show-log-attributes',
+          'Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.'
+        ),
+        defaultValue: true,
+      });
+    }
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showControls',
+        name: t('logs.name-show-controls', 'Show controls'),
+        category,
+        description: t(
+          'logs.description-show-controls',
+          'Display controls to jump to the last or first log line, and filters by log level.'
+        ),
+        defaultValue: false,
+      });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'showLabels',
+      name: t('logs.name-unique-labels', 'Unique labels'),
+      category,
+      description: '',
+    });
+
+    builder
+      .addRadio({
+        path: 'dedupStrategy',
+        name: t('logs.name-deduplication', 'Deduplication'),
+        category,
+        description: '',
+        settings: {
+          options: [
+            {
+              value: LogsDedupStrategy.none,
+              label: t('logs.deduplication-options.label-none', 'None'),
+              description: LogsDedupDescription[LogsDedupStrategy.none],
+            },
             {
               value: LogsDedupStrategy.exact,
-              label: 'Exact',
+              label: t('logs.deduplication-options.label-exact', 'Exact'),
               description: LogsDedupDescription[LogsDedupStrategy.exact],
             },
             {
               value: LogsDedupStrategy.numbers,
-              label: 'Numbers',
+              label: t('logs.deduplication-options.label-numbers', 'Numbers'),
               description: LogsDedupDescription[LogsDedupStrategy.numbers],
             },
             {
               value: LogsDedupStrategy.signature,
-              label: 'Signature',
+              label: t('logs.deduplication-options.label-signature', 'Signature'),
               description: LogsDedupDescription[LogsDedupStrategy.signature],
             },
           ],
@@ -77,15 +232,21 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       })
       .addRadio({
         path: 'sortOrder',
-        name: 'Order',
-        description: '',
+        name: t('logs.name-order', 'Order'),
+        category,
+        description: t(
+          'logs.description-order',
+          'Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.'
+        ),
         settings: {
           options: [
-            { value: LogsSortOrder.Descending, label: 'Newest first' },
-            { value: LogsSortOrder.Ascending, label: 'Oldest first' },
+            { value: LogsSortOrder.Descending, label: t('logs.order-options.label-newest-first', 'Newest first') },
+            { value: LogsSortOrder.Ascending, label: t('logs.order-options.label-oldest-first', 'Oldest first') },
           ],
         },
         defaultValue: LogsSortOrder.Descending,
       });
   })
-  .setSuggestionsSupplier(new LogsPanelSuggestionsSupplier());
+  .setSuggestionsSupplier(
+    showDefaultSuggestion((ds) => ds.hasData && ds.hasFieldType(FieldType.time) && ds.hasFieldType(FieldType.string))
+  );

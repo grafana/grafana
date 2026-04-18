@@ -5,23 +5,20 @@ import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import {
-  useRegisterRecentDashboardsActions,
-  useRegisterRecentScopesActions,
-  useRegisterScopesActions,
-  useRegisterStaticActions,
-} from './actions/useActions';
-import { CommandPaletteAction } from './types';
+import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
+import { type CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
@@ -42,24 +39,28 @@ function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery, currentRootActionId } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
   }));
 
-  useRegisterRecentDashboardsActions(searchQuery);
+  useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
 
-  // Dashboards and folders
-  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
+  // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
+  // dashboards category right now, so if any category is selected, we don't show these).
+  // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
+  // the currentRootActionId. Because these search results are manually added to the list later, they would show every
+  // time.
+  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
-    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
 
@@ -88,7 +89,11 @@ function CommandPaletteContents() {
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <div className={styles.resultsContainer}>
-              <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+              <RenderResults
+                isFetchingSearchResults={isFetchingSearchResults}
+                searchResults={searchResults}
+                searchQuery={searchQuery}
+              />
             </div>
           </div>
         </FocusScope>
@@ -131,12 +136,16 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
+  searchQuery: string;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
+  const { query } = useKBar();
+  const { isAvailable: isAssistantAvailable } = useAssistant();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
+
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
@@ -175,11 +184,16 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   }, [showEmptyState]);
 
   return showEmptyState ? (
-    <EmptyState
-      variant="not-found"
-      role="alert"
-      message={t('command-palette.empty-state.message', 'No results found')}
-    />
+    <EmptyState variant="not-found" role="alert" message={t('command-palette.empty-state.message', 'No results found')}>
+      {isAssistantAvailable && (
+        <OpenAssistantButton
+          origin="grafana/command-palette-empty-state"
+          prompt={`Search for ${searchQuery}`}
+          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+          onClick={query.toggle}
+        />
+      )}
+    </EmptyState>
   ) : (
     <KBarResults
       items={items}
@@ -229,7 +243,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,

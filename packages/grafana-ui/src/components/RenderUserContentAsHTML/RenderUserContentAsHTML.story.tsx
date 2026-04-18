@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';
 import mdx from './RenderUserContentAsHTML.mdx';
 
 const meta: Meta<typeof RenderUserContentAsHTML> = {
-  title: 'General/RenderUserContentAsHTML',
+  title: 'Utilities/RenderUserContentAsHTML',
   component: RenderUserContentAsHTML,
   parameters: {
     docs: {

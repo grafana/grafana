@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import { type GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControlsButton } from '../components/InstallControls';
+import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin/GetStartedWithPlugin';
+import { InstallControlsButton } from '../components/InstallControls/InstallControlsButton';
 import {
   getLatestCompatibleVersion,
   hasInstallControlWarning,
@@ -15,7 +15,7 @@ import {
   isNonAngularVersion,
 } from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
-import { CatalogPlugin, PluginStatus, Version } from '../types';
+import { type CatalogPlugin, PluginStatus, type Version } from '../types';
 
 interface Props {
   plugin?: CatalogPlugin;

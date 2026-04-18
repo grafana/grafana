@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type subHealthREST struct {
@@ -47,6 +49,9 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+		}
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)

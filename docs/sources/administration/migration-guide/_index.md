@@ -9,6 +9,7 @@ keywords:
   - Grafana OSS
 menuTitle: Migrate from Grafana OSS/Enterprise to Grafana Cloud
 title: Migrate from Grafana OSS/Enterprise to Grafana Cloud
+weight: 7000
 ---
 
 # Migrate from Grafana OSS/Enterprise to Grafana Cloud

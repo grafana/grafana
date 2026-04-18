@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
+import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
+import { TimeRangeLabel } from '../TimeRangeLabel';
+
+import { type AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;
@@ -26,8 +28,6 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
-
-  const timeRange = query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined;
 
   const separator = <span>, </span>;
 
@@ -58,7 +58,9 @@ export const QueryOptions = ({
       </Toggletip>
 
       <div className={styles.staticValues}>
-        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
+        <span>
+          <TimeRangeLabel relativeTimeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()} />
+        </span>
 
         {queryOptions.maxDataPoints && (
           <>

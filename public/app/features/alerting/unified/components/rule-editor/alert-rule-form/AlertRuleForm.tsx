@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
+import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -21,8 +21,8 @@ import {
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { RuleGroupIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
-import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleGroupIdentifier, type RuleWithLocation } from 'app/types/unified-alerting';
+import { type PostableRuleGrafanaRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   LogMessages,
@@ -36,8 +36,8 @@ import {
   trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import {
-  GrafanaGroupUpdatedResponse,
-  RulerGroupUpdatedResponse,
+  type GrafanaGroupUpdatedResponse,
+  type RulerGroupUpdatedResponse,
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
@@ -51,7 +51,7 @@ import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { rulesNav } from '../../../utils/navigation';
 import {
   MANUAL_ROUTING_KEY,
@@ -60,6 +60,7 @@ import {
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { BacktestDropdownButton } from '../../backtesting/BacktestDropdownButton';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -106,9 +107,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       return formValuesFromPrefill(prefill);
     }
 
-    const defaultRuleType = ruleType || RuleFormType.grafana;
-
-    return defaultFormValuesForRuleType(defaultRuleType);
+    return defaultFormValuesForRuleType(ruleType);
   }, [existing, prefill, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
@@ -246,6 +245,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           <Stack direction="column" gap={3}>
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
+
             {/* Step 2 */}
             <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} mode="edit" />
             {/* Step 3-4-5 */}
@@ -291,6 +291,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                   <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
                 </Button>
               )}
+
+              {config.featureToggles.alertingBacktesting && <BacktestDropdownButton ruleDefinition={watch()} />}
             </Stack>
           </Stack>
         </div>

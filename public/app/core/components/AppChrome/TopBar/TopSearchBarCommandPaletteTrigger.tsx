@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -40,6 +40,7 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
 
   return <PretendTextInput onClick={onOpenSearch} />;
 });
+TopSearchBarCommandPaletteTrigger.displayName = 'TopSearchBarCommandPaletteTrigger';
 
 interface PretendTextInputProps {
   onClick: () => void;
@@ -111,18 +112,5 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&:focus-visible': getFocusStyles(theme),
       },
     ]),
-
-    button: css({
-      // height: 32,
-      width: '100%',
-      textAlign: 'center',
-
-      '> *': {
-        width: '100%',
-        textAlign: 'center',
-        justifyContent: 'center',
-        gap: '1ch',
-      },
-    }),
   };
 };

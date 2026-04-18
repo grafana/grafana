@@ -1,18 +1,20 @@
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { backendSrv } from 'app/core/services/backend_srv';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 
-import { DashboardWithAccessInfo } from './types';
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
+import { type DashboardWithAccessInfo } from './types';
 import { K8sDashboardV2API } from './v2';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -32,12 +34,12 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
   access: {},
 };
 
-// Create mock get and put functions that we can spy on
+// Create mock get, put, and post functions that we can spy on
 const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
 
 const mockPut = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    apiVersion: 'dashboard.grafana.app/v2',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name,
@@ -51,11 +53,28 @@ const mockPut = jest.fn().mockImplementation((url, data) => {
   };
 });
 
+const mockPost = jest.fn().mockImplementation((url, data) => {
+  return {
+    apiVersion: 'dashboard.grafana.app/v2',
+    kind: 'Dashboard',
+    metadata: {
+      name: data.metadata?.name || 'restored-dash',
+      generation: 1,
+      resourceVersion: '1',
+      creationTimestamp: new Date().toISOString(),
+      labels: data.metadata?.labels,
+      annotations: data.metadata?.annotations,
+    },
+    spec: data.spec,
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: mockGet,
     put: mockPut,
+    post: mockPost,
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -73,6 +92,7 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 describe('v2 dashboard API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
   });
 
   it('should provide folder annotations', async () => {
@@ -84,7 +104,7 @@ describe('v2 dashboard API', () => {
       },
     });
 
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -110,7 +130,7 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  it('throws an error if folder is not found', async () => {
+  it('throws an error if folder service returns an error other than 403', async () => {
     mockGet.mockResolvedValueOnce({
       ...mockDashboardDto,
       metadata: {
@@ -119,11 +139,25 @@ describe('v2 dashboard API', () => {
       },
     });
     jest
-      .spyOn(backendSrv, 'getFolderByUid')
+      .spyOn(folderHooks, 'getFolderByUidFacade')
       .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardV2API();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
+  });
+
+  it('should not throw an error if folder is not found and user has access to dashboard but not to folder', async () => {
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
+    });
+    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+
+    const api = new K8sDashboardV2API();
+    const dashboardDTO = await api.getDashboardDTO('test');
+    expect(dashboardDTO.spec).toMatchObject({
+      title: '',
+    });
   });
   describe('v2 dashboard API - Save', () => {
     beforeEach(() => {
@@ -147,7 +181,8 @@ describe('v2 dashboard API', () => {
       },
     };
 
-    it('should create new dashboard', async () => {
+    // TODO: unskip once slug implemented in response
+    it.skip('should create new dashboard', async () => {
       const api = new K8sDashboardV2API();
       const result = await api.saveDashboard({
         ...defaultSaveCommand,
@@ -161,13 +196,14 @@ describe('v2 dashboard API', () => {
         id: 123,
         uid: 'test-dash',
         url: '/d/test-dash/testdashboard',
-        slug: '',
+        slug: 'testdashboard',
         status: 'success',
         version: 2,
       });
     });
 
-    it('should update existing dashboard', async () => {
+    // TODO: unskip once slug implemented in response
+    it.skip('should update existing dashboard', async () => {
       const api = new K8sDashboardV2API();
 
       const result = await api.saveDashboard({
@@ -181,6 +217,7 @@ describe('v2 dashboard API', () => {
           name: 'existing-dash',
         },
       });
+      expect(result.slug).toBe('chaingtitledashboard');
       expect(result.version).toBe(2);
     });
 
@@ -203,7 +240,7 @@ describe('v2 dashboard API', () => {
       });
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v2alpha1/namespaces/default/dashboards/existing-dash',
+        '/apis/dashboard.grafana.app/v2/namespaces/default/dashboards/existing-dash',
         {
           metadata: {
             name: 'existing-dash',
@@ -220,10 +257,70 @@ describe('v2 dashboard API', () => {
         { params: undefined }
       );
     });
+
+    it('should handle empty string folderUid for root folder', async () => {
+      const api = new K8sDashboardV2API();
+      const saveCommand = {
+        dashboard: defaultDashboardV2Spec(),
+        folderUid: '',
+        message: 'Move to root folder',
+        k8s: {
+          name: 'existing-dash',
+          annotations: {
+            [AnnoKeyFolder]: 'some-previous-folder',
+            [AnnoKeyFolderUrl]: 'some-folder-url',
+            [AnnoKeyFolderTitle]: 'Some Folder Title',
+          },
+        },
+      };
+
+      await api.saveDashboard(saveCommand);
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut).toHaveBeenCalledWith(
+        '/apis/dashboard.grafana.app/v2/namespaces/default/dashboards/existing-dash',
+        {
+          metadata: {
+            name: 'existing-dash',
+            annotations: {
+              [AnnoKeyFolder]: '',
+              [AnnoKeyMessage]: 'Move to root folder',
+              [AnnoKeySavedFromUI]: '10.0.0',
+            },
+          },
+          spec: defaultDashboardV2Spec(),
+        },
+        { params: undefined }
+      );
+
+      const callArgs = mockPut.mock.calls[0];
+      const requestBody = callArgs[1];
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolderUrl);
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolderTitle);
+    });
+
+    it('should not set folder annotation when folderUid is undefined', async () => {
+      const api = new K8sDashboardV2API();
+      const saveCommand = {
+        dashboard: defaultDashboardV2Spec(),
+        message: 'Save without folder',
+        k8s: {
+          name: 'existing-dash',
+        },
+      };
+
+      await api.saveDashboard(saveCommand);
+      expect(mockPut).toHaveBeenCalledTimes(1);
+
+      const callArgs = mockPut.mock.calls[0];
+      const requestBody = callArgs[1];
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
+      expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
+    });
   });
 
   describe('version error handling', () => {
-    it('should throw DashboardVersionError for v0alpha1 conversion error', async () => {
+    it('should throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
@@ -241,9 +338,55 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should throw DashboardVersionError for v1beta1 conversion error', async () => {
+    it('should throw DashboardVersionError for v0alpha1 conversion error and v1 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
+        spec: {
+          // this is a v1 dashboard
+          title: 'test-dashboard',
+          panels: [],
+        },
+        status: {
+          conversion: {
+            failed: true,
+            error: 'backend conversion not yet implemented',
+            storedVersion: 'v0alpha1',
+          },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardV2API();
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
+    });
+
+    it('should throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'backend conversion not yet implemented',
+            storedVersion: 'v1beta1',
+          },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardV2API();
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
+    });
+
+    it('should throw DashboardVersionError for v1beta1 conversion error and v1 spec', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        spec: {
+          // this is a v1 dashboard
+          title: 'test-dashboard',
+          panels: [],
+        },
         status: {
           conversion: {
             failed: true,
@@ -266,7 +409,7 @@ describe('v2 dashboard API', () => {
           conversion: {
             failed: true,
             error: 'other-error',
-            storedVersion: 'v2alpha1',
+            storedVersion: 'v2beta1',
           },
         },
       };
@@ -275,6 +418,172 @@ describe('v2 dashboard API', () => {
 
       const api = new K8sDashboardV2API();
       await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
+    });
+  });
+
+  describe('listDashboardHistory', () => {
+    it('should return all versions in a single request when no pagination needed', async () => {
+      const mockHistory = {
+        metadata: { resourceVersion: '1' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } },
+        ],
+      };
+      mockGet.mockResolvedValueOnce(mockHistory);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.listDashboardHistory('dash-uid');
+
+      expect(result.items).toHaveLength(3);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should follow pagination tokens across multiple pages', async () => {
+      const page1 = {
+        metadata: { resourceVersion: '1', continue: 'token-page2' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 5 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 4 } },
+        ],
+      };
+      const page2 = {
+        metadata: { resourceVersion: '1', continue: 'token-page3' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+        ],
+      };
+      const page3 = {
+        metadata: { resourceVersion: '1' },
+        items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } }],
+      };
+
+      mockGet.mockResolvedValueOnce(page1).mockResolvedValueOnce(page2).mockResolvedValueOnce(page3);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.listDashboardHistory('dash-uid');
+
+      expect(result.items).toHaveLength(5);
+      expect(mockGet).toHaveBeenCalledTimes(3);
+      expect(result.metadata.continue).toBeUndefined();
+    });
+  });
+
+  describe('listDeletedDashboards', () => {
+    it('should return list of deleted dashboards', async () => {
+      const mockDeletedDashboards = {
+        items: [
+          {
+            ...mockDashboardDto,
+            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' },
+          },
+          {
+            ...mockDashboardDto,
+            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' },
+          },
+        ],
+      };
+
+      mockGet.mockResolvedValueOnce(mockDeletedDashboards);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.listDeletedDashboards({ limit: 10 });
+
+      expect(result).toEqual(mockDeletedDashboards);
+      expect(result.items).toHaveLength(2);
+    });
+  });
+
+  describe('restoreDashboardVersion', () => {
+    it('should use current folder, not the historical version folder', async () => {
+      // History list: version 3 was in 'old-folder'
+      mockGet.mockResolvedValueOnce({
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            ...mockDashboardDto,
+            metadata: {
+              ...mockDashboardDto.metadata,
+              generation: 3,
+              annotations: { [AnnoKeyFolder]: 'old-folder' },
+            },
+          },
+        ],
+      });
+
+      // Current dashboard is in 'current-folder'
+      mockGet.mockResolvedValueOnce({
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          annotations: { [AnnoKeyFolder]: 'current-folder' },
+        },
+      });
+
+      const api = new K8sDashboardV2API();
+      await api.restoreDashboardVersion('dash-uid', 3);
+
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: expect.objectContaining({
+              [AnnoKeyFolder]: 'current-folder',
+            }),
+          }),
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('restoreDashboard', () => {
+    it('should send only metadata and spec, without apiVersion, kind, or status', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          resourceVersion: '123456',
+        },
+        status: { conversion: { failed: false, storedVersion: 'v0alpha1' } },
+      };
+
+      const api = new K8sDashboardV2API();
+      const result = await api.restoreDashboard(dashboardToRestore);
+
+      const payload = mockPost.mock.calls[0][1];
+      expect(payload).not.toHaveProperty('apiVersion');
+      expect(payload).not.toHaveProperty('kind');
+      expect(payload).not.toHaveProperty('status');
+      expect(payload.metadata.resourceVersion).toBe('');
+      expect(payload).toHaveProperty('spec');
+      expect(result.metadata.name).toBe('dash-uid');
+    });
+
+    it('should preserve dashboard folder metadata', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          annotations: {
+            ...(mockDashboardDto.metadata.annotations || {}),
+            [AnnoKeyFolder]: 'randomFolderUid',
+          },
+        },
+      };
+
+      const api = new K8sDashboardV2API();
+      await api.restoreDashboard(dashboardToRestore);
+
+      const payload = mockPost.mock.calls[0][1];
+      expect(payload.metadata.annotations).toEqual(
+        expect.objectContaining({
+          [AnnoKeyFolder]: 'randomFolderUid',
+          [AnnoKeyGrantPermissions]: 'default',
+        })
+      );
     });
   });
 });

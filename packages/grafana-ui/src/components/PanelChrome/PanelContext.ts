@@ -2,18 +2,18 @@ import { createContext, useContext } from 'react';
 
 import {
   EventBusSrv,
-  EventBus,
-  DashboardCursorSync,
-  AnnotationEventUIModel,
-  ThresholdsConfig,
-  CoreApp,
-  DataFrame,
-  DataLinkPostProcessor,
+  type EventBus,
+  type DashboardCursorSync,
+  type AnnotationEventUIModel,
+  type ThresholdsConfig,
+  type CoreApp,
+  type DataFrame,
+  type DataLinkPostProcessor,
 } from '@grafana/data';
 
-import { AdHocFilterItem } from '../Table/types';
+import { type AdHocFilterItem } from '../Table/types';
 
-import { OnSelectRangeCallback, SeriesVisibilityChangeMode } from './types';
+import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
@@ -34,11 +34,12 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
-  onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
+  onToggleSeriesVisibility?: (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
   canDeleteAnnotations?: (dashboardUID?: string) => boolean;
+  canExecuteActions?: () => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
@@ -54,6 +55,15 @@ export interface PanelContext {
    */
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
+  /**
+   * Returns filters based on existing grouping or an empty array
+   */
+  getFiltersBasedOnGrouping?: (items: AdHocFilterItem[]) => AdHocFilterItem[];
+  /**
+   *
+   * Used to apply multiple filters at once
+   */
+  onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
   /**
    * Enables modifying thresholds directly from the panel
    *
@@ -95,6 +105,7 @@ export interface PanelContext {
   /**
    * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
    * @internal
+   * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
 }

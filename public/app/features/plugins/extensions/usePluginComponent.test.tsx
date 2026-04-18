@@ -1,6 +1,7 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import type { JSX } from 'react';
 
-import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
+import { type AppPluginConfig, PluginContextProvider, type PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
@@ -10,7 +11,8 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './registry/types';
+import { type PluginExtensionRegistries } from './registry/types';
+import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
 import { isGrafanaDevMode } from './utils';
@@ -50,8 +52,7 @@ describe('usePluginComponent()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const originalApps = config.apps;
-  const pluginId = 'myorg-extensions-app';
+  const pluginId = basicApp.id;
   const exposedComponentId = `${pluginId}/exposed-component/v1`;
   const exposedComponentConfig = {
     id: exposedComponentId,
@@ -60,39 +61,23 @@ describe('usePluginComponent()', () => {
     component: () => <div>Hello World</div>,
   };
   const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
+    ...basicApp,
     extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
+      ...basicApp.extensions,
       // This is necessary, so we can register exposed components to the registry during the tests
       // (Otherwise the registry would reject it in the imitated production mode)
       exposedComponents: [exposedComponentConfig],
-      extensionPoints: [],
     },
   };
+  let apps: AppPluginConfig[];
 
   beforeEach(() => {
+    apps = [appPluginConfig];
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry(apps),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
+      addedLinksRegistry: new AddedLinksRegistry(apps),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
@@ -134,17 +119,9 @@ describe('usePluginComponent()', () => {
       },
     };
 
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
   });
 
   it('should return null if there are no component exposed for the id', () => {
@@ -333,7 +310,7 @@ describe('usePluginComponent()', () => {
     expect(log.warning).not.toHaveBeenCalled();
   });
 
-  it('should pass a read-only copy of the props (in dev mode)', async () => {
+  it('should pass a writable copy of the props (in dev mode)', async () => {
     config.buildInfo.env = 'development';
 
     type Props = {
@@ -377,12 +354,16 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(Component && <Component {...originalProps} override />)).toThrow(
-      TypeError("'set' on proxy: trap returned falsish for property 'c'")
+    // Should not throw an error if it mutates the props
+    expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
+
+    // Should log an error in dev mode
+    expect(log.error).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id grafana-basic-app and version unknown',
+      {
+        stack: expect.any(String),
+      }
     );
-    jest.spyOn(console, 'error').mockRestore();
   });
 
   it('should pass a writable copy of the props (in production mode)', async () => {
@@ -429,12 +410,15 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
+    // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
     // Should log a warning
-    expect(log.warning).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
-      stack: expect.any(String),
-    });
+    expect(log.warning).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id grafana-basic-app and version unknown',
+      {
+        stack: expect.any(String),
+      }
+    );
   });
 });

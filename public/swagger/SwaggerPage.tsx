@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, SelectableValue } from '@grafana/data';
-import { Stack, Select, UserIcon, UserView, Button } from '@grafana/ui';
+import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
-import grafanaIconSvg from 'img/grafana_icon.svg';
-
-import { Trans } from '../app/core/internationalization';
 
 import { NamespaceContext, WrappedPlugins } from './plugins';
 
@@ -86,7 +84,7 @@ export const Page = () => {
         <NamespaceContext.Provider value={namespace.value}>
           <div style={{ backgroundColor: '#000', padding: '10px' }}>
             <Stack justifyContent={'space-between'}>
-              <img height="40" src={grafanaIconSvg} alt="Grafana" />
+              <Icon name="grafana" size="xxl" />
               <Select
                 options={urls.value}
                 isClearable={false /* TODO -- when we allow a landing page, this can be true */}
@@ -126,10 +124,9 @@ export const Page = () => {
               tryItOutEnabled={true}
               queryConfigEnabled={false}
               persistAuthorization={false}
+              displayOperationId
             />
           )}
-
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>

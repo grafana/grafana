@@ -21,7 +21,7 @@ var (
 )
 
 type ruleFactory interface {
-	new(context.Context, *models.AlertRule) Rule
+	new(context.Context, ruleWithFolder) Rule
 }
 
 type ruleRegistry struct {
@@ -35,14 +35,14 @@ func newRuleRegistry() ruleRegistry {
 
 // getOrCreate gets a rule routine from registry for the provided rule. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
-func (r *ruleRegistry) getOrCreate(context context.Context, item *models.AlertRule, factory ruleFactory) (Rule, bool) {
+func (r *ruleRegistry) getOrCreate(context context.Context, rf ruleWithFolder, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	key := item.GetKey()
+	key := rf.rule.GetKey()
 	rule, ok := r.rules[key]
 	if !ok {
-		rule = factory.new(context, item)
+		rule = factory.new(context, rf)
 		r.rules[key] = rule
 	}
 	return rule, !ok
@@ -99,15 +99,16 @@ func (e *Evaluation) Fingerprint() fingerprint {
 }
 
 type alertRulesRegistry struct {
-	rules        map[models.AlertRuleKey]*models.AlertRule
-	folderTitles map[models.FolderKey]string
-	mu           sync.Mutex
+	ruleChainFingerprints map[string]uint64
+	rules                 map[models.AlertRuleKey]*models.AlertRule
+	folderTitles          map[models.FolderKey]string
+	mu                    sync.RWMutex
 }
 
 // all returns all rules in the registry.
 func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
 	for _, rule := range r.rules {
 		result = append(result, rule)
@@ -116,15 +117,19 @@ func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]st
 }
 
 func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.rules[k]
 }
 
-// set replaces all rules in the registry. Returns difference between previous and the new current version of the registry
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string) diff {
+// set replaces all rules in the registry. Rules belonging to a chain are
+// enriched with synthetic group names, sequential indices, and the chain's
+// interval (no-op when chains is empty). Returns the difference between the
+// previous and the new version of the registry.
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string, ruleChains []models.SchedulableRuleChain) diff {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	models.EnrichRulesWithChainMembership(rules, ruleChains)
 	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		rulesMap[rule.GetKey()] = rule
@@ -133,6 +138,11 @@ func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.F
 	r.rules = rulesMap
 	// return the map as is without copying because it is not mutated
 	r.folderTitles = folders
+	fingerprints := make(map[string]uint64, len(ruleChains))
+	for _, chain := range ruleChains {
+		fingerprints[chain.UID] = ruleChainFingerprint(chain)
+	}
+	r.ruleChainFingerprints = fingerprints
 	return d
 }
 
@@ -157,12 +167,28 @@ func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool
 }
 
 func (r *alertRulesRegistry) isEmpty() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return len(r.rules) == 0
 }
 
-func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+func (r *alertRulesRegistry) ruleChainsNeedUpdate(ruleChains []models.SchedulableRuleChain) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if len(r.ruleChainFingerprints) != len(ruleChains) {
+		return true
+	}
+	for _, chain := range ruleChains {
+		if fp, ok := r.ruleChainFingerprints[chain.UID]; !ok || fp != ruleChainFingerprint(chain) {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *alertRulesRegistry) rulesNeedUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	if len(r.rules) != len(keys) {
 		return true
 	}
@@ -303,8 +329,8 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(0)
 	}
 
-	for _, setting := range rule.NotificationSettings {
-		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint()))
+	if rule.NotificationSettings != nil {
+		binary.LittleEndian.PutUint64(tmp, uint64(rule.NotificationSettings.Fingerprint(nil)))
 		writeBytes(tmp)
 	}
 
@@ -318,7 +344,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(*rule.PanelID)
 	}
 	writeString(rule.RuleGroup)
-	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
 	if rule.Record != nil {

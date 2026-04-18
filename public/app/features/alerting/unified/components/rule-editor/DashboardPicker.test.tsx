@@ -1,7 +1,9 @@
 import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
+
+import { config } from '@grafana/runtime';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
@@ -21,40 +23,43 @@ jest.mock('react-virtualized-auto-sizer', () => {
 
 const server = setupMswServer();
 
-mockDashboardApi(server).search([
-  mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
-  mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),
-  mockDashboardSearchItem({ uid: 'dash-3', type: DashboardSearchItemType.DashDB, title: 'Dashboard 3' }),
-]);
-
-mockDashboardApi(server).dashboard(
-  mockDashboardDto({
-    uid: 'dash-2',
-    title: 'Dashboard 2',
-    panels: [
-      {
-        type: 'graph',
-      },
-      {
-        type: 'timeseries',
-      },
-      // this one is a library panel
-      {
-        type: undefined,
-        libraryPanel: {
-          name: 'my library panel',
-          uid: 'abc123',
-        },
-      },
-    ],
-  })
-);
-
 const ui = {
   dashboardButton: (name: RegExp) => byRole('button', { name }),
 };
 
 describe('DashboardPicker', () => {
+  beforeEach(() => {
+    config.featureToggles.kubernetesDashboards = false;
+
+    mockDashboardApi(server).search([
+      mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
+      mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),
+      mockDashboardSearchItem({ uid: 'dash-3', type: DashboardSearchItemType.DashDB, title: 'Dashboard 3' }),
+    ]);
+
+    mockDashboardApi(server).dashboard(
+      mockDashboardDto({
+        uid: 'dash-2',
+        title: 'Dashboard 2',
+        panels: [
+          {
+            type: 'graph',
+          },
+          {
+            type: 'timeseries',
+          },
+          // this one is a library panel
+          {
+            type: undefined,
+            libraryPanel: {
+              name: 'my library panel',
+              uid: 'abc123',
+            },
+          },
+        ],
+      })
+    );
+  });
   it('Renders panels without ids', async () => {
     render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />);
 

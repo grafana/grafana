@@ -14,6 +14,7 @@ area/backend/db/mysql
 area/backend/db/postgres
 area/backend/db/sql
 area/backend/db/sqlite
+area/gitsync
 area/configuration
 area/dashboard/annotations
 area/dashboard/data-links
@@ -84,10 +85,10 @@ area/scenes
 area/search
 area/security
 area/streaming
+area/suggestions
 area/templating/repeating
 area/tooltip
 area/transformations
-datagrid
 datasource/Alertmanager
 datasource/Azure
 datasource/azure-cosmosdb
@@ -121,4 +122,3 @@ datasource/Timestream
 datasource/X-Ray
 datasource/Zabbix
 datasource/Zipkin
-team/grafana-aws-datasources

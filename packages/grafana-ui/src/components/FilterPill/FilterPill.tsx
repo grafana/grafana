@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types';
-import { clearButtonStyles } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { type IconName } from '../../types/icon';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface FilterPillProps {
@@ -15,6 +15,11 @@ export interface FilterPillProps {
   icon?: IconName;
 }
 
+/**
+ * A component used for quick toggling on/off filters. Mostly used in inline form components and transformation/query editors.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filterpill--docs
+ */
 export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
@@ -51,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     selected: css({
       color: theme.colors.text.primary,
       background: theme.colors.action.selected,
+      border: `1px solid ${theme.colors.action.selectedBorder}`,
 
       '&:hover': {
         background: theme.colors.action.focus,

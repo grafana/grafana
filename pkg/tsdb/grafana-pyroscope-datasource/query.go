@@ -13,12 +13,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/heatmap"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
 type queryModel struct {
@@ -34,7 +41,12 @@ const (
 	queryTypeProfile = string(dataquery.PyroscopeQueryTypeProfile)
 	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
 	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
+
+	exemplarsFeatureToggle = "profilesExemplars"
+	heatmapFeatureToggle   = "profilesHeatmap"
 )
+
+var identityTransformation = func(value float64) float64 { return value }
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
 func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
@@ -75,7 +87,27 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
-			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
+
+			// Heatmap handling
+			if qm.IncludeHeatmap && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
+				const maxHeatmapPoints = 64
+				timeRangeSec := query.TimeRange.To.Sub(query.TimeRange.From).Seconds()
+				minStepFromRange := timeRangeSec / maxHeatmapPoints
+				stepDuration := math.Max(math.Max(query.Interval.Seconds(), parsedInterval.Seconds()), minStepFromRange)
+				frames, err := d.queryHeatmap(gCtx, span, profileTypeId, labelSelector, query, qm, stepDuration, pCtx.DataSourceInstanceSettings.UID)
+				if err != nil {
+					return err
+				}
+				responseMutex.Lock()
+				defer responseMutex.Unlock()
+				response.Frames = append(response.Frames, frames...)
+				return nil
+			}
+
+			exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
+			if qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
+				exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
+			}
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
 				profileTypeId,
@@ -85,6 +117,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				qm.GroupBy,
 				qm.Limit,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+				exemplarType,
 			)
 			if err != nil {
 				span.RecordError(err)
@@ -94,8 +127,18 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
-			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
-			responseMutex.Unlock()
+			defer responseMutex.Unlock()
+			withAnnotations := qm.Annotations != nil && *qm.Annotations
+			stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
+			frames, err := seriesToDataFrames(seriesResp, withAnnotations, stepDuration, profileTypeId)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				return err
+			}
+			response.Frames = append(response.Frames, frames...)
+
 			return nil
 		})
 	}
@@ -115,7 +158,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				profileResp = prof
 			} else {
 				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes, qm.ProfileIdSelector)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -127,7 +170,24 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 			var frame *data.Frame
 			if profileResp != nil {
-				frame = responseToDataFrames(profileResp)
+				var dsJson dsJsonModel
+				err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					return fmt.Errorf("error unmarshaling datasource json model: %v", err)
+				}
+
+				parsedInterval := time.Second * 15
+				if dsJson.MinStep != "" {
+					parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+					if err != nil {
+						parsedInterval = time.Second * 15
+						logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+					}
+				}
+				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
+				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
@@ -161,12 +221,87 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	return response
 }
 
+// queryHeatmap handles heatmap query execution and frame construction.
+func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span, profileTypeId string, labelSelector string, query backend.DataQuery, qm queryModel, stepDuration float64, datasourceUID string) ([]*data.Frame, error) {
+	heatmapType := querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL
+	if qm.HeatmapType == "span" {
+		heatmapType = querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN
+	}
+
+	includeExemplars := qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle)
+
+	heatmapResp, err := d.client.GetHeatmap(
+		ctx,
+		profileTypeId,
+		labelSelector,
+		query.TimeRange.From.UnixMilli(),
+		query.TimeRange.To.UnixMilli(),
+		qm.GroupBy,
+		stepDuration,
+		heatmapType,
+		qm.Limit,
+		includeExemplars,
+	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		logger.Error("Querying SelectHeatmap()", "err", err, "function", logEntrypoint())
+		return nil, err
+	}
+
+	exemplarType := exemplar.ExemplarTypeProfile
+	if heatmapType == querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN {
+		exemplarType = exemplar.ExemplarTypeSpan
+	}
+
+	frames := make([]*data.Frame, 0, len(heatmapResp.Series)*2)
+	for _, series := range heatmapResp.Series {
+		labels := make(map[string]string)
+		for _, label := range series.Labels {
+			labels[label.Name] = label.Value
+		}
+		slots := make([]*heatmap.Slot, len(series.Points))
+		exemplars := []*exemplar.Exemplar{}
+		for i, p := range series.Points {
+			slots[i] = &heatmap.Slot{
+				Timestamp: p.Timestamp,
+				YMin:      p.YMin,
+				Counts:    p.Counts,
+			}
+			for _, e := range p.Exemplars {
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
+				exemplars = append(exemplars, &exemplar.Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     float64(e.Value),
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				})
+			}
+		}
+		heatmapFrame := heatmap.CreateHeatmapFrame(labels, slots, heatmapResp.Units, stepDuration)
+		frames = append(frames, heatmapFrame)
+
+		if len(exemplars) > 0 {
+			exemplarFrame := exemplar.CreateExemplarFrame(labels, exemplars, exemplarType, heatmapResp.Units)
+			exemplarFrame.Meta.Custom = map[string]interface{}{
+				"datasourceUID": datasourceUID,
+			}
+			frames = append(frames, exemplarFrame)
+		}
+	}
+	return frames, nil
+}
+
 // responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *ProfileResponse) *data.Frame {
+func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string) *data.Frame {
 	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
-	return treeToNestedSetDataFrame(tree, resp.Units)
+	return treeToNestedSetDataFrame(tree, resp.Units, stepDurationSec, profileTypeID)
 }
 
 // START_OFFSET is offset of the bar relative to previous sibling
@@ -328,7 +463,7 @@ type CustomMeta struct {
 // where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
 // parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
+func treeToNestedSetDataFrame(tree *ProfileTree, unit string, stepDurationSec float64, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -347,6 +482,7 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 	if tree != nil {
 		walkTree(tree, func(tree *ProfileTree) {
 			levelField.Append(int64(tree.Level))
+			// Flamegraphs show cumulative values without rate calculation
 			valueField.Append(tree.Value)
 			selfField.Append(tree.Self)
 			labelField.Append(tree.Name)
@@ -411,13 +547,54 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+// isCumulativeProfile determines if a profile type requires rate calculation using the metadata registry
+func isCumulativeProfile(profileTypeID string) bool {
+	registry := GetProfileMetadataRegistry()
+	return registry.IsCumulativeProfile(profileTypeID)
+}
+
+// isCPUTimeProfile determines if a profile type represents CPU time in nanoseconds
+func isCPUTimeProfile(profileTypeID string) bool {
+	registry := GetProfileMetadataRegistry()
+	metadata := registry.GetProfileMetadata(profileTypeID)
+	if metadata != nil {
+		// Check if it's CPU time (unit is nanoseconds and type contains cpu)
+		return metadata.Unit == "ns" && (metadata.Type == "cpu" || metadata.Group == "process_cpu")
+	}
+	return false
+}
+
+// convertToRateUnit converts profile units to appropriate rate units when rate calculation is applied
+func convertToRateUnit(originalUnit string) string {
+	switch originalUnit {
+	case "bytes":
+		return "binBps"
+	case "short":
+		return "ops"
+	case "ns":
+		return "ns"
+	default:
+		return originalUnit
+	}
+}
+
+func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDurationSec float64, profileTypeID string) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
+	annotations := make([]*annotation.TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
+		exemplars := make([]*exemplar.Exemplar, 0)
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
+		frameMeta := &data.FrameMeta{PreferredVisualization: "graph"}
+
+		// Add metadata when rate calculation is applied
+		if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+			frameMeta.Custom = map[string]interface{}{
+				"rateCalculated": true,
+			}
+		}
+		frame.Meta = frameMeta
 
 		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
@@ -428,17 +605,82 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 			labels[label.Name] = label.Value
 		}
 
+		// Determine display unit - convert units for rate-calculated cumulative profiles
+		displayUnit := resp.Units
+		if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+			if isCPUTimeProfile(profileTypeID) {
+				displayUnit = "cores"
+			} else {
+				// Convert other cumulative profile units to rate units
+				displayUnit = convertToRateUnit(resp.Units)
+			}
+		}
+
 		valueField := data.NewField(resp.Label, labels, []float64{})
-		valueField.Config = &data.FieldConfig{Unit: resp.Units}
+		valueField.Config = &data.FieldConfig{Unit: displayUnit}
+		fields = append(fields, valueField)
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
-			valueField.Append(point.Value)
+
+			// Apply rate calculation for cumulative profiles
+			value := point.Value
+			transformation := identityTransformation
+			if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
+				transformation = func(value float64) float64 {
+					return value / stepDurationSec
+				}
+
+				// Convert CPU nanoseconds to cores
+				if isCPUTimeProfile(profileTypeID) {
+					transformation = func(value float64) float64 {
+						return value / stepDurationSec / 1e9
+					}
+				}
+			}
+			value = transformation(value)
+			valueField.Append(value)
+			if withAnnotations {
+				for _, a := range point.Annotations {
+					annotations = append(annotations, &annotation.TimedAnnotation{
+						Timestamp:  point.Timestamp,
+						Annotation: a,
+					})
+				}
+			}
+			for _, e := range point.Exemplars {
+				// Convert exemplar labels from slice to map
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
+				exemplars = append(exemplars, &exemplar.Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     transformation(float64(e.Value)),
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				})
+			}
 		}
 
-		fields = append(fields, valueField)
 		frame.Fields = fields
 		frames = append(frames, frame)
+
+		if len(exemplars) > 0 {
+			// Series queries always use individual profiles
+			frame := exemplar.CreateExemplarFrame(labels, exemplars, exemplar.ExemplarTypeProfile, displayUnit)
+			frames = append(frames, frame)
+		}
 	}
-	return frames
+
+	if len(annotations) > 0 {
+		frame, err := annotation.CreateAnnotationFrame(annotations)
+		if err != nil {
+			return nil, backend.DownstreamError(fmt.Errorf("error creating annotation frame: %w", err))
+		}
+		frames = append(frames, frame)
+	}
+
+	return frames, nil
 }

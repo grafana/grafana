@@ -1,24 +1,26 @@
 import { Fragment, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { getAlertTableStyles } from '../../styles/table';
+import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useDeleteNotificationTemplate,
   useNotificationTemplateMetadata,
 } from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { TemplateEditor } from './TemplateEditor';
@@ -102,8 +104,12 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <ConfirmModal
           isOpen={true}
           title={t('alerting.templates-table.title-delete-template-group', 'Delete template group')}
-          body={`Are you sure you want to delete template group "${templateToDelete.title}"?`}
-          confirmText="Yes, delete"
+          body={t(
+            'alerting.templates-table.body-delete-template-group',
+            'Are you sure you want to delete template group "{{template}}"?',
+            { template: templateToDelete.title }
+          )}
+          confirmText={t('alerting.templates-table.confirmText-yes-delete', 'Yes, delete')}
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />
@@ -124,7 +130,8 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
   const isGrafanaAlertmanager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
+  const { provenance } = useNotificationTemplateMetadata(notificationTemplate);
+  const isProvisioned = isProvisionedResource(provenance);
 
   const { uid, title: name, content: template, missing } = notificationTemplate;
   const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
@@ -135,7 +142,17 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
           <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
         </td>
         <td>
-          {name} {isProvisioned && <ProvisioningBadge />}{' '}
+          {name} {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}{' '}
+          {isLegacyTemplate(notificationTemplate) && (
+            <Badge
+              text={t('alerting.templates.legacy-badge-text', 'Legacy')}
+              color="orange"
+              tooltip={t(
+                'alerting.templates.legacy-badge-tooltip',
+                'This template was imported from a Mimir Alertmanager and uses a legacy format.'
+              )}
+            />
+          )}{' '}
           {missing && !isGrafanaAlertmanager && (
             <Tooltip
               content={

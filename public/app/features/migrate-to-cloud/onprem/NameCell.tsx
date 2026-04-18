@@ -2,18 +2,21 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import {
+  useGetDashboardByUidQuery,
+  useGetLibraryElementByUidQuery,
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
+import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
-import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { LocalPlugin } from '../../plugins/admin/types';
-import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
+import { type LocalPlugin } from '../../plugins/admin/types';
 
 import { iconNameForResource } from './resourceInfo';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export function NameCell(props: CellProps<ResourceTableItem>) {
   const data = props.row.original;
@@ -121,7 +124,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
-  const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
+  const { data: folderData, isLoading, isError } = useGetFolderQueryFacade(skipApiCall ? undefined : folderUID);
 
   const folderName = data.name || folderData?.title;
   const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;
@@ -176,7 +179,7 @@ function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
         </Text>
 
         <Text color="secondary">
-          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {uid}</Trans>
+          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {{ uid }}</Trans>
         </Text>
       </>
     );

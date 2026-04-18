@@ -1,6 +1,6 @@
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { type DashboardLayoutManager } from './DashboardLayoutManager';
 
 /**
  * This interface is needed to support layouts existing on different levels of the scene (DashboardScene and inside the TabsLayoutManager)
@@ -13,9 +13,10 @@ export interface LayoutParent extends SceneObject {
 
   /**
    * Switches the inner layout manager
-   * @param newLayout
+   * @param newLayout The new layout manager to switch to
+   * @param skipUndo If true, skips creating an undo entry for this operation
    */
-  switchLayout(newLayout: DashboardLayoutManager): void;
+  switchLayout(newLayout: DashboardLayoutManager, skipUndo?: boolean): void;
 }
 
 export function isLayoutParent(obj: SceneObject): obj is LayoutParent {

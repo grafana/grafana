@@ -1,18 +1,23 @@
 import { PureComponent } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
+import {
+  type DataSourcePluginOptionsEditorProps,
+  type SelectableValue,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
+import { getBackendSrv, getTemplateSrv, isFetchError, type TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
-  AzureAPIResponse,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData,
-  AzureMonitorDataSourceSettings,
-  Subscription,
-} from '../../types';
+  type AzureAPIResponse,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceSecureJsonData,
+  type AzureMonitorDataSourceSettings,
+  type Subscription,
+} from '../../types/types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
@@ -43,7 +48,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state = {
       unsaved: false,
     };
-    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
+    this.baseURL = `/api/datasources/uid/${this.props.options.uid}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
   private updateOptions = (
@@ -58,7 +63,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private saveOptions = async (): Promise<void> => {
     if (this.state.unsaved) {
       await getBackendSrv()
-        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .put(`/api/datasources/uid/${this.props.options.uid}`, this.props.options)
         .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
           updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
         });
@@ -114,19 +119,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
             {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
           </Alert>
         )}
-        {config.secureSocksDSProxyEnabled && (
-          <>
-            <Divider />
-            <ConfigSection
-              title="Additional settings"
-              description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
-              isCollapsible={true}
-              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
-            >
+        <>
+          <Divider />
+          <ConfigSection
+            title={t('components.config-editor.title-additional-settings', 'Additional settings')}
+            description={t(
+              'components.config-editor.description-additional-settings',
+              'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.'
+            )}
+            isCollapsible={true}
+            isInitiallyOpen={
+              options.jsonData.enableSecureSocksProxy !== undefined ||
+              options.jsonData.timeout !== undefined ||
+              options.jsonData.keepCookies !== undefined
+            }
+          >
+            <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+            {config.secureSocksDSProxyEnabled && (
               <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </ConfigSection>
-          </>
-        )}
+            )}
+          </ConfigSection>
+        </>
       </>
     );
   }

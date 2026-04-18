@@ -1,9 +1,32 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
+import {
+  type DataQueryResponse,
+  LoadingState,
+  EventBusSrv,
+  type LogRowModel,
+  arrayToDataFrame,
+  DataTopic,
+} from '@grafana/data';
+import { createLogLine } from 'app/features/logs/components/mocks/logRow';
+
+import * as logUtils from '../../logs/utils';
 
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 jest.mock('../Graph/ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
@@ -12,7 +35,7 @@ jest.mock('../Graph/ExploreGraph', () => {
   };
 });
 
-function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () => {}) {
+function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () => {}, logs: LogRowModel[] = []) {
   render(
     <LogsVolumePanelList
       absoluteRange={{ from: 0, to: 1 }}
@@ -22,13 +45,18 @@ function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () =
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
       onLoadLogsVolume={onLoadLogsVolume}
-      onHiddenSeriesChanged={() => null}
+      onDisplayedSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
+      logs={logs}
     />
   );
 }
 
 describe('LogsVolumePanelList', () => {
+  beforeEach(() => {
+    setBooleanFlags({ lokiShardSplitting: false });
+  });
+
   it('shows loading message', () => {
     renderPanel({ state: LoadingState.Loading, error: undefined, data: [] });
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -74,8 +102,48 @@ describe('LogsVolumePanelList', () => {
     expect(screen.getByText('No logs volume available')).toBeInTheDocument();
   });
 
-  it('does not show an info message with empty responses when the current state is streaming', async () => {
-    renderPanel({ state: LoadingState.Streaming, data: [] });
-    expect(screen.queryByText('No logs volume available')).not.toBeInTheDocument();
+  describe('Visible range', () => {
+    it('computes the visible range when logs are passed', async () => {
+      const spy = jest.spyOn(logUtils, 'getLogsVisibleRange');
+      spy.mockClear();
+
+      renderPanel({ state: LoadingState.Streaming, data: [] });
+
+      expect(spy).not.toHaveBeenCalled();
+
+      const logs = [createLogLine({ timeEpochMs: 1 }), createLogLine({ timeEpochMs: 2 })];
+
+      renderPanel({ state: LoadingState.Streaming, data: [] }, undefined, logs);
+
+      expect(spy).toHaveBeenCalledWith(logs);
+    });
+
+    it('does not compute the visible range when an annotation frame is present', async () => {
+      const spy = jest.spyOn(logUtils, 'getLogsVisibleRange');
+      spy.mockClear();
+      const logs = [createLogLine({ timeEpochMs: 1 }), createLogLine({ timeEpochMs: 2 })];
+      const loadingFrame = arrayToDataFrame([
+        {
+          time: 0,
+          timeEnd: 1,
+          isRegion: true,
+          color: 'rgba(120, 120, 120, 0.1)',
+        },
+      ]);
+      loadingFrame.meta = {
+        dataTopic: DataTopic.Annotations,
+      };
+
+      renderPanel(
+        {
+          state: LoadingState.Streaming,
+          data: [loadingFrame],
+        },
+        undefined,
+        logs
+      );
+
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 });

@@ -17,9 +17,10 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -42,21 +43,11 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email",
+			"receiver": "empty",
 			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureFields": {}
-			}]
+			"name": "empty"
 		}]
 	}
 }
@@ -248,6 +239,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Record:               gettable.Record,
 		Metadata:             gettable.Metadata,
 	}
 }
@@ -308,6 +300,41 @@ func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cm
 
 	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/receivers/%s/%s/%s", a.url, receiverUID, assignment, assignTo), body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) AssignRoutePermission(t *testing.T, routeUID string, cmd accesscontrol.SetResourcePermissionCommand) (int, string) {
+	t.Helper()
+
+	var assignment string
+	var assignTo string
+	if cmd.UserID != 0 {
+		assignment = "users"
+		assignTo = fmt.Sprintf("%d", cmd.UserID)
+	} else if cmd.TeamID != 0 {
+		assignment = "teams"
+		assignTo = fmt.Sprintf("%d", cmd.TeamID)
+	} else {
+		assignment = "builtInRoles"
+		assignTo = cmd.BuiltinRole
+	}
+
+	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/%s/%s/%s/%s", a.url, accesscontrol.AlertingRoutesResource, routeUID, assignment, assignTo), body)
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -503,6 +530,19 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string, p
 	if permanently {
 		req.URL.RawQuery = url.Values{"deletePermanently": []string{"true"}}.Encode()
 	}
+
+	resp, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+
+	return status, string(resp)
+}
+
+func (a apiClient) DeleteRulesGroupProvisioning(t *testing.T, folder string, group string) (int, string) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folder, group)
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	require.NoError(t, err)
 
 	resp, status, err := sendRequestRaw(t, req)
 	require.NoError(t, err)
@@ -794,6 +834,61 @@ func (a apiClient) DeleteDatasource(t *testing.T, uid string) {
 	}
 }
 
+func (a apiClient) GetTemplatesWithStatus(t *testing.T) (apimodels.NotificationTemplates, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/templates", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplates](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetTemplateByNameWithStatus(t *testing.T, name string) (apimodels.NotificationTemplate, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplate](t, req, http.StatusOK)
+}
+
+func (a apiClient) PutTemplateWithStatus(t *testing.T, name string, tmpl apimodels.NotificationTemplateContent) (apimodels.NotificationTemplate, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(tmpl)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplate](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) DeleteTemplateWithStatus(t *testing.T, name string) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
+func (a apiClient) DeleteRouteWithStatus(t *testing.T) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
 func (a apiClient) GetAllMuteTimingsWithStatus(t *testing.T) (apimodels.MuteTimings, int, string) {
 	t.Helper()
 
@@ -984,12 +1079,19 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	return sendRequestJSON[data.Frame](t, req, http.StatusOK)
 }
 
-func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
+func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
+	t.Helper()
+
+	_, status, body := a.CreateContactPointWithStatus(t, receiver)
+	require.Equalf(t, http.StatusAccepted, status, body)
+}
+
+func (a apiClient) CreateContactPointWithStatus(t *testing.T, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
-	err := enc.Encode(receiver)
+	err := enc.Encode(contactPoint)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url), &buf)
@@ -999,11 +1101,56 @@ func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.Emb
 	return sendRequestJSON[apimodels.EmbeddedContactPoint](t, req, http.StatusAccepted)
 }
 
-func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
+func (a apiClient) GetContactPointsWithStatus(t *testing.T) ([]apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
-	_, status, body := a.CreateReceiverWithStatus(t, receiver)
-	require.Equalf(t, http.StatusAccepted, status, body)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[[]apimodels.EmbeddedContactPoint](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetContactPointsByNameWithStatus(t *testing.T, name string) ([]apimodels.EmbeddedContactPoint, int, string) {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("name", name)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[[]apimodels.EmbeddedContactPoint](t, req, http.StatusOK)
+}
+
+func (a apiClient) UpdateContactPointWithStatus(t *testing.T, uid string, receiver apimodels.EmbeddedContactPoint) (int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(receiver)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/contact-points/%s", a.url, uid), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
+func (a apiClient) DeleteContactPointWithStatus(t *testing.T, uid string) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/contact-points/%s", a.url, uid), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
 }
 
 func (a apiClient) ExportReceiver(t *testing.T, name string, format string, decrypt bool) string {
@@ -1052,11 +1199,37 @@ func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.Gett
 	return sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
 }
 
+func (a apiClient) GetAlertmanagerConfigForDatasource(t *testing.T, datasourceUID string) apimodels.GettableUserConfig {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/%s/config/api/v1/alerts", a.url, datasourceUID), nil)
+	require.NoError(t, err)
+
+	config, status, body := sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return config
+}
+
 func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroups, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
 	require.NoError(t, err)
 	return sendRequestJSON[apimodels.AlertGroups](t, req, http.StatusOK)
+}
+
+// GetPrometheusRulesWithStatus fetches rules from the Prometheus-compatible rules API.
+func (a apiClient) GetPrometheusRulesWithStatus(t *testing.T) (apimodels.RuleResponse, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/prometheus/grafana/api/v1/rules", a.url), nil)
+	require.NoError(t, err)
+	return sendRequestJSON[apimodels.RuleResponse](t, req, http.StatusOK)
+}
+
+// GetPrometheusRules fetches rules from the Prometheus-compatible rules API, asserting success.
+func (a apiClient) GetPrometheusRules(t *testing.T) apimodels.RuleResponse {
+	t.Helper()
+	resp, status, body := a.GetPrometheusRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return resp
 }
 
 func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
@@ -1262,6 +1435,92 @@ func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle
 	requireStatusCode(t, http.StatusAccepted, status, raw)
 }
 
+func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertAlertmanagerResponse {
+	t.Helper()
+
+	resp, status, body := a.RawConvertPrometheusPostAlertmanagerConfig(t, amCfg, headers)
+	requireStatusCode(t, http.StatusAccepted, status, body)
+
+	return resp
+}
+
+func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertAlertmanagerResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(amCfg)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(amCfg)
+		require.NoError(t, err)
+	}
+
+	buf := bytes.NewReader(data)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url), buf)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertAlertmanagerResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.AlertmanagerUserConfig {
+	t.Helper()
+
+	config, status, raw := a.RawConvertPrometheusGetAlertmanagerConfig(t, headers)
+	requireStatusCode(t, http.StatusOK, status, raw)
+
+	return config
+}
+
+func (a apiClient) RawConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.AlertmanagerUserConfig, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	config, status, raw := sendRequestYAML[apimodels.AlertmanagerUserConfig](t, req, http.StatusOK)
+
+	return config, status, raw
+}
+
+func (a apiClient) ConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, headers map[string]string) {
+	t.Helper()
+
+	_, status, raw := a.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
+func (a apiClient) RawConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
 func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
 	t.Helper()
 
@@ -1278,6 +1537,38 @@ func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTi
 	}
 
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) UpdateNamespaceRules(t *testing.T, folder string, body *apimodels.UpdateNamespaceRulesRequest) (apimodels.UpdateNamespaceRulesResponse, int, string) {
+	t.Helper()
+
+	client := &http.Client{}
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(body)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
+
+	req, err := http.NewRequest(http.MethodPatch, u, &buf)
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	var m apimodels.UpdateNamespaceRulesResponse
+	if resp.StatusCode == http.StatusAccepted {
+		require.NoError(t, json.Unmarshal(b, &m))
+	}
+	return m, resp.StatusCode, string(b)
 }
 
 func sendRequestRaw(t *testing.T, req *http.Request) ([]byte, int, error) {
@@ -1342,16 +1633,57 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
+}
+
+func (a apiClient) GetProvisioningAlertRule(t *testing.T, ruleUID string) (apimodels.ProvisionedAlertRule, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ProvisionedAlertRule](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
+	require.NoError(t, err)
+	if params != nil {
+		q := url.Values{}
+		if params.Format != "" {
+			q.Set("format", params.Format)
+		}
+		if params.Download {
+			q.Set("download", "true")
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
 }

@@ -1,107 +1,127 @@
 import { css, cx } from '@emotion/css';
-import { sortBy } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
+import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { isInCloneChain } from '../utils/clone';
+import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../settings/links/LinkAddEditableElement';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
-export interface Props {
-  editPane: DashboardEditPane;
+export class DashboardOutline extends SceneObjectBase {
+  public static Component = DashboardOutlineRenderer;
+  public getId() {
+    return 'outline' as const;
+  }
 }
 
-export function DashboardOutline({ editPane }: Props) {
-  const dashboard = getDashboardSceneFor(editPane);
+export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane)!;
+  const dashboard = getDashboardSceneFor(model);
+  const { isEditing } = dashboard.useState();
 
   return (
-    <Box padding={1} gap={0} display="flex" direction="column">
-      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} />
+    <Box display="flex" direction="column" flex={1} height="100%">
+      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
+      <ScrollContainer showScrollIndicators={true}>
+        <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+        </Box>
+      </ScrollContainer>
     </Box>
   );
 }
 
-function DashboardOutlineNode({
-  sceneObject,
-  editPane,
-  depth,
-}: {
+interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
+  isEditing: boolean | undefined;
   depth: number;
-}) {
-  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
-  const theme = useTheme2();
-  const { key } = sceneObject.useState();
+  index: number;
+}
+
+function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
+  const key = sceneObject.state.key;
+  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
-  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
+  const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
-  const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
-  const elementInfo = editableElement.getEditableElementInfo();
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
-  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
-  const elementCollapsed = editableElement.getCollapsedState?.();
-  const outlineRename = useOutlineRename(editableElement);
 
-  const onNodeClicked = (evt: React.PointerEvent) => {
-    // Only select via clicking outline never deselect
+  const elementInfo = editableElement.getEditableElementInfo();
+  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
+  const outlineRename = useOutlineRename(editableElement, isEditing);
+  const isContainer = editableElement.getOutlineChildren ? true : false;
+  const outlineChildren = editableElement.getOutlineChildren?.(isEditing) ?? [];
+  const visibleChildren = isEditing
+    ? outlineChildren
+    : outlineChildren.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
+
+  const onNodeClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
     if (!isSelected) {
-      onSelect?.(evt);
+      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
+        // Select directly via editPane.selectObject because link objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject);
+      } else {
+        onSelect?.(e);
+      }
     }
 
     editableElement.scrollIntoView?.();
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {
     evt.stopPropagation();
     setIsCollapsed(!isCollapsed);
-
-    // Sync expanded state with canvas element
-    if (editableElement.getCollapsedState) {
-      editableElement.setCollapsedState?.(!isCollapsed);
-    }
   };
 
-  // Sync canvas element expanded state with outline element
-  useEffect(() => {
-    if (elementCollapsed != null && elementCollapsed !== isCollapsed) {
-      setIsCollapsed(elementCollapsed);
-    }
-  }, [isCollapsed, elementCollapsed]);
+  if (elementInfo.isHidden && !isEditing) {
+    return null;
+  }
 
   return (
-    <>
+    // todo: add proper keyboard navigation
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+    <li
+      role="treeitem"
+      aria-selected={isSelected}
+      className={styles.container}
+      onClick={onNodeClicked}
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      style={{ '--depth': depth } as React.CSSProperties}
+    >
       <div
-        className={cx(styles.container, isSelected && styles.containerSelected)}
-        style={{ paddingLeft: theme.spacing(depth * 3) }}
-        onPointerDown={onNodeClicked}
+        className={cx(styles.row, isEditing ? styles.rowEditMode : styles.rowViewMode, {
+          [styles.rowSelected]: isSelected,
+        })}
       >
-        {elementInfo.isContainer && (
+        <div className={styles.indentation}></div>
+        {isContainer && (
           <button
-            // TODO fix keyboard a11y here
-            // eslint-disable-next-line jsx-a11y/role-has-required-aria-props
-            role="treeitem"
             className={styles.angleButton}
-            onPointerDown={onToggleCollapse}
+            onClick={onToggleCollapse}
             data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
           >
-            <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
+            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
           </button>
         )}
         <button
-          className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
+          className={cx(styles.nodeButton, { [styles.nodeButtonClone]: isCloned })}
           onDoubleClick={outlineRename.onNameDoubleClicked}
           data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
@@ -118,34 +138,52 @@ function DashboardOutlineNode({
             />
           ) : (
             <>
-              <span>{instanceName}</span>
-              {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
-              {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
+              <div className={styles.nodeName}>
+                <Text truncate>{instanceName}</Text>
+                {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
+              </div>
+              {isCloned && (
+                <span>
+                  <Trans i18nKey="dashboard.outline.repeated-item">Repeat</Trans>
+                </span>
+              )}
             </>
           )}
         </button>
       </div>
 
-      {elementInfo.isContainer && !isCollapsed && (
-        <div className={styles.nodeChildren}>
-          <div className={styles.nodeChildrenLine} style={{ marginLeft: theme.spacing(depth * 3) }} />
-          {children.length > 0 ? (
-            children.map((child) => (
+      {isContainer && !isCollapsed && (
+        <ul className={styles.nodeChildren} role="group">
+          {visibleChildren.length > 0 ? (
+            visibleChildren.map((child, i) => (
               <DashboardOutlineNode
-                key={child.sceneObject.state.key}
-                sceneObject={child.sceneObject}
+                key={child.state.key}
+                sceneObject={child}
                 editPane={editPane}
                 depth={depth + 1}
+                isEditing={isEditing}
+                index={i}
               />
             ))
           ) : (
-            <Text color="secondary">
-              <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
-            </Text>
+            <li
+              role="treeitem"
+              aria-selected={isSelected}
+              className={styles.container}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              style={{ '--depth': depth + 1 } as React.CSSProperties}
+            >
+              <div className={styles.row}>
+                <div className={styles.indentation}></div>
+                <Text color="secondary" italic>
+                  <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
+                </Text>
+              </div>
+            </li>
           )}
-        </div>
+        </ul>
       )}
-    </>
+    </li>
   );
 }
 
@@ -154,28 +192,40 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: theme.spacing(0.5),
-      alignItems: 'center',
       flexGrow: 1,
+      flexDirection: 'column',
       borderRadius: theme.shape.radius.default,
-      position: 'relative',
-      marginBottom: theme.spacing(0.25),
       color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        outline: `1px dashed ${theme.colors.border.strong}`,
-        outlineOffset: '0px',
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
-      },
     }),
     containerSelected: css({
       outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
       color: theme.colors.text.primary,
-
+    }),
+    row: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+    }),
+    rowEditMode: css({
       '&:hover': {
-        outline: `1px dashed ${theme.colors.primary.border}`,
         color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
       },
+    }),
+    rowViewMode: css({
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
+    rowSelected: css({
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border} !important`,
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+    }),
+    indentation: css({
+      marginLeft: `calc(var(--depth) * ${theme.spacing(3)})`,
     }),
     angleButton: css({
       boxShadow: 'none',
@@ -186,11 +236,11 @@ function getStyles(theme: GrafanaTheme2) {
       color: 'inherit',
       lineHeight: 0,
     }),
-    nodeName: css({
+    nodeButton: css({
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1, 0.25, 0),
+      padding: 0,
       borderRadius: theme.shape.radius.default,
       color: 'inherit',
       display: 'flex',
@@ -204,13 +254,19 @@ function getStyles(theme: GrafanaTheme2) {
         textOverflow: 'ellipsis',
       },
     }),
+    nodeName: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexGrow: 1,
+      alignItems: 'center',
+      overflow: 'hidden',
+    }),
     hiddenIcon: css({
       color: theme.colors.text.secondary,
       marginLeft: theme.spacing(1),
     }),
-    nodeNameClone: css({
+    nodeButtonClone: css({
       color: theme.colors.text.secondary,
-      cursor: 'not-allowed',
     }),
     outlineInput: css({
       border: `1px solid ${theme.components.input.borderColor}`,
@@ -226,52 +282,19 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-    }),
-    nodeChildrenLine: css({
-      position: 'absolute',
-      width: '1px',
-      height: '100%',
-      left: '7px',
-      zIndex: 1,
-      backgroundColor: theme.colors.border.weak,
+      gap: theme.spacing(0.5),
+
+      // tree line
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        width: '1px',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+        background: theme.colors.border.weak,
+        marginLeft: `calc(11px + ${theme.spacing(3)} * var(--depth))`,
+      },
     }),
   };
-}
-
-interface EditableElementConfig {
-  sceneObject: SceneObject;
-  editableElement: EditableDashboardElement;
-  depth: number;
-}
-
-function collectEditableElementChildren(
-  sceneObject: SceneObject,
-  children: EditableElementConfig[],
-  depth: number
-): EditableElementConfig[] {
-  sceneObject.forEachChild((child) => {
-    const editableElement = getEditableElementFor(child);
-
-    if (editableElement) {
-      children.push({ sceneObject: child, editableElement, depth });
-      return;
-    }
-
-    if (child instanceof DashboardGridItem) {
-      // DashboardGridItem is a special case as it can contain repeated panels
-      // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
-      if (child.state.repeatedPanels?.length) {
-        for (const repeatedPanel of child.state.repeatedPanels) {
-          const editableElement = getEditableElementFor(repeatedPanel)!;
-          children.push({ sceneObject: repeatedPanel, editableElement, depth });
-        }
-
-        return;
-      }
-    }
-
-    collectEditableElementChildren(child, children, depth + 1);
-  });
-
-  return children;
 }

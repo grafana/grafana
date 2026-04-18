@@ -1,13 +1,17 @@
 import { useEffect } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type SyncInfo } from 'app/types/ldap';
+import { type StoreState } from 'app/types/store';
+import { type UserDTO, type UserOrg, type UserSession, type UserAdminError } from 'app/types/user';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
@@ -123,7 +127,10 @@ export const UserAdminPage = ({
   const pageNav: NavModelItem = {
     text: user?.login ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings for an individual user.',
+    subTitle: t(
+      'admin.user-admin-page.page-nav.subTitle.manage-settings-for-an-individual-user',
+      'Manage settings for an individual user.'
+    ),
   };
 
   return (

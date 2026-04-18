@@ -1,22 +1,21 @@
-import { FormEvent, PureComponent } from 'react';
+import { type FormEvent, memo } from 'react';
 
-import { ConstantVariableModel } from '@grafana/data';
+import { type ConstantVariableModel } from '@grafana/data';
 import { ConstantVariableForm } from 'app/features/dashboard-scene/settings/variables/components/ConstantVariableForm';
 
-import { VariableEditorProps } from '../editor/types';
+import { type VariableEditorProps } from '../editor/types';
 
 export interface Props extends VariableEditorProps<ConstantVariableModel> {}
 
-export class ConstantVariableEditor extends PureComponent<Props> {
-  onChange = (event: FormEvent<HTMLInputElement>) => {
-    this.props.onPropChange({
+export const ConstantVariableEditor = memo(({ variable, onPropChange }: Props) => {
+  const onChange = (event: FormEvent<HTMLInputElement>) => {
+    onPropChange({
       propName: 'query',
       propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
 
-  render() {
-    return <ConstantVariableForm constantValue={this.props.variable.query} onChange={this.onChange} />;
-  }
-}
+  return <ConstantVariableForm constantValue={variable.query} onChange={onChange} />;
+});
+ConstantVariableEditor.displayName = 'ConstantVariableEditor';

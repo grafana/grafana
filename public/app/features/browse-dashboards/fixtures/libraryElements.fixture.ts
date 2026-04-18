@@ -1,8 +1,8 @@
 import { Chance } from 'chance';
 
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 
-import { LibraryElementsSearchResult } from '../../library-panels/types';
+import { type LibraryElementsSearchResult } from '../../library-panels/types';
 
 export function getLibraryElementsResponse(length = 1, overrides?: Partial<LibraryPanel>): LibraryElementsSearchResult {
   const elements: LibraryPanel[] = [];

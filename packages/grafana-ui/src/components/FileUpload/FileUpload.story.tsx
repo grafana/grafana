@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { FileUpload } from './FileUpload';
 import mdx from './FileUpload.mdx';
 
 const meta: Meta<typeof FileUpload> = {
-  title: 'Forms/FileUpload',
+  title: 'Inputs/FileUpload',
   component: FileUpload,
   parameters: {
     docs: {

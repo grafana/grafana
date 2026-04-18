@@ -2,9 +2,8 @@ import pluralize from 'pluralize';
 import { Fragment } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
-
-import { t } from '../../../../../core/internationalization';
 
 interface Props {
   active?: number;

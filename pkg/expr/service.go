@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
@@ -65,8 +67,9 @@ type Service struct {
 
 	pluginsClient backend.CallResourceHandler
 
-	tracer  tracing.Tracer
-	metrics *metrics.ExprMetrics
+	tracer                    tracing.Tracer
+	metrics                   *metrics.ExprMetrics
+	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder
 }
 
 type pluginContextProvider interface {
@@ -75,7 +78,7 @@ type pluginContextProvider interface {
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
@@ -88,6 +91,7 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 			Features: features,
 			Tracer:   tracer,
 		},
+		qsDatasourceClientBuilder: builder,
 	}
 }
 
@@ -99,8 +103,26 @@ func (s *Service) isDisabled() bool {
 }
 
 // BuildPipeline builds a pipeline from a request.
-func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
-	return s.buildPipeline(req)
+// If any nodes are disabled (e.g. missing dependencies), it returns an error
+// rather than a degraded pipeline. This preserves safety for callers such as
+// alerting that cannot handle partial results.
+func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
+	pipeline, err := s.buildPipeline(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range pipeline {
+		if nodeErr := node.DisabledErr(); nodeErr != nil {
+			// Record SQL metrics before returning, matching the behavior of
+			// the non-degraded path where instrumentSQLError fires on failure.
+			var sqlErr *sql.ErrorWithCategory
+			if errors.As(nodeErr, &sqlErr) {
+				s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+			}
+			return nil, nodeErr
+		}
+	}
+	return pipeline, nil
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

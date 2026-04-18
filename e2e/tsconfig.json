@@ -1,8 +1,9 @@
 {
+  "extends": "../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "types": ["cypress"],
     "resolveJsonModule": true
   },
-  "extends": "@grafana/tsconfig/base.json",
   "include": ["**/*.ts", "cypress/support/e2e.js", "cypress/support/index.d.ts"]
 }

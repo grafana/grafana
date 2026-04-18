@@ -1,38 +1,49 @@
 import { groupBy } from 'lodash';
 
 import {
-  DataFrame,
-  Field as DataFrameField,
-  DataFrameJSON,
-  Field,
+  type DataFrame,
+  type Field as DataFrameField,
+  type DataFrameJSON,
+  type Field,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   ThresholdsMode,
   getDisplayProcessor,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/internal';
-import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
+import { isPromQLStyleMatcher, parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './constants';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 
+/**
+ * Normalise a free-text PromQL-style label filter string into the selector
+ * format expected by the backend `matchers` query parameter.
+ *
+ * - Empty / whitespace-only input → undefined (param omitted from request)
+ * - Already wrapped in `{}` → returned as-is
+ * - Bare matchers like `foo="bar",baz=~".*"` → wrapped in `{foo="bar",baz=~".*"}`
+ */
+export function toMatchersParam(labelFilter: string): string | undefined {
+  const trimmed = labelFilter.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  return isPromQLStyleMatcher(trimmed) ? trimmed : `{${trimmed}}`;
+}
+
 interface HistoryFilters {
-  stateTo: string;
-  stateFrom: string;
   labels: string;
 }
 
 const emptyFilters: HistoryFilters = {
-  stateTo: 'all',
-  stateFrom: 'all',
   labels: '',
 };
 
@@ -42,33 +53,8 @@ const emptyFilters: HistoryFilters = {
  * We group all records by alert instance (unique set of labels) and create a DataFrame for each group (instance).
  * This allows us to be able to filter by labels and states in the groupDataFramesByTime function.
  */
-export function historyResultToDataFrame({ data }: DataFrameJSON, filters = emptyFilters): DataFrame[] {
-  const { stateTo, stateFrom } = filters;
-
-  // Extract timestamps and lines from the response
-  const [tsValues = [], lines = []] = data?.values ?? [];
-  const timestamps = isNumbers(tsValues) ? tsValues : [];
-
-  // Filter log records by state and create a list of log records with the timestamp and line
-  const logRecords = timestamps.reduce<LogRecord[]>((acc, timestamp: number, index: number) => {
-    const line = lines[index];
-    if (!isLine(line)) {
-      return acc;
-    }
-
-    // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
-    const baseStateTo = mapStateWithReasonToBaseState(line.current);
-    const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
-    const stateToMatch = stateTo !== StateFilterValues.all ? stateTo === baseStateTo : true;
-    const stateFromMatch = stateFrom !== StateFilterValues.all ? stateFrom === baseStateFrom : true;
-
-    // filter by state
-    if (stateToMatch && stateFromMatch) {
-      acc.push({ timestamp, line });
-    }
-
-    return acc;
-  }, []);
+export function historyResultToDataFrame(stateHistory: DataFrameJSON, filters = emptyFilters): DataFrame[] {
+  const logRecords = historyDataFrameToLogRecords(stateHistory);
 
   // Group log records by alert instance
   const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {

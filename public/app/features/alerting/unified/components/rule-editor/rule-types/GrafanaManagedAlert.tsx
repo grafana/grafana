@@ -1,9 +1,9 @@
+import { Trans } from '@grafana/i18n';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { RuleFormType } from '../../../types/rule-form';
 
-import { RuleType, SharedProps } from './RuleType';
+import { RuleType, type SharedProps } from './RuleType';
 
 const GrafanaManagedRuleType = ({ selected = false, disabled, onClick }: SharedProps) => {
   return (

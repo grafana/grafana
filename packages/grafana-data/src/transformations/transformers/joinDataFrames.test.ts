@@ -1,6 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -142,20 +142,20 @@ describe('align frames', () => {
         {
           name: 'gender',
           type: FieldType.string,
-          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY', 'COW'],
         },
         {
           name: 'day',
           type: FieldType.string,
-          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday'],
+          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday', 'Monday'],
         },
-        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7] },
+        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7, 1] },
       ],
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
-        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE', 'DOG'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201, 6] },
       ],
     });
 
@@ -181,6 +181,8 @@ describe('align frames', () => {
               "FEMALE",
               "FEMALE",
               "NON-BINARY",
+              "COW",
+              "DOG",
             ],
           },
           {
@@ -192,6 +194,8 @@ describe('align frames', () => {
               "Wednesday",
               "Tuesday",
               "Monday",
+              "Monday",
+              null,
             ],
           },
           {
@@ -203,6 +207,8 @@ describe('align frames', () => {
               17,
               71,
               7,
+              1,
+              null,
             ],
           },
           {
@@ -214,6 +220,8 @@ describe('align frames', () => {
               201,
               201,
               95,
+              null,
+              6,
             ],
           },
         ]
@@ -618,6 +626,35 @@ describe('align frames', () => {
         },
       ]
     `);
+  });
+
+  describe('handles empty tables (no frames match join field)', () => {
+    it.each([JoinMode.outer, JoinMode.inner, JoinMode.outerTabular])(
+      '%s join should not crash when no frames have the join field',
+      (mode) => {
+        const frame1 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'A', type: FieldType.number, values: [1, 2] },
+          ],
+        });
+        const frame2 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 3000] },
+            { name: 'B', type: FieldType.number, values: [3, 4] },
+          ],
+        });
+
+        const out = joinDataFrames({
+          frames: [frame1, frame2],
+          joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
+          mode,
+        });
+
+        expect(out).toBeDefined();
+        expect(out!.length).toBe(0);
+      }
+    );
   });
 
   describe('check ascending data', () => {

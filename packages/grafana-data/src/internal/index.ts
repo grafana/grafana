@@ -26,6 +26,7 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
+export { type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
 export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
@@ -39,6 +40,8 @@ export {
 } from '../transformations/transformers/groupBy';
 export {
   type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '../transformations/transformers/groupToNestedTable';
 export {
@@ -63,7 +66,13 @@ export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformatio
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
 export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
-export { createOrderFieldsComparer } from '../transformations/transformers/order';
+export {
+  createOrderFieldsComparer,
+  Order,
+  OrderByMode,
+  OrderByType,
+  type OrderByItem,
+} from '../transformations/transformers/order';
 export { type RenameByRegexTransformerOptions } from '../transformations/transformers/renameByRegex';
 export { type OrganizeFieldsTransformerOptions } from '../transformations/transformers/organize';
 export { compareValues } from '../transformations/matchers/compareValues';
@@ -98,3 +107,4 @@ export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
+export { NewThemeOptionsSchema } from '../themes/createTheme';

@@ -1,19 +1,20 @@
 import { map } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  DataTransformerInfo,
+  type DataTransformerInfo,
   FieldMatcherID,
   getFieldDisplayName,
   getFieldMatcher,
-  MatcherConfig,
+  type MatcherConfig,
   reduceField,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import {
   evaluateFieldMappings,
-  FieldToConfigMapping,
+  type FieldToConfigMapping,
   getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
@@ -64,9 +65,8 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     }
 
     const outputFrame: DataFrame = {
+      ...frame,
       fields: [],
-      length: frame.length,
-      refId: frame.refId,
     };
 
     for (const field of frame.fields) {
@@ -89,10 +89,13 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
   return output;
 }
 
-export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
+export const getConfigFromDataTransformer: () => DataTransformerInfo<ConfigFromQueryTransformOptions> = () => ({
   id: DataTransformerID.configFromData,
-  name: 'Config from query results',
-  description: 'Set unit, min, max and more from data.',
+  name: t('transformers.get-config-from-data-transformer.name.config-from-query-results', 'Config from query results'),
+  description: t(
+    'transformers.get-config-from-data-transformer.description.set-unit-min-max-and-more',
+    'Set unit, min, max and more.'
+  ),
   defaultOptions: {
     configRefId: 'config',
     mappings: [],
@@ -103,4 +106,4 @@ export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTrans
    * be applied, just return the input series
    */
   operator: (options) => (source) => source.pipe(map((data) => extractConfigFromQuery(options, data))),
-};
+});

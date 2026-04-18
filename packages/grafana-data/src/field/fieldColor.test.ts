@@ -1,8 +1,8 @@
 import { createTheme } from '../themes/createTheme';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 
-import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
+import { fieldColorModeRegistry, type FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 import { cacheFieldDisplayNames } from './fieldState';
 
 function getTestField(mode: string, fixedColor?: string, name = 'name'): Field {
@@ -113,8 +113,8 @@ describe('fieldColorModeRegistry', () => {
     const calcFn1 = mode.getCalculator(frames[0].fields[1], createTheme());
     const calcFn2 = mode.getCalculator(frames[1].fields[1], createTheme());
 
-    expect(calcFn1(0, 0)).toEqual('#82B5D8');
-    expect(calcFn2(0, 0)).toEqual('#FCE2DE');
+    expect(calcFn1(0, 0)).toEqual('#5195CE');
+    expect(calcFn2(0, 0)).toEqual('#37872D');
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {

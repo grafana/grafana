@@ -3,20 +3,20 @@ import { countBy, sum } from 'lodash';
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
   AlertInstanceStateFilter,
-  InstanceStateFilter,
+  type InstanceStateFilter,
 } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
+import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { Trans } from '../../../../../core/internationalization';
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { prometheusRuleType } from '../../utils/rules';
@@ -40,25 +40,44 @@ interface ShowMoreInstancesProps {
   stats: ShowMoreStats;
   onClick?: React.ComponentProps<typeof LinkButton>['onClick'];
   href?: React.ComponentProps<typeof LinkButton>['href'];
+  enableFiltering?: boolean;
+  alertState?: InstanceStateFilter;
 }
 
-function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
+function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
+  const { visibleItemsCount, totalItemsCount } = stats;
 
   return (
     <div className={styles.footerRow}>
       <div>
-        <Trans
-          i18nKey="alerting.rule-details-matching-instances.showing-count"
-          values={{ visibleItems: stats.visibleItemsCount, totalItems: stats.totalItemsCount }}
-        >
-          Showing {'{{visibleItems}}'} out of {'{{totalItems}}'} instances
-        </Trans>
+        {enableFiltering && alertState ? (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count-with-state"
+            values={{ visibleItemsCount, alertState, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} {{ alertState }} out of {{ totalItemsCount }} instances
+          </Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count"
+            values={{ visibleItemsCount, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
+          </Trans>
+        )}
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
-        <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all" count={stats.totalItemsCount}>
-          Show all {'{{totalItems}}'} alert instances
-        </Trans>
+        {enableFiltering ? (
+          <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all">Show all</Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.button-show-all-instances"
+            values={{ totalItemsCount }}
+          >
+            Show all {{ totalItemsCount }} alert instances
+          </Trans>
+        )}
       </LinkButton>
     </div>
   );
@@ -127,6 +146,8 @@ export function RuleDetailsMatchingInstances(props: Props) {
       stats={stats}
       onClick={enableFiltering ? resetFilter : undefined}
       href={!enableFiltering ? ruleViewPageLink : undefined}
+      enableFiltering={enableFiltering}
+      alertState={alertState}
     />
   ) : undefined;
 

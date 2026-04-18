@@ -31,7 +31,7 @@ func NewFakeAlertInstanceManager(t *testing.T) *fakeAlertInstanceManager {
 	}
 }
 
-func (f *fakeAlertInstanceManager) GetAll(orgID int64) []*state.State {
+func (f *fakeAlertInstanceManager) GetAll(_ context.Context, orgID int64) []*state.State {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	var s []*state.State
@@ -45,7 +45,7 @@ func (f *fakeAlertInstanceManager) GetAll(orgID int64) []*state.State {
 	return s
 }
 
-func (f *fakeAlertInstanceManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State {
+func (f *fakeAlertInstanceManager) GetStatesForRuleUID(_ context.Context, orgID int64, alertRuleUID string) []*state.State {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	return f.states[orgID][alertRuleUID]
@@ -129,6 +129,10 @@ var _ ac.AccessControl = &recordingAccessControlFake{}
 type fakeRuleAccessControlService struct {
 }
 
+func (f *fakeRuleAccessControlService) HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+	return true, nil
+}
+
 func (f fakeRuleAccessControlService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
 	return true, nil
 }
@@ -154,7 +158,7 @@ func (f fakeRuleAccessControlService) AuthorizeDatasourceAccessForRuleGroup(ctx 
 }
 
 type statesReader interface {
-	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State
+	GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*state.State
 }
 
 type fakeSchedulerReader struct {
@@ -172,9 +176,9 @@ func (f *fakeSchedulerReader) setupStates(reader statesReader) *fakeSchedulerRea
 	return f
 }
 
-func (f *fakeSchedulerReader) Status(key models.AlertRuleKey) (models.RuleStatus, bool) {
+func (f *fakeSchedulerReader) Status(ctx context.Context, key models.AlertRuleKey) (models.RuleStatus, bool) {
 	if f.states == nil {
 		return models.RuleStatus{}, false
 	}
-	return state.StatesToRuleStatus(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
+	return state.StatesToRuleStatus(f.states.GetStatesForRuleUID(ctx, key.OrgID, key.UID)), true
 }

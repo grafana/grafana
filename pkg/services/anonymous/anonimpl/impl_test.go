@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -28,9 +29,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	type tagReq struct {
 		httpReq *http.Request
@@ -208,9 +207,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	store := db.InitTestDB(t)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
 		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
@@ -243,9 +241,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC) // Fixed timestamp for testing
 
@@ -356,9 +352,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 }
 
 func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// Setup test environment
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()

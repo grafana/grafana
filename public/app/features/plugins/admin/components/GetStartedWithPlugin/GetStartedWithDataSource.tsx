@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourcePluginMeta } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { ROUTES } from 'app/features/connections/constants';
-import { addDataSource } from 'app/features/datasources/state';
-import { useDispatch } from 'app/types';
+import { addDataSource } from 'app/features/datasources/state/actions';
+import { useDispatch } from 'app/types/store';
 
 import { isDataSourceEditor } from '../../permissions';
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;

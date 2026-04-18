@@ -25,9 +25,9 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
   | `=~`     | Select labels that regex-match the value.          |
   | `!~`     | Select labels that do not regex-match the value.   |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Label matching example**
 

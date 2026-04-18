@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { getConnectedDashboards } from 'app/features/library-panels/state/api';
 import { getModalStyles } from 'app/features/library-panels/styles';
 
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 interface Props {
   libraryPanel: LibraryPanelBehavior;
@@ -20,8 +20,8 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(libraryPanel.state.uid);
-    if (searchHits.length > 0) {
-      return searchHits.map((dash) => dash.title);
+    if (searchHits && searchHits.length > 0) {
+      return searchHits.map((dash) => dash.name);
     }
 
     return [];
@@ -50,7 +50,7 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           <Trans

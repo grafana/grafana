@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { SerializedError } from '@reduxjs/toolkit';
-import { FC, ReactElement, useMemo, useState } from 'react';
+import { type SerializedError } from '@reduxjs/toolkit';
+import { type FC, type JSX, type ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';

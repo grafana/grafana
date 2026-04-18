@@ -5,7 +5,7 @@ import {
   FieldType,
   LogRowContextQueryDirection,
   LogsSortOrder,
-  SplitOpenOptions,
+  type SplitOpenOptions,
 } from '@grafana/data';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -57,8 +57,8 @@ const dfAfter = createDataFrame({
 
 let getRowContext = jest.fn();
 const dispatchMock = jest.fn();
-jest.mock('app/types', () => ({
-  ...jest.requireActual('app/types'),
+jest.mock('app/types/store', () => ({
+  ...jest.requireActual('app/types/store'),
   useDispatch: () => dispatchMock,
 }));
 

@@ -1,22 +1,36 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useId } from 'react';
 
-import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
 import {
-  Switch,
+  type Action,
+  ActionType,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
+  httpMethodOptions,
+  HttpRequestMethod,
+  type VariableSuggestion,
+  type InfinityOptions,
+  type FetchOptions,
+  type ActionVariable,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import {
+  ColorPicker,
   Field,
   InlineField,
   InlineFieldRow,
-  RadioButtonGroup,
   JSONFormatter,
+  RadioButtonGroup,
+  Stack,
+  Switch,
   useStyles2,
-  ColorPicker,
   useTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
+import { ActionVariablesEditor } from './ActionVariablesEditor';
+import { ConnectionPicker } from './ConnectionPicker';
 import { ParamsEditor } from './ParamsEditor';
 
 interface ActionEditorProps {
@@ -29,9 +43,63 @@ interface ActionEditorProps {
 
 const LABEL_WIDTH = 13;
 
+const DEFAULT_HTTP_CONFIG: FetchOptions = {
+  method: HttpRequestMethod.POST,
+  url: '',
+  body: '{}',
+  queryParams: [],
+  headers: [['Content-Type', 'application/json']],
+};
+
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const titleId = useId();
+  const confirmationId = useId();
+  const oneClickId = useId();
+  const connectionId = useId();
+  const methodId = useId();
+  const urlId = useId();
+  const bodyId = useId();
+  const colorPickerId = useId();
+
+  const getActionConfig = (): FetchOptions | InfinityOptions => {
+    if (value.type === ActionType.Infinity) {
+      return (
+        value[ActionType.Infinity] || {
+          ...DEFAULT_HTTP_CONFIG,
+          datasourceUid: '',
+        }
+      );
+    }
+
+    return value[ActionType.Fetch] || DEFAULT_HTTP_CONFIG;
+  };
+
+  const updateActionConfig = (updates: Partial<FetchOptions | InfinityOptions>) => {
+    const configKey = value.type === ActionType.Infinity ? ActionType.Infinity : ActionType.Fetch;
+    const baseConfig = getActionConfig();
+
+    const updatedConfig = {
+      ...baseConfig,
+      ...updates,
+      ...(value.type === ActionType.Infinity && {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        datasourceUid: (baseConfig as InfinityOptions).datasourceUid || '',
+      }),
+    };
+
+    onChange(index, {
+      ...value,
+      [configKey]: updatedConfig,
+    });
+  };
+
+  const updateConfig =
+    <K extends keyof (FetchOptions & InfinityOptions)>(field: K) =>
+    (newValue: (FetchOptions & InfinityOptions)[K]) => {
+      updateActionConfig({ [field]: newValue });
+    };
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -41,59 +109,22 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     onChange(index, { ...value, confirmation });
   };
 
+  const onVariablesChange = (variables: ActionVariable[]) => {
+    onChange(index, {
+      ...value,
+      variables,
+    });
+  };
+
   const onOneClickChanged = () => {
     onChange(index, { ...value, oneClick: !value.oneClick });
   };
 
-  const onUrlChange = (url: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        url,
-      },
-    });
-  };
-
-  const onBodyChange = (body: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        body,
-      },
-    });
-  };
-
-  const onMethodChange = (method: HttpRequestMethod) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        method,
-      },
-    });
-  };
-
-  const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        queryParams,
-      },
-    });
-  };
-
-  const onHeadersChange = (headers: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        headers,
-      },
-    });
-  };
+  const onUrlChange = updateConfig('url');
+  const onBodyChange = updateConfig('body');
+  const onMethodChange = updateConfig('method');
+  const onQueryParamsChange = updateConfig('queryParams');
+  const onHeadersChange = updateConfig('headers');
 
   const onBackgroundColorChange = (backgroundColor: string) => {
     onChange(index, {
@@ -103,6 +134,33 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         backgroundColor,
       },
     });
+  };
+
+  const onConnectionChange = (connectionType: string | DataSourceInstanceSettings) => {
+    const baseAction = {
+      title: value.title,
+      confirmation: value.confirmation,
+      oneClick: value.oneClick,
+      variables: value.variables,
+      style: value.style,
+    };
+
+    if (typeof connectionType === 'string') {
+      onChange(index, {
+        ...baseAction,
+        type: ActionType.Fetch,
+        [ActionType.Fetch]: getActionConfig(),
+      });
+    } else {
+      onChange(index, {
+        ...baseAction,
+        type: ActionType.Infinity,
+        [ActionType.Infinity]: {
+          ...getActionConfig(),
+          datasourceUid: connectionType.uid,
+        },
+      });
+    }
   };
 
   const renderJSON = (data = '{}') => {
@@ -118,14 +176,18 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     }
   };
 
+  const actionConfig = getActionConfig();
   const shouldRenderJSON =
-    value.fetch.method !== HttpRequestMethod.GET &&
-    value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+    actionConfig.method !== HttpRequestMethod.GET &&
+    actionConfig.headers?.some(
+      ([name, value]: [string, string]) => name === 'Content-Type' && value === 'application/json'
+    );
 
   return (
-    <div className={styles.listItem}>
-      <Field label={t('grafana-ui.action-editor.modal.action-title', 'Title')} className={styles.inputField}>
+    <Stack direction="column" gap={2}>
+      <Field label={t('grafana-ui.action-editor.modal.action-title', 'Title')} className={styles.inputField} noMargin>
         <SuggestionsInput
+          id={titleId}
           value={value.title}
           onChange={onTitleChange}
           suggestions={suggestions}
@@ -141,8 +203,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           'Provide a descriptive prompt to confirm or cancel the action.'
         )}
         className={styles.inputField}
+        noMargin
       >
         <SuggestionsInput
+          id={confirmationId}
           value={value.confirmation}
           onChange={onConfirmationChange}
           suggestions={suggestions}
@@ -153,20 +217,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           )}
         />
       </Field>
-
-      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
-        <InlineField
-          label={t('actions.action-editor.button.style.background-color', 'Color')}
-          labelWidth={LABEL_WIDTH}
-          className={styles.colorPicker}
-        >
-          <ColorPicker
-            color={value?.style?.backgroundColor || theme.colors.secondary.main}
-            onChange={onBackgroundColorChange}
-          />
-        </InlineField>
-      </Field>
-
       {showOneClick && (
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
@@ -174,57 +224,79 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
             'grafana-ui.action-editor.modal.one-click-description',
             'Only one link or action can have one click enabled at a time'
           )}
+          noMargin
         >
-          <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
+          <Switch id={oneClickId} value={value.oneClick || false} onChange={onOneClickChanged} />
         </Field>
       )}
 
-      <InlineFieldRow>
-        <InlineField
-          label={t('grafana-ui.action-editor.modal.action-method', 'Method')}
-          labelWidth={LABEL_WIDTH}
-          grow={true}
-        >
-          <RadioButtonGroup<HttpRequestMethod>
-            value={value?.fetch.method}
-            options={httpMethodOptions}
-            onChange={onMethodChange}
-            fullWidth
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <div>
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+            <ConnectionPicker
+              id={connectionId}
+              actionType={value.type}
+              datasourceUid={value?.[ActionType.Infinity]?.datasourceUid}
+              onChange={onConnectionChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput
-            value={value.fetch.url}
-            onChange={onUrlChange}
-            suggestions={suggestions}
-            placeholder={t('actions.action-editor.placeholder-url', 'URL')}
-          />
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
+            <RadioButtonGroup<HttpRequestMethod>
+              value={actionConfig.method}
+              options={httpMethodOptions}
+              onChange={onMethodChange}
+              id={methodId}
+              fullWidth
+            />
+          </InlineField>
+        </InlineFieldRow>
+
+        <InlineFieldRow>
+          <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
+            <SuggestionsInput
+              id={urlId}
+              value={actionConfig.url}
+              onChange={onUrlChange}
+              suggestions={suggestions}
+              placeholder={t('actions.action-editor.placeholder-url', 'URL')}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </div>
+
+      <Field
+        label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
+        className={styles.fieldGap}
+        noMargin
+      >
+        <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
+      </Field>
 
       <Field
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
         className={styles.fieldGap}
+        noMargin
       >
-        <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
+        <ParamsEditor value={actionConfig.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
-      <Field label={t('actions.action-editor.label-headers', 'Headers')}>
+      <Field label={t('actions.action-editor.label-headers', 'Headers')} noMargin>
         <ParamsEditor
-          value={value?.fetch.headers ?? []}
+          value={actionConfig.headers ?? []}
           onChange={onHeadersChange}
           suggestions={suggestions}
           contentTypeHeader={true}
         />
       </Field>
 
-      {value?.fetch.method !== HttpRequestMethod.GET && (
-        <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField}>
+      {actionConfig.method !== HttpRequestMethod.GET && (
+        <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField} noMargin>
           <SuggestionsInput
-            value={value.fetch.body}
+            id={bodyId}
+            value={actionConfig.body}
             onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
@@ -235,10 +307,24 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       {shouldRenderJSON && (
         <>
           <br />
-          {renderJSON(value?.fetch.body)}
+          {renderJSON(actionConfig.body)}
         </>
       )}
-    </div>
+
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')} style={{ marginTop: '8px' }} noMargin>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            id={colorPickerId}
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
+      </Field>
+    </Stack>
   );
 });
 

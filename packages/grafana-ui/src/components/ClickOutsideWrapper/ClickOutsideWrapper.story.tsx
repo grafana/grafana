@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { Meta } from '@storybook/react';
+import { type Meta } from '@storybook/react';
 
 import { ClickOutsideWrapper } from './ClickOutsideWrapper';
 import mdx from './ClickOutsideWrapper.mdx';
 
 const meta: Meta<typeof ClickOutsideWrapper> = {
-  title: 'Layout/ClickOutsideWrapper',
+  title: 'Utilities/ClickOutsideWrapper',
   component: ClickOutsideWrapper,
   parameters: {
     docs: {

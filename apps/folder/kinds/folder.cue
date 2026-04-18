@@ -1,27 +1,19 @@
 package folder
 
-folder: {
+foldersV1: {
 	kind:       "Folder"
 	pluralName: "Folders"
-	current:    "v1beta1"
-	codegen: {
-		ts: {
-			enabled: false // Not sure if it should be enabled or not, currently it is.
-		}
-		go: {
-			enabled: true
+
+	schema: {
+		spec: {
+			title:        string
+			description?: string
 		}
 	}
 
-	versions: {
-		"v1beta1": {
-			schema: {
-				spec: {
-					title:    string
-					description?: string
-				}
-				status: {} // nothing
-			}
-		}
-	}
+	selectableFields: [
+		"spec.title",
+	]
 }
+
+foldersV1beta1: foldersV1

@@ -24,7 +24,8 @@ const (
 
 	ManagedRolePrefix = "managed:"
 
-	PluginRolePrefix = "plugins:"
+	PluginRolePrefix    = "plugins:"
+	PluginRoleUIDPrefix = "plugins_"
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
@@ -272,6 +273,14 @@ var (
 			{
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsOAuth("ldap"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSCIM,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSCIM,
 			},
 		},
 	}

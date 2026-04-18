@@ -3,6 +3,7 @@
   "name": "Zipkin",
   "id": "zipkin",
   "category": "tracing",
+  "executable": "gpx_zipkin",
 
   "backend": true,
   "metrics": true,
@@ -39,6 +40,7 @@
     "version": "%VERSION%"
   },
   "dependencies": {
-    "grafanaDependency": ">=10.3.0-0"
+    "grafanaDependency": ">=12.3.0",
+    "plugins": []
   }
 }

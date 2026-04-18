@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { SceneObject } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { type SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
+import { type OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
 export interface RowOptionsModalProps {
   title: string;

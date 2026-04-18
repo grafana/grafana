@@ -1,7 +1,7 @@
 // Code was originally generated from cue
 // It must now be updated manually
 
-import * as common from '@grafana/schema';
+import type * as common from '@grafana/schema';
 
 export enum TestDataQueryType {
   Annotations = 'annotations',
@@ -21,6 +21,7 @@ export enum TestDataQueryType {
   NodeGraph = 'node_graph',
   PredictableCSVWave = 'predictable_csv_wave',
   PredictablePulse = 'predictable_pulse',
+  QueryMeta = 'query_meta',
   RandomWalk = 'random_walk',
   RandomWalkTable = 'random_walk_table',
   RandomWalkWithError = 'random_walk_with_error',

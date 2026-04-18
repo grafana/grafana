@@ -26,9 +26,9 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Name of contributor -->
 <!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
-{{% /admonition %}}
+{{< /admonition >}}
 -->
 <!-- Add an image, GIF or video  as below
 
@@ -439,7 +439,7 @@ Grafana now supports GitLab OIDC through the `GitLab` OAuth provider in addition
 This change also allows Grafana to reduce the access scope to only the required scopes for authentication and authorization, instead
 of full read API access.
 
-To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation](../../setup-grafana/configure-security/configure-authentication/gitlab/).
+To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation](../../setup-grafana/configure-access/configure-authentication/gitlab/).
 
 ### Google OIDC and Team Sync support
 
@@ -451,7 +451,7 @@ Grafana now supports Google OIDC through the `Google` OAuth provider in addition
 
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
 
-To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation](../../setup-grafana/configure-security/configure-authentication/google/).
+To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation](../../setup-grafana/configure-access/configure-authentication/google/).
 
 ## Plugins
 

@@ -1,22 +1,32 @@
-import { useState, FormEvent } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  getDataSourceRef,
+  type SelectableValue,
+  type VariableRegexApplyTo,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
-import { VariableRefresh, VariableSort } from '@grafana/schema';
-import { Box, Button, Field, Modal, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { QueryVariable, sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type VariableRefresh, type VariableSort } from '@grafana/schema';
+import { Box, Button, Field, Modal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
+import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
+import {
+  QueryVariableStaticOptions,
+  type StaticOptionsOrderType,
+  type StaticOptionsType,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
-import { VariableTextAreaField } from '../components/VariableTextAreaField';
 import { VariableValuesPreview } from '../components/VariableValuesPreview';
 import { hasVariableOptions } from '../utils';
 
@@ -27,12 +37,28 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, allowCustomValue } =
-    variable.useState();
+  const {
+    datasource,
+    regex,
+    regexApplyTo,
+    sort,
+    refresh,
+    isMulti,
+    includeAll,
+    allValue,
+    query,
+    allowCustomValue,
+    options,
+    staticOptions,
+    staticOptionsOrder,
+  } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
+  };
+  const onRegexApplyToChange = (event: VariableRegexApplyTo) => {
+    variable.setState({ regexApplyTo: event });
   };
   const onSortChange = (sort: SelectableValue<VariableSort>) => {
     variable.setState({ sort: sort.value });
@@ -52,10 +78,10 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
-  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
+  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings, preserveQuery = false) => {
     const datasource = getDataSourceRef(dsInstanceSettings);
 
-    if ((variable.state.datasource?.type || '') !== datasource.type) {
+    if (!preserveQuery && (variable.state.datasource?.type || '') !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });
       return;
     }
@@ -67,6 +93,16 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     onRunQuery();
   };
 
+  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
+    onRunQuery();
+    variable.setState({ staticOptions });
+  };
+
+  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    onRunQuery();
+    variable.setState({ staticOptionsOrder });
+  };
+
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
@@ -76,7 +112,9 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onLegacyQueryChange={onQueryChange}
       timeRange={timeRange}
       regex={regex}
+      regexApplyTo={regexApplyTo}
       onRegExChange={onRegExChange}
+      onRegexApplyToChange={onRegexApplyToChange}
       sort={sort}
       onSortChange={onSortChange}
       refresh={refresh}
@@ -89,6 +127,11 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onAllValueChange={onAllValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      staticOptions={staticOptions}
+      staticOptionsOrder={staticOptionsOrder}
+      onStaticOptionsChange={onStaticOptionsChange}
+      onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      options={options}
     />
   );
 }
@@ -101,7 +144,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.query-variable-form.label-editor', 'Query Editor'),
+      id: `variable-${variable.state.name}-value`,
       render: () => <ModalEditor variable={variable} />,
     }),
   ];
@@ -125,6 +168,7 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
           onClick={() => setIsOpen(true)}
           size="sm"
           fullWidth
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
         >
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
@@ -133,13 +177,25 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
         title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
       >
         <Editor variable={variable} />
         <Modal.ButtonRow>
-          <Button variant="primary" fill="outline" onClick={onRunQuery}>
+          <Button
+            variant="primary"
+            fill="outline"
+            onClick={onRunQuery}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
           </Button>
-          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="secondary"
+            fill="outline"
+            onClick={() => setIsOpen(false)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
           </Button>
         </Modal.ButtonRow>
@@ -149,7 +205,17 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
 }
 
 export function Editor({ variable }: { variable: QueryVariable }) {
-  const { datasource: datasourceRef, sort, refresh, query, regex } = variable.useState();
+  const {
+    datasource: datasourceRef,
+    sort,
+    refresh,
+    query,
+    regex,
+    regexApplyTo,
+    options,
+    staticOptions,
+    staticOptionsOrder,
+  } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -164,6 +230,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
+
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
@@ -180,27 +247,35 @@ export function Editor({ variable }: { variable: QueryVariable }) {
   const onQueryChange = (query: VariableQueryType) => {
     variable.setState({ query, definition: getQueryDef(query) });
   };
-
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
   };
-
+  const onRegexApplyToChange = (event: VariableRegexApplyTo) => {
+    variable.setState({ regexApplyTo: event });
+  };
   const onSortChange = (sort: SelectableValue<VariableSort>) => {
     variable.setState({ sort: sort.value });
   };
   const onRefreshChange = (refresh: VariableRefresh) => {
     variable.setState({ refresh: refresh });
   };
+  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
+    variable.setState({ staticOptions });
+  };
+  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    variable.setState({ staticOptionsOrder });
+  };
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
   return (
-    <>
+    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
       <Field
-        label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
+        label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
       >
-        <DataSourcePicker current={selectedDatasource} onChange={onDataSourceChange} variables={true} width={30} />
+        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
       {selectedDatasource && VariableQueryEditor && (
@@ -214,32 +289,11 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         />
       )}
 
-      <VariableTextAreaField
-        defaultValue={regex ?? ''}
-        name="Regex"
-        description={
-          <div>
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
-              Optional, if you want to extract part of a series name or metric node segment.
-            </Trans>
-            <br />
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
-              Named capture groups can be used to separate the display text and value (
-              <TextLink
-                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
-                external
-              >
-                see examples
-              </TextLink>
-              ).
-            </Trans>
-          </div>
-        }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
-        placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
-        onBlur={onRegExChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
-        width={52}
+      <QueryVariableRegexForm
+        regex={regex}
+        regexApplyTo={regexApplyTo}
+        onRegExChange={onRegExChange}
+        onRegexApplyToChange={onRegexApplyToChange}
       />
 
       <QueryVariableSortSelect
@@ -254,8 +308,16 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         refresh={refresh}
       />
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
-    </>
+      <QueryVariableStaticOptions
+        options={options}
+        staticOptions={staticOptions}
+        staticOptionsOrder={staticOptionsOrder}
+        onStaticOptionsChange={onStaticOptionsChange}
+        onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      />
+
+      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />}
+    </div>
   );
 }
 

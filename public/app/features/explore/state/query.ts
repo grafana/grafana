@@ -1,27 +1,28 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction, type PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
-import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
   DataQueryErrorType,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceApi,
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  QueryFixAction,
-  ScopedVars,
-  SupplementaryQueryType,
+  type QueryFixAction,
+  type ScopedVars,
+  type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -33,23 +34,21 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  createAsyncThunk,
-  ExploreItemState,
-  ExplorePanelData,
-  QueryTransaction,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
-import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
+  type ExploreItemState,
+  type ExplorePanelData,
+  type ExploreState,
+  type QueryOptions,
+  type QueryTransaction,
+  type SupplementaryQueries,
+} from 'app/types/explore';
+import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
-import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -64,13 +63,7 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import {
-  createCacheKey,
-  filterLogRowsByIndex,
-  getCorrelationsData,
-  getDatasourceUIDs,
-  getResultsFromCache,
-} from './utils';
+import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -105,6 +98,9 @@ export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQu
 export interface ChangeQueriesPayload {
   exploreId: string;
   queries: DataQuery[];
+  options?: {
+    skipAutoImport?: boolean;
+  };
 }
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
@@ -323,7 +319,7 @@ const getImportableQueries = async (
 
 export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   'explore/changeQueries',
-  async ({ queries, exploreId }, { getState, dispatch }) => {
+  async ({ queries, exploreId, options }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
@@ -338,10 +334,13 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-          const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-          const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
-          await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
-          queriesImported = true;
+          // Skip automatic import if explicitly requested (e.g., query library replacement)
+          if (!options?.skipAutoImport) {
+            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
+            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+            queriesImported = true;
+          }
         }
 
         if (
@@ -349,8 +348,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           newQuery.refId === oldQuery.refId &&
           newQuery.datasource?.uid !== oldQuery.datasource?.uid
         ) {
-          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
-          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
           dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
@@ -1055,6 +1053,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
+      queriesChangedIndex: state.queriesChangedIndex + 1,
       queries,
     };
   }
@@ -1333,6 +1332,7 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
 
   return {
     ...state,
+    queriesChangedIndexAtRun: state.queriesChangedIndex,
     queryResponse: response,
     graphResult,
     tableResult,

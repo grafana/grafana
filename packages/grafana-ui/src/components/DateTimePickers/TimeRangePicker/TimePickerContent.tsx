@@ -1,15 +1,25 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  isDateTime,
+  isValidGrafanaDuration,
+  rangeUtil,
+  type RawTimeRange,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
-import { t, Trans } from '../../../utils/i18n';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
-import { WeekStart } from '../WeekStartPicker';
+import { TextLink } from '../../Link/TextLink';
+import { type WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -67,10 +77,25 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const timeOption = useTimeOption(value.raw, quickOptions);
+  const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
+    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+    const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
+
+    if (customTimeOption) {
+      const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
+
+      if (!alreadyExists) {
+        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+      }
+    }
+
+    return { filteredQuickOptions: filtered, customTimeOption: undefined };
+  }, [searchTerm, quickOptions]);
+
+  const timeOption = customTimeOption || baseTimeOption;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
@@ -86,6 +111,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 width={0}
                 value={searchTerm}
                 onChange={setSearchQuery}
+                escapeRegex={false}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
@@ -234,13 +260,9 @@ const EmptyRecentList = memo(() => {
       </div>
       <Trans i18nKey="time-picker.content.empty-recent-list-docs">
         <div>
-          <a
-            className={styles.link}
-            href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-            target="_new"
-          >
+          <TextLink href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls" external>
             Read the documentation
-          </a>
+          </TextLink>
           <span> to find out more about how to enter custom time ranges.</span>
         </div>
       </Trans>
@@ -370,8 +392,5 @@ const getEmptyListStyles = (theme: GrafanaTheme2) => ({
     'a, span': {
       fontSize: '13px',
     },
-  }),
-  link: css({
-    color: theme.colors.text.link,
   }),
 });

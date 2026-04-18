@@ -1,32 +1,43 @@
-import { ComponentType } from 'react';
-import { Observable } from 'rxjs';
+import { type ComponentType } from 'react';
+import { type Observable } from 'rxjs';
 
-import { DataSourceRef } from '@grafana/schema';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { throwIfAngular } from '../utils/throwIfAngular';
 
-import { ScopedVars } from './ScopedVars';
-import { WithAccessControlMetadata } from './accesscontrol';
-import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
-import { CoreApp } from './app';
-import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
-import { DataFrame, DataFrameDTO } from './dataFrame';
-import { PanelData } from './panel';
-import { GrafanaPlugin, PluginMeta } from './plugin';
-import { DataQuery } from './query';
-import { Scope } from './scopes';
-import { AdHocVariableFilter } from './templateVars';
-import { RawTimeRange, TimeRange } from './time';
-import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { type ScopedVars } from './ScopedVars';
+import { type WithAccessControlMetadata } from './accesscontrol';
+import { type AnnotationEvent, type AnnotationQuery, type AnnotationSupport } from './annotations';
+import { type CoreApp } from './app';
+import { type KeyValue, type LoadingState, type TableData, type TimeSeries } from './data';
+import { type DataFrame, type DataFrameDTO } from './dataFrame';
+import { type PanelData } from './panel';
+import { GrafanaPlugin, type PluginMeta } from './plugin';
+import { type DataQuery } from './query';
+import { type Scope } from './scopes';
+import { type AdHocVariableFilter } from './templateVars';
+import { type RawTimeRange, type TimeRange } from './time';
+import { type UserStorage } from './userStorage';
+import { type CustomVariableSupport, type DataSourceVariableSupport, type StandardVariableSupport } from './variables';
 
+export interface DataSourceConfigValidationAPI {
+  registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  validate: () => Promise<boolean>;
+  isValid: () => boolean;
+  getErrors: () => Record<string, string>;
+  setError: (field: string, message: string) => void;
+  clearError: (field: string) => void;
+}
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
   SecureJSONData = {},
 > {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
+  validation?: DataSourceConfigValidationAPI;
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
@@ -214,9 +225,11 @@ abstract class DataSourceApi<
   readonly name: string;
 
   /**
-   *  Set in constructor
+   * Internal ID, this will be removed in G13
+   *
+   * @deprecated
    */
-  readonly id: number;
+  readonly id?: number;
 
   /**
    *  Set in constructor
@@ -237,6 +250,11 @@ abstract class DataSourceApi<
    *  min interval range
    */
   interval?: string;
+
+  /**
+   * Initialized in datasource_srv.ts
+   */
+  userStorage?: UserStorage;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
@@ -301,14 +319,45 @@ abstract class DataSourceApi<
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
+   * Verify adhoc filters and groupBy keys applicability based on queries and current selected values
+   */
+  getDrilldownsApplicability?(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<TQuery>
+  ): Promise<DrilldownsApplicability[]>;
+
+  /**
+   * Get recommended drilldowns for a dashboard
+   */
+  getRecommendedDrilldowns?(
+    options?: DataSourceGetRecommendedDrilldownsOptions<TQuery>
+  ): Promise<DrilldownRecommendation>;
+
+  /**
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
+   * Get tag keys for group by variables. Implementing this method independently from getTagKeys
+   * allows a datasource to support group by variables without necessarily supporting adhoc filters,
+   * and vice versa.
+   */
+  getGroupByKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
    * Get tag values for adhoc filters
    */
   getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
+   * Get default variables that will be added to the dashboard
+   */
+  getDefaultVariables?(): Promise<VariableKind[]>;
+
+  /**
+   * Get default dashboard links that should be added when this datasource is used.
+   */
+  getDefaultLinks?(): Promise<DashboardLink[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -385,13 +434,9 @@ abstract class DataSourceApi<
 }
 
 /**
- * Options argument to DataSourceAPI.getTagKeys
+ * Base options shared across datasource filtering operations.
  */
-export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery> {
-  /**
-   * The other existing filters or base filters. New in v10.3
-   */
-  filters: AdHocVariableFilter[];
+export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
@@ -401,20 +446,26 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
 }
 
 /**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+}
+
+/**
  * Options argument to DataSourceAPI.getTagValues
  */
-export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
   key: string;
   /**
    * The other existing filters or base filters. New in v10.3
    */
   filters: AdHocVariableFilter[];
-  /**
-   * Context time range. New in v10.3
-   */
-  timeRange?: TimeRange;
-  queries?: TQuery[];
-  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
@@ -568,6 +619,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
@@ -629,6 +681,35 @@ export interface MetricFindValue {
   value?: string | number;
   group?: string;
   expandable?: boolean;
+  properties?: Record<string, string>;
+}
+
+export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  dashboardUid?: string;
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DrilldownRecommendation {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DrilldownsApplicability {
+  key: string;
+  applicable: boolean;
+  // message explaining why the filter is not applicable
+  reason?: string;
+  // needed to differentiate between filters with same key
+  // but different origin
+  origin?: string;
 }
 
 export interface DataSourceJsonData {
@@ -636,6 +717,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }
@@ -679,7 +761,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number;
+  /**
+   * @deprecated will be removed in G13
+   */
+  id?: number;
   uid: string;
   type: string;
   name: string;
@@ -710,15 +795,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-}
-
-/**
- * @deprecated -- use {@link DataSourceInstanceSettings} instead
- */
-export interface DataSourceSelectItem {
-  name: string;
-  value: string | null;
-  meta: DataSourcePluginMeta;
 }
 
 /**

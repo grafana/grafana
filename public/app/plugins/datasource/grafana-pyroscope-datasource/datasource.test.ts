@@ -1,37 +1,10 @@
-import {
-  AbstractLabelOperator,
-  CoreApp,
-  DataSourceInstanceSettings,
-  PluginMetaInfo,
-  PluginType,
-  DataSourceJsonData,
-  makeTimeRange,
-} from '@grafana/data';
-import { getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { AbstractLabelOperator, CoreApp, makeTimeRange } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
-import { Query } from './types';
-
-/** The datasource QueryEditor fetches datasource settings to send to the extension's `configure` method */
-export function mockFetchPyroscopeDatasourceSettings(
-  datasourceSettings?: Partial<DataSourceInstanceSettings<DataSourceJsonData>>
-) {
-  const settings = { ...defaultSettings, ...datasourceSettings };
-  const returnValues: Record<string, unknown> = {
-    [`/api/datasources/uid/${settings.uid}`]: settings,
-  };
-  setBackendSrv({
-    ...getBackendSrv(),
-    get: function <T>(path: string) {
-      const value = returnValues[path];
-      if (value) {
-        return Promise.resolve(value as T);
-      }
-      return Promise.reject({ message: 'reject' });
-    },
-  });
-}
+import { defaultSettings, mockFetchPyroscopeDatasourceSettings } from './mocks';
+import { type Query } from './types';
 
 function setupDatasource() {
   mockFetchPyroscopeDatasourceSettings();
@@ -70,6 +43,9 @@ describe('Pyroscope data source', () => {
           queryType: 'both',
           profileTypeId: '',
           groupBy: [''],
+          includeExemplars: false,
+          includeHeatmap: false,
+          heatmapType: 'individual',
         },
       ]);
       expect(queries).toMatchObject([
@@ -145,6 +121,9 @@ describe('normalizeQuery', () => {
       queryType: 'metrics',
       profileTypeId: 'cpu',
       refId: '',
+      includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     });
     expect(normalized).toMatchObject({
       labelSelector: '{app="myapp"}',
@@ -172,24 +151,9 @@ const defaultQuery = (query: Partial<Query>): Query => {
     labelSelector: '',
     profileTypeId: '',
     queryType: defaultPyroscopeQueryType,
+    includeExemplars: false,
+    includeHeatmap: false,
+    heatmapType: 'individual',
     ...query,
   };
-};
-
-const defaultSettings: DataSourceInstanceSettings = {
-  id: 0,
-  uid: 'pyroscope',
-  type: 'profiling',
-  name: 'pyroscope',
-  access: 'proxy',
-  meta: {
-    id: 'pyroscope',
-    name: 'pyroscope',
-    type: PluginType.datasource,
-    info: {} as PluginMetaInfo,
-    module: '',
-    baseUrl: '',
-  },
-  jsonData: {},
-  readOnly: false,
 };

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { type TraceKeyValuePair, type TraceLog } from '@grafana/data';
 
 /**
  * All timestamps are in microseconds
@@ -25,6 +25,7 @@ export type TraceLink = {
 
 export type TraceProcess = {
   serviceName: string;
+  serviceNamespace?: string;
   tags: TraceKeyValuePair[];
 };
 
@@ -99,4 +100,13 @@ export type CriticalPathSection = {
   spanId: string;
   section_start: number;
   section_end: number;
+};
+
+// Type for the plugin link context that includes trace data and datasource information
+export type TraceViewPluginExtensionContext = Trace & {
+  datasource: {
+    name: string;
+    uid: string;
+    type: string;
+  };
 };

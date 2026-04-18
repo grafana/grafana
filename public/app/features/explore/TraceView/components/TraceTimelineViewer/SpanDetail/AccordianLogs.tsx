@@ -16,14 +16,12 @@ import { css } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair, TraceLog } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2, type TraceLog } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
-import { TraceLink } from '../../types/trace';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import AccordianKeyValues from './AccordianKeyValues';
 
@@ -33,24 +31,17 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     AccordianLogs: css({
       label: 'AccordianLogs',
-      border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
       position: 'relative',
-      marginBottom: '0.25rem',
     }),
     AccordianLogsHeader: css({
       label: 'AccordianLogsHeader',
-      background: autoColor(theme, '#e4e4e4'),
       color: 'inherit',
-      display: 'block',
-      padding: '0.25rem 0.5rem',
-      '&:hover': {
-        background: autoColor(theme, '#dadada'),
-      },
+      display: 'flex',
+      alignItems: 'center',
     }),
     AccordianLogsContent: css({
       label: 'AccordianLogsContent',
       background: autoColor(theme, '#f0f0f0'),
-      borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
       padding: '0.5rem 0.5rem 0.25rem 0.5rem',
     }),
     AccordianLogsFooter: css({
@@ -69,7 +60,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 export type AccordianLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logs: TraceLog[];
   onItemToggle?: (log: TraceLog) => void;
   onToggle?: () => void;
@@ -80,7 +70,6 @@ export type AccordianLogsProps = {
 export default function AccordianLogs({
   interactive = true,
   isOpen,
-  linksGetter,
   logs,
   openedItems,
   onItemToggle,
@@ -94,7 +83,7 @@ export default function AccordianLogs({
     arrow = isOpen ? (
       <Icon name={'angle-down'} className={alignIcon} />
     ) : (
-      <Icon name={'angle-right'} className="u-align-icon" />
+      <Icon name={'angle-right'} className="u-align-icon" style={{ margin: '0 0.25rem 0 0' }} />
     );
     HeaderComponent = 'a';
     headerProps = {
@@ -108,7 +97,11 @@ export default function AccordianLogs({
   return (
     <div className={styles.AccordianLogs}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
-        {arrow} <strong>Events</strong> ({logs.length})
+        {arrow}{' '}
+        <strong>
+          <Trans i18nKey="explore.accordian-logs.events">Events</Trans>
+        </strong>{' '}
+        <Counter value={logs.length} variant="secondary" />
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>
@@ -134,7 +127,6 @@ export default function AccordianLogs({
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(log) : false}
                 label={label}
-                linksGetter={linksGetter}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
               />
             );

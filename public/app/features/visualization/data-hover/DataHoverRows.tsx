@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import { FeatureLike } from 'ol/Feature';
+import { type FeatureLike } from 'ol/Feature';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, FieldType, getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
+import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 import { DataHoverRow } from './DataHoverRow';
+import { renderValue } from './renderValue';
 
 type Props = {
   layers: GeomapLayerHover[];
@@ -38,7 +38,6 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                   return shouldDisplayCollapse ? (
                     <Collapse
                       key={key}
-                      collapsible
                       label={generateLabel(feature, idx)}
                       isOpen={rowMap.get(key)}
                       onToggle={() => {
@@ -87,7 +86,6 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
 
   if (first) {
     return (
-      // eslint-disable-next-line @grafana/no-untranslated-strings
       <span>
         {first}: {renderValue(props[first])}
       </span>
@@ -98,7 +96,6 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
     const v = props[k];
     if (isString(v)) {
       return (
-        // eslint-disable-next-line @grafana/no-untranslated-strings
         <span>
           {k}: {renderValue(v)}
         </span>

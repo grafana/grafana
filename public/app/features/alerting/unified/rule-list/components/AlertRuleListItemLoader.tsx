@@ -1,22 +1,23 @@
 import Skeleton from 'react-loading-skeleton';
 
-import { t } from 'app/core/internationalization';
-import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { StateIcon } from '@grafana/alerting/unstable';
+import { t } from '@grafana/i18n';
+import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { ListItem } from './ListItem';
 import { RuleActionsSkeleton } from './RuleActionsSkeleton';
-import { RuleListIcon } from './RuleListIcon';
 
 export function AlertRuleListItemSkeleton() {
   return (
     <ListItem
       title={<Skeleton width={64} />}
-      icon={<RuleListIcon isPaused={false} />}
+      icon={<StateIcon isPaused={false} />}
       description={<Skeleton width={256} />}
       actions={<RuleActionsSkeleton />}
       data-testid="alert-rule-list-item-loader"
+      aria-disabled={true}
     />
   );
 }

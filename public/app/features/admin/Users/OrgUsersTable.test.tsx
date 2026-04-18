@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { OrgUser } from '../../../types';
-import { getMockUsers } from '../../users/__mocks__/userMocks';
+import { type OrgUser } from 'app/types/user';
 
-import { OrgUsersTable, Props } from './OrgUsersTable';
+import { getMockUsers } from '../../users/mocks/userMocks';
 
-jest.mock('app/core/core', () => ({
+import { OrgUsersTable, type Props } from './OrgUsersTable';
+
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,

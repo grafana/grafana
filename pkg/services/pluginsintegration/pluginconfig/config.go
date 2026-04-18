@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
@@ -24,21 +23,18 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 
 	return config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
-		cfg.PluginsPath,
+		cfg.PluginsPaths,
 		extractPluginSettings(settingProvider),
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			ExternalCorePluginsEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
-			SkipHostEnvVarsEnabled:      features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
-			SriChecksEnabled:            features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
-			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
-			LocalizationForPlugins:      features.IsEnabledGlobally(featuremgmt.FlagLocalizationForPlugins),
+			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
-		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComSSOAPIToken,
 	), nil
@@ -52,14 +48,15 @@ type PluginInstanceCfg struct {
 
 	Tracing config.Tracing
 
-	PluginSettings setting.PluginSettings
+	PluginSettings config.PluginSettings
 
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSExternalId             string
-	AWSSessionDuration        string
-	AWSListMetricsPageLimit   string
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSExternalId                    string
+	AWSSessionDuration               string
+	AWSListMetricsPageLimit          string
+	AWSForwardSettingsPlugins        []string
 
 	Azure            *azsettings.AzureSettings
 	AzureAuthEnabled bool
@@ -81,6 +78,8 @@ type PluginInstanceCfg struct {
 
 	SigV4AuthEnabled    bool
 	SigV4VerboseLogging bool
+
+	LiveClientQueueMaxSize int
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -111,6 +110,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
+		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
 		AWSExternalId:                       aws.KeyValue("external_id").Value(),
 		AWSSessionDuration:                  aws.KeyValue("session_duration").Value(),
 		AWSListMetricsPageLimit:             aws.KeyValue("list_metrics_page_limit").Value(),
@@ -128,11 +128,12 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		ResponseLimit:                       cfg.ResponseLimit,
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
+		LiveClientQueueMaxSize:              cfg.LiveClientQueueMaxSize,
 	}, nil
 }
 
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
+	ps := config.PluginSettings{}
 	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue

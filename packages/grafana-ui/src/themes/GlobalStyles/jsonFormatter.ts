@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getJsonFormatterStyles(theme: GrafanaTheme2) {
   return css({
@@ -89,7 +89,9 @@ export function getJsonFormatterStyles(theme: GrafanaTheme2) {
 
         '&::after': {
           display: 'inline-block',
-          transition: 'transform 100ms ease-in',
+          [theme.transitions.handleMotion('no-preference')]: {
+            transition: 'transform 100ms ease-in',
+          },
           content: "'►'",
         },
       },
@@ -97,7 +99,9 @@ export function getJsonFormatterStyles(theme: GrafanaTheme2) {
       // Inline preview on hover (optional)
       '> a > .json-formatter-preview-text': {
         opacity: 0,
-        transition: 'opacity 0.15s ease-in',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.15s ease-in',
+        },
         fontStyle: 'italic',
       },
 

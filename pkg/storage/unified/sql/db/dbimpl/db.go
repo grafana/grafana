@@ -28,6 +28,10 @@ func (d sqlDB) DriverName() string {
 	return d.driverName
 }
 
+func (d sqlDB) SqlDB() *sql.DB {
+	return d.DB
+}
+
 func (d sqlDB) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	return d.DB.QueryContext(ctx, query, args...)
 }
@@ -46,6 +50,11 @@ func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) 
 
 type sqlTx struct {
 	*sql.Tx
+}
+
+// NewTx wraps an existing *sql.Tx with sqlTx
+func NewTx(tx *sql.Tx) db.Tx {
+	return sqlTx{tx}
 }
 
 func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {

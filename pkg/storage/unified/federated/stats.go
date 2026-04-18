@@ -5,17 +5,20 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
+	Cfg *setting.Cfg
 }
 
-func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(in.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read namespace")
@@ -29,7 +32,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceS
 		return nil, err
 	}
 
-	rsp := &resource.ResourceStatsResponse{}
+	rsp := &resourcepb.ResourceStatsResponse{}
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		fn := func(table, where, g, r string, existCheck bool) error {
 			// if existCheck is true, do not error out if the table does not exist
@@ -46,7 +49,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceS
 			if err != nil {
 				return err
 			}
-			rsp.Stats = append(rsp.Stats, &resource.ResourceStatsResponse_Stats{
+			rsp.Stats = append(rsp.Stats, &resourcepb.ResourceStatsResponse_Stats{
 				Group:    g, // all legacy for now
 				Resource: r,
 				Count:    count,
@@ -57,19 +60,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceS
 		group := "sql-fallback"
 
 		// Legacy alert rule table
-		err = fn("alert_rule", "org_id=? AND dashboard_uid=?", group, "alertrules", false)
-		if err != nil {
-			return err
-		}
-
-		// Legacy dashboard table
-		err = fn("dashboard", "org_id=? AND folder_uid=?", group, "dashboards", true)
-		if err != nil {
-			return err
-		}
-
-		// Legacy folder table
-		err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
+		err = fn("alert_rule", "org_id=? AND namespace_uid=?", group, "alertrules", false)
 		if err != nil {
 			return err
 		}

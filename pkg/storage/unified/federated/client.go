@@ -5,15 +5,18 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider) resource.ResourceClient {
+func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) resource.ResourceClient {
 	return &federatedClient{
 		ResourceClient: base,
 		stats: &LegacyStatsGetter{
 			SQL: sql,
+			Cfg: cfg,
 		},
 	}
 }
@@ -26,7 +29,7 @@ type federatedClient struct {
 }
 
 // Get the resource stats
-func (s *federatedClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	rsp, err := s.ResourceClient.GetStats(ctx, in, opts...)
 	if err != nil {
 		return nil, err

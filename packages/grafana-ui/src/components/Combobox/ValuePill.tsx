@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { forwardRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 
 interface ValuePillProps {
@@ -27,6 +27,9 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
               name="times"
               size="md"
               aria-label={removeButtonLabel}
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();
@@ -38,23 +41,20 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
     );
   }
 );
+ValuePill.displayName = 'ValuePill';
 
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
     display: 'inline-flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
     padding: theme.spacing(0.25),
     border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
     fontSize: theme.typography.bodySmall.fontSize,
-    flexShrink: 0,
+    flexShrink: 1,
     minWidth: '50px',
     alignItems: 'center',
-
-    '&:first-child:has(+ div)': {
-      flexShrink: 1,
-    },
   }),
 
   text: css({
@@ -66,7 +66,7 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
 
   separator: css({
     background: theme.colors.border.weak,
-    width: '2px',
+    width: '1px',
     height: '100%',
     marginRight: theme.spacing(0.5),
   }),

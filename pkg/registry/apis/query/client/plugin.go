@@ -8,13 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type pluginClient struct {
@@ -35,7 +35,7 @@ type pluginClient struct {
 
 type pluginRegistry struct {
 	pluginsMu     sync.Mutex
-	plugins       *query.DataSourceApiServerList
+	plugins       *dsV0.DataSourceApiServerList
 	apis          map[string]schema.GroupVersion
 	groupToPlugin map[string]string
 	pluginStore   pluginstore.Store
@@ -45,7 +45,7 @@ type pluginRegistry struct {
 }
 
 var _ clientapi.QueryDataClient = (*pluginClient)(nil)
-var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
+var _ dsV0.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
 var k8sForbiddenError error = &apierrors.StatusError{
 	ErrStatus: metav1.Status{
@@ -64,7 +64,7 @@ var k8sNotFoundError error = &apierrors.StatusError{
 }
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
+func newQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
@@ -74,7 +74,7 @@ func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider
 
 func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 	dataSourcesService datasources.DataSourceService,
-) query.DataSourceApiServerRegistry {
+) dsV0.DataSourceApiServerRegistry {
 	return &pluginRegistry{
 		pluginStore:        pluginStore,
 		dataSourcesService: dataSourcesService,
@@ -109,7 +109,6 @@ func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInsta
 	return adapters.ModelToInstanceSettings(ds, decryptFunc)
 }
 
-// ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
@@ -183,7 +182,7 @@ func (d *pluginRegistry) GetDatasourceGroupVersion(pluginId string) (schema.Grou
 }
 
 // GetDatasourcePlugins no namespace? everything that is available
-func (d *pluginRegistry) GetDatasourceApiServers(ctx context.Context) (*query.DataSourceApiServerList, error) {
+func (d *pluginRegistry) GetDatasourceApiServers(ctx context.Context) (*dsV0.DataSourceApiServerList, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -201,7 +200,7 @@ func (d *pluginRegistry) GetDatasourceApiServers(ctx context.Context) (*query.Da
 func (d *pluginRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
-	result := &query.DataSourceApiServerList{
+	result := &dsV0.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
@@ -225,7 +224,7 @@ func (d *pluginRegistry) updatePlugins() error {
 		}
 		groupToPlugin[group] = dsp.ID
 
-		ds := query.DataSourceApiServer{
+		ds := dsV0.DataSourceApiServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dsp.ID,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),

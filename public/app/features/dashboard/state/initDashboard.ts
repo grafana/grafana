@@ -1,43 +1,42 @@
-import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { type DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-import store from 'app/core/store';
+import { type KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { type DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv, type TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { updateNavModel } from 'app/features/dashboard-scene/pages/utils';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
-import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { toStateKey } from 'app/features/variables/utils';
+import { toStateKey } from 'app/features/variables/toStateKey';
 import {
   DASHBOARD_FROM_LS_KEY,
-  DashboardDTO,
+  type DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
-  HomeDashboardRedirectDTO,
+  type HomeDashboardRedirectDTO,
   isRedirectResponse,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+} from 'app/types/dashboard';
+import { type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
-import { PanelModel } from './PanelModel';
+import { type PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
@@ -75,7 +74,7 @@ async function fetchDashboard(
 
         // if user specified a custom home dashboard redirect to that
         if (isRedirectResponse(dashDTO)) {
-          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+          const newUrl = locationUtil.processRedirectUri(dashDTO.redirectUri, locationService.getLocation());
           locationService.replace(newUrl);
           return null;
         }
@@ -96,11 +95,7 @@ async function fetchDashboard(
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
         if (dashDTO.meta.folderUid) {
-          try {
-            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
-          } catch (err) {
-            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
-          }
+          await updateNavModel(dashDTO.meta.folderUid);
         }
 
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
@@ -124,7 +119,7 @@ async function fetchDashboard(
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
         if (args.urlFolderUid) {
-          await dispatch(getFolderByUid(args.urlFolderUid));
+          await updateNavModel(args.urlFolderUid);
         }
         return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
@@ -137,7 +132,12 @@ async function fetchDashboard(
       return null;
     }
 
-    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
+    dispatch(
+      dashboardInitFailed({
+        message: t('dashboard.fetch-dashboard.message.failed-to-fetch-dashboard', 'Failed to fetch dashboard'),
+        error: err,
+      })
+    );
     console.error(err);
     return null;
   }
@@ -200,7 +200,12 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     try {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
-      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
+      dispatch(
+        dashboardInitFailed({
+          message: t('dashboard.init-dashboard.message.failed-create-dashboard-model', 'Failed create dashboard model'),
+          error: err,
+        })
+      );
       console.error(err);
       return;
     }
@@ -276,7 +281,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
-      setWeekStart(config.bootData.user.weekStart);
+      setWeekStart(contextSrv.user.weekStart);
     }
 
     // Propagate an app-wide event about the dashboard being loaded

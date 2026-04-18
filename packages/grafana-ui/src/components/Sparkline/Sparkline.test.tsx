@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { createTheme, FieldSparkline, FieldType } from '@grafana/data';
+import { createTheme, type FieldSparkline, FieldType } from '@grafana/data';
 
 import { Sparkline } from './Sparkline';
 
@@ -21,6 +21,50 @@ describe('Sparkline', () => {
         state: {
           range: { min: 1, max: 5, delta: 1 },
         },
+      },
+    };
+    expect(() =>
+      render(<Sparkline width={800} height={600} theme={createTheme()} sparkline={sparkline} />)
+    ).not.toThrow();
+  });
+
+  it('should not throw an error if there is a single value', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [1679839200000],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [1],
+        type: FieldType.number,
+        config: {},
+        state: {
+          range: { min: 1, max: 1, delta: 0 },
+        },
+      },
+    };
+    expect(() =>
+      render(<Sparkline width={800} height={600} theme={createTheme()} sparkline={sparkline} />)
+    ).not.toThrow();
+  });
+
+  it('should not throw an error if there are no values', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [],
+        type: FieldType.number,
+        config: {},
+        state: {},
       },
     };
     expect(() =>

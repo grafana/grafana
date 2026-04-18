@@ -1,15 +1,21 @@
 import { renderHook } from '@testing-library/react';
 import * as React from 'react';
+import { Provider } from 'react-redux';
 
-import { locationService } from '@grafana/runtime';
-import store from 'app/core/store';
+import { store } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
 
 import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY } from '../utils/constants';
-import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { AlertmanagerProvider, isAlertManagerWithConfigAPI, useAlertmanager } from './AlertmanagerContext';
+import {
+  AlertmanagerProvider,
+  getOrgAlertmanagerLocalStorageKey,
+  isAlertManagerWithConfigAPI,
+  useAlertmanager,
+} from './AlertmanagerContext';
 
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
@@ -21,14 +27,21 @@ const externalAmMimir: AlertManagerDataSource = {
   imgUrl: '',
 };
 
+function getProviderWrapper() {
+  const reduxStore = configureStore();
+  return ({ children }: React.PropsWithChildren) => (
+    <Provider store={reduxStore}>
+      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+    </Provider>
+  );
+}
+
 describe('useAlertmanager', () => {
   it('Should return undefined alert manager name when there are no available alert managers', () => {
     jest
       .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
       .mockReturnValueOnce({ availableExternalDataSources: [], availableInternalDataSources: [] });
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(undefined);
@@ -40,9 +53,7 @@ describe('useAlertmanager', () => {
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
     });
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(GRAFANA_RULES_SOURCE_NAME);
@@ -55,9 +66,7 @@ describe('useAlertmanager', () => {
 
     locationService.push({ search: `alertmanager=${externalAmProm.name}` });
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
@@ -70,9 +79,7 @@ describe('useAlertmanager', () => {
 
     locationService.push({ search: `alertmanager=Not available external AM` });
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(undefined);
@@ -83,11 +90,9 @@ describe('useAlertmanager', () => {
       .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
       .mockReturnValueOnce({ availableExternalDataSources: [externalAmProm], availableInternalDataSources: [] });
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
-    store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmProm.name);
+    store.set(getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId), externalAmProm.name);
     locationService.push({ search: '' });
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
@@ -101,14 +106,60 @@ describe('useAlertmanager', () => {
 
     locationService.push({ search: `alertmanager=${externalAmProm.name}` });
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
-    );
+    const wrapper = getProviderWrapper();
 
-    store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmMimir.name);
+    store.set(getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId), externalAmMimir.name);
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
+  });
+
+  it('Should fall back to Grafana AM when stored AM is not available', () => {
+    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+      availableExternalDataSources: [],
+      availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
+    });
+
+    const orgKey = getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId);
+    store.set(orgKey, 'NonExistentAM');
+    locationService.push({ search: '' });
+
+    const wrapper = getProviderWrapper();
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
+
+    expect(result.current.selectedAlertmanager).toBe(GRAFANA_RULES_SOURCE_NAME);
+  });
+
+  it('Should clean up stale localStorage entry when stored AM is not available', () => {
+    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+      availableExternalDataSources: [],
+      availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
+    });
+
+    const orgKey = getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId);
+    store.set(orgKey, 'NonExistentAM');
+    locationService.push({ search: '' });
+
+    const wrapper = getProviderWrapper();
+    renderHook(() => useAlertmanager(), { wrapper });
+
+    expect(store.get(orgKey)).toBeUndefined();
+  });
+
+  it('Should not read localStorage from a different org', () => {
+    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+      availableExternalDataSources: [externalAmProm],
+      availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
+    });
+
+    const otherOrgKey = getOrgAlertmanagerLocalStorageKey(999);
+    store.set(otherOrgKey, externalAmProm.name);
+    locationService.push({ search: '' });
+
+    const wrapper = getProviderWrapper();
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
+
+    expect(result.current.selectedAlertmanager).toBe(GRAFANA_RULES_SOURCE_NAME);
   });
 });
 

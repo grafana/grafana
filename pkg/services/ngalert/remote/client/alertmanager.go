@@ -8,12 +8,13 @@ import (
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	amclient "github.com/prometheus/alertmanager/api/v2/client"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/util/httpclient"
-	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
 const alertmanagerAPIMountPath = "/alertmanager"
@@ -24,25 +25,29 @@ type AlertmanagerConfig struct {
 	Password string
 	URL      *url.URL
 	Logger   log.Logger
+	Timeout  time.Duration
 }
 
 type Alertmanager struct {
 	*amclient.AlertmanagerAPI
-	httpClient client.Requester
+	httpClient alertingInstrument.Requester
 	url        *url.URL
 	logger     log.Logger
 }
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
-	// First, add the authentication middleware.
-	c := &http.Client{Transport: &MimirAuthRoundTripper{
-		TenantID: cfg.TenantID,
-		Password: cfg.Password,
-		Next:     httpclient.NewHTTPTransport(),
-	}}
+	// First, set up the http client.
+	c := &http.Client{
+		Transport: &MimirAuthRoundTripper{
+			TenantID: cfg.TenantID,
+			Password: cfg.Password,
+			Next:     httpclient.NewHTTPTransport(),
+		},
+		Timeout: cfg.Timeout,
+	}
 
-	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
+	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
+	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
@@ -56,20 +61,22 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		logger:          cfg.Logger,
 		url:             cfg.URL,
 		AlertmanagerAPI: amclient.New(r, nil),
-		httpClient:      tc,
+		httpClient:      trc,
 	}, nil
 }
 
 // GetAuthedClient returns a client.Requester that includes a configured MimirAuthRoundTripper.
 // Requests using this client are fully authenticated.
-func (am *Alertmanager) GetAuthedClient() client.Requester {
+func (am *Alertmanager) GetAuthedClient() alertingInstrument.Requester {
 	return am.httpClient
 }
+
+var ReadinessTimeout = 10 * time.Second
 
 // IsReadyWithBackoff executes a readiness check against the `/-/ready` Alertmanager endpoint.
 // It uses exponential backoff (100ms * 2^attempts) with a 10s timeout.
 func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, ReadinessTimeout)
 	defer cancel()
 
 	var wait time.Duration

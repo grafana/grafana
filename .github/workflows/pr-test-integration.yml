@@ -6,6 +6,10 @@ on:
       - main
       - release-*.*.*
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,27 +18,75 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-test-integration.yml
+
+  #### OSS
   sqlite:
-    name: Sqlite
-    runs-on: ubuntu-latest-8-cores
+    # Run this workflow only for PRs from forks
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    strategy:
+      matrix:
+        # We don't need more than this since it has to wait for the other tests.
+        shard: [
+          1/4, 2/4, 3/4, 4/4,
+        ]
+      fail-fast: false
+
+    name: Sqlite (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - run: |
-          make gen-go
-          go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+        uses: ./.github/actions/setup-go
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
+          go test -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
   mysql:
-    name: MySQL
-    runs-on: ubuntu-latest-8-cores
+    # Run this workflow only for PRs from forks
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: MySQL (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     env:
@@ -42,7 +94,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
     services:
       mysql:
-        image: mysql:8.0.32
+        image: mysql:8.0.43
         env:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
@@ -53,49 +105,256 @@ jobs:
           - 3306:3306
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - run: |
-          sudo apt-get update -yq && sudo apt-get install mariadb-client
-          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
-          make gen-go
-          go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+        uses: ./.github/actions/setup-go
+      - name: Setup MySQL devenv
+        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+
   postgres:
-    name: Postgres
-    runs-on: ubuntu-latest-8-cores
+    # Run this workflow only for PRs from forks
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: Postgres (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
-    services:
-      postgres:
-        image: postgres:12.3-alpine
-        env:
-          POSTGRES_USER: grafanatest
-          POSTGRES_PASSWORD: grafanatest
-          POSTGRES_DB: grafanatest
-        ports:
-          - 5432:5432
+    env:
+      GRAFANA_TEST_DB: postgres
+      PGPASSWORD: grafanatest
+      POSTGRES_HOST: 127.0.0.1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - env:
-          GRAFANA_TEST_DB: postgres
-          PGPASSWORD: grafanatest
-          POSTGRES_HOST: 127.0.0.1
+      - name: Start Postgres via docker compose
         run: |
-          sudo apt-get update -yq && sudo apt-get install postgresql-client
-          psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-          make gen-go
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          make devenv sources=postgres_tests
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Setup Postgres devenv
+        run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup Postgres
+        if: always()
+        run: |
+          make devenv-down sources=postgres_tests
+
+  #### Enterprise
+  sqlite-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: Sqlite Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      # Enterprise must be cloned before setup-go so that enterprise
+      # modules are visible when the Go cache key is computed.
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
+          go test -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  mysql-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: MySQL Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GRAFANA_TEST_DB: mysql
+      MYSQL_HOST: 127.0.0.1
+    services:
+      mysql:
+        image: mysql:8.0.43
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana_tests
+          MYSQL_USER: grafana
+          MYSQL_PASSWORD: password
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        ports:
+          - 3306:3306
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      # Enterprise must be cloned before setup-go so that enterprise
+      # modules are visible when the Go cache key is computed.
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Setup MySQL devenv
+        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  postgres-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: Postgres Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GRAFANA_TEST_DB: postgres
+      PGPASSWORD: grafanatest
+      POSTGRES_HOST: 127.0.0.1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Start Postgres via docker compose
+        run: |
+          make devenv sources=postgres_tests
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      # Enterprise must be cloned before setup-go so that enterprise
+      # modules are visible when the Go cache key is computed.
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Setup Postgres devenv
+        run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup Postgres
+        if: always()
+        run: |
+          make devenv-down sources=postgres_tests
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests and shards.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-backend-integration-tests:
+    needs:
+      - mysql
+      - postgres
+      - sqlite
+      - mysql-enterprise
+      - postgres-enterprise
+      - sqlite-enterprise
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend integration tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

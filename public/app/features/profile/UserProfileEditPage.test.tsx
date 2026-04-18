@@ -4,13 +4,13 @@ import { render } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, usePluginComponents } from '@grafana/runtime';
+import { setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
-import { getMockTeam } from '../teams/__mocks__/teamMocks';
+import { getMockTeam } from '../teams/mocks/teamMocks';
 
-import { Props, UserProfileEditPage } from './UserProfileEditPage';
+import { type Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -24,6 +24,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -36,15 +37,18 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	features := featuremgmt.WithFeatures()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	quotaService := quotatest.New(false, nil)
+	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
 		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
 }
 
-func TestMigrate(t *testing.T) {
+func TestIntegrationMigrate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)

@@ -1,7 +1,7 @@
-import { CellProps, Text, Stack, Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { type CellProps, Text, Stack, Button } from '@grafana/ui';
 
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export function StatusCell(props: CellProps<ResourceTableItem>) {
   const item = props.row.original;

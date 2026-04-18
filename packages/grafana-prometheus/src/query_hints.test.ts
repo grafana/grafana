@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
-import { QueryHint } from '@grafana/data';
-import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
+import { type QueryHint } from '@grafana/data';
+import { type QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import {
   getExpandRulesHints,
   getQueryHints,
@@ -12,7 +12,7 @@ import {
   SUM_HINT_THRESHOLD_COUNT,
 } from './query_hints';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { RuleQueryMapping } from './types';
+import { type RuleQueryMapping } from './types';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
@@ -55,7 +55,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'counter' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'counter' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
@@ -213,7 +213,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'histogram' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
@@ -234,7 +234,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'histogram' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints(queryWithNativeHistogramFunction, series, datasource);

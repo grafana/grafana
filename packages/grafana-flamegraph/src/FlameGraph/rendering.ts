@@ -1,7 +1,7 @@
-import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import {
@@ -16,13 +16,13 @@ import {
   GROUP_STRIP_MARGIN_LEFT,
   GROUP_TEXT_OFFSET,
 } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type TextAlign } from '../types';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
-import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { type CollapseConfig, type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 
 type RenderOptions = {
-  canvasRef: RefObject<HTMLCanvasElement>;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
   data: FlameGraphDataContainer;
   root: LevelItem;
   direction: 'children' | 'parents';
@@ -373,7 +373,7 @@ function useColorFunction(
   );
 }
 
-function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
+function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperWidth: number, numberOfLevels: number) {
   const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
 
   useEffect(() => {

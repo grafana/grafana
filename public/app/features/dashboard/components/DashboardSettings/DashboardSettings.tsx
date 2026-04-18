@@ -1,20 +1,20 @@
-import * as H from 'history';
+import type * as H from 'history';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
+import { locationUtil, type NavModel, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
@@ -23,7 +23,7 @@ import { GeneralSettings } from './GeneralSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
-import { SettingsPage, SettingsPageProps } from './types';
+import { type SettingsPage, type SettingsPageProps } from './types';
 
 export interface Props {
   dashboard: DashboardModel;

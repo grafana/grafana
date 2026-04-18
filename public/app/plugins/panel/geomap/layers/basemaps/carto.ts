@@ -1,8 +1,8 @@
-import Map from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 
 // https://carto.com/help/building-maps/basemap-list/
 
@@ -33,7 +33,12 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<CartoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<CartoConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style: string | undefined = cfg.theme;
@@ -45,10 +50,14 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       } else {
         style += '_nolabels';
       }
+      const scale = window.devicePixelRatio > 1 ? '@2x' : '';
+      const noRepeat = options.noRepeat ?? false;
+
       return new TileLayer({
         source: new XYZ({
-          attributions: `<a href="https://carto.com/attribution/">© CARTO</a>`,
-          url: `https://{1-4}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}.png`,
+          attributions: `<a href="https://carto.com/attribution/">©CARTO</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`,
+          url: `https://{1-4}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}${scale}.png`,
+          wrapX: !noRepeat,
         }),
       });
     },

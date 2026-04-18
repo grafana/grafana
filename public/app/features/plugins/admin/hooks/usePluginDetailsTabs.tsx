@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
+import { type GrafanaPlugin, type NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
+import { type CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
 type ReturnType = {
   error: Error | undefined;
@@ -17,9 +18,9 @@ type ReturnType = {
 };
 
 function getCurrentPageId(
-  pageId: PluginTabIds | undefined,
   isNarrowScreen: boolean | undefined,
-  defaultTab: string
+  defaultTab: string,
+  pageId?: PluginTabIds | string | null
 ): PluginTabIds | string {
   if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
     return defaultTab;
@@ -29,7 +30,7 @@ function getCurrentPageId(
 
 export const usePluginDetailsTabs = (
   plugin?: CatalogPlugin,
-  pageId?: PluginTabIds,
+  pageId?: PluginTabIds | string | null,
   isNarrowScreen?: boolean
 ): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
@@ -37,7 +38,7 @@ export const usePluginDetailsTabs = (
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
 
-  const currentPageId = getCurrentPageId(pageId, isNarrowScreen, defaultTab);
+  const currentPageId = getCurrentPageId(isNarrowScreen, defaultTab, pageId);
 
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
@@ -73,7 +74,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
+    if (isPublished && isNarrowScreen) {
       navModelChildren.push({
         text: PluginTabLabels.PLUGINDETAILS,
         id: PluginTabIds.PLUGINDETAILS,
@@ -84,7 +85,8 @@ export const usePluginDetailsTabs = (
     }
 
     // Not extending the tabs with the config pages if the plugin is not installed
-    if (!pluginConfig) {
+    // also wait if the plugin config is still loading to avoid showing default tabs prematurely
+    if (!pluginConfig || loading) {
       return navModelChildren;
     }
 
@@ -99,7 +101,7 @@ export const usePluginDetailsTabs = (
     }
 
     if (
-      config.featureToggles.panelTitleSearch &&
+      config.featureToggles.unifiedStorageSearchUI &&
       (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
     ) {
       navModelChildren.push({
@@ -140,7 +142,7 @@ export const usePluginDetailsTabs = (
 
       if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
         navModelChildren.push({
-          text: 'Dashboards',
+          text: t('plugins.use-plugin-details-tabs.nav-model-children.text.dashboards', 'Dashboards'),
           icon: 'apps',
           id: PluginTabIds.DASHBOARDS,
           url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
@@ -150,7 +152,7 @@ export const usePluginDetailsTabs = (
     }
 
     return navModelChildren;
-  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen]);
+  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen, loading]);
 
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',

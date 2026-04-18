@@ -1,13 +1,14 @@
 import { useCallback } from 'react';
 
-import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { type StandardEditorProps, type StandardEditorsRegistryItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { defaultStyleConfig } from '../style/types';
-import { FeatureStyleConfig } from '../types';
+import { type FeatureStyleConfig } from '../types';
 
-import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
+import { StyleRuleEditor, type StyleRuleEditorSettings } from './StyleRuleEditor';
 
 type Props = StandardEditorProps<FeatureStyleConfig[], StyleRuleEditorSettings, unknown>;
 
@@ -61,7 +62,13 @@ export const GeomapStyleRulesEditor = ({ value, onChange, context, item }: Props
   return (
     <>
       {styleOptions}
-      <Button size="sm" icon="plus" onClick={onAddRule} variant="secondary" aria-label={'Add geomap style rule'}>
+      <Button
+        size="sm"
+        icon="plus"
+        onClick={onAddRule}
+        variant="secondary"
+        aria-label={t('geomap.geomap-style-rules-editor.aria-label-add-geomap-style-rule', 'Add geomap style rule')}
+      >
         {'Add style rule'}
       </Button>
     </>

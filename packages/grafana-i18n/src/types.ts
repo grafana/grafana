@@ -11,17 +11,15 @@ type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Reco
 type TransChild = React.ReactNode | Record<string, unknown>;
 
 /**
- * Props interface for the Trans component used for internationalization
+ * Shared props for the Trans component used for internationalization.
+ * Either `children` or `defaults` must be provided so that the component
+ * always has fallback text when translations are not loaded.
  */
-interface TransProps {
+interface TransPropsBase {
   /**
    * The translation key to look up
    */
   i18nKey: string;
-  /**
-   * Child elements or values to interpolate
-   */
-  children?: TransChild | readonly TransChild[];
   /**
    * React elements to use for interpolation
    */
@@ -30,10 +28,6 @@ interface TransProps {
    * Count value for pluralization
    */
   count?: number;
-  /**
-   * Default text if translation is not found
-   */
-  defaults?: string;
   /**
    * Namespace for the translation key
    */
@@ -46,7 +40,29 @@ interface TransProps {
    * Values to interpolate into the translation
    */
   values?: Record<string, unknown>;
+  /**
+   * Class name for the Trans component
+   */
+  className?: string;
 }
+
+interface TransPropsWithChildren extends TransPropsBase {
+  /**
+   * Child elements or values to interpolate — also serves as fallback text
+   */
+  children: TransChild | readonly TransChild[];
+  defaults?: string;
+}
+
+interface TransPropsWithDefaults extends TransPropsBase {
+  children?: TransChild | readonly TransChild[];
+  /**
+   * Default text if translation is not found
+   */
+  defaults: string;
+}
+
+type TransProps = TransPropsWithChildren | TransPropsWithDefaults;
 
 /**
  * Function declaration for the Trans component
@@ -60,4 +76,21 @@ declare function Trans(props: TransProps): React.ReactElement;
  */
 type TransType = typeof Trans;
 
-export type { UseTranslateHook, TransProps, TransType };
+/**
+ * Type for the translation function
+ */
+type TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
+
+/**
+ * Type for the resources object
+ */
+interface Resources extends Record<string, string | Resources | unknown> {}
+
+/**
+ * Type for the resource loader function
+ * @param resolvedLanguage - The resolved language to load resources for
+ * @returns A promise that resolves to the resources
+ */
+type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
+
+export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };

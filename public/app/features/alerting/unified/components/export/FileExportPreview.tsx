@@ -4,11 +4,17 @@ import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
+import {
+  DOCS_URL_FILE_PROVISIONING,
+  DOCS_URL_HTTP_API_PROVISIONING,
+  DOCS_URL_TERRAFORM_PROVISIONING,
+} from '../../utils/docs';
+
+import { type ExportFormats, type ExportProvider, type ProvisioningType, allGrafanaExportProviders } from './providers';
 
 interface FileExportPreviewProps {
   format: ExportFormats;
@@ -96,42 +102,42 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
 
   const exportInlineDoc: Record<ProvisioningType, { title: string; component: React.ReactNode }> = {
     file: {
-      title: 'File-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.fileprovisioning-format',
+        'File-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
           {{ name }} format is only valid for File Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_FILE_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>
       ),
     },
     api: {
-      title: 'API-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.apiprovisioning-format',
+        'API-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
           {{ name }} format is only valid for API Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_HTTP_API_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>
       ),
     },
     terraform: {
-      title: 'Terraform-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.terraformprovisioning-format',
+        'Terraform-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
           {{ name }} format is only valid for Terraform Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_TERRAFORM_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>

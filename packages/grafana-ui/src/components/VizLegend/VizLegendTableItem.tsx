@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
+import { hoverColor } from '../../themes/mixins';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;
@@ -112,7 +112,7 @@ export const LegendTableItem = ({
 LegendTableItem.displayName = 'LegendTableItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = styleMixins.hoverColor(theme.colors.background.primary, theme);
+  const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
 
   return {
     row: css({
@@ -148,6 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       whiteSpace: 'nowrap',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     value: css({
       textAlign: 'right',

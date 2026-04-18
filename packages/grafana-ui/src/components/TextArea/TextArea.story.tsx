@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { TextArea } from './TextArea';
 import mdx from './TextArea.mdx';
 
 const meta: Meta = {
-  title: 'Forms/TextArea',
+  title: 'Inputs/TextArea',
   component: TextArea,
   parameters: {
     controls: {

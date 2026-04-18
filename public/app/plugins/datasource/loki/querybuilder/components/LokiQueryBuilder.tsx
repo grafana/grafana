@@ -2,7 +2,14 @@ import { isEqual } from 'lodash';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
+import {
+  type DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  type SelectableValue,
+  type TimeRange,
+} from '@grafana/data';
 import {
   EditorRow,
   LabelFilters,
@@ -12,20 +19,20 @@ import {
   OperationsEditorRow,
   QueryBuilderHints,
   RawQuery,
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
 } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
-import { LokiDatasource } from '../../datasource';
+import { type LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
-import { LokiQuery } from '../../types';
+import { type LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { isConflictingFilter } from '../operationUtils';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiOperationId, LokiVisualQuery } from '../types';
+import { LokiOperationId, type LokiVisualQuery } from '../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
@@ -126,14 +133,14 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES ||
         Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES);
     const updateBasedOnChangedQuery = !isEqual(prevQuery, query);
-    if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
+    if (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery) {
       onGetSampleData().catch(console.error);
     }
   }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <div data-testid={testIds.editor}>
+    <Stack direction="column" gap={0.5} data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -201,7 +208,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
           showExplain={showExplain}
         />
       )}
-    </div>
+    </Stack>
   );
 });
 

@@ -1,23 +1,26 @@
 import { css } from '@emotion/css';
-import { CSSProperties, FC } from 'react';
+import { type CSSProperties, type FC } from 'react';
 
 import {
-  StandardEditorProps,
+  type StandardEditorProps,
   FieldColorModeId,
-  SelectableValue,
-  FieldColor,
+  type SelectableValue,
+  type FieldColor,
   fieldColorModeRegistry,
-  FieldColorMode,
-  GrafanaTheme2,
-  FieldColorConfigSettings,
-  FieldColorSeriesByMode,
+  type FieldColorMode,
+  type GrafanaTheme2,
+  type FieldColorConfigSettings,
+  type FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
-import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
-
-import { t } from '../../internationalization';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
+
+const GRADIENT_DEFAULT_FROM = '#73BF69';
+const GRADIENT_DEFAULT_TO = '#F2495C';
 
 type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
 
@@ -30,28 +33,54 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const options = availableOptions
-    .filter((mode) => !mode.excludeFromPicker)
-    .map((mode) => {
-      let suffix = mode.isByValue ? ' (by value)' : '';
+  const filteredOptions = availableOptions.filter(
+    (option) =>
+      !option.excludeFromPicker &&
+      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions) &&
+      (option.id !== FieldColorModeId.Gradient ||
+        (item.settings?.gradientSupport && config.featureToggles.pieChartGradientColorScheme))
+  );
 
-      return {
-        value: mode.id,
-        label: `${mode.name}${suffix}`,
-        description: mode.description,
-        isContinuous: mode.isContinuous,
-        isByValue: mode.isByValue,
-        component() {
-          return <FieldColorModeViz mode={mode} theme={theme} />;
-        },
-      };
-    });
+  const options: Array<SelectableValue<string>> = [];
+  // collect any grouped options in this map
+  // this allows us to easily push to the child array without having to rescan the options array
+  // it also allows us to maintain group position in the order they're first encountered
+  const groupMap = new Map<string, Array<SelectableValue<string>>>();
+
+  for (const option of filteredOptions) {
+    const suffix = option.isByValue ? ' (by value)' : '';
+
+    const groupName = option.group;
+    const selectOption = {
+      value: option.id,
+      label: `${option.name}${suffix}`,
+      description: option.description,
+      component() {
+        return <FieldColorModeViz mode={option} theme={theme} />;
+      },
+    };
+
+    if (groupName) {
+      let group = groupMap.get(groupName);
+      if (!group) {
+        group = [];
+        groupMap.set(groupName, group);
+        options.push({ label: groupName, options: group });
+      }
+      group.push(selectOption);
+    } else {
+      options.push(selectOption);
+    }
+  }
 
   const onModeChange = (newMode: SelectableValue<string>) => {
-    onChange({
-      ...value,
-      mode: newMode.value!,
-    });
+    const update: FieldColor = { ...value, mode: newMode.value! };
+    // Seed gradient defaults so the pickers are never empty when first selected.
+    if (newMode.value === FieldColorModeId.Gradient) {
+      update.fixedColor = value?.fixedColor ?? GRADIENT_DEFAULT_FROM;
+      update.gradientColorTo = value?.gradientColorTo ?? GRADIENT_DEFAULT_TO;
+    }
+    onChange(update);
   };
 
   const onColorChange = (color?: string) => {
@@ -59,6 +88,14 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       ...value,
       mode,
       fixedColor: color,
+    });
+  };
+
+  const onGradientColorToChange = (color?: string) => {
+    onChange({
+      ...value,
+      mode,
+      gradientColorTo: color,
     });
   };
 
@@ -84,6 +121,25 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
           inputId={id}
         />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
+      </div>
+    );
+  }
+
+  if (mode === FieldColorModeId.Gradient) {
+    return (
+      <div className={styles.group}>
+        <Select
+          minMenuHeight={200}
+          options={options}
+          value={mode}
+          onChange={onModeChange}
+          className={styles.select}
+          inputId={id}
+        />
+        <Stack gap={0.5}>
+          <ColorValueEditor value={value?.fixedColor ?? GRADIENT_DEFAULT_FROM} onChange={onColorChange} />
+          <ColorValueEditor value={value?.gradientColorTo ?? GRADIENT_DEFAULT_TO} onChange={onGradientColorToChange} />
+        </Stack>
       </div>
     );
   }
@@ -140,7 +196,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
       if (gradient === '') {
         gradient = `linear-gradient(90deg, ${color} 0%`;
       } else {
-        const valuePercent = i / (colors.length - 1);
+        const valuePercent = i / colors.length;
         const pos = valuePercent * 100;
         gradient += `, ${lastColor} ${pos}%, ${color} ${pos}%`;
       }

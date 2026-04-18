@@ -1,24 +1,26 @@
 import { cloneDeep } from 'lodash';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { AadCurrentUserCredentials, instanceOfAzureCredential, isCredentialsComplete } from '@grafana/azure-sdk';
+import { type AadCurrentUserCredentials, instanceOfAzureCredential, isCredentialsComplete } from '@grafana/azure-sdk';
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   LoadingState,
-  QueryFixAction,
-  ScopedVars,
+  type QueryFixAction,
+  type ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import { AzureQueryType } from './dataquery.gen';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureMonitorDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
+import { type AzureMonitorQuery } from './types/query';
+import { type AzureMonitorDataSourceJsonData } from './types/types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -34,6 +36,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
+  defaultSubscriptionId?: string;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -77,6 +80,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
+
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -96,7 +101,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       // Migrate old query structures
       const target = migrateQuery(baseTarget);
 
-      // Skip hidden or invalid queries or ones without properties
+      // Skip hidden or invalid queries, or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {
         continue;
       }
@@ -239,6 +244,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     });
   }
 
+  getLocations(subscriptions: string[]) {
+    return this.azureMonitorDatasource.getLocations(subscriptions);
+  }
+
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
       if (!query.queryType) {
@@ -283,6 +292,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       }
     }
     return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
+  }
+
+  getDefaultSubscriptionId() {
+    return this.defaultSubscriptionId || '';
   }
 }
 

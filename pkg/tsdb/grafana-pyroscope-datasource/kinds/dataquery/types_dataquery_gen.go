@@ -19,6 +19,13 @@ const (
 	PyroscopeQueryTypeBoth    PyroscopeQueryType = "both"
 )
 
+type HeatmapQueryType string
+
+const (
+	HeatmapQueryTypeIndividual HeatmapQueryType = "individual"
+	HeatmapQueryTypeSpan       HeatmapQueryType = "span"
+)
+
 type GrafanaPyroscopeDataQuery struct {
 	// Specifies the query label selectors.
 	LabelSelector string `json:"labelSelector"`
@@ -32,6 +39,16 @@ type GrafanaPyroscopeDataQuery struct {
 	Limit *int64 `json:"limit,omitempty"`
 	// Sets the maximum number of nodes in the flamegraph.
 	MaxNodes *int64 `json:"maxNodes,omitempty"`
+	// If set to true, the response will contain annotations
+	Annotations *bool `json:"annotations,omitempty"`
+	// If set to true, exemplars will be requested
+	IncludeExemplars bool `json:"includeExemplars"`
+	// Specifies the query profile id selectors.
+	ProfileIdSelector []string `json:"profileIdSelector,omitempty"`
+	// If set to true, heatmap data will be requested
+	IncludeHeatmap bool `json:"includeHeatmap"`
+	// Specifies the type of heatmap query
+	HeatmapType string `json:"heatmapType"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -51,6 +68,10 @@ type GrafanaPyroscopeDataQuery struct {
 // NewGrafanaPyroscopeDataQuery creates a new GrafanaPyroscopeDataQuery object.
 func NewGrafanaPyroscopeDataQuery() *GrafanaPyroscopeDataQuery {
 	return &GrafanaPyroscopeDataQuery{
-		LabelSelector: "{}",
+		LabelSelector:    "{}",
+		GroupBy:          []string{},
+		IncludeExemplars: false,
+		IncludeHeatmap:   false,
+		HeatmapType:      "individual",
 	}
 }

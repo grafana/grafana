@@ -1,13 +1,18 @@
-import { HideSeriesConfig } from '@grafana/schema';
+import { type HideSeriesConfig } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { Action } from './action';
-import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DataLink, LinkModel } from './dataLink';
-import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
-import { FieldColor } from './fieldColor';
-import { ThresholdsConfig } from './thresholds';
-import { ValueMapping } from './valueMapping';
+import { type ScopedVars } from './ScopedVars';
+import { type Action } from './action';
+import { type QueryResultBase, type Labels, type NullValueMode } from './data';
+import { type DataLink, type LinkModel } from './dataLink';
+import {
+  type DecimalCount,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+} from './displayValue';
+import { type FieldColor } from './fieldColor';
+import { type ThresholdsConfig } from './thresholds';
+import { type ValueMapping } from './valueMapping';
 
 /** @public */
 export enum FieldType {
@@ -23,8 +28,7 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
 
-  // @alpha Nested DataFrames. This is for example used with tables where expanding a row will show a nested table.
-  // The value should be DataFrame[] even if it is a single frame.
+  // Used for nested data (e.g. expandable table rows). Value must be DataFrame[], even for a single frame.
   nestedFrames = 'nestedFrames',
 }
 
@@ -54,7 +58,7 @@ export interface FieldConfig<TOptions = any> {
   description?: string;
 
   /**
-   * An explict path to the field in the datasource.  When the frame meta includes a path,
+   * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
    *
    * When defined, this value can be used as an identifier within the datasource scope, and
@@ -158,7 +162,7 @@ export interface Field<T = any> {
 
   /**
    * When type === FieldType.Time, this can optionally store
-   * the nanosecond-precison fractions as integers between
+   * the nanosecond-precision fractions as integers between
    * 0 and 999999.
    */
   nanos?: number[];

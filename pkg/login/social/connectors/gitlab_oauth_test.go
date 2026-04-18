@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,6 +39,8 @@ const (
 	rootUserRespBody   = `{"id":1,"username":"root","name":"Administrator","state":"active","email":"root@example.org", "confirmed_at":"2022-09-13T19:38:04.891Z","is_admin":true,"namespace_id":1}`
 	editorUserRespBody = `{"id":3,"username":"gitlab-editor","name":"Gitlab Editor","state":"active","email":"gitlab-editor@example.org", "confirmed_at":"2022-09-13T19:38:04.891Z","is_admin":false,"namespace_id":1}`
 
+	editorUserIDToken = `{"sub":"3","preferred_username":"gitlab-editor","name":"Gitlab Editor","email":"gitlab-editor@example.org","email_verified":true,"groups_direct":["editors", "viewers"]}` // #nosec G101 not a hardcoded credential
+
 	adminGroup  = `{"id":4,"web_url":"http://grafana-gitlab.local/groups/admins","name":"Admins","path":"admins","project_creation_level":"developer","full_name":"Admins","full_path":"admins","created_at":"2022-09-13T19:38:04.891Z"}`
 	editorGroup = `{"id":5,"web_url":"http://grafana-gitlab.local/groups/editors","name":"Editors","path":"editors","project_creation_level":"developer","full_name":"Editors","full_path":"editors","created_at":"2022-09-13T19:38:15.074Z"}`
 	viewerGroup = `{"id":6,"web_url":"http://grafana-gitlab.local/groups/viewers","name":"Viewers","path":"viewers","project_creation_level":"developer","full_name":"Viewers","full_path":"viewers","created_at":"2022-09-13T19:38:25.777Z"}`
@@ -61,6 +65,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		GroupsRespBody       string
 		GroupHeaders         map[string]string
 		RoleAttributePath    string
+		IDToken              string
 		ExpectedLogin        string
 		ExpectedEmail        string
 		ExpectedRoles        map[int64]org.RoleType
@@ -181,6 +186,24 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedRoles:  map[int64]org.RoleType{4: "Editor", 5: "Viewer"},
 		},
 		{
+			Name:                 "Maps roles from ID token attributes if available",
+			RoleAttributePath:    `email=='gitlab-editor@example.org' && 'Editor' || 'Viewer'`,
+			IDToken:              editorUserIDToken,
+			ExpectedLogin:        "gitlab-editor",
+			ExpectedEmail:        "gitlab-editor@example.org",
+			ExpectedRoles:        map[int64]org.RoleType{1: "Editor"},
+			ExpectedGrafanaAdmin: nilPointer,
+		},
+		{
+			Name:                 "Maps groups from ID token groups if available",
+			RoleAttributePath:    gitlabAttrPath,
+			IDToken:              editorUserIDToken,
+			ExpectedLogin:        "gitlab-editor",
+			ExpectedEmail:        "gitlab-editor@example.org",
+			ExpectedRoles:        map[int64]org.RoleType{1: "Editor"},
+			ExpectedGrafanaAdmin: nilPointer,
+		},
+		{
 			Name:           "Should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
 			Cfg:            conf{RoleAttributeStrict: true, OrgMapping: []string{"other:Org4:Editor"}},
 			UserRespBody:   editorUserRespBody,
@@ -209,7 +232,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				SkipOrgRoleSync:         tt.Cfg.SkipOrgRoleSync,
 				OrgMapping:              tt.Cfg.OrgMapping,
 				// OrgAttributePath:        "",
-			}, cfg, orgMapper, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			}, cfg, orgMapper, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -230,8 +253,17 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 					require.Fail(t, "unexpected request URI: "+r.RequestURI)
 				}
 			}))
+
+			token := &oauth2.Token{}
+			if tt.IDToken != "" {
+				emptyJWTHeader := base64.RawURLEncoding.EncodeToString([]byte("{}"))
+				JWTBody := base64.RawURLEncoding.EncodeToString([]byte(tt.IDToken))
+				idToken := fmt.Sprintf("%s.%s.signature", emptyJWTHeader, JWTBody)
+				token = token.WithExtra(map[string]any{"id_token": idToken})
+			}
+
 			provider.info.ApiUrl = ts.URL + apiURI
-			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 			if tt.ExpectedError != nil {
 				require.ErrorIs(t, err, tt.ExpectedError)
 				return
@@ -382,6 +414,9 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		if tc.wantUser != nil {
+			tc.wantUser.raw = []byte(tc.payload)
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			// Create a test client with a dummy token
 			client := oauth2.NewClient(context.Background(), &tokenSource{accessToken: "dummy_access_token"})
@@ -398,8 +433,9 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				},
 				&setting.Cfg{
 					AutoAssignOrgRole: "",
-				}, nil, &ssosettingstests.MockService{},
-				featuremgmt.WithFeatures())
+				}, nil, ssosettingstests.NewFakeService(),
+				featuremgmt.WithFeatures(),
+				nil)
 
 			// Test case: successful extraction
 			token := &oauth2.Token{}
@@ -489,7 +525,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
@@ -514,6 +550,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 					"auth_url":                   "",
 					"token_url":                  "",
 					"api_url":                    "",
+					"login_prompt":               "select_account",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -607,11 +644,66 @@ func TestSocialGitlab_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if validate_id_token is enabled and jwk_set_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if validate_id_token is enabled and jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false even when jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -647,6 +739,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "login",
 				},
 			},
 			expectError: false,
@@ -654,6 +747,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "login",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -692,7 +786,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -703,6 +797,110 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 			require.EqualValues(t, tc.expectedInfo, s.info)
 			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
+	validKey, validKeyID := createTestRSAKey(t)
+	invalidKey, _ := createTestRSAKey(t)
+
+	// Create a mock JWKS server
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jwksData := createJWKSResponse(t, validKey, validKeyID)
+		_, _ = w.Write(jwksData)
+	}))
+	defer jwksServer.Close()
+
+	claims := map[string]any{
+		"sub":                "12345678",
+		"email":              "johndoe@example.com",
+		"email_verified":     true,
+		"name":               "John Doe",
+		"preferred_username": "johndoe",
+		"exp":                time.Now().Add(time.Hour).Unix(),
+		"iat":                time.Now().Unix(),
+	}
+
+	tests := []struct {
+		name          string
+		validateToken bool
+		jwkSetURL     string
+		tokenKey      *rsa.PrivateKey
+		tokenKeyID    string
+		wantData      bool
+		wantError     error
+	}{
+		{
+			name:          "valid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      validKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+		},
+		{
+			name:          "invalid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantError:     fmt.Errorf("signing key not found for kid: test-key-id"),
+		},
+		{
+			name:          "validation disabled should extract without signature check",
+			validateToken: false,
+			jwkSetURL:     "",
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			}
+			if tc.validateToken {
+				info.ValidateIDToken = true
+				info.JwkSetURL = tc.jwkSetURL
+			}
+
+			s := NewGitLabProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+			// Sign the token
+			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)
+
+			// Create OAuth token with ID token
+			token := &oauth2.Token{
+				AccessToken: "access-token",
+			}
+			token = token.WithExtra(map[string]any{
+				"id_token": idToken,
+			})
+
+			// Create HTTP client
+			client := &http.Client{}
+
+			// Extract from token
+			data, err := s.extractFromToken(context.Background(), client, token)
+
+			if tc.wantError != nil {
+				require.ErrorContains(t, err, tc.wantError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.wantData {
+				require.NotNil(t, data, "Expected user data but got nil")
+				assert.Equal(t, "johndoe@example.com", data.Email)
+				assert.Equal(t, "johndoe", data.Login)
+			} else {
+				require.Nil(t, data, "Expected nil data but got user data")
+			}
 		})
 	}
 }

@@ -1,12 +1,12 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { PluginExtensionAddedComponentConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
 import { isAddedComponentMetaInfoMissing } from '../validators';
 
-import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
 
 const logPrefix = 'Could not register component extension. Reason:';
 
@@ -22,12 +22,13 @@ export class AddedComponentsRegistry extends Registry<
   PluginExtensionAddedComponentConfig
 > {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedComponentRegistryItem[]>>;
       initialState?: RegistryType<AddedComponentRegistryItem[]>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -51,7 +52,7 @@ export class AddedComponentsRegistry extends Registry<
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isAddedComponentMetaInfoMissing(pluginId, config, configLog)
+        isAddedComponentMetaInfoMissing(pluginId, config, configLog, this.apps)
       ) {
         continue;
       }
@@ -62,18 +63,21 @@ export class AddedComponentsRegistry extends Registry<
 
         const result = {
           pluginId,
-          component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
+          component: wrapWithPluginContext({
+            pluginId,
+            extensionTitle: config.title,
+            Component: config.component,
+            log: pointIdLog,
+          }),
           description: config.description,
           title: config.title,
         };
 
         pointIdLog.debug('Added component extension successfully registered');
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
-        }
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 
@@ -82,7 +86,7 @@ export class AddedComponentsRegistry extends Registry<
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedComponentsRegistry({
+    return new AddedComponentsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

@@ -1,19 +1,19 @@
 import { get, set } from 'lodash';
 
-import { ScopedVars } from '@grafana/data';
-import { VariableInterpolation } from '@grafana/runtime';
+import { type ScopedVars } from '@grafana/data';
+import { type VariableInterpolation } from '@grafana/runtime';
 
-import createMockQuery from '../__mocks__/query';
-import { createTemplateVariables } from '../__mocks__/utils';
-import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
+import createMockQuery from '../mocks/query';
+import { createTemplateVariables } from '../mocks/utils';
+import { multiVariable } from '../mocks/variables';
 import {
-  AzureAPIResponse,
-  AzureMonitorDataSourceInstanceSettings,
-  Location,
-  RawAzureResourceGroupItem,
-  RawAzureResourceItem,
-} from '../types';
+  type AzureAPIResponse,
+  type AzureMonitorDataSourceInstanceSettings,
+  type Location,
+  type RawAzureResourceGroupItem,
+  type RawAzureResourceItem,
+} from '../types/types';
 
 // We want replace to just return the value as is in general/
 // We declare this as a function so that we can overwrite it in each test

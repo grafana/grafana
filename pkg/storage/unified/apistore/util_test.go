@@ -6,35 +6,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestToListRequest(t *testing.T) {
 	tests := []struct {
 		name          string
-		key           *resource.ResourceKey
+		key           *resourcepb.ResourceKey
 		opts          storage.ListOptions
-		want          *resource.ListRequest
+		want          *resourcepb.ListRequest
 		wantPredicate storage.SelectionPredicate
 		wantErr       error
 	}{
 		{
 			name: "basic list request",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
 			},
 			opts: storage.ListOptions{},
-			want: &resource.ListRequest{
+			want: &resourcepb.ListRequest{
 				VersionMatchV2: 1,
-				Options: &resource.ListOptions{
-					Key: &resource.ResourceKey{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
 						Group:     "test",
 						Resource:  "test",
 						Namespace: "default",
@@ -46,7 +47,7 @@ func TestToListRequest(t *testing.T) {
 		},
 		{
 			name: "with resource version",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
@@ -54,11 +55,11 @@ func TestToListRequest(t *testing.T) {
 			opts: storage.ListOptions{
 				ResourceVersion: "123",
 			},
-			want: &resource.ListRequest{
+			want: &resourcepb.ListRequest{
 				VersionMatchV2:  1,
 				ResourceVersion: 123,
-				Options: &resource.ListOptions{
-					Key: &resource.ResourceKey{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
 						Group:     "test",
 						Resource:  "test",
 						Namespace: "default",
@@ -70,7 +71,7 @@ func TestToListRequest(t *testing.T) {
 		},
 		{
 			name: "invalid resource version",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
@@ -84,7 +85,7 @@ func TestToListRequest(t *testing.T) {
 		},
 		{
 			name: "with label selector",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
@@ -94,15 +95,15 @@ func TestToListRequest(t *testing.T) {
 					Label: labels.SelectorFromSet(labels.Set{"key": "value"}),
 				},
 			},
-			want: &resource.ListRequest{
+			want: &resourcepb.ListRequest{
 				VersionMatchV2: 1,
-				Options: &resource.ListOptions{
-					Key: &resource.ResourceKey{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
 						Group:     "test",
 						Resource:  "test",
 						Namespace: "default",
 					},
-					Labels: []*resource.Requirement{
+					Labels: []*resourcepb.Requirement{
 						{
 							Key:      "key",
 							Operator: string(selection.Equals),
@@ -117,8 +118,51 @@ func TestToListRequest(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "with field selector",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+					Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+				},
+			},
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Labels: []*resourcepb.Requirement{
+						{
+							Key:      "label",
+							Operator: string(selection.Equals),
+							Values:   []string{"A"},
+						},
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "field",
+							Operator: string(selection.Equals),
+							Values:   []string{"B"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+				Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+			},
+			wantErr: nil,
+		},
+		{
 			name: "with trash label",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
@@ -128,13 +172,13 @@ func TestToListRequest(t *testing.T) {
 					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetTrash: "true"}),
 				},
 			},
-			want: &resource.ListRequest{
+			want: &resourcepb.ListRequest{
 				VersionMatchV2: 1,
-				Source:         resource.ListRequest_TRASH,
-				Options: &resource.ListOptions{
+				Source:         resourcepb.ListRequest_TRASH,
+				Options: &resourcepb.ListOptions{
 					Labels: nil,
 					Fields: nil,
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Group:     "test",
 						Resource:  "test",
 						Namespace: "default",
@@ -146,54 +190,28 @@ func TestToListRequest(t *testing.T) {
 		},
 		{
 			name: "with history label",
-			key: &resource.ResourceKey{
+			key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Namespace: "default",
 			},
 			opts: storage.ListOptions{
 				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "test-name"}),
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "true"}),
+					Field: fields.SelectorFromSet(fields.Set{"metadata.name": "test-name"}),
 				},
 			},
-			want: &resource.ListRequest{
+			want: &resourcepb.ListRequest{
 				VersionMatchV2: 1,
-				Source:         resource.ListRequest_HISTORY,
-				Options: &resource.ListOptions{
+				Source:         resourcepb.ListRequest_HISTORY,
+				Options: &resourcepb.ListOptions{
 					Labels: nil,
 					Fields: nil,
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Group:     "test",
 						Resource:  "test",
 						Namespace: "default",
 						Name:      "test-name",
-					},
-				},
-			},
-			wantPredicate: storage.Everything,
-			wantErr:       nil,
-		},
-		{
-			name: "with fullpath label",
-			key: &resource.ResourceKey{
-				Group:     "test",
-				Resource:  "test",
-				Namespace: "default",
-			},
-			opts: storage.ListOptions{
-				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelGetFullpath: "true"}),
-				},
-			},
-			want: &resource.ListRequest{
-				VersionMatchV2: 1,
-				Options: &resource.ListOptions{
-					Labels: nil,
-					Fields: nil,
-					Key: &resource.ResourceKey{
-						Group:     "test",
-						Resource:  "test",
-						Namespace: "default",
 					},
 				},
 			},

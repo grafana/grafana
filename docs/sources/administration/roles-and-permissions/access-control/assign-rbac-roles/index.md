@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles
-weight: 40
+weight: 60
 refs:
   custom-role-actions-scopes:
     - pattern: /docs/grafana/
@@ -41,9 +41,9 @@ refs:
 
 # Assign RBAC roles
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
 

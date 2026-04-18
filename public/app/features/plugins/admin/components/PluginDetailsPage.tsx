@@ -3,12 +3,11 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
@@ -17,8 +16,7 @@ import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
-import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
-import { PluginTabIds } from '../types';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus, useGetPluginInsights } from '../state/hooks';
 
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
 
@@ -37,21 +35,23 @@ export function PluginDetailsPage({
   pluginId,
   navId = 'plugins',
   notFoundComponent = <NotFoundPlugin />,
-  notFoundNavModel = {
-    text: 'Unknown plugin',
-    subTitle: 'The requested ID does not belong to any plugin',
-    active: true,
-  },
+  notFoundNavModel,
 }: Props) {
   const location = useLocation();
+  const notFoundModel = notFoundNavModel ?? {
+    text: t('plugins.plugin-details-page.not-found-model.text.unknown-plugin', 'Unknown plugin'),
+    subTitle: t(
+      'plugins.plugin-details-page.not-found-model.subTitle.requested-belong-plugin',
+      'The requested ID does not belong to any plugin'
+    ),
+    active: true,
+  };
   const queryParams = new URLSearchParams(location.search);
   const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
+  useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
+
   const isNarrowScreen = useMedia('(max-width: 600px)');
-  const { navModel, activePageId } = usePluginDetailsTabs(
-    plugin,
-    queryParams.get('page') as PluginTabIds,
-    isNarrowScreen
-  );
+  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
@@ -73,16 +73,14 @@ export function PluginDetailsPage({
 
   if (!plugin) {
     return (
-      <Page navId={navId} pageNav={notFoundNavModel}>
+      <Page navId={navId} pageNav={notFoundModel}>
         {notFoundComponent}
       </Page>
     );
   }
 
-  const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
-
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
       <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <Page.Contents>
           <TabContent className={styles.tabContent}>
@@ -98,9 +96,7 @@ export function PluginDetailsPage({
             />
           </TabContent>
         </Page.Contents>
-        {!isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel && (
-          <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} />
-        )}
+        {!isNarrowScreen && <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} />}
       </Stack>
     </Page>
   );

@@ -14,6 +14,7 @@ type RuleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
 func newRuleAccessControlService(ac RuleAccessControlService) *provisioningRuleAccessControl {

@@ -18,6 +18,60 @@ Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropriate token such as `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle`.
 
+Instead of using `0` to remove a previously set border-radius, use `unset`.
+
+### `no-invalid-css-properties`
+
+Disallow invalid CSS property names in Emotion `css()` calls.
+
+This rule catches typos and invalid CSS properties in Emotion's `css()` function calls, helping prevent bugs where styles are silently ignored by browsers. It uses the [`known-css-properties`](https://www.npmjs.com/package/known-css-properties) package (the same one used by Stylelint) to validate property names against all standard CSS properties.
+
+The rule automatically converts camelCase property names to kebab-case for validation and allows:
+
+- Valid CSS properties (e.g., `paddingLeft`, `backgroundColor`)
+- CSS custom properties/variables (e.g., `--my-custom-property`)
+- Nested selectors and pseudo-classes (e.g., `&:hover`, `& > div`)
+- At-rules (e.g., `@media`, `@supports`)
+- HTML tag selectors (e.g., `button`, `span`)
+
+#### Examples
+
+```tsx
+// Bad ❌ - Typo in property name
+const styles = css({
+  addingLeft: 10, // Should be "paddingLeft"
+  backgroudColor: 'red', // Should be "backgroundColor"
+});
+
+// Good ✅ - Valid CSS properties
+const styles = css({
+  paddingLeft: 10,
+  backgroundColor: 'red',
+});
+
+// Good ✅ - CSS custom properties
+const styles = css({
+  '--my-custom-property': '10px',
+});
+
+// Good ✅ - Nested selectors and pseudo-classes
+const styles = css({
+  '&:hover': {
+    backgroundColor: 'blue',
+  },
+  '& > span': {
+    color: 'red',
+  },
+});
+
+// Good ✅ - Media queries
+const styles = css({
+  '@media (max-width: 768px)': {
+    display: 'none',
+  },
+});
+```
+
 ### `no-unreduced-motion`
 
 Avoid direct use of `animation*` or `transition*` properties.
@@ -112,117 +166,131 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
 
-### `no-untranslated-strings`
+### `consistent-story-titles`
 
-Check if strings are marked for translation.
+Enforce consistent Storybook titles in `.story.tsx` files.
+
+Storybook titles should not contain more than one `/` for sections (resulting in maximum 2 parts), unless one of the sections is 'Deprecated'. This helps maintain a clean and organized Storybook structure.
+
+#### Examples
 
 ```tsx
 // Bad ❌
-<InlineToast placement="top" referenceElement={buttonRef.current}>
-  Copied
-</InlineToast>
+export default { title: 'Components/Forms/Button' };
 
 // Good ✅
-<InlineToast placement="top" referenceElement={buttonRef.current}>
-  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
-</InlineToast>
+export default { title: 'Components/Button' };
 
+// Good ✅ - Deprecated allows any number of sections
+export default { title: 'Components/Deprecated/Forms/Button/Extra' };
+
+// Good ✅ - Variable assignment pattern
+const storyConfig = { title: 'Components/Button' };
+export default storyConfig;
+
+// Bad ❌ - Variable assignment with too many sections
+const storyConfig = { title: 'Components/Forms/Button' };
+export default storyConfig;
 ```
 
-#### Passing variables to translations
+### `no-plugin-external-import-paths`
+
+Prevent plugins from importing anything outside their own directory.
+
+This rule enforces strict plugin isolation by preventing plugins from importing anything that reaches outside their own plugin directory. This helps maintain clean plugin boundaries and prevents tight coupling between plugins and other parts of the codebase.
+
+The rule automatically detects the current plugin directory from the file path and blocks any relative imports that would reach outside that directory.
+
+The rule is applied to specific plugins by configuring the `files` pattern in the ESLint configuration, similar to `grafana/decoupled-plugins-overrides`.
+
+#### Examples
 
 ```tsx
-// Bad ❌
-const SearchTitle = ({ term }) => <div>Results for {term}</div>;
+// Bad ❌ - Importing from sibling plugin
+import { getDataLinks } from '../status-history/utils';
+import { isTooltipScrollable } from '../timeseries/utils';
 
-// Good ✅
-const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
+// Bad ❌ - Importing from Grafana core
+import { something } from '../../../features/dashboard/state';
 
-// Good ✅ (if you need to interpolate variables inside nested components)
-const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
-const SearchTitle = ({ term }) => (
-  <Trans i18nKey="search-page.results-title">
-    Results for <SearchTerm term={term} />
-  </Trans>
-);
+// Bad ❌ - Importing from outside plugin directory
+import { other } from '../some-other-folder/utils';
 
-// Good ✅ (if you need to interpolate variables and additional translated strings inside nested components)
-const SearchTitle = ({ term }) => (
-  <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
-    Results for <Text color="success">{'{{ myVariable }}'} and this translated text is also in green</Text>
-  </Trans>
-);
+// Good ✅ - Importing from same plugin
+import { someUtil } from './utils';
+import { Component } from './Component';
+import { helper } from './subfolder/helper';
+
+// Good ✅ - Importing from external packages
+import React from 'react';
+import { Button } from '@grafana/ui';
 ```
 
-#### How to translate props or attributes
+#### Error Message
 
-This rule checks if a string is wrapped up by the `Trans` tag, or if certain props contain untranslated strings.
-We ask for such props to be translated with the `t()` function.
+When a violation is detected, the rule reports:
 
-The below props are checked for untranslated strings:
-
-- `label`
-- `description`
-- `placeholder`
-- `aria-label`
-- `title`
-- `text`
-- `tooltip`
-
-```tsx
-// Bad ❌
-<input type="value" placeholder={'Username'} />;
-
-// Good ✅
-const placeholder = t('form.username-placeholder', 'Username');
-return <input type="value" placeholder={placeholder} />;
+```
+Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
 ```
 
-Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
+### `define-feature-events`
 
-### `no-translation-top-level`
+Enforces best practices when using `defineFeatureEvents` from `@grafana/runtime/internal`.
+Only activates in files that import `defineFeatureEvents`.
 
-Ensure that `t()` translation method is not used at the top level of a file, outside of a component of method.
-This is to prevent calling the translation method before it's been instantiated.
+#### Rules enforced:
 
-This does not cause an error if a file is lazily loaded, but refactors can cause errors, and it can cause problems in tests.
-Fix the
+- **`literalArgsRequired`** — `repo` and `feature` args must be string literals so the analytics scanner script can statically extract event names.
 
-```tsx
+```ts
 // Bad ❌
-const someTranslatedText = t('some.key', 'Some text');
-const SomeComponent = () => {
-  return <div title={someTranslatedText} />;
+const feature = 'dashboard_library';
+defineFeatureEvents('grafana', feature);
+
+// Good ✅
+defineFeatureEvents('grafana', 'dashboard_library');
+```
+
+- **`missingOwnerTag`** — Exported events objects must have a JSDoc block with `@owner`.
+
+```ts
+// Bad ❌
+export const MyInteractions = { loaded: createEvent('loaded') };
+
+// Good ✅
+/** @owner grafana-dashboards */
+export const MyInteractions = { loaded: createEvent('loaded') };
+```
+
+- **`missingEventComment`** — Each event in the object must be documented.
+
+```ts
+// Bad ❌
+export const MyInteractions = {
+  loaded: createEvent('loaded'),
 };
 
 // Good ✅
-const SomeComponent = () => {
-  const someTranslatedText = t('some.key', 'Some text');
-  return <div title={someTranslatedText} />;
+export const MyInteractions = {
+  /** Fires when the library finishes rendering. */
+  loaded: createEvent('loaded'),
 };
+```
 
+- **`interfaceMustExtend`** — Event property interfaces must extend `EventProperty`.
+
+- **`missingPropertyComment`** — Each property in the interface must have a JSDoc comment, enabling the analytics report scanner to extract descriptions automatically.
+
+```ts
 // Bad ❌
-const someConfigThatHasToBeShared = [{ foo: t('some.key', 'Some text') }];
-const SomeComponent = () => {
-  return (
-    <div>
-      {someConfigThatHasToBeShared.map((cfg) => {
-        return <div>{cfg.foo}</div>;
-      })}
-    </div>
-  );
-};
+interface LoadedProperties extends EventProperty {
+  numberOfItems: number;
+}
 
 // Good ✅
-const someConfigThatHasToBeShared = () => [{ foo: t('some.key', 'Some text') }];
-const SomeComponent = () => {
-  const configs = someConfigThatHasToBeShared();
-  return (
-    <div>
-      {configs.map((cfg) => {
-        return <div>{cfg.foo}</div>;
-      })}
-    </div>
-  );
-};
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library at load time. */
+  numberOfItems: number;
+}
 ```

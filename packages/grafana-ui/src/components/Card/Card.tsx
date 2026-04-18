@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import { memo, cloneElement, type FC, useMemo, useContext, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { t } from '../../utils/i18n';
 
-import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
+import { CardContainer, type CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public
@@ -27,6 +28,8 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   isSelected?: boolean;
   /** If true, the padding of the Card will be smaller */
   isCompact?: boolean;
+  /** Remove the bottom margin */
+  noMargin?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -49,6 +52,7 @@ const CardContext = React.createContext<{
 /**
  * Generic card component
  *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-card--docs
  * @public
  */
 export const Card: CardInterface = ({
@@ -59,16 +63,29 @@ export const Card: CardInterface = ({
   isSelected,
   isCompact,
   className,
+  noMargin,
   ...htmlProps
 }) => {
   const hasHeadingComponent = useMemo(
     () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
   );
+  const hasDescriptionComponent = useMemo(
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Description),
+    [children]
+  );
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact);
+  const styles = useStyles2(
+    getCardContainerStyles,
+    disabled,
+    disableHover,
+    hasDescriptionComponent,
+    isSelected,
+    isCompact,
+    noMargin
+  );
 
   return (
     <CardContainer
@@ -76,6 +93,8 @@ export const Card: CardInterface = ({
       disableHover={disableHover}
       isSelected={isSelected}
       className={cx(styles.container, className)}
+      noMargin={noMargin}
+      hasDescriptionComponent={hasDescriptionComponent}
       {...htmlProps}
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
@@ -106,7 +125,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const optionLabel = t('grafana-ui.card.option', 'option');
 
   return (
-    <h2 className={cx(styles.heading, className)}>
+    <div data-testid={selectors.components.Card.heading} className={cx(styles.heading, className)}>
       {href ? (
         <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
@@ -120,7 +139,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       )}
       {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
       {isSelected !== undefined && <input aria-label={optionLabel} type="radio" checked={isSelected} readOnly />}
-    </h2>
+    </div>
   );
 };
 Heading.displayName = 'Heading';
@@ -298,7 +317,9 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
   return (
     <div className={cx(css, className)}>
       {React.Children.map(children, (child) => {
-        return React.isValidElement(child) ? cloneElement(child, { disabled: isDisabled, ...child.props }) : null;
+        return React.isValidElement<Record<string, unknown>>(child)
+          ? cloneElement(child, child.type !== React.Fragment ? { disabled: isDisabled, ...child.props } : undefined)
+          : null;
       })}
     </div>
   );

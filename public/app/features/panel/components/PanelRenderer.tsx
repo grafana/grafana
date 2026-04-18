@@ -1,18 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   getTimeZone,
-  PanelPlugin,
+  type PanelPlugin,
   PluginContextProvider,
   getPanelOptionsWithDefaults,
-  OptionDefaults,
+  type OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
-import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
+import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
@@ -39,16 +39,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const { dataLinkPostProcessor } = usePanelContext();
-  const dataWithOverrides = useFieldOverrides(
-    plugin,
-    optionsWithDefaults?.fieldConfig,
-    data,
-    timeZone,
-    theme,
-    replace,
-    dataLinkPostProcessor
-  );
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone, theme, replace);
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -101,7 +92,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const PanelComponent = plugin.panel;
 
   return (
-    <ErrorBoundaryAlert dependencies={[plugin, data]}>
+    <ErrorBoundaryAlert boundaryName="panel-renderer" dependencies={[plugin, data]}>
       <PluginContextProvider meta={plugin.meta}>
         <PanelComponent
           id={1}

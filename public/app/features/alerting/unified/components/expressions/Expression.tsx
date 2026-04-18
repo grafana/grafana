@@ -1,35 +1,34 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { FC, useCallback, useState } from 'react';
+import { type FC, Suspense, lazy, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataFrame,
-  GrafanaTheme2,
+  type DataFrame,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
+  type PanelData,
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
-import { SqlExpr } from 'app/features/expressions/components/SqlExpr';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
-import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../../utils/rules';
 import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
@@ -37,6 +36,12 @@ import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+
+const SqlExpr = lazy(() =>
+  import('app/features/expressions/components/SqlExpressions/SqlExpr').then((module) => ({
+    default: module.SqlExpr,
+  }))
+);
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -48,7 +53,6 @@ interface ExpressionProps {
   onSetCondition: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
   onRemoveExpression: (refId: string) => void;
-  onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
   onChangeQuery: (query: ExpressionQuery) => void;
 }
 
@@ -62,7 +66,6 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
@@ -133,7 +136,17 @@ export const Expression: FC<ExpressionProps> = ({
           );
 
         case ExpressionQueryType.sql:
-          return <SqlExpr onChange={(query) => onChangeQuery(query)} query={query} refIds={availableRefIds} alerting />;
+          return (
+            <Suspense fallback={null}>
+              <SqlExpr
+                onChange={(query) => onChangeQuery(query)}
+                query={query}
+                refIds={availableRefIds}
+                alerting
+                queries={[]}
+              />
+            </Suspense>
+          );
 
         default:
           return (
@@ -145,6 +158,7 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries, onQueriesValidationError]
   );
+
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
@@ -412,7 +426,6 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-// eslint-disable-next-line @grafana/no-untranslated-strings
 const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 
@@ -533,6 +546,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       flex: 1,
       flexBasis: '400px',
       borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
     }),
     stack: css({
       display: 'flex',

@@ -1,5 +1,6 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,
   NestedScene,
@@ -15,7 +16,6 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { Icon, Text, Tooltip } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -71,25 +71,28 @@ const grafanaCloudPromDs: DataSourceInformation = {
   settings: undefined,
 };
 
-const SERIES_COLORS = {
-  alerting: 'red',
-  firing: 'red',
-  active: 'red',
-  missed: 'red',
-  failed: 'red',
-  pending: 'yellow',
-  recovering: 'yellow',
-  nodata: 'blue',
-  'active evaluation': 'blue',
-  normal: 'green',
-  success: 'green',
-  error: 'orange',
+const themeColors = config.theme2.colors;
+
+const SERIES_COLOR_MAPPING = {
+  alerting: themeColors.error.main,
+  firing: themeColors.error.main,
+  active: themeColors.error.main,
+  missed: themeColors.error.main,
+  failed: themeColors.error.main,
+  pending: themeColors.warning.main,
+  recovering: themeColors.warning.main,
+  nodata: themeColors.info.main,
+  'active evaluation': themeColors.info.main,
+  normal: themeColors.success.main,
+  success: themeColors.success.main,
+  error: themeColors.warning.text,
 };
 
-export function overrideToFixedColor(key: keyof typeof SERIES_COLORS) {
+// ⚠️ these colors will _not_ update if user changes their theme without refreshing
+export function overrideToFixedColor(key: keyof typeof SERIES_COLOR_MAPPING) {
   return {
     mode: 'fixed',
-    fixedColor: SERIES_COLORS[key],
+    fixedColor: SERIES_COLOR_MAPPING[key],
   };
 }
 
@@ -214,7 +217,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed alert rules',
+    title: t('alerting.get-grafana-managed-scenes.title.grafanamanaged-alert-rules', 'Grafana-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -289,7 +292,7 @@ function getGrafanaManagedScenes() {
             new SceneFlexLayout({
               children: [
                 getGrafanaEvalSuccessVsFailuresScene(cloudUsageDs, 'Evaluation success vs failures'),
-                getGrafanaMissedIterationsScene(cloudUsageDs, 'Iterations missed per evaluation group'),
+                getGrafanaMissedIterationsScene(cloudUsageDs, 'Iterations missed per alert rule'),
               ],
             }),
           ],
@@ -304,7 +307,7 @@ function getGrafanaManagedScenes() {
 
 function getGrafanaAlertmanagerScenes() {
   return new NestedScene({
-    title: 'Grafana Alertmanager',
+    title: t('alerting.get-grafana-alertmanager-scenes.title.grafana-alertmanager', 'Grafana Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -327,7 +330,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir Alertmanager',
+    title: t('alerting.get-cloud-scenes.title.mimir-alertmanager', 'Mimir Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -361,7 +364,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed alert rules',
+    title: t('alerting.get-mimir-managed-rules-scenes.title.mimirmanaged-alert-rules', 'Mimir-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -402,14 +405,17 @@ function getMimirManagedRulesScenes() {
 
 function getMimirManagedRulesPerGroupScenes() {
   const ruleGroupHandler = new QueryVariable({
-    label: 'Rule Group',
+    label: t('alerting.get-mimir-managed-rules-per-group-scenes.rule-group-handler.label.rule-group', 'Rule Group'),
     name: 'rule_group',
     datasource: cloudUsageDs,
     query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
   });
 
   return new NestedScene({
-    title: 'Mimir-managed alert rules - per rule group',
+    title: t(
+      'alerting.get-mimir-managed-rules-per-group-scenes.title.mimirmanaged-alert-rules-per-rule-group',
+      'Mimir-managed alert rules - per rule group'
+    ),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

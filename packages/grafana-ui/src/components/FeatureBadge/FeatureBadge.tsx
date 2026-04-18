@@ -1,13 +1,18 @@
 import { FeatureState } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
-import { Badge, BadgeProps } from '../Badge/Badge';
+import { Badge, type BadgeProps } from '../Badge/Badge';
 
 export interface FeatureBadgeProps {
   featureState: FeatureState;
   tooltip?: string;
 }
 
+/**
+ * A component for displaying information about different release stages of features, in accordance with the guidelines provided at [Grafana's Release Life Cycle](https://grafana.com/docs/release-life-cycle).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-featurebadge--docs
+ */
 export const FeatureBadge = ({ featureState, tooltip }: FeatureBadgeProps) => {
   const display = getPanelStateBadgeDisplayModel(featureState);
   return <Badge text={display.text} color={display.color} icon={display.icon} tooltip={tooltip} />;

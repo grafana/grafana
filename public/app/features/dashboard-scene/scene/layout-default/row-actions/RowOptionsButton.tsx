@@ -1,8 +1,8 @@
-import { SceneObject } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { type SceneObject } from '@grafana/scenes';
 import { Icon, ModalsController } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { OnRowOptionsUpdate } from './RowOptionsForm';
+import { type OnRowOptionsUpdate } from './RowOptionsForm';
 import { RowOptionsModal } from './RowOptionsModal';
 
 export interface RowOptionsButtonProps {

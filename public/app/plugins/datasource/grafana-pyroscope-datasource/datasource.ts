@@ -1,24 +1,30 @@
 import Prism from 'prismjs';
-import { Observable, of } from 'rxjs';
+import { map, type Observable, of } from 'rxjs';
 
 import {
-  AbstractQuery,
-  AdHocVariableFilter,
+  type AbstractQuery,
+  type AdHocVariableFilter,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
-import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
-import { addLabelToQuery, extractLabelMatchers, grammar, toPromLikeExpr } from './utils';
+import { type PyroscopeDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
+import {
+  addLabelToQuery,
+  extractLabelMatchers,
+  grammar,
+  toPromLikeExpr,
+  enrichDataFrameWithAssistantContentMapper,
+} from './utils';
 
 export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   constructor(
@@ -45,10 +51,12 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     if (!validTargets.length) {
       return of({ data: [] });
     }
-    return super.query({
-      ...request,
-      targets: validTargets,
-    });
+    return super
+      .query({
+        ...request,
+        targets: validTargets,
+      })
+      .pipe(map(enrichDataFrameWithAssistantContentMapper(request, this.name)));
   }
 
   async getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]> {
@@ -121,6 +129,9 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       queryType: 'both',
       profileTypeId: '',
       groupBy: [],
+      includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     };
   }
 

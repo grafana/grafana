@@ -1,0 +1,23 @@
+{
+  "config-editor": {
+    "api-key": {
+      "label": "API Key",
+      "placeholder": "Enter your API key",
+      "tooltip": "Secure json field (backend only)"
+    },
+    "auth-type": {
+      "label": "Auth type"
+    },
+    "checkbox-enabled": {
+      "label": "Checkbox Enabled"
+    },
+    "path": {
+      "label": "Path",
+      "placeholder": "Enter the path, e.g. /api/v1",
+      "tooltip": "Json field returned to frontend"
+    },
+    "switch-enabled": {
+      "label": "Switch Enabled"
+    }
+  }
+}

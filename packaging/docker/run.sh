@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 
 PERMISSIONS_OK=0
 
@@ -26,14 +27,14 @@ if [ ! -d "$GF_PATHS_PLUGINS" ]; then
 fi
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
-    > "$GF_PATHS_HOME/.aws/credentials"
+    :> "$GF_PATHS_HOME/.aws/credentials"
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
         secret_key_varname="GF_AWS_${profile}_SECRET_ACCESS_KEY"
         region_varname="GF_AWS_${profile}_REGION"
 
-        if [ ! -z "${!access_key_varname}" -a ! -z "${!secret_key_varname}" ]; then
+        if [ ! -z "${!access_key_varname}" ] && [ ! -z "${!secret_key_varname}" ]; then
             echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_access_key_id = ${!access_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_secret_access_key = ${!secret_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
@@ -63,18 +64,21 @@ done
 export HOME="$GF_PATHS_HOME"
 
 if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
-  OLDIFS=$IFS
-  IFS=','
-  for plugin in ${GF_INSTALL_PLUGINS}; do
-    IFS=$OLDIFS
-    if [[ $plugin =~ .*\;.* ]]; then
-        pluginUrl=$(echo "$plugin" | cut -d';' -f 1)
-        pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2)
-        grafana cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
-    else
-        grafana cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}
-    fi
-  done
+  >&2 echo "\033[0;33mWARN\033[0m: GF_INSTALL_PLUGINS is deprecated. Use GF_PLUGINS_PREINSTALL or GF_PLUGINS_PREINSTALL_SYNC instead. Checkout the documentation for more info."
+  if [ "${GF_INSTALL_PLUGINS_FORCE}" = "true" ]; then
+    OLDIFS=$IFS
+    IFS=','
+    for plugin in ${GF_INSTALL_PLUGINS}; do
+        IFS=$OLDIFS
+        if [[ $plugin =~ .*\;.* ]]; then
+            pluginUrl=$(echo "$plugin" | cut -d';' -f 1)
+            pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2)
+            grafana cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
+        else
+            grafana cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}
+        fi
+    done
+  fi
 fi
 
 exec grafana server                                         \

@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, FeatureState } from '@grafana/data';
+import { type GrafanaTheme2, FeatureState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import {
   Drawer,
   Tab,
@@ -22,9 +23,8 @@ import {
   Stack,
   TextLink,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -36,7 +36,7 @@ interface Props {
 export function HelpWizard({ panel, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const service = useMemo(() => new SupportSnapshotService(panel), [panel]);
-  const plugin = panel.getPlugin();
+  const plugin = useMemo(() => panel.getPlugin(), [panel]);
 
   const {
     currentTab,
@@ -61,8 +61,8 @@ export function HelpWizard({ panel, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Snapshot', value: SnapshotTab.Support },
-    { label: 'Data', value: SnapshotTab.Data },
+    { label: t('dashboard-scene.help-wizard.tabs.label.snapshot', 'Snapshot'), value: SnapshotTab.Support },
+    { label: t('dashboard-scene.help-wizard.tabs.label.data', 'Data'), value: SnapshotTab.Data },
   ];
 
   const hasSupportBundleAccess =

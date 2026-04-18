@@ -38,7 +38,8 @@ func (s *AnnotationServiceStore) Save(ctx context.Context, panel *PanelKey, anno
 		}
 
 		for i := range annotations {
-			annotations[i].DashboardID = dashID
+			annotations[i].DashboardID = dashID // nolint: staticcheck
+			annotations[i].DashboardUID = panel.dashUID
 			annotations[i].PanelID = panel.panelID
 		}
 	}

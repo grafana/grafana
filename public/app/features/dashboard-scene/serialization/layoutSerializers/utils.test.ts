@@ -1,132 +1,405 @@
-import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  defaultDataQueryKind,
+  defaultPanelSpec,
+  type PanelKind,
+  type PanelQueryKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getRuntimePanelDataSource } from './utils';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 
-// Mock the config needed for the function
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      settings: {
-        defaultDatasource: 'default-ds-grafana',
-        datasources: {
-          'default-ds-grafana': {
-            uid: 'default-ds-uid',
-            name: 'Default DS',
-            meta: { id: 'default-ds-grafana' },
-            type: 'datasource',
+import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
+
+describe('getRuntimePanelDataSource', () => {
+  it('should return uid and type when explicit datasource UID is provided', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'prometheus-uid',
           },
-          prometheus: {
-            uid: 'prometheus-uid',
-            name: 'Prometheus',
-            meta: { id: 'prometheus' },
-            type: 'datasource',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      uid: 'prometheus-uid',
+      type: 'prometheus',
+    });
+  });
+
+  it('should return type-only when only group is provided (no explicit UID)', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      type: 'prometheus',
+    });
+  });
+
+  it('should return type-only for different datasource types when no UID provided', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'loki',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      type: 'loki',
+    });
+  });
+
+  it('should return type-only even for unknown datasource types', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'unknown-type',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      type: 'unknown-type',
+    });
+  });
+
+  it('should return type-only when datasource name is empty string', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: '',
           },
-          loki: {
-            uid: 'loki-uid',
-            name: 'Loki',
-            meta: { id: 'loki' },
-            type: 'datasource',
-          },
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      type: 'prometheus',
+    });
+  });
+
+  it('should return undefined when neither group nor datasource is provided', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: '',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('getPanelDataSource', () => {
+  const createPanelWithQueries = (queries: PanelQueryKind[]): PanelKind => ({
+    kind: 'Panel',
+    spec: {
+      ...defaultPanelSpec(),
+      id: 1,
+      title: 'Test Panel',
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries,
+          queryOptions: {},
+          transformations: [],
         },
       },
     },
-  },
-}));
+  });
 
-describe('getRuntimePanelDataSource', () => {
-  it('should return the datasource when it is specified in the query', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
+  const createQuery = (datasourceName: string, group: string, refId = 'A'): PanelQueryKind => ({
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group,
         datasource: {
-          uid: 'test-ds-uid',
-          type: 'test-ds-type',
+          name: datasourceName,
         },
-        query: {
-          kind: 'prometheus',
-          spec: {},
-        },
+        spec: {},
       },
-    };
-
-    const result = getRuntimePanelDataSource(query);
-
-    expect(result).toEqual({
-      uid: 'test-ds-uid',
-      type: 'test-ds-type',
-    });
+    },
   });
 
-  it('should infer datasource based on query kind when datasource is not specified', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
-        datasource: undefined,
-        query: {
-          kind: 'prometheus',
-          spec: {},
-        },
+  const createQueryWithoutDatasourceName = (group: string, refId = 'A'): PanelQueryKind => ({
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group,
+        spec: {},
       },
-    };
-
-    const result = getRuntimePanelDataSource(query);
-
-    expect(result).toEqual({
-      uid: 'prometheus-uid',
-      type: 'prometheus',
-    });
+    },
   });
 
-  it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
-        datasource: undefined,
-        query: {
-          kind: 'unknown-type',
-          spec: {},
-        },
-      },
-    };
+  it('should return undefined when panel has no queries', () => {
+    const panel = createPanelWithQueries([]);
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getPanelDataSource(panel);
 
-    expect(result).toEqual({
-      uid: 'default-ds-uid',
-      type: 'default-ds-grafana',
-    });
+    expect(result).toBeUndefined();
   });
 
-  it('should handle the case when datasource uid is empty string', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
+  it('should return undefined for a single query with specific datasource (not mixed)', () => {
+    const panel = createPanelWithQueries([createQuery('prometheus-uid', 'prometheus')]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined for multiple queries with the same datasource', () => {
+    const panel = createPanelWithQueries([
+      createQuery('prometheus-uid', 'prometheus', 'A'),
+      createQuery('prometheus-uid', 'prometheus', 'B'),
+      createQuery('prometheus-uid', 'prometheus', 'C'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('should return mixed datasource when queries use different datasource UIDs', () => {
+    const panel = createPanelWithQueries([
+      createQuery('prometheus-uid', 'prometheus', 'A'),
+      createQuery('loki-uid', 'loki', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
+  it('should return mixed datasource when queries use different datasource types', () => {
+    const panel = createPanelWithQueries([
+      createQuery('ds-uid', 'prometheus', 'A'),
+      createQuery('ds-uid', 'loki', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
+  it('should return mixed datasource when multiple queries use Dashboard datasource', () => {
+    const panel = createPanelWithQueries([
+      createQuery(SHARED_DASHBOARD_QUERY, 'datasource', 'A'),
+      createQuery(SHARED_DASHBOARD_QUERY, 'datasource', 'B'),
+      createQuery(SHARED_DASHBOARD_QUERY, 'datasource', 'C'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
+  it('should return Dashboard datasource when single query uses Dashboard datasource', () => {
+    const panel = createPanelWithQueries([createQuery(SHARED_DASHBOARD_QUERY, 'datasource')]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'datasource', uid: SHARED_DASHBOARD_QUERY });
+  });
+
+  it('should return mixed when Dashboard datasource is mixed with other datasources', () => {
+    const panel = createPanelWithQueries([
+      createQuery(SHARED_DASHBOARD_QUERY, 'datasource', 'A'),
+      createQuery('prometheus-uid', 'prometheus', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
+  it('should return undefined when queries have no explicit datasource name but same type', () => {
+    const panel = createPanelWithQueries([
+      createQueryWithoutDatasourceName('prometheus', 'A'),
+      createQueryWithoutDatasourceName('prometheus', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('should return mixed when queries have no explicit datasource name but different types', () => {
+    const panel = createPanelWithQueries([
+      createQueryWithoutDatasourceName('prometheus', 'A'),
+      createQueryWithoutDatasourceName('loki', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+});
+
+describe('ensureUniqueRefIds', () => {
+  const createQuery = (refId: string): PanelQueryKind => ({
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: 'prometheus',
+        spec: {},
+      },
+    },
+  });
+
+  it('should assign unique refIds to queries without refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery(''), createQuery(''), createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('C');
+  });
+
+  it('should preserve existing refIds and fill gaps', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery(''), createQuery('D'), createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('D');
+    expect(result[3].spec.refId).toBe('C');
+  });
+
+  it('should handle all queries having existing refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery('B'), createQuery('C')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[1].spec.refId).toBe('B');
+    expect(result[2].spec.refId).toBe('C');
+  });
+
+  it('should only modify queries without refIds', () => {
+    const queries: PanelQueryKind[] = [createQuery('A'), createQuery(''), createQuery('C')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    // Existing refIds should be preserved
+    expect(result[0].spec.refId).toBe('A');
+    expect(result[2].spec.refId).toBe('C');
+    // Missing refId should be assigned
+    expect(result[1].spec.refId).toBe('B');
+  });
+
+  it('should handle empty array', () => {
+    const result = ensureUniqueRefIds([]);
+
+    expect(result).toEqual([]);
+  });
+
+  it('should handle single query without refId', () => {
+    const queries: PanelQueryKind[] = [createQuery('')];
+
+    const result = ensureUniqueRefIds(queries);
+
+    expect(result[0].spec.refId).toBe('A');
+  });
+});
+
+describe('buildVizPanel', () => {
+  it('maps queryOptions.timeCompare to PanelTimeRange compareWith', () => {
+    const base = defaultPanelSpec();
+    const panel: PanelKind = {
+      kind: 'Panel',
       spec: {
-        refId: 'A',
-        hidden: false,
-        datasource: {
-          uid: '',
-          type: 'test-ds-type',
-        },
-        query: {
-          kind: 'prometheus',
-          spec: {},
+        ...base,
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            ...base.data.spec,
+            queryOptions: {
+              ...base.data.spec.queryOptions,
+              timeCompare: '1d',
+            },
+          },
         },
       },
     };
-
-    const result = getRuntimePanelDataSource(query);
-
-    expect(result).toEqual({
-      uid: 'prometheus-uid',
-      type: 'prometheus',
-    });
+    const viz = buildVizPanel(panel);
+    if (!(viz.state.$timeRange instanceof PanelTimeRange)) {
+      throw new Error('$timeRange must be PanelTimeRange');
+    }
+    expect(viz.state.$timeRange).toBeDefined();
+    expect(viz.state.$timeRange?.state.compareWith).toBe('1d');
   });
 });

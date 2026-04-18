@@ -2,195 +2,353 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	authtypes "github.com/grafana/authlib/types"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
+	sdkres "github.com/grafana/grafana-app-sdk/resource"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
-var resourceInfo = folders.FolderResourceInfo
-
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
-
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv                   schema.GroupVersion
 	features             featuremgmt.FeatureToggles
 	namespacer           request.NamespaceMapper
-	folderSvc            folder.Service
-	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
 	storage              grafanarest.Storage
+	permissionStore      PermissionStore
+	accessClient         authlib.AccessClient
+	parents              parentsGetter
+	searcher             resourcepb.ResourceIndexClient
+	permissionsOnCreate  bool
+	maxNestedFolderDepth int
 
-	authorizer authorizer.Authorizer
-
-	searcher     resource.ResourceIndexClient
-	cfg          *setting.Cfg
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	// Legacy services -- these will not exist in the MT environment
+	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
+	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+	acService              accesscontrol.Service
+	ac                     accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	acService accesscontrol.Service,
+	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
+	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		gv:                   resourceInfo.GroupVersion(),
 		features:             features,
 		namespacer:           request.GetNamespaceMapper(cfg),
-		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
-		cfg:                  cfg,
-		authorizer:           newLegacyAuthorizer(accessControl),
+		ac:                   accessControl,
+		accessClient:         accessClient,
+		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		searcher:             unified,
+		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authtypes.AccessClient) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		gv:           resourceInfo.GroupVersion(),
-		namespacer:   request.GetNamespaceMapper(nil),
-		authorizer:   newMultiTenantAuthorizer(ac),
-		ignoreLegacy: true,
+		features:               features,
+		accessClient:           ac,
+		searcher:               searcher,
+		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
+		resourcePermissionsSvc: resourcePermissionsSvc,
+		maxNestedFolderDepth:   maxNestedFolderDepth,
 	}
 }
 
-func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.gv
+func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	// Same pattern as dashboards: stable version first, then compatibility alias.
+	// This order feeds LegacyCodec(groupVersions...) and must match SetVersionPriority below.
+	return []schema.GroupVersion{
+		foldersv1.FolderResourceInfo.GroupVersion(),
+		foldersv1beta1.FolderResourceInfo.GroupVersion(),
+	}
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
-	scheme.AddKnownTypes(gv,
-		&folders.Folder{},
-		&folders.FolderList{},
-		&folders.FolderInfoList{},
-		&folders.DescendantCounts{},
-		&folders.FolderAccessInfo{},
-	)
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runtime.Object) {
+	scheme.AddKnownTypes(gv, types...)
 }
 
 func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, b.gv)
+	gvv1beta1 := foldersv1beta1.FolderResourceInfo.GroupVersion()
+	gvv1 := foldersv1.FolderResourceInfo.GroupVersion()
 
-	// Link this version to the internal representation.
+	addKnownTypes(scheme, gvv1,
+		&foldersv1.Folder{},
+		&foldersv1.FolderList{},
+		&foldersv1.FolderInfoList{},
+		&foldersv1.DescendantCounts{},
+		&foldersv1.FolderAccessInfo{},
+	)
+
+	addKnownTypes(scheme, gvv1beta1,
+		&foldersv1beta1.Folder{},
+		&foldersv1beta1.FolderList{},
+		&foldersv1beta1.FolderInfoList{},
+		&foldersv1beta1.DescendantCounts{},
+		&foldersv1beta1.FolderAccessInfo{},
+	)
+	// Link v1beta1 to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   b.gv.Group,
+		Group:   foldersv1.FolderResourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
-	})
+	},
+		&foldersv1.Folder{},
+		&foldersv1.FolderList{},
+		&foldersv1.FolderInfoList{},
+		&foldersv1.DescendantCounts{},
+		&foldersv1.FolderAccessInfo{},
+	)
 
-	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	// if err := playlist.RegisterConversions(scheme); err != nil {
-	//   return err
-	// }
-	metav1.AddToGroupVersion(scheme, b.gv)
-	return scheme.SetVersionPriority(b.gv)
+	metav1.AddToGroupVersion(scheme, gvv1)
+	metav1.AddToGroupVersion(scheme, gvv1beta1)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gvv1, foldersv1.FolderKind())
+	if err != nil {
+		return err
+	}
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, gvv1beta1, foldersv1beta1.FolderKind())
+	if err != nil {
+		return err
+	}
+	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	scheme := opts.Scheme
-	optsGetter := opts.OptsGetter
-	dualWriteBuilder := opts.DualWriteBuilder
-	storage := map[string]rest.Storage{}
-
-	if b.ignoreLegacy {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[resourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
-		return nil
-	}
-
-	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
-		features:       b.features,
-		cfg:            b.cfg,
-	}
-
-	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true})
-
-	folderStore := &folderStorage{
-		tableConverter:       resourceInfo.TableConverter(),
-		folderPermissionsSvc: b.folderPermissionsSvc,
-		acService:            b.acService,
-		features:             b.features,
-		cfg:                  b.cfg,
-	}
-
-	if optsGetter != nil && dualWriteBuilder != nil {
-		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
-		if err != nil {
-			return err
-		}
-
-		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
-		if err != nil {
-			return err
-		}
-
-		folderStore.store = dw
-	}
-	storage[resourceInfo.StoragePath()] = folderStore
-
-	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
-		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
-	}
-	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
-
-	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
-	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
+func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 
+func (b *FolderAPIBuilder) storageForVersion(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	folders utils.ResourceInfo,
+	folderKind sdkres.Kind,
+) error {
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(folderKind),
+	}
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, opts.OptsGetter, selectableFieldsOpts)
+	if err != nil {
+		return err
+	}
+	b.registerPermissionHooks(unified)
+	b.storage = unified
+
+	// This is the ST wrapper
+	if b.folderPermissionsSvc != nil {
+		b.storage = &folderStorage{
+			resourceInfo:         folders,
+			tableConverter:       folders.TableConverter(),
+			folderPermissionsSvc: b.folderPermissionsSvc,
+			features:             b.features,
+			acService:            b.acService,
+			permissionsOnCreate:  b.permissionsOnCreate,
+			store:                unified,
+		}
+	}
+
+	storage := map[string]rest.Storage{}
+	storage[folders.StoragePath()] = b.storage
+
+	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	storage[folders.StoragePath("parents")] = &subParentsREST{
+		getter:  b.storage,
+		parents: b.parents,
+	}
+	storage[folders.StoragePath("counts")] = &subCountREST{
+		getter:   b.storage,
+		searcher: b.searcher,
+	}
+	storage[folders.StoragePath("access")] = &subAccessREST{
+		getter:       b.storage,
+		accessClient: b.accessClient,
+	}
+
+	// Adds a path to return children of a given folder
+	storage[folders.StoragePath("children")] = &subChildrenREST{
+		getter: b.storage,
+		lister: b.storage,
+	}
+
+	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
+	return nil
+}
+
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
+		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
+		// uses the global LegacyCodec and converts to a single preferred external version.
+		Scheme:                      opts.Scheme,
+		EnableFolderSupport:         true,
+		RequireDeprecatedInternalID: true,
+		Permissions:                 b.setDefaultFolderPermissions,
+	})
+
+	// v1
+	if err := b.storageForVersion(
+		apiGroupInfo,
+		opts,
+		foldersv1.FolderResourceInfo,
+		foldersv1.FolderKind(),
+	); err != nil {
+		return err
+	}
+
+	// v1beta1
+	if err := b.storageForVersion(
+		apiGroupInfo,
+		opts,
+		foldersv1beta1.FolderResourceInfo,
+		foldersv1beta1.FolderKind(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var defaultPermissions = []map[string]any{
+	{
+		"kind": "BasicRole",
+		"name": "Editor",
+		"verb": "edit",
+	},
+	{
+		"kind": "BasicRole",
+		"name": "Viewer",
+		"verb": "view",
+	},
+}
+
+func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	if b.resourcePermissionsSvc == nil {
+		return nil
+	}
+
+	// only set default permissions for root folders
+	if obj.GetFolder() != "" {
+		return nil
+	}
+
+	log := logging.FromContext(ctx)
+	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+
+	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
+
+	// the resource permission will likely already exist with admin can admin, so we will need to update it
+	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		_, err := client.Update(ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": obj.GetNamespace(),
+				},
+				"spec": map[string]any{
+					"resource": map[string]any{
+						"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+						"name":     obj.GetName(),
+					},
+					"permissions": defaultPermissions,
+				},
+			},
+		}, metav1.UpdateOptions{})
+		if err != nil {
+			logger.Error("failed to update root permissions", "error", err)
+			return fmt.Errorf("update root permissions: %w", err)
+		}
+
+		return nil
+	}
+
+	_, err := client.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": obj.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"resource": map[string]any{
+					"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+					"name":     obj.GetName(),
+				},
+				"permissions": defaultPermissions,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		logger.Error("failed to create root permissions", "error", err)
+		return fmt.Errorf("create root permissions: %w", err)
+	}
+
+	return nil
+}
+
+func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
+	log := logging.FromContext(context.Background())
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		log.Info("Enabling Zanzana folder propagation hooks")
+		store.BeginCreate = b.beginCreate
+		store.BeginUpdate = b.beginUpdate
+	} else {
+		log.Info("Zanzana is not enabled; skipping folder propagation hooks")
+	}
+
+	store.AfterDelete = b.afterDelete
+}
+
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return folders.GetOpenAPIDefinitions
+	// Same pattern as dashboards: v1beta1 aliases v1; kube-openapi definitions use v1 model keys only.
+	return foldersv1.GetOpenAPIDefinitions
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -198,184 +356,66 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
-}
-
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
-}
-
-var folderValidationRules = struct {
-	maxDepth     int
-	invalidNames []string
-}{
-	maxDepth:     5,
-	invalidNames: []string{"general"},
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
-		f, ok := obj.(*folders.Folder)
+		f, ok := obj.(*foldersv1.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	id := a.GetName()
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
-	}
-
-	f, ok := obj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
-	}
+	var obj runtime.Object
 	verb := a.GetOperation()
 
 	switch verb {
-	case admission.Create:
-		return b.validateOnCreate(ctx, id, obj)
+	case admission.Create, admission.Update:
+		obj = a.GetObject()
 	case admission.Delete:
-		return b.validateOnDelete(ctx, f)
-	case admission.Update:
-		old := a.GetOldObject()
-		if old == nil {
-			return fmt.Errorf("old object is nil")
+		obj = a.GetOldObject()
+		if obj == nil {
+			return fmt.Errorf("old object is nil for delete request")
 		}
-		return b.validateOnUpdate(ctx, obj, old)
 	case admission.Connect:
 		return nil
-	}
-	return nil
-}
-
-func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *folders.Folder) error {
-	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
-	if err != nil {
-		return err
+	default:
+		obj = a.GetObject()
 	}
 
-	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
-	}
-
-	if resp.Stats == nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
-	}
-
-	for _, v := range resp.Stats {
-		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty
-		}
-	}
-
-	return nil
-}
-
-func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
-	for _, invalidName := range folderValidationRules.invalidNames {
-		if id == invalidName {
-			return dashboards.ErrFolderInvalidUID
-		}
-	}
-
-	f, ok := obj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
-	}
-	if f.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
-	}
-
-	if f.Name == getParent(obj) {
-		return folder.ErrFolderCannotBeParentOfItself
-	}
-
-	_, err := b.checkFolderMaxDepth(ctx, obj)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func getParent(o runtime.Object) string {
-	meta, err := utils.MetaAccessor(o)
-	if err != nil {
-		return ""
-	}
-	return meta.GetFolder()
-}
-
-func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.Object) ([]string, error) {
-	var parents = []string{}
-	for i := 0; i < folderValidationRules.maxDepth; i++ {
-		parent := getParent(obj)
-		if parent == "" {
-			break
-		}
-		parents = append(parents, parent)
-		if i+1 == folderValidationRules.maxDepth {
-			return parents, folder.ErrMaximumDepthReached
-		}
-
-		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
-		if err != nil {
-			return parents, err
-		}
-		obj = parentObj
-	}
-	return parents, nil
-}
-
-func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
-	f, ok := obj.(*folders.Folder)
+	f, ok := obj.(*foldersv1.Folder)
 	if !ok {
 		return fmt.Errorf("obj is not folders.Folder")
 	}
 
-	fOld, ok := old.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
+	switch a.GetOperation() {
+	case admission.Create:
+		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
+			return err
+		}
+		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+	case admission.Delete:
+		return validateOnDelete(ctx, f, b.searcher)
+	case admission.Update:
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not folders.Folder")
+		}
+		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
+		}
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
+	default:
+		return nil
 	}
-	var newParent = getParent(obj)
-	if newParent != getParent(fOld) {
-		// it's a move operation
-		return b.validateMove(ctx, obj, newParent)
-	}
-	// it's a spec update
-	if f.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
-	}
-	return nil
-}
-
-func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object, newParent string) error {
-	// folder cannot be moved to a k6 folder
-	if newParent == accesscontrol.K6FolderUID {
-		return fmt.Errorf("k6 project may not be moved")
-	}
-
-	//FIXME: until we have a way to represent the tree, we can only
-	// look at folder parents to check how deep the new folder tree will be
-	parents, err := b.checkFolderMaxDepth(ctx, obj)
-	if err != nil {
-		return err
-	}
-
-	// if by moving a folder we exceed the max depth, return an error
-	if len(parents)+1 >= folderValidationRules.maxDepth {
-		return folder.ErrMaximumDepthReached
-	}
-	return nil
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import {
   Box,
@@ -16,14 +17,13 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
 import { getSectionFields } from './fields';
-import { SSOProvider, SSOProviderDTO } from './types';
+import { type SSOProvider, type SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
 const appEvents = getAppEvents();
@@ -246,7 +246,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       {resetConfig && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
           title={t('auth-config.provider-config-form.title-reset', 'Reset')}
           body={
             <Stack direction={'column'} gap={3}>
@@ -263,7 +262,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               </small>
             </Stack>
           }
-          confirmText="Reset"
+          confirmText={t('auth-config.provider-config-form.confirmText-reset', 'Reset')}
           onDismiss={() => setResetConfig(false)}
           onConfirm={async () => {
             await onResetConfig();

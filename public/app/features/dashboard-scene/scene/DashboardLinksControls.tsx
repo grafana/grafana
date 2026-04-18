@@ -1,17 +1,12 @@
-import { sanitizeUrl } from '@grafana/data/internal';
-import { selectors } from '@grafana/e2e-selectors';
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
-import { Tooltip } from '@grafana/ui';
-import {
-  DashboardLinkButton,
-  DashboardLinksDashboard,
-} from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
-import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { type DashboardLink } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 
-import { LINK_ICON_MAP } from '../settings/links/utils';
-
-import { DashboardScene } from './DashboardScene';
+import { DashboardLinkRenderer } from './DashboardLinkRenderer';
+import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   links: DashboardLink[];
@@ -20,42 +15,49 @@ export interface Props {
 
 export function DashboardLinksControls({ links, dashboard }: Props) {
   sceneGraph.getTimeRange(dashboard).useState();
-  const uid = dashboard.state.uid;
+  const { uid } = dashboard.useState();
+  const styles = useStyles2(getStyles);
+  const linksToDisplay = excludeControlMenuLinks(links);
 
-  if (!links || !uid) {
+  if (!uid || linksToDisplay.length === 0) {
     return null;
   }
 
   return (
-    <>
-      {links.map((link: DashboardLink, index: number) => {
-        const linkInfo = getLinkSrv().getAnchorInfo(link);
-        const key = `${link.title}-$${index}`;
-
-        if (link.type === 'dashboards') {
-          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={uid} />;
-        }
-
-        const icon = LINK_ICON_MAP[link.icon];
-
-        const linkElement = (
-          <DashboardLinkButton
-            icon={icon}
-            href={sanitizeUrl(linkInfo.href)}
-            target={link.targetBlank ? '_blank' : undefined}
-            rel="noreferrer"
-            data-testid={selectors.components.DashboardLinks.link}
-          >
-            {linkInfo.title}
-          </DashboardLinkButton>
-        );
-
-        return (
-          <div key={key} data-testid={selectors.components.DashboardLinks.container}>
-            {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
-          </div>
-        );
-      })}
-    </>
+    <div className={styles.linksContainer}>
+      {linksToDisplay.map((link: DashboardLink, index: number) => (
+        <DashboardLinkRenderer
+          link={link}
+          dashboardUID={uid}
+          key={`${link.title}-$${index}`}
+          linkIndex={links.indexOf(link)}
+          dashboard={dashboard}
+        />
+      ))}
+    </div>
   );
+}
+
+function excludeControlMenuLinks(links: DashboardLink[]): DashboardLink[] {
+  if (!links || links.length === 0) {
+    return [];
+  }
+
+  return links.filter((link) => link.placement === undefined);
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    linksContainer: css({
+      label: 'dashboard-links-controls',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      flexWrap: 'wrap',
+      // Match variable/annotation alignment in the controls row
+      alignSelf: 'flex-start',
+    }),
+  };
 }

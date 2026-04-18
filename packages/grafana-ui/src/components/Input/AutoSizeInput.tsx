@@ -4,7 +4,7 @@ import * as React from 'react';
 import { measureText } from '../../utils/measureText';
 
 import { AutoSizeInputContext } from './AutoSizeInputContext';
-import { Input, Props as InputProps } from './Input';
+import { Input, type Props as InputProps } from './Input';
 
 export interface Props extends InputProps {
   /** Sets the min-width to a multiple of 8px. Default value is 10*/
@@ -20,6 +20,11 @@ export interface Props extends InputProps {
   defaultValue?: string | number | readonly string[];
 }
 
+/**
+ * You can use it or regular text input. When used, AutoSizeInput resizes itself to the current content. For an array of data or tree-structured data, consider using `Combobox` or `Cascader` respectively.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-autosizeinput--docs
+ */
 export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const {
     defaultValue = '',

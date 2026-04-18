@@ -1,86 +1,141 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
+import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
+import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { TabItem } from './TabItem';
+import { TabItemLayoutRenderer } from './TabItemRenderer';
+import { TabItemRepeater } from './TabItemRepeater';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { tabs, key } = model.useState();
+  const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
+
+  const { tabs, key, placeholder, isDropTarget } = model.useState();
   const currentTab = model.getCurrentTab();
-  const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
+  const orchestrator = getLayoutOrchestratorFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+  const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
+  const soloPanelContext = useSoloPanelContext();
+
+  useEffect(() => {
+    if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
+      model.setState({ currentTabSlug: currentTab.getSlug() });
+    }
+  }, [currentTab, model]);
+
+  if (soloPanelContext) {
+    return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+  }
+
+  const isClone = isRepeatCloneOrChildOf(model);
+
+  const onBeforeDragStart = (start: DragStart) => {
+    const sourceTabsManagerId = start.source.droppableId;
+    const draggedTabId = start.draggableId;
+    orchestrator?.startTabDrag(sourceTabsManagerId, draggedTabId);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const targetIndex = result.destination?.index;
+    orchestrator?.stopTabDrag(targetIndex);
+  };
+
+  let placeholderComponent: React.ReactNode | null = null;
+
+  const children: React.ReactNode[] = tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+
+  if (isDropTarget && placeholder) {
+    placeholderComponent = (
+      <div key="placeholder" style={{ width: placeholder.width, height: placeholder.height }}></div>
+    );
+    children.splice(placeholder.index, 0, placeholderComponent);
+  }
 
   return (
-    <div className={styles.tabLayoutContainer}>
+    <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
-        <DragDropContext
-          onBeforeDragStart={(start) => model.forceSelectTab(start.draggableId)}
-          onDragEnd={(result) => {
-            if (!result.destination) {
-              return;
-            }
-
-            if (result.destination.index === result.source.index) {
-              return;
-            }
-
-            model.moveTab(result.draggableId, result.source.index, result.destination.index);
-          }}
-        >
-          <div className={styles.tabsRow}>
+        <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
+          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
             <Droppable droppableId={key!} direction="horizontal">
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                  {tabs.map((tab) => (
-                    <tab.Component model={tab} key={tab.state.key!} />
-                  ))}
+                  {children}
 
                   {dropProvided.placeholder}
                 </div>
               )}
             </Droppable>
-            {isEditing && (
-              <div className="dashboard-canvas-add-button">
-                <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewTab()}>
+            {isEditing && !isClone && (
+              <div className={cx(styles.tabControls, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
+                <Button
+                  icon="plus"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => model.addNewTab()}
+                  onPointerUp={(evt) => evt.stopPropagation()}
+                  data-testid={selectors.components.CanvasGridAddActions.addTab}
+                >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
                 {hasCopiedTab && (
-                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteTab()}>
+                  <Button
+                    icon="clipboard-alt"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => model.pasteTab()}
+                    onPointerUp={(evt) => evt.stopPropagation()}
+                    data-testid={selectors.components.CanvasGridAddActions.pasteTab}
+                  >
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                   </Button>
                 )}
+                <Button
+                  icon="layers-slash"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => model.ungroupTabs()}
+                  data-testid={selectors.components.CanvasGridAddActions.ungroup}
+                >
+                  <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
+                </Button>
               </div>
             )}
           </div>
         </DragDropContext>
       </TabsBar>
 
-      {isEditing && (
-        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
-          {currentTab && <layout.Component model={layout} />}
-          {conditionalRenderingOverlay}
-        </TabContent>
-      )}
-
-      {!isEditing && (
-        <TabContent className={styles.tabContentContainer}>
-          {currentTab && <layout.Component model={layout} />}
-        </TabContent>
-      )}
+      {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
     </div>
   );
+}
+
+function TabWrapper({ tab, manager }: { tab: TabItem; manager: TabsLayoutManager }) {
+  const { repeatByVariable } = useSceneObjectState(tab, { shouldActivateOrKeepAlive: true });
+
+  if (repeatByVariable) {
+    const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
+
+    if (variable instanceof MultiValueVariable) {
+      return <TabItemRepeater tab={tab} key={tab.state.key!} manager={manager} variable={variable} />;
+    }
+  }
+  return <tab.Component model={tab} key={tab.state.key!} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -90,12 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 auto',
   }),
   tabsBar: css({
-    '&:hover': {
-      '.dashboard-canvas-add-button': {
-        filter: 'unset',
-        opacity: 1,
-      },
-    },
+    ...dashboardCanvasAddButtonHoverStyles,
   }),
   tabsRow: css({
     display: 'flex',
@@ -111,13 +161,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
   }),
-  tabContentContainer: css({
-    backgroundColor: 'transparent',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    minHeight: 0,
-    paddingTop: theme.spacing(1),
+  tabControls: css({
+    marginLeft: theme.spacing(1),
+  }),
+  nestedTabsMargin: css({
+    marginLeft: theme.spacing(2),
   }),
 });

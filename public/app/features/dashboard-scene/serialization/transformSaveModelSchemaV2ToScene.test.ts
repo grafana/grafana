@@ -12,35 +12,38 @@ import {
   sceneGraph,
   GroupByVariable,
   AdHocFiltersVariable,
-  SceneDataTransformer,
-  SceneGridRow,
-  SceneGridItem,
+  type SceneDataTransformer,
+  type SceneGridItem,
+  SwitchVariable,
 } from '@grafana/scenes';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
-  GridLayoutItemSpec,
-  GridLayoutSpec,
-  GroupByVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type DatasourceVariableKind,
+  defaultDataQueryKind,
+  type GridLayoutItemSpec,
+  type GridLayoutSpec,
+  type GroupByVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type SwitchVariableKind,
+  type TextVariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { type AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
@@ -138,6 +141,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Variables
     const variables = scene.state?.$variables;
     expect(variables?.state.variables).toHaveLength(dash.variables.length);
+
     validateVariable({
       sceneVariable: variables?.state.variables[0],
       variableKind: dash.variables[0] as QueryVariableKind,
@@ -202,50 +206,48 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       sceneVariableClass: AdHocFiltersVariable,
       index: 7,
     });
+    validateVariable({
+      sceneVariable: variables?.state.variables[8],
+      variableKind: dash.variables[8] as SwitchVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: SwitchVariable,
+      index: 8,
+    });
 
     // Annotations
     expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
     const dataLayers = scene.state.$data as DashboardDataLayerSet;
-    // we should get two annotations, Grafana built-in and the custom ones
     expect(dataLayers.state.annotationLayers).toHaveLength(dash.annotations.length);
-    expect(dataLayers.state.annotationLayers).toHaveLength(5);
-
-    // Built-in
-    const builtInAnnotation = dataLayers.state.annotationLayers[0] as unknown as DashboardAnnotationsDataLayer;
-    expect(builtInAnnotation.state.name).toBe('Annotations & Alerts');
-    expect(builtInAnnotation.state.isEnabled).toBe(true);
-    expect(builtInAnnotation.state.isHidden).toBe(true);
-    expect(builtInAnnotation.state?.query.builtIn).toBe(1);
+    expect(dataLayers.state.annotationLayers[0].state.name).toBe(dash.annotations[0].spec.name);
+    expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(dash.annotations[0].spec.enable);
+    expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(dash.annotations[0].spec.hide);
 
     // Enabled
     expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
     expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
     expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
 
+    // Disabled
     expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
     expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
     expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
 
-    // Disabled
+    // Hidden
     expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
 
-    // Hidden
-    expect(dataLayers.state.annotationLayers[4].state.name).toBe(dash.annotations[4].spec.name);
-    expect(dataLayers.state.annotationLayers[4].state.isEnabled).toBe(dash.annotations[4].spec.enable);
-    expect(dataLayers.state.annotationLayers[4].state.isHidden).toBe(dash.annotations[4].spec.hide);
-
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels).toHaveLength(3);
+    expect(vizPanels).toHaveLength(2);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
 
     // Panel
     const panel = getPanelElement(dash, 'panel-1')!;
-    expect(layout.state.grid.state.children.length).toBe(3);
+    expect(layout.state.grid.state.children.length).toBe(2);
     expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[0].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
@@ -266,14 +268,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
     validateVizPanel(vizLibraryPanel, dash);
 
-    expect((layout.state.grid.state.children[2] as SceneGridRow).state.isCollapsed).toBe(false);
-    expect((layout.state.grid.state.children[2] as SceneGridRow).state.y).toBe(20);
-
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
-    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
-    );
+    const expectedTransformation = getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0];
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
   });
 
   it('should set panel ds if it is mixed DS', () => {
@@ -282,13 +284,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
-        datasource: {
-          type: 'graphite',
-          uid: 'datasource1',
-        },
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'graphite',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -299,7 +302,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(3);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
@@ -310,13 +313,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource1',
-        },
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -327,7 +331,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(3);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.queries[0].datasource).toEqual({
       type: 'prometheus',
       uid: 'datasource1',
@@ -343,7 +347,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         refId: 'A',
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'abc123',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -354,9 +363,99 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(3);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('adhoc variables', () => {
+    it('should convert empty defaultKeys array to undefined', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
+    });
+
+    it('should preserve non-empty defaultKeys array', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      expect(adhocVar.spec.defaultKeys.length).toBeGreaterThan(0);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
+    });
+
+    it('should set enableGroupBy to true when feature flag is on and enableGroupBy is true', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = true;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(true);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should set enableGroupBy to false when feature flag is on and enableGroupBy is false', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = false;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should default enableGroupBy to false when feature flag is on and enableGroupBy is not set', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should not set enableGroupBy when dashboardUnifiedDrilldownControls is disabled', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.enableGroupBy = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+      expect(adhocVariable.state.enableGroupBy).toBe(false);
+    });
   });
 
   describe('When creating a snapshot dashboard scene', () => {
@@ -367,7 +466,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           ...defaultDashboard.metadata,
           annotations: {
             ...defaultDashboard.metadata.annotations,
-            'grafana.app/dashboard-is-snapshot': true,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
           },
         },
       };
@@ -375,7 +474,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const scene = transformSaveModelSchemaV2ToScene(snapshot);
 
       // check variables were converted to snapshot variables
-      expect(scene.state.$variables?.state.variables).toHaveLength(8);
+      expect(scene.state.$variables?.state.variables).toHaveLength(9);
       expect(scene.state.$variables?.getByName('customVar')).toBeInstanceOf(SnapshotVariable);
       expect(scene.state.$variables?.getByName('adhocVar')).toBeInstanceOf(AdHocFiltersVariable);
       expect(scene.state.$variables?.getByName('intervalVar')).toBeInstanceOf(SnapshotVariable);
@@ -394,6 +493,29 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(intervalSnapshot.state.value).toBe('1m');
       expect(intervalSnapshot.state.text).toBe('1m');
       expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+
+    it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      });
+
+      const adhocVar = snapshot.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
     });
   });
 
@@ -432,11 +554,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             canAdmin: false,
             annotationsPermissions: {
               dashboard: {
-                canAdd: false,
-                canEdit: false,
-                canDelete: false,
-              },
-              organization: {
                 canAdd: false,
                 canEdit: false,
                 canDelete: false,
@@ -678,11 +795,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('annotations', () => {
-    it('should transform annotation with options field', () => {
+    it('should transform annotation with legacyOptions field', () => {
       // Create a dashboard with an annotation that has options
       const dashboardWithAnnotationOptions: DashboardWithAccessInfo<DashboardV2Spec> = {
         kind: 'DashboardWithAccessInfo',
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         metadata: {
           name: 'test-dashboard',
           namespace: 'default',
@@ -720,21 +837,26 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             {
               kind: 'AnnotationQuery',
               spec: {
-                name: 'Annotation with options',
+                name: 'Annotation with legacy options',
                 builtIn: false,
                 enable: true,
                 hide: false,
                 iconColor: 'purple',
-                datasource: {
-                  type: 'prometheus',
-                  uid: 'abc123',
-                },
-                options: {
+                legacyOptions: {
                   expr: 'rate(http_requests_total[5m])',
                   queryType: 'range',
                   legendFormat: '{{method}} {{endpoint}}',
                   useValueAsTime: true,
                   step: '1m',
+                },
+                query: {
+                  kind: 'DataQuery',
+                  version: defaultDataQueryKind().version,
+                  group: 'prometheus',
+                  datasource: {
+                    name: 'abc123',
+                  },
+                  spec: {},
                 },
               },
             },
@@ -753,11 +875,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
               canEdit: true,
               canDelete: true,
             },
-            organization: {
-              canAdd: true,
-              canEdit: true,
-              canDelete: true,
-            },
           },
         },
       };
@@ -767,23 +884,35 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       // Get the annotation layers
       const dataLayerSet = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayerSet).toBeDefined();
-      // it should have two annotation layers, built-in and custom
       expect(dataLayerSet.state.annotationLayers.length).toBe(2);
+      const defaultAnnotationLayer = dataLayerSet.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+
+      // Verify that the default annotation layer has been correctly initialized
+      expect(defaultAnnotationLayer.state.query).toEqual({
+        datasource: {
+          uid: '-- Grafana --',
+          type: 'grafana',
+        },
+        builtIn: 1,
+        enable: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        hide: true,
+        type: 'dashboard',
+      });
 
       const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
 
-      // Verify that the options have been merged into the query object
+      // Verify that the legacyOptions have been merged into the query object
       expect(annotationLayer.state.query).toMatchObject({
-        name: 'Annotation with options',
-        expr: 'rate(http_requests_total[5m])',
-        queryType: 'range',
-        legendFormat: '{{method}} {{endpoint}}',
-        useValueAsTime: true,
-        step: '1m',
-      });
-
-      // Verify the original options object is also preserved
-      expect(annotationLayer.state.query.options).toMatchObject({
+        datasource: {
+          uid: 'abc123',
+          type: 'prometheus',
+        },
+        name: 'Annotation with legacy options',
+        enable: true,
+        hide: false,
+        iconColor: 'purple',
         expr: 'rate(http_requests_total[5m])',
         queryType: 'range',
         legendFormat: '{{method}} {{endpoint}}',

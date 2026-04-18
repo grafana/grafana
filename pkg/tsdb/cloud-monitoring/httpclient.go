@@ -23,12 +23,12 @@ type routeInfo struct {
 var routes = map[string]routeInfo{
 	cloudMonitor: {
 		method: "GET",
-		url:    "https://monitoring.googleapis.com",
+		url:    "https://monitoring.",
 		scopes: []string{cloudMonitorScope},
 	},
 	resourceManager: {
 		method: "GET",
-		url:    "https://cloudresourcemanager.googleapis.com",
+		url:    "https://cloudresourcemanager.",
 		scopes: []string{resourceManagerScope},
 	},
 }
@@ -45,17 +45,34 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	var provider tokenprovider.TokenProvider
 	switch model.authenticationType {
 	case gceAuthentication:
-		provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
+		if model.usingImpersonation {
+			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
+			provider = tokenprovider.NewImpersonatedGceAccessTokenProvider(providerConfig)
+		} else {
+			provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
+		}
 	case jwtAuthentication:
 		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
 			PrivateKey: []byte(model.privateKey),
 		}
-		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
+		if model.usingImpersonation {
+			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
+			provider = tokenprovider.NewImpersonatedJwtAccessTokenProvider(providerConfig)
+		} else {
+			provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
+		}
 	}
 
 	return tokenprovider.AuthMiddleware(provider), nil
+}
+
+func buildURL(route string, universeDomain string) string {
+	if universeDomain == "" {
+		universeDomain = "googleapis.com"
+	}
+	return routes[route].url + universeDomain
 }
 
 func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider *httpclient.Provider, route string) (*http.Client, error) {

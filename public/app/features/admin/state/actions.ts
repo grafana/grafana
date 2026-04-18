@@ -2,19 +2,14 @@ import { debounce } from 'lodash';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { FetchDataArgs } from '@grafana/ui';
+import { type FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import {
-  ThunkResult,
-  LdapUser,
-  UserSession,
-  UserDTO,
-  AccessControlAction,
-  UserFilter,
-  AnonUserFilter,
-} from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type LdapUser } from 'app/types/ldap';
+import { type ThunkResult } from 'app/types/store';
+import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
 import {
   userAdminPageLoadedAction,

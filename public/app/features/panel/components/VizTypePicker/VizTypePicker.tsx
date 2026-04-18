@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
+import { filterPluginList } from '../../state/util';
 
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   pluginId: string;
@@ -19,7 +20,7 @@ export interface Props {
 
 export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
-  const pluginsList = useMemo(getAllPanelPluginMeta, []);
+  const { value: pluginsList = [] } = useListedPanelPluginMetas();
 
   const filteredPluginTypes = useMemo(() => {
     const result = filterPluginList(pluginsList, searchQuery, pluginId);
@@ -41,16 +42,16 @@ export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: 
 
   return (
     <div className={styles.grid}>
-      {filteredPluginTypes.map((plugin) => (
+      {filteredPluginTypes.map((plugin, idx) => (
         <VizTypePickerPlugin
           disabled={false}
           key={plugin.id}
           isCurrent={plugin.id === pluginId}
           plugin={plugin}
-          onClick={(e) =>
+          onSelect={(withModKey) =>
             onChange({
               pluginId: plugin.id,
-              withModKey: e.metaKey || e.ctrlKey || e.altKey,
+              withModKey,
             })
           }
         />

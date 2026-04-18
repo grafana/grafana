@@ -2,34 +2,50 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { OnNodeUpdate } from './types';
+import { type TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
-  nodePath: string[];
-  query: string;
-  onNodeUpdate: OnNodeUpdate;
+  searchArea: string;
+  treeNode: TreeNode;
+  onFocus: () => void;
+  onBlur: () => void;
+  'aria-controls': string;
+  'aria-activedescendant'?: string;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({
+  anyChildExpanded,
+  treeNode,
+  searchArea,
+  onFocus,
+  onBlur,
+  'aria-controls': ariaControls,
+  'aria-activedescendant': ariaActivedescendant,
+}: ScopesTreeSearchProps) {
+  const { filterNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
-  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
+    value: treeNode.query,
+    dirty: false,
+  });
 
   useEffect(() => {
-    if (!inputState.dirty && inputState.value !== query) {
-      setInputState({ value: query, dirty: false });
+    if (!inputState.dirty && inputState.value !== treeNode.query) {
+      setInputState({ value: treeNode.query, dirty: false });
     }
-  }, [inputState, query]);
+  }, [inputState, treeNode.query]);
 
   useDebounce(
     () => {
       if (inputState.dirty) {
-        onNodeUpdate(nodePath, true, inputState.value);
+        filterNode(treeNode.scopeNodeId, inputState.value);
       }
     },
     500,
@@ -40,15 +56,34 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
     return null;
   }
 
+  const searchLabel = t('scopes.tree.search', 'Search {{parentTitle}}', {
+    parentTitle: searchArea,
+  });
+
   return (
     <FilterInput
-      placeholder={t('scopes.tree.search', 'Search')}
+      placeholder={searchLabel}
+      // Don't do autofocus for root node
+      autoFocus={treeNode.scopeNodeId !== ''}
+      role="combobox"
+      aria-expanded={true}
+      aria-autocomplete="list"
+      aria-controls={ariaControls}
+      aria-activedescendant={ariaActivedescendant}
+      aria-label={searchLabel}
       value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"
       escapeRegex={false}
       onChange={(value) => {
         setInputState({ value, dirty: true });
+      }}
+      onFocus={onFocus}
+      onBlur={() => {
+        // TODO:Handle weird race condition where the blur event interupts selection of a radio button. This is because disableHighlighting is called, which forces a re-render of the tree. This re-render causes the radio button to lose focus, and the selection to be interrupted.
+        setTimeout(() => {
+          onBlur();
+        }, 0);
       }}
     />
   );

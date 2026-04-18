@@ -1,9 +1,17 @@
 import { partition } from 'lodash';
 
-import { DataFrame, Field, FieldWithIndex, LinkModel, LogRowModel, ScopedVars } from '@grafana/data';
+import {
+  type DataFrame,
+  type Field,
+  type FieldWithIndex,
+  type LinkModel,
+  type LogRowModel,
+  type ScopedVars,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type ExploreFieldLinkModel } from 'app/features/explore/utils/links';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { parseLogsFrame } from '../logsFrame';
 
@@ -65,7 +73,7 @@ export const getDataframeFields = (row: LogRowModel, getFieldLinks?: GetFieldLin
   return nonEmptyVisibleFields.map((field) => {
     const vars: ScopedVars = {
       __labels: {
-        text: 'Labels',
+        text: t('logs.get-dataframe-fields.vars.text.labels', 'Labels'),
         value: {
           tags: { ...row.labels },
         },
@@ -146,10 +154,20 @@ export function separateVisibleFields(
   return { visible, hidden };
 }
 
+// Memoization cache for getVisibleFieldIndices results to avoid re-processing the same DataFrame structure
+// WeakMap ensures automatic garbage collection when DataFrames are no longer referenced
+const visibleFieldIndicesCache = new WeakMap<DataFrame, Set<number>>();
+function getCachedVisibleFieldIndices(frame: DataFrame): Set<number> {
+  if (!visibleFieldIndicesCache.has(frame)) {
+    visibleFieldIndicesCache.set(frame, getVisibleFieldIndices(frame, {}));
+  }
+  return visibleFieldIndicesCache.get(frame)!;
+}
+
 // Optimized version of separateVisibleFields() to only return visible fields for getAllFields()
-function getNonEmptyVisibleFields(row: LogRowModel, opts?: VisOptions): FieldWithIndex[] {
+function getNonEmptyVisibleFields(row: LogRowModel): FieldWithIndex[] {
   const frame = row.dataFrame;
-  const visibleFieldIndices = getVisibleFieldIndices(frame, opts ?? {});
+  const visibleFieldIndices = getCachedVisibleFieldIndices(frame);
   const visibleFields: FieldWithIndex[] = [];
   for (let index = 0; index < frame.fields.length; index++) {
     const field = frame.fields[index];

@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataFrame } from '../types/dataFrame';
-import { DataTransformerInfo } from '../types/transformations';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type DataFrame } from '../types/dataFrame';
+import { type DataTransformerInfo } from '../types/transformations';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
   /**
@@ -34,6 +34,21 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    * Set of categories associated with the transformer
    */
   categories?: Set<TransformerCategory>;
+
+  /**
+   * Set of tags associated with the transformer for improved transformation search
+   */
+  tags?: Set<string>;
+
+  /**
+   * Image representing the transformer, for dark themes
+   */
+  imageDark: string;
+
+  /**
+   * Image representing the transformer, for light themes
+   */
+  imageLight: string;
 }
 
 export enum TransformerCategory {

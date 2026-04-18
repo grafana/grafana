@@ -529,7 +529,12 @@ export const defaultFieldColor = (): FieldColor => ({
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -541,7 +546,7 @@ export const defaultFieldColor = (): FieldColor => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
@@ -609,7 +614,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -669,42 +674,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
 
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
-
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
 	spec: RowsLayoutSpec;
@@ -745,6 +714,16 @@ export interface RowsLayoutRowSpec {
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 export interface ConditionalRenderingGroupKind {
@@ -1503,3 +1482,4 @@ export const defaultVariableValueOption = (): VariableValueOption => ({
 	label: "",
 	value: defaultVariableValueSingle(),
 });
+

@@ -1,31 +1,36 @@
 // Library
 import { cx } from '@emotion/css';
-import { CSSProperties, PureComponent, ReactNode } from 'react';
+import { type CSSProperties, memo, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
-  DisplayProcessor,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
   FALLBACK_COLOR,
   FieldColorModeId,
-  FieldConfig,
-  FormattedValue,
+  type FieldConfig,
+  type FormattedValue,
   formattedValueToString,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getFieldColorMode,
   ThresholdsMode,
-  TimeSeriesValue,
+  type TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeNamePlacement,
+  BarGaugeValueMode,
+  type VizTextDisplayOptions,
+} from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { type Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -53,19 +58,21 @@ export interface Props extends Themeable2 {
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
   namePlacement?: BarGaugeNamePlacement;
-  isOverflow: boolean;
+  isOverflow?: boolean;
 }
 
-export class BarGauge extends PureComponent<Props> {
-  static defaultProps: Partial<Props> = {
-    lcdCellWidth: 12,
-    value: {
-      text: '100',
-      numeric: 100,
-    },
-    displayMode: BarGaugeDisplayMode.Gradient,
-    orientation: VizOrientation.Horizontal,
-    field: {
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
+ */
+export const BarGauge = memo(function BarGauge(props: Props) {
+  const {
+    onClick,
+    className,
+    theme,
+    value,
+    displayMode = BarGaugeDisplayMode.Gradient,
+    orientation = VizOrientation.Horizontal,
+    field = {
       min: 0,
       max: 100,
       thresholds: {
@@ -73,53 +80,18 @@ export class BarGauge extends PureComponent<Props> {
         steps: [],
       },
     },
-    itemSpacing: 8,
-    showUnfilled: true,
-    isOverflow: false,
-  };
+    lcdCellWidth = 12,
+    itemSpacing = 8,
+    showUnfilled = true,
+    isOverflow = false,
+    display,
+    alignmentFactors,
+    text,
+    valueDisplayMode,
+  } = props;
 
-  render() {
-    const { onClick, className, theme } = this.props;
-    const { title } = this.props.value;
-    const styles = getTitleStyles(this.props);
-
-    if (onClick) {
-      return (
-        <button
-          type="button"
-          style={styles.wrapper}
-          onClick={onClick}
-          className={cx(clearButtonStyles(theme), className)}
-        >
-          <div style={styles.title}>{title}</div>
-          {this.renderBarAndValue()}
-        </button>
-      );
-    }
-
-    return (
-      <div style={styles.wrapper} className={className}>
-        {title && <div style={styles.title}>{title}</div>}
-        {this.renderBarAndValue()}
-      </div>
-    );
-  }
-
-  renderBarAndValue() {
-    switch (this.props.displayMode) {
-      case 'lcd':
-        return this.renderRetroBars();
-      case 'basic':
-      case 'gradient':
-      default:
-        return this.renderBasicAndGradientBars();
-    }
-  }
-
-  renderBasicAndGradientBars(): ReactNode {
-    const { value, showUnfilled, valueDisplayMode } = this.props;
-
-    const styles = getBasicAndGradientStyles(this.props);
+  const renderBasicAndGradientBars = () => {
+    const styles = getBasicAndGradientStyles(props);
 
     return (
       <div style={styles.wrapper}>
@@ -134,24 +106,10 @@ export class BarGauge extends PureComponent<Props> {
         <div style={styles.bar} />
       </div>
     );
-  }
+  };
 
-  renderRetroBars(): ReactNode {
-    const {
-      display,
-      field,
-      value,
-      itemSpacing,
-      alignmentFactors,
-      orientation,
-      lcdCellWidth,
-      text,
-      valueDisplayMode,
-      theme,
-      isOverflow,
-    } = this.props;
-    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
-      calculateBarAndValueDimensions(this.props);
+  const renderRetroBars = () => {
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperHeight } = calculateBarAndValueDimensions(props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
@@ -161,7 +119,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellSpacing = itemSpacing!;
     const cellCount = Math.floor(maxSize / lcdCellWidth!);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
-    const valueColor = getTextValueColor(this.props);
+    const valueColor = getTextValueColor(props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
     const valueStyles = getValueStyles(
@@ -175,18 +133,23 @@ export class BarGauge extends PureComponent<Props> {
     );
 
     const containerStyles: CSSProperties = {
-      width: `${wrapperWidth}px`,
       height: `${wrapperHeight}px`,
+      display: 'flex',
+    };
+
+    const cellsContainerStyles: CSSProperties = {
       display: 'flex',
     };
 
     if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
+      cellsContainerStyles.flexDirection = 'column-reverse';
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
       valueStyles.justifyContent = 'flex-end';
+      cellsContainerStyles.flexDirection = 'row';
     }
 
     const cells: JSX.Element[] = [];
@@ -195,7 +158,7 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
-        borderRadius: theme.shape.radius.default,
+        borderRadius: '2px',
       };
 
       if (cellColor.isLit) {
@@ -219,7 +182,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={containerStyles}>
-        {cells}
+        <div style={cellsContainerStyles}>{cells}</div>
         {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
@@ -229,8 +192,54 @@ export class BarGauge extends PureComponent<Props> {
         )}
       </div>
     );
+  };
+
+  const renderBarAndValue = () => {
+    switch (displayMode) {
+      case 'lcd':
+        return renderRetroBars();
+      case 'basic':
+      case 'gradient':
+      default:
+        return renderBasicAndGradientBars();
+    }
+  };
+
+  const allProps: Props = {
+    ...props,
+    displayMode,
+    orientation,
+    field,
+    lcdCellWidth,
+    itemSpacing,
+    showUnfilled,
+    isOverflow,
+  };
+
+  const { title } = value;
+  const styles = getTitleStyles(allProps);
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        style={styles.wrapper}
+        onClick={onClick}
+        className={cx(clearButtonStyles(theme), className)}
+      >
+        <div style={styles.title}>{title}</div>
+        {renderBarAndValue()}
+      </button>
+    );
   }
-}
+
+  return (
+    <div style={styles.wrapper} className={className}>
+      {title && <div style={styles.title}>{title}</div>}
+      {renderBarAndValue()}
+    </div>
+  );
+});
 
 interface CellColors {
   background: string;
@@ -498,7 +507,7 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow = false } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -525,7 +534,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const barStyles: CSSProperties = {
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 
@@ -533,7 +542,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 

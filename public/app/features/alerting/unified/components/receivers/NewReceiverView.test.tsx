@@ -1,9 +1,9 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
-import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
+import { byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -79,18 +79,23 @@ describe('new receiver', () => {
     // click test
     await user.click(ui.testContactPoint.get());
 
+    // close the modal
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
     // we shouldn't be testing implementation details but when the request is successful
     // it can't seem to assert on the success toast
     await user.click(ui.saveContactButton.get());
 
     const requests = await capture;
-    const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
+    const testRequest = requests.find(
+      (r) => r.url.includes('/apis/notifications.alerting.grafana.app/') && r.url.endsWith('/test')
+    );
     const saveRequest = requests.find((r) => r.url.endsWith('/receivers') && r.method === 'POST');
 
-    const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    expect(testRequest).toBeDefined();
+    expect(testRequest?.url).toContain('/receivers/-/test');
 
-    expect([testBody]).toMatchSnapshot();
+    const saveBody = await saveRequest?.clone().json();
     expect([saveBody]).toMatchSnapshot();
   });
 
@@ -122,7 +127,7 @@ const ui = {
   inputs: {
     name: byPlaceholderText('Name'),
     email: {
-      addresses: byLabelText(/Addresses/),
+      addresses: byRole('textbox', { name: /^Addresses/ }),
     },
   },
 };

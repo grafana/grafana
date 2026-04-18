@@ -77,6 +77,15 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 	}
 
+	// TODO: Move this to the generated type
+	var queryEnvelope struct {
+		GrafanaSql bool `json:"grafanaSql"`
+	}
+	err = json.Unmarshal(query.JSON, &queryEnvelope)
+	if err != nil {
+		queryEnvelope.GrafanaSql = false
+	}
+
 	azJSONModel := queryJSONModel.AzureMonitor
 	// Legacy: If only MetricDefinition is set, use it as namespace
 	if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
@@ -98,7 +107,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
 	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
-		ub := urlBuilder{
+		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
 			DefaultSubscription: &dsInfo.Settings.SubscriptionId,
@@ -109,7 +118,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 
 		// Construct the resourceURI (for legacy query objects pre Grafana 9)
-		resourceUri, err := ub.buildResourceURI()
+		resourceUri, err := ub.BuildResourceURI()
 		if err != nil {
 			return nil, err
 		}
@@ -118,24 +127,28 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		filterInBody = false
 		if resourceUri != nil {
 			azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
-			resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
+			// Store the resource URI in the map lowercased to avoid case sensitivity issues
+			uriLower := strings.ToLower(*resourceUri)
+			resourceMap[uriLower] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 		}
 	} else {
 		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
+			ub := UrlBuilder{
 				DefaultSubscription: &dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
 				ResourceGroup:       r.ResourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        r.ResourceName,
 			}
-			resourceUri, err := ub.buildResourceURI()
+			resourceUri, err := ub.BuildResourceURI()
 			if err != nil {
 				return nil, err
 			}
 
 			if resourceUri != nil {
-				resourceMap[*resourceUri] = r
+				// Store the resource URI in the map lowercased to avoid case sensitivity issues
+				uriLower := strings.ToLower(*resourceUri)
+				resourceMap[uriLower] = r
 			}
 			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", *resourceUri))
 		}
@@ -199,6 +212,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
+		GrafanaSql:   queryEnvelope.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
@@ -440,6 +454,30 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			}
 		}
 
+		if query.GrafanaSql {
+			timeField.Name = "time"
+			metricFieldName := dataField.Name
+			dataField.Name = "value"
+			if query.Alias == "" {
+				if dataField.Config != nil {
+					if dataField.Config.DisplayName == "" {
+						dataField.Config.DisplayName = metricFieldName
+					}
+				} else {
+					dataField.SetConfig(&data.FieldConfig{
+						DisplayName: metricFieldName,
+					})
+				}
+			}
+
+			resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(series.Data))
+			resourceNameField.Name = "resourceName"
+			for i := 0; i < len(series.Data); i++ {
+				resourceNameField.Set(i, resourceName)
+			}
+			frame.Fields = append(frame.Fields, resourceNameField)
+		}
+
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
@@ -597,7 +635,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 func formatAzureMonitorLegendKey(query *types.AzureMonitorQuery, resourceId string, amr *types.AzureMonitorResponse, labels data.Labels, subscription string) string {
 	alias := query.Alias
 	subscriptionId := query.Subscription
-	resource := query.Resources[resourceId]
+	resource := query.Resources[strings.ToLower(resourceId)]
 	metricName := amr.Value[0].Name.LocalizedValue
 	namespace := amr.Namespace
 	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.

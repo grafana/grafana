@@ -1,5 +1,5 @@
-import { t } from 'app/core/internationalization';
-import { CombinedRuleGroup } from 'app/types/unified-alerting';
+import { t } from '@grafana/i18n';
+import { type CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { DetailsField } from '../DetailsField';
 

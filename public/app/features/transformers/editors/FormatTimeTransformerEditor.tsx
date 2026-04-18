@@ -1,19 +1,20 @@
-import { useCallback, ChangeEvent } from 'react';
+import { useCallback, type ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   getFieldDisplayName,
   PluginState,
 } from '@grafana/data';
-import { FormatTimeTransformerOptions } from '@grafana/data/internal';
+import { type FormatTimeTransformerOptions } from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/formatTime.svg';
+import lightImage from '../images/light/formatTime.svg';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -80,7 +81,7 @@ export function FormatTimeTransfomerEditor({
             value={options.timeField}
             onChange={onSelectField}
             /* don't translate here as this references a field name */
-            /* eslint-disable-next-line @grafana/no-untranslated-strings */
+            /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
           />
@@ -117,12 +118,17 @@ export function FormatTimeTransfomerEditor({
   );
 }
 
-export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTimeTransformerOptions> = {
-  id: DataTransformerID.formatTime,
-  editor: FormatTimeTransfomerEditor,
-  transformation: standardTransformers.formatTimeTransformer,
-  name: standardTransformers.formatTimeTransformer.name,
-  state: PluginState.alpha,
-  description: standardTransformers.formatTimeTransformer.description,
-  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
-};
+export const getFormatTimeTransformerRegistryItem: () => TransformerRegistryItem<FormatTimeTransformerOptions> =
+  () => ({
+    id: DataTransformerID.formatTime,
+    editor: FormatTimeTransfomerEditor,
+    transformation: standardTransformers.formatTimeTransformer,
+    name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
+    state: PluginState.alpha,
+    description: t(
+      'transformers.format-time-transformer-editor.description.set-based-on-time',
+      'Set the output format of a time field'
+    ),
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

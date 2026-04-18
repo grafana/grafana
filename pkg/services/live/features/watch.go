@@ -2,6 +2,7 @@ package features
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -11,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -48,19 +49,16 @@ func (b *WatchRunner) GetHandlerForPath(_ string) (model.ChannelHandler, error) 
 // Valid paths look like: {version}/{resource}[={name}]/{user.uid}
 // * v0alpha1/dashboards/u12345
 // * v0alpha1/dashboards=ABCD/u12345
-func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	// To make sure we do not share resources across users, in clude the UID in the path
+func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	// To make sure we do not share resources across users, include the UID in the path
 	userID := u.GetIdentifier()
-	if userID == "" {
+	if u.GetIdentityType() == types.TypeAnonymous {
+		userID = "anonymous"
+	} else if userID == "" {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("missing user identity")
 	}
 	if !strings.HasSuffix(e.Path, userID) {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("path must end with user uid (%s)", userID)
-	}
-
-	// While testing with provisioning repositories, we will limit this to admin only
-	if !u.HasRole(identity.RoleAdmin) {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("only admin users for now")
 	}
 
 	b.watchingMu.Lock()
@@ -87,11 +85,14 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
 	}
 
-	requester := types.WithAuthInfo(context.Background(), u)
-	cfg, err := b.configProvider.GetRestConfig(requester)
+	// doesn't matter what GetRestConfig sees for context, matters for watch below
+	cfg, err := b.configProvider.GetRestConfig(context.Background())
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
+
+	// add user to both requester and authInfo context keys, older implementations are still using requester
+	ctx := identity.WithRequester(types.WithAuthInfo(context.Background(), u), u)
 	uclient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
@@ -102,13 +103,24 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	if len(name) > 1 {
 		opts.FieldSelector = "metadata.name=" + name
 	}
-	watch, err := client.Watch(requester, opts)
+
+	// Support resourceVersion from subscription data.
+	if len(e.Data) > 0 {
+		var subData struct {
+			ResourceVersion string `json:"resourceVersion,omitempty"`
+		}
+		if err := json.Unmarshal(e.Data, &subData); err == nil && subData.ResourceVersion != "" {
+			opts.ResourceVersion = subData.ResourceVersion
+		}
+	}
+
+	watch, err := client.Watch(ctx, opts)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
 
 	current = &watcher{
-		orgId:     u.GetOrgID(),
+		ns:        u.GetNamespace(),
 		channel:   e.Channel,
 		publisher: b.publisher,
 		watch:     watch,
@@ -156,7 +168,7 @@ func (b *WatchRunner) OnPublish(_ context.Context, u identity.Requester, e model
 }
 
 type watcher struct {
-	orgId     int64
+	ns        string
 	channel   string
 	publisher model.ChannelPublisher
 	done      bool
@@ -185,24 +197,13 @@ func (b *watcher) run(ctx context.Context) {
 				return
 			}
 
-			cfg := jsoniter.ConfigCompatibleWithStandardLibrary
-			stream := cfg.BorrowStream(nil)
-			defer cfg.ReturnStream(stream)
+			data, err := marshalWatchEvent(event)
+			if err != nil {
+				logger.Error("marshal error", "channel", b.channel, "err", err)
+				continue
+			}
 
-			// regular json.Marshal() uses upper case
-			stream.WriteObjectStart()
-			stream.WriteObjectField("type")
-			stream.WriteString(string(event.Type))
-			stream.WriteMore()
-			stream.WriteObjectField("object")
-			stream.WriteVal(event.Object)
-			stream.WriteObjectEnd()
-
-			buf := stream.Buffer()
-			data := make([]byte, len(buf))
-			copy(data, buf)
-
-			err := b.publisher(b.orgId, b.channel, data)
+			err = b.publisher(b.ns, b.channel, data)
 			if err != nil {
 				logger.Error("publish error", "channel", b.channel, "err", err)
 				b.watch.Stop()
@@ -211,4 +212,29 @@ func (b *watcher) run(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// marshalWatchEvent serializes a watch event to JSON. This is extracted from the
+// run loop so that defer correctly returns the borrowed jsoniter stream each call.
+func marshalWatchEvent(event watch.Event) ([]byte, error) {
+	cfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	stream := cfg.BorrowStream(nil)
+	defer cfg.ReturnStream(stream)
+
+	stream.WriteObjectStart()
+	stream.WriteObjectField("type")
+	stream.WriteString(string(event.Type))
+	stream.WriteMore()
+	stream.WriteObjectField("object")
+	stream.WriteVal(event.Object)
+	stream.WriteObjectEnd()
+
+	if stream.Error != nil {
+		return nil, stream.Error
+	}
+
+	buf := stream.Buffer()
+	data := make([]byte, len(buf))
+	copy(data, buf)
+	return data, nil
 }

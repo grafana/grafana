@@ -1,22 +1,43 @@
-import type { apiOptions, identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
-
-import { BuildInfo, CurrentUserDTO } from '@grafana/data';
+import { type BuildInfo } from '@grafana/data';
 import {
-  EchoBackend,
+  type EchoBackend,
   EchoEventType,
   isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
-  PageviewEchoEvent,
+  type PageviewEchoEvent,
 } from '@grafana/runtime';
 
+import { type User } from '../../../context_srv';
 import { loadScript } from '../../utils';
 
+type Properties = Record<string, string | boolean | number>;
+
+interface RudderstackAPIOptions {
+  Intercom?: {
+    user_hash: string;
+  };
+}
+
 interface Rudderstack {
-  identify: typeof identify;
-  load: typeof load;
-  page: typeof page;
-  track: typeof track;
+  identify: (identifier: string, traits: Properties, options?: RudderstackAPIOptions) => void;
+  // load type set to match Rudderstack v3, for global type compatibility with new version.
+  load: (
+    writeKey: string,
+    dataPlaneURL: string,
+    options: {
+      configUrl?: string;
+      destSDKBaseURL?: string;
+      storage?: {
+        encryption?: {
+          version: 'V3' | 'legacy';
+        };
+        migrate?: boolean;
+      };
+    }
+  ) => void;
+  page: () => void;
+  track: (eventName: string, properties?: Properties) => void;
 }
 
 declare global {
@@ -31,7 +52,7 @@ export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
   buildInfo: BuildInfo;
-  user?: CurrentUserDTO;
+  user?: User;
   sdkUrl?: string;
   configUrl?: string;
   integrationsUrl?: string;
@@ -76,7 +97,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     if (options.user) {
       const { identifier, intercomIdentifier } = options.user.analytics;
-      const apiOptions: apiOptions = {};
+      const apiOptions: RudderstackAPIOptions = {};
 
       if (intercomIdentifier) {
         apiOptions.Intercom = {

@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+type TeamUIDCtxKey struct{}
+
 type Service interface {
 	CreateTeam(ctx context.Context, cmd *CreateTeamCommand) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
@@ -19,7 +21,7 @@ type Service interface {
 	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, error)
 	IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveUsersMemberships(tx context.Context, userID int64) error
-	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*TeamMemberDTO, error)
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
 	RegisterDelete(query string)
 }
@@ -51,8 +53,20 @@ func MiddlewareTeamUIDResolver(teamService Service, paramName string) web.Handle
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id
 			web.SetURLParams(c.Req, gotParams)
+
+			// Only set the UID in context if a UID was provided (not an ID)
+			_, parseErr := strconv.ParseInt(teamIDorUID, 10, 64)
+			if parseErr != nil {
+				ctx := context.WithValue(c.Req.Context(), TeamUIDCtxKey{}, teamIDorUID)
+				c.Req = c.Req.WithContext(ctx)
+			}
 		} else {
 			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		}
 	}
+}
+
+func TeamUIDFrom(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(TeamUIDCtxKey{}).(string)
+	return uid, ok && uid != ""
 }

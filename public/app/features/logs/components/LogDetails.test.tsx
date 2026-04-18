@@ -2,21 +2,33 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  Field,
+  type Field,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   MutableDataFrame,
   createTheme,
   FieldType,
   createDataFrame,
   DataFrameType,
   CoreApp,
+  PluginExtensionPoints,
+  dateTime,
 } from '@grafana/data';
+import { setPluginLinksHook } from '@grafana/runtime';
 
-import { LogDetails, Props } from './LogDetails';
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
-import { createLogRow } from './__mocks__/logRow';
+import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../logsFrame';
+
+import { LogDetails, type Props } from './LogDetails';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  };
+});
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
@@ -31,9 +43,16 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickFilterOutLabel: () => {},
     onClickShowField: () => {},
     onClickHideField: () => {},
-    theme,
     styles,
     app: CoreApp.Explore,
+    timeRange: {
+      from: dateTime(1757937009041),
+      to: dateTime(1757940609041),
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    },
     ...(propOverrides || {}),
   };
 
@@ -296,6 +315,35 @@ describe('LogDetails', () => {
     expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
   });
 
+  it('should load plugin links for logs view resource attributes extension point', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    const rowOverrides = {
+      datasourceType: 'loki',
+      datasourceUid: 'grafanacloud-logs',
+      labels: { key1: 'label1', key2: 'label2' },
+    };
+    setup(undefined, rowOverrides);
+
+    expect(usePluginLinksMock).toHaveBeenCalledWith({
+      extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
+      limitPerPlugin: 10,
+      context: {
+        datasource: {
+          type: 'loki',
+          uid: 'grafanacloud-logs',
+        },
+        timeRange: {
+          from: 1757937009041,
+          to: 1757940609041,
+        },
+        attributes: { key1: ['label1'], key2: ['label2'] },
+      },
+    });
+  });
+
   describe('Label types', () => {
     const entry = 'test';
     const labels = {
@@ -309,12 +357,12 @@ describe('LogDetails', () => {
         { name: 'body', type: FieldType.string, values: [entry] },
         { name: 'id', type: FieldType.string, values: ['1'] },
         {
-          name: 'labels',
+          name: DATAPLANE_LABELS_NAME,
           type: FieldType.other,
           values: [labels],
         },
         {
-          name: 'labelTypes',
+          name: DATAPLANE_LABEL_TYPES_NAME,
           type: FieldType.other,
           values: [
             {

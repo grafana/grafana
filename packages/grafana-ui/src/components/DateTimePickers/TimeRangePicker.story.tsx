@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { dateTime, DefaultTimeZone } from '@grafana/data';
 
@@ -10,7 +10,7 @@ const to = dateTime();
 const from = to.subtract(6, 'h');
 
 const meta: Meta<typeof TimeRangePicker> = {
-  title: 'Pickers and Editors/TimePickers/TimeRangePicker',
+  title: 'Date time pickers/TimeRangePicker',
   component: TimeRangePicker,
   args: {
     value: {

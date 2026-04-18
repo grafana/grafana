@@ -1,6 +1,7 @@
-import { appendFileSync, writeFileSync } from 'fs';
-import { exec as execCallback } from 'node:child_process';
-import { promisify } from 'node:util';
+import {appendFileSync, writeFileSync} from 'fs';
+import {exec as execCallback} from 'node:child_process';
+import {promisify} from 'node:util';
+import {findPreviousVersion, semverParse} from "./semver.js";
 
 //
 // Github Action core utils: logging (notice + debug log levels), must escape
@@ -9,35 +10,6 @@ import { promisify } from 'node:util';
 const escapeData = (s) => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
 const LOG = (msg) => console.log(`::notice::${escapeData(msg)}`);
 
-//
-// Semver utils: parse, compare, sort etc (using official regexp)
-// https://regex101.com/r/Ly7O1x/3/
-//
-const semverRegExp =
-  /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
-
-const semverParse = (tag) => {
-  const m = tag.match(semverRegExp);
-  if (!m) {
-    return;
-  }
-  const [_, major, minor, patch, prerelease] = m;
-  return [+major, +minor, +patch, prerelease, tag];
-};
-
-// semverCompare takes two parsed semver tags and comparest them more or less
-// according to the semver specs
-const semverCompare = (a, b) => {
-  for (let i = 0; i < 3; i++) {
-    if (a[i] !== b[i]) {
-      return a[i] < b[i] ? 1 : -1;
-    }
-  }
-  if (a[3] !== b[3]) {
-    return a[3] < b[3] ? 1 : -1;
-  }
-  return 0;
-};
 
 // Using `git tag -l` output find the tag (version) that goes semantically
 // right before the given version. This might not work correctly with some
@@ -45,29 +17,53 @@ const semverCompare = (a, b) => {
 // into this action explicitly to avoid this step.
 const getPreviousVersion = async (version) => {
   const exec = promisify(execCallback);
-  const { stdout } = await exec('git tag -l');
-  const prev = stdout
+  const {stdout} = await exec('git for-each-ref --sort=-creatordate --format \'%(refname:short)\' refs/tags');
+
+  const parsedTags = stdout
     .split('\n')
     .map(semverParse)
-    .filter((tag) => tag)
-    .sort(semverCompare)
-    .find((tag) => semverCompare(tag, semverParse(version)) > 0);
+    .filter(Boolean);
+
+  const parsedVersion = semverParse(version);
+  const prev = findPreviousVersion(parsedTags, parsedVersion);
   if (!prev) {
     throw `Could not find previous git tag for ${version}`;
   }
-  return prev[4];
+  return prev[5];
 };
+
 
 // A helper for Github GraphQL API endpoint
 const graphql = async (ghtoken, query, variables) => {
-  const { env } = process;
+  const {env} = process;
   const results = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${ghtoken}`,
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({query, variables}),
+  });
+
+  const res = await results.json();
+
+  LOG(
+    JSON.stringify({
+      status: results.status,
+      text: results.statusText,
+      errors: res.errors,
+    })
+  );
+
+  return res.data;
+};
+
+// A helper for Github REST API endpoints
+const rest = async (ghtoken, path) => {
+  const results = await fetch(`https://api.github.com/${path}`, {
+    headers: {
+      Authorization: `Bearer ${ghtoken}`,
+    },
   });
 
   const res = await results.json();
@@ -79,73 +75,56 @@ const graphql = async (ghtoken, query, variables) => {
     })
   );
 
-  return res.data;
+  return res;
 };
 
-// Using Github GraphQL API find the timestamp for the given tag/commit hash.
-// This is required for PR listing, because Github API only takes date/time as
-// a "since" parameter while listing. Currently there is no way to provide two
-// "commitish" items and get a list of PRs in between them.
-const getCommitishDate = async (name, owner, target) => {
-  const result = await graphql(
-    ghtoken,
-    `
-      query getCommitDate($owner: String!, $name: String!, $target: String!) {
-        repository(owner: $owner, name: $name) {
-          object(expression: $target) {
-            ... on Commit {
-              committedDate
-            }
-          }
-        }
-      }
-    `,
-    { name, owner, target }
-  );
-  return result.repository.object.committedDate;
+// Using Github REST API get a list of commits between the two "commitish" items.
+// Use the REST API, rather than the GraphQL API, as the GraphQL ref compare only returns the first 1000 commits.
+const getComparison = async (name, owner, from, to) => {
+  LOG(`Fetching ${owner}/${name} PRs between ${from} and ${to}`);
+
+  let page = 1;
+  let nodes = [];
+
+  for (; ;) {
+    const result = await rest(ghtoken, `repos/${owner}/${name}/compare/${from}...${to}?per_page=100&page=${page}`);
+    nodes = nodes.concat(result.commits.map(({ sha, node_id }) => ({ sha, node_id })));
+    LOG(`Fetched ${result.commits.length} commits, total so far: ${nodes.length}`);
+
+    if (nodes.length >= result.total_commits || !result.commits.length) {
+      break;
+    }
+    page++;
+  }
+
+  return nodes;
 };
 
 // Using Github GraphQL API get a list of PRs between the two "commitish" items.
-// This resoves the "since" item's timestamp first and iterates over all PRs
-// till "target" using naïve pagination.
+// This resolves the diff using the REST API, and then populates PR data from the GraphQL API.
 const getHistory = async (name, owner, from, to) => {
-  LOG(`Fetching ${owner}/${name} PRs between ${from} and ${to}`);
+  const commits = await getComparison(name, owner, from, to);
+
   const query = `
-  query findCommitsWithAssociatedPullRequests(
-    $name: String!
-    $owner: String!
-    $from: String!
-    $to: String!
-    $cursor: String
-  ) {
-    repository(name: $name, owner: $owner) {
-      ref(qualifiedName: $from) {
-        compare(headRef: $to) {
-          commits(first: 25, after: $cursor) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
+    query($nodeIds: [ID!]!) {
+      nodes(ids: $nodeIds) {
+        ... on Commit {
+          oid
+          associatedPullRequests(first: 1) {
             nodes {
-              id
-              associatedPullRequests(first: 1) {
+              title
+              number
+              labels(first: 10) {
                 nodes {
-                  title
-                  number
-                  labels(first: 10) {
-                    nodes {
-                      name
-                    }
-                  }
-                  commits(first: 1) {
-                    nodes {
-                      commit {
-                        author {
-                          user {
-                            login
-                          }
-                        }
+                  name
+                }
+              }
+              commits(first: 1) {
+                nodes {
+                  commit {
+                    author {
+                      user {
+                        login
                       }
                     }
                   }
@@ -156,26 +135,17 @@ const getHistory = async (name, owner, from, to) => {
         }
       }
     }
-  }`;
+  `;
 
-  let cursor;
   let nodes = [];
-  for (;;) {
-    const result = await graphql(ghtoken, query, {
-      name,
-      owner,
-      from,
-      to,
-      cursor,
-    });
-    LOG(`GraphQL: ${JSON.stringify(result)}`);
-    nodes = [...nodes, ...result.repository.ref.compare.commits.nodes];
-    const { hasNextPage, endCursor } = result.repository.ref.compare.commits.pageInfo;
-    if (!hasNextPage) {
-      break;
-    }
-    cursor = endCursor;
+
+  while (commits.length) {
+    const batch = commits.splice(0, 25).map(c => c.node_id);
+    const result = await graphql(ghtoken, query, { nodeIds: batch });
+    nodes = nodes.concat(result.nodes);
+    LOG(`Fetched PRs for ${batch.length} commits, total so far: ${nodes.length}`);
   }
+
   return nodes;
 };
 
@@ -186,9 +156,10 @@ const getHistory = async (name, owner, from, to) => {
 // PR grouping relies on Github labels only, not on the PR contents.
 const getChangeLogItems = async (name, owner, from, to) => {
   // check if a node contains a certain label
-  const hasLabel = ({ labels }, label) => labels.nodes.some(({ name }) => name === label);
+  const hasLabel = ({labels}, label) => labels.nodes.some(({name}) => name === label);
   // get all the PRs between the two "commitish" items
   const history = await getHistory(name, owner, from, to);
+  LOG(`History for ${owner}/${name} between ${from} and ${to}: ${history.length} PRs`);
 
   const items = history.flatMap((node) => {
     // discard PRs without a "changelog" label
@@ -197,17 +168,17 @@ const getChangeLogItems = async (name, owner, from, to) => {
       return [];
     }
     const item = changes[0];
-    const { number, url, labels } = item;
+    const {number, url, labels} = item;
     const title = item.title.replace(/^\[[^\]]+\]:?\s*/, '');
     // for changelog PRs try to find a suitable category.
     // Note that we can not detect "deprecation notices" like that
     // as there is no suitable label yet.
-    const isBug = /fix/i.test(title) || hasLabel({ labels }, 'type/bug');
-    const isBreaking = hasLabel({ labels }, 'breaking change');
+    const isBug = /fix/i.test(title) || hasLabel({labels}, 'type/bug');
+    const isBreaking = hasLabel({labels}, 'breaking change');
     const isPlugin =
-      hasLabel({ labels }, 'area/grafana/ui') ||
-      hasLabel({ labels }, 'area/grafana/toolkit') ||
-      hasLabel({ labels }, 'area/grafana/runtime');
+      hasLabel({labels}, 'area/grafana/ui') ||
+      hasLabel({labels}, 'area/grafana/toolkit') ||
+      hasLabel({labels}, 'area/grafana/runtime');
     const author = item.commits.nodes[0].commit.author.user?.login;
     return {
       repo: name,
@@ -227,7 +198,7 @@ const getChangeLogItems = async (name, owner, from, to) => {
 // ======================================================
 
 LOG(`Changelog action started`);
-
+console.log(process.argv);
 const ghtoken = process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN;
 if (!ghtoken) {
   throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
@@ -286,15 +257,15 @@ const markdown = (changelog) => {
       : `### ${title}
 
 ${items
-  .map(
-    (item) =>
-      `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
-        item.repo === 'grafana-enterprise'
-          ? '(Enterprise)'
-          : `${pullRequestLink(item.number)}${item.author ? ', ' + userLink(item.author) : ''}`
-      }`
-  )
-  .join('\n')}
+        .map(
+          (item) =>
+            `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
+              item.repo === 'grafana-enterprise'
+                ? '(Enterprise)'
+                : `${pullRequestLink(item.number)}${item.author ? ', ' + userLink(item.author) : ''}`
+            }`
+        )
+        .join('\n')}
   `;
 
   // Render all present sections for the given changelog

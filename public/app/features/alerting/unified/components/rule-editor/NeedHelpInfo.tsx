@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;

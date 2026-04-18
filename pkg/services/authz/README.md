@@ -4,12 +4,18 @@ This package contains the authorization server implementation.
 
 ## Feature toggles
 
-The following feature toggles need to be activated:
+The following feature toggle needs to be activated:
 
 ```ini
 [feature_toggles]
 authZGRPCServer = true
-grpcServer = true
+```
+
+The gRPC server also needs to be enabled:
+
+```ini
+[grpc_server]
+enabled = true
 ```
 
 ## Configuration
@@ -29,6 +35,13 @@ The default configuration does not register the authorization service on the Gra
 remote_address = ""
 listen = false
 mode = "inproc"
+```
+
+For load balancing you would want to enable the load balancing configuration. This sets sane default for multiple pods to be evenly distributed with load across the different pods.
+
+```ini
+[authorization]
+load_balancing_enabled = true
 ```
 
 ### Example

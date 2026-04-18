@@ -16,6 +16,12 @@ import (
 )
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if !isFeatureEnabled(ctx, flagLokiExperimentalStreaming) {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, fmt.Errorf("streaming is not supported")
+	}
+
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{

@@ -1,10 +1,10 @@
-import { ScopedVars } from '../types/ScopedVars';
-import { Field } from '../types/dataFrame';
-import { DataLink, InternalDataLink, LinkModel } from '../types/dataLink';
-import { SplitOpen, ExplorePanelsState } from '../types/explore';
-import { InterpolateFunction } from '../types/panel';
-import { DataQuery } from '../types/query';
-import { TimeRange } from '../types/time';
+import { type ScopedVars } from '../types/ScopedVars';
+import { type Field } from '../types/dataFrame';
+import { type DataLink, type InternalDataLink, type LinkModel } from '../types/dataLink';
+import { type SplitOpen, type ExplorePanelsState } from '../types/explore';
+import { type InterpolateFunction } from '../types/panel';
+import { type DataQuery } from '../types/query';
+import { type TimeRange } from '../types/time';
 
 import { locationUtil } from './location';
 import { serializeStateToUrlParam, toURLRange } from './url';
@@ -16,6 +16,7 @@ export const DataLinkBuiltInVars = {
   includeVars: '__all_variables',
   seriesName: '__series.name',
   fieldName: '__field.name',
+  fieldDisplayName: '__field.displayName',
   valueTime: '__value.time',
   valueNumeric: '__value.numeric',
   valueText: '__value.text',
@@ -42,10 +43,26 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     typeof link.internal?.query === 'function'
       ? link.internal.query({ replaceVariables, scopedVars })
       : internalLink.query;
+
+  // datasource ref is optional in a query object, but Explore relies on it being defined for some
+  // functionalities, e.g., changing query filters directly from visualizations, so we need to put
+  // it here if it's missing. See also #112945
+  if (query && typeof query === 'object' && !query.datasource?.uid && internalLink.datasourceUid) {
+    query.datasource = query.datasource || {};
+    query.datasource.uid = internalLink.datasourceUid;
+  }
+
   const interpolatedQuery = interpolateObject(query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
+
+  const interpolatedParams = interpolatedQuery
+    ? {
+        query: interpolatedQuery,
+        ...(range && { timeRange: range }),
+      }
+    : undefined;
 
   return {
     title: replaceVariables(title, scopedVars),
@@ -72,6 +89,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
+    ...(interpolatedParams && { interpolatedParams }),
   };
 }
 

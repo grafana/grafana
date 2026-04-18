@@ -16,8 +16,9 @@ import (
 )
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema) (*data.Frame, error) {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, maxOutputCells int64) (*data.Frame, error) {
 	f := &data.Frame{}
+
 	// Create fields based on the schema
 	for _, col := range schema {
 		fT, err := MySQLColToFieldType(col)
@@ -29,14 +30,37 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		f.Fields = append(f.Fields, field)
 	}
 
+	cellCount := int64(0)
+
 	// Iterate through the rows and append data to fields
 	for {
+		// Check for context cancellation or timeout
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		row, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error reading row: %v", err)
+		}
+
+		// We check the cell count here to avoid appending an incomplete row, so the
+		// the number returned may be less than the maxOutputCells.
+		// If the maxOutputCells is 0, we don't check the cell count.
+		if maxOutputCells > 0 {
+			cellCount += int64(len(row))
+			if cellCount > maxOutputCells {
+				f.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Query exceeded max output cells (%d). Only %d cells returned.", maxOutputCells, cellCount-int64(len(row))),
+				})
+				return f, nil
+			}
 		}
 
 		for i, val := range row {
@@ -106,7 +130,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		}
 	}
 
-	if col.Nullable {
+	// Floats are always nullable so we can map NaN/Inf values to null
+	if col.Nullable || fT == data.FieldTypeFloat32 || fT == data.FieldTypeFloat64 {
 		fT = fT.NullableType()
 	}
 
@@ -148,10 +173,10 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		return parseVal[uint64](val, "uint64", nullable)
 
 	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
-		return parseVal[float32](val, "float32", nullable)
+		return parseVal[float32](val, "float32", true)
 
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
-		return parseFloat64OrDecimal(val, nullable)
+		return parseFloat64OrDecimal(val, true)
 
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return parseVal[time.Time](val, "time.Time", nullable)
@@ -162,7 +187,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		return parseBoolFromInt8(val, nullable)
 
-	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
 		switch v := val.(type) {
 		case types.JSONDocument:
 			raw := json.RawMessage(v.String())

@@ -1,26 +1,28 @@
 import { chain } from 'lodash';
 
 import {
-  DataFrame,
-  DataLink,
+  type DataFrame,
+  type DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
-  Field,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  InterpolateFunction,
-  KeyValue,
-  LinkModel,
+  type InterpolateFunction,
+  type KeyValue,
+  type LinkModel,
   locationUtil,
-  ScopedVars,
+  type ScopedVars,
   textUtil,
+  type TypedVariableModel,
   urlUtil,
   VariableOrigin,
-  VariableSuggestion,
+  type VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DashboardLink, VariableFormatID } from '@grafana/schema';
+import { type DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 
 const timeRangeVars = [
@@ -78,17 +80,47 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unknown[] =>
+  typeof value === 'object' && value !== null;
+
+const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
+  if (!('options' in variable) || !variable.options?.[0]?.properties) {
+    return [];
+  }
+
+  function collectFieldPaths(properties: Record<string, unknown> | unknown[], currentPath: string) {
+    let paths: string[] = [];
+    for (const [field, value] of Object.entries(properties)) {
+      const newPath = `${currentPath}.${field}`;
+      if (isRecordOrArray(value)) {
+        paths = [...paths, ...collectFieldPaths(value, newPath)];
+      }
+      paths.push(newPath);
+    }
+    return paths;
+  }
+
+  return collectFieldPaths(variable.options[0].properties, variable.name);
+};
+
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map((variable) => ({
-      value: variable.name,
-      label: variable.name,
-      origin: VariableOrigin.Template,
-    })),
+    .flatMap((variable) => [
+      {
+        value: variable.name,
+        label: variable.name,
+        origin: VariableOrigin.Template,
+      },
+      ...getVariableValueProperties(variable).map((fieldPath) => ({
+        value: fieldPath,
+        label: fieldPath,
+        origin: VariableOrigin.Template,
+      })),
+    ]),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
-    label: 'All variables',
+    label: t('panel.get-panel-links-variable-suggestions.label.all-variables', 'All variables'),
     documentation: 'Adds current variables',
     origin: VariableOrigin.Template,
   },
@@ -112,8 +144,14 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
   return [
     {
       value: `${DataLinkBuiltInVars.fieldName}`,
-      label: 'Name',
+      label: t('panel.get-field-vars.label.name', 'Name'),
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
+    },
+    {
+      value: `${DataLinkBuiltInVars.fieldDisplayName}`,
+      label: t('panel.get-field-vars.label.display-name', 'Display name'),
+      documentation: 'Display name of the field (includes overrides and transformations)',
       origin: VariableOrigin.Field,
     },
     ...labels.map((label) => ({
@@ -206,7 +244,7 @@ export const getDataLinksVariableSuggestions = (
 ): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
-    label: 'Time',
+    label: t('panel.get-data-links-variable-suggestions.value-time-var.label.time', 'Time'),
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
@@ -233,7 +271,10 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   const fieldVars = getFieldVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
-    label: 'Calculation name',
+    label: t(
+      'panel.get-calculation-value-data-links-variable-suggestions.value-calc-var.label.calculation-name',
+      'Calculation name'
+    ),
     documentation: 'Name of the calculation the value is a result of',
     origin: VariableOrigin.Value,
   };
@@ -252,18 +293,18 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
-    let params: { [key: string]: boolean } = {};
+    let url = link.url ?? '';
 
     if (link.keepTime) {
-      params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.keepTime}`);
     }
 
     if (link.includeVars) {
-      params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.includeVars}`);
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
     url = getTemplateSrv().replace(url);
+    url = locationUtil.assureBaseUrl(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }

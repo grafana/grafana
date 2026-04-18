@@ -3,9 +3,11 @@ package annotationsimpl
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 
@@ -27,7 +28,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 		createAnnotationsNum    int
 		createOldAnnotationsNum int
 
-		cfg                           *setting.Cfg
+		cleanupSettings               annotations.CleanupSettings
 		alertAnnotationCount          int64
 		annotationCleanupJobBatchSize int
 		dashboardAnnotationCount      int64
@@ -39,75 +40,55 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			createAnnotationsNum:          21,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 0),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 0),
-				APIAnnotationCleanupSettings:       settingsFn(0, 0),
-			},
-			alertAnnotationCount:     7,
-			dashboardAnnotationCount: 7,
-			APIAnnotationCount:       7,
-			affectedAnnotations:      0,
+			cleanupSettings:               settingsFn(0, 0),
+			alertAnnotationCount:          7,
+			dashboardAnnotationCount:      7,
+			APIAnnotationCount:            7,
+			affectedAnnotations:           0,
 		},
 		{
 			name:                          "should remove annotations created before cut off point",
 			createAnnotationsNum:          21,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(time.Hour*48, 0),
-				DashboardAnnotationCleanupSettings: settingsFn(time.Hour*48, 0),
-				APIAnnotationCleanupSettings:       settingsFn(time.Hour*48, 0),
-			},
-			alertAnnotationCount:     5,
-			dashboardAnnotationCount: 5,
-			APIAnnotationCount:       5,
-			affectedAnnotations:      6,
+			cleanupSettings:               settingsFn(time.Hour*48, 0),
+			alertAnnotationCount:          5,
+			dashboardAnnotationCount:      5,
+			APIAnnotationCount:            5,
+			affectedAnnotations:           6,
 		},
 		{
 			name:                          "should only keep three annotations",
 			createAnnotationsNum:          15,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
-				APIAnnotationCleanupSettings:       settingsFn(0, 3),
-			},
-			alertAnnotationCount:     3,
-			dashboardAnnotationCount: 3,
-			APIAnnotationCount:       3,
-			affectedAnnotations:      6,
+			cleanupSettings:               settingsFn(0, 3),
+			alertAnnotationCount:          3,
+			dashboardAnnotationCount:      3,
+			APIAnnotationCount:            3,
+			affectedAnnotations:           6,
 		},
 		{
 			name:                          "running the max count delete again should not remove any annotations",
 			createAnnotationsNum:          9,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
-				APIAnnotationCleanupSettings:       settingsFn(0, 3),
-			},
-			alertAnnotationCount:     3,
-			dashboardAnnotationCount: 3,
-			APIAnnotationCount:       3,
-			affectedAnnotations:      0,
+			cleanupSettings:               settingsFn(0, 3),
+			alertAnnotationCount:          3,
+			dashboardAnnotationCount:      3,
+			APIAnnotationCount:            3,
+			affectedAnnotations:           0,
 		},
 		{
 			name:                          "should not fail if batch size is larger than SQLITE_MAX_VARIABLE_NUMBER for SQLite >= 3.32.0",
 			createAnnotationsNum:          40003,
 			createOldAnnotationsNum:       0,
 			annotationCleanupJobBatchSize: 32767,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 1),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 1),
-				APIAnnotationCleanupSettings:       settingsFn(0, 1),
-			},
-			alertAnnotationCount:     1,
-			dashboardAnnotationCount: 1,
-			APIAnnotationCount:       1,
-			affectedAnnotations:      40000,
+			cleanupSettings:               settingsFn(0, 1),
+			alertAnnotationCount:          1,
+			dashboardAnnotationCount:      1,
+			APIAnnotationCount:            1,
+			affectedAnnotations:           40000,
 		},
 	}
 
@@ -129,7 +110,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
 			cleaner := ProvideCleanupService(fakeSQL, cfg)
-			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cleanupSettings)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
@@ -149,9 +130,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 }
 
 func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 
@@ -187,7 +166,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
+		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil, prometheus.NewRegistry())
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 
@@ -238,24 +217,27 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 	newAnnotationTags := make([]*annotationTag, 0, 2*expectedCount)
 	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
-			ID:          int64(i + 1),
-			DashboardID: 1,
-			OrgID:       1,
-			UserID:      1,
-			PanelID:     1,
-			Text:        "",
+			ID:           int64(i + 1),
+			DashboardID:  1,
+			DashboardUID: "uid" + strconv.Itoa(i),
+			OrgID:        1,
+			UserID:       1,
+			PanelID:      1,
+			Text:         "",
 		}
 
 		// mark every third as an API annotation
 		// that does not belong to a dashboard
 		if i%3 == 1 {
-			a.DashboardID = 0
+			a.DashboardID = 0 // nolint: staticcheck
+			a.DashboardUID = ""
 		}
 
 		// mark every third annotation as an alert annotation
 		if i%3 == 0 {
 			a.AlertID = 10
-			a.DashboardID = 2
+			a.DashboardID = 2 // nolint: staticcheck
+			a.DashboardUID = "dashboard2uid"
 		}
 
 		// create epoch as int annotations.go line 40
@@ -291,6 +273,7 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 	require.NoError(t, err)
 }
 
-func settingsFn(maxAge time.Duration, maxCount int64) setting.AnnotationCleanupSettings {
-	return setting.AnnotationCleanupSettings{MaxAge: maxAge, MaxCount: maxCount}
+func settingsFn(maxAge time.Duration, maxCount int64) annotations.CleanupSettings {
+	p := setting.AnnotationCleanupSettings{MaxAge: maxAge, MaxCount: maxCount}
+	return annotations.CleanupSettings{Alerting: p, API: p, Dashboard: p}
 }

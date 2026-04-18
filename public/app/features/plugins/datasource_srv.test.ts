@@ -1,16 +1,15 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   DataSourcePlugin,
-  DataSourcePluginMeta,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
-import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
+import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -61,9 +60,9 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('./plugin_loader', () => ({
-  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
-    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: {
+    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
   },
 }));
 
@@ -299,6 +298,19 @@ describe('datasource_srv', () => {
         const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
         expect(settings).toBe(undefined);
       });
+
+      it('should handle type-only datasource references consistently', async () => {
+        const typeOnlyRef = { type: 'jaeger-db' };
+
+        const datasource = await dataSourceSrv.get(typeOnlyRef);
+        const settings = dataSourceSrv.getInstanceSettings(typeOnlyRef);
+
+        expect(datasource.uid).toBe('uid-code-Jaeger');
+        expect(datasource.type).toBe('jaeger-db');
+        expect(settings?.uid).toBe(datasource.uid);
+        expect(settings?.type).toBe(datasource.type);
+        expect(settings?.name).toBe('Jaeger');
+      });
     });
 
     describe('when loading datasource', () => {
@@ -321,13 +333,6 @@ describe('datasource_srv', () => {
       it('should load by name', async () => {
         let api = await dataSourceSrv.loadDatasource('ZZZ');
         expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
-      });
-    });
-
-    describe('when getting external metric sources', () => {
-      it('should return list of explore sources', () => {
-        const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(11);
       });
     });
 

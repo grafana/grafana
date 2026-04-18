@@ -208,7 +208,9 @@ func RunTestGet(ctx context.Context, t *testing.T, store storage.Interface) {
 				return
 			}
 			if tt.expectRVTooLarge {
-				if err == nil || !storage.IsTooLargeResourceVersion(err) {
+				// Our implementation differs from etcd by returning 400 (bad request) instead of 504 with
+				// a retry duration.
+				if err == nil || !apierrors.IsBadRequest(err) || !strings.Contains(err.Error(), "too large resource version") {
 					t.Errorf("expecting resource version too high error, but get: %v", err)
 				}
 				return
@@ -2558,7 +2560,7 @@ func RunTestGuaranteedUpdateWithSuggestionAndConflict(ctx context.Context, t *te
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if updatedPod2.Generation != 3 {
-		t.Errorf("unexpected pod generation: %q", updatedPod2.Generation)
+		t.Errorf("unexpected pod generation: %d", updatedPod2.Generation)
 	}
 
 	// Third, update using a current version as the suggestion.
@@ -2663,44 +2665,5 @@ func RunTestTransformationFailure(ctx context.Context, t *testing.T, store Inter
 	}
 	if err := store.Get(ctx, preset[1].key, storage.GetOptions{}, &example.Pod{}); !storage.IsInternalError(err) {
 		t.Errorf("Unexpected error: %v", err)
-	}
-}
-
-func RunTestCount(ctx context.Context, t *testing.T, store storage.Interface) {
-	resourceA := "/foo.bar.io/abc"
-
-	// resourceA is intentionally a prefix of resourceB to ensure that the count
-	// for resourceA does not include any objects from resourceB.
-	resourceB := fmt.Sprintf("%sdef", resourceA)
-
-	resourceACountExpected := 5
-	for i := 1; i <= resourceACountExpected; i++ {
-		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i)}}
-
-		key := fmt.Sprintf("%s/%d", resourceA, i)
-		if err := store.Create(ctx, key, obj, nil, 0); err != nil {
-			t.Fatalf("Create failed: %v", err)
-		}
-	}
-
-	resourceBCount := 4
-	for i := 1; i <= resourceBCount; i++ {
-		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i)}}
-
-		key := fmt.Sprintf("%s/%d", resourceB, i)
-		if err := store.Create(ctx, key, obj, nil, 0); err != nil {
-			t.Fatalf("Create failed: %v", err)
-		}
-	}
-
-	resourceACountGot, err := store.Count(resourceA)
-	if err != nil {
-		t.Fatalf("store.Count failed: %v", err)
-	}
-
-	// count for resourceA should not include the objects for resourceB
-	// even though resourceA is a prefix of resourceB.
-	if int64(resourceACountExpected) != resourceACountGot {
-		t.Fatalf("store.Count for resource %s: expected %d but got %d", resourceA, resourceACountExpected, resourceACountGot)
 	}
 }

@@ -1,26 +1,33 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useEffect, useMemo } from 'react';
-import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
+import { type JSX, useEffect, useMemo } from 'react';
+import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
-  ChannelValues,
-  CloudChannelValues,
-  CommonSettingsComponentType,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelValues,
+  type CommonSettingsComponentType,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../../../types/receiver-form';
+import {
+  canCreateNotifier,
+  getLegacyVersionLabel,
+  getOptionsForVersion,
+  isDeprecated,
+  isLegacyVersion,
+} from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 interface Props<R extends ChannelValues> {
   defaultValues: R;
@@ -35,6 +42,7 @@ interface Props<R extends ChannelValues> {
   onDelete?: () => void;
   isEditable?: boolean;
   isTestable?: boolean;
+  canEditProtectedFields: boolean;
 
   customValidators?: React.ComponentProps<typeof ChannelOptions>['customValidators'];
 }
@@ -52,6 +60,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
+  canEditProtectedFields,
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
@@ -60,11 +69,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const channelFieldPath = `items.${integrationIndex}` as const;
   const typeFieldPath = `${channelFieldPath}.type` as const;
+  const versionFieldPath = `${channelFieldPath}.version` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
+  const secureFieldsPath = `${channelFieldPath}.secureFields` as const;
 
   const selectedType = watch(typeFieldPath) ?? defaultValues.type;
   const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
-  const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
@@ -82,10 +92,31 @@ export function ChannelSubForm<R extends ChannelValues>({
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
-      const value = name ? formValues[name] : '';
+      const value = name ? getValues(name, formValues) : '';
       if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
+        setValue(secureFieldsPath, initialValues.secureFields);
+      } else if (name === typeFieldPath && type === 'change') {
+        // When switching to a new notifier, set the default settings to remove all existing settings
+        // from the previous notifier
+        const newNotifier = notifiers.find(({ dto: { type } }) => type === value);
+        const defaultNotifierSettings = newNotifier ? getDefaultNotifierSettings(newNotifier) : {};
+
+        // Not sure why, but verriding settingsFieldPath is not enough if notifiers have the same settings fields, like url, title
+        const currentSettings = getValues(settingsFieldPath) ?? {};
+        Object.keys(currentSettings).forEach((key) => {
+          if (!defaultNotifierSettings[key]) {
+            setValue(`${settingsFieldPath}.${key}`, defaultNotifierSettings[key]);
+          }
+        });
+
+        setValue(settingsFieldPath, defaultNotifierSettings);
+        setValue(secureFieldsPath, {});
+
+        // Reset version when changing type - backend will use its default
+        setValue(versionFieldPath, undefined);
       }
+
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
@@ -97,10 +128,20 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
-
-  // const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
-  const formSecureFields = useWatch({ control, name: `${channelFieldPath}.secureFields` });
+  }, [
+    selectedType,
+    initialValues,
+    setValue,
+    settingsFieldPath,
+    typeFieldPath,
+    versionFieldPath,
+    secureFieldsPath,
+    getValues,
+    watch,
+    defaultValues.settings,
+    defaultValues.secureFields,
+    notifiers,
+  ]);
 
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
@@ -110,32 +151,57 @@ export function ChannelSubForm<R extends ChannelValues>({
     }
   };
 
-  const onDeleteSubform = (propertyName: string) => {
-    const relatedSecureFields = Object.keys(formSecureFields).filter((key) => key.startsWith(propertyName));
+  const findSecureFieldsRecursively = (options: NotificationChannelOption[]): string[] => {
+    const secureFields: string[] = [];
+    options?.forEach((option) => {
+      if (option.secure && option.secureFieldKey) {
+        secureFields.push(option.secureFieldKey);
+      }
+      if (option.subformOptions) {
+        secureFields.push(...findSecureFieldsRecursively(option.subformOptions));
+      }
+    });
+    return secureFields;
+  };
+
+  const onDeleteSubform = (settingsPath: string, option: NotificationChannelOption) => {
+    // Get all subform options with secure=true recursively.
+    const relatedSecureFields = findSecureFieldsRecursively(option.subformOptions ?? []);
     relatedSecureFields.forEach((key) => {
       onResetSecureField(key);
     });
-    setValue(`${channelFieldPath}.settings.${propertyName}`, undefined);
+    const fieldPath = settingsPath.startsWith(`${channelFieldPath}.settings.`)
+      ? settingsPath.slice(`${channelFieldPath}.settings.`.length)
+      : settingsPath;
+    setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
   };
 
-  const typeOptions = useMemo(
-    (): SelectableValue[] =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-        ({ dto: { name, type }, meta }) => ({
-          // @ts-expect-error ReactNode is supported
+  const typeOptions = useMemo((): SelectableValue[] => {
+    // Filter out notifiers that can't be created (e.g., v0-only integrations like WeChat)
+    // These are legacy integrations that only exist in Mimir and can't be created in Grafana
+    // BUT: Always include the current type if editing an existing integration
+    const currentType = initialValues?.type || defaultValues.type;
+    const creatableNotifiers = notifiers.filter(({ dto }) => canCreateNotifier(dto) || dto.type === currentType);
+
+    return sortBy(creatableNotifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
+      ({ dto: { name, type }, meta }) => {
+        return {
+          // ReactNode is supported in Select label, but types don't reflect it
+          /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           label: (
             <Stack alignItems="center" gap={1}>
               {name}
               {meta?.badge}
             </Stack>
-          ),
+          ) as any,
+          /* eslint-enable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-        })
-      ),
-    [notifiers]
-  );
+        };
+      }
+    );
+  }, [notifiers, initialValues?.type, defaultValues.type]);
 
   const handleTest = async () => {
     await trigger();
@@ -152,10 +218,25 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Cloud AM takes no value at all
   const isParseModeNone = parse_mode === 'None' || !parse_mode;
   const showTelegramWarning = isTelegram && !isParseModeNone;
+
+  // Read version from existing integration data (stored in receiver config)
+  const integrationVersion = initialValues?.version || defaultValues.version;
+
+  // Check if integration is deprecated (will be removed in a future release)
+  const notifierIsDeprecated = notifier ? isDeprecated(notifier.dto, integrationVersion) : false;
+
+  // Check if current integration is a legacy version (old version format, e.g., v0mimir1)
+  // Legacy integrations use an older schema imported from Mimir
+  const isLegacy = notifier ? isLegacyVersion(notifier.dto, integrationVersion) : false;
+
+  // Get the correct options based on the integration's version
+  // This ensures legacy (v0) integrations display the correct schema
+  const versionedOptions = notifier ? getOptionsForVersion(notifier.dto, integrationVersion) : [];
+
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
-  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
-  const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
+  const mandatoryOptions = versionedOptions.filter((o) => o.required);
+  const optionalOptions = versionedOptions.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
@@ -166,42 +247,64 @@ export function ChannelSubForm<R extends ChannelValues>({
             label={t('alerting.channel-sub-form.label-integration', 'Integration')}
             htmlFor={contactPointTypeInputId}
             data-testid={`${pathPrefix}type`}
+            noMargin
           >
-            <Controller
-              name={typeFieldPath}
-              control={control}
-              defaultValue={defaultValues.type}
-              render={({ field: { ref, onChange, ...field } }) => (
-                <Select
-                  disabled={!isEditable}
-                  inputId={contactPointTypeInputId}
-                  {...field}
-                  width={37}
-                  options={typeOptions}
-                  onChange={(value) => onChange(value?.value)}
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Controller
+                name={typeFieldPath}
+                control={control}
+                defaultValue={defaultValues.type}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Select
+                    disabled={!isEditable}
+                    inputId={contactPointTypeInputId}
+                    {...field}
+                    width={37}
+                    options={typeOptions}
+                    onChange={(value) => onChange(value?.value)}
+                  />
+                )}
+              />
+              {notifierIsDeprecated && (
+                <Badge
+                  text={t('alerting.channel-sub-form.badge-deprecated', 'Deprecated')}
+                  color="orange"
+                  icon="exclamation-triangle"
+                  tooltip={t(
+                    'alerting.channel-sub-form.tooltip-deprecated',
+                    'This integration is deprecated and will be removed in a future release.'
+                  )}
                 />
               )}
-            />
+              {isLegacy && integrationVersion && (
+                <Badge
+                  text={getLegacyVersionLabel(integrationVersion)}
+                  color="orange"
+                  icon="exclamation-triangle"
+                  tooltip={t(
+                    'alerting.channel-sub-form.tooltip-legacy-version',
+                    'This is a legacy integration (version: {{version}}). It cannot be modified.',
+                    { version: integrationVersion }
+                  )}
+                />
+              )}
+            </Stack>
           </Field>
         </div>
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
-            <Button
-              disabled={testingReceiver}
-              size="xs"
-              variant="secondary"
-              type="button"
-              onClick={() => handleTest()}
-              icon={testingReceiver ? 'spinner' : 'message'}
-            >
+            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
-              <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
-              </Button>
+              {/* Only show duplicate button if the notifier type can be created */}
+              {notifier && canCreateNotifier(notifier.dto) && (
+                <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                  <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
+                </Button>
+              )}
               {onDelete && (
                 <Button
                   data-testid={`${pathPrefix}delete-button`}
@@ -243,6 +346,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
             readOnly={!isEditable}
+            canEditProtectedFields={canEditProtectedFields}
             customValidators={customValidators}
           />
           {!!(mandatoryOptions.length && optionalOptions.length) && (
@@ -251,7 +355,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 name: notifier.dto.name,
               })}
             >
-              {notifier.dto.info !== '' && (
+              {notifier.dto.info && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}
                 </Alert>
@@ -264,6 +368,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 errors={errors}
                 integrationPrefix={channelFieldPath}
                 readOnly={!isEditable}
+                canEditProtectedFields={canEditProtectedFields}
                 customValidators={customValidators}
               />
             </CollapsibleSection>
@@ -277,6 +382,16 @@ export function ChannelSubForm<R extends ChannelValues>({
       )}
     </div>
   );
+}
+
+function getDefaultNotifierSettings(notifier: Notifier): Record<string, string> {
+  const defaultSettings: Record<string, string> = {};
+  getOptionsForVersion(notifier.dto).forEach((option) => {
+    if (option.defaultValue?.value) {
+      defaultSettings[option.propertyName] = option.defaultValue?.value;
+    }
+  });
+  return defaultSettings;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -1,12 +1,14 @@
 package tracing
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +29,11 @@ type TracingConfig struct {
 	Insecure             bool
 }
 
-func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
+func ProvideTracingConfig(cfgProvider configprovider.ConfigProvider) (*TracingConfig, error) {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
 	return ParseTracingConfig(cfg)
 }
 
@@ -90,6 +96,12 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	tc.CustomAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyTags))
 	if err != nil {
 		return nil, err
+	}
+
+	// Allow overriding service name via configuration
+	serviceName := section.Key("service_name").MustString("")
+	if serviceName != "" {
+		tc.ServiceName = serviceName
 	}
 
 	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger

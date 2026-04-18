@@ -1,19 +1,53 @@
+import { css } from '@emotion/css';
+import { useMemo } from 'react';
+
+import {
+  type DataFrame,
+  DataTransformerID,
+  type GrafanaTheme2,
+  standardTransformersRegistry,
+  type TransformerRegistryItem,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Box, Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
+
+import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
+import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
+import sqlDarkImage from '../../../expressions/images/dark/sqlExpression.svg';
+import sqlLightImage from '../../../expressions/images/light/sqlExpression.svg';
+
+import { hasBackendDatasource } from './utils';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
+  onGoToQueries?: () => void;
+  onAddTransformation?: (transformationId: string) => void;
+  data: DataFrame[];
+  datasourceUid?: string;
+  queries?: DataQuery[];
+  showHeaderText?: boolean;
 }
-export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
+
+const TRANSFORMATION_IDS = [
+  DataTransformerID.organize,
+  DataTransformerID.groupBy,
+  DataTransformerID.extractFields,
+  DataTransformerID.filterByValue,
+];
+
+export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPicker: () => void }) {
   return (
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center">
-          <Trans i18nKey="transformations.empty.add-transformation-header">Start transforming data</Trans>
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-header">Start transforming data</Trans>
         </Text>
         <Text element="p" textAlignment="center" data-testid={selectors.components.Transforms.noTransformationsMessage}>
-          <Trans i18nKey="transformations.empty.add-transformation-body">
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-body">
             Transformations allow data to be changed in various ways before your visualization is shown.
             <br />
             This includes joining data together, renaming fields, making calculations, formatting data for display, and
@@ -24,12 +58,138 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
           icon="plus"
           variant="primary"
           size="md"
-          onClick={props.onShowPicker}
+          onClick={onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">Add transformation</Trans>
+          <Trans i18nKey="dashboard-scene.legacy.empty-transformations-message.add-transformation">
+            Add transformation
+          </Trans>
         </Button>
       </Stack>
     </Box>
   );
 }
+
+export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
+  const styles = useStyles2(getStyles);
+
+  const hasGoToQueries = props.onGoToQueries != null;
+  const hasAddTransformation = props.onAddTransformation != null;
+  const showHeaderText = props.showHeaderText ?? true;
+
+  // Get transformations from registry
+  const transformations = useMemo(() => {
+    return standardTransformersRegistry.list().filter((t): t is TransformerRegistryItem => {
+      return TRANSFORMATION_IDS.some((id) => t.id === id);
+    });
+  }, []);
+
+  const handleSqlTransformationClick = () => {
+    reportInteraction('dashboards_expression_interaction', {
+      action: 'add_expression',
+      expression_type: 'sql',
+      context: 'empty_transformations_placeholder',
+    });
+    props.onGoToQueries?.();
+  };
+
+  const handleTransformationClick = (transformationId: string) => {
+    reportInteraction('grafana_panel_transformations_clicked', {
+      context: 'empty_transformations_placeholder',
+      type: transformationId,
+      action: 'add',
+    });
+    props.onAddTransformation?.(transformationId);
+  };
+
+  const handleShowMoreClick = () => {
+    reportInteraction('grafana_panel_transformations_show_more_clicked', {
+      context: 'empty_transformations_placeholder',
+    });
+    props.onShowPicker();
+  };
+
+  // Show the SQL Expression card if any datasource in the query set is a backend datasource.
+  const showSqlCard =
+    hasGoToQueries &&
+    config.featureToggles.sqlExpressions &&
+    hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
+
+  return (
+    <Box padding={2}>
+      <Stack direction="column" alignItems="start" gap={2}>
+        {showHeaderText && (
+          <Stack direction="column" alignItems="start" gap={1}>
+            <Text element="h3" textAlignment="start">
+              <Trans i18nKey="transformations.empty.add-transformation-header">Add a Transformation</Trans>
+            </Text>
+            <Text element="p" textAlignment="start" color="secondary">
+              <Trans i18nKey="transformations.empty.add-transformation-body">
+                Transformations allow data to be changed in various ways before your visualization is shown.
+                <br />
+                This includes joining data together, renaming fields, making calculations, formatting data for display,
+                and more.
+              </Trans>
+            </Text>
+          </Stack>
+        )}
+        {(hasAddTransformation || hasGoToQueries) && (
+          <div className={styles.transformationsContainer}>
+            {showSqlCard && (
+              <SqlExpressionCard
+                name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
+                description={t(
+                  'dashboard-scene.empty-transformations-message.sql-transformation-description',
+                  'Manipulate your data using MySQL-like syntax'
+                )}
+                imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
+                onClick={handleSqlTransformationClick}
+                testId="transform-with-sql-card"
+                fullWidth
+              />
+            )}
+            {hasAddTransformation &&
+              transformations.map((transform) => (
+                <TransformationCard
+                  key={transform.id}
+                  transform={transform}
+                  onClick={handleTransformationClick}
+                  showIllustrations={true}
+                  showPluginState={false}
+                  showTags={false}
+                  fullWidth
+                  data={props.data}
+                />
+              ))}
+          </div>
+        )}
+        <Button
+          icon="plus"
+          variant="primary"
+          size="md"
+          onClick={handleShowMoreClick}
+          data-testid={selectors.components.Transforms.addTransformationButton}
+        >
+          <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
+        </Button>
+      </Stack>
+    </Box>
+  );
+}
+
+export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
+  if (config.featureToggles.transformationsEmptyPlaceholder) {
+    return <NewEmptyTransformationsMessage {...props} />;
+  }
+
+  return <LegacyEmptyTransformationsMessage onShowPicker={props.onShowPicker} />;
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  transformationsContainer: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    width: '100%',
+  }),
+});

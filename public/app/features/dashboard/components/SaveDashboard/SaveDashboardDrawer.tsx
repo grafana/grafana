@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
 
-import { config, isFetchError } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
-import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 import { proxyHandlesError, SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
-import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
+import { type SaveDashboardData, type SaveDashboardModalProps, type SaveDashboardOptions } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
@@ -103,11 +102,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   }
 
-  let title = 'Save dashboard';
+  let title = t('dashboard.save-dashboard-drawer.title', 'Save dashboard');
   if (isCopy) {
-    title = 'Save dashboard copy';
+    title = t('dashboard.save-dashboard-drawer.title-copy', 'Save dashboard copy');
   } else if (isProvisioned) {
-    title = 'Provisioned dashboard';
+    title = t('dashboard.save-dashboard-drawer.title-provisioned', 'Provisioned dashboard');
   }
 
   return (
@@ -134,8 +133,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       }
     >
       {renderSaveBody()}
-
-      {config.featureToggles.showDashboardValidationWarnings && <DashboardValidation dashboard={dashboard} />}
     </Drawer>
   );
 };

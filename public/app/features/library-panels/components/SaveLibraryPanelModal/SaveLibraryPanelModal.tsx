@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getConnectedDashboards } from '../../state/api';
 import { getModalStyles } from '../../styles';
-import { PanelModelWithLibraryPanel } from '../../types';
+import { type PanelModelWithLibraryPanel } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface Props {
@@ -29,8 +29,8 @@ export const SaveLibraryPanelModal = ({
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
-    if (searchHits.length > 0) {
-      return searchHits.map((dash) => dash.title);
+    if (searchHits && searchHits.length > 0) {
+      return searchHits.map((dash) => dash.name);
     }
 
     return [];
@@ -60,7 +60,7 @@ export const SaveLibraryPanelModal = ({
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           <Trans

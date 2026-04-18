@@ -18,6 +18,7 @@ type confGetter interface {
 	Err() error
 	Bool(key string) bool
 	String(key string) string
+	Int(key string, def int) int
 }
 
 func newConfGetter(ds *setting.DynamicSection, keyPrefix string) confGetter {
@@ -50,6 +51,10 @@ func (g *sectionGetter) String(key string) string {
 	}
 
 	return v
+}
+
+func (g *sectionGetter) Int(key string, def int) int {
+	return g.ds.Key(g.keyPrefix + key).MustInt(def)
 }
 
 // MakeDSN creates a DSN from the given key/value pair. It validates the strings

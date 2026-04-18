@@ -4,117 +4,246 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProvideZanzana used to register ZanzanaClient.
+// ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return zanzana.NewNoopClient(), nil
+		return zClient.NewNoopClient(), nil
 	}
 
-	logger := log.New("zanzana")
-
-	var client zanzana.Client
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
-		tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		zanzanaConfig := ZanzanaClientConfig{
+			Addr:             cfg.ZanzanaClient.Addr,
 			Token:            cfg.ZanzanaClient.Token,
 			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
+			TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
+			ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
 		}
+		return NewRemoteZanzanaClient(zanzanaConfig, reg)
 
-		if cfg.StackID == "" {
-			return nil, fmt.Errorf("missing stack ID")
-		}
-
-		transportCredentials := insecure.NewCredentials()
-		if cfg.ZanzanaClient.ServerCertFile != "" {
-			transportCredentials, err = credentials.NewClientTLSFromFile(cfg.ZanzanaClient.ServerCertFile, "")
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize TLS certificate: %w", err)
-			}
-		}
-		dialOptions := []grpc.DialOption{
-			grpc.WithTransportCredentials(transportCredentials),
-			grpc.WithPerRPCCredentials(
-				NewGRPCTokenAuth(AuthzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
-			),
-		}
-
-		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
-		}
-
-		client, err = zanzana.NewClient(conn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
-		}
 	case setting.ZanzanaModeEmbedded:
-		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
-		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store, logger)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
 		channel := &inprocgrpc.Channel{}
 		// Put * as a namespace so we can properly authorize request with in-proc mode
 		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
 			ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
+					Permissions: []string{
+						zanzana.TokenPermissionUpdate,
+					},
 				},
 			}))
 			return ctx, nil
 		}))
 
-		openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
-		authzv1.RegisterAuthzServiceServer(channel, srv)
-		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
+		authzv1.RegisterAuthzServiceServer(channel, zanzanaServer)
+		authzextv1.RegisterAuthzExtentionServiceServer(channel, zanzanaServer)
 
-		client, err = zanzana.NewClient(channel)
+		client, err := zClient.New(channel, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
+		return client, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
+	}
+}
+
+// ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (zanzana.Server, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zServer.NewNoopServer(), nil
+	}
+
+	logger := log.New("zanzana.server")
+
+	store, err := storeProvider.NewEmbeddedStore(cfg, db, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
+	}
+
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	return srv, nil
+}
+
+// ProvideReconcileCRDs returns the OSS list of CRDs. Role and RoleBinding are
+// noop-implemented in OSS (pkg/registry/apis/iam/api_installer.go) and are
+// omitted — listing them would fail the whole namespace reconcile.
+func ProvideReconcileCRDs() []schema.GroupVersionResource {
+	return reconciler.DefaultCRDs
+}
+
+// ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server
+// to ensure proper cleanup when Grafana shuts down, and optionally starts the MT reconciler.
+func ProvideEmbeddedZanzanaService(
+	cfg *setting.Cfg,
+	server zanzana.Server,
+	tracer tracing.Tracer,
+) *EmbeddedZanzanaService {
+	return &EmbeddedZanzanaService{
+		cfg:    cfg,
+		server: server,
+		tracer: tracer,
+		logger: log.New("zanzana.server"),
+	}
+}
+
+// EmbeddedZanzanaService wraps the embedded zanzana server as a background service
+// to ensure Close() is called during shutdown.
+type EmbeddedZanzanaService struct {
+	cfg    *setting.Cfg
+	server zanzana.Server
+	tracer tracing.Tracer
+	logger log.Logger
+}
+
+func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
+	if s.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		srv, ok := s.server.(*zServer.Server)
+		if !ok {
+			// noop server, reconciler can't run
+			<-ctx.Done()
+			if s.server != nil {
+				s.server.Close()
+			}
+			return nil
+		}
+
+		go func() {
+			if err := srv.RunReconciler(ctx); err != nil {
+				s.logger.Error("MT reconciler stopped with error", "error", err)
+			}
+		}()
+	}
+
+	// The zanzana server doesn't have a blocking Run method,
+	// so we just wait for shutdown
+	<-ctx.Done()
+	if s.server != nil {
+		s.server.Close()
+	}
+	return nil
+}
+
+func (s *EmbeddedZanzanaService) IsDisabled() bool {
+	return s.server == nil
+}
+
+// ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
+// Client connects to a remote Zanzana server specified in the configuration.
+func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zClient.NewNoopClient(), nil
+	}
+
+	zanzanaConfig := ZanzanaClientConfig{
+		Addr:             cfg.ZanzanaClient.Addr,
+		Token:            cfg.ZanzanaClient.Token,
+		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+		TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
+		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+	}
+
+	return NewRemoteZanzanaClient(zanzanaConfig, reg)
+}
+
+type ZanzanaClientConfig struct {
+	Addr             string
+	Token            string
+	TokenExchangeURL string
+	TokenNamespace   string
+	ServerCertFile   string
+}
+
+// NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
+func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) (zanzana.Client, error) {
+	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	transportCredentials := insecure.NewCredentials()
+	if cfg.ServerCertFile != "" {
+		transportCredentials, err = credentials.NewClientTLSFromFile(cfg.ServerCertFile, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize TLS certificate: %w", err)
+		}
+	}
+
+	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+		Name:                            "authz_zanzana_grpc_client_request_duration_seconds",
+		Help:                            "Time spent executing requests to zanzana server.",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"operation", "status_code"})
+	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+
+	dialOptions := []grpc.DialOption{
+		grpc.WithTransportCredentials(transportCredentials),
+		grpc.WithPerRPCCredentials(
+			NewGRPCTokenAuth(AuthzServiceAudience, cfg.TokenNamespace, tokenClient),
+		),
+		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainStreamInterceptor(streamInterceptors...),
+	}
+
+	conn, err := grpc.NewClient(cfg.Addr, dialOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
+	}
+
+	client, err := zClient.New(conn, reg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 	}
 
 	return client, nil
@@ -126,12 +255,32 @@ type ZanzanaService interface {
 
 var _ ZanzanaService = (*Zanzana)(nil)
 
-// ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
+// ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (*Zanzana, error) {
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingCfg, err := tracing.ProvideTracingConfig(cfgProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracingCfg.ServiceName = "zanzana"
+
+	tracer, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
+	}
+
 	s := &Zanzana{
-		cfg:      cfg,
-		features: features,
-		logger:   log.New("zanzana"),
+		cfg:           cfg,
+		features:      features,
+		logger:        log.New("zanzana.server"),
+		reg:           reg,
+		tracer:        tracer,
+		storeProvider: storeProvider,
+		reconcileCRDs: reconcileCRDs,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -142,55 +291,55 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 type Zanzana struct {
 	*services.BasicService
 
-	cfg *setting.Cfg
-
-	logger   log.Logger
-	handle   grpcserver.Provider
-	features featuremgmt.FeatureToggles
+	cfg           *setting.Cfg
+	zanzanaServer zanzana.ServerInternal
+	logger        log.Logger
+	tracer        tracing.Tracer
+	handle        grpcserver.Provider
+	features      featuremgmt.FeatureToggles
+	reg           prometheus.Registerer
+	storeProvider zStore.StoreProvider
+	reconcileCRDs []schema.GroupVersionResource
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
+	store, err := z.storeProvider.NewStandaloneStore(z.cfg, z.logger)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	tracingCfg.ServiceName = "zanzana"
-
-	tracer, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		return err
-	}
-
-	store, err := zanzana.NewStore(z.cfg, z.logger)
-	if err != nil {
-		return fmt.Errorf("failed to initilize zanana store: %w", err)
-	}
-
-	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store, z.logger)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
+	z.zanzanaServer = zanzanaServer
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
-	if err != nil {
-		return fmt.Errorf("failed to start zanzana: %w", err)
+	var authenticatorInterceptor interceptors.Authenticator
+	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
+		z.logger.Info("Allowing insecure connections to zanzana server")
+		authenticatorInterceptor = noopAuthenticator{}
+	} else {
+		z.logger.Info("Requiring secure connections to zanzana server")
+		authenticator := authnlib.NewAccessTokenAuthenticator(
+			authnlib.NewAccessTokenVerifier(
+				authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
+				authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
+					SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
+				}),
+			),
+		)
+		authenticatorInterceptor = interceptors.AuthenticatorFunc(
+			grpcutils.NewAuthenticatorInterceptor(
+				authenticator,
+				z.tracer,
+			),
+		)
 	}
-
-	authenticator := authnlib.NewAccessTokenAuthenticator(
-		authnlib.NewAccessTokenVerifier(
-			authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
-			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
-			}),
-		),
-	)
 
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
-		z.features,
-		interceptors.AuthenticatorFunc(grpcutils.NewAuthenticatorInterceptor(authenticator, tracer)),
-		tracer,
+		authenticatorInterceptor,
+		z.tracer,
 		prometheus.DefaultRegisterer,
 	)
 	if err != nil {
@@ -198,13 +347,17 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	grpcServer := z.handle.GetServer()
-	openfgav1.RegisterOpenFGAServiceServer(grpcServer, openfgaServer)
 	authzv1.RegisterAuthzServiceServer(grpcServer, zanzanaServer)
 	authzextv1.RegisterAuthzExtentionServiceServer(grpcServer, zanzanaServer)
 
 	// register grpc health server
-	healthServer := zanzana.NewHealthServer(zanzanaServer)
+	healthServer := zServer.NewHealthServer(zanzanaServer)
 	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
+
+	if z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
+		// Register OpenFGA service server to pass to the HTTP server
+		openfgav1.RegisterOpenFGAServiceServer(grpcServer, zanzanaServer.GetOpenFGAServer())
+	}
 
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
@@ -214,16 +367,18 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
-	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
+	if z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
-			srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
-			if err != nil {
-				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
-			} else {
-				z.logger.Info("Starting OpenFGA HTTP server")
-				if err := srv.ListenAndServe(); err != nil {
-					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
-				}
+			if err := z.runHTTPServer(); err != nil {
+				z.logger.Error("failed to run OpenFGA HTTP server", "error", err)
+			}
+		}()
+	}
+
+	if z.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		go func() {
+			if err := z.zanzanaServer.RunReconciler(ctx); err != nil {
+				z.logger.Error("reconciler stopped with error", "error", err)
 			}
 		}()
 	}
@@ -236,5 +391,39 @@ func (z *Zanzana) stopping(err error) error {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
+	z.zanzanaServer.Close()
 	return nil
+}
+
+func (z *Zanzana) runHTTPServer() error {
+	if z.cfg.Env != setting.Dev && z.cfg.ZanzanaServer.AllowInsecure {
+		return fmt.Errorf("allow_insecure is only supported in dev mode")
+	}
+
+	z.logger.Info("Initializing OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
+
+	httpSrv, err := zServer.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+	if err != nil {
+		z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
+		return err
+	} else {
+		z.logger.Info("Starting OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
+		if z.cfg.ZanzanaServer.AllowInsecure {
+			z.logger.Warn("Allowing unauthenticated connections!")
+		}
+		if err := httpSrv.ListenAndServe(); err != nil {
+			z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// TODO this impl might be more broadly useful in authlib
+type noopAuthenticator struct {
+}
+
+func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	return ctx, nil
 }

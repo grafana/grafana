@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "title": "V2 Comprehensive Migration Test Dashboard",
+  "services": {
+    "filter": {
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "list": [
+        {
+          "name": "server",
+          "type": "query",
+          "datasource": "prometheus",
+          "query": "label_values(server)"
+        },
+        {
+          "name": "env",
+          "type": "custom",
+          "options": [
+            {"text": "Production", "value": "prod"},
+            {"text": "Staging", "value": "stage"}
+          ]
+        }
+      ]
+    }
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "graphite",
+      "title": "CPU Usage",
+      "legend": true,
+      "grid": {
+        "min": 0,
+        "max": 100
+      },
+      "y_format": "percent",
+      "y2_format": "short",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "cpu.usage"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "graph",
+      "title": "Memory Usage",
+      "legend": false,
+      "grid": {
+        "min": 0
+      },
+      "y_format": "bytes",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "memory.usage"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Server Stats",
+      "legend": true,
+      "grid": {
+        "min": 0,
+        "max": 100
+      },
+      "y_format": "short",
+      "y2_format": "bytes"
+    },
+    {
+      "id": 4,
+      "type": "graphite",
+      "title": "Disk I/O",
+      "legend": true,
+      "y2_format": "Bps",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "disk.io"
+        }
+      ]
+    }
+  ]
+}

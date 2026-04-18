@@ -1,14 +1,22 @@
-import { SceneGridLayout } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
+import { type Spec as DashboardV2Spec, type RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { deserializeRowsLayout, serializeRowsLayout } from './RowsLayoutSerializer';
+
+beforeEach(() => {
+  setTestFlags({ dashboardSectionVariables: true });
+});
+
+afterEach(() => {
+  setTestFlags({});
+});
 
 describe('deserialization', () => {
   it('should deserialize rows layout with default grid child', () => {
@@ -169,12 +177,70 @@ describe('deserialization', () => {
     expect(deserialized.state.rows).toHaveLength(1);
 
     const row = deserialized.state.rows[0];
-    expect(row.state.$behaviors).toBeDefined();
-    const behaviors = row.state.$behaviors ?? [];
-    expect(behaviors).toHaveLength(1);
-    const repeaterBehavior = behaviors[0] as RowItemRepeaterBehavior;
-    expect(repeaterBehavior).toBeInstanceOf(RowItemRepeaterBehavior);
-    expect(repeaterBehavior.state.variableName).toBe('foo');
+    expect(row.state.repeatByVariable).toBe('foo');
+  });
+
+  it('should deserialize row with section variables', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row with vars',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              variables: [
+                {
+                  kind: 'CustomVariable',
+                  spec: {
+                    name: 'env',
+                    label: 'Environment',
+                    query: 'dev,staging,prod',
+                    current: { text: 'dev', value: 'dev' },
+                    options: [],
+                    multi: false,
+                    includeAll: false,
+                    hide: 'dontHide',
+                    skipUrlSync: false,
+                    allowCustomValue: true,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const deserialized = deserializeRowsLayout(layout, {}, false);
+
+    const row = deserialized.state.rows[0];
+    expect(row.state.$variables).toBeInstanceOf(SceneVariableSet);
+    expect(row.state.$variables!.state.variables).toHaveLength(1);
+    expect(row.state.$variables!.state.variables[0].state.name).toBe('env');
+  });
+
+  it('should deserialize row without section variables as undefined $variables', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row without vars',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+    const deserialized = deserializeRowsLayout(layout, {}, false);
+
+    const row = deserialized.state.rows[0];
+    expect(row.state.$variables).toBeUndefined();
   });
 });
 
@@ -270,7 +336,7 @@ describe('serialization', () => {
               isResizable: true,
             }),
           }),
-          $behaviors: [new RowItemRepeaterBehavior({ variableName: 'foo' })],
+          repeatByVariable: 'foo',
         }),
       ],
     });
@@ -366,5 +432,63 @@ describe('serialization', () => {
         ],
       },
     });
+  });
+
+  it('should serialize row with section variables', () => {
+    const rowsLayout = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          title: 'Row with vars',
+          collapse: false,
+          layout: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [],
+              isDraggable: true,
+              isResizable: true,
+            }),
+          }),
+          $variables: new SceneVariableSet({
+            variables: [
+              new CustomVariable({
+                name: 'env',
+                label: 'Environment',
+                query: 'dev,staging,prod',
+              }),
+            ],
+          }),
+        }),
+      ],
+    });
+
+    const serialized = serializeRowsLayout(rowsLayout);
+
+    const rowSpec = serialized.spec as RowsLayoutSpec;
+    expect(rowSpec.rows[0].spec.variables).toBeDefined();
+    expect(rowSpec.rows[0].spec.variables).toHaveLength(1);
+    expect(rowSpec.rows[0].spec.variables![0].kind).toBe('CustomVariable');
+    expect(rowSpec.rows[0].spec.variables![0].spec.name).toBe('env');
+  });
+
+  it('should not include variables key when row has no section variables', () => {
+    const rowsLayout = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          title: 'Row without vars',
+          collapse: false,
+          layout: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [],
+              isDraggable: true,
+              isResizable: true,
+            }),
+          }),
+        }),
+      ],
+    });
+
+    const serialized = serializeRowsLayout(rowsLayout);
+
+    const rowSpec = serialized.spec as RowsLayoutSpec;
+    expect(rowSpec.rows[0].spec.variables).toBeUndefined();
   });
 });

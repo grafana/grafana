@@ -1,27 +1,24 @@
 import { render, screen } from '@testing-library/react';
-import { Component } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { RouteDescriptor } from 'app/core/navigation/types';
-import { DashboardMeta, DashboardRoutes } from 'app/types';
+import { type RouteDescriptor } from 'app/core/navigation/types';
+import { type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
-import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
-import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
-import { DashboardModel } from '../state/DashboardModel';
+import { getRouteComponentProps } from '../../../core/navigation/mocks/routeProps';
+import { type Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
+import { type DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-import { Props, SoloPanelPage } from './SoloPanelPage';
+import { type Props, SoloPanelPage } from './SoloPanelPage';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
-  class DashboardPanel extends Component<DashboardPanelProps> {
-    render() {
-      // In this test we only check whether a new panel has arrived in the props
-      return <>{this.props.panel?.title}</>;
-    }
-  }
+  const DashboardPanel = (props: DashboardPanelProps) => {
+    // In this test we only check whether a new panel has arrived in the props
+    return <>{props.panel?.title}</>;
+  };
 
   return { DashboardPanel };
 });
@@ -127,8 +124,12 @@ describe('SoloPanelPage', () => {
   soloPanelPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       // Needed for AutoSizer to work in test
-      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
-      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+      Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+        value: jest.fn(() => ({
+          width: 500,
+          height: 500,
+        })),
+      });
 
       ctx.mount();
       ctx.setDashboard();

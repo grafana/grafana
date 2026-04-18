@@ -1,8 +1,7 @@
 import { getDataSourceSrv } from '@grafana/runtime';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import { RichHistoryQuery } from '../../types';
-
-import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
+import { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 
 export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
   const datasource = getDataSourceSrv().getInstanceSettings({ uid: dto.datasourceUid });

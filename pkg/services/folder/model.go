@@ -24,10 +24,19 @@ var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
+var ErrVersionMismatch = errors.New("the folder has been changed by someone else")
+var ErrTitleEmpty = errors.New("folder title cannot be empty")
+var ErrSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
+var ErrInvalidUID = errors.New("invalid uid for folder provided")
+var ErrAccessDenied = errors.New("access denied to folder")
+var ErrMoveAccessDenied = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
+var ErrAccessEscalation = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
+var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))
+var ErrNameExists = errutil.BadGateway("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
+
 const (
 	GeneralFolderUID      = "general"
 	RootFolderUID         = ""
-	MaxNestedFolderDepth  = 4
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
@@ -132,6 +141,13 @@ type CreateFolderCommand struct {
 	ParentUID   string `json:"parentUid"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -151,6 +167,13 @@ type UpdateFolderCommand struct {
 	Overwrite bool `json:"overwrite"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
@@ -170,7 +193,8 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
+	RemovePermissions bool               `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -209,12 +233,13 @@ type GetFoldersQuery struct {
 }
 
 type SearchFoldersQuery struct {
-	OrgID        int64
-	UIDs         []string
-	IDs          []int64
-	Title        string
-	Limit        int64
-	SignedInUser identity.Requester `json:"-"`
+	OrgID           int64
+	UIDs            []string
+	IDs             []int64
+	Title           string
+	TitleExactMatch bool
+	Limit           int64
+	SignedInUser    identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -245,14 +270,6 @@ type GetChildrenQuery struct {
 	FolderUIDs []string `json:"-"`
 }
 
-type HasEditPermissionInFoldersQuery struct {
-	SignedInUser identity.Requester
-}
-
-type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser identity.Requester
-}
-
 // GetDescendantCountsQuery captures the information required by the folder service
 // to return the count of descendants (direct and indirect) in a folder.
 type GetDescendantCountsQuery struct {
@@ -263,3 +280,50 @@ type GetDescendantCountsQuery struct {
 }
 
 type DescendantCounts map[string]int64
+
+// SortByPostorder returns the folders in postorder traversal order.
+// That is, children folders appear before their parents in the returned slice.
+func SortByPostorder(folders []*Folder) []*Folder {
+	if len(folders) == 0 {
+		return folders
+	}
+
+	// Build parent-to-children map
+	tree := make(map[string][]*Folder)
+	folderMap := make(map[string]*Folder)
+	for _, f := range folders {
+		folderMap[f.UID] = f
+		tree[f.ParentUID] = append(tree[f.ParentUID], f)
+	}
+
+	// Find all roots (folders whose parents are not in the result set)
+	var roots []*Folder
+	for _, f := range folders {
+		if folderMap[f.ParentUID] == nil {
+			roots = append(roots, f)
+		}
+	}
+
+	// Traverse in postorder
+	result := make([]*Folder, 0, len(folders))
+	visited := make(map[string]bool)
+	var traverse func(f *Folder)
+	traverse = func(f *Folder) {
+		if visited[f.UID] {
+			return
+		}
+		visited[f.UID] = true
+		// First visit all children
+		for _, child := range tree[f.UID] {
+			traverse(child)
+		}
+		// Then add current folder
+		result = append(result, f)
+	}
+
+	for _, root := range roots {
+		traverse(root)
+	}
+
+	return result
+}

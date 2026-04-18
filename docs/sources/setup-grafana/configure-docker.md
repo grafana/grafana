@@ -18,6 +18,11 @@ title: Configure a Grafana Docker image
 weight: 1800
 ---
 
+{{< admonition type="caution" >}}
+Starting with Grafana release `12.4.0`, the `grafana/grafana-oss` Docker Hub repository will no longer be updated.
+Instead, we encourage you to use the `grafana/grafana` Docker Hub repository. These two repositories have the same Grafana OSS docker images.
+{{< /admonition >}}
+
 # Configure a Grafana Docker image
 
 This topic explains how to run Grafana on Docker in complex environments that require you to:
@@ -27,7 +32,7 @@ This topic explains how to run Grafana on Docker in complex environments that re
 - Define secrets on the Cloud
 - Configure plugins
 
-> **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana-oss`.
+> **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana`.
 
 ## Supported Docker image variants
 
@@ -35,7 +40,7 @@ You can install and run Grafana using the following official Docker images.
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
 
-- **Grafana Open Source**: `grafana/grafana-oss`
+- **Grafana Open Source**: `grafana/grafana`
 
 Each edition is available in two variants: Alpine and Ubuntu.
 
@@ -52,11 +57,11 @@ The Ubuntu-based Grafana Enterprise and OSS images are built using the [Ubuntu](
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
-- **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
+- **Grafana Open Source**: `grafana/grafana:<version>-ubuntu`
 
 ## Run a specific version of Grafana
 
-You can also run a specific version of Grafana or a beta version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+You can also run a specific version of Grafana or a beta version based on the main branch of the [`grafana/grafana` GitHub repository](https://github.com/grafana/grafana).
 
 > **Note:** If you use a Linux operating system such as Debian or Ubuntu and encounter permission errors when running Docker commands, you might need to prefix the command with `sudo` or add your user to the `docker` group. The official Docker documentation provides instructions on how to [run Docker without a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
 
@@ -74,13 +79,15 @@ The following command runs the Grafana Enterprise container and specifies versio
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
 ```
 
+For recent releases of Grafana, there are also `minor` version tags in the `grafana/grafana` and `grafana/grafana-enterprise` docker repositories. For example, if you want to always have the latest `12.1` version, you can use `grafana/grafana-enterprise:12.1` or `grafana/grafana-enterprise:12.1-ubuntu`.
+
 ## Run the Grafana main branch
 
-After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:<version><build ID>-pre` and `grafana/grafana-oss-dev:<version><build ID>-pre-ubuntu`, where `version` is the next version of Grafana and `build ID `is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds. For more information, refer to [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags).
+After every successful build of the main branch, two tags, `grafana/grafana:main` and `grafana/grafana:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-dev:<version>` and `grafana/grafana-dev:<version>-ubuntu`, where `version` is a prerelease version of Grafana. For example, if `1234` is the GitHub Run ID of the build, `12.2.0-1234`. These tags provide access to the most recent Grafana main builds. For more information, refer to [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags).
 
-To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:<version><build ID>-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
+To ensure stability and consistency, we strongly recommend using the `grafana/grafana-dev:<version>` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
 
-For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
+For a list of available tags, refer to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 
 ## Default paths
 
@@ -117,7 +124,7 @@ docker run -d -p 3000:3000 --name=grafana \
 
 ## Build a custom Grafana Docker image
 
-In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
+In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION` and `GF_INSTALL_PLUGINS` as build arguments.
 
 The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` Docker image tag. By default, Grafana builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument.
 
@@ -135,30 +142,6 @@ docker build \
   -t grafana-custom .
 
 # run the custom grafana container using docker run command
-docker run -d -p 3000:3000 --name=grafana grafana-custom
-```
-
-### Build Grafana with the Image Renderer plugin pre-installed
-
-> **Note:** This feature is experimental.
-
-Currently, the Grafana Image Renderer plugin requires dependencies that are not available in the Grafana Docker image (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301) for more details). However, you can create a customized Docker image using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
-
-Example:
-
-The following example shows how to build a customized Grafana Docker image that includes the Image Renderer plugin.
-
-```bash
-# go to the folder
-cd packaging/docker/custom
-
-# running the build command
-docker build \
-  --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
-  -t grafana-custom .
-
-# running the docker run command
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 

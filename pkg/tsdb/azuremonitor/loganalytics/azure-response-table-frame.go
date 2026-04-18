@@ -138,7 +138,7 @@ type KeyValue struct {
 }
 
 var tagsConverter = data.FieldConverter{
-	OutputFieldType: data.FieldTypeNullableJSON,
+	OutputFieldType: data.FieldTypeNullableJSON, //nolint:staticcheck
 	Converter: func(v any) (any, error) {
 		if v == nil {
 			return nil, nil

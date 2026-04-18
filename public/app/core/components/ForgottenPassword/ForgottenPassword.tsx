@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, useStyles2, LinkButton, Stack } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 interface EmailDTO {
   userOrEmail: string;

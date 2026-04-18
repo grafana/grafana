@@ -4,21 +4,22 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
-import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
-import { RuleFormValues } from '../../types/rule-form';
+import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
+import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
+import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
+import { DashboardPicker, type PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { useDashboardQuery } from './useDashboardQuery';
+import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -39,22 +40,22 @@ const AnnotationsStep = () => {
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
 
-  const [selectedDashboard, setSelectedDashboard] = useState<DashboardModel | undefined>(undefined);
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardResponse | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
-  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   useEffect(() => {
-    if (isDashboardFetching || !dashboardModel) {
+    if (isDashboardFetching || !dashboard) {
       return;
     }
 
-    setSelectedDashboard(dashboardModel);
+    setSelectedDashboard(dashboard);
 
-    const allPanels = getVisualPanels(dashboardModel);
+    const allPanels = getVisualPanels(dashboard);
     const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
-  }, [selectedPanelId, dashboardModel, isDashboardFetching]);
+  }, [selectedPanelId, dashboard, isDashboardFetching]);
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {
@@ -98,9 +99,7 @@ const AnnotationsStep = () => {
           <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
-          externalLink={
-            'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations'
-          }
+          externalLink={DOCS_URL_ANNOTATIONS}
           linkText={`Read about annotations`}
           contentText={
             <>
@@ -138,6 +137,7 @@ const AnnotationsStep = () => {
       fullWidth
     >
       <Stack direction="column" gap={1}>
+        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -163,54 +163,53 @@ const AnnotationsStep = () => {
                     onDeleteClick={handleDeleteDashboardAnnotation}
                   />
                 )}
-
-                {
-                  <div className={styles.annotationValueContainer}>
-                    <Field
-                      hidden={
-                        annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+                <div className={styles.annotationValueContainer}>
+                  <Field
+                    hidden={
+                      annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+                    }
+                    className={cx(styles.flexRowItemMargin, styles.field)}
+                    invalid={!!errors.annotations?.[index]?.value?.message}
+                    error={errors.annotations?.[index]?.value?.message}
+                    noMargin
+                  >
+                    <ValueInputComponent
+                      data-testid={`annotation-value-${index}`}
+                      id={`annotation-${index}`}
+                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                      {...register(`annotations.${index}.value`)}
+                      placeholder={
+                        isUrl
+                          ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                            'https://'
+                          : (annotationField.key &&
+                              t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                key: annotationField.key,
+                              })) ||
+                            t(
+                              'alerting.annotations-step.placeholder-value-input-default',
+                              'Enter custom annotation content...'
+                            )
                       }
-                      className={cx(styles.flexRowItemMargin, styles.field)}
-                      invalid={!!errors.annotations?.[index]?.value?.message}
-                      error={errors.annotations?.[index]?.value?.message}
-                    >
-                      <ValueInputComponent
-                        data-testid={`annotation-value-${index}`}
-                        id={`annotation-${index}`}
-                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                        {...register(`annotations.${index}.value`)}
-                        placeholder={
-                          isUrl
-                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
-                              'https://'
-                            : (annotationField.key &&
-                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
-                                  key: annotationField.key,
-                                })) ||
-                              t(
-                                'alerting.annotations-step.placeholder-value-input-default',
-                                'Enter custom annotation content...'
-                              )
-                        }
-                        defaultValue={annotationField.value}
-                      />
-                    </Field>
-                    {!annotationLabels[annotation] && (
-                      <Button
-                        type="button"
-                        className={styles.deleteAnnotationButton}
-                        aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
-                        icon="trash-alt"
-                        variant="secondary"
-                        onClick={() => remove(index)}
-                      />
-                    )}
-                  </div>
-                }
+                      defaultValue={annotationField.value}
+                    />
+                  </Field>
+                  {!annotationLabels[annotation] && (
+                    <Button
+                      type="button"
+                      className={styles.deleteAnnotationButton}
+                      aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
+                      icon="trash-alt"
+                      variant="secondary"
+                      onClick={() => remove(index)}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           );
         })}
+
         <Stack direction="row" gap={1}>
           <div className={styles.addAnnotationsButtonContainer}>
             <Button

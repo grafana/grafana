@@ -42,7 +42,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -123,8 +125,7 @@
         {
           "alias": "server = $server",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -156,7 +157,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -239,8 +242,7 @@
         {
           "alias": "host = ${host:text} / id = $host",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -259,16 +261,8 @@
       {
         "current": {
           "selected": false,
-          "text": [
-            "A",
-            "B",
-            "C"
-          ],
-          "value": [
-            "A",
-            "B",
-            "C"
-          ]
+          "text": ["A", "B", "C"],
+          "value": ["A", "B", "C"]
         },
         "hide": 0,
         "includeAll": true,
@@ -354,12 +348,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "hide": 0,
         "includeAll": true,

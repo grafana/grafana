@@ -1,45 +1,41 @@
-import { set } from 'lodash';
-
-import { RelativeTimeRange } from '@grafana/data';
-import { t } from 'app/core/internationalization';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { type RelativeTimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleIdentifier, type RuleNamespace, type RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
-  AlertQuery,
-  Annotations,
-  GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  Labels,
-  PostableRulerRuleGroupDTO,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerGrafanaRulesConfigDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type AlertQuery,
+  type Annotations,
+  type GrafanaAlertStateDecision,
+  type GrafanaRuleDefinition,
+  type Labels,
+  type PostableRulerRuleGroupDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerGrafanaRulesConfigDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../types/rule-form';
+import { type ExportFormats } from '../components/export/providers';
+import { type Folder } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
-import { RulerGroupUpdatedResponse } from './alertRuleModel';
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type RulerGroupUpdatedResponse } from './alertRuleModel';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
-  FetchPromRulesFilter,
+  type FetchPromRulesFilter,
   getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
 } from './prometheus';
-import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
+import { type FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
-export type ResponseLabels = {
-  labels: AlertInstances[];
-};
-
-export type PreviewResponse = ResponseLabels[];
+export type PreviewResponse = Array<
+  Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
+>;
 
 export interface Datasource {
   type: string;
@@ -49,11 +45,18 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
+// for some reason vanilla Prometheus uses param notation with [] appended
 export enum PrometheusAPIFilters {
+  RuleName = 'rule_name',
+  RuleNameVanilla = 'rule_name[]',
   RuleGroup = 'rule_group',
+  RuleGroupVanilla = 'rule_group[]',
   Namespace = 'file',
+  NamespaceVanilla = 'file[]',
   FolderUID = 'folder_uid',
   LimitAlerts = 'limit_alerts',
+  MaxGroups = 'max_groups',
+  ExcludeAlerts = 'exclude_alerts',
 }
 
 export interface Data {
@@ -77,8 +80,6 @@ export interface Rule {
   labels: Labels;
   annotations: Annotations;
 }
-
-export type AlertInstances = Record<string, string>;
 
 interface ExportRulesParams {
   format: ExportFormats;
@@ -146,7 +147,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
           searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
+          searchParams.set(PrometheusAPIFilters.NamespaceVanilla, identifier.namespace);
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
+          searchParams.set(PrometheusAPIFilters.RuleGroupVanilla, identifier.groupName);
         }
 
         const filterParams = getRulesFilterSearchParams(filter);
@@ -185,30 +188,39 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         excludeAlerts,
       }) => {
         const queryParams: Record<string, string | undefined> = {
-          rule_group: groupName,
-          rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
           panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
 
+        if (groupName) {
+          queryParams[PrometheusAPIFilters.RuleGroup] = groupName;
+          queryParams[PrometheusAPIFilters.RuleGroupVanilla] = groupName;
+        }
+
+        if (ruleName) {
+          queryParams[PrometheusAPIFilters.RuleName] = ruleName;
+          queryParams[PrometheusAPIFilters.RuleNameVanilla] = ruleName;
+        }
+
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
-            set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
+            queryParams[PrometheusAPIFilters.FolderUID] = namespace;
           } else {
-            set(queryParams, PrometheusAPIFilters.Namespace, namespace);
+            queryParams[PrometheusAPIFilters.Namespace] = namespace;
+            queryParams[PrometheusAPIFilters.NamespaceVanilla] = namespace;
           }
         }
 
         if (limitAlerts !== undefined) {
-          set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+          queryParams[PrometheusAPIFilters.LimitAlerts] = String(limitAlerts);
         }
 
         if (maxGroups) {
-          set(queryParams, 'max_groups', maxGroups);
+          queryParams[PrometheusAPIFilters.MaxGroups] = String(maxGroups);
         }
 
         if (excludeAlerts) {
-          set(queryParams, 'exclude_alerts', 'true');
+          queryParams[PrometheusAPIFilters.ExcludeAlerts] = 'true';
         }
 
         return {
@@ -238,7 +250,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
         return { url: path, params };
       },
-      providesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
+      providesTags: (_result, _error, { namespace, rulerConfig }) => [
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+      ],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -388,10 +402,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
-    exportPolicies: build.query<string, { format: ExportFormats }>({
-      query: ({ format }) => ({
+    exportPolicies: build.query<string, { routeName?: string; format: ExportFormats }>({
+      query: ({ routeName, format }) => ({
         url: `/api/v1/provisioning/policies/export/`,
-        params: { format: format },
+        params: { format: format, routeName: routeName },
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,

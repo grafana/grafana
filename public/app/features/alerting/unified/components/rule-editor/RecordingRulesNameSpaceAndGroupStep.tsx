@@ -1,8 +1,8 @@
 import { useFormContext } from 'react-hook-form';
 
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';

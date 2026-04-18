@@ -1,7 +1,9 @@
-import { PanelData } from '@grafana/data';
+import type { JSX } from 'react';
+
+import { type PanelData } from '@grafana/data';
 
 import { VizWrapper } from '../rule-editor/VizWrapper';
-import { ThresholdDefinition } from '../rule-editor/util';
+import { type ThresholdDefinition } from '../rule-editor/util';
 
 interface RuleViewerVisualizationProps {
   data?: PanelData;

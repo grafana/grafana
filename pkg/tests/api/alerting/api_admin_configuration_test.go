@@ -24,18 +24,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func ptrTo[T any](v T) *T { return &v }
+
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	const disableOrgID int64 = 3
+	const disableOrgID int64 = 2
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,
 		DisableAnonymous:               true,
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
-		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
+		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 2
 		AppModeProduction:              true,
 	})
 
@@ -88,7 +93,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// An invalid alertmanager choice should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice("invalid"),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("invalid")),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -109,7 +114,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// but never specify any. This should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -184,7 +189,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// and make it so that only the external Alertmanagers handle the alerts.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -312,7 +317,9 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Now, lets re-set external Alertmanagers for the other organisation.
 	// Sending an empty value for AlertmanagersChoice should default to AllAlertmanagers.
 	{
-		ac := apimodels.PostableNGalertConfig{}
+		ac := apimodels.PostableNGalertConfig{
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("")),
+		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
 		err := enc.Encode(&ac)

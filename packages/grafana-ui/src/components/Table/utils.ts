@@ -1,35 +1,37 @@
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
-import { HeaderGroup, Row } from 'react-table';
+import { type HeaderGroup, type Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
-  DataFrame,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
-  Field,
-  FieldConfigSource,
+  type ActionModel,
+  type DataFrame,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  type Field,
+  type FieldConfigSource,
   fieldReducers,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
+  type LinkModel,
   reduceField,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  TableAutoCellOptions,
+  type TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 
 import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';
@@ -42,13 +44,13 @@ import { SparklineCell } from './Cells/SparklineCell';
 import { getFooterValue } from './TableRT/FooterRow';
 import { RowExpander } from './TableRT/RowExpander';
 import {
-  CellColors,
-  CellComponent,
-  FooterItem,
-  GrafanaTableColumn,
-  TableCellOptions,
-  TableFieldOptions,
-  TableFooterCalc,
+  type CellColors,
+  type CellComponent,
+  type FooterItem,
+  type GrafanaTableColumn,
+  type TableCellOptions,
+  type TableFieldOptions,
+  type TableFooterCalc,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -112,7 +114,12 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions: TableFieldOptions = field.config.custom || {};
-    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
+    if (
+      // @ts-ignore this was the former hidden option; we support it for legacy use cases while TableRT is being sunset.
+      fieldTableOptions.hidden ||
+      fieldTableOptions.hideFrom?.viz ||
+      field.type === FieldType.nestedFrames
+    ) {
       continue;
     }
 
@@ -194,6 +201,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
@@ -485,8 +494,9 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
         mode: mode,
       };
     default:
+      // @ts-ignore TSGO / TS7
       return {
-        // @ts-ignore
+        // @ts-ignore TS5 / TS6
         type: displayMode,
       };
   }
@@ -727,12 +737,11 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
       const numValues = stringFields[0].values.length;
       let longestLength = 0;
 
-      // If we have less than 30 values we assume
-      // that the first record is representative
-      // of the overall data
+      // If we have less than 30 values we assume that the first
+      // non-null record is representative of the overall data
       if (numValues <= 30) {
         for (const field of stringFields) {
-          const fieldLength = field.values[0].length;
+          const fieldLength = field.values.find((v) => v != null)?.length ?? 0;
           if (fieldLength > longestLength) {
             longestLength = fieldLength;
             longestField = field;
@@ -762,3 +771,39 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
 
   return longestField;
 }
+
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
+  clientX: number;
+  clientY: number;
+}
+
+export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
+  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
+
+  return { shouldShowLink, hasMultipleLinksOrActions };
+};
+
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
+};
+
+/**
+ * Creates an onClick handler for table cells that only triggers tooltip when clicking directly on the cell
+ * @param setTooltipCoords - function to set tooltip coordinates
+ * @returns onClick handler
+ */
+export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
+    if (shouldTriggerTooltip(event)) {
+      const { clientX, clientY } = event;
+      setTooltipCoords({ clientX, clientY });
+    }
+  };
+};

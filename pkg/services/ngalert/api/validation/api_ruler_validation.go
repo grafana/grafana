@@ -23,15 +23,12 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
-	// Whether recording rules are allowed.
-	RecordingRulesAllowed bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
-		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -142,7 +139,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
-		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		newRule.NotificationSettings, err = ValidateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
 			return ngmodels.AlertRule{}, err
 		}
@@ -176,10 +173,6 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
 // it will load fields that pass validation onto newRule and return the result.
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
-	if !limits.RecordingRulesAllowed {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
 	err := ValidateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
@@ -189,23 +182,20 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	if !metricName.IsValid() {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
 	}
-	if !prommodels.IsValidMetricName(metricName) {
+	if !prommodels.IsValidMetricName(metricName) { // nolint:staticcheck
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
 
-	newRule.NoDataState = ""
-	newRule.ExecErrState = ""
-	newRule.Condition = ""
-	newRule.For = 0
-	newRule.KeepFiringFor = 0
-	newRule.NotificationSettings = nil
-
+	ngmodels.ClearRecordingRuleIgnoredFields(&newRule)
 	return newRule, nil
 }
 
 func validateLabels(l map[string]string) error {
 	for key := range l {
+		if key == "" {
+			return fmt.Errorf("label key cannot be empty")
+		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
 		}
@@ -253,6 +243,21 @@ func ValidateCondition(condition string, queries []apimodels.AlertQuery, canPatc
 		return fmt.Errorf("%w: condition %s does not exist, must be one of [%s]", ngmodels.ErrAlertRuleFailedValidation, condition, strings.Join(ids, ","))
 	}
 	return nil
+}
+
+func validateGroupInterval(incoming prommodels.Duration, limits RuleLimits) (time.Duration, error) {
+	interval := time.Duration(incoming)
+	if interval == 0 {
+		// if group interval is 0 (undefined) then we automatically fall back to the default interval
+		interval = limits.DefaultRuleEvaluationInterval
+	}
+
+	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
+		return 0, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
+	}
+
+	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
+	return interval, nil
 }
 
 func ValidateInterval(interval, baseInterval time.Duration) (int64, error) {
@@ -306,10 +311,10 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 //   - == 0, returns nil (reset to default)
 //   - == nil && UID == "", returns nil (new rule)
 //   - == nil && UID != "", returns -1 (existing rule)
-func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}
@@ -336,21 +341,21 @@ func ValidateRuleGroup(
 		return nil, errors.New("rule group name cannot be empty")
 	}
 
-	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
+	isNoGroupRuleGroup := ngmodels.IsNoGroupRuleGroup(ruleGroupConfig.Name)
+
+	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
 		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
-	interval := time.Duration(ruleGroupConfig.Interval)
-	if interval == 0 {
-		// if group interval is 0 (undefined) then we automatically fall back to the default interval
-		interval = limits.DefaultRuleEvaluationInterval
+	interval, err := validateGroupInterval(ruleGroupConfig.Interval, limits)
+	if err != nil {
+		return nil, err
 	}
 
-	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if isNoGroupRuleGroup && len(ruleGroupConfig.Rules) > 1 {
+		return nil, fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", ruleGroupConfig.Name)
 	}
-
-	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
@@ -391,21 +396,43 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
-	s := ngmodels.NotificationSettings{
-		Receiver:            n.Receiver,
-		GroupBy:             n.GroupBy,
-		GroupWait:           n.GroupWait,
-		GroupInterval:       n.GroupInterval,
-		RepeatInterval:      n.RepeatInterval,
-		MuteTimeIntervals:   n.MuteTimeIntervals,
-		ActiveTimeIntervals: n.ActiveTimeIntervals,
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
+	if n.Policy == nil && n.Receiver == "" {
+		return nil, errors.New("notification policy or receiver must be specified")
 	}
 
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}
-	return []ngmodels.NotificationSettings{
-		s,
-	}, nil
+	return s, nil
+}
+
+func ValidateBacktestConfig(orgId int64, config apimodels.BacktestConfig, limits RuleLimits) (*ngmodels.AlertRule, error) {
+	if config.From.After(config.To) {
+		return nil, fmt.Errorf("invalid testing range: from %s must be before to %s", config.From, config.To)
+	}
+
+	interval, err := validateGroupInterval(config.Interval, limits)
+	if err != nil {
+		return nil, err
+	}
+
+	return ValidateRuleNode(&apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:           config.For,
+			KeepFiringFor: config.KeepFiringFor,
+			Labels:        config.Labels,
+			Annotations:   nil,
+		},
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:                       config.Title,
+			Condition:                   config.Condition,
+			Data:                        config.Data,
+			UID:                         config.UID,
+			NoDataState:                 config.NoDataState,
+			ExecErrState:                config.ExecErrState,
+			MissingSeriesEvalsToResolve: config.MissingSeriesEvalsToResolve,
+		},
+	}, config.RuleGroup, interval, orgId, config.NamespaceUID, limits)
 }

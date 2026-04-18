@@ -1,6 +1,6 @@
-import { CoreApp } from '@grafana/data';
+import { type CoreApp } from '@grafana/data';
 
-import { EchoEvent, EchoEventType } from '../services/EchoSrv';
+import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
 
 /**
  * Describes the basic dashboard information that can be passed as the meta
@@ -10,7 +10,6 @@ import { EchoEvent, EchoEventType } from '../services/EchoSrv';
  */
 export interface DashboardInfo {
   /** @deprecated -- use UID not internal ID */
-  dashboardId: number;
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
@@ -24,7 +23,10 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   source?: CoreApp | string;
   datasourceName: string;
-  datasourceId: number;
+  /**
+   * @deprecated will be removed in G13
+   */
+  datasourceId?: number;
   datasourceUid: string;
   datasourceType: string;
   panelId?: number;

@@ -1,19 +1,19 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   InteractiveTable,
   Stack,
   Badge,
   Tooltip,
   Pagination,
-  FetchDataFunc,
+  type FetchDataFunc,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
-import { UserAnonymousDeviceDTO } from 'app/types';
+import { type UserAnonymousDeviceDTO } from 'app/types/user';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
   UserAnonymousDeviceDTO,

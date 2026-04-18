@@ -1,9 +1,10 @@
-import { CSSProperties } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
-import { SelectableValue } from './select';
+import { type SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
+  Infinity = 'infinity',
 }
 
 type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
@@ -11,13 +12,11 @@ type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 export interface Action {
   type: ActionType;
   title: string;
-
-  // Options for the selected type
-  // Currently this is required because there is only one valid type (fetch)
-  // once multiple types are valid, usage of this will need to be optional
-  [ActionType.Fetch]: FetchOptions;
+  [ActionType.Fetch]?: FetchOptions;
+  [ActionType.Infinity]?: InfinityOptions;
   confirmation?: string;
   oneClick?: boolean;
+  variables?: ActionVariable[];
   style?: ActionButtonCssProperties;
 }
 
@@ -26,13 +25,25 @@ export interface Action {
  */
 export interface ActionModel<T = any> {
   title: string;
-  onClick: (event: any, origin?: any) => void;
-  confirmation?: string;
+  type?: ActionType;
+  onClick: (event: any, origin?: any, actionVars?: ActionVariableInput) => void;
+  confirmation: (actionVars?: ActionVariableInput) => ReactNode;
   oneClick?: boolean;
   style: ActionButtonCssProperties;
+  variables?: ActionVariable[];
 }
 
-interface FetchOptions {
+export type ActionVariable = {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+};
+
+export enum ActionVariableType {
+  String = 'string',
+}
+
+export interface FetchOptions {
   method: HttpRequestMethod;
   url: string;
   body?: string;
@@ -40,15 +51,20 @@ interface FetchOptions {
   headers?: Array<[string, string]>;
 }
 
+export interface InfinityOptions extends FetchOptions {
+  datasourceUid: string;
+}
+
 export enum HttpRequestMethod {
   POST = 'POST',
   PUT = 'PUT',
   GET = 'GET',
+  DELETE = 'DELETE',
+  PATCH = 'PATCH',
 }
 
 export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
-  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
@@ -62,7 +78,7 @@ export const contentTypeOptions: SelectableValue[] = [
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  fetch: {
+  [ActionType.Fetch]: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
@@ -70,3 +86,5 @@ export const defaultActionConfig: Action = {
     headers: [['Content-Type', 'application/json']],
   },
 };
+
+export type ActionVariableInput = { [key: string]: string };

@@ -1,23 +1,29 @@
 import { isEqual, uniqWith } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { matchLabelsSet } from '@grafana/alerting/unstable';
+import { type SelectableValue } from '@grafana/data';
 import {
-  AlertManagerCortexConfig,
-  Matcher,
+  type AlertManagerCortexConfig,
+  type Matcher,
   MatcherOperator,
-  ObjectMatcher,
-  Route,
-  TimeInterval,
-  TimeRange,
+  type ObjectMatcher,
+  type Route,
+  type TimeInterval,
+  type TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
-import { Labels } from 'app/types/unified-alerting-dto';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
-import { MatcherFieldValue } from '../types/silence-form';
+import { type MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { objectLabelsToArray } from './labels';
-import { MatcherFormatter, matchLabelsSet, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
+import {
+  type MatcherFormatter,
+  convertObjectMatcherToAlertingPackageMatcher,
+  parsePromQLStyleMatcherLooseSafe,
+  unquoteWithUnescape,
+} from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -127,9 +133,9 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
   const labelsArray = objectLabelsToArray(labels);
-  const objectMatchers = matchers.map(matcherToObjectMatcher);
+  const labelMatchers = matchers.map(matcherToObjectMatcher).map(convertObjectMatcherToAlertingPackageMatcher);
 
-  return matchLabelsSet(objectMatchers, labelsArray);
+  return matchLabelsSet(labelMatchers, labelsArray);
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {
