@@ -4,42 +4,25 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
+	"github.com/grafana/grafana/pkg/cmd/grafdev/commands"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	app := &cli.App{
-		Name:  "grafdev",
-		Usage: "Prototype helper for Grafana OSS + grafana-enterprise local development",
-		Flags: globalPathFlags(),
-		Commands: []*cli.Command{
-			cmdContext(),
-			cmdBranch(),
-			cmdDualize(),
-			cmdDoctor(),
-			cmdSync(),
-			cmdLink(),
-			cmdImports(),
-			cmdWire(),
-			cmdVerify(),
-			cmdSmoke(),
-			cmdGe(),
+	deps := commands.Deps{
+		Resolve: func(c *cli.Context) (base.RepoPaths, error) {
+			return base.ResolveRepos(base.FromContext(c, "oss"), base.FromContext(c, "enterprise"))
 		},
+	}
+	app := &cli.App{
+		Name:     "grafdev",
+		Usage:    "Prototype helper for Grafana OSS + grafana-enterprise local development",
+		Flags:    base.GlobalPathFlags(),
+		Commands: deps.All(),
 	}
 	if err := app.Run(os.Args); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-}
-
-func resolve(c *cli.Context) (RepoPaths, error) {
-	return ResolveRepos(flagFromContext(c, "oss"), flagFromContext(c, "enterprise"))
-}
-
-func mustResolve(c *cli.Context) (RepoPaths, error) {
-	p, err := resolve(c)
-	if err != nil {
-		return RepoPaths{}, fmt.Errorf("%w\n(hint: run from the Grafana OSS checkout, pass --oss / --enterprise, or set GRAFANA_DEV_OSS)", err)
-	}
-	return p, nil
 }

@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdLink() *cli.Command {
+func (d Deps) cmdLink() *cli.Command {
 	return &cli.Command{
 		Name:  "link",
 		Usage: "Inspect or invoke the enterprise ↔ OSS dev link (make enterprise-dev / unlock)",
@@ -19,7 +20,7 @@ func cmdLink() *cli.Command {
 				Name:  "status",
 				Usage: "Show how enterprise-dev is wired (from local/Makefile) and .devlock state",
 				Action: func(c *cli.Context) error {
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}
@@ -27,8 +28,8 @@ func cmdLink() *cli.Command {
 					_, _ = fmt.Fprintf(w, "OSS:         %s\n", p.OSS)
 					_, _ = fmt.Fprintf(w, "Enterprise:  %s\n", p.Enterprise)
 					_, _ = fmt.Fprintf(w, "Dev script:  %s\n", filepath.Join(p.Enterprise, "start-dev.sh"))
-					kind, lockPath := devLockClassify(p)
-					line1, line2 := devLockLinkSummary(kind, lockPath)
+					kind, lockPath := base.ClassifyDevLock(p)
+					line1, line2 := base.DevLockLinkSummary(kind, lockPath)
 					_, _ = fmt.Fprintln(w, line1)
 					if line2 != "" {
 						_, _ = fmt.Fprintln(w, line2)
@@ -52,7 +53,7 @@ func cmdLink() *cli.Command {
 					&cli.BoolFlag{Name: "dry-run", Usage: "Print make -n enterprise-dev instead of running"},
 				},
 				Action: func(c *cli.Context) error {
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}
@@ -76,7 +77,7 @@ func cmdLink() *cli.Command {
 				Name:  "unlock",
 				Usage: "Remove stale ../grafana-enterprise/.devlock (same as make enterprise-unlock when local/Makefile exists)",
 				Action: func(c *cli.Context) error {
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}

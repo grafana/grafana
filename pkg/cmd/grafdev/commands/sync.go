@@ -1,13 +1,14 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdSync() *cli.Command {
+func (d Deps) cmdSync() *cli.Command {
 	flags := []cli.Flag{
 		&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote name"},
 		&cli.StringFlag{
@@ -27,7 +28,7 @@ func cmdSync() *cli.Command {
 		Usage: "Detect drift against the remote default branch; optionally rebase or merge",
 		Flags: flags,
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
@@ -61,9 +62,9 @@ func cmdSync() *cli.Command {
 	}
 }
 
-func assertCleanForSync(p RepoPaths, ossOnly, entOnly bool) error {
+func assertCleanForSync(p base.RepoPaths, ossOnly, entOnly bool) error {
 	check := func(dir, name string) error {
-		clean, err := isCleanWorktree(dir)
+		clean, err := base.IsCleanWorktree(dir)
 		if err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}
@@ -86,15 +87,15 @@ func assertCleanForSync(p RepoPaths, ossOnly, entOnly bool) error {
 }
 
 func reportAndMaybeSyncRepo(dir, remote, label string, c *cli.Context, w io.Writer) error {
-	base, err := remoteDefaultBranch(dir, remote)
+	refBase, err := base.RemoteDefaultBranch(dir, remote)
 	if err != nil {
 		return fmt.Errorf("%s: %w", label, err)
 	}
-	if _, err := git(dir, "fetch", remote); err != nil {
+	if _, err := base.Git(dir, "fetch", remote); err != nil {
 		return fmt.Errorf("%s: %w", label, err)
 	}
-	ref := fmt.Sprintf("%s/%s", remote, base)
-	behind, ahead, err := commitsRelativeToRef(dir, ref)
+	ref := fmt.Sprintf("%s/%s", remote, refBase)
+	behind, ahead, err := base.CommitsRelativeToRef(dir, ref)
 	if err != nil {
 		return fmt.Errorf("%s: %w", label, err)
 	}
@@ -109,15 +110,15 @@ func reportAndMaybeSyncRepo(dir, remote, label string, c *cli.Context, w io.Writ
 	strategy := c.String("strategy")
 	switch strategy {
 	case "rebase":
-		if _, err := git(dir, "rebase", ref); err != nil {
+		if _, err := base.Git(dir, "rebase", ref); err != nil {
 			return fmt.Errorf("%s: rebase: %w", label, err)
 		}
 	case "merge":
-		if _, err := git(dir, "merge", ref); err != nil {
+		if _, err := base.Git(dir, "merge", ref); err != nil {
 			return fmt.Errorf("%s: merge: %w", label, err)
 		}
 	case "ff":
-		if _, err := git(dir, "merge", "--ff-only", ref); err != nil {
+		if _, err := base.Git(dir, "merge", "--ff-only", ref); err != nil {
 			return fmt.Errorf("%s: ff-only merge: %w", label, err)
 		}
 	default:

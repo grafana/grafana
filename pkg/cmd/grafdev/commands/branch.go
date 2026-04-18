@@ -1,14 +1,15 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdBranch() *cli.Command {
+func (d Deps) cmdBranch() *cli.Command {
 	return &cli.Command{
 		Name:  "branch",
 		Usage: "Create a fresh branch from the remote default branch",
@@ -27,7 +28,7 @@ func cmdBranch() *cli.Command {
 					if name == "" {
 						return fmt.Errorf("branch name is required")
 					}
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}
@@ -48,7 +49,7 @@ func cmdBranch() *cli.Command {
 					if name == "" {
 						return fmt.Errorf("branch name is required")
 					}
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}
@@ -66,13 +67,13 @@ func createBranchFromRemoteDefault(dir, remote, branch string, yes, resetExistin
 	if !yes {
 		return fmt.Errorf("refusing without --yes: would run git fetch and create (or with --reset-existing, reset) branch %q in %s", branch, dir)
 	}
-	base, err := remoteDefaultBranch(dir, remote)
+	refBase, err := base.RemoteDefaultBranch(dir, remote)
 	if err != nil {
 		return err
 	}
-	if _, err := git(dir, "fetch", remote); err != nil {
+	if _, err := base.Git(dir, "fetch", remote); err != nil {
 		return err
 	}
-	ref := fmt.Sprintf("%s/%s", remote, base)
-	return switchToBranchFromRef(dir, branch, ref, resetExisting, w)
+	ref := fmt.Sprintf("%s/%s", remote, refBase)
+	return base.SwitchToBranchFromRef(dir, branch, ref, resetExisting, w)
 }

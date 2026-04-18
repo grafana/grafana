@@ -1,4 +1,4 @@
-package main
+package base
 
 import (
 	"strings"
@@ -7,11 +7,11 @@ import (
 
 func TestDevLockDoctorMessage(t *testing.T) {
 	t.Parallel()
-	ok, msg := devLockDoctorMessage(devLockAbsent, "/e/.devlock")
+	ok, msg := DevLockDoctorMessage(DevLockAbsent, "/e/.devlock")
 	if !ok || !strings.Contains(msg, "no enterprise") {
 		t.Fatalf("absent: ok=%v msg=%q", ok, msg)
 	}
-	ok, msg = devLockDoctorMessage(devLockStale, "/e/.devlock")
+	ok, msg = DevLockDoctorMessage(DevLockStale, "/e/.devlock")
 	if ok || !strings.Contains(msg, "stale") {
 		t.Fatalf("stale: ok=%v msg=%q", ok, msg)
 	}
@@ -19,11 +19,11 @@ func TestDevLockDoctorMessage(t *testing.T) {
 
 func TestDevLockLinkSummary(t *testing.T) {
 	t.Parallel()
-	l1, l2 := devLockLinkSummary(devLockAbsent, "/e/.devlock")
+	l1, l2 := DevLockLinkSummary(DevLockAbsent, "/e/.devlock")
 	if l1 != ".devlock:    absent" || l2 != "" {
 		t.Fatalf("absent: %q %q", l1, l2)
 	}
-	l1, l2 = devLockLinkSummary(devLockActive, "/e/.devlock")
+	l1, l2 = DevLockLinkSummary(DevLockActive, "/e/.devlock")
 	if !strings.Contains(l1, "watcher process detected") || !strings.Contains(l2, "/e/.devlock") {
 		t.Fatalf("active: %q %q", l1, l2)
 	}
@@ -61,8 +61,8 @@ func TestEnterpriseDevProcessLine(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		if got := enterpriseDevProcessLine(tc.line, oss, ent, start); got != tc.want {
-			t.Fatalf("enterpriseDevProcessLine(%q) = %v, want %v", tc.line, got, tc.want)
+		if got := EnterpriseDevProcessLine(tc.line, oss, ent, start); got != tc.want {
+			t.Fatalf("EnterpriseDevProcessLine(%q) = %v, want %v", tc.line, got, tc.want)
 		}
 	}
 }

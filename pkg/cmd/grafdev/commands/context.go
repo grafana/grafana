@@ -1,24 +1,25 @@
-package main
+package commands
 
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdContext() *cli.Command {
+func (d Deps) cmdContext() *cli.Command {
 	return &cli.Command{
 		Name:  "context",
 		Usage: "Print resolved repo paths and current git branches",
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
 			fmt.Fprintf(c.App.Writer, "OSS root:        %s\n", p.OSS)
 			fmt.Fprintf(c.App.Writer, "Enterprise root: %s\n", p.Enterprise)
-			ossBr, ossErr := currentBranch(p.OSS)
-			entBr, entErr := currentBranch(p.Enterprise)
+			ossBr, ossErr := base.CurrentBranch(p.OSS)
+			entBr, entErr := base.CurrentBranch(p.Enterprise)
 			if ossErr == nil {
 				fmt.Fprintf(c.App.Writer, "OSS branch:      %s\n", ossBr)
 			} else {

@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func cmdImports() *cli.Command {
+func (d Deps) cmdImports() *cli.Command {
 	return &cli.Command{
 		Name:  "imports",
 		Usage: "Help for pkg/extensions/enterprise_imports.go (GE-only Go deps)",
@@ -22,7 +22,7 @@ func cmdImports() *cli.Command {
 				Name:  "explain",
 				Usage: "Print where enterprise_imports.go lives and the upstream comment guidance",
 				Action: func(c *cli.Context) error {
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}
@@ -61,7 +61,7 @@ func cmdImports() *cli.Command {
 					if !c.Bool("yes") {
 						return fmt.Errorf("refusing without --yes to modify enterprise_imports.go")
 					}
-					p, err := mustResolve(c)
+					p, err := d.mustResolve(c)
 					if err != nil {
 						return err
 					}

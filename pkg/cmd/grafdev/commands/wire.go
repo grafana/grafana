@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func cmdWire() *cli.Command {
+func (d Deps) cmdWire() *cli.Command {
 	return &cli.Command{
 		Name:  "wire",
 		Usage: "Print standardized wire layout pointers for OSS vs Enterprise",

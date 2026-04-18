@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -7,10 +7,11 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdDoctor() *cli.Command {
+func (d Deps) cmdDoctor() *cli.Command {
 	return &cli.Command{
 		Name:  "doctor",
 		Usage: "Sanity-check OSS + enterprise linkage, local Makefile, dev lock, and branch parity",
@@ -20,7 +21,7 @@ func cmdDoctor() *cli.Command {
 			&cli.BoolFlag{Name: "strict", Usage: "Exit with non-zero status if any check warns"},
 		},
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
@@ -29,7 +30,7 @@ func cmdDoctor() *cli.Command {
 	}
 }
 
-func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bool) error {
+func runDoctor(c *cli.Context, p base.RepoPaths, remote string, quickBuild, strict bool) error {
 	w := c.App.Writer
 	ew := c.App.ErrWriter
 	var problems int
@@ -65,19 +66,19 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bo
 		printCheck(false, "pkg/extensions/ext.go missing (enterprise not linked into this OSS tree?)")
 	} else {
 		b, _ := os.ReadFile(p.ExtGo())
-		if extGoIndicatesEnterpriseLinked(b) {
+		if base.ExtGoIndicatesEnterpriseLinked(b) {
 			printCheck(true, "ext.go indicates enterprise extensions are linked")
 		} else {
 			printCheck(false, "ext.go present but IsEnterprise = true not detected")
 		}
 	}
 
-	kind, lockPath := devLockClassify(p)
-	ok, msg := devLockDoctorMessage(kind, lockPath)
+	kind, lockPath := base.ClassifyDevLock(p)
+	ok, msg := base.DevLockDoctorMessage(kind, lockPath)
 	printCheck(ok, msg)
 
-	ossBr, ossErr := currentBranch(p.OSS)
-	geBr, geErr := currentBranch(p.Enterprise)
+	ossBr, ossErr := base.CurrentBranch(p.OSS)
+	geBr, geErr := base.CurrentBranch(p.Enterprise)
 	if ossErr != nil || geErr != nil {
 		printCheck(false, "could not read current branch in one or both repos")
 	} else {
@@ -88,9 +89,9 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bo
 		}
 	}
 
-	if base, err := remoteDefaultBranch(p.OSS, remote); err == nil {
-		ref := fmt.Sprintf("%s/%s", remote, base)
-		if b, a, err := commitsRelativeToRef(p.OSS, ref); err == nil {
+	if refBase, err := base.RemoteDefaultBranch(p.OSS, remote); err == nil {
+		ref := fmt.Sprintf("%s/%s", remote, refBase)
+		if b, a, err := base.CommitsRelativeToRef(p.OSS, ref); err == nil {
 			if b > 0 || a > 0 {
 				printCheck(false, fmt.Sprintf("OSS vs %s: behind=%d ahead=%d (consider grafdev sync)", ref, b, a))
 			} else {
@@ -98,9 +99,9 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bo
 			}
 		}
 	}
-	if base, err := remoteDefaultBranch(p.Enterprise, remote); err == nil {
-		ref := fmt.Sprintf("%s/%s", remote, base)
-		if b, a, err := commitsRelativeToRef(p.Enterprise, ref); err == nil {
+	if refBase, err := base.RemoteDefaultBranch(p.Enterprise, remote); err == nil {
+		ref := fmt.Sprintf("%s/%s", remote, refBase)
+		if b, a, err := base.CommitsRelativeToRef(p.Enterprise, ref); err == nil {
 			if b > 0 || a > 0 {
 				printCheck(false, fmt.Sprintf("enterprise vs %s: behind=%d ahead=%d (consider grafdev sync)", ref, b, a))
 			} else {

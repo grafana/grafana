@@ -1,13 +1,14 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-func cmdDualize() *cli.Command {
+func (d Deps) cmdDualize() *cli.Command {
 	return &cli.Command{
 		Name:  "dualize",
 		Usage: "Align grafana-enterprise branch with OSS (or the reverse) for dual-repo work",
@@ -26,7 +27,7 @@ If the target branch name already exists locally in the repo being updated, pass
 			&cli.BoolFlag{Name: "reset-existing", Usage: "If the branch to create already exists locally, reset it to remote default (git switch -C); default is refuse"},
 		},
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
@@ -38,12 +39,12 @@ If the target branch name already exists locally in the repo being updated, pass
 	}
 }
 
-func dualize(p RepoPaths, remote string, force, resetExisting bool, logW io.Writer) error {
-	ossBr, err := currentBranch(p.OSS)
+func dualize(p base.RepoPaths, remote string, force, resetExisting bool, logW io.Writer) error {
+	ossBr, err := base.CurrentBranch(p.OSS)
 	if err != nil {
 		return fmt.Errorf("OSS: %w", err)
 	}
-	geBr, err := currentBranch(p.Enterprise)
+	geBr, err := base.CurrentBranch(p.Enterprise)
 	if err != nil {
 		return fmt.Errorf("enterprise: %w", err)
 	}
@@ -54,7 +55,7 @@ func dualize(p RepoPaths, remote string, force, resetExisting bool, logW io.Writ
 			{p.OSS, "OSS"},
 			{p.Enterprise, "enterprise"},
 		} {
-			clean, err := isCleanWorktree(x.dir)
+			clean, err := base.IsCleanWorktree(x.dir)
 			if err != nil {
 				return err
 			}
@@ -67,11 +68,11 @@ func dualize(p RepoPaths, remote string, force, resetExisting bool, logW io.Writ
 		_, _ = fmt.Fprintf(logW, "Already dualized: both on branch %q\n", ossBr)
 		return nil
 	}
-	ossBase, err := remoteDefaultBranch(p.OSS, remote)
+	ossBase, err := base.RemoteDefaultBranch(p.OSS, remote)
 	if err != nil {
 		return err
 	}
-	geBase, err := remoteDefaultBranch(p.Enterprise, remote)
+	geBase, err := base.RemoteDefaultBranch(p.Enterprise, remote)
 	if err != nil {
 		return err
 	}
@@ -80,15 +81,15 @@ func dualize(p RepoPaths, remote string, force, resetExisting bool, logW io.Writ
 
 	switch {
 	case ossBr != ossBase && geBr == geBase:
-		if _, err := git(p.Enterprise, "fetch", remote); err != nil {
+		if _, err := base.Git(p.Enterprise, "fetch", remote); err != nil {
 			return err
 		}
-		return switchToBranchFromRef(p.Enterprise, ossBr, geRef, resetExisting, logW)
+		return base.SwitchToBranchFromRef(p.Enterprise, ossBr, geRef, resetExisting, logW)
 	case geBr != geBase && ossBr == ossBase:
-		if _, err := git(p.OSS, "fetch", remote); err != nil {
+		if _, err := base.Git(p.OSS, "fetch", remote); err != nil {
 			return err
 		}
-		return switchToBranchFromRef(p.OSS, geBr, ossRef, resetExisting, logW)
+		return base.SwitchToBranchFromRef(p.OSS, geBr, ossRef, resetExisting, logW)
 	default:
 		return fmt.Errorf("ambiguous state (OSS=%q enterprise=%q): put one repo on its remote default branch or matching names first, or use grafdev branch dual",
 			ossBr, geBr)

@@ -1,4 +1,4 @@
-package main
+package base
 
 import "testing"
 
@@ -15,9 +15,9 @@ func init() { IsEnterprise = true }`, true},
 		{`package x`, false},
 	}
 	for _, tc := range cases {
-		got := extGoIndicatesEnterpriseLinked([]byte(tc.src))
+		got := ExtGoIndicatesEnterpriseLinked([]byte(tc.src))
 		if got != tc.ok {
-			t.Fatalf("extGoIndicatesEnterpriseLinked(%q) = %v, want %v", tc.src, got, tc.ok)
+			t.Fatalf("ExtGoIndicatesEnterpriseLinked(%q) = %v, want %v", tc.src, got, tc.ok)
 		}
 	}
 }

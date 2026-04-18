@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -7,16 +7,16 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func cmdSmoke() *cli.Command {
+func (d Deps) cmdSmoke() *cli.Command {
 	return &cli.Command{
 		Name:  "smoke",
 		Usage: "Run the same checks as verify, then `make -n enterprise-dev` in OSS",
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
-			if err := verifyLayout(p); err != nil {
+			if err := VerifyLayout(p); err != nil {
 				return err
 			}
 			makeBin, err := exec.LookPath("make")

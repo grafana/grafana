@@ -1,6 +1,6 @@
 # How to test `grafdev` (manual)
 
-Keep this file aligned with CLI behavior in `pkg/cmd/grafdev/`.
+Keep this file aligned with CLI behavior: `main.go`, `commands/` (subcommands), and `base/` (paths, git, flags, devlock).
 
 ## Path resolution (`--oss`, `--enterprise`, env)
 

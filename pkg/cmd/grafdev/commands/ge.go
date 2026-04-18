@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -6,16 +6,15 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-// cmdGe proxies subprocess execution into the grafana-enterprise checkout so agents
-// (often cwd = OSS only) do not need to cd ../grafana-enterprise for every git call.
-func cmdGe() *cli.Command {
+func (d Deps) cmdGe() *cli.Command {
 	return &cli.Command{
 		Name:  "ge",
 		Usage: "Run a subprocess with working directory = grafana-enterprise (git, shell scripts, etc.)",
-		Flags: globalPathFlags(),
+		Flags: base.GlobalPathFlags(),
 		Description: `Set OSS / enterprise paths on the root command or right after ge (both work), for example:
 
   grafdev --oss /path/to/grafana ge git status -sb
@@ -28,21 +27,21 @@ You can also rely on GRAFANA_DEV_OSS / GRAFANA_DEV_ENTERPRISE (see flag EnvVars)
 				Usage:           "Run git in the enterprise checkout; all arguments after 'git' are forwarded",
 				ArgsUsage:       "[git arguments...]",
 				SkipFlagParsing: true,
-				Action:          geGitAction,
+				Action:          d.geGitAction,
 			},
 			{
 				Name:            "run",
 				Usage:           "Run an arbitrary program in the enterprise checkout; first arg is the executable",
 				ArgsUsage:       "<program> [arguments...]",
 				SkipFlagParsing: true,
-				Action:          geRunAction,
+				Action:          d.geRunAction,
 			},
 		},
 	}
 }
 
-func geGitAction(c *cli.Context) error {
-	p, err := mustResolve(c)
+func (d Deps) geGitAction(c *cli.Context) error {
+	p, err := d.mustResolve(c)
 	if err != nil {
 		return err
 	}
@@ -62,8 +61,8 @@ func geGitAction(c *cli.Context) error {
 	return nil
 }
 
-func geRunAction(c *cli.Context) error {
-	p, err := mustResolve(c)
+func (d Deps) geRunAction(c *cli.Context) error {
+	p, err := d.mustResolve(c)
 	if err != nil {
 		return err
 	}
@@ -83,11 +82,11 @@ func geRunAction(c *cli.Context) error {
 		}
 		prog = progName
 	} else {
-		p, err := exec.LookPath(progName)
+		lp, err := exec.LookPath(progName)
 		if err != nil {
 			return fmt.Errorf("ge run: %q not found on PATH: %w", progName, err)
 		}
-		prog = p
+		prog = lp
 	}
 	cmd := exec.Command(prog, args[1:]...)
 	cmd.Dir = p.Enterprise

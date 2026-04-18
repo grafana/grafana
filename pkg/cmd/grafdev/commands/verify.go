@@ -1,24 +1,24 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/cmd/grafdev/base"
 	"github.com/urfave/cli/v2"
 )
 
-// cmdVerify is a minimal non-zero exit gate for scripting (CI / preflight).
-func cmdVerify() *cli.Command {
+func (d Deps) cmdVerify() *cli.Command {
 	return &cli.Command{
 		Name:  "verify",
 		Usage: "Exit 0 only if OSS + enterprise checkouts, local/Makefile, and ext.go look usable",
 		Action: func(c *cli.Context) error {
-			p, err := mustResolve(c)
+			p, err := d.mustResolve(c)
 			if err != nil {
 				return err
 			}
-			if err := verifyLayout(p); err != nil {
+			if err := VerifyLayout(p); err != nil {
 				return err
 			}
 			_, _ = fmt.Fprintln(c.App.Writer, "verify: ok")
@@ -27,7 +27,8 @@ func cmdVerify() *cli.Command {
 	}
 }
 
-func verifyLayout(p RepoPaths) error {
+// VerifyLayout checks enterprise link prerequisites (also used by smoke).
+func VerifyLayout(p base.RepoPaths) error {
 	if st, e := os.Stat(p.Enterprise); e != nil || !st.IsDir() {
 		return fmt.Errorf("enterprise directory missing: %s", p.Enterprise)
 	}
@@ -41,7 +42,7 @@ func verifyLayout(p RepoPaths) error {
 	if e != nil {
 		return fmt.Errorf("ext.go: %w", e)
 	}
-	if !extGoIndicatesEnterpriseLinked(b) {
+	if !base.ExtGoIndicatesEnterpriseLinked(b) {
 		return fmt.Errorf("ext.go does not appear to set IsEnterprise = true (enterprise not linked?)")
 	}
 	return nil

@@ -1,4 +1,4 @@
-package main
+package base
 
 import (
 	"strings"
@@ -6,9 +6,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// globalPathFlags returns --oss / --enterprise definitions used on the root App
-// and on the `ge` command so paths can be set either before or immediately after `ge`.
-func globalPathFlags() []cli.Flag {
+// GlobalPathFlags returns --oss / --enterprise for the root App and the `ge` subcommand.
+func GlobalPathFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    "oss",
@@ -23,9 +22,8 @@ func globalPathFlags() []cli.Flag {
 	}
 }
 
-// flagFromContext returns the innermost explicitly set flag value walking child → parent
-// (urfave/cli v2 Lineage order), otherwise c.String(name) (e.g. env default from urfave).
-func flagFromContext(c *cli.Context, name string) string {
+// FromContext returns the innermost explicitly set flag (urfave/cli v2 Lineage), else c.String.
+func FromContext(c *cli.Context, name string) string {
 	for _, cur := range c.Lineage() {
 		if cur.IsSet(name) {
 			return strings.TrimSpace(cur.String(name))

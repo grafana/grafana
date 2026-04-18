@@ -1,4 +1,4 @@
-package main
+package base
 
 import (
 	"bufio"
@@ -10,55 +10,55 @@ import (
 	"strings"
 )
 
-type devLockKind int
+type DevLockKind int
 
 const (
-	devLockAbsent devLockKind = iota
-	devLockActive
-	devLockStale
-	devLockUncertain
+	DevLockAbsent DevLockKind = iota
+	DevLockActive
+	DevLockStale
+	DevLockUncertain
 )
 
-// devLockClassify implements the same .devlock + ps heuristic used by doctor and link status.
-func devLockClassify(p RepoPaths) (kind devLockKind, lockPath string) {
+// ClassifyDevLock interprets ../grafana-enterprise/.devlock together with running processes.
+func ClassifyDevLock(p RepoPaths) (kind DevLockKind, lockPath string) {
 	lockPath = p.EnterpriseDevLock()
 	if _, err := os.Stat(lockPath); err != nil {
-		return devLockAbsent, lockPath
+		return DevLockAbsent, lockPath
 	}
 	active, certain := enterpriseDevLockStatus(p.OSS, p.Enterprise)
 	switch {
 	case active:
-		return devLockActive, lockPath
+		return DevLockActive, lockPath
 	case certain && !active:
-		return devLockStale, lockPath
+		return DevLockStale, lockPath
 	default:
-		return devLockUncertain, lockPath
+		return DevLockUncertain, lockPath
 	}
 }
 
-// devLockDoctorMessage returns printCheck inputs (ok, full sentence).
-func devLockDoctorMessage(kind devLockKind, lockPath string) (ok bool, msg string) {
+// DevLockDoctorMessage returns doctor printCheck inputs (ok, full sentence).
+func DevLockDoctorMessage(kind DevLockKind, lockPath string) (ok bool, msg string) {
 	switch kind {
-	case devLockAbsent:
+	case DevLockAbsent:
 		return true, "no enterprise .devlock (nothing holding the file watcher lock)"
-	case devLockActive:
+	case DevLockActive:
 		return true, fmt.Sprintf(".devlock at %s (enterprise-dev watcher process detected — expected while make enterprise-dev is running)", lockPath)
-	case devLockStale:
+	case DevLockStale:
 		return false, fmt.Sprintf(".devlock at %s but no matching watcher process — likely stale (grafdev link unlock or make enterprise-unlock)", lockPath)
 	default:
 		return true, fmt.Sprintf(".devlock at %s (could not confirm watcher via ps; if enterprise-dev is not running, remove stale lock: grafdev link unlock)", lockPath)
 	}
 }
 
-// devLockLinkSummary returns two lines: status label and indented lock path (path empty for absent).
-func devLockLinkSummary(kind devLockKind, lockPath string) (line1, line2 string) {
+// DevLockLinkSummary returns two lines for link status (line2 empty when absent).
+func DevLockLinkSummary(kind DevLockKind, lockPath string) (line1, line2 string) {
 	switch kind {
-	case devLockAbsent:
+	case DevLockAbsent:
 		return ".devlock:    absent", ""
-	case devLockActive:
+	case DevLockActive:
 		return ".devlock:    present — watcher process detected (expected while make enterprise-dev is running)",
 			"             " + lockPath
-	case devLockStale:
+	case DevLockStale:
 		return ".devlock:    present — likely stale (no matching watcher); try: grafdev link unlock",
 			"             " + lockPath
 	default:
@@ -67,9 +67,6 @@ func devLockLinkSummary(kind devLockKind, lockPath string) (line1, line2 string)
 	}
 }
 
-// enterpriseDevLockStatus interprets ../grafana-enterprise/.devlock together with running processes.
-// certain is false if we could not run ps or got no output (caller should not treat as stale proof).
-// active is true when a process line plausibly belongs to start-dev.sh / fswatch / inotifywait for this OSS+GE pair.
 func enterpriseDevLockStatus(ossRoot, entRoot string) (active, certain bool) {
 	ossRoot = filepath.Clean(ossRoot)
 	entRoot = filepath.Clean(entRoot)
@@ -84,7 +81,7 @@ func enterpriseDevLockStatus(ossRoot, entRoot string) (active, certain bool) {
 	sc := bufio.NewScanner(bytes.NewReader(out))
 	for sc.Scan() {
 		line := sc.Text()
-		if enterpriseDevProcessLine(line, ossRoot, entRoot, entStart) {
+		if EnterpriseDevProcessLine(line, ossRoot, entRoot, entStart) {
 			return true, true
 		}
 	}
@@ -92,12 +89,10 @@ func enterpriseDevLockStatus(ossRoot, entRoot string) (active, certain bool) {
 }
 
 func psForDoctor() ([]byte, error) {
-	// macOS / BSD: full-width args column
 	out, err := exec.Command("ps", "axww", "-o", "args=").Output()
 	if err == nil && len(bytes.TrimSpace(out)) > 0 {
 		return out, nil
 	}
-	// Linux procps-ng (repeat -w for wider command column)
 	out, err = exec.Command("ps", "-axwwww", "-o", "args=").Output()
 	if err == nil {
 		return out, nil
@@ -105,24 +100,22 @@ func psForDoctor() ([]byte, error) {
 	return out, err
 }
 
-func enterpriseDevProcessLine(line, ossRoot, entRoot, entStartScript string) bool {
+// EnterpriseDevProcessLine reports whether a ps args line plausibly belongs to enterprise-dev tooling.
+func EnterpriseDevProcessLine(line, ossRoot, entRoot, entStartScript string) bool {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return false
 	}
-	// macOS enterprise-dev uses fswatch with absolute watch paths under OSS.
 	if strings.Contains(line, "fswatch") {
 		if strings.Contains(line, ossRoot) || strings.Contains(line, entRoot) {
 			return true
 		}
 	}
-	// Linux path
 	if strings.Contains(line, "inotifywait") {
 		if strings.Contains(line, ossRoot) || strings.Contains(line, entRoot) {
 			return true
 		}
 	}
-	// start-dev.sh is launched from the enterprise checkout (often absolute path in argv).
 	if strings.Contains(line, "start-dev.sh") {
 		if strings.Contains(line, entRoot) || strings.Contains(line, entStartScript) {
 			return true
