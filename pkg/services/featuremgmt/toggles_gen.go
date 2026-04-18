@@ -246,9 +246,6 @@ const (
 	// FlagSceneCsvExport
 	// Enables CSV export using scenes dashboard architecture
 	FlagSceneCsvExport = "sceneCsvExport"
-	// FlagDashboardRules
-	// Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior
-	FlagDashboardRules = "dashboardRules"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting

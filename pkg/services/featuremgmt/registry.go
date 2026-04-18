@@ -694,12 +694,12 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dashboardRules",
-			Description:  "Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Name:        "dashboardRules",
+			Description: "Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "drilldownRecommendations",

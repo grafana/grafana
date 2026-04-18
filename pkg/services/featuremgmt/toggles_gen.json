@@ -1533,13 +1533,17 @@
     {
       "metadata": {
         "name": "dashboardRules",
-        "resourceVersion": "1770908390454",
-        "creationTimestamp": "2026-02-12T14:59:50Z"
+        "resourceVersion": "1776528462898",
+        "creationTimestamp": "2026-02-12T14:59:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-18 16:07:42.898644 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

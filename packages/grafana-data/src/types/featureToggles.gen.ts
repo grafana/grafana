@@ -398,6 +398,7 @@ export interface FeatureToggles {
   * @default false
   */
   sceneCsvExport?: boolean;
+  /**
   * Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior
   * @default false
   */
