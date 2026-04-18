@@ -354,6 +354,44 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
 // Query State Preservation
 // ---------------------------------------------------------------------------
 test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', '@queryEditorNext'] }, () => {
+  // Regression cover for https://github.com/grafana/grafana/pull/117785. Each SQL Expression's
+  // Monaco onChange fires synchronously as the user types; if QueryEditorRenderer's handleChange
+  // routes those updates by the currently selected refId instead of the originating query's
+  // refId, a late onChange from the unmounting editor clobbers the newly selected query.
+  test("switching between SQL expressions preserves each expression's content", async ({
+    gotoDashboardPage,
+    page,
+  }) => {
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+
+    async function addSqlExpression() {
+      await addQueryOrExpressionButton(page).click();
+      await page.getByRole('menuitem', { name: 'Add expression' }).click();
+      await page.getByRole('button', { name: 'SQL', exact: true }).click();
+      await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
+    }
+
+    await addSqlExpression();
+    await page.locator('.monaco-editor textarea').first().fill('SELECT 1 FROM A');
+
+    await addSqlExpression();
+    await page.locator('.monaco-editor textarea').first().fill('SELECT 2 FROM A');
+
+    const cardB = page.locator('[data-query-sidebar-card="B"]');
+    const cardC = page.locator('[data-query-sidebar-card="C"]');
+
+    await cardB.click();
+    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
+
+    await cardC.click();
+    await expect(cardC).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('SELECT 2 FROM A')).toBeVisible();
+
+    await cardB.click();
+    await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
+  });
+
   // Regression cover for https://github.com/grafana/grafana/issues/122956. Prometheus' Monaco
   // query field only commits its value via onBlur; @hello-pangea/dnd's capture-phase mousedown
   // preventDefault suppresses the native focus transfer, so without the imperative blur in
