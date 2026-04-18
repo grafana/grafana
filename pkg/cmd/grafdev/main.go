@@ -13,7 +13,7 @@ func main() {
 		Usage: "Prototype helper for Grafana OSS + grafana-enterprise local development",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "oss", Usage: "Path to Grafana OSS checkout (default: walk parents for go.mod or GRAFANA_DEV_OSS)"},
-			&cli.StringFlag{Name: "enterprise", Usage: "Path to grafana-enterprise checkout (default: sibling ../grafana-enterprise)"},
+			&cli.StringFlag{Name: "enterprise", Usage: "Path to grafana-enterprise checkout (default: $GRAFANA_DEV_ENTERPRISE or sibling ../grafana-enterprise)"},
 		},
 		Commands: []*cli.Command{
 			cmdContext(),
@@ -26,6 +26,7 @@ func main() {
 			cmdWire(),
 			cmdVerify(),
 			cmdSmoke(),
+			cmdGe(),
 		},
 	}
 	if err := app.Run(os.Args); err != nil {

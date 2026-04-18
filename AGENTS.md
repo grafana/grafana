@@ -85,6 +85,10 @@ make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
 
+### Grafana Enterprise (OSS + `grafana-enterprise`)
+
+Local enterprise development links this repo to a sibling **`../grafana-enterprise`** checkout (`make enterprise-dev`, `local/Makefile`). Agents should read **`docs/agents/skills/grafdev-enterprise/SKILL.md`** for workflows, environment variables, and the **`grafdev`** helper CLI (`go run ./pkg/cmd/grafdev`). Use **`grafdev ge git …`** to run git in the enterprise repo when the shell cwd is OSS-only.
+
 ## Architecture
 
 ### Backend (`pkg/`)

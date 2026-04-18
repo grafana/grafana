@@ -22,7 +22,10 @@ func ResolveRepos(ossFlag, entFlag string) (RepoPaths, error) {
 	if err != nil {
 		return RepoPaths{}, err
 	}
-	ent := entFlag
+	ent := strings.TrimSpace(entFlag)
+	if ent == "" {
+		ent = strings.TrimSpace(os.Getenv("GRAFANA_DEV_ENTERPRISE"))
+	}
 	if ent == "" {
 		ent = filepath.Join(filepath.Dir(oss), "grafana-enterprise")
 	}
