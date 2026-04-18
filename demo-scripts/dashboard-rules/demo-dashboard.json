@@ -1,6 +1,6 @@
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "apiVersion": "dashboard.grafana.app/v3alpha0",
   "metadata": {
     "name": "war-room-black-friday"
   },

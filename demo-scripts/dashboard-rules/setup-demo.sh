@@ -4,7 +4,7 @@
 #   1. Creates users: sre-user, product-user, business-user
 #   2. Creates teams: platform-sre, product-eng, business
 #   3. Adds users to their respective teams (admin to all teams)
-#   4. Imports the demo dashboard via the v2beta1 k8s-style API
+#   4. Imports the demo dashboard via the v3alpha0 k8s-style API
 #
 # With --rules flag, also patches the dashboard with 6 pre-configured rules
 # (3 row-level team visibility + 3 tab-level team/time-range visibility).
@@ -162,7 +162,7 @@ add_member "${BUSINESS_TEAM}" "${BUSINESS_ID}" "business" "business-user"
 echo ""
 
 # ---------------------------------------------------------------
-# 4. Create folder and import demo dashboard (v2beta1 API)
+# 4. Create folder and import demo dashboard (v3alpha0 API)
 # ---------------------------------------------------------------
 FOLDER_UID="demo-rules"
 FOLDER_TITLE="Dashboard rules demo"
@@ -183,7 +183,7 @@ if [ ! -f "${DASHBOARD_FILE}" ]; then
   exit 1
 fi
 
-DASH_API="${GRAFANA_URL}/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards"
+DASH_API="${GRAFANA_URL}/apis/dashboard.grafana.app/v3alpha0/namespaces/default/dashboards"
 
 # Inject folder annotation into the dashboard JSON before import
 DASH_WITH_FOLDER=$(python3 -c "
