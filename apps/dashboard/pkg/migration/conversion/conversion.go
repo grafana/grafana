@@ -10,6 +10,7 @@ import (
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
@@ -222,6 +223,26 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
 		normalizeConversion(dashv2.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
 			return Convert_V2_to_V2beta1(a.(*dashv2.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+
+	// v3alpha0 ↔ v2 conversions
+	//
+	// v2 is the stable storage version; v3alpha0 is the alpha schema that
+	// introduces Dashboard Rules. v3alpha0 ↔ v2beta1 is intentionally NOT
+	// registered: v2beta1 is a pre-stable transitional version and we support a
+	// single downgrade target (v2 stable) for the alpha release. See the
+	// Phase 2 migration plan.
+	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv3alpha0.Dashboard)(nil),
+		normalizeConversion(dashv2.APIVERSION, dashv3alpha0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V2_to_V3alpha0(a.(*dashv2.Dashboard), b.(*dashv3alpha0.Dashboard), scope)
+		})); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*dashv3alpha0.Dashboard)(nil), (*dashv2.Dashboard)(nil),
+		normalizeConversion(dashv3alpha0.APIVERSION, dashv2.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			return Convert_V3alpha0_to_V2(a.(*dashv3alpha0.Dashboard), b.(*dashv2.Dashboard), scope)
 		})); err != nil {
 		return err
 	}

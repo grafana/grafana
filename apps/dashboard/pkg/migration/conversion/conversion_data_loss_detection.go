@@ -9,6 +9,7 @@ import (
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
 )
 
 // Conversion Data Loss Detection Strategy for Dashboard Conversions
@@ -83,6 +84,11 @@ type dashboardStats struct {
 	annotationCount int
 	linkCount       int
 	variableCount   int
+	// v3alpha0-only: total dashboard-level rules. A v3alpha0 → v2 conversion
+	// drops any rule that does not fit the v2-compatible subset (visibility-only
+	// outcome, single target, no UserTeam condition); such drops show up as a
+	// ruleCount decrease from source to target.
+	ruleCount int
 }
 
 // countPanelsV0V1 counts panels in v0alpha1 or v1beta1 dashboard spec (unstructured JSON)
@@ -373,6 +379,41 @@ func collectStatsV2(spec dashv2.DashboardSpec) dashboardStats {
 		annotationCount: len(spec.Annotations),
 		linkCount:       len(spec.Links),
 		variableCount:   len(spec.Variables),
+		// v2 has no rules by design.
+		ruleCount: 0,
+	}
+}
+
+func countPanelsV3alpha0(elements map[string]dashv3alpha0.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count++
+		} else if element.LibraryPanelKind != nil {
+			count++
+		}
+	}
+	return count
+}
+
+func countQueriesV3alpha0(elements map[string]dashv3alpha0.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count += len(element.PanelKind.Spec.Data.Spec.Queries)
+		}
+	}
+	return count
+}
+
+func collectStatsV3alpha0(spec dashv3alpha0.DashboardSpec) dashboardStats {
+	return dashboardStats{
+		panelCount:      countPanelsV3alpha0(spec.Elements),
+		queryCount:      countQueriesV3alpha0(spec.Elements),
+		annotationCount: len(spec.Annotations),
+		linkCount:       len(spec.Links),
+		variableCount:   len(spec.Variables),
+		ruleCount:       len(spec.Rules),
 	}
 }
 
@@ -433,6 +474,18 @@ func detectConversionDataLoss(sourceStats, targetStats dashboardStats, sourceFun
 		))
 	}
 
+	// Rule count: detect loss only (target < source). A v3alpha0 → v2 downgrade
+	// will drop rules that target multiple elements, use UserTeam conditions, or
+	// apply non-visibility outcomes — these are the architected-lossy drops.
+	if targetStats.ruleCount < sourceStats.ruleCount {
+		errors = append(errors, fmt.Sprintf(
+			"rule count decreased: source=%d, target=%d (loss of %d rules)",
+			sourceStats.ruleCount,
+			targetStats.ruleCount,
+			sourceStats.ruleCount-targetStats.ruleCount,
+		))
+	}
+
 	if len(errors) > 0 {
 		errorMsg := fmt.Sprintf("%v", errors)
 		// Note: sourceAPIVersion and targetAPIVersion are passed from checkConversionDataLoss
@@ -485,6 +538,8 @@ func collectDashboardStats(dashboard interface{}) dashboardStats {
 		return collectStatsV2beta1(d.Spec)
 	case *dashv2.Dashboard:
 		return collectStatsV2(d.Spec)
+	case *dashv3alpha0.Dashboard:
+		return collectStatsV3alpha0(d.Spec)
 	}
 	return dashboardStats{}
 }
