@@ -2,10 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  ElementReference,
-  LayoutItemReference,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import {
   Button,
   ComboboxOption,
@@ -123,10 +120,12 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
 
   // Check whether targets are needed based on the selected outcomes.
   // If every outcome is dashboard-global (targetKinds === []), targets are optional.
-  const requiresTargets = outcomes.length === 0 || outcomes.some((o) => {
-    const item = outcomeRegistry.getIfExists(o.type);
-    return item ? item.targetKinds.length > 0 : true;
-  });
+  const requiresTargets =
+    outcomes.length === 0 ||
+    outcomes.some((o) => {
+      const item = outcomeRegistry.getIfExists(o.type);
+      return item ? item.targetKinds.length > 0 : true;
+    });
 
   const canSubmit = outcomes.length > 0 && (resolvedTargets.length > 0 || !requiresTargets);
 
@@ -153,23 +152,20 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
     setConditions((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
-  const handleAddOutcome = useCallback(
-    (option: SelectableValue<string>) => {
-      const type = option.value;
-      if (!type) {
-        return;
-      }
+  const handleAddOutcome = useCallback((option: SelectableValue<string>) => {
+    const type = option.value;
+    if (!type) {
+      return;
+    }
 
-      const registryItem = outcomeRegistry.get(type);
-      const defaultSpec = registryItem.createDefaultSpec();
-      const kind = registryItem.specToKind(defaultSpec);
+    const registryItem = outcomeRegistry.get(type);
+    const defaultSpec = registryItem.createDefaultSpec();
+    const kind = registryItem.specToKind(defaultSpec);
 
-      const id = nextOutcomeId.current++;
-      setOutcomes((prev) => [...prev, { id, type, spec: kind }]);
-      setAddingOutcome(false);
-    },
-    []
-  );
+    const id = nextOutcomeId.current++;
+    setOutcomes((prev) => [...prev, { id, type, spec: kind }]);
+    setAddingOutcome(false);
+  }, []);
 
   const handleUpdateOutcome = useCallback((id: number, updatedSpec: DashboardRuleOutcomeKindTypes) => {
     setOutcomes((prev) => prev.map((o) => (o.id === id ? { ...o, spec: updatedSpec } : o)));
@@ -222,11 +218,7 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
     <div className={styles.form}>
       <Stack direction="column" gap={2}>
         <Field label="Rule name (optional)">
-          <Input
-            placeholder="e.g. Hide when no data"
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-          />
+          <Input placeholder="e.g. Hide when no data" value={name} onChange={(e) => setName(e.currentTarget.value)} />
         </Field>
 
         <Field label="Match conditions">
@@ -244,12 +236,7 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
         <Field label="Conditions" description="Conditions that must be met for outcomes to apply">
           <Stack direction="column" gap={1}>
             {conditions.map((entry) => (
-              <ConditionItem
-                key={entry.id}
-                entry={entry}
-                onRemove={handleRemoveCondition}
-                styles={styles}
-              />
+              <ConditionItem key={entry.id} entry={entry} onRemove={handleRemoveCondition} styles={styles} />
             ))}
 
             {addingCondition ? (
@@ -284,6 +271,8 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
                 entry={entry}
                 onUpdate={handleUpdateOutcome}
                 onRemove={handleRemoveOutcome}
+                dashboard={dashboard}
+                selectedTargets={selectedTargetValues}
                 styles={styles}
               />
             ))}
@@ -363,11 +352,7 @@ function ConditionItem({
     <div className={styles.conditionEditor}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
         <div style={{ flex: 1 }}>
-          {ConditionEditor ? (
-            <ConditionEditor model={entry.instance} />
-          ) : (
-            <span>{entry.type}</span>
-          )}
+          {ConditionEditor ? <ConditionEditor model={entry.instance} /> : <span>{entry.type}</span>}
         </div>
         <IconButton name="trash-alt" size="sm" onClick={() => onRemove(entry.id)} tooltip="Remove condition" />
       </Stack>
@@ -380,11 +365,15 @@ function OutcomeItem({
   entry,
   onUpdate,
   onRemove,
+  dashboard,
+  selectedTargets,
   styles,
 }: {
   entry: OutcomeEntry;
   onUpdate: (id: number, spec: DashboardRuleOutcomeKindTypes) => void;
   onRemove: (id: number) => void;
+  dashboard: DashboardScene;
+  selectedTargets: string[];
   styles: ReturnType<typeof getStyles>;
 }) {
   const registryItem = outcomeRegistry.get(entry.type);
@@ -430,6 +419,8 @@ function OutcomeItem({
             <EditorComponent
               spec={spec}
               onChange={(newSpec) => onUpdate(entry.id, registryItem.specToKind(newSpec))}
+              dashboard={dashboard}
+              selectedTargets={selectedTargets}
             />
           )}
         </div>

@@ -1,6 +1,8 @@
 import { Registry, RegistryItem } from '@grafana/data';
+import type { SceneObject } from '@grafana/scenes';
 import {
   DashboardRuleOutcomeCollapseKind,
+  DashboardRuleOutcomeOverrideQueryKind,
   DashboardRuleOutcomeRefreshIntervalKind,
   DashboardRuleOutcomeVisibilityKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -9,7 +11,8 @@ import {
 export type DashboardRuleOutcomeKindTypes =
   | DashboardRuleOutcomeVisibilityKind
   | DashboardRuleOutcomeCollapseKind
-  | DashboardRuleOutcomeRefreshIntervalKind;
+  | DashboardRuleOutcomeRefreshIntervalKind
+  | DashboardRuleOutcomeOverrideQueryKind;
 
 /** Element kinds an outcome can target. Empty array means dashboard-global (no targets needed). */
 export type OutcomeTargetKind = 'panel' | 'row' | 'tab';
@@ -45,6 +48,10 @@ export interface OutcomeRegistryItem<TSpec = any> extends RegistryItem {
 export interface OutcomeEditorProps<TSpec = any> {
   spec: TSpec;
   onChange: (spec: TSpec) => void;
+  /** Dashboard context -- available for editors that need scene graph access (e.g. query editor). */
+  dashboard?: SceneObject;
+  /** Currently selected target keys (e.g. "panel-1", "row-myrow"). */
+  selectedTargets?: string[];
 }
 
 export const outcomeRegistry = new Registry<OutcomeRegistryItem>();

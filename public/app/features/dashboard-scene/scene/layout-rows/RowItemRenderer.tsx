@@ -54,7 +54,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   // Show overlay/class from either source
   const conditionalRenderingClass = isHiddenByAnySource ? 'dashboard-visible-hidden-element' : elementCrClass;
   const conditionalRenderingOverlay = isHiddenByAnySource
-    ? elementCrOverlay ?? <ConditionalRenderingOverlay />
+    ? (elementCrOverlay ?? <ConditionalRenderingOverlay />)
     : elementCrOverlay;
 
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);

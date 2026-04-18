@@ -2052,7 +2052,7 @@ export interface DashboardRuleSpec {
 	conditions: DashboardRuleConditionsSpec;
 	// Outcomes to apply when conditions are met. Automatically reversed when
 	// conditions stop being met.
-	outcomes: (DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind)[];
+	outcomes: (DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind | DashboardRuleOutcomeOverrideQueryKind)[];
 }
 
 export const defaultDashboardRuleSpec = (): DashboardRuleSpec => ({
@@ -2138,6 +2138,27 @@ export interface DashboardRuleOutcomeRefreshIntervalSpec {
 
 export const defaultDashboardRuleOutcomeRefreshIntervalSpec = (): DashboardRuleOutcomeRefreshIntervalSpec => ({
 	interval: "",
+});
+
+// Override query outcome: replace the target panel's queries while conditions are met.
+// The datasource is inherited from the target panel and does not change.
+export interface DashboardRuleOutcomeOverrideQueryKind {
+	kind: "DashboardRuleOutcomeOverrideQuery";
+	spec: DashboardRuleOutcomeOverrideQuerySpec;
+}
+
+export const defaultDashboardRuleOutcomeOverrideQueryKind = (): DashboardRuleOutcomeOverrideQueryKind => ({
+	kind: "DashboardRuleOutcomeOverrideQuery",
+	spec: defaultDashboardRuleOutcomeOverrideQuerySpec(),
+});
+
+export interface DashboardRuleOutcomeOverrideQuerySpec {
+	// Replacement queries as opaque JSON objects. Each query uses the target panel's datasource.
+	queries: Record<string, any>[];
+}
+
+export const defaultDashboardRuleOutcomeOverrideQuerySpec = (): DashboardRuleOutcomeOverrideQuerySpec => ({
+	queries: [],
 });
 
 export interface Spec {

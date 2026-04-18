@@ -1184,8 +1184,8 @@ func convertRuleConditions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDashboa
 	return out
 }
 
-func convertRuleOutcomes_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind) []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind {
-	out := make([]dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind, len(in))
+func convertRuleOutcomes_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind) []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind {
+	out := make([]dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind, len(in))
 	for i, outcome := range in {
 		if outcome.DashboardRuleOutcomeVisibilityKind != nil {
 			out[i].DashboardRuleOutcomeVisibilityKind = &dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind{
@@ -1208,6 +1208,14 @@ func convertRuleOutcomes_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardDashboar
 				Kind: outcome.DashboardRuleOutcomeRefreshIntervalKind.Kind,
 				Spec: dashv2beta1.DashboardDashboardRuleOutcomeRefreshIntervalSpec{
 					Interval: outcome.DashboardRuleOutcomeRefreshIntervalKind.Spec.Interval,
+				},
+			}
+		}
+		if outcome.DashboardRuleOutcomeOverrideQueryKind != nil {
+			out[i].DashboardRuleOutcomeOverrideQueryKind = &dashv2beta1.DashboardDashboardRuleOutcomeOverrideQueryKind{
+				Kind: outcome.DashboardRuleOutcomeOverrideQueryKind.Kind,
+				Spec: dashv2beta1.DashboardDashboardRuleOutcomeOverrideQuerySpec{
+					Queries: outcome.DashboardRuleOutcomeOverrideQueryKind.Spec.Queries,
 				},
 			}
 		}

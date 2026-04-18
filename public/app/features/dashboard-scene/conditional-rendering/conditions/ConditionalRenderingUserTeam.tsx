@@ -38,10 +38,8 @@ export class ConditionalRenderingUserTeam extends SceneObjectBase<ConditionalRen
     id: 'ConditionalRenderingUserTeam',
     name: 'User team',
     description: 'Check if the current user belongs to specific teams',
-    deserialize: (model) =>
-      ConditionalRenderingUserTeam.deserialize(model as ConditionalRenderingUserTeamKind),
-    createEmpty: () =>
-      new ConditionalRenderingUserTeam({ operator: 'is_member', teamUids: [], result: undefined }),
+    deserialize: (model) => ConditionalRenderingUserTeam.deserialize(model as ConditionalRenderingUserTeamKind),
+    createEmpty: () => new ConditionalRenderingUserTeam({ operator: 'is_member', teamUids: [], result: undefined }),
     isApplicable: () => true,
   };
 
@@ -141,9 +139,7 @@ export class ConditionalRenderingUserTeam extends SceneObjectBase<ConditionalRen
 
 // ─── Renderer ──────────────────────────────────────────────────────
 
-function ConditionalRenderingUserTeamRenderer({
-  model,
-}: SceneComponentProps<ConditionalRenderingUserTeam>) {
+function ConditionalRenderingUserTeamRenderer({ model }: SceneComponentProps<ConditionalRenderingUserTeam>) {
   const { operator, teamUids } = model.useState();
   const [allTeams, setAllTeams] = useState<TeamInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,4 +250,3 @@ function ConditionalRenderingUserTeamRenderer({
     </ConditionalRenderingConditionWrapper>
   );
 }
-

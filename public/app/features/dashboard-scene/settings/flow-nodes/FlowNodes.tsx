@@ -286,6 +286,8 @@ function getOutcomeIcon(kind: string, spec: Record<string, unknown>): IconName {
       return spec.collapse ? 'angle-double-down' : 'angle-double-up';
     case 'DashboardRuleOutcomeRefreshInterval':
       return 'sync';
+    case 'DashboardRuleOutcomeOverrideQuery':
+      return 'database';
     default:
       return 'cog';
   }
@@ -299,6 +301,8 @@ function getOutcomeTypeName(kind: string): string {
       return 'Collapse';
     case 'DashboardRuleOutcomeRefreshInterval':
       return 'Refresh interval';
+    case 'DashboardRuleOutcomeOverrideQuery':
+      return 'Override query';
     default:
       return kind;
   }
@@ -312,6 +316,10 @@ function getOutcomeLabel(kind: string, spec: Record<string, unknown>): string {
       return spec.collapse ? 'Collapse row' : 'Expand row';
     case 'DashboardRuleOutcomeRefreshInterval':
       return `Interval: ${spec.interval}`;
+    case 'DashboardRuleOutcomeOverrideQuery': {
+      const queries = spec.queries as unknown[];
+      return queries?.length ? `${queries.length} ${queries.length === 1 ? 'query' : 'queries'}` : 'No queries';
+    }
     default:
       return JSON.stringify(spec);
   }

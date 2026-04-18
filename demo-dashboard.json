@@ -1,0 +1,971 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "war-room-black-friday"
+  },
+  "spec": {
+    "title": "War room: Black Friday",
+    "description": "Shared war room dashboard for Black Friday operations. Adapts to viewer context using dashboard rules.",
+    "links": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "timeSettings": {
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0,
+      "timezone": ""
+    },
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "service",
+          "current": { "text": "All", "value": "$__all" },
+          "hide": "dontHide",
+          "includeAll": true,
+          "multi": true,
+          "options": [
+            { "selected": true, "text": "api-gateway", "value": "api-gateway" },
+            { "selected": true, "text": "checkout-service", "value": "checkout-service" },
+            { "selected": true, "text": "payment-service", "value": "payment-service" },
+            { "selected": true, "text": "cart-service", "value": "cart-service" },
+            { "selected": false, "text": "inventory-service", "value": "inventory-service" }
+          ],
+          "query": "api-gateway,checkout-service,payment-service,cart-service,inventory-service",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "region",
+          "current": { "text": "us-east-1", "value": "us-east-1" },
+          "hide": "dontHide",
+          "includeAll": false,
+          "multi": false,
+          "options": [
+            { "selected": true, "text": "us-east-1", "value": "us-east-1" },
+            { "selected": false, "text": "eu-west-1", "value": "eu-west-1" },
+            { "selected": false, "text": "ap-southeast-1", "value": "ap-southeast-1" }
+          ],
+          "query": "us-east-1,eu-west-1,ap-southeast-1",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      }
+    ],
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "builtIn": true,
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": { "name": "-- Grafana --" },
+            "spec": {}
+          }
+        }
+      }
+    ],
+    "elements": {
+      "panel-orders-per-min": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Orders / min",
+          "description": "Live order throughput across all services",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "orders", "min": 800, "max": 1200 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "justifyMode": "auto", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 500 }, { "color": "blue", "value": 800 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-error-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Error rate",
+          "description": "Aggregate error rate across all services",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "error rate", "min": 0, "max": 3 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "orange", "value": 1 }, { "color": "red", "value": 2 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-p99-latency": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "P99 latency",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p99", "min": 80, "max": 350 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "ms", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "orange", "value": 200 }, { "color": "red", "value": 500 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-uptime": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Uptime",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "uptime", "min": 99.5, "max": 100 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "none", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 99 }, { "color": "green", "value": 99.9 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-services-health": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Service health",
+          "description": "Health score per service",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "api-gateway", "min": 95, "max": 100 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout-service", "min": 88, "max": 99 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "payment-service", "min": 92, "max": 100 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "cart-service", "min": 90, "max": 100 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "E", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "inventory-service", "min": 85, "max": 98 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "bargauge", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "minVizWidth": 8, "minVizHeight": 10, "valueMode": "color" },
+              "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 90 }, { "color": "green", "value": 98 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-slo-burn": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "SLO error budget remaining",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "error budget", "min": 40, "max": 78 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "gauge", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 30 }, { "color": "green", "value": 60 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-request-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Request rate by service",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "api-gateway" } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout-service" } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "payment-service" } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "cart-service" } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "E", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "inventory-service" } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-error-rate-ts": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Error rate by service",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "api-gateway", "min": 0, "max": 2 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout-service", "min": 0, "max": 4 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "payment-service", "min": 0, "max": 5 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "cart-service", "min": 0, "max": 1.5 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "E", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "inventory-service", "min": 0, "max": 3 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "percent", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 15, "showPoints": "never", "stacking": { "mode": "none" }, "thresholdsStyle": { "mode": "dashed" } }, "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": 0 }, { "color": "red", "value": 2 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-revenue": {
+        "kind": "Panel",
+        "spec": {
+          "id": 30,
+          "title": "Revenue / min",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "revenue", "min": 5000, "max": 25000 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "currencyUSD", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 5000 }, { "color": "green", "value": 15000 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-active-users": {
+        "kind": "Panel",
+        "spec": {
+          "id": 32,
+          "title": "Active users",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "active users", "min": 15000, "max": 45000 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": 0 }, { "color": "green", "value": 20000 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-aov": {
+        "kind": "Panel",
+        "spec": {
+          "id": 33,
+          "title": "Avg order value",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "avg order value", "min": 45, "max": 120 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "currencyUSD", "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": 0 }, { "color": "green", "value": 60 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-revenue-trend": {
+        "kind": "Panel",
+        "spec": {
+          "id": 31,
+          "title": "Revenue trend",
+          "description": "Revenue over time, compared to last Black Friday",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "BF 2026", "min": 10000, "max": 25000 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "BF 2025", "min": 8000, "max": 20000 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean", "sum"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyUSD", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 15, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-pod-count": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Pod count / scaling events",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "api-gateway", "min": 8, "max": 30 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout-service", "min": 5, "max": 20 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "payment-service", "min": 4, "max": 15 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "lineWidth": 2, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-cpu": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "CPU saturation",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "api-gateway", "min": 30, "max": 70 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout-service", "min": 40, "max": 85 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "payment-service", "min": 25, "max": 60 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "cart-service", "min": 20, "max": 55 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "E", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "inventory-service", "min": 15, "max": 45 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 15, "showPoints": "never", "stacking": { "mode": "none" }, "thresholdsStyle": { "mode": "dashed" } }, "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": 0 }, { "color": "red", "value": 80 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-memory": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Memory pressure",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "heap used", "min": 45, "max": 78 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "gauge", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "orange", "value": 70 }, { "color": "red", "value": 85 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-network-io": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Network I/O",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "rx bytes", "min": 500, "max": 2000 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "tx bytes", "min": 300, "max": 1500 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "KBs", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-latency-heatmap": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Latency distribution",
+          "description": "Request latency by percentile bucket",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p50", "min": 10, "max": 40 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p75", "min": 30, "max": 80 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p90", "min": 60, "max": 150 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p95", "min": 100, "max": 250 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "E", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "p99", "min": 180, "max": 500 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "ms", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 40, "showPoints": "never", "stacking": { "mode": "normal" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-cart-additions": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "Cart additions / min",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "cart additions", "min": 200, "max": 600 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" }, "unit": "short", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 25, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-checkout-funnel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 21,
+          "title": "Checkout starts vs completions",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "checkout starts", "min": 300, "max": 500 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "completions", "min": 250, "max": 450 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "none" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-payment-errors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 22,
+          "title": "Payment gateway errors",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "Stripe", "min": 0, "max": 8 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "PayPal", "min": 0, "max": 5 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "Braintree", "min": 0, "max": 3 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "timeseries", "version": "",
+            "spec": {
+              "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+              "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 80, "showPoints": "never", "stacking": { "mode": "normal" } } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-abandoned-carts": {
+        "kind": "Panel",
+        "spec": {
+          "id": 23,
+          "title": "Abandoned carts",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "abandoned", "min": 10, "max": 80 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "stat", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background_solid", "graphMode": "area", "textMode": "auto", "wideLayout": true, "orientation": "auto" },
+              "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "orange", "value": 40 }, { "color": "red", "value": 70 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-conversion-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 24,
+          "title": "Conversion by step",
+          "description": "Cart > Checkout > Payment > Confirmed",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "Cart > Checkout", "min": 85, "max": 98 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "B", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "Checkout > Payment", "min": 70, "max": 92 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "C", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "Payment > Confirmed", "min": 88, "max": 99 } } } },
+                { "kind": "PanelQuery", "spec": { "refId": "D", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk", "seriesCount": 1, "alias": "End-to-end", "min": 50, "max": 82 } } } }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "bargauge", "version": "",
+            "spec": {
+              "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "minVizWidth": 8, "minVizHeight": 10, "valueMode": "color" },
+              "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 70 }, { "color": "green", "value": 90 }] } }, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-errors-by-endpoint": {
+        "kind": "Panel",
+        "spec": {
+          "id": 40,
+          "title": "Errors by endpoint",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk_table", "seriesCount": 5 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "table", "version": "",
+            "spec": {
+              "options": { "showHeader": true, "cellHeight": "sm" },
+              "fieldConfig": { "defaults": {}, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-slow-requests": {
+        "kind": "Panel",
+        "spec": {
+          "id": 41,
+          "title": "Slow requests (> 2s)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk_table", "seriesCount": 3 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "table", "version": "",
+            "spec": {
+              "options": { "showHeader": true, "cellHeight": "sm" },
+              "fieldConfig": { "defaults": {}, "overrides": [] }
+            }
+          }
+        }
+      },
+      "panel-top-errors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 42,
+          "title": "Top error messages",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [{ "kind": "PanelQuery", "spec": { "refId": "A", "hidden": false, "query": { "kind": "DataQuery", "group": "testdata", "version": "v0", "datasource": { "type": "grafana-testdata-datasource" }, "spec": { "scenarioId": "random_walk_table", "seriesCount": 4 } } } }],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig", "group": "table", "version": "",
+            "spec": {
+              "options": { "showHeader": true, "cellHeight": "sm" },
+              "fieldConfig": { "defaults": {}, "overrides": [] }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "name": "tab-war-room",
+              "title": "War room",
+              "layout": {
+                "kind": "RowsLayout",
+                "spec": {
+                  "rows": [
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-golden-signals",
+                        "title": "Golden signals",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "short",
+                            "maxColumnCount": 4,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-orders-per-min" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-error-rate" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-p99-latency" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-uptime" } } }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-sre-overview",
+                        "title": "SRE overview",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 2,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-services-health" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-slo-burn" } } }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-product-overview",
+                        "title": "Checkout health",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 3,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-checkout-funnel" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-payment-errors" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-abandoned-carts" } } }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-business-overview",
+                        "title": "Business KPIs",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "short",
+                            "maxColumnCount": 3,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-revenue" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-active-users" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-aov" } } }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "name": "tab-infrastructure",
+              "title": "Infrastructure",
+              "layout": {
+                "kind": "RowsLayout",
+                "spec": {
+                  "rows": [
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-infra-traffic",
+                        "title": "Traffic",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 2,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-request-rate" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-error-rate-ts" } } }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-infra-compute",
+                        "title": "Compute & network",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 3,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-pod-count" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-cpu" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-memory" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-latency-heatmap" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-network-io" } } }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "name": "tab-checkout",
+              "title": "Checkout & payments",
+              "layout": {
+                "kind": "RowsLayout",
+                "spec": {
+                  "rows": [
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-checkout-funnel",
+                        "title": "Funnel",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 2,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-cart-additions" } } },
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-conversion-rate" } } }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "name": "row-checkout-trends",
+                        "title": "Trends",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "AutoGridLayout",
+                          "spec": {
+                            "columnWidthMode": "standard",
+                            "rowHeightMode": "standard",
+                            "maxColumnCount": 2,
+                            "items": [
+                              { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-revenue-trend" } } }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "name": "tab-deep-dive",
+              "title": "Deep dive",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "maxColumnCount": 3,
+                  "items": [
+                    { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-errors-by-endpoint" } } },
+                    { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-slow-requests" } } },
+                    { "kind": "AutoGridLayoutItem", "spec": { "element": { "kind": "ElementReference", "name": "panel-top-errors" } } }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

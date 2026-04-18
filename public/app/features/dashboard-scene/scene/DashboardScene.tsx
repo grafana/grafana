@@ -314,8 +314,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     const destroyMutationClient = createMutationClient(this);
 
+    // Activate dashboard-level rules so conditions subscribe to time range / variable changes
+    const deactivateDashboardRules =
+      this.state.dashboardRules && !this.state.dashboardRules.isActive
+        ? this.state.dashboardRules.activate()
+        : undefined;
+
     return () => {
       destroyMutationClient();
+      deactivateDashboardRules?.();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
