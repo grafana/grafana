@@ -1065,8 +1065,6 @@ ConditionalRenderingGroupKind: {
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
 	condition:  "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
-	condition: "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind]
 }
 

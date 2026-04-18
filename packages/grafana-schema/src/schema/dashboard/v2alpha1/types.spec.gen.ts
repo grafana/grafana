@@ -799,7 +799,7 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 export interface ConditionalRenderingGroupSpec {
 	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
@@ -864,6 +864,30 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
+});
+
+// Checks whether the current user belongs to (or does not belong to) the specified team(s).
+export interface ConditionalRenderingUserTeamKind {
+	kind: "ConditionalRenderingUserTeam";
+	spec: ConditionalRenderingUserTeamSpec;
+}
+
+export const defaultConditionalRenderingUserTeamKind = (): ConditionalRenderingUserTeamKind => ({
+	kind: "ConditionalRenderingUserTeam",
+	spec: defaultConditionalRenderingUserTeamSpec(),
+});
+
+export interface ConditionalRenderingUserTeamSpec {
+	// How to match: "is_member" means the user must belong to at least one team,
+	// "is_not_member" means the user must not belong to any of the teams.
+	operator: "is_member" | "is_not_member";
+	// Team UIDs to evaluate against.
+	teamUids: string[];
+}
+
+export const defaultConditionalRenderingUserTeamSpec = (): ConditionalRenderingUserTeamSpec => ({
+	operator: "is_member",
+	teamUids: [],
 });
 
 export interface RowRepeatOptions {
@@ -1582,30 +1606,6 @@ export interface DashboardRuleConditionsSpec {
 export const defaultDashboardRuleConditionsSpec = (): DashboardRuleConditionsSpec => ({
 	match: "and",
 	items: [],
-});
-
-// Checks whether the current user belongs to (or does not belong to) the specified team(s).
-export interface ConditionalRenderingUserTeamKind {
-	kind: "ConditionalRenderingUserTeam";
-	spec: ConditionalRenderingUserTeamSpec;
-}
-
-export const defaultConditionalRenderingUserTeamKind = (): ConditionalRenderingUserTeamKind => ({
-	kind: "ConditionalRenderingUserTeam",
-	spec: defaultConditionalRenderingUserTeamSpec(),
-});
-
-export interface ConditionalRenderingUserTeamSpec {
-	// How to match: "is_member" means the user must belong to at least one team,
-	// "is_not_member" means the user must not belong to any of the teams.
-	operator: "is_member" | "is_not_member";
-	// Team UIDs to evaluate against.
-	teamUids: string[];
-}
-
-export const defaultConditionalRenderingUserTeamSpec = (): ConditionalRenderingUserTeamSpec => ({
-	operator: "is_member",
-	teamUids: [],
 });
 
 // Visibility outcome: show or hide the target element/layout item.
