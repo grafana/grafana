@@ -5,7 +5,7 @@ import {
   ConditionalRenderingTimeRangeSizeKind,
   ConditionalRenderingUserTeamKind,
   ConditionalRenderingVariableKind,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+} from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 
 import { ObjectsWithConditionalRendering } from '../object';
 

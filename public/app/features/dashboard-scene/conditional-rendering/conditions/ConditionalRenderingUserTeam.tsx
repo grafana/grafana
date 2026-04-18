@@ -3,7 +3,7 @@ import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConditionalRenderingUserTeamKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { ConditionalRenderingUserTeamKind } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { Field, MultiSelect, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';

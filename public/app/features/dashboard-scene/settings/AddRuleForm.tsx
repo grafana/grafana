@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import {
   Button,
   ComboboxOption,

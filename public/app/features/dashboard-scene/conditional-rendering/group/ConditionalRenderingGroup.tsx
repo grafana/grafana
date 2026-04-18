@@ -157,8 +157,9 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
   }
 
   public serialize(): ConditionalRenderingGroupKind {
-    // UserTeam condition is v2beta1-only and doesn't appear in v2 stable's ConditionalRenderingGroupSpec
-    // items union. Cast at this boundary; Phase 2 moves this to v3alpha0 cleanly.
+    // UserTeam is a v3alpha0-only condition kind. v2 stable's items union excludes it, so the
+    // cast covers the mismatch on the v2 save path. Rule-bearing dashboards (which carry
+    // UserTeam conditions) route through v3alpha0 where the union matches cleanly.
     return {
       kind: 'ConditionalRenderingGroup',
       spec: {

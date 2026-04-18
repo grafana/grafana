@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { Badge, Button, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { conditionRegistry } from '../conditional-rendering/conditions/conditionRegistry';

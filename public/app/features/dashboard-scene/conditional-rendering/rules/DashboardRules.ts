@@ -9,7 +9,7 @@ import {
   SceneRefreshPicker,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardRuleKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { DashboardRuleKind } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 
 import { DashboardRule } from './DashboardRule';
 
