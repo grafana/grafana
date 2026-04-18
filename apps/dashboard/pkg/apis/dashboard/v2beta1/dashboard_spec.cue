@@ -48,12 +48,6 @@ DashboardSpec: {
 
 	// Configured template variables.
 	variables: [...VariableKind] | *[]
-
-	// Dashboard-level rules for dynamic behavior (conditional rendering, etc.).
-	// Rules are evaluated in array order. When multiple rules target the same
-	// element with conflicting outcomes, the last matching rule wins.
-	// Gated behind the dashboardRules feature flag.
-	rules?: [...DashboardRuleKind]
 }
 
 // Supported dashboard elements
@@ -649,9 +643,6 @@ RowsLayoutRowKind: {
 }
 
 RowsLayoutRowSpec: {
-	// Stable unique identifier for this row, used by LayoutItemReference to target
-	// this row in dashboard rules. Auto-generated on creation (e.g. "row-a1b2c3").
-	name?:                 string
 	title?:                string
 	collapse?:             bool
 	hideHeader?:           bool
@@ -703,9 +694,6 @@ TabsLayoutTabKind: {
 }
 
 TabsLayoutTabSpec: {
-	// Stable unique identifier for this tab, used by LayoutItemReference to target
-	// this tab in dashboard rules. Auto-generated on creation (e.g. "tab-x7y8z9").
-	name?:                 string
 	title?:                string
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
@@ -1097,7 +1085,7 @@ ConditionalRenderingGroupKind: {
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
 	condition:  "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -1127,94 +1115,4 @@ ConditionalRenderingTimeRangeSizeKind: {
 
 ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
-}
-
-// Checks whether the current user belongs to (or does not belong to) the specified team(s).
-ConditionalRenderingUserTeamKind: {
-	kind: "ConditionalRenderingUserTeam"
-	spec: ConditionalRenderingUserTeamSpec
-}
-
-ConditionalRenderingUserTeamSpec: {
-	// How to match: "is_member" means the user must belong to at least one team,
-	// "is_not_member" means the user must not belong to any of the teams.
-	operator: "is_member" | "is_not_member"
-	// Team UIDs to evaluate against.
-	teamUids: [...string]
-}
-
-// --- Dashboard rules ---
-
-// A rule defines a set of conditions and outcomes that apply to a target element
-// or layout item. Rules enable dynamic dashboard behavior such as conditional
-// visibility, visualization switching, and query overrides.
-DashboardRuleKind: {
-	kind: "DashboardRule"
-	spec: DashboardRuleSpec
-}
-
-DashboardRuleSpec: {
-	// Optional human-readable name for this rule.
-	name?: string
-	// The elements or layout items this rule targets.
-	targets: [...ElementReference | LayoutItemReference]
-	// Conditions that must be met for the outcomes to apply.
-	conditions: DashboardRuleConditionsSpec
-	// Outcomes to apply when conditions are met. Automatically reversed when
-	// conditions stop being met.
-	outcomes: [...DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind | DashboardRuleOutcomeOverrideQueryKind]
-}
-
-// Refers to a layout item (row, tab) by its stable name field.
-LayoutItemReference: {
-	kind: "LayoutItemReference"
-	name: string
-}
-
-DashboardRuleConditionsSpec: {
-	// How to combine the conditions: "and" requires all to match, "or" requires any.
-	match: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind]
-}
-
-// Visibility outcome: show or hide the target element/layout item.
-DashboardRuleOutcomeVisibilityKind: {
-	kind: "DashboardRuleOutcomeVisibility"
-	spec: DashboardRuleOutcomeVisibilitySpec
-}
-
-DashboardRuleOutcomeVisibilitySpec: {
-	visibility: "show" | "hide"
-}
-
-// Collapse outcome: collapse or expand the target row.
-DashboardRuleOutcomeCollapseKind: {
-	kind: "DashboardRuleOutcomeCollapse"
-	spec: DashboardRuleOutcomeCollapseSpec
-}
-
-DashboardRuleOutcomeCollapseSpec: {
-	collapse: bool
-}
-
-// Refresh interval outcome: override the dashboard auto-refresh interval.
-DashboardRuleOutcomeRefreshIntervalKind: {
-	kind: "DashboardRuleOutcomeRefreshInterval"
-	spec: DashboardRuleOutcomeRefreshIntervalSpec
-}
-
-DashboardRuleOutcomeRefreshIntervalSpec: {
-	interval: string
-}
-
-// Override query outcome: replace the target panel's queries while conditions are met.
-// The datasource is inherited from the target panel and does not change.
-DashboardRuleOutcomeOverrideQueryKind: {
-	kind: "DashboardRuleOutcomeOverrideQuery"
-	spec: DashboardRuleOutcomeOverrideQuerySpec
-}
-
-DashboardRuleOutcomeOverrideQuerySpec: {
-	// Replacement queries as opaque JSON objects. Each query uses the target panel's datasource.
-	queries: [...{...}]
 }

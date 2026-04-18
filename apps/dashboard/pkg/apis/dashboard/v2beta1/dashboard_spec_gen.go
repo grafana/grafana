@@ -1248,9 +1248,6 @@ func (DashboardRowsLayoutRowKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	// Stable unique identifier for this row, used by LayoutItemReference to target
-	// this row in dashboard rules. Auto-generated on creation (e.g. "row-a1b2c3").
-	Name                 *string                                                                     `json:"name,omitempty"`
 	Title                *string                                                                     `json:"title,omitempty"`
 	Collapse             *bool                                                                       `json:"collapse,omitempty"`
 	HideHeader           *bool                                                                       `json:"hideHeader,omitempty"`
@@ -1294,15 +1291,15 @@ func (DashboardConditionalRenderingGroupKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupSpec struct {
-	Visibility DashboardConditionalRenderingGroupSpecVisibility                                                                                                   `json:"visibility"`
-	Condition  DashboardConditionalRenderingGroupSpecCondition                                                                                                    `json:"condition"`
-	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind `json:"items"`
+	Visibility DashboardConditionalRenderingGroupSpecVisibility                                                                 `json:"visibility"`
+	Condition  DashboardConditionalRenderingGroupSpecCondition                                                                  `json:"condition"`
+	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind `json:"items"`
 }
 
 // NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
 func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
 	return &DashboardConditionalRenderingGroupSpec{
-		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{},
+		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{},
 	}
 }
 
@@ -1413,47 +1410,6 @@ func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRe
 // OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeSpec.
 func (DashboardConditionalRenderingTimeRangeSizeSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingTimeRangeSizeSpec"
-}
-
-// Checks whether the current user belongs to (or does not belong to) the specified team(s).
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingUserTeamKind struct {
-	Kind string                                    `json:"kind"`
-	Spec DashboardConditionalRenderingUserTeamSpec `json:"spec"`
-}
-
-// NewDashboardConditionalRenderingUserTeamKind creates a new DashboardConditionalRenderingUserTeamKind object.
-func NewDashboardConditionalRenderingUserTeamKind() *DashboardConditionalRenderingUserTeamKind {
-	return &DashboardConditionalRenderingUserTeamKind{
-		Kind: "ConditionalRenderingUserTeam",
-		Spec: *NewDashboardConditionalRenderingUserTeamSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingUserTeamKind.
-func (DashboardConditionalRenderingUserTeamKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingUserTeamKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingUserTeamSpec struct {
-	// How to match: "is_member" means the user must belong to at least one team,
-	// "is_not_member" means the user must not belong to any of the teams.
-	Operator DashboardConditionalRenderingUserTeamSpecOperator `json:"operator"`
-	// Team UIDs to evaluate against.
-	TeamUids []string `json:"teamUids"`
-}
-
-// NewDashboardConditionalRenderingUserTeamSpec creates a new DashboardConditionalRenderingUserTeamSpec object.
-func NewDashboardConditionalRenderingUserTeamSpec() *DashboardConditionalRenderingUserTeamSpec {
-	return &DashboardConditionalRenderingUserTeamSpec{
-		TeamUids: []string{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingUserTeamSpec.
-func (DashboardConditionalRenderingUserTeamSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingUserTeamSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -1633,9 +1589,6 @@ func (DashboardTabsLayoutTabKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabSpec struct {
-	// Stable unique identifier for this tab, used by LayoutItemReference to target
-	// this tab in dashboard rules. Auto-generated on creation (e.g. "tab-x7y8z9").
-	Name                 *string                                                                     `json:"name,omitempty"`
 	Title                *string                                                                     `json:"title,omitempty"`
 	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
@@ -2557,237 +2510,6 @@ func (DashboardTimeRangeOption) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeRangeOption"
 }
 
-// A rule defines a set of conditions and outcomes that apply to a target element
-// or layout item. Rules enable dynamic dashboard behavior such as conditional
-// visibility, visualization switching, and query overrides.
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardDashboardRuleSpec `json:"spec"`
-}
-
-// NewDashboardDashboardRuleKind creates a new DashboardDashboardRuleKind object.
-func NewDashboardDashboardRuleKind() *DashboardDashboardRuleKind {
-	return &DashboardDashboardRuleKind{
-		Kind: "DashboardRule",
-		Spec: *NewDashboardDashboardRuleSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleKind.
-func (DashboardDashboardRuleKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleSpec struct {
-	// Optional human-readable name for this rule.
-	Name *string `json:"name,omitempty"`
-	// The elements or layout items this rule targets.
-	Targets []DashboardElementReferenceOrLayoutItemReference `json:"targets"`
-	// Conditions that must be met for the outcomes to apply.
-	Conditions DashboardDashboardRuleConditionsSpec `json:"conditions"`
-	// Outcomes to apply when conditions are met. Automatically reversed when
-	// conditions stop being met.
-	Outcomes []DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind `json:"outcomes"`
-}
-
-// NewDashboardDashboardRuleSpec creates a new DashboardDashboardRuleSpec object.
-func NewDashboardDashboardRuleSpec() *DashboardDashboardRuleSpec {
-	return &DashboardDashboardRuleSpec{
-		Targets:    []DashboardElementReferenceOrLayoutItemReference{},
-		Conditions: *NewDashboardDashboardRuleConditionsSpec(),
-		Outcomes:   []DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleSpec.
-func (DashboardDashboardRuleSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleSpec"
-}
-
-// Refers to a layout item (row, tab) by its stable name field.
-// +k8s:openapi-gen=true
-type DashboardLayoutItemReference struct {
-	Kind string `json:"kind"`
-	Name string `json:"name"`
-}
-
-// NewDashboardLayoutItemReference creates a new DashboardLayoutItemReference object.
-func NewDashboardLayoutItemReference() *DashboardLayoutItemReference {
-	return &DashboardLayoutItemReference{
-		Kind: "LayoutItemReference",
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardLayoutItemReference.
-func (DashboardLayoutItemReference) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardLayoutItemReference"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleConditionsSpec struct {
-	// How to combine the conditions: "and" requires all to match, "or" requires any.
-	Match DashboardDashboardRuleConditionsSpecMatch                                                                                                          `json:"match"`
-	Items []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind `json:"items"`
-}
-
-// NewDashboardDashboardRuleConditionsSpec creates a new DashboardDashboardRuleConditionsSpec object.
-func NewDashboardDashboardRuleConditionsSpec() *DashboardDashboardRuleConditionsSpec {
-	return &DashboardDashboardRuleConditionsSpec{
-		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleConditionsSpec.
-func (DashboardDashboardRuleConditionsSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleConditionsSpec"
-}
-
-// Visibility outcome: show or hide the target element/layout item.
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeVisibilityKind struct {
-	Kind string                                      `json:"kind"`
-	Spec DashboardDashboardRuleOutcomeVisibilitySpec `json:"spec"`
-}
-
-// NewDashboardDashboardRuleOutcomeVisibilityKind creates a new DashboardDashboardRuleOutcomeVisibilityKind object.
-func NewDashboardDashboardRuleOutcomeVisibilityKind() *DashboardDashboardRuleOutcomeVisibilityKind {
-	return &DashboardDashboardRuleOutcomeVisibilityKind{
-		Kind: "DashboardRuleOutcomeVisibility",
-		Spec: *NewDashboardDashboardRuleOutcomeVisibilitySpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeVisibilityKind.
-func (DashboardDashboardRuleOutcomeVisibilityKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilityKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeVisibilitySpec struct {
-	Visibility DashboardDashboardRuleOutcomeVisibilitySpecVisibility `json:"visibility"`
-}
-
-// NewDashboardDashboardRuleOutcomeVisibilitySpec creates a new DashboardDashboardRuleOutcomeVisibilitySpec object.
-func NewDashboardDashboardRuleOutcomeVisibilitySpec() *DashboardDashboardRuleOutcomeVisibilitySpec {
-	return &DashboardDashboardRuleOutcomeVisibilitySpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeVisibilitySpec.
-func (DashboardDashboardRuleOutcomeVisibilitySpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilitySpec"
-}
-
-// Collapse outcome: collapse or expand the target row.
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeCollapseKind struct {
-	Kind string                                    `json:"kind"`
-	Spec DashboardDashboardRuleOutcomeCollapseSpec `json:"spec"`
-}
-
-// NewDashboardDashboardRuleOutcomeCollapseKind creates a new DashboardDashboardRuleOutcomeCollapseKind object.
-func NewDashboardDashboardRuleOutcomeCollapseKind() *DashboardDashboardRuleOutcomeCollapseKind {
-	return &DashboardDashboardRuleOutcomeCollapseKind{
-		Kind: "DashboardRuleOutcomeCollapse",
-		Spec: *NewDashboardDashboardRuleOutcomeCollapseSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeCollapseKind.
-func (DashboardDashboardRuleOutcomeCollapseKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeCollapseKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeCollapseSpec struct {
-	Collapse bool `json:"collapse"`
-}
-
-// NewDashboardDashboardRuleOutcomeCollapseSpec creates a new DashboardDashboardRuleOutcomeCollapseSpec object.
-func NewDashboardDashboardRuleOutcomeCollapseSpec() *DashboardDashboardRuleOutcomeCollapseSpec {
-	return &DashboardDashboardRuleOutcomeCollapseSpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeCollapseSpec.
-func (DashboardDashboardRuleOutcomeCollapseSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeCollapseSpec"
-}
-
-// Refresh interval outcome: override the dashboard auto-refresh interval.
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeRefreshIntervalKind struct {
-	Kind string                                           `json:"kind"`
-	Spec DashboardDashboardRuleOutcomeRefreshIntervalSpec `json:"spec"`
-}
-
-// NewDashboardDashboardRuleOutcomeRefreshIntervalKind creates a new DashboardDashboardRuleOutcomeRefreshIntervalKind object.
-func NewDashboardDashboardRuleOutcomeRefreshIntervalKind() *DashboardDashboardRuleOutcomeRefreshIntervalKind {
-	return &DashboardDashboardRuleOutcomeRefreshIntervalKind{
-		Kind: "DashboardRuleOutcomeRefreshInterval",
-		Spec: *NewDashboardDashboardRuleOutcomeRefreshIntervalSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeRefreshIntervalKind.
-func (DashboardDashboardRuleOutcomeRefreshIntervalKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeRefreshIntervalKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeRefreshIntervalSpec struct {
-	Interval string `json:"interval"`
-}
-
-// NewDashboardDashboardRuleOutcomeRefreshIntervalSpec creates a new DashboardDashboardRuleOutcomeRefreshIntervalSpec object.
-func NewDashboardDashboardRuleOutcomeRefreshIntervalSpec() *DashboardDashboardRuleOutcomeRefreshIntervalSpec {
-	return &DashboardDashboardRuleOutcomeRefreshIntervalSpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeRefreshIntervalSpec.
-func (DashboardDashboardRuleOutcomeRefreshIntervalSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeRefreshIntervalSpec"
-}
-
-// Override query outcome: replace the target panel's queries while conditions are met.
-// The datasource is inherited from the target panel and does not change.
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeOverrideQueryKind struct {
-	Kind string                                         `json:"kind"`
-	Spec DashboardDashboardRuleOutcomeOverrideQuerySpec `json:"spec"`
-}
-
-// NewDashboardDashboardRuleOutcomeOverrideQueryKind creates a new DashboardDashboardRuleOutcomeOverrideQueryKind object.
-func NewDashboardDashboardRuleOutcomeOverrideQueryKind() *DashboardDashboardRuleOutcomeOverrideQueryKind {
-	return &DashboardDashboardRuleOutcomeOverrideQueryKind{
-		Kind: "DashboardRuleOutcomeOverrideQuery",
-		Spec: *NewDashboardDashboardRuleOutcomeOverrideQuerySpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeOverrideQueryKind.
-func (DashboardDashboardRuleOutcomeOverrideQueryKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeOverrideQueryKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeOverrideQuerySpec struct {
-	// Replacement queries as opaque JSON objects. Each query uses the target panel's datasource.
-	Queries []map[string]interface{} `json:"queries"`
-}
-
-// NewDashboardDashboardRuleOutcomeOverrideQuerySpec creates a new DashboardDashboardRuleOutcomeOverrideQuerySpec object.
-func NewDashboardDashboardRuleOutcomeOverrideQuerySpec() *DashboardDashboardRuleOutcomeOverrideQuerySpec {
-	return &DashboardDashboardRuleOutcomeOverrideQuerySpec{
-		Queries: []map[string]interface{}{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeOverrideQuerySpec.
-func (DashboardDashboardRuleOutcomeOverrideQuerySpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeOverrideQuerySpec"
-}
-
 // +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
@@ -2820,11 +2542,6 @@ type DashboardSpec struct {
 	Title string `json:"title"`
 	// Configured template variables.
 	Variables []DashboardVariableKind `json:"variables"`
-	// Dashboard-level rules for dynamic behavior (conditional rendering, etc.).
-	// Rules are evaluated in array order. When multiple rules target the same
-	// element with conflicting outcomes, the last matching rule wins.
-	// Gated behind the dashboardRules feature flag.
-	Rules []DashboardDashboardRuleKind `json:"rules,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.
@@ -3046,19 +2763,6 @@ func (DashboardConditionalRenderingVariableSpecOperator) OpenAPIModelName() stri
 }
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingUserTeamSpecOperator string
-
-const (
-	DashboardConditionalRenderingUserTeamSpecOperatorIsMember    DashboardConditionalRenderingUserTeamSpecOperator = "is_member"
-	DashboardConditionalRenderingUserTeamSpecOperatorIsNotMember DashboardConditionalRenderingUserTeamSpecOperator = "is_not_member"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingUserTeamSpecOperator.
-func (DashboardConditionalRenderingUserTeamSpecOperator) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingUserTeamSpecOperator"
-}
-
-// +k8s:openapi-gen=true
 type DashboardAutoGridLayoutSpecColumnWidthMode string
 
 const (
@@ -3127,32 +2831,6 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpecWeekStart.
 func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleConditionsSpecMatch string
-
-const (
-	DashboardDashboardRuleConditionsSpecMatchAnd DashboardDashboardRuleConditionsSpecMatch = "and"
-	DashboardDashboardRuleConditionsSpecMatchOr  DashboardDashboardRuleConditionsSpecMatch = "or"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleConditionsSpecMatch.
-func (DashboardDashboardRuleConditionsSpecMatch) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleConditionsSpecMatch"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeVisibilitySpecVisibility string
-
-const (
-	DashboardDashboardRuleOutcomeVisibilitySpecVisibilityShow DashboardDashboardRuleOutcomeVisibilitySpecVisibility = "show"
-	DashboardDashboardRuleOutcomeVisibilitySpecVisibilityHide DashboardDashboardRuleOutcomeVisibilitySpecVisibility = "hide"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeVisibilitySpecVisibility.
-func (DashboardDashboardRuleOutcomeVisibilitySpecVisibility) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilitySpecVisibility"
 }
 
 // +k8s:openapi-gen=true
@@ -3405,20 +3083,19 @@ func (DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKin
 }
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind struct {
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind struct {
 	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
 	ConditionalRenderingDataKind          *DashboardConditionalRenderingDataKind          `json:"ConditionalRenderingDataKind,omitempty"`
 	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
-	ConditionalRenderingUserTeamKind      *DashboardConditionalRenderingUserTeamKind      `json:"ConditionalRenderingUserTeamKind,omitempty"`
 }
 
-// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind object.
-func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind {
-	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind` as JSON.
-func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
 	if resource.ConditionalRenderingVariableKind != nil {
 		return json.Marshal(resource.ConditionalRenderingVariableKind)
 	}
@@ -3428,15 +3105,12 @@ func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDa
 	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
 		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
 	}
-	if resource.ConditionalRenderingUserTeamKind != nil {
-		return json.Marshal(resource.ConditionalRenderingUserTeamKind)
-	}
 
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind` from JSON.
-func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -3469,14 +3143,6 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 
 		resource.ConditionalRenderingTimeRangeSizeKind = &dashboardConditionalRenderingTimeRangeSizeKind
 		return nil
-	case "ConditionalRenderingUserTeam":
-		var dashboardConditionalRenderingUserTeamKind DashboardConditionalRenderingUserTeamKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingUserTeamKind); err != nil {
-			return err
-		}
-
-		resource.ConditionalRenderingUserTeamKind = &dashboardConditionalRenderingUserTeamKind
-		return nil
 	case "ConditionalRenderingVariable":
 		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
 		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
@@ -3490,9 +3156,9 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 	return nil
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind.
-func (DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind"
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"
 }
 
 // +k8s:openapi-gen=true
@@ -3855,162 +3521,4 @@ func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
 // OpenAPIModelName returns the OpenAPI model name for DashboardStringOrFloat64.
 func (DashboardStringOrFloat64) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardStringOrFloat64"
-}
-
-// +k8s:openapi-gen=true
-type DashboardElementReferenceOrLayoutItemReference struct {
-	ElementReference    *DashboardElementReference    `json:"ElementReference,omitempty"`
-	LayoutItemReference *DashboardLayoutItemReference `json:"LayoutItemReference,omitempty"`
-}
-
-// NewDashboardElementReferenceOrLayoutItemReference creates a new DashboardElementReferenceOrLayoutItemReference object.
-func NewDashboardElementReferenceOrLayoutItemReference() *DashboardElementReferenceOrLayoutItemReference {
-	return &DashboardElementReferenceOrLayoutItemReference{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardElementReferenceOrLayoutItemReference` as JSON.
-func (resource DashboardElementReferenceOrLayoutItemReference) MarshalJSON() ([]byte, error) {
-	if resource.ElementReference != nil {
-		return json.Marshal(resource.ElementReference)
-	}
-	if resource.LayoutItemReference != nil {
-		return json.Marshal(resource.LayoutItemReference)
-	}
-
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardElementReferenceOrLayoutItemReference` from JSON.
-func (resource *DashboardElementReferenceOrLayoutItemReference) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return nil
-	}
-
-	switch discriminator {
-	case "ElementReference":
-		var dashboardElementReference DashboardElementReference
-		if err := json.Unmarshal(raw, &dashboardElementReference); err != nil {
-			return err
-		}
-
-		resource.ElementReference = &dashboardElementReference
-		return nil
-	case "LayoutItemReference":
-		var dashboardLayoutItemReference DashboardLayoutItemReference
-		if err := json.Unmarshal(raw, &dashboardLayoutItemReference); err != nil {
-			return err
-		}
-
-		resource.LayoutItemReference = &dashboardLayoutItemReference
-		return nil
-	}
-
-	return nil
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardElementReferenceOrLayoutItemReference.
-func (DashboardElementReferenceOrLayoutItemReference) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardElementReferenceOrLayoutItemReference"
-}
-
-// +k8s:openapi-gen=true
-type DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind struct {
-	DashboardRuleOutcomeVisibilityKind      *DashboardDashboardRuleOutcomeVisibilityKind      `json:"DashboardRuleOutcomeVisibilityKind,omitempty"`
-	DashboardRuleOutcomeCollapseKind        *DashboardDashboardRuleOutcomeCollapseKind        `json:"DashboardRuleOutcomeCollapseKind,omitempty"`
-	DashboardRuleOutcomeRefreshIntervalKind *DashboardDashboardRuleOutcomeRefreshIntervalKind `json:"DashboardRuleOutcomeRefreshIntervalKind,omitempty"`
-	DashboardRuleOutcomeOverrideQueryKind   *DashboardDashboardRuleOutcomeOverrideQueryKind   `json:"DashboardRuleOutcomeOverrideQueryKind,omitempty"`
-}
-
-// NewDashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind creates a new DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind object.
-func NewDashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind() *DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind {
-	return &DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind` as JSON.
-func (resource DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind) MarshalJSON() ([]byte, error) {
-	if resource.DashboardRuleOutcomeVisibilityKind != nil {
-		return json.Marshal(resource.DashboardRuleOutcomeVisibilityKind)
-	}
-	if resource.DashboardRuleOutcomeCollapseKind != nil {
-		return json.Marshal(resource.DashboardRuleOutcomeCollapseKind)
-	}
-	if resource.DashboardRuleOutcomeRefreshIntervalKind != nil {
-		return json.Marshal(resource.DashboardRuleOutcomeRefreshIntervalKind)
-	}
-	if resource.DashboardRuleOutcomeOverrideQueryKind != nil {
-		return json.Marshal(resource.DashboardRuleOutcomeOverrideQueryKind)
-	}
-
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind` from JSON.
-func (resource *DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return nil
-	}
-
-	switch discriminator {
-	case "DashboardRuleOutcomeCollapse":
-		var dashboardDashboardRuleOutcomeCollapseKind DashboardDashboardRuleOutcomeCollapseKind
-		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeCollapseKind); err != nil {
-			return err
-		}
-
-		resource.DashboardRuleOutcomeCollapseKind = &dashboardDashboardRuleOutcomeCollapseKind
-		return nil
-	case "DashboardRuleOutcomeOverrideQuery":
-		var dashboardDashboardRuleOutcomeOverrideQueryKind DashboardDashboardRuleOutcomeOverrideQueryKind
-		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeOverrideQueryKind); err != nil {
-			return err
-		}
-
-		resource.DashboardRuleOutcomeOverrideQueryKind = &dashboardDashboardRuleOutcomeOverrideQueryKind
-		return nil
-	case "DashboardRuleOutcomeRefreshInterval":
-		var dashboardDashboardRuleOutcomeRefreshIntervalKind DashboardDashboardRuleOutcomeRefreshIntervalKind
-		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeRefreshIntervalKind); err != nil {
-			return err
-		}
-
-		resource.DashboardRuleOutcomeRefreshIntervalKind = &dashboardDashboardRuleOutcomeRefreshIntervalKind
-		return nil
-	case "DashboardRuleOutcomeVisibility":
-		var dashboardDashboardRuleOutcomeVisibilityKind DashboardDashboardRuleOutcomeVisibilityKind
-		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeVisibilityKind); err != nil {
-			return err
-		}
-
-		resource.DashboardRuleOutcomeVisibilityKind = &dashboardDashboardRuleOutcomeVisibilityKind
-		return nil
-	}
-
-	return nil
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind.
-func (DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind"
 }

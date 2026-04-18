@@ -39,70 +39,54 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardConditionalRenderingGroupSpec{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupSpec(ref),
 		DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName():                    schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingTimeRangeSizeKind(ref),
 		DashboardConditionalRenderingTimeRangeSizeSpec{}.OpenAPIModelName():                    schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingTimeRangeSizeSpec(ref),
-		DashboardConditionalRenderingUserTeamKind{}.OpenAPIModelName():                         schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingUserTeamKind(ref),
-		DashboardConditionalRenderingUserTeamSpec{}.OpenAPIModelName():                         schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingUserTeamSpec(ref),
 		DashboardConditionalRenderingVariableKind{}.OpenAPIModelName():                         schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKind(ref),
-		DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind(ref),
-		DashboardConditionalRenderingVariableSpec{}.OpenAPIModelName():        schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableSpec(ref),
-		DashboardConstantVariableKind{}.OpenAPIModelName():                    schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableKind(ref),
-		DashboardConstantVariableSpec{}.OpenAPIModelName():                    schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref),
-		DashboardConversionStatus{}.OpenAPIModelName():                        schema_pkg_apis_dashboard_v2beta1_DashboardConversionStatus(ref),
-		DashboardCustomVariableKind{}.OpenAPIModelName():                      schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableKind(ref),
-		DashboardCustomVariableSpec{}.OpenAPIModelName():                      schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref),
-		DashboardDashboardLink{}.OpenAPIModelName():                           schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref),
-		DashboardDashboardRuleConditionsSpec{}.OpenAPIModelName():             schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleConditionsSpec(ref),
-		DashboardDashboardRuleKind{}.OpenAPIModelName():                       schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleKind(ref),
-		DashboardDashboardRuleOutcomeCollapseKind{}.OpenAPIModelName():        schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeCollapseKind(ref),
-		DashboardDashboardRuleOutcomeCollapseSpec{}.OpenAPIModelName():        schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeCollapseSpec(ref),
-		DashboardDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName():   schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeOverrideQueryKind(ref),
-		DashboardDashboardRuleOutcomeOverrideQuerySpec{}.OpenAPIModelName():   schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeOverrideQuerySpec(ref),
-		DashboardDashboardRuleOutcomeRefreshIntervalKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeRefreshIntervalKind(ref),
-		DashboardDashboardRuleOutcomeRefreshIntervalSpec{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeRefreshIntervalSpec(ref),
-		DashboardDashboardRuleOutcomeVisibilityKind{}.OpenAPIModelName():      schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilityKind(ref),
-		DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind(ref),
-		DashboardDashboardRuleOutcomeVisibilitySpec{}.OpenAPIModelName():                                 schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilitySpec(ref),
-		DashboardDashboardRuleSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleSpec(ref),
-		DashboardDataLink{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v2beta1_DashboardDataLink(ref),
-		DashboardDataQueryKind{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2beta1_DashboardDataQueryKind(ref),
-		DashboardDataTransformerConfig{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref),
-		DashboardDatasourceControlSourceRef{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceControlSourceRef(ref),
-		DashboardDatasourceVariableKind{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableKind(ref),
-		DashboardDatasourceVariableSpec{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref),
-		DashboardDynamicConfigValue{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_DashboardDynamicConfigValue(ref),
-		DashboardElementReference{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_DashboardElementReference(ref),
-		DashboardElementReferenceOrLayoutItemReference{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2beta1_DashboardElementReferenceOrLayoutItemReference(ref),
-		DashboardFetchOptions{}.OpenAPIModelName():                                                       schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref),
-		DashboardFieldColor{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref),
-		DashboardFieldConfig{}.OpenAPIModelName():                                                        schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref),
-		DashboardFieldConfigSource{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfigSource(ref),
-		DashboardGridLayoutItemKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutItemKind(ref),
-		DashboardGridLayoutItemSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutItemSpec(ref),
-		DashboardGridLayoutKind{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKind(ref),
-		DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(ref),
-		DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(ref),
-		DashboardGridLayoutSpec{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref),
-		DashboardGroupByVariableKind{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref),
-		DashboardGroupByVariableSpec{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref),
-		DashboardInfinityOptions{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref),
-		DashboardIntervalVariableKind{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableKind(ref),
-		DashboardIntervalVariableSpec{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v2beta1_DashboardJSONCodec(ref),
-		DashboardLayoutItemReference{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2beta1_DashboardLayoutItemReference(ref),
-		DashboardLibraryPanelKind{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKind(ref),
-		DashboardLibraryPanelKindSpec{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKindSpec(ref),
-		DashboardLibraryPanelRef{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelRef(ref),
-		DashboardList{}.OpenAPIModelName():                                                               schema_pkg_apis_dashboard_v2beta1_DashboardList(ref),
-		DashboardMatcherConfig{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref),
-		DashboardMetricFindValue{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_DashboardMetricFindValue(ref),
-		DashboardPanelKind{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPanelKind(ref),
-		DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref),
-		DashboardPanelQueryKind{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardPanelQueryKind(ref),
-		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardPanelQuerySpec(ref),
-		DashboardPanelSpec{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref),
-		DashboardQueryGroupKind{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupKind(ref),
-		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                     schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupSpec(ref),
-		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref),
-		DashboardQueryVariableKind{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableKind(ref),
+		DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind(ref),
+		DashboardConditionalRenderingVariableSpec{}.OpenAPIModelName():                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableSpec(ref),
+		DashboardConstantVariableKind{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableKind(ref),
+		DashboardConstantVariableSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref),
+		DashboardConversionStatus{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardConversionStatus(ref),
+		DashboardCustomVariableKind{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableKind(ref),
+		DashboardCustomVariableSpec{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref),
+		DashboardDashboardLink{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref),
+		DashboardDataLink{}.OpenAPIModelName():                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardDataLink(ref),
+		DashboardDataQueryKind{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2beta1_DashboardDataQueryKind(ref),
+		DashboardDataTransformerConfig{}.OpenAPIModelName():                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref),
+		DashboardDatasourceControlSourceRef{}.OpenAPIModelName():                                                                            schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceControlSourceRef(ref),
+		DashboardDatasourceVariableKind{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableKind(ref),
+		DashboardDatasourceVariableSpec{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref),
+		DashboardDynamicConfigValue{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardDynamicConfigValue(ref),
+		DashboardElementReference{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardElementReference(ref),
+		DashboardFetchOptions{}.OpenAPIModelName():                                                                                          schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref),
+		DashboardFieldColor{}.OpenAPIModelName():                                                                                            schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref),
+		DashboardFieldConfig{}.OpenAPIModelName():                                                                                           schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref),
+		DashboardFieldConfigSource{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfigSource(ref),
+		DashboardGridLayoutItemKind{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutItemKind(ref),
+		DashboardGridLayoutItemSpec{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutItemSpec(ref),
+		DashboardGridLayoutKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKind(ref),
+		DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(ref),
+		DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(ref),
+		DashboardGridLayoutSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref),
+		DashboardGroupByVariableKind{}.OpenAPIModelName():                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref),
+		DashboardGroupByVariableSpec{}.OpenAPIModelName():                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref),
+		DashboardInfinityOptions{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref),
+		DashboardIntervalVariableKind{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableKind(ref),
+		DashboardIntervalVariableSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardJSONCodec":                                           schema_pkg_apis_dashboard_v2beta1_DashboardJSONCodec(ref),
+		DashboardLibraryPanelKind{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKind(ref),
+		DashboardLibraryPanelKindSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKindSpec(ref),
+		DashboardLibraryPanelRef{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelRef(ref),
+		DashboardList{}.OpenAPIModelName():                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardList(ref),
+		DashboardMatcherConfig{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref),
+		DashboardMetricFindValue{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardMetricFindValue(ref),
+		DashboardPanelKind{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2beta1_DashboardPanelKind(ref),
+		DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                                                                           schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref),
+		DashboardPanelQueryKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardPanelQueryKind(ref),
+		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardPanelQuerySpec(ref),
+		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref),
+		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupKind(ref),
+		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupSpec(ref),
+		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref),
+		DashboardQueryVariableKind{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableKind(ref),
 		DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind(ref),
 		DashboardQueryVariableSpec{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref),
 		DashboardRangeMap{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_DashboardRangeMap(ref),
@@ -1179,7 +1163,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupSpec(re
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1190,7 +1174,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupSpec(re
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}.OpenAPIModelName()},
+			DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -1242,71 +1226,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingTimeRangeSiz
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingUserTeamKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Checks whether the current user belongs to (or does not belong to) the specified team(s).",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardConditionalRenderingUserTeamSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardConditionalRenderingUserTeamSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingUserTeamSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"operator": {
-						SchemaProps: spec.SchemaProps{
-							Description: "How to match: \"is_member\" means the user must belong to at least one team, \"is_not_member\" means the user must not belong to any of the teams.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"teamUids": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Team UIDs to evaluate against.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"operator", "teamUids"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1335,7 +1254,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKind
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1356,16 +1275,11 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableKind
 							Ref: ref(DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()),
 						},
 					},
-					"ConditionalRenderingUserTeamKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardConditionalRenderingUserTeamKind{}.OpenAPIModelName()),
-						},
-					},
 				},
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingDataKind{}.OpenAPIModelName(), DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(), DashboardConditionalRenderingUserTeamKind{}.OpenAPIModelName(), DashboardConditionalRenderingVariableKind{}.OpenAPIModelName()},
+			DashboardConditionalRenderingDataKind{}.OpenAPIModelName(), DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(), DashboardConditionalRenderingVariableKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -1799,370 +1713,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleConditionsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"match": {
-						SchemaProps: spec.SchemaProps{
-							Description: "How to combine the conditions: \"and\" requires all to match, \"or\" requires any.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"match", "items"},
-			},
-		},
-		Dependencies: []string{
-			DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "A rule defines a set of conditions and outcomes that apply to a target element or layout item. Rules enable dynamic dashboard behavior such as conditional visibility, visualization switching, and query overrides.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardDashboardRuleSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeCollapseKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Collapse outcome: collapse or expand the target row.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardDashboardRuleOutcomeCollapseSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleOutcomeCollapseSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeCollapseSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"collapse": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"collapse"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeOverrideQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Override query outcome: replace the target panel's queries while conditions are met. The datasource is inherited from the target panel and does not change.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardDashboardRuleOutcomeOverrideQuerySpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleOutcomeOverrideQuerySpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeOverrideQuerySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"queries": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Replacement queries as opaque JSON objects. Each query uses the target panel's datasource.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Allows: true,
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type:   []string{"object"},
-													Format: "",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"queries"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeRefreshIntervalKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Refresh interval outcome: override the dashboard auto-refresh interval.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardDashboardRuleOutcomeRefreshIntervalSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleOutcomeRefreshIntervalSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeRefreshIntervalSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilityKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Visibility outcome: show or hide the target element/layout item.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(DashboardDashboardRuleOutcomeVisibilitySpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleOutcomeVisibilitySpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"DashboardRuleOutcomeVisibilityKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardDashboardRuleOutcomeVisibilityKind{}.OpenAPIModelName()),
-						},
-					},
-					"DashboardRuleOutcomeCollapseKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardDashboardRuleOutcomeCollapseKind{}.OpenAPIModelName()),
-						},
-					},
-					"DashboardRuleOutcomeRefreshIntervalKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardDashboardRuleOutcomeRefreshIntervalKind{}.OpenAPIModelName()),
-						},
-					},
-					"DashboardRuleOutcomeOverrideQueryKind": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName()),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleOutcomeCollapseKind{}.OpenAPIModelName(), DashboardDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName(), DashboardDashboardRuleOutcomeRefreshIntervalKind{}.OpenAPIModelName(), DashboardDashboardRuleOutcomeVisibilityKind{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleOutcomeVisibilitySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"visibility": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"visibility"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Optional human-readable name for this rule.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"targets": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The elements or layout items this rule targets.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(DashboardElementReferenceOrLayoutItemReference{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"conditions": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Conditions that must be met for the outcomes to apply.",
-							Default:     map[string]interface{}{},
-							Ref:         ref(DashboardDashboardRuleConditionsSpec{}.OpenAPIModelName()),
-						},
-					},
-					"outcomes": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Outcomes to apply when conditions are met. Automatically reversed when conditions stop being met.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"targets", "conditions", "outcomes"},
-			},
-		},
-		Dependencies: []string{
-			DashboardDashboardRuleConditionsSpec{}.OpenAPIModelName(), DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKindOrDashboardRuleOutcomeOverrideQueryKind{}.OpenAPIModelName(), DashboardElementReferenceOrLayoutItemReference{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_DashboardDataLink(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2547,30 +2097,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardElementReference(ref common.Refe
 				Required: []string{"kind", "name"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardElementReferenceOrLayoutItemReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ElementReference": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardElementReference{}.OpenAPIModelName()),
-						},
-					},
-					"LayoutItemReference": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardLayoutItemReference{}.OpenAPIModelName()),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			DashboardElementReference{}.OpenAPIModelName(), DashboardLayoutItemReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -3471,34 +2997,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardJSONCodec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Description: "DashboardJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
 				Type:        []string{"object"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardLayoutItemReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Refers to a layout item (row, tab) by its stable name field.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -4480,13 +3978,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardRowsLayoutRowSpec(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Stable unique identifier for this row, used by LayoutItemReference to target this row in dashboard rules. Auto-generated on creation (e.g. \"row-a1b2c3\").",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -4712,26 +4203,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							},
 						},
 					},
-					"rules": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Dashboard-level rules for dynamic behavior (conditional rendering, etc.). Rules are evaluated in array order. When multiple rules target the same element with conflicting outcomes, the last matching rule wins. Gated behind the dashboardRules feature flag.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDashboardRuleKind{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
 				},
 				Required: []string{"annotations", "cursorSync", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardDashboardRuleKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -5059,13 +4536,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTabsLayoutTabSpec(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Stable unique identifier for this tab, used by LayoutItemReference to target this tab in dashboard rules. Auto-generated on creation (e.g. \"tab-x7y8z9\").",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
