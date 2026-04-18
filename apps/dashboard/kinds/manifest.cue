@@ -6,6 +6,7 @@ import (
 	v2alpha1 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
 	v2beta1 "github.com/grafana/grafana/sdkkinds/dashboard/v2beta1"
 	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2"
+	v3alpha0 "github.com/grafana/grafana/sdkkinds/dashboard/v3alpha0"
 )
 
 manifest: {
@@ -121,6 +122,27 @@ manifest: {
 					pluralName: "Dashboards"
 					schema: {
 						spec:   v2.DashboardSpec
+						status: DashboardStatus
+					}
+				},
+			]
+		}
+		"v3alpha0": {
+			codegen: {
+				ts: {
+					enabled: true
+					config: {
+						enumsAsUnionTypes: true
+					}
+				}
+				go: {enabled: true}
+			}
+			kinds: [
+				{
+					kind:       "Dashboard"
+					pluralName: "Dashboards"
+					schema: {
+						spec:   v3alpha0.DashboardSpec
 						status: DashboardStatus
 					}
 				},
