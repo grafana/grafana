@@ -358,10 +358,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
   // Monaco onChange fires synchronously as the user types; if QueryEditorRenderer's handleChange
   // routes those updates by the currently selected refId instead of the originating query's
   // refId, a late onChange from the unmounting editor clobbers the newly selected query.
-  test("switching between SQL expressions preserves each expression's content", async ({
-    gotoDashboardPage,
-    page,
-  }) => {
+  test("switching between SQL expressions preserves each expression's content", async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     async function addSqlExpression() {
