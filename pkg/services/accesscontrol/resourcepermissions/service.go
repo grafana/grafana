@@ -216,7 +216,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetTeamPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInRolePermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func (s *Service) SetPermissions(
 			}
 		}
 
-		actions, err := s.mapPermission(ctx, cmd.Permission)
+		actions, err := s.mapPermission(cmd.Permission)
 		if err != nil {
 			return nil, err
 		}
@@ -392,7 +392,7 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 	})
 }
 
-func (s *Service) mapPermission(ctx context.Context, permission string) ([]string, error) {
+func (s *Service) mapPermission(permission string) ([]string, error) {
 	if permission == "" {
 		return []string{}, nil
 	}
@@ -415,7 +415,7 @@ func (s *Service) mapPermission(ctx context.Context, permission string) ([]strin
 	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
 		actions = append(actions, s.options.GetActionSetName(permission))
 
-		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.TransactionContext(ctx))
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.EvaluationContext{})
 		if onlyActionSets {
 			return actions, nil
 		}
