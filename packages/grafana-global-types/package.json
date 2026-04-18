@@ -1,0 +1,13 @@
+{
+  "name": "@types/grafana-globals",
+  "version": "0.0.1",
+  "private": true,
+  "types": "./index.d.ts",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@formatjs/intl-durationformat": "*",
+    "@grafana/data": "workspace:*",
+    "@testing-library/jest-dom": "*",
+    "rxjs": "*"
+  }
+}
