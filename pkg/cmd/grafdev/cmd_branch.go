@@ -20,6 +20,7 @@ func cmdBranch() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote name"},
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "Non-interactive"},
+					&cli.BoolFlag{Name: "reset-existing", Usage: "If the branch already exists locally, reset it to remote default (git switch -C); default is refuse"},
 				},
 				Action: func(c *cli.Context) error {
 					name := strings.TrimSpace(c.Args().First())
@@ -30,7 +31,7 @@ func cmdBranch() *cli.Command {
 					if err != nil {
 						return err
 					}
-					return createBranchFromRemoteDefault(p.Enterprise, c.String("remote"), name, c.Bool("yes"), c.App.ErrWriter)
+					return createBranchFromRemoteDefault(p.Enterprise, c.String("remote"), name, c.Bool("yes"), c.Bool("reset-existing"), c.App.ErrWriter)
 				},
 			},
 			{
@@ -40,6 +41,7 @@ func cmdBranch() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote name"},
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "Non-interactive"},
+					&cli.BoolFlag{Name: "reset-existing", Usage: "If the branch already exists locally, reset it to remote default (git switch -C); default is refuse"},
 				},
 				Action: func(c *cli.Context) error {
 					name := strings.TrimSpace(c.Args().First())
@@ -50,19 +52,19 @@ func cmdBranch() *cli.Command {
 					if err != nil {
 						return err
 					}
-					if err := createBranchFromRemoteDefault(p.OSS, c.String("remote"), name, c.Bool("yes"), c.App.ErrWriter); err != nil {
+					if err := createBranchFromRemoteDefault(p.OSS, c.String("remote"), name, c.Bool("yes"), c.Bool("reset-existing"), c.App.ErrWriter); err != nil {
 						return err
 					}
-					return createBranchFromRemoteDefault(p.Enterprise, c.String("remote"), name, c.Bool("yes"), c.App.ErrWriter)
+					return createBranchFromRemoteDefault(p.Enterprise, c.String("remote"), name, c.Bool("yes"), c.Bool("reset-existing"), c.App.ErrWriter)
 				},
 			},
 		},
 	}
 }
 
-func createBranchFromRemoteDefault(dir, remote, branch string, yes bool, w io.Writer) error {
+func createBranchFromRemoteDefault(dir, remote, branch string, yes, resetExisting bool, w io.Writer) error {
 	if !yes {
-		return fmt.Errorf("refusing without --yes: would run git fetch and reset-create branch %q in %s", branch, dir)
+		return fmt.Errorf("refusing without --yes: would run git fetch and create (or with --reset-existing, reset) branch %q in %s", branch, dir)
 	}
 	base, err := remoteDefaultBranch(dir, remote)
 	if err != nil {
@@ -72,10 +74,5 @@ func createBranchFromRemoteDefault(dir, remote, branch string, yes bool, w io.Wr
 		return err
 	}
 	ref := fmt.Sprintf("%s/%s", remote, base)
-	// -C creates or resets the branch to start-point (matches "fresh branch from main" workflows).
-	if _, err := git(dir, "switch", "-C", branch, ref); err != nil {
-		return err
-	}
-	_, _ = fmt.Fprintf(w, "%s: branch %s now at %s\n", dir, branch, ref)
-	return nil
+	return switchToBranchFromRef(dir, branch, ref, resetExisting, w)
 }

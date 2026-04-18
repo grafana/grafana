@@ -56,16 +56,16 @@ GRAFANA_DEV_ENTERPRISE=/abs/path/to/grafana-enterprise   # optional override
 
 ### Other subcommands (summary)
 
-| Command | Purpose |
-|--------|---------|
-| `context` | Resolved paths and current branches |
-| `branch dual \| enterprise` | New branches from remote default (`--yes`) |
-| `dualize --yes` | Align branch on the repo still on default |
-| `doctor` / `verify` / `smoke` | Health and `make -n enterprise-dev` |
-| `sync` | Drift vs remote default; `--apply --yes` to rebase/merge/ff |
-| `link status\|start\|unlock` | enterprise-dev / `.devlock` |
-| `imports explain\|add` | `enterprise_imports.go` |
-| `wire patterns` | Wire file split reminder |
+| Command                       | Purpose                                                                                                                                         |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `context`                     | Resolved paths and current branches                                                                                                             |
+| `branch dual \| enterprise`   | New branches from remote default (`--yes`); `--reset-existing` to allow `git switch -C` when the branch already exists                          |
+| `dualize --yes`               | Align branch on the repo still on default; `--reset-existing` if that branch name already exists locally; `--force` only skips dirty-tree check |
+| `doctor` / `verify` / `smoke` | Health and `make -n enterprise-dev`; `doctor --strict` exits non-zero on warnings                                                               |
+| `sync`                        | Drift vs remote default; `--apply --yes` to rebase/merge/ff (clean tree required unless `--force`)                                              |
+| `link status\|start\|unlock`  | enterprise-dev / `.devlock`                                                                                                                     |
+| `imports explain\|add`        | `enterprise_imports.go`                                                                                                                         |
+| `wire patterns`               | Wire file split reminder                                                                                                                        |
 
 ## Linking OSS ↔ enterprise
 

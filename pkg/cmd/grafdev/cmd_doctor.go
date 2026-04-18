@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/urfave/cli/v2"
 )
@@ -18,18 +17,19 @@ func cmdDoctor() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote for drift vs default branch"},
 			&cli.BoolFlag{Name: "quick-build", Usage: "Run a short enterprise-tagged compile of pkg/cmd/grafana (can take minutes)"},
+			&cli.BoolFlag{Name: "strict", Usage: "Exit with non-zero status if any check warns"},
 		},
 		Action: func(c *cli.Context) error {
 			p, err := mustResolve(c)
 			if err != nil {
 				return err
 			}
-			return runDoctor(c, p, c.String("remote"), c.Bool("quick-build"))
+			return runDoctor(c, p, c.String("remote"), c.Bool("quick-build"), c.Bool("strict"))
 		},
 	}
 }
 
-func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild bool) error {
+func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bool) error {
 	w := c.App.Writer
 	ew := c.App.ErrWriter
 	var problems int
@@ -65,10 +65,10 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild bool) erro
 		printCheck(false, "pkg/extensions/ext.go missing (enterprise not linked into this OSS tree?)")
 	} else {
 		b, _ := os.ReadFile(p.ExtGo())
-		if strings.Contains(string(b), "IsEnterprise = true") {
+		if extGoIndicatesEnterpriseLinked(b) {
 			printCheck(true, "ext.go indicates enterprise extensions are linked")
 		} else {
-			printCheck(false, "ext.go present but IsEnterprise=true not found")
+			printCheck(false, "ext.go present but IsEnterprise = true not detected")
 		}
 	}
 
@@ -123,12 +123,15 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild bool) erro
 
 	if problems > 0 {
 		_, _ = fmt.Fprintf(ew, "\n(%d check(s) reported issues above.)\n", problems)
+		if strict {
+			return fmt.Errorf("doctor: %d check(s) failed (--strict)", problems)
+		}
 	}
 	return nil
 }
 
 func quickEnterpriseBuild(ossRoot string, logW io.Writer) error {
-	tmp, err := os.CreateTemp("", "grafdev-grafana-*.exe")
+	tmp, err := os.CreateTemp("", "grafdev-grafana-*")
 	if err != nil {
 		return err
 	}

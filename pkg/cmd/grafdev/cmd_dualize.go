@@ -16,11 +16,14 @@ func cmdDualize() *cli.Command {
   - Enterprise is on feature/foo and OSS is still on the remote default branch: creates feature/foo on OSS from origin/<default>.
 If both repos already use the same branch name, this command succeeds as a no-op.
 
-Requires a clean working tree unless --force is passed (still refuses if there are untracked conflict risks — only bypasses dirty check).`,
+Requires a clean working tree unless --force is passed (--force only skips the dirty-tree check; it does not skip other safety checks).
+
+If the target branch name already exists locally in the repo being updated, pass --reset-existing to allow git switch -C (reset); otherwise the command refuses.`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote name"},
 			&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "Required to perform git operations"},
 			&cli.BoolFlag{Name: "force", Usage: "Allow dirty working trees (use with care)"},
+			&cli.BoolFlag{Name: "reset-existing", Usage: "If the branch to create already exists locally, reset it to remote default (git switch -C); default is refuse"},
 		},
 		Action: func(c *cli.Context) error {
 			p, err := mustResolve(c)
@@ -30,12 +33,12 @@ Requires a clean working tree unless --force is passed (still refuses if there a
 			if !c.Bool("yes") {
 				return fmt.Errorf("refusing without --yes: dualize runs git fetch/switch in OSS and/or enterprise checkouts")
 			}
-			return dualize(p, c.String("remote"), c.Bool("force"), c.App.ErrWriter)
+			return dualize(p, c.String("remote"), c.Bool("force"), c.Bool("reset-existing"), c.App.ErrWriter)
 		},
 	}
 }
 
-func dualize(p RepoPaths, remote string, force bool, logW io.Writer) error {
+func dualize(p RepoPaths, remote string, force, resetExisting bool, logW io.Writer) error {
 	ossBr, err := currentBranch(p.OSS)
 	if err != nil {
 		return fmt.Errorf("OSS: %w", err)
@@ -80,20 +83,12 @@ func dualize(p RepoPaths, remote string, force bool, logW io.Writer) error {
 		if _, err := git(p.Enterprise, "fetch", remote); err != nil {
 			return err
 		}
-		if _, err := git(p.Enterprise, "switch", "-C", ossBr, geRef); err != nil {
-			return err
-		}
-		_, _ = fmt.Fprintf(logW, "enterprise: created/reset branch %q from %s (OSS was already on it)\n", ossBr, geRef)
-		return nil
+		return switchToBranchFromRef(p.Enterprise, ossBr, geRef, resetExisting, logW)
 	case geBr != geBase && ossBr == ossBase:
 		if _, err := git(p.OSS, "fetch", remote); err != nil {
 			return err
 		}
-		if _, err := git(p.OSS, "switch", "-C", geBr, ossRef); err != nil {
-			return err
-		}
-		_, _ = fmt.Fprintf(logW, "OSS: created/reset branch %q from %s (enterprise was already on it)\n", geBr, ossRef)
-		return nil
+		return switchToBranchFromRef(p.OSS, geBr, ossRef, resetExisting, logW)
 	default:
 		return fmt.Errorf("ambiguous state (OSS=%q enterprise=%q): put one repo on its remote default branch or matching names first, or use grafdev branch dual",
 			ossBr, geBr)

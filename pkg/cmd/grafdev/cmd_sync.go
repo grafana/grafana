@@ -19,6 +19,7 @@ func cmdSync() *cli.Command {
 		&cli.BoolFlag{Name: "oss-only", Usage: "Only consider the OSS repository"},
 		&cli.BoolFlag{Name: "enterprise-only", Usage: "Only consider the enterprise repository"},
 		&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "Required together with --apply"},
+		&cli.BoolFlag{Name: "force", Usage: "With --apply: allow a dirty working tree (otherwise sync refuses)"},
 	}
 
 	return &cli.Command{
@@ -39,6 +40,11 @@ func cmdSync() *cli.Command {
 			if ossOnly && entOnly {
 				return fmt.Errorf("choose at most one of --oss-only and --enterprise-only")
 			}
+			if c.Bool("apply") && c.Bool("yes") && !c.Bool("force") {
+				if err := assertCleanForSync(p, ossOnly, entOnly); err != nil {
+					return err
+				}
+			}
 			w := c.App.Writer
 			if !ossOnly {
 				if err := reportAndMaybeSyncRepo(p.Enterprise, remote, "enterprise", c, w); err != nil {
@@ -53,6 +59,30 @@ func cmdSync() *cli.Command {
 			return nil
 		},
 	}
+}
+
+func assertCleanForSync(p RepoPaths, ossOnly, entOnly bool) error {
+	check := func(dir, name string) error {
+		clean, err := isCleanWorktree(dir)
+		if err != nil {
+			return fmt.Errorf("%s: %w", name, err)
+		}
+		if !clean {
+			return fmt.Errorf("%s repo %s has a dirty working tree; commit/stash or pass --force", name, dir)
+		}
+		return nil
+	}
+	if !ossOnly {
+		if err := check(p.Enterprise, "enterprise"); err != nil {
+			return err
+		}
+	}
+	if !entOnly {
+		if err := check(p.OSS, "OSS"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func reportAndMaybeSyncRepo(dir, remote, label string, c *cli.Context, w io.Writer) error {

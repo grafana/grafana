@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -42,8 +41,8 @@ func verifyLayout(p RepoPaths) error {
 	if e != nil {
 		return fmt.Errorf("ext.go: %w", e)
 	}
-	if !bytes.Contains(b, []byte("IsEnterprise = true")) {
-		return fmt.Errorf("ext.go does not contain IsEnterprise = true")
+	if !extGoIndicatesEnterpriseLinked(b) {
+		return fmt.Errorf("ext.go does not appear to set IsEnterprise = true (enterprise not linked?)")
 	}
 	return nil
 }

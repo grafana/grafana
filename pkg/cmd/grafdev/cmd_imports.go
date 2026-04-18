@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -74,27 +78,49 @@ func addEnterpriseImport(ossRoot, importPath string) error {
 	if err != nil {
 		return err
 	}
-	s := string(src)
-	if strings.Contains(s, `"`+importPath+`"`) {
-		return fmt.Errorf("import %q already present", importPath)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, src, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", path, err)
 	}
-	var pos int
-	switch {
-	case strings.Contains(s, "import (\n"):
-		needle := "import (\n"
-		pos = strings.Index(s, needle) + len(needle)
-	case strings.Contains(s, "import (\r\n"):
-		needle := "import (\r\n"
-		pos = strings.Index(s, needle) + len(needle)
-	default:
-		return fmt.Errorf("could not find multi-line import block in %s", path)
+	quoted := strconv.Quote(importPath)
+	var importGen *ast.GenDecl
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.IMPORT || gen.Lparen == token.NoPos {
+			continue
+		}
+		importGen = gen
+		break
 	}
-	line := "\t_ \"" + importPath + "\"\n"
-	out := s[:pos] + line + s[pos:]
+	if importGen == nil {
+		return fmt.Errorf("no grouped import block in %s", path)
+	}
+	for _, spec := range importGen.Specs {
+		im, ok := spec.(*ast.ImportSpec)
+		if !ok || im.Path == nil {
+			continue
+		}
+		if im.Path.Value == quoted {
+			return fmt.Errorf("import %q already present", importPath)
+		}
+	}
+	off := fset.Position(importGen.Rparen).Offset
+	if off < 0 || off > len(src) {
+		return fmt.Errorf("invalid import block end offset in %s", path)
+	}
+	if src[off] != ')' {
+		return fmt.Errorf("internal: expected ')' before grouped import close in %s", path)
+	}
+	insert := []byte("\t_ " + quoted + "\n")
+	out := make([]byte, 0, len(src)+len(insert))
+	out = append(out, src[:off]...)
+	out = append(out, insert...)
+	out = append(out, src[off:]...)
 	st, err := os.Stat(path)
 	mode := os.FileMode(0o644)
 	if err == nil {
 		mode = st.Mode()
 	}
-	return os.WriteFile(path, []byte(out), mode)
+	return os.WriteFile(path, out, mode)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 )
@@ -68,9 +69,23 @@ func geRunAction(c *cli.Context) error {
 	if len(args) == 0 {
 		return fmt.Errorf("ge run: need at least a program name, e.g. grafdev ge run git status")
 	}
-	prog, err := exec.LookPath(args[0])
-	if err != nil {
-		prog = args[0]
+	progName := args[0]
+	var prog string
+	if filepath.IsAbs(progName) {
+		st, err := os.Stat(progName)
+		if err != nil {
+			return fmt.Errorf("ge run: stat %q: %w", progName, err)
+		}
+		if st.IsDir() {
+			return fmt.Errorf("ge run: %q is a directory, not an executable", progName)
+		}
+		prog = progName
+	} else {
+		p, err := exec.LookPath(progName)
+		if err != nil {
+			return fmt.Errorf("ge run: %q not found on PATH: %w", progName, err)
+		}
+		prog = p
 	}
 	cmd := exec.Command(prog, args[1:]...)
 	cmd.Dir = p.Enterprise
