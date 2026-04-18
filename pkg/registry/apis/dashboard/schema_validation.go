@@ -16,6 +16,7 @@ import (
 	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	v2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	v3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -41,6 +42,7 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		case *v2.Dashboard:
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
+		case *v3alpha0.Dashboard:
 		default:
 			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
 		}
@@ -66,6 +68,8 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 			errors = v2beta1.ValidateDashboardSpec(v)
 		case *v2.Dashboard:
 			errors = v2.ValidateDashboardSpec(v)
+		case *v3alpha0.Dashboard:
+			errors = v3alpha0.ValidateDashboardSpec(v)
 		}
 	}
 
