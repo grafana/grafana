@@ -18,6 +18,7 @@ import (
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -240,6 +241,7 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+				dashv3alpha0.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -252,6 +254,7 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+				dashv3alpha0.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -263,6 +266,7 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+				dashv3alpha0.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv1beta1.DashboardResourceInfo.GroupVersion(),
