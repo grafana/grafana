@@ -21,8 +21,10 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
 
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
-  // `name` is a v2beta1-only field (tab identifier used by rule targeting). Cast at this boundary;
-  // Phase 2 moves the rules support to v3alpha0 where `name` becomes part of the schema.
+  // `name` is the stable tab identifier targeted by dashboard rules. It lives on v3alpha0
+  // but not on v2 stable. The cast keeps the v2 writer happy; when the save routes to
+  // v3alpha0 (rule-bearing dashboards) the field survives unchanged. For pure v2 saves
+  // the field is simply carried along as an extra property and ignored by the backend.
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {

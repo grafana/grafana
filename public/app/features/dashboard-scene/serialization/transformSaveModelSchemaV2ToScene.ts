@@ -47,6 +47,7 @@ import {
   type AnnotationQueryKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardRuleKind } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -66,9 +67,9 @@ import {
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { DashboardRules } from '../conditional-rendering/rules/DashboardRules';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
+import { DashboardRules } from '../conditional-rendering/rules/DashboardRules';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -107,6 +108,14 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind
   | SwitchVariableKind;
 
+/**
+ * Transform a v2 (or v3alpha0 — treated as a structural superset) dashboard
+ * resource into a DashboardScene.
+ *
+ * v3alpha0 adds `rules` plus optional `name` on rows and tabs on top of the v2
+ * body. Transformation-kind wire shape differs (v3alpha0 matches v2beta1) but
+ * the scene's downstream transform path normalises both shapes.
+ */
 export function transformSaveModelSchemaV2ToScene(
   dto: DashboardWithAccessInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
@@ -228,11 +237,12 @@ export function transformSaveModelSchemaV2ToScene(
       title: dashboard.title,
       uid: metadata.name,
       version: metadata.generation,
-      // Rules are an experimental extension present only in v2beta1/v2alpha1, not v2 stable.
-      // Cast through a rules-bearing shape at this boundary; Phase 2 moves rules to v3alpha0.
+      // Rules live on v3alpha0 only. v2 dashboards arrive without `rules` and this is a no-op.
+      // v3alpha0 specs are typed as DashboardV3alpha0Spec upstream but delegated into this
+      // v2-typed transform via structural compatibility, so we probe defensively.
       dashboardRules: (() => {
-        const rules = (dashboard as unknown as { rules?: Array<Parameters<typeof DashboardRules.deserialize>[0][number]> })
-          .rules;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const rules = (dashboard as { rules?: DashboardRuleKind[] }).rules;
         return rules?.length ? DashboardRules.deserialize(rules) : undefined;
       })(),
       body: layoutManager,

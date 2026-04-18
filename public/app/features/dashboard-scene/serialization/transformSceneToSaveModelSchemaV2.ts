@@ -162,11 +162,9 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
 
-    // rules (dashboard-level rules engine, gated behind dashboardRules feature flag)
-    // Cast needed because rules are v2beta1/v2alpha1-only, not in v2 stable.
-    // Phase 2 moves rules to v3alpha0.
-    ...(sceneDash.dashboardRules ? { rules: sceneDash.dashboardRules.serialize() } : {}),
-    // EOF rules
+    // Rules are v3alpha0-only and never written through this transform. Dashboards
+    // carrying rules are routed to transformSceneToSaveModelSchemaV3alpha0 instead
+    // (see DashboardSceneSerializer.getSaveModel).
   } as DashboardV2Spec;
 
   try {

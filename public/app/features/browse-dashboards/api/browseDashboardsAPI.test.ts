@@ -65,7 +65,7 @@ describe('browseDashboardsAPI', () => {
     const saveDashboardV1 = jest.fn().mockResolvedValue({ uid: 'test-uid-v1' });
     const saveDashboardV2 = jest.fn().mockResolvedValue({ uid: 'test-uid-v2' });
 
-    getDashboardAPIMock.mockImplementation((version?: 'v1' | 'v2') => {
+    getDashboardAPIMock.mockImplementation((version?: 'v1' | 'v2' | 'v3alpha0') => {
       if (version === 'v1') {
         return createMockDashboardAPI(saveDashboardV1);
       }
@@ -92,7 +92,7 @@ describe('browseDashboardsAPI', () => {
     const saveDashboardV1 = jest.fn().mockResolvedValue({ uid: 'test-uid-v1' });
     const saveDashboardV2 = jest.fn().mockResolvedValue({ uid: 'test-uid-v2' });
 
-    getDashboardAPIMock.mockImplementation((version?: 'v1' | 'v2') => {
+    getDashboardAPIMock.mockImplementation((version?: 'v1' | 'v2' | 'v3alpha0') => {
       if (version === 'v1') {
         return createMockDashboardAPI(saveDashboardV1);
       }

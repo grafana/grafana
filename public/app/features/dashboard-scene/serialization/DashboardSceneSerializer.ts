@@ -24,6 +24,7 @@ import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { transformSceneToSaveModelSchemaV3alpha0 } from './transformSceneToSaveModelSchemaV3alpha0';
 
 /**
  * T is the type of the save model
@@ -393,7 +394,16 @@ export class V2DashboardSerializer
     return newElementId;
   }
 
-  getSaveModel(s: DashboardScene) {
+  getSaveModel(s: DashboardScene): DashboardV2Spec {
+    // Rules are a v3alpha0-exclusive concept. A rule-bearing scene produces a
+    // v3alpha0-shaped spec (same body as v2 plus `rules`). The downstream
+    // saveDashboard RTK mutation inspects `rules` to pick the v3 client.
+    // For callers typed against v2 the extra field is harmless structural
+    // superset and flows through unchanged.
+    if (s.state.dashboardRules?.state.rules.length) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return transformSceneToSaveModelSchemaV3alpha0(s) as unknown as DashboardV2Spec;
+    }
     return transformSceneToSaveModelSchemaV2(s);
   }
 

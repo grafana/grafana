@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV3alpha0Spec } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
@@ -18,7 +19,12 @@ import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
+import {
+  isDashboardV2Resource,
+  isV1DashboardCommand,
+  isV2DashboardCommand,
+  isV3DashboardCommand,
+} from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
@@ -462,9 +468,20 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing dashboard
-    saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
+    saveDashboard: builder.mutation<
+      SaveDashboardResponseDTO,
+      SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
+    >({
       queryFn: async (cmd) => {
         try {
+          // Rules are v3alpha0-exclusive. Dashboards with rules go to v3; everything
+          // else stays on v2 stable to avoid mass-upgrading users to an alpha API.
+          if (isV3DashboardCommand(cmd)) {
+            const api = await getDashboardAPI('v3alpha0');
+            const response = await api.saveDashboard(cmd);
+            return { data: response };
+          }
+
           if (isV2DashboardCommand(cmd)) {
             const api = await getDashboardAPI('v2');
             const response = await api.saveDashboard(cmd);

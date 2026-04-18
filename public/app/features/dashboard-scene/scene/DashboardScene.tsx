@@ -60,6 +60,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { backfillLayoutItemNames } from '../conditional-rendering/rules/backfillLayoutItemNames';
 import { DashboardRules } from '../conditional-rendering/rules/DashboardRules';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
@@ -313,6 +314,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
     const destroyMutationClient = createMutationClient(this);
+
+    // Backfill stable `name` on rows/tabs referenced by rules so that renaming
+    // those sections after load does not break the LayoutItemReference link.
+    // Backend v2->v3alpha0 conversion derives reference names from titles; this
+    // stamps them onto the scene's layout items so round-trip save preserves them.
+    if (this.state.dashboardRules?.state.rules.length) {
+      backfillLayoutItemNames(this);
+    }
 
     // Activate dashboard-level rules so conditions subscribe to time range / variable changes
     const deactivateDashboardRules =
