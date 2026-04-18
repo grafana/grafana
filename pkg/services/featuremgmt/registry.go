@@ -2373,6 +2373,15 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "onlyStoreServiceAccountActionSets",
+			Description:  "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:         "excludeRedundantManagedPermissions",
 			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
 			Stage:        FeatureStageExperimental,
