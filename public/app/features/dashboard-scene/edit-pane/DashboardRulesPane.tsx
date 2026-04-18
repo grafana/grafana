@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Box, Sidebar, Text, useStyles2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Box, Button, Sidebar, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardRulesFlowEditor } from '../settings/DashboardRulesFlowEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -16,9 +17,17 @@ export function DashboardRulesPane({ dashboard, isEditing }: Props) {
   const { dashboardRules } = dashboard.useState();
   const ruleCount = dashboardRules?.state.rules.length ?? 0;
 
+  const openRulesStudio = () => {
+    locationService.partial({ editview: 'rules' });
+  };
+
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader title="Rules" />
+      <Sidebar.PaneHeader title="Rules">
+        <Button variant="secondary" size="sm" icon="cog" onClick={openRulesStudio}>
+          Rules
+        </Button>
+      </Sidebar.PaneHeader>
       <Box padding={1} display="flex" direction="column" flex={1}>
         {ruleCount === 0 ? (
           <Box display="flex" direction="column" alignItems="center" justifyContent="center" flex={1} gap={1}>

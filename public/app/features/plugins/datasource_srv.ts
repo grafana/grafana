@@ -37,11 +37,14 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
+  /** In-flight datasource load promises, keyed by UID. Prevents duplicate concurrent loads. */
+  private inflightLoads: Record<string, Promise<DataSourceApi>> = {};
 
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
 
   init(settingsMapByName: Record<string, DataSourceInstanceSettings>, defaultName: string) {
     this.datasources = {};
+    this.inflightLoads = {};
     this.settingsMapByUid = {};
     this.settingsMapByName = settingsMapByName;
     this.defaultName = defaultName;
@@ -209,6 +212,22 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(this.datasources[key]);
     }
 
+    // Deduplicate concurrent loads for the same key. If a load is already
+    // in-flight, all callers share the same Promise instead of triggering
+    // parallel plugin imports that race and can fail.
+    if (key in this.inflightLoads) {
+      return this.inflightLoads[key];
+    }
+
+    const loadPromise = this._doLoadDatasource(key);
+    this.inflightLoads[key] = loadPromise;
+
+    return loadPromise.finally(() => {
+      delete this.inflightLoads[key];
+    });
+  }
+
+  private async _doLoadDatasource(key: string): Promise<DataSourceApi> {
     // find the metadata
     const instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {

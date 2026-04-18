@@ -3,6 +3,7 @@ import {
   DashboardRuleConditionsSpec,
   DashboardRuleKind,
   DashboardRuleOutcomeCollapseKind,
+  DashboardRuleOutcomeOverrideQueryKind,
   DashboardRuleOutcomeRefreshIntervalKind,
   DashboardRuleOutcomeVisibilityKind,
   ElementReference,
@@ -97,9 +98,7 @@ export class DashboardRule extends SceneObjectBase<DashboardRuleState> {
 
   /** Returns target reference keys for indexing. */
   public getTargetKeys(): string[] {
-    return this._getTargets().map((t) =>
-      t.kind === 'LayoutItemReference' ? `layout:${t.name}` : `element:${t.name}`
-    );
+    return this._getTargets().map((t) => (t.kind === 'LayoutItemReference' ? `layout:${t.name}` : `element:${t.name}`));
   }
 
   /** Backwards-compat accessor: older rules may still have singular `target`. */
@@ -125,6 +124,13 @@ export class DashboardRule extends SceneObjectBase<DashboardRuleState> {
   public getRefreshIntervalOutcome(): DashboardRuleOutcomeRefreshIntervalKind | undefined {
     return this.state.outcomes.find(
       (o): o is DashboardRuleOutcomeRefreshIntervalKind => o.kind === 'DashboardRuleOutcomeRefreshInterval'
+    );
+  }
+
+  /** Check if this rule has an override query outcome. */
+  public getOverrideQueryOutcome(): DashboardRuleOutcomeOverrideQueryKind | undefined {
+    return this.state.outcomes.find(
+      (o): o is DashboardRuleOutcomeOverrideQueryKind => o.kind === 'DashboardRuleOutcomeOverrideQuery'
     );
   }
 

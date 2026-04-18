@@ -29,18 +29,14 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 import { AddRuleForm } from './AddRuleForm';
-import {
-  ConditionConnectorNode,
-  ConditionNode,
-  OutcomeNode,
-  RuleNode,
-  TargetNode,
-} from './flow-nodes/FlowNodes';
+import { ConditionConnectorNode, ConditionNode, OutcomeNode, RuleNode, TargetNode } from './flow-nodes/FlowNodes';
 
 interface Props {
   dashboard: DashboardScene;
   /** When true, hides add/edit controls (for use in view mode sidebar). */
   readOnly?: boolean;
+  /** When set, overrides live rule evaluation for visual styling (simulator mode). */
+  simulatedActiveRules?: Set<number>;
 }
 
 const nodeTypes = {
@@ -57,11 +53,18 @@ const defaultEdgeOptions = {
   markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
 };
 
-export function DashboardRulesFlowEditor({ dashboard, readOnly }: Props) {
+export function DashboardRulesFlowEditor({ dashboard, readOnly, simulatedActiveRules }: Props) {
   const { dashboardRules } = dashboard.useState();
 
   if (dashboardRules) {
-    return <ReactiveFlowEditor dashboard={dashboard} dashboardRules={dashboardRules} readOnly={readOnly} />;
+    return (
+      <ReactiveFlowEditor
+        dashboard={dashboard}
+        dashboardRules={dashboardRules}
+        readOnly={readOnly}
+        simulatedActiveRules={simulatedActiveRules}
+      />
+    );
   }
 
   if (readOnly) {
@@ -156,10 +159,12 @@ function ReactiveFlowEditor({
   dashboard,
   dashboardRules,
   readOnly,
+  simulatedActiveRules,
 }: {
   dashboard: DashboardScene;
   dashboardRules: DashboardRules;
   readOnly?: boolean;
+  simulatedActiveRules?: Set<number>;
 }) {
   const styles = useStyles2(getStyles);
   const [formMode, setFormMode] = useState<FormMode>({ type: 'closed' });
@@ -169,11 +174,11 @@ function ReactiveFlowEditor({
   const { rules, hiddenTargets } = dashboardRules.useState();
 
   const { flowNodes, flowEdges } = useMemo(
-    () => buildFlowFromRules(rules),
+    () => buildFlowFromRules(rules, simulatedActiveRules),
     // hiddenTargets is included because it changes when rule active states change,
     // and buildFlowFromRules reads rule.state.active and condition.state.result directly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rules, hiddenTargets]
+    [rules, hiddenTargets, simulatedActiveRules]
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
@@ -185,10 +190,7 @@ function ReactiveFlowEditor({
     setEdges(flowEdges);
   }, [flowNodes, flowEdges, setNodes, setEdges]);
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   // Double-click on a rule node opens the editor for that rule
   const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -319,7 +321,10 @@ const EDGE_COLORS = {
  * The rule node spans both bands. Conditions flow left-to-right with small
  * AND/OR connector pills between them. Outcomes sit after the last condition.
  */
-function buildFlowFromRules(rules: DashboardRule[]): {
+function buildFlowFromRules(
+  rules: DashboardRule[],
+  simulatedActiveRules?: Set<number>
+): {
   flowNodes: Node[];
   flowEdges: Edge[];
 } {
@@ -332,8 +337,13 @@ function buildFlowFromRules(rules: DashboardRule[]): {
 
   let currentY = 0;
 
+  // When in simulator mode, use the simulated active state instead of live evaluation
+  const isSimulating = simulatedActiveRules !== undefined;
+
   rules.forEach((rule, ruleIdx) => {
     const ruleId = `rule-${ruleIdx}`;
+    const isActive = isSimulating ? simulatedActiveRules.has(ruleIdx) : rule.state.active;
+    const dimOpacity = isSimulating && !isActive ? 0.25 : 1;
 
     const targets = rule.state.targets ?? ((rule.state as any).target ? [(rule.state as any).target] : []);
     const targetCount = targets.length;
@@ -360,10 +370,11 @@ function buildFlowFromRules(rules: DashboardRule[]): {
       id: ruleId,
       type: 'ruleNode',
       position: { x: RULE_X, y: ruleCenterY },
+      style: { opacity: dimOpacity },
       data: {
         label: rule.state.name || `Rule ${ruleIdx + 1}`,
         match: rule.state.match,
-        active: rule.state.active,
+        active: isActive,
         ruleIndex: ruleIdx,
         conditionCount: condCount,
         targetCount: targetCount,
@@ -377,6 +388,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
         id: targetId,
         type: 'targetNode',
         position: { x: TARGET_X, y: targetBandY + targetIdx * ROW_HEIGHT },
+        style: { opacity: dimOpacity },
         data: { kind: target.kind, name: target.name },
       });
 
@@ -386,8 +398,8 @@ function buildFlowFromRules(rules: DashboardRule[]): {
         sourceHandle: 'targets',
         target: targetId,
         label: targetIdx === 0 ? 'applies' : undefined,
-        style: { stroke: EDGE_COLORS.applies },
-        animated: rule.state.active,
+        style: { stroke: EDGE_COLORS.applies, opacity: dimOpacity },
+        animated: isActive,
       });
     });
 
@@ -403,6 +415,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
         id: condId,
         type: 'conditionNode',
         position: { x: condX, y: condY },
+        style: { opacity: dimOpacity },
         data: {
           kind: serialized.kind,
           spec: serialized.spec,
@@ -418,7 +431,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
           sourceHandle: 'conditions',
           target: condId,
           label: 'if',
-          style: { stroke: EDGE_COLORS.condition },
+          style: { stroke: EDGE_COLORS.condition, opacity: dimOpacity },
         });
       }
 
@@ -431,6 +444,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
           id: connectorId,
           type: 'conditionConnectorNode',
           position: { x: connectorX, y: condY + 12 },
+          style: { opacity: dimOpacity },
           data: { match: rule.state.match },
         });
 
@@ -439,7 +453,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
           id: `${condId}-to-connector`,
           source: condId,
           target: connectorId,
-          style: { stroke: EDGE_COLORS.connector },
+          style: { stroke: EDGE_COLORS.connector, opacity: dimOpacity },
         });
 
         // Connector -> next condition
@@ -448,7 +462,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
           id: `connector-${connectorId}-to-next`,
           source: connectorId,
           target: nextCondId,
-          style: { stroke: EDGE_COLORS.connector },
+          style: { stroke: EDGE_COLORS.connector, opacity: dimOpacity },
         });
       }
     });
@@ -463,6 +477,7 @@ function buildFlowFromRules(rules: DashboardRule[]): {
         id: outId,
         type: 'outcomeNode',
         position: { x: outcomeX, y: outcomeStartY + outIdx * ROW_HEIGHT },
+        style: { opacity: dimOpacity },
         data: { kind: outcome.kind, spec: outcome.spec },
       });
 
@@ -475,8 +490,8 @@ function buildFlowFromRules(rules: DashboardRule[]): {
           source: lastCondId,
           target: outId,
           label: outIdx === 0 ? 'then' : undefined,
-          style: { stroke: EDGE_COLORS.outcome },
-          animated: rule.state.active,
+          style: { stroke: EDGE_COLORS.outcome, opacity: dimOpacity },
+          animated: isActive,
         });
       }
     });
@@ -493,7 +508,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       width: '100%',
       height: '100%',
-      minHeight: 600,
+      minHeight: 0,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',

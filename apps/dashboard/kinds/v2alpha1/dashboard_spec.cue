@@ -1128,7 +1128,7 @@ DashboardRuleSpec: {
 	conditions: DashboardRuleConditionsSpec
 	// Outcomes to apply when conditions are met. Automatically reversed when
 	// conditions stop being met.
-	outcomes: [...DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind]
+	outcomes: [...DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind | DashboardRuleOutcomeOverrideQueryKind]
 }
 
 // Refers to a layout item (row, tab) by its stable name field.
@@ -1171,4 +1171,16 @@ DashboardRuleOutcomeRefreshIntervalKind: {
 
 DashboardRuleOutcomeRefreshIntervalSpec: {
 	interval: string
+}
+
+// Override query outcome: replace the target panel's queries while conditions are met.
+// The datasource is inherited from the target panel and does not change.
+DashboardRuleOutcomeOverrideQueryKind: {
+	kind: "DashboardRuleOutcomeOverrideQuery"
+	spec: DashboardRuleOutcomeOverrideQuerySpec
+}
+
+DashboardRuleOutcomeOverrideQuerySpec: {
+	// Replacement queries as opaque JSON objects. Each query uses the target panel's datasource.
+	queries: [...{...}]
 }
