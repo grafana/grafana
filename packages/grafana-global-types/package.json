@@ -7,7 +7,6 @@
   "devDependencies": {
     "@formatjs/intl-durationformat": "*",
     "@grafana/data": "workspace:*",
-    "@testing-library/jest-dom": "*",
-    "rxjs": "*"
+    "@testing-library/jest-dom": "*"
   }
 }

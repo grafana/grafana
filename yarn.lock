@@ -10952,7 +10952,6 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:*"
     "@grafana/data": "workspace:*"
     "@testing-library/jest-dom": "npm:*"
-    rxjs: "npm:*"
   languageName: unknown
   linkType: soft
 
@@ -30516,21 +30515,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:*, rxjs@npm:7.8.2, rxjs@npm:^7.2.0, rxjs@npm:^7.8.1, rxjs@npm:^7.8.2":
-  version: 7.8.2
-  resolution: "rxjs@npm:7.8.2"
-  dependencies:
-    tslib: "npm:^2.1.0"
-  checksum: 10/03dff09191356b2b87d94fbc1e97c4e9eb3c09d4452399dddd451b09c2f1ba8d56925a40af114282d7bc0c6fe7514a2236ca09f903cf70e4bbf156650dddb49d
-  languageName: node
-  linkType: hard
-
 "rxjs@npm:7.8.1":
   version: 7.8.1
   resolution: "rxjs@npm:7.8.1"
   dependencies:
     tslib: "npm:^2.1.0"
   checksum: 10/b10cac1a5258f885e9dd1b70d23c34daeb21b61222ee735d2ec40a8685bdca40429000703a44f0e638c27a684ac139e1c37e835d2a0dc16f6fc061a138ae3abb
+  languageName: node
+  linkType: hard
+
+"rxjs@npm:7.8.2, rxjs@npm:^7.2.0, rxjs@npm:^7.8.1, rxjs@npm:^7.8.2":
+  version: 7.8.2
+  resolution: "rxjs@npm:7.8.2"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10/03dff09191356b2b87d94fbc1e97c4e9eb3c09d4452399dddd451b09c2f1ba8d56925a40af114282d7bc0c6fe7514a2236ca09f903cf70e4bbf156650dddb49d
   languageName: node
   linkType: hard
 
