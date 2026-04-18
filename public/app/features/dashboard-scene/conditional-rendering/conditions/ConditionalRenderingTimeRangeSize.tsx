@@ -11,7 +11,6 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { ConditionRegistryItem } from './conditionRegistry';
 import { checkGroup, getObjectType } from './utils';
 

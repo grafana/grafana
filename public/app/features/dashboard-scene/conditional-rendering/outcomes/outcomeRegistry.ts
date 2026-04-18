@@ -5,7 +5,7 @@ import {
   DashboardRuleOutcomeOverrideQueryKind,
   DashboardRuleOutcomeRefreshIntervalKind,
   DashboardRuleOutcomeVisibilityKind,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 /** Union of all outcome kind types from the dashboard schema. Grows with new outcome types. */
 export type DashboardRuleOutcomeKindTypes =

@@ -38,10 +38,11 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     }));
   }
 
+  // `name` is a v2beta1-only field (row identifier used by rule targeting). Cast at this boundary;
+  // Phase 2 moves the rules support to v3alpha0 where `name` becomes part of the schema.
   const rowKind: RowsLayoutRowKind = {
     kind: 'RowsLayoutRow',
     spec: {
-      name: row.state.name,
       title: row.state.title,
       collapse: row.state.collapse ?? false,
       layout: layout,
@@ -53,7 +54,8 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
           value: row.state.repeatByVariable,
         },
       }),
-    },
+      ...(row.state.name !== undefined && { name: row.state.name }),
+    } as RowsLayoutRowKind['spec'],
   };
 
   const sectionVariables = serializeSectionVariables(row.state.$variables);
@@ -92,7 +94,7 @@ export function deserializeRow(
   const layout = row.spec.layout;
 
   return new RowItem({
-    name: row.spec.name,
+    name: (row.spec as { name?: string }).name,
     title: row.spec.title,
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,

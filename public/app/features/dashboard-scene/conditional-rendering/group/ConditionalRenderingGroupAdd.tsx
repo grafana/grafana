@@ -5,12 +5,10 @@ import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { type ObjectsWithConditionalRendering } from '../object';
-
-import { type GroupConditionConditionType } from './types';
-
 import { conditionRegistry } from '../conditions/conditionRegistry';
 import { ObjectsWithConditionalRendering } from '../object';
+
+import { type GroupConditionConditionType } from './types';
 
 interface Props {
   objectType: ObjectsWithConditionalRendering;

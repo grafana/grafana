@@ -3,7 +3,7 @@ import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConditionalRenderingUserTeamKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { ConditionalRenderingUserTeamKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 import { Field, MultiSelect, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
@@ -114,6 +114,10 @@ export class ConditionalRenderingUserTeam extends SceneObjectBase<ConditionalRen
     this._evaluate();
   }
 
+  public forceCheck() {
+    this._evaluate();
+  }
+
   public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }
@@ -216,6 +220,7 @@ function ConditionalRenderingUserTeamRenderer({ model }: SceneComponentProps<Con
       isObjectSupported={true}
       model={model}
       title="User team"
+      ruleId="ConditionalRenderingUserTeam"
     >
       <Stack direction="column" gap={1}>
         <Field label="Operator" noMargin>

@@ -33,8 +33,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     key,
     repeatSourceKey,
   } = model.useState();
-  const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
-  const { layout, collapse, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, elementCrClass, elementCrOverlay] = useIsConditionallyHidden(

@@ -163,9 +163,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF layout
 
     // rules (dashboard-level rules engine, gated behind dashboardRules feature flag)
-    rules: sceneDash.dashboardRules?.serialize(),
+    // Cast needed because rules are v2beta1/v2alpha1-only, not in v2 stable.
+    // Phase 2 moves rules to v3alpha0.
+    ...(sceneDash.dashboardRules ? { rules: sceneDash.dashboardRules.serialize() } : {}),
     // EOF rules
-  };
+  } as DashboardV2Spec;
 
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid

@@ -2,7 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import {
   DashboardRuleOutcomeRefreshIntervalKind,
   DashboardRuleOutcomeRefreshIntervalSpec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 import { Field, Select } from '@grafana/ui';
 
 import { DashboardRuleOutcomeKindTypes, OutcomeEditorProps, OutcomeRegistryItem } from './outcomeRegistry';

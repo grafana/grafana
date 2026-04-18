@@ -1,7 +1,7 @@
 import {
   DashboardRuleOutcomeVisibilityKind,
   DashboardRuleOutcomeVisibilitySpec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { DashboardRuleOutcomeKindTypes, OutcomeRegistryItem } from './outcomeRegistry';
 

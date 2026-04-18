@@ -228,7 +228,13 @@ export function transformSaveModelSchemaV2ToScene(
       title: dashboard.title,
       uid: metadata.name,
       version: metadata.generation,
-      dashboardRules: dashboard.rules?.length ? DashboardRules.deserialize(dashboard.rules) : undefined,
+      // Rules are an experimental extension present only in v2beta1/v2alpha1, not v2 stable.
+      // Cast through a rules-bearing shape at this boundary; Phase 2 moves rules to v3alpha0.
+      dashboardRules: (() => {
+        const rules = (dashboard as unknown as { rules?: Array<Parameters<typeof DashboardRules.deserialize>[0][number]> })
+          .rules;
+        return rules?.length ? DashboardRules.deserialize(rules) : undefined;
+      })(),
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         // Use defaults when time is empty to match DashboardModel behavior

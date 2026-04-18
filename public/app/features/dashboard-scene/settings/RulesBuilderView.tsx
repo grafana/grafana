@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { ElementReference, LayoutItemReference } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 import { Badge, Button, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { conditionRegistry } from '../conditional-rendering/conditions/conditionRegistry';
@@ -115,24 +115,25 @@ function collectLayoutItems(layout: unknown, targets: TargetOption[]) {
 // ---------------------------------------------------------------------------
 
 function describeCondition(
-  serialized: { kind: string; spec: Record<string, unknown> },
+  serialized: { kind: string; spec: Record<string, unknown> } | { kind: string; spec: unknown },
   teamNames: TeamNameMap
 ): string {
+  const spec = serialized.spec as Record<string, unknown>;
   switch (serialized.kind) {
     case 'ConditionalRenderingTimeRangeSize':
-      return `time range < ${serialized.spec.value}`;
+      return `time range < ${spec.value}`;
     case 'ConditionalRenderingUserTeam': {
-      const op = serialized.spec.operator as string;
-      const uids = (serialized.spec.teamUids as string[] | undefined) ?? [];
+      const op = spec.operator as string;
+      const uids = (spec.teamUids as string[] | undefined) ?? [];
       const names = uids.map((uid) => teamNames.get(uid) ?? uid).join(', ');
       return op === 'is_member' ? `user is member of ${names}` : `user is not in ${names}`;
     }
     case 'ConditionalRenderingVariable': {
-      const { variable, operator, value } = serialized.spec;
+      const { variable, operator, value } = spec;
       return `$${variable} ${operator} ${value}`;
     }
     case 'ConditionalRenderingData':
-      return serialized.spec.value ? 'panel has data' : 'panel has no data';
+      return spec.value ? 'panel has data' : 'panel has no data';
     default:
       return serialized.kind;
   }

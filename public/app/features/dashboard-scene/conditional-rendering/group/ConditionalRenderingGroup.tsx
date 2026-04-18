@@ -14,12 +14,6 @@ import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboa
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';
-import { getDashboardSceneFor } from '../../utils/utils';
-import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
-import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';
-import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
-import { conditionalRenderingSerializerRegistry } from '../conditions/serializers';
-import { type ConditionalRenderingConditions } from '../conditions/types';
 import { conditionRegistry } from '../conditions/conditionRegistry';
 import '../conditions/serializers'; // side-effect: populates conditionRegistry
 import { ConditionalRenderingConditions } from '../conditions/types';
@@ -28,7 +22,6 @@ import { extractObjectType, getTranslatedObjectType } from '../object';
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
-import { type GroupConditionCondition, type GroupConditionConditionType, type GroupConditionVisibility } from './types';
 import { GroupConditionCondition, GroupConditionVisibility } from './types';
 
 export interface ConditionalRenderingGroupState extends SceneObjectState {
@@ -164,6 +157,8 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
   }
 
   public serialize(): ConditionalRenderingGroupKind {
+    // UserTeam condition is v2beta1-only and doesn't appear in v2 stable's ConditionalRenderingGroupSpec
+    // items union. Cast at this boundary; Phase 2 moves this to v3alpha0 cleanly.
     return {
       kind: 'ConditionalRenderingGroup',
       spec: {
@@ -171,7 +166,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         condition: this.state.condition,
         items: this.state.conditions.map((condition) => condition.serialize()),
       },
-    };
+    } as ConditionalRenderingGroupKind;
   }
 
   public static createEmpty(): ConditionalRenderingGroup {

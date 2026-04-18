@@ -8,7 +8,7 @@ import {
   DashboardRuleOutcomeVisibilityKind,
   ElementReference,
   LayoutItemReference,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { conditionRegistry } from '../conditions/conditionRegistry';
 import '../conditions/serializers'; // side-effect: populates conditionRegistry

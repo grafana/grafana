@@ -6,7 +6,6 @@ import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from 
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { ConditionalRenderingOverlay } from '../../conditional-rendering/hooks/ConditionalRenderingOverlay';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useRuleBasedVisibility } from '../../conditional-rendering/hooks/useRuleBasedVisibility';

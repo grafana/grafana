@@ -1,7 +1,7 @@
 import {
   DashboardRuleOutcomeCollapseKind,
   DashboardRuleOutcomeCollapseSpec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardRuleOutcomeKindTypes, OutcomeEditorProps, OutcomeRegistryItem } from './outcomeRegistry';

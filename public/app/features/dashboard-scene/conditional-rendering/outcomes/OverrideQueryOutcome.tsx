@@ -14,7 +14,7 @@ import { SceneDataTransformer, SceneQueryRunner, sceneGraph, VizPanel } from '@g
 import {
   DashboardRuleOutcomeOverrideQueryKind,
   DashboardRuleOutcomeOverrideQuerySpec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 import { Button, Field, Stack, useStyles2 } from '@grafana/ui';
 
 import { DashboardRuleOutcomeKindTypes, OutcomeEditorProps, OutcomeRegistryItem } from './outcomeRegistry';

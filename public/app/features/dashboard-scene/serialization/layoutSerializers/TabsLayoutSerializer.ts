@@ -21,10 +21,11 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
 
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
+  // `name` is a v2beta1-only field (tab identifier used by rule targeting). Cast at this boundary;
+  // Phase 2 moves the rules support to v3alpha0 where `name` becomes part of the schema.
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
-      name: tab.state.name,
       title: tab.state.title,
       layout: layout,
       ...(tab.state.repeatByVariable && {
@@ -33,7 +34,8 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
           value: tab.state.repeatByVariable,
         },
       }),
-    },
+      ...(tab.state.name !== undefined && { name: tab.state.name }),
+    } as TabsLayoutTabKind['spec'],
   };
 
   const sectionVariables = serializeSectionVariables(tab.state.$variables);
@@ -76,7 +78,7 @@ export function deserializeTab(
   const layout = tab.spec.layout;
 
   return new TabItem({
-    name: tab.spec.name,
+    name: (tab.spec as { name?: string }).name,
     title: tab.spec.title,
     $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
