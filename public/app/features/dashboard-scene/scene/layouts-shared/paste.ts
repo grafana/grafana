@@ -57,8 +57,7 @@ function isV2DynamicDashboardsPanelClipboard(obj: unknown): obj is PanelStore {
   if (gridItem === null || typeof gridItem !== 'object') {
     return false;
   }
-  const kind = Reflect.get(gridItem, 'kind');
-  return kind === 'GridLayoutItem' || kind === 'AutoGridLayoutItem';
+  return true;
 }
 
 export function getRowFromClipboard(scene: DashboardScene): RowItem {
@@ -98,10 +97,10 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
 
 function getGridItemFromClipboard(scene: DashboardScene) {
   const jsonData = store.get(LS_PANEL_COPY_KEY);
-  const parsed: unknown = JSON.parse(jsonData);
 
   let deserializedGridItem;
   try {
+    const parsed: unknown = JSON.parse(jsonData);
     if (isV2DynamicDashboardsPanelClipboard(parsed)) {
       const { elements, gridItem } = parsed;
       deserializedGridItem =
