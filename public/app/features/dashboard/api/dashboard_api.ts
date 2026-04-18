@@ -1,5 +1,6 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV3alpha0Spec } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { type DashboardDTO } from 'app/types/dashboard';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
@@ -9,11 +10,13 @@ import { type DashboardAPI, type DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
+import { K8sDashboardV3alpha0API } from './v3alpha0';
 
 type DashboardAPIClients = {
   legacy: DashboardAPI<DashboardDTO, Dashboard>;
   v1: DashboardAPI<DashboardDTO, Dashboard>;
   v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
+  v3alpha0: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV3alpha0Spec>, DashboardV3alpha0Spec>;
   unified: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec>;
 };
 
@@ -35,8 +38,16 @@ export async function getDashboardAPI(
   responseFormat: 'v2'
 ): Promise<DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>>;
 export async function getDashboardAPI(
-  responseFormat?: 'v1' | 'v2'
-): Promise<DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec>> {
+  responseFormat: 'v3alpha0'
+): Promise<DashboardAPI<DashboardWithAccessInfo<DashboardV3alpha0Spec>, DashboardV3alpha0Spec>>;
+export async function getDashboardAPI(
+  responseFormat?: 'v1' | 'v2' | 'v3alpha0'
+): Promise<
+  DashboardAPI<
+    DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardV3alpha0Spec>,
+    Dashboard | DashboardV2Spec | DashboardV3alpha0Spec
+  >
+> {
   // Ensure API versions are resolved before creating clients.
   // The resolver caches internally — only the first call does a network request.
   // On failure it returns beta fallbacks without caching, so we rebuild
@@ -50,6 +61,7 @@ export async function getDashboardAPI(
       legacy: new LegacyDashboardAPI(),
       v1: new K8sDashboardAPI(),
       v2: new K8sDashboardV2API(),
+      v3alpha0: new K8sDashboardV3alpha0API(),
       unified: new UnifiedDashboardAPI(),
     };
   }
@@ -58,5 +70,5 @@ export async function getDashboardAPI(
     throw new Error(`Unknown Dashboard API version: ${v}`);
   }
 
-  return clients[v];
+  return clients[v]!;
 }

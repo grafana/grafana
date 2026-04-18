@@ -1,12 +1,14 @@
 import { config, locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV3alpha0Spec } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { isRecord } from 'app/core/utils/isRecord';
 import { AnnoKeyGrantPermissions, type Resource, type ResourceForCreate } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
@@ -17,20 +19,37 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
   return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1' || version === 'v1';
 }
 
-export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
+export function isV3StoredVersion(version: string | undefined): boolean {
+  return version === 'v3alpha0';
+}
+
+export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2' | 'v3alpha0') {
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
   const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
 
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
-  // console.log(forcingOldDashboardArch);
   // Force legacy API when dashboard scene is force disabled
   if (forcingOldDashboardArch) {
-    if (responseFormat === 'v2') {
-      throw new Error('v2 is not supported for legacy architecture');
+    if (responseFormat === 'v2' || responseFormat === 'v3alpha0') {
+      throw new Error(`${responseFormat} is not supported for legacy architecture`);
     }
 
     return isKubernetesDashboardsEnabled ? 'v1' : 'legacy';
+  }
+
+  // v3alpha0 is only available when the backend advertises it AND the
+  // dashboardRules feature toggle is on. The resolver bakes the toggle in.
+  if (responseFormat === 'v3alpha0') {
+    if (!isKubernetesDashboardsEnabled) {
+      throw new Error('v3alpha0 requires kubernetes dashboards to be enabled');
+    }
+    if (!dashboardAPIVersionResolver.isV3Available()) {
+      throw new Error(
+        'v3alpha0 is not available — requires the dashboardRules feature toggle and a backend that serves v3alpha0'
+      );
+    }
+    return 'v3alpha0';
   }
 
   // Unified manages redirection between v1 and v2, but when responseFormat is undefined we get the unified API
@@ -61,8 +80,26 @@ export function isDashboardResource(
   );
 }
 
+/**
+ * Structural check — v2 and v3alpha0 both carry `elements`. v3 adds `rules`
+ * on top; call isDashboardV3Spec to narrow to the rules-bearing shape.
+ */
 export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
   return isRecord(obj) && 'elements' in obj;
+}
+
+/**
+ * True when the spec carries v3alpha0-exclusive rules with at least one entry.
+ * Dashboards with an empty `rules: []` round-trip safely through v2, so they
+ * don't need v3 storage.
+ */
+export function isDashboardV3Spec(obj: unknown): obj is DashboardV3alpha0Spec {
+  if (!isDashboardV2Spec(obj)) {
+    return false;
+  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const rules = (obj as DashboardV3alpha0Spec).rules;
+  return Array.isArray(rules) && rules.length > 0;
 }
 
 export function isDashboardV1Spec(obj: unknown): obj is Dashboard {
@@ -78,7 +115,7 @@ export function isDashboardV2Resource(value: unknown): value is DashboardWithAcc
 }
 
 export function isV1DashboardCommand(
-  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
+  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
 ): cmd is SaveDashboardCommand<Dashboard> {
   return !isDashboardV2Spec(cmd.dashboard);
 }
@@ -92,9 +129,20 @@ export function isDashboardV1Resource(value: unknown): value is DashboardWithAcc
 }
 
 export function isV2DashboardCommand(
-  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
+  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
 ): cmd is SaveDashboardCommand<DashboardV2Spec> {
-  return isDashboardV2Spec(cmd.dashboard);
+  return isDashboardV2Spec(cmd.dashboard) && !isDashboardV3Spec(cmd.dashboard);
+}
+
+/**
+ * True when the save command carries a rule-bearing spec. Rules are a
+ * v3alpha0-exclusive concept, so this is the signal to route the save to
+ * the v3alpha0 client instead of v2.
+ */
+export function isV3DashboardCommand(
+  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
+): cmd is SaveDashboardCommand<DashboardV3alpha0Spec> {
+  return isDashboardV3Spec(cmd.dashboard);
 }
 
 export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {

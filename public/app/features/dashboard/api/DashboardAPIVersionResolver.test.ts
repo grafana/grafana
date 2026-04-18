@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 
@@ -187,6 +187,46 @@ describe('DashboardAPIVersionResolver', () => {
       await dashboardAPIVersionResolver.resolve();
       expect(dashboardAPIVersionResolver.getV1()).toBe('v1');
       expect(dashboardAPIVersionResolver.getV2()).toBe('v2');
+    });
+  });
+
+  describe('v3alpha0', () => {
+    const originalToggle = config.featureToggles.dashboardRules;
+
+    afterEach(() => {
+      config.featureToggles.dashboardRules = originalToggle;
+    });
+
+    it('returns undefined when the server does not advertise v3alpha0', async () => {
+      config.featureToggles.dashboardRules = true;
+      mockDiscoveryResponse(['v2', 'v1']);
+      await dashboardAPIVersionResolver.resolve();
+      expect(dashboardAPIVersionResolver.getV3()).toBeUndefined();
+      expect(dashboardAPIVersionResolver.isV3Available()).toBe(false);
+    });
+
+    it('returns undefined when the dashboardRules toggle is off even if server advertises v3alpha0', async () => {
+      config.featureToggles.dashboardRules = false;
+      mockDiscoveryResponse(['v3alpha0', 'v2', 'v1']);
+      await dashboardAPIVersionResolver.resolve();
+      expect(dashboardAPIVersionResolver.getV3()).toBeUndefined();
+      expect(dashboardAPIVersionResolver.isV3Available()).toBe(false);
+    });
+
+    it('returns v3alpha0 when both toggle is on and server advertises it', async () => {
+      config.featureToggles.dashboardRules = true;
+      mockDiscoveryResponse(['v3alpha0', 'v2', 'v1']);
+      await dashboardAPIVersionResolver.resolve();
+      expect(dashboardAPIVersionResolver.getV3()).toBe('v3alpha0');
+      expect(dashboardAPIVersionResolver.isV3Available()).toBe(true);
+    });
+
+    it('keeps v2 as default when v3alpha0 is available', async () => {
+      config.featureToggles.dashboardRules = true;
+      mockDiscoveryResponse(['v3alpha0', 'v2', 'v1']);
+      const result = await dashboardAPIVersionResolver.resolve();
+      expect(result.v2).toBe('v2');
+      expect(result.v1).toBe('v1');
     });
   });
 });
