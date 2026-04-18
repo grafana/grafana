@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "沒有找到資料來源"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15333,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "虛線",
         "label-dots": "點",
         "label-solid": "實體"
