@@ -11,5 +11,5 @@
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
-  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]
+  "include": ["src/**/*.ts*"]
 }

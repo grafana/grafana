@@ -10,7 +10,7 @@
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
-  "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"],
+  "include": ["src/**/*.ts*"],
   "ts-node": {
     "compilerOptions": {
       "module": "NodeNext",
