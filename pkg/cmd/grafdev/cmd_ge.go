@@ -15,11 +15,13 @@ func cmdGe() *cli.Command {
 	return &cli.Command{
 		Name:  "ge",
 		Usage: "Run a subprocess with working directory = grafana-enterprise (git, shell scripts, etc.)",
-		Description: `Global flags such as --oss and --enterprise must appear before the "ge" subcommand, for example:
+		Flags: globalPathFlags(),
+		Description: `Set OSS / enterprise paths on the root command or right after ge (both work), for example:
 
   grafdev --oss /path/to/grafana ge git status -sb
+  grafdev ge --oss /path/to/grafana git status -sb
 
-Alternatively set GRAFANA_DEV_OSS and optional GRAFANA_DEV_ENTERPRISE, then run from anywhere.`,
+You can also rely on GRAFANA_DEV_OSS / GRAFANA_DEV_ENTERPRISE (see flag EnvVars).`,
 		Subcommands: []*cli.Command{
 			{
 				Name:            "git",

@@ -35,11 +35,12 @@ Agents often have shell cwd = OSS only. Use **`grafdev ge git`** so git runs wit
 
 ```bash
 go run ./pkg/cmd/grafdev --oss . ge git status -sb
+go run ./pkg/cmd/grafdev ge --oss . git status -sb
 go run ./pkg/cmd/grafdev --oss . ge git rev-parse HEAD
 go run ./pkg/cmd/grafdev --oss . ge git checkout -b my-branch
 ```
 
-Put **global flags before `ge`**: `grafdev --oss <path> ge git …`
+Paths can be set **before** `ge` (`grafdev --oss <path> ge git …`) or **right after** `ge` (`grafdev ge --oss <path> git …`); env vars on the flags also work.
 
 **Any command** in the enterprise tree:
 

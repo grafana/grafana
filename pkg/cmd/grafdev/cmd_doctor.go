@@ -74,7 +74,15 @@ func runDoctor(c *cli.Context, p RepoPaths, remote string, quickBuild, strict bo
 
 	lock := p.EnterpriseDevLock()
 	if _, err := os.Stat(lock); err == nil {
-		printCheck(false, fmt.Sprintf(".devlock exists at %s — start-dev.sh may still be running, or stale lock (make enterprise-unlock)", lock))
+		active, certain := enterpriseDevLockStatus(p.OSS, p.Enterprise)
+		switch {
+		case active:
+			printCheck(true, fmt.Sprintf(".devlock at %s (enterprise-dev watcher process detected — expected while make enterprise-dev is running)", lock))
+		case certain && !active:
+			printCheck(false, fmt.Sprintf(".devlock at %s but no matching watcher process — likely stale (grafdev link unlock or make enterprise-unlock)", lock))
+		default:
+			printCheck(true, fmt.Sprintf(".devlock at %s (could not confirm watcher via ps; if enterprise-dev is not running, remove stale lock: grafdev link unlock)", lock))
+		}
 	} else {
 		printCheck(true, "no enterprise .devlock (nothing holding the file watcher lock)")
 	}
