@@ -58,6 +58,12 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2' | 'v3alpha0
       return 'v1';
     }
     if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled) {
+      // When dashboardRules is on and the server advertises v3alpha0, use v3alpha0 as the
+      // default read/write path. v3alpha0 is a structural superset of v2 (rules field optional),
+      // so rule-free dashboards round-trip identically while rule-bearing dashboards stay native.
+      if (config.featureToggles.dashboardRules && dashboardAPIVersionResolver.isV3Available()) {
+        return 'v3alpha0';
+      }
       return 'v2';
     }
     return 'unified';
