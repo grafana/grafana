@@ -15,6 +15,7 @@ import (
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashboardV3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -118,6 +119,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		// Strip BOMs from all string fields recursively
 		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2.DashboardResourceInfo
+
+	case *dashboardV3alpha0.Dashboard:
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV3alpha0.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV3alpha0.DashboardGridLayoutSpec{},
+			}
+		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
+		resourceInfo = dashboardV3alpha0.DashboardResourceInfo
 
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
