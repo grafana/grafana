@@ -5,7 +5,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { type PageProps } from 'app/core/components/Page/types';
 
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
-import { getRulesDataSources } from '../utils/datasource';
+import { getAlertManagerDataSourcesByPermission, getRulesDataSources } from '../utils/datasource';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
@@ -37,7 +37,11 @@ export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: Aler
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
   // Check if there are any external data sources that can manage alerts
   // If so, show the AlertManagerPicker so users can configure their alertmanagers
-  const hasExternalManagedAlerts = useMemo(() => getRulesDataSources().length > 0, []);
+  const hasExternalManagedAlerts = useMemo(() => {
+    const rulesSources = getRulesDataSources();
+    const { availableExternalDataSources } = getAlertManagerDataSourcesByPermission(accessType);
+    return rulesSources.length > 0 || availableExternalDataSources.length > 0;
+  }, [accessType]);
 
   return (
     <AlertmanagerProvider accessType={accessType}>

@@ -195,6 +195,28 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
+    it('should show AlertManagerPicker when external Alertmanager data source is configured', () => {
+      const alertmanagerDataSource = mockDataSource({
+        name: 'alertmanager',
+        uid: 'alertmanager-uid',
+        type: 'alertmanager',
+        jsonData: {
+          handleGrafanaManagedAlerts: true,
+        },
+      });
+      setupDataSources(alertmanagerDataSource);
+
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingRuleExternalRead, // Add all so we don't trip up any hidden logic
+      ]);
+
+      renderTestComponent();
+
+      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+    });
+
     it('should hide AlertManagerPicker when user lacks permissions even if external data sources exist', () => {
       const dataSourceWithManageAlerts = mockDataSource({
         name: 'prometheus-managed',
