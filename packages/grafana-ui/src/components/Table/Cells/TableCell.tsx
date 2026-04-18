@@ -5,6 +5,13 @@ import { TimeRange, DataFrame, InterpolateFunction } from '@grafana/data';
 import { TableStyles } from '../TableRT/styles';
 import { GetActionsFunction, GrafanaTableColumn, TableFilterActionCallback, TableInspectCellCallback } from '../types';
 
+export interface SelectionEdges {
+  top: boolean;
+  bottom: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 export interface Props {
   cell: Cell;
   tableStyles: TableStyles;
@@ -21,6 +28,9 @@ export interface Props {
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
   setInspectCell?: TableInspectCellCallback;
+  selectionEdges?: SelectionEdges | null;
+  onCellMouseDown?: (event: React.MouseEvent) => void;
+  onCellMouseEnter?: () => void;
 }
 
 export const TableCell = ({
@@ -37,6 +47,9 @@ export const TableCell = ({
   getActions,
   replaceVariables,
   setInspectCell,
+  selectionEdges,
+  onCellMouseDown,
+  onCellMouseEnter,
 }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
@@ -64,13 +77,39 @@ export const TableCell = ({
 
   const actions = getActions ? getActions(frame, field, cell.row.index, replaceVariables) : [];
 
+  if (selectionEdges) {
+    const borderColor = tableStyles.theme.colors.primary.main;
+    const shadows: string[] = [];
+    if (selectionEdges.top) {
+      shadows.push(`inset 0 2px 0 0 ${borderColor}`);
+    }
+    if (selectionEdges.bottom) {
+      shadows.push(`inset 0 -2px 0 0 ${borderColor}`);
+    }
+    if (selectionEdges.left) {
+      shadows.push(`inset 2px 0 0 0 ${borderColor}`);
+    }
+    if (selectionEdges.right) {
+      shadows.push(`inset -2px 0 0 0 ${borderColor}`);
+    }
+    if (shadows.length > 0) {
+      cellProps.style = { ...cellProps.style, boxShadow: shadows.join(', ') };
+    }
+  }
+
+  const enhancedCellProps = {
+    ...cellProps,
+    ...(onCellMouseDown && { onMouseDown: onCellMouseDown }),
+    ...(onCellMouseEnter && { onMouseEnter: onCellMouseEnter }),
+  };
+
   return (
     <>
       {cell.render('Cell', {
         field,
         tableStyles,
         onCellFilterAdded,
-        cellProps,
+        cellProps: enhancedCellProps,
         innerWidth,
         timeRange,
         userProps,

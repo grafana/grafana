@@ -23,6 +23,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';
 import {
   CellColors,
+  CellRangeSelection,
   GetActionsFunction,
   TableFieldOptions,
   TableFilterActionCallback,
@@ -64,6 +65,9 @@ interface RowsListProps {
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
   setInspectCell?: TableInspectCellCallback;
+  cellSelection?: CellRangeSelection | null;
+  onCellMouseDown?: (rowIndex: number, colIndex: number, event: React.MouseEvent) => void;
+  onCellMouseEnter?: (rowIndex: number, colIndex: number) => void;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -93,6 +97,9 @@ export const RowsList = (props: RowsListProps) => {
     getActions,
     replaceVariables,
     setInspectCell,
+    cellSelection,
+    onCellMouseDown,
+    onCellMouseEnter,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -338,13 +345,13 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
-          {row.cells.map((cell: Cell, index: number) => (
+          {row.cells.map((cell: Cell, colIndex: number) => (
             <TableCell
-              key={index}
+              key={colIndex}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
+              columnIndex={colIndex}
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
@@ -357,6 +364,9 @@ export const RowsList = (props: RowsListProps) => {
               getActions={getActions}
               replaceVariables={replaceVariables}
               setInspectCell={setInspectCell}
+              selectionEdges={getSelectionEdges(index, colIndex, cellSelection ?? null)}
+              onCellMouseDown={(e: React.MouseEvent) => onCellMouseDown?.(index, colIndex, e)}
+              onCellMouseEnter={() => onCellMouseEnter?.(index, colIndex)}
             />
           ))}
         </div>
@@ -386,6 +396,9 @@ export const RowsList = (props: RowsListProps) => {
       getActions,
       replaceVariables,
       setInspectCell,
+      cellSelection,
+      onCellMouseDown,
+      onCellMouseEnter,
     ]
   );
 
@@ -451,3 +464,29 @@ export const RowsList = (props: RowsListProps) => {
     </CustomScrollbar>
   );
 };
+
+function getSelectionEdges(
+  visualRowIndex: number,
+  colIndex: number,
+  cellSelection: CellRangeSelection | null
+): { top: boolean; bottom: boolean; left: boolean; right: boolean } | null {
+  if (!cellSelection) {
+    return null;
+  }
+
+  const minRow = Math.min(cellSelection.anchor.row, cellSelection.focus.row);
+  const maxRow = Math.max(cellSelection.anchor.row, cellSelection.focus.row);
+  const minCol = Math.min(cellSelection.anchor.col, cellSelection.focus.col);
+  const maxCol = Math.max(cellSelection.anchor.col, cellSelection.focus.col);
+
+  if (visualRowIndex < minRow || visualRowIndex > maxRow || colIndex < minCol || colIndex > maxCol) {
+    return null;
+  }
+
+  return {
+    top: visualRowIndex === minRow,
+    bottom: visualRowIndex === maxRow,
+    left: colIndex === minCol,
+    right: colIndex === maxCol,
+  };
+}

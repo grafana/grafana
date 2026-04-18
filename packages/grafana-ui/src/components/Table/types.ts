@@ -173,6 +173,16 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
+export interface CellPosition {
+  row: number;
+  col: number;
+}
+
+export interface CellRangeSelection {
+  anchor: CellPosition;
+  focus: CellPosition;
+}
+
 export type GetActionsFunction = (
   frame: DataFrame,
   field: Field,

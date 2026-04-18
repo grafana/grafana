@@ -10,7 +10,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -21,7 +21,14 @@ import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, InspectCell, TableRTProps as Props } from '../types';
+import {
+  CellRangeSelection,
+  FooterItem,
+  GrafanaTableColumn,
+  GrafanaTableState,
+  InspectCell,
+  TableRTProps as Props,
+} from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -74,6 +81,36 @@ export const Table = memo((props: Props) => {
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
   const [inspectCell, setInspectCell] = useState<InspectCell | null>(null);
+  const [cellSelection, setCellSelection] = useState<CellRangeSelection | null>(null);
+  const isSelectingRef = useRef(false);
+
+  const onCellMouseDown = useCallback((rowIndex: number, colIndex: number, event: React.MouseEvent) => {
+    if (event.shiftKey) {
+      setCellSelection((prev) =>
+        prev
+          ? { ...prev, focus: { row: rowIndex, col: colIndex } }
+          : { anchor: { row: rowIndex, col: colIndex }, focus: { row: rowIndex, col: colIndex } }
+      );
+    } else {
+      setCellSelection({ anchor: { row: rowIndex, col: colIndex }, focus: { row: rowIndex, col: colIndex } });
+      isSelectingRef.current = true;
+    }
+    tableDivRef.current?.focus();
+  }, []);
+
+  const onCellMouseEnter = useCallback((rowIndex: number, colIndex: number) => {
+    if (isSelectingRef.current) {
+      setCellSelection((prev) => (prev ? { ...prev, focus: { row: rowIndex, col: colIndex } } : null));
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      isSelectingRef.current = false;
+    };
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, []);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -197,6 +234,66 @@ export const Table = memo((props: Props) => {
 
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
+
+  const handleCopy = useCallback(
+    (event: React.ClipboardEvent<HTMLDivElement>) => {
+      if (!cellSelection) {
+        return;
+      }
+      const { anchor, focus } = cellSelection;
+      const minRow = Math.min(anchor.row, focus.row);
+      const maxRow = Math.max(anchor.row, focus.row);
+      const minCol = Math.min(anchor.col, focus.col);
+      const maxCol = Math.max(anchor.col, focus.col);
+
+      const { headers } = headerGroups[0];
+
+      const colNames: string[] = [];
+      for (let c = minCol; c <= maxCol; c++) {
+        const col = headers[c] as unknown as GrafanaTableColumn;
+        colNames.push(typeof col.Header === 'string' ? col.Header : '');
+      }
+
+      const grid: string[][] = [];
+      for (let r = minRow; r <= maxRow; r++) {
+        const paginatedIndex = state.pageIndex * state.pageSize + r;
+        const row = rows[paginatedIndex];
+        if (!row) {
+          continue;
+        }
+
+        const rowLine: string[] = [];
+        for (let c = minCol; c <= maxCol; c++) {
+          const col = headers[c] as unknown as GrafanaTableColumn;
+          const field = col.field;
+          if (!field) {
+            rowLine.push('');
+            continue;
+          }
+          const rawValue = field.values[row.index];
+          if (rawValue == null) {
+            rowLine.push('');
+          } else if (field.display) {
+            rowLine.push(formattedValueToString(field.display(rawValue)).replace(/[\t\n\r]/g, ' '));
+          } else {
+            rowLine.push(String(rawValue).replace(/[\t\n\r]/g, ' '));
+          }
+        }
+        grid.push(rowLine);
+      }
+
+      const tsv = [colNames.join('\t'), ...grid.map((r) => r.join('\t'))].join('\n');
+
+      const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const htmlRows = grid.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('');
+      const html = `<table><thead><tr>${colNames.map((n) => `<th>${esc(n)}</th>`).join('')}</tr></thead><tbody>${htmlRows}</tbody></table>`;
+
+      event.clipboardData.setData('text/plain', tsv);
+      event.clipboardData.setData('text/html', html);
+      event.preventDefault();
+    },
+    [cellSelection, headerGroups, rows, state.pageIndex, state.pageSize]
+  );
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -333,7 +430,9 @@ export const Table = memo((props: Props) => {
         aria-label={ariaLabel}
         role="table"
         ref={tableDivRef}
-        style={{ width, height }}
+        style={{ width, height, outline: 'none' }}
+        tabIndex={-1}
+        onCopy={handleCopy}
       >
         <CustomScrollbar hideVerticalTrack={true}>
           <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
@@ -371,6 +470,9 @@ export const Table = memo((props: Props) => {
                   getActions={getActions}
                   replaceVariables={replaceVariables}
                   setInspectCell={setInspectCell}
+                  cellSelection={cellSelection}
+                  onCellMouseDown={onCellMouseDown}
+                  onCellMouseEnter={onCellMouseEnter}
                 />
               </div>
             ) : (
