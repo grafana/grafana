@@ -103,6 +103,15 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		MissingImageRenderer: !rendererAvailable,
 	}
 
+	// Screenshots embedded in PR comments must be reachable from outside the
+	// cluster. Prefer the per-repository spec.webhook.baseUrl when set, since the
+	// internal AppURL/urlProvider value typically points at a cluster-internal
+	// host that GitHub cannot fetch images from.
+	screenshotBaseURL := info.GrafanaBaseURL
+	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
+		screenshotBaseURL = cfg.Spec.Webhook.BaseURL
+	}
+
 	logger := logging.FromContext(ctx)
 
 	for i, change := range changes {
@@ -115,7 +124,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, change, opts, parser, shouldRender))
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
@@ -123,7 +132,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
 		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
 	}
@@ -195,14 +204,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
