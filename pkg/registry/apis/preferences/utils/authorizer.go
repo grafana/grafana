@@ -91,7 +91,11 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		if ok {
 			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "you are not a member of the referenced team", nil
+		msg := "you are not an admin of the referenced team"
+		if attr.IsReadOnly() {
+			msg = "you are not a member of the referenced team"
+		}
+		return authorizer.DecisionDeny, msg, nil
 
 	case UnknownResourceOwner:
 		return authorizer.DecisionAllow, "", nil

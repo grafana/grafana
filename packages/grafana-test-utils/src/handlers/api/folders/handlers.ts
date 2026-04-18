@@ -125,17 +125,20 @@ const saveFolderHandler = () =>
     return HttpResponse.json({ ...folder.item, title: body.title });
   });
 
-const getMockFolderCounts = (folder: number, dashboard: number, librarypanel: number, alertrule: number) => {
+const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
   return {
-    folder,
-    dashboard,
-    librarypanel,
-    alertrule,
+    folders,
+    dashboards,
+    library_elements,
+    alertrules,
   };
 };
 
+export const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
+  http.get('/api/folders/:uid/counts', resolver);
+
 const folderCountsHandler = () =>
-  http.get<{ uid: string }, { title: string; version: number }>('/api/folders/:uid/counts', async ({ params }) => {
+  customFolderCountsHandler(async ({ params }) => {
     const { uid } = params;
     const folder = mockTree.find((v) => v.item.uid === uid);
 

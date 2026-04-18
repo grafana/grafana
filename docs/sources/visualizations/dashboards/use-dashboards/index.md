@@ -67,7 +67,7 @@ image_maps:
         content: |
           **Variables**
 
-          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including ad hoc filters, to create more interactive and dynamic dashboards.
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including filters, to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
@@ -358,7 +358,7 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-Once you've [added an ad hoc filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+After you've [added a filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
 To filter dashboard data, follow these steps:
@@ -370,7 +370,7 @@ To filter dashboard data, follow these steps:
 
 1. Repeat this process as needed until you have all the filters you need.
 
-   ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+   ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
 
 ### Edit or delete filters
 
@@ -380,7 +380,7 @@ To edit or delete filters, follow these steps:
 1. Do one of the following:
    - To edit the operator or value of a filter, click anywhere on the filter and update it.
 
-     ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+     ![Editing a filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
 
    - To change the filter label, you must delete the filter and create a new one.
    - To delete a filter, click the **X** next to it.

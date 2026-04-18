@@ -82,7 +82,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | Feature toggle name               | Description                                                                                            |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                |
-| `grpcServer`                      | Run the GRPC server                                                                                    |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
@@ -109,6 +108,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
+| `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles
