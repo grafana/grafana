@@ -294,6 +294,24 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'C:\\test\\'`)
 		})
 
+		t.Run("can escape single quotes when rendering string tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: `Syl's thermostat`, Key: "deviceName"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"deviceName" = 'Syl\'s thermostat'`)
+		})
+
+		t.Run("can escape single quotes when rendering Is tag with ::tag suffix", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: `Syl's`, Key: "deviceName::tag"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"deviceName"::tag = 'Syl\'s'`)
+		})
+
+		t.Run("can escape single quotes when rendering Is tag with string field", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: `Syl's`, Key: "name"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"name" = 'Syl\'s'`)
+		})
+
 		t.Run("can render regular measurement", func(t *testing.T) {
 			query := &Query{Measurement: `apa`, Policy: "policy"}
 
