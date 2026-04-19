@@ -67,7 +67,6 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
 
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
 
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
@@ -125,7 +124,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
       }
 
       if (type === variable.state.type) {
-        dashboard.state.editPane.selectObject(variable, { force: true, multi: false });
+        dashboard.state.editPane.goBackToPrevious();
         return;
       }
 

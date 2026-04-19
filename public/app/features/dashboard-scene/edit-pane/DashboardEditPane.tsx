@@ -5,7 +5,6 @@ import {
   type ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
-import { getState } from 'app/store/store';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
@@ -451,7 +450,7 @@ function trySwitchingToSourceTab(source: SceneObject) {
 }
 
 function getStateForPaneHistory(state: DashboardEditPaneState | undefined): DashboardEditPaneState | undefined {
-  if (!state) {
+  if (!state || !state.openPane) {
     return undefined;
   }
 
