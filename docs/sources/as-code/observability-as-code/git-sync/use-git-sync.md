@@ -14,7 +14,7 @@ labels:
     - cloud
 title: Work with provisioned repositories in Git Sync
 menuTitle: Work with provisioned repositories
-weight: 400
+weight: 500
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/use-git-sync/
 aliases:
   - ../../../observability-as-code/provision-resources/use-git-sync/ # /docs/grafana/next/observability-as-code/provision-resources/use-git-sync/
