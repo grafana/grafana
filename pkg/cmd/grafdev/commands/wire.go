@@ -36,10 +36,18 @@ const wirePatternsDoc = `Wire split (pkg/server):
 
 Typical dependency patterns:
 
-A) Change OSS service behavior when Enterprise is linked
-   - Define an interface in OSS and accept it in the OSS wire graph.
-   - Bind the OSS implementation in wireexts_oss.go.
-   - Bind the Enterprise override in wireexts_enterprise.go.
+A) OSS vs Enterprise capability (preferred for anything “enterprise-only”)
+   - Define an interface in OSS (e.g. under pkg/services/...) and depend on that
+     interface from HTTP/API or shared services wired in wire.go.
+   - wire.Bind the OSS implementation in wireexts_oss.go.
+   - wire.Bind the Enterprise implementation in wireexts_enterprise.go.
+   - Put Enterprise-only concrete types under pkg/extensions/... with
+     //go:build enterprise || pro so they are not compiled into the OSS binary.
+
+   Do not use cfg.IsEnterprise / setting.IsEnterprise as the only gate for
+   licensed or security-sensitive behavior inside one OSS implementation: the
+   OSS repo is open source—those flags are not a substitute for a separate
+   type only linked in the enterprise Wire graph.
 
 B) New dependency used from Enterprise code only
    - Prefer wiring via Enterprise sets in wireexts_enterprise.go.

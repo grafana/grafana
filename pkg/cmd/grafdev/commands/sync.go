@@ -26,6 +26,8 @@ func (d Deps) cmdSync() *cli.Command {
 	return &cli.Command{
 		Name:  "sync",
 		Usage: "Detect drift against the remote default branch; optionally rebase or merge",
+		Description: `Without --apply, output is read-only. Before "sync --apply --yes", prefer "grafdev doctor"
+so branch/dirty-tree issues are visible first.`,
 		Flags: flags,
 		Action: func(c *cli.Context) error {
 			p, err := d.mustResolve(c)

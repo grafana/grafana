@@ -12,7 +12,9 @@ func (d Deps) cmdDualize() *cli.Command {
 	return &cli.Command{
 		Name:  "dualize",
 		Usage: "Align grafana-enterprise branch with OSS (or the reverse) for dual-repo work",
-		Description: `Typical flows:
+		Description: `Before running dualize (or any mutating grafdev/git step), run: grafdev doctor
+
+Typical flows:
   - OSS is on feature/foo and enterprise is still on the remote default branch: creates feature/foo on enterprise from origin/<default>.
   - Enterprise is on feature/foo and OSS is still on the remote default branch: creates feature/foo on OSS from origin/<default>.
 If both repos already use the same branch name, this command succeeds as a no-op.

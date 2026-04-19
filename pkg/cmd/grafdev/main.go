@@ -16,8 +16,11 @@ func main() {
 		},
 	}
 	app := &cli.App{
-		Name:     "grafdev",
-		Usage:    "Prototype helper for Grafana OSS + grafana-enterprise local development",
+		Name:  "grafdev",
+		Usage: "Prototype helper for Grafana OSS + grafana-enterprise local development",
+		Description: `Dual-repo layout is non-obvious when cwd is only the OSS checkout. Start with read-only
+checks: "grafdev doctor" (and optionally verify/smoke) before branch, dualize,
+sync --apply, or "ge git". For OSS vs Enterprise code seams, see "grafdev wire patterns".`,
 		Flags:    base.GlobalPathFlags(),
 		Commands: deps.All(),
 	}

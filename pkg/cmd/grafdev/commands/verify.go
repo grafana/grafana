@@ -13,6 +13,8 @@ func (d Deps) cmdVerify() *cli.Command {
 	return &cli.Command{
 		Name:  "verify",
 		Usage: "Exit 0 only if OSS + enterprise checkouts, local/Makefile, and ext.go look usable",
+		Description: `Fast layout gate for scripts. For a fuller read-only picture (branches, drift, dev lock),
+use "grafdev doctor"—ideally before mutating git (branch, dualize, sync --apply, ge git).`,
 		Action: func(c *cli.Context) error {
 			p, err := d.mustResolve(c)
 			if err != nil {

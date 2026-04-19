@@ -2,6 +2,14 @@
 
 Keep this file aligned with CLI behavior: `main.go`, `commands/` (subcommands), and `base/` (paths, git, flags, devlock).
 
+## 0. Session start (recommended)
+
+When automating or experimenting in **OSS cwd + sibling `grafana-enterprise`**:
+
+1. Run **`grafdev doctor`** first (add **`--strict`** in CI if you want a non-zero exit on warnings). It reports layout, `.devlock`, **branch parity**, and **drift vs `origin`/`main`** before you touch git.
+2. Optionally **`grafdev verify`** (fast layout gate) and **`grafdev smoke`** (`verify` + dry-run `make -n enterprise-dev`).
+3. Only then run **mutating** commands: **`branch`**, **`dualize`**, **`sync --apply`**, or **`ge git …`**.
+
 ## Path resolution (`--oss`, `--enterprise`, env)
 
 - **Default:** From a directory **inside** the OSS repo, `grafdev` walks parents until it finds `go.mod` with `module github.com/grafana/grafana`. Enterprise defaults to **`../grafana-enterprise`** next to that OSS root.
@@ -43,6 +51,8 @@ go run ./pkg/cmd/grafdev --oss /path/to/grafana --enterprise /path/to/grafana-en
 ---
 
 ## 3. Read-only checks (safe)
+
+Run these **before** section 4 if you are about to change branches or align repos.
 
 ```bash
 go run ./pkg/cmd/grafdev doctor

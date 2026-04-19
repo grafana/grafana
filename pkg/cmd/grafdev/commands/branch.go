@@ -13,6 +13,8 @@ func (d Deps) cmdBranch() *cli.Command {
 	return &cli.Command{
 		Name:  "branch",
 		Usage: "Create a fresh branch from the remote default branch",
+		Description: `Prefer running "grafdev doctor" first so branch parity, dirty trees, and layout issues
+surface before this command mutates git.`,
 		Subcommands: []*cli.Command{
 			{
 				Name:      "enterprise",

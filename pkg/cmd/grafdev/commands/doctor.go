@@ -15,6 +15,9 @@ func (d Deps) cmdDoctor() *cli.Command {
 	return &cli.Command{
 		Name:  "doctor",
 		Usage: "Sanity-check OSS + enterprise linkage, local Makefile, dev lock, and branch parity",
+		Description: `Run this early when working in a dual-repo layout (especially before branch, dualize,
+sync --apply, or ge git). It is the read-only "outside" view of both checkouts:
+paths, ext.go linkage, Makefile targets, .devlock, branch parity, and drift vs origin.`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "remote", Value: "origin", Usage: "Git remote for drift vs default branch"},
 			&cli.BoolFlag{Name: "quick-build", Usage: "Run a short enterprise-tagged compile of pkg/cmd/grafana (can take minutes)"},
