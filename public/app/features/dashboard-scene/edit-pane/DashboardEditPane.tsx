@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
   type ElementSelectionContextItem,
@@ -196,7 +198,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     if (action.removedObject && !action.addedObject) {
-      this.clearSelection();
+      this.fixSelectionOfRemovedObject();
     }
   }
 
@@ -293,6 +295,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
   }
 
+  public fixSelectionOfRemovedObject() {
+    if (this.state.previousState) {
+      this.goBackToPrevious();
+    } else {
+      this.clearSelection();
+    }
+  }
+
   public goBackToPrevious() {
     if (!this.state.previousState) {
       return;
@@ -321,12 +331,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       document.activeElement.blur();
     }
 
+    if (isEqual(selected, this.state.selectionContext.selected)) {
+      return;
+    }
+
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
-      previousState: getStateForPaneHistory(this.state),
+      previousState: selected.length ? getStateForPaneHistory(this.state) : undefined,
     });
   }
 

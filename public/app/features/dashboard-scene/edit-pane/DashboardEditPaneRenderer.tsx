@@ -57,7 +57,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
    */
   useEffect(() => {
     if (!selectedObject && selectionContext.selected.length > 0) {
-      editPane.clearSelection();
+      editPane.fixSelectionOfRemovedObject();
       return;
     }
   }, [selectedObject, selectionContext.selected, editPane]);
