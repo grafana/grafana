@@ -18,6 +18,8 @@ interface InstanceTimelineSectionProps {
   stateHistoryFetching: boolean;
   stateHistoryError: boolean;
   loadingBarRef: React.Ref<HTMLDivElement>;
+  /** When set, single-receiver rows open drawer instead of a new tab. */
+  onOpenContactPoint?: (receiverName: string) => void;
 }
 
 export function InstanceTimelineSection({
@@ -28,6 +30,7 @@ export function InstanceTimelineSection({
   stateHistoryFetching,
   stateHistoryError,
   loadingBarRef,
+  onOpenContactPoint,
 }: InstanceTimelineSectionProps) {
   const [
     createNotificationQuery,
@@ -105,7 +108,12 @@ export function InstanceTimelineSection({
         )}
 
         {!isLoading && !stateHistoryError && (
-          <InstanceTimeline records={historyRecords} notifications={notifications} filter={filter} />
+          <InstanceTimeline
+            records={historyRecords}
+            notifications={notifications}
+            filter={filter}
+            onOpenContactPoint={onOpenContactPoint}
+          />
         )}
       </Stack>
     </Box>
