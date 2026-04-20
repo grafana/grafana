@@ -86,27 +86,19 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
-type simpleFolderClientProvider struct {
+// simpleClientProvider is a K8sHandlerProvider that always returns the same
+// pre-built handler regardless of namespace. It is used when a caller has
+// already obtained a handler (e.g. folder or variable client) and just needs
+// to satisfy the provider interface.
+type simpleClientProvider struct {
 	handler client.K8sHandler
 }
 
-type simpleVariableClientProvider struct {
-	handler client.K8sHandler
+func newSimpleClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleClientProvider{handler: handler}
 }
 
-func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleFolderClientProvider{handler: handler}
-}
-
-func newSimpleVariableClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleVariableClientProvider{handler: handler}
-}
-
-func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
-	return p.handler
-}
-
-func (p *simpleVariableClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
@@ -198,8 +190,8 @@ func RegisterAPIService(
 		minRefreshInterval:       cfg.MinRefreshInterval,
 		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
-		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
-		variableClientProvider:   newSimpleVariableClientProvider(variableClient),
+		folderClientProvider:     newSimpleClientProvider(folderClient),
+		variableClientProvider:   newSimpleClientProvider(variableClient),
 		libraryPanels:            libraryPanels,
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
