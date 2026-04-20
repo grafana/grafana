@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -47,6 +46,10 @@ var errLeaseExpired = errors.New("lease expired")
 var errInvalidLockKey = errors.New("invalid lock key")
 
 // objectStorageLock provides distributed locking via conditional object storage writes.
+//
+// Not safe for concurrent use from the caller side. A single goroutine should
+// call Acquire, then either Release or consume Lost(). The internal heartbeat
+// goroutine only touches immutable config and closes lostCh.
 type objectStorageLock struct {
 	// Immutable after construction.
 	backend           lockBackend
@@ -55,10 +58,9 @@ type objectStorageLock struct {
 	ttl               time.Duration
 	heartbeatInterval time.Duration
 
-	// mu protects held and stopHeartbeat.
-	mu            sync.Mutex
-	held          bool
-	stopHeartbeat func() // set by Acquire, idempotent
+	held     bool
+	hbCancel context.CancelFunc
+	hbDone   chan struct{}
 
 	// lostCh is created in Acquire and only closed by the heartbeat goroutine.
 	lostCh chan struct{}
@@ -119,9 +121,6 @@ func (l *objectStorageLock) Lost() <-chan struct{} {
 // If the lock is held by another owner and not expired, returns errLockHeld.
 // Starts a background heartbeat goroutine on success.
 func (l *objectStorageLock) Acquire(ctx context.Context) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	if l.held {
 		return fmt.Errorf("lock already held by this instance")
 	}
@@ -140,92 +139,82 @@ func (l *objectStorageLock) Acquire(ctx context.Context) error {
 	l.lostCh = make(chan struct{})
 
 	hbCtx, cancel := context.WithCancel(context.Background())
-	hbDone := make(chan struct{})
-	l.startHeartbeat(hbCtx, hbDone)
-
-	var once sync.Once
-	l.stopHeartbeat = func() {
-		once.Do(func() {
-			cancel()
-			<-hbDone
-		})
-	}
+	l.hbCancel = cancel
+	l.hbDone = make(chan struct{})
+	go l.runHeartbeat(hbCtx, l.hbDone)
 	return nil
 }
 
 // Release stops the heartbeat and deletes the lock object.
 // Non-retriable errors: errLockHeld, errLockNotFound
 func (l *objectStorageLock) Release() error {
-	l.mu.Lock()
 	if !l.held {
-		l.mu.Unlock()
 		return nil
 	}
-	stopHeartbeat := l.stopHeartbeat
-	l.mu.Unlock()
+	l.hbCancel()
+	<-l.hbDone
 
-	stopHeartbeat()
-
-	deleteCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	err := l.backend.Delete(deleteCtx, l.key, l.owner)
-
-	l.mu.Lock()
+	err := l.backend.Delete(ctx, l.key, l.owner)
 	if err == nil || errors.Is(err, errLockNotFound) || errors.Is(err, errLockHeld) {
 		l.held = false
-		l.stopHeartbeat = nil
 	}
 	// On transient Delete errors, keep held=true so a retry re-enters this path
-	// and re-attempts the Delete. stopHeartbeat() is already a no-op on subsequent calls.
-	l.mu.Unlock()
-
+	// and re-attempts the Delete. hbCancel() and <-hbDone are both idempotent.
 	return err
 }
 
-func (l *objectStorageLock) startHeartbeat(ctx context.Context, done chan struct{}) {
-	go func() {
-		defer close(done)
-		ticker := time.NewTicker(l.heartbeatInterval)
-		defer ticker.Stop()
+func (l *objectStorageLock) runHeartbeat(ctx context.Context, done chan struct{}) {
+	defer close(done)
+	ticker := time.NewTicker(l.heartbeatInterval)
+	defer ticker.Stop()
 
-		// Tolerate transient failures up to the lease boundary.
-		// Floor ensures loss is detected no later than TTL
-		maxFailures := int(l.ttl / l.heartbeatInterval)
-		consecutiveFailures := 0
+	// Tolerate transient failures up to the lease boundary.
+	// Floor ensures loss is detected no later than TTL
+	maxFailures := int(l.ttl / l.heartbeatInterval)
+	consecutiveFailures := 0
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				info := lockInfo{
-					Owner:     l.owner,
-					TTL:       l.ttl,
-					Heartbeat: time.Now(),
-				}
-				// Use background context so writes can complete before Release's Delete
-				updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
-				err := l.backend.Update(updateCtx, l.key, info)
-				updateCancel()
-				if err != nil {
-					if ctx.Err() != nil {
-						return
-					}
-					// Definitive loss: another owner took the lock, it was deleted, or our lease expired.
-					if errors.Is(err, errLockHeld) || errors.Is(err, errLockNotFound) || errors.Is(err, errLeaseExpired) {
-						close(l.lostCh)
-						return
-					}
-					// Transient error — retry on next tick, give up after maxFailures.
-					consecutiveFailures++
-					if consecutiveFailures >= maxFailures {
-						close(l.lostCh)
-						return
-					}
-					continue
-				}
-				consecutiveFailures = 0
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			info := lockInfo{
+				Owner:     l.owner,
+				TTL:       l.ttl,
+				Heartbeat: time.Now(),
 			}
+			// Heartbeat Update uses context.Background() — intentionally NOT derived
+			// from ctx — so Release's cancel doesn't abort an in-flight Update. On
+			// GCS, a cancelled-but-committed Update can leave the object at a new
+			// ETag server-side, which would then mismatch Release's conditional
+			// Delete and surface as errPreconditionFailed. Tradeoff: hbCancel() +
+			// <-hbDone in Release can block up to the 30s timeout below if a tick
+			// is in flight. See also the ctx.Err() != nil guard below, which
+			// prevents the goroutine from signalling Lost when Release is the
+			// reason we're exiting.
+			updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			err := l.backend.Update(updateCtx, l.key, info)
+			updateCancel()
+			if err != nil {
+				if ctx.Err() != nil {
+					return
+				}
+				// Definitive loss: another owner took the lock, it was deleted, or our lease expired.
+				if errors.Is(err, errLockHeld) || errors.Is(err, errLockNotFound) || errors.Is(err, errLeaseExpired) {
+					close(l.lostCh)
+					return
+				}
+				// Transient error — retry on next tick, give up after maxFailures.
+				consecutiveFailures++
+				if consecutiveFailures >= maxFailures {
+					close(l.lostCh)
+					return
+				}
+				continue
+			}
+			consecutiveFailures = 0
 		}
-	}()
+	}
 }

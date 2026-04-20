@@ -117,13 +117,59 @@ func TestObjectStorageLock_LostChannel(t *testing.T) {
 	}
 }
 
-func TestNewObjectStorageLock_RejectsNilBackend(t *testing.T) {
-	_, err := newObjectStorageLock(objectStorageLockConfig{
-		Key:   "test-lock",
-		Owner: "instance-1",
-	})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "backend must not be nil")
+func TestNewObjectStorageLock_Validation(t *testing.T) {
+	backend := newFakeBackend(newConditionalBucket())
+	validKey := "test-lock"
+
+	tests := []struct {
+		name    string
+		cfg     objectStorageLockConfig
+		wantErr string
+		wantIs  error // optional sentinel
+	}{
+		{
+			name:    "nil backend",
+			cfg:     objectStorageLockConfig{Key: validKey, Owner: "instance-1"},
+			wantErr: "backend must not be nil",
+		},
+		{
+			name:    "empty owner",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: ""},
+			wantErr: "owner must not be empty",
+		},
+		{
+			name:   "invalid key",
+			cfg:    objectStorageLockConfig{Backend: backend, Key: "bad#key", Owner: "instance-1"},
+			wantIs: errInvalidLockKey,
+		},
+		{
+			name:    "negative TTL",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: -1 * time.Second},
+			wantErr: "TTL must be positive",
+		},
+		{
+			name:    "negative HeartbeatInterval",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: time.Second, HeartbeatInterval: -1 * time.Millisecond},
+			wantErr: "HeartbeatInterval must be positive",
+		},
+		{
+			name:    "TTL less than 2x HeartbeatInterval",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: 100 * time.Millisecond, HeartbeatInterval: 75 * time.Millisecond},
+			wantErr: "at least 2x HeartbeatInterval",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := newObjectStorageLock(tc.cfg)
+			require.Error(t, err)
+			if tc.wantIs != nil {
+				require.ErrorIs(t, err, tc.wantIs)
+			}
+			if tc.wantErr != "" {
+				require.Contains(t, err.Error(), tc.wantErr)
+			}
+		})
+	}
 }
 
 // --- tests that need failure injection ---
@@ -212,12 +258,13 @@ type failingUpdateBackend struct {
 func (b *failingUpdateBackend) Update(ctx context.Context, key string, info lockInfo) error {
 	b.mu.Lock()
 	b.updateCount++
-	count := b.updateCount
+	shouldFail := b.updateCount > b.failAfterN
+	errFunc := b.updateErrFunc
 	b.mu.Unlock()
 
-	if count > b.failAfterN {
-		if b.updateErrFunc != nil {
-			return b.updateErrFunc()
+	if shouldFail {
+		if errFunc != nil {
+			return errFunc()
 		}
 		return fmt.Errorf("simulated transient error")
 	}
