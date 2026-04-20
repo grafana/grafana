@@ -116,6 +116,12 @@ This guide uses Loki, but Trace to logs also supports Elasticsearch, Splunk, Ope
    {${__tags}} | logfmt | trace_id=`${__trace.traceId}`
    ```
 
+   If a tag like `pod` is stored as Loki [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) instead of an indexed label, it can't appear in the stream selector `{}`. Move it to a pipeline filter instead:
+
+   ```logql
+   {${__tags}} | pod=`${__span.tags["k8s.pod.name"]}` |= `${__trace.traceId}`
+   ```
+
    Refer to [Custom query variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables) for the full list of available variables.
 
 1. Click **Save & test**.
@@ -206,12 +212,12 @@ After configuring both data sources:
 
 ## Troubleshooting
 
-If trace to logs links aren't appearing, return no data, or only work for some services, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
+If trace to logs links aren't appearing, return no data, or only work for some services, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
 
 If the configuration fields are greyed out, your data source is provisioned. Refer to [Provision trace to logs settings](#provision-trace-to-logs-settings) for options.
 
 ## Next steps
 
-- [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics): Link spans to metrics queries in Prometheus.
-- [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-profiles): Link spans to profiling data in Grafana Pyroscope.
+- [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): Link spans to metrics queries in Prometheus.
+- [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope.
 - [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/): Return to connection, authentication, and streaming settings.

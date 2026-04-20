@@ -3,8 +3,8 @@ module github.com/grafana/grafana/apps/shorturl
 go 1.25.9
 
 require (
-	github.com/grafana/grafana-app-sdk v0.52.1
-	github.com/grafana/grafana-app-sdk/logging v0.51.4
+	github.com/grafana/grafana-app-sdk v0.53.1
+	github.com/grafana/grafana-app-sdk/logging v0.53.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.35.3
@@ -46,8 +46,8 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // indirect
+	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // indirect
+	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

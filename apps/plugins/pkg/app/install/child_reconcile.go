@@ -109,17 +109,17 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 			"parentId", plugin.Spec.ParentId,
 		)
 		logger.Error("Failed to determine child reconciler shard ownership", "error", err)
-		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action)).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, err
 	}
 	if !ownsPlugin {
-		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
 	stored := getStoredChildState(plugin)
 	if req.Action == operator.ReconcileActionUpdated && stored.shouldSkipGeneration(plugin.Generation) {
-		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
@@ -137,7 +137,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	if err != nil {
 		resultLabel = "error"
 	}
-	metrics.ChildReconciliationTotal.WithLabelValues(resultLabel, actionLabel(req.Action)).Inc()
+	metrics.ChildReconciliationTotal.WithLabelValues(resultLabel, actionLabel(req.Action), plugin.Spec.Id).Inc()
 
 	return operator.ReconcileResult{}, err
 }

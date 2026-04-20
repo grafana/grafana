@@ -350,13 +350,18 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 
 func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Type:      types.TypeAccessPolicy,
 		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{
-				Permissions:     permissions,
-				ServiceIdentity: serviceIdentity,
-			},
+			Rest: authn.AccessTokenClaims{},
 		},
+	}
+
+	if serviceIdentity != "" {
+		requester.AccessTokenClaims.Rest.ServiceIdentity = serviceIdentity
+	}
+	if len(permissions) > 0 {
+		requester.AccessTokenClaims.Rest.DelegatedPermissions = permissions
 	}
 
 	return types.WithAuthInfo(ctx, requester)

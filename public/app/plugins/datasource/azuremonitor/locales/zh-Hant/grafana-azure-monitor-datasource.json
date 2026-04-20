@@ -34,22 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "用戶端憑證",
       "aria-label-client-id": "用戶端 ID",
       "aria-label-client-secret": "用戶端機密",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
+      "aria-label-private-key": "私人金鑰",
+      "aria-label-private-key-password": "憑證密碼",
       "aria-label-symbol-client-secret": "用戶端機密",
       "aria-label-tenant-id": "租用戶 ID",
-      "description-certificate-format": "",
+      "description-certificate-format": "選擇憑證格式（PEM 憑證應為純文字 PEM 格式，PFX 憑證應為 Base64 編碼的 PFX 格式）",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "格式",
+      "label-client-certificate": "用戶端憑證",
       "label-client-id": "應用程式（用戶端）ID",
       "label-client-secret": "用戶端機密",
-      "label-private-key": "",
+      "label-private-key": "私人金鑰",
       "label-symbol-client-secret": "用戶端機密",
-      "label-symbol-private-key-password": "",
+      "label-symbol-private-key-password": "憑證密碼",
       "label-tenant-id": "目錄（租用戶）ID",
       "placeholder-symbol-client-secret": "已設定",
       "reset-symbol-client-secret": "重設"
@@ -62,7 +62,7 @@
       "label-query-results": "查詢結果：{{numResults}}",
       "noOptionsMessage-unable-to-list-categories": "無法列出所有類別",
       "placeholder-all-categories": "所有分類",
-      "placeholder-search-logs": "搜尋「紀錄查詢」",
+      "placeholder-search-logs": "搜尋「記錄查詢」",
       "text-loading": "正在載入…"
     },
     "azure-cheat-sheet-modal": {
@@ -71,26 +71,26 @@
     },
     "azure-credentials-form": {
       "description-authentication": "選擇 Azure 服務的驗證類型",
-      "label-authentication": "",
+      "label-authentication": "身分驗證類型",
       "title-authentication": "身分驗證"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "基本紀錄",
+      "aria-label-enable-basic-logs": "基本記錄",
       "description-basic-logs": "啟用此功能會導致 Azure Monitor 在查詢為<2>基本記錄</2>設定的表格之儀表板面板上，產生每次查詢成本。",
-      "label-enable-basic-logs": "啟用基本紀錄"
+      "label-enable-basic-logs": "啟用基本記錄"
     },
     "config-editor": {
       "description-additional-settings": "附加設定為選擇性設定，可進行設定以便更妥善掌控您的資料來源。這包括安全 Socks 代理伺服器、要求逾時和轉寄的 Cookie。",
       "title-additional-settings": "附加設定"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警報、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",
-      "body-service-credentials": "使用者型驗證本質上不支援 Grafana 功能，該功能會在沒有使用者詳細資訊的情況下向資料來源提出請求。警報就是一個例子。如果您想確保在請求內容中沒有使用者的功能仍然有效，請在下方提供備用憑證。",
+      "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警示、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",
+      "body-service-credentials": "使用者型驗證本質上不支援 Grafana 功能，該功能會在沒有使用者詳細資訊的情況下向資料來源提出請求。警示就是一個例子。如果您想確保在請求內容中沒有使用者的功能仍然有效，請在下方提供備用憑證。",
       "description-authentication": "選擇 Azure 服務的驗證類型",
       "description-service-credentials": "選擇是否為此資料來源啟用或停用備用服務憑證",
       "label-authentication": "身分驗證",
       "label-service-credentials": "服務憑證",
-      "note-service-credentials": "請注意：警報等功能將限制為備用憑證的存取等級，而非使用者。這可能會讓使用者感到困惑，應加以說明。",
+      "note-service-credentials": "請注意：警示等功能將限制為備用憑證的存取等級，而非使用者。這可能會讓使用者感到困惑，應加以說明。",
       "title-fallback-credentials-disabled": "備用憑證已停用",
       "title-fallback-service-credentials": "備用服務憑證",
       "title-service-credentials": "服務憑證"
@@ -174,12 +174,12 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "確定要切換至基本紀錄嗎？",
+      "body-basic-logs-queries": "確定要切換至基本記錄嗎？",
       "confirmText-confirm": "確認",
-      "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
+      "description-basic-logs-queries": "基本記錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
-      "title-basic-logs-queries": "基本紀錄查詢",
-      "tooltip-logs": "指定是否執行基本或分析紀錄查詢。"
+      "title-basic-logs-queries": "基本記錄查詢",
+      "tooltip-logs": "指定是否執行基本或分析記錄查詢。"
     },
     "logs-query-builder": {
       "title-no-tables": "已成功載入資源，但沒有任何表格"
@@ -210,7 +210,7 @@
       "alert-error-occurred": "從 Azure Monitor 請求中繼資料時發生錯誤"
     },
     "query-header": {
-      "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
+      "aria-label-kick-start": "Azure 記錄會啟動您的查詢按鈕",
       "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
@@ -244,7 +244,7 @@
       "heading-selection": "選擇",
       "locations-filter": "位置",
       "locations-filter-placeholder": "選取位置",
-      "recent-tab": "最近",
+      "recent-tab": "近期",
       "result-limit": "顯示前 {{numResults}} 個結果",
       "subscriptions-filter": "訂閱",
       "subscriptions-filter-placeholder": "選取訂閱",
@@ -299,7 +299,7 @@
       "title-unsupported-auth": "不支援的驗證提供者"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "資料來源後端功能（例如警報）需要服務憑證才能運作。此資料來源設定時沒有服務憑證備用，或備用功能已停用。請查看<2>文件</2>，了解更多詳細資訊。",
+      "body-no-fallback-credentials": "資料來源後端功能（例如警示）需要服務憑證才能運作。此資料來源設定時沒有服務憑證備用，或備用功能已停用。請查看<2>文件</2>，了解更多詳細資訊。",
       "title-no-fallback-credentials": "沒有可用的備用憑證"
     },
     "variable-editor": {

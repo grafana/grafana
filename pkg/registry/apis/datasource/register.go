@@ -67,7 +67,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return nil, nil
 	}
 
@@ -105,8 +105,8 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},

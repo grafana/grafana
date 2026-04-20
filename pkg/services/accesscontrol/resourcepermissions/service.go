@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -227,7 +230,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -261,7 +264,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -295,7 +298,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -323,7 +326,7 @@ func (s *Service) SetPermissions(
 	}
 
 	var datasourceType string
-	if s.options.DatasourceTypeResolver != nil {
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
 			datasourceType = t
 		}
@@ -407,6 +410,17 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		}
 	}
 
+	// Write action set token for service accounts. Granular actions are also written until
+	// FlagOnlyStoreServiceAccountActionSets is enabled (after the backfill migration has run).
+	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
+		actions = append(actions, s.options.GetActionSetName(permission))
+
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.EvaluationContext{})
+		if onlyActionSets {
+			return actions, nil
+		}
+	}
+
 	// New resources with no legacy granular data go straight to action-set-only.
 	if s.options.Resource == accesscontrol.AlertingRoutesResource {
 		return []string{s.options.GetActionSetName(permission)}, nil
@@ -424,6 +438,10 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateResource")
 	defer span.End()
+
+	if resourceID == "*" {
+		return ErrInvalidResourceID.Build(ErrInvalidResourceIDData(resourceID))
+	}
 
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
@@ -639,7 +657,8 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
-		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
+		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.
