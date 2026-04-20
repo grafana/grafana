@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/utils/ptr"
 
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv3alpha0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v3alpha0"
@@ -320,6 +319,3 @@ func attachConditionalRenderingToLayoutItemInRowLayout_V2(layout *dashv2.Dashboa
 	}
 }
 
-// Suppress unused import warning from ptr package when all helpers above are
-// field-copies only; exported for future use in default-spec plumbing.
-var _ = ptr.To[string]

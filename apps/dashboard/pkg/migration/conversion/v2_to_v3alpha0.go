@@ -35,15 +35,18 @@ func Convert_V2_to_V3alpha0(in *dashv2.Dashboard, out *dashv3alpha0.Dashboard, s
 		return fmt.Errorf("failed to unmarshal into v3alpha0 spec: %w", err)
 	}
 
-	// Transformations use the same v2-shape in v3alpha0 (we copied v2beta1 which
-	// was the same as v2 with respect to transformation wire format is *not* the
-	// case — v3alpha0 inherits v2beta1's shape. Re-emit the v2-shaped
-	// DashboardTransformationKind as v3alpha0 expects it.
+	// v3alpha0 inherits v2beta1's DataTransformerConfig shape (kind carries the
+	// transformer ID, spec.id duplicates it), not v2 stable's. Rebuild
+	// transformations to match.
 	fixupTransformations_V2_to_V3alpha0(in, out)
 
 	// Semantic migration: promote element-level and layout-item-level
-	// conditionalRendering into DashboardRule entries.
+	// conditionalRendering into DashboardRule entries, then clear the legacy
+	// fields on the v3alpha0 output so the same visibility predicate is not
+	// double-represented (runtime ambiguity: rule vs inline block on the same
+	// element).
 	out.Spec.Rules = promoteConditionalRenderingToRules_V2_to_V3alpha0(&in.Spec)
+	clearLayoutConditionalRendering_V3alpha0(&out.Spec.Layout)
 
 	return nil
 }
@@ -288,4 +291,61 @@ func convertConditionItems_V2_to_V3alpha0(in []dashv2.DashboardConditionalRender
 		out = append(out, converted)
 	}
 	return out
+}
+
+// clearLayoutConditionalRendering_V3alpha0 walks the v3alpha0 layout tree and
+// nils every ConditionalRendering pointer on AutoGrid items, Rows, and Tabs.
+// Called after promoteConditionalRenderingToRules_V2_to_V3alpha0 so the
+// promoted rules are the sole representation of visibility predicates.
+//
+// Mirrors walkTab/walkRow but mutates v3alpha0 output rather than visiting v2
+// input. Two variants because the Go-generated disjunction type names differ
+// between top-level and row-nested layouts.
+func clearLayoutConditionalRendering_V3alpha0(layout *dashv3alpha0.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) {
+	if layout == nil {
+		return
+	}
+	if layout.AutoGridLayoutKind != nil {
+		for i := range layout.AutoGridLayoutKind.Spec.Items {
+			layout.AutoGridLayoutKind.Spec.Items[i].Spec.ConditionalRendering = nil
+		}
+	}
+	if layout.RowsLayoutKind != nil {
+		for i := range layout.RowsLayoutKind.Spec.Rows {
+			layout.RowsLayoutKind.Spec.Rows[i].Spec.ConditionalRendering = nil
+			clearLayoutConditionalRenderingRowNested_V3alpha0(&layout.RowsLayoutKind.Spec.Rows[i].Spec.Layout)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		for i := range layout.TabsLayoutKind.Spec.Tabs {
+			layout.TabsLayoutKind.Spec.Tabs[i].Spec.ConditionalRendering = nil
+			clearLayoutConditionalRendering_V3alpha0(&layout.TabsLayoutKind.Spec.Tabs[i].Spec.Layout)
+		}
+	}
+}
+
+// Row-nested variant. Go codegen emits a different disjunction-type name for
+// the layout field on RowsLayoutRowSpec vs the top-level DashboardSpec even
+// though the content is structurally identical.
+func clearLayoutConditionalRenderingRowNested_V3alpha0(layout *dashv3alpha0.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) {
+	if layout == nil {
+		return
+	}
+	if layout.AutoGridLayoutKind != nil {
+		for i := range layout.AutoGridLayoutKind.Spec.Items {
+			layout.AutoGridLayoutKind.Spec.Items[i].Spec.ConditionalRendering = nil
+		}
+	}
+	if layout.RowsLayoutKind != nil {
+		for i := range layout.RowsLayoutKind.Spec.Rows {
+			layout.RowsLayoutKind.Spec.Rows[i].Spec.ConditionalRendering = nil
+			clearLayoutConditionalRenderingRowNested_V3alpha0(&layout.RowsLayoutKind.Spec.Rows[i].Spec.Layout)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		for i := range layout.TabsLayoutKind.Spec.Tabs {
+			layout.TabsLayoutKind.Spec.Tabs[i].Spec.ConditionalRendering = nil
+			clearLayoutConditionalRendering_V3alpha0(&layout.TabsLayoutKind.Spec.Tabs[i].Spec.Layout)
+		}
+	}
 }
