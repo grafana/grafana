@@ -1,6 +1,7 @@
 import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { render } from '@testing-library/react';
+import { EditorView } from '@uiw/react-codemirror';
 
 import { CodeEditor } from './CodeEditor';
 
@@ -36,6 +37,11 @@ const getAutocompleteSources = () =>
   EditorState.create({
     extensions: getExtensions() as never[],
   }).languageDataAt<CompletionSource>('autocomplete', 0);
+
+const getContentAttributes = () =>
+  EditorState.create({
+    extensions: getExtensions() as never[],
+  }).facet(EditorView.contentAttributes);
 
 describe('CodeMirror CodeEditor', () => {
   beforeEach(() => {
@@ -95,5 +101,13 @@ describe('CodeMirror CodeEditor', () => {
 
     expect(autocompletionMock).not.toHaveBeenCalled();
     expect(getAutocompleteSources()).toEqual([existingSource]);
+  });
+
+  it('adds accessibility attributes to the editor content when provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} aria-label="Code editor" aria-labelledby="code-editor-label" />);
+
+    expect(getContentAttributes()).toEqual(
+      expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
+    );
   });
 });

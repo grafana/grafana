@@ -1,7 +1,7 @@
 import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { loadLanguage, type LanguageName } from '@uiw/codemirror-extensions-langs';
-import CodeMirror, { type Extension } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -15,6 +15,8 @@ export interface CodeEditorProps {
   language?: CodeEditorLanguage;
   height?: string;
   onChange: (value: string) => void;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
   /**
    * Autocomplete sources. When provided, enables autocompletion with the given sources.
    */
@@ -58,11 +60,26 @@ const getCompletionExtensions = (
   return [autocompletion(), ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }]))];
 };
 
+const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledby: string | undefined): Extension[] => {
+  if (!ariaLabel && !ariaLabelledby) {
+    return [];
+  }
+
+  return [
+    EditorView.contentAttributes.of({
+      ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+      ...(ariaLabelledby ? { 'aria-labelledby': ariaLabelledby } : {}),
+    }),
+  ];
+};
+
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
   height = '200px',
   onChange,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
@@ -70,11 +87,12 @@ export const CodeEditor = memo(function CodeEditor({
   const theme = useTheme2();
   const extensions = useMemo(
     () => [
+      ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...getLanguageExtensions(language),
       ...getCompletionExtensions(completionSources, completionMode),
       ...(additionalExtensions ?? []),
     ],
-    [language, completionSources, completionMode, additionalExtensions]
+    [ariaLabel, ariaLabelledby, language, completionSources, completionMode, additionalExtensions]
   );
   return (
     <CodeMirror

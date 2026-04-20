@@ -1,7 +1,7 @@
 import { type CompletionSource } from '@codemirror/autocomplete';
 import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { CodeEditor, type CodeEditorProps } from './CodeEditor';
 
@@ -43,6 +43,7 @@ const meta: Meta<typeof CodeEditor> = {
 };
 
 const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
+  const id = useId();
   const [value, setValue] = useState(args.value);
 
   useEffect(() => {
@@ -53,6 +54,7 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
     <CodeEditor
       {...args}
       value={value}
+      aria-labelledby={id}
       onChange={(nextValue) => {
         setValue(nextValue);
         action('onChange')(nextValue);
