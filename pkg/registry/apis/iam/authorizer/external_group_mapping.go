@@ -35,7 +35,7 @@ func (r *ExternalGroupMappingAuthorizer) AfterGet(ctx context.Context, obj runti
 		return storewrapper.ErrUnauthenticated
 	}
 
-	// FIXME: Remove this if the namegenerator can be configured
+	// FIXME: Remove this when the namegenerator can be configured for the API
 	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
