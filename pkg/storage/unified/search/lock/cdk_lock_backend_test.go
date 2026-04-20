@@ -494,7 +494,7 @@ func (b *notFoundOnAttributesBucket) Attributes(ctx context.Context, key string)
 		b.mu.Unlock()
 		// Delete the object so the retry's IfNotExist write succeeds, then
 		// delegate to produce a real gcerrors.NotFound from the now-missing key.
-		_ = b.CDKBucket.Delete(ctx, key)
+		_ = b.Delete(ctx, key)
 		return b.CDKBucket.Attributes(ctx, key)
 	}
 	b.mu.Unlock()
