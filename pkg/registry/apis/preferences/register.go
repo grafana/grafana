@@ -22,9 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -35,26 +33,27 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer      authorizer.Authorizer
-	clientGenerator resource.ClientGenerator
-	legacyPrefs     rest.Storage
+	authorizer  authorizer.Authorizer
+	legacyPrefs rest.Storage
 
 	merger *merger // joins all preferences
 }
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
 	db db.DB,
 	prefs pref.Service,
-	users user.Service,
 	apiregistration builder.APIRegistrar,
 	clientGenerator resource.ClientGenerator,
-) *APIBuilder {
+) (*APIBuilder, error) {
+	client, err := preferences.NewPreferencesClientFromGenerator(clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		clientGenerator: clientGenerator,
-		merger:          newMerger(cfg, sql),
+		merger: newMerger(cfg, client),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service
@@ -73,7 +72,7 @@ func RegisterAPIService(
 		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 // AllowedV0Alpha1Resources implements builder.APIGroupBuilder.
