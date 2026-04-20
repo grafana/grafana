@@ -189,7 +189,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				Features: featuremgmt.WithFeatures(
 					featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
 					featuremgmt.FlagQueryService,
-					featuremgmt.FlagQueryServiceWithConnections,
+					featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 				),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
