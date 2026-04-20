@@ -1,4 +1,6 @@
-import { differenceInMinutes, parseISO, toDate } from 'date-fns';
+import { differenceInMinutes } from 'date-fns/differenceInMinutes';
+import { parseISO } from 'date-fns/parseISO';
+import { toDate } from 'date-fns/toDate';
 import { type Page } from 'playwright-core';
 
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
