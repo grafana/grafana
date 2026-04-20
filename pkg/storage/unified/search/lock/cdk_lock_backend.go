@@ -47,15 +47,9 @@ func newCDKLockBackend(bucket resource.CDKBucket, opts cdkLockBackendOptions) *c
 // takeover. Returns errLockHeld if the lock is live or if another instance wins the
 // takeover race.
 func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
-	data, err := json.Marshal(info)
+	data, err := marshalLockInfo(info)
 	if err != nil {
-		return fmt.Errorf("marshal lock info: %w", err)
-	}
-	if len(data) > maxLockDataSize {
-		return fmt.Errorf("lock data too large: %d bytes (max %d)", len(data), maxLockDataSize)
+		return err
 	}
 
 	// Attempt atomic create (If-None-Match: * / ifGenerationMatch: 0).
@@ -82,19 +76,11 @@ func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) 
 	}
 
 	// Lock object exists — check if it's expired and attempt takeover.
-	attrs, err := b.bucket.Attributes(ctx, key)
-	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return createIfNotExists()
-		}
-		return fmt.Errorf("read lock attributes: %w", err)
+	attrs, existing, err := b.fetchAttrsAndData(ctx, key)
+	if errors.Is(err, errLockNotFound) {
+		return createIfNotExists()
 	}
-
-	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return createIfNotExists()
-		}
 		return err
 	}
 
@@ -137,22 +123,8 @@ func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data 
 
 // Update atomically updates an existing lock, verifying ownership via conditional write.
 func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
-	attrs, err := b.bucket.Attributes(ctx, key)
+	attrs, existing, err := b.fetchAttrsAndData(ctx, key)
 	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return errLockNotFound
-		}
-		return fmt.Errorf("read lock attributes: %w", err)
-	}
-
-	existing, err := readLockData(ctx, b.bucket, key)
-	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return errLockNotFound
-		}
 		return err
 	}
 	if existing.Owner != info.Owner {
@@ -164,12 +136,9 @@ func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) 
 		return errLeaseExpired
 	}
 
-	data, err := json.Marshal(info)
+	data, err := marshalLockInfo(info)
 	if err != nil {
-		return fmt.Errorf("marshal lock info: %w", err)
-	}
-	if len(data) > maxLockDataSize {
-		return fmt.Errorf("lock data too large: %d bytes (max %d)", len(data), maxLockDataSize)
+		return err
 	}
 
 	return b.conditionalWrite(ctx, key, data, attrs)
@@ -177,22 +146,8 @@ func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) 
 
 // Delete atomically deletes a lock, verifying ownership.
 func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
-	attrs, err := b.bucket.Attributes(ctx, key)
+	attrs, existing, err := b.fetchAttrsAndData(ctx, key)
 	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return errLockNotFound
-		}
-		return fmt.Errorf("read lock attributes: %w", err)
-	}
-
-	existing, err := readLockData(ctx, b.bucket, key)
-	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
-			return errLockNotFound
-		}
 		return err
 	}
 	if existing.Owner != owner {
@@ -218,9 +173,6 @@ func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) e
 
 // Read returns the current lock info, or errLockNotFound if no lock exists.
 func (b *cdkLockBackend) Read(ctx context.Context, key string) (*lockInfo, error) {
-	if err := validateObjectKey(key); err != nil {
-		return nil, err
-	}
 	info, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
@@ -252,8 +204,40 @@ func validateObjectKey(key string) error {
 	return nil
 }
 
+// fetchAttrsAndData reads the lock object's attributes and deserialized contents.
+// Returns errLockNotFound if the object is missing at either step.
+func (b *cdkLockBackend) fetchAttrsAndData(ctx context.Context, key string) (*blob.Attributes, lockInfo, error) {
+	attrs, err := b.bucket.Attributes(ctx, key)
+	if err != nil {
+		if gcerrors.Code(err) == gcerrors.NotFound {
+			return nil, lockInfo{}, errLockNotFound
+		}
+		return nil, lockInfo{}, fmt.Errorf("read lock attributes: %w", err)
+	}
+	info, err := readLockData(ctx, b.bucket, key)
+	if err != nil {
+		if gcerrors.Code(err) == gcerrors.NotFound {
+			return nil, lockInfo{}, errLockNotFound
+		}
+		return nil, lockInfo{}, err
+	}
+	return attrs, info, nil
+}
+
 // maxLockDataSize is the maximum serialized size of a lock object.
 const maxLockDataSize = 4096
+
+// marshalLockInfo serializes lockInfo to JSON, enforcing the maxLockDataSize cap.
+func marshalLockInfo(info lockInfo) ([]byte, error) {
+	data, err := json.Marshal(info)
+	if err != nil {
+		return nil, fmt.Errorf("marshal lock info: %w", err)
+	}
+	if len(data) > maxLockDataSize {
+		return nil, fmt.Errorf("lock data too large: %d bytes (max %d)", len(data), maxLockDataSize)
+	}
+	return data, nil
+}
 
 // readLockData downloads and unmarshals the lock object with maxLockDataSize size limit
 func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (lockInfo, error) {

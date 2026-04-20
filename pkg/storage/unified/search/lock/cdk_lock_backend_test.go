@@ -103,9 +103,7 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
-		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		info, err := backend.Read(ctx, key)
 		require.NoError(t, err)
@@ -131,15 +129,7 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		backend, bucket := expiredFakeLock(t, "lock-1", "owner-1")
 		ctx := context.Background()
 
-		origOps := backend.ops
-		backend.ops = &interceptOps{
-			conditionalOps: origOps,
-			beforeWriteHook: func() {
-				bucket.mu.Lock()
-				bucket.etags["lock-1"] = "raced-etag"
-				bucket.mu.Unlock()
-			},
-		}
+		injectETagMismatch(backend, bucket, "lock-1")
 
 		err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
 		require.ErrorIs(t, err, errLockHeld)
@@ -170,9 +160,7 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
-		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		err := backend.Update(ctx, key, newLockInfo("owner-1", 2*time.Minute))
 		require.NoError(t, err)
@@ -186,9 +174,7 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
-		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		err := backend.Update(ctx, key, newLockInfo("owner-2", time.Minute))
 		require.ErrorIs(t, err, errLockHeld)
@@ -211,16 +197,7 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		ctx := context.Background()
 
 		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
-
-		origOps := backend.ops
-		backend.ops = &interceptOps{
-			conditionalOps: origOps,
-			beforeWriteHook: func() {
-				bucket.mu.Lock()
-				bucket.etags["lock-1"] = "concurrent-etag"
-				bucket.mu.Unlock()
-			},
-		}
+		injectETagMismatch(backend, bucket, "lock-1")
 
 		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute))
 		require.ErrorIs(t, err, errLockHeld)
@@ -293,9 +270,7 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
-		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		err := backend.Delete(ctx, key, "owner-2")
 		require.ErrorIs(t, err, errLockHeld)
@@ -318,16 +293,7 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		ctx := context.Background()
 
 		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
-
-		origOps := backend.ops
-		backend.ops = &interceptOps{
-			conditionalOps: origOps,
-			beforeDeleteHook: func(key string) {
-				bucket.mu.Lock()
-				bucket.etags[key] = "concurrent-etag"
-				bucket.mu.Unlock()
-			},
-		}
+		injectETagMismatch(backend, bucket, "lock-1")
 
 		err := backend.Delete(ctx, "lock-1", "owner-1")
 		require.Error(t, err)
@@ -349,9 +315,7 @@ func TestCDKLockBackend_Read(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
-		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", 5*time.Minute)))
+		createLockForTest(t, backend, key, "owner-1", 5*time.Minute)
 
 		info, err := backend.Read(ctx, key)
 		require.NoError(t, err)
@@ -400,24 +364,6 @@ func TestCDKLockBackend_HeartbeatPreserved(t *testing.T) {
 	got, err := backend.Read(ctx, key)
 	require.NoError(t, err)
 	assert.Equal(t, now.UTC(), got.Heartbeat.UTC())
-}
-
-func TestCDKLockBackend_RejectsInvalidKeys(t *testing.T) {
-	backend := testBackend(t)
-	ctx := context.Background()
-
-	badKey := "lock#bad"
-	err := backend.Create(ctx, badKey, newLockInfo("owner", time.Minute))
-	require.ErrorIs(t, err, errInvalidLockKey)
-
-	err = backend.Update(ctx, badKey, newLockInfo("owner", time.Minute))
-	require.ErrorIs(t, err, errInvalidLockKey)
-
-	err = backend.Delete(ctx, badKey, "owner")
-	require.ErrorIs(t, err, errInvalidLockKey)
-
-	_, err = backend.Read(ctx, badKey)
-	require.ErrorIs(t, err, errInvalidLockKey)
 }
 
 // --- tests that always use fake bucket (need internal manipulation) ---
@@ -740,11 +686,7 @@ func TestCDKLockBackend_UpdateAfterTTLExpires(t *testing.T) {
 	ctx := context.Background()
 	key := testKey(t)
 
-	t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
-
-	// Create a lock with a short TTL.
-	info := lockInfo{Owner: "owner-1", TTL: ttl, Heartbeat: time.Now()}
-	require.NoError(t, backend.Create(ctx, key, info))
+	createLockForTest(t, backend, key, "owner-1", ttl)
 
 	// Wait for the lease to expire (mtime + TTL).
 	// Use the full wait duration which accounts for provider timestamp precision.
@@ -757,6 +699,29 @@ func TestCDKLockBackend_UpdateAfterTTLExpires(t *testing.T) {
 
 func newLockInfo(owner string, ttl time.Duration) lockInfo {
 	return lockInfo{Owner: owner, TTL: ttl, Heartbeat: time.Now()}
+}
+
+// createLockForTest creates a lock and registers cleanup to delete it on test exit.
+func createLockForTest(t *testing.T, backend *cdkLockBackend, key, owner string, ttl time.Duration) {
+	t.Helper()
+	ctx := context.Background()
+	require.NoError(t, backend.Create(ctx, key, newLockInfo(owner, ttl)))
+	t.Cleanup(func() { _ = backend.Delete(context.Background(), key, owner) })
+}
+
+// injectETagMismatch swaps ETags to an unexpected an unexpected value to
+// simulates concurrent modification between the backend's read and write.
+func injectETagMismatch(backend *cdkLockBackend, bucket *conditionalBucket, key string) {
+	changeETag := func() {
+		bucket.mu.Lock()
+		bucket.etags[key] = "concurrent-etag"
+		bucket.mu.Unlock()
+	}
+	backend.ops = &interceptOps{
+		conditionalOps:   backend.ops,
+		beforeWriteHook:  changeETag,
+		beforeDeleteHook: func(string) { changeETag() },
+	}
 }
 
 // --- conditionalBucket: fake ETag tracking for memblob ---

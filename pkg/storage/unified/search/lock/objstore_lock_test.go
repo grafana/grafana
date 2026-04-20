@@ -15,19 +15,26 @@ import (
 // These test the higher-level lock API (Acquire/Release/Lost/heartbeat).
 // CRUD-level tests are in cdk_lock_backend_test.go.
 
+// newTestLock constructs an objectStorageLock with the given backend and timings.
+func newTestLock(t *testing.T, backend lockBackend, key, owner string, ttl, hbInterval time.Duration) *objectStorageLock {
+	t.Helper()
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:           backend,
+		Key:               key,
+		Owner:             owner,
+		TTL:               ttl,
+		HeartbeatInterval: hbInterval,
+	})
+	require.NoError(t, err)
+	return lock
+}
+
 func TestObjectStorageLock_AcquireRelease(t *testing.T) {
 	backend := testBackend(t)
 	ctx := context.Background()
 	key := testKey(t)
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               key,
-		Owner:             "instance-1",
-		TTL:               5 * time.Second,
-		HeartbeatInterval: 100 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, key, "instance-1", 5*time.Second, 100*time.Millisecond)
 
 	require.NoError(t, lock.Acquire(ctx))
 
@@ -46,26 +53,12 @@ func TestObjectStorageLock_Contention(t *testing.T) {
 	ctx := context.Background()
 	key := testKey(t)
 
-	lock1, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               key,
-		Owner:             "instance-1",
-		TTL:               5 * time.Second,
-		HeartbeatInterval: 100 * time.Millisecond,
-	})
-	require.NoError(t, err)
-	lock2, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               key,
-		Owner:             "instance-2",
-		TTL:               5 * time.Second,
-		HeartbeatInterval: 100 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock1 := newTestLock(t, backend, key, "instance-1", 5*time.Second, 100*time.Millisecond)
+	lock2 := newTestLock(t, backend, key, "instance-2", 5*time.Second, 100*time.Millisecond)
 
 	require.NoError(t, lock1.Acquire(ctx))
 
-	err = lock2.Acquire(ctx)
+	err := lock2.Acquire(ctx)
 	require.ErrorIs(t, err, errLockHeld)
 
 	require.NoError(t, lock1.Release())
@@ -86,14 +79,7 @@ func TestObjectStorageLock_Heartbeat(t *testing.T) {
 		hbInterval = 1 * time.Second
 	}
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               key,
-		Owner:             "instance-1",
-		TTL:               ttl,
-		HeartbeatInterval: hbInterval,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, key, "instance-1", ttl, hbInterval)
 
 	require.NoError(t, lock.Acquire(ctx))
 
@@ -116,14 +102,7 @@ func TestObjectStorageLock_Heartbeat(t *testing.T) {
 func TestObjectStorageLock_LostChannel(t *testing.T) {
 	backend := newFakeBackend(newConditionalBucket())
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               "test-lock",
-		Owner:             "instance-1",
-		TTL:               100 * time.Millisecond,
-		HeartbeatInterval: 50 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 100*time.Millisecond, 50*time.Millisecond)
 
 	ctx := context.Background()
 	require.NoError(t, lock.Acquire(ctx))
@@ -156,14 +135,7 @@ func TestObjectStorageLock_ReleaseAfterHeartbeatLoss(t *testing.T) {
 		failAfterN:  0,
 	}
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               "test-lock",
-		Owner:             "instance-1",
-		TTL:               100 * time.Millisecond,
-		HeartbeatInterval: 50 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 100*time.Millisecond, 50*time.Millisecond)
 
 	ctx := context.Background()
 	require.NoError(t, lock.Acquire(ctx))
@@ -174,10 +146,9 @@ func TestObjectStorageLock_ReleaseAfterHeartbeatLoss(t *testing.T) {
 		t.Fatal("expected lock loss")
 	}
 
-	err = lock.Release()
-	require.NoError(t, err)
+	require.NoError(t, lock.Release())
 
-	_, err = backend.Read(ctx, "test-lock")
+	_, err := backend.Read(ctx, "test-lock")
 	require.ErrorIs(t, err, errLockNotFound)
 }
 
@@ -187,14 +158,7 @@ func TestObjectStorageLock_TransientHeartbeatRecovery(t *testing.T) {
 		failAfterN:  0,
 	}
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               "test-lock",
-		Owner:             "instance-1",
-		TTL:               150 * time.Millisecond,
-		HeartbeatInterval: 50 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 150*time.Millisecond, 50*time.Millisecond)
 
 	ctx := context.Background()
 	require.NoError(t, lock.Acquire(ctx))
@@ -223,14 +187,7 @@ func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 		updateErrFunc: func() error { return errLockHeld },
 	}
 
-	lock, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           backend,
-		Key:               "test-lock",
-		Owner:             "instance-1",
-		TTL:               5 * time.Second,
-		HeartbeatInterval: 50 * time.Millisecond,
-	})
-	require.NoError(t, err)
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 5*time.Second, 50*time.Millisecond)
 
 	ctx := context.Background()
 	require.NoError(t, lock.Acquire(ctx))

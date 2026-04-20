@@ -112,6 +112,18 @@ func isObjectExistsErr(err error) bool {
 	return errors.As(err, &respErr) && respErr.HTTPStatusCode() == 409
 }
 
+// mapDeleteStatus maps HTTP status codes from a conditional delete response to
+// lock-package sentinel errors. Returns err unchanged for unmapped codes.
+func mapDeleteStatus(httpStatus int, err error) error {
+	switch httpStatus {
+	case 412:
+		return fmt.Errorf("%w: %w", errPreconditionFailed, err)
+	case 404:
+		return fmt.Errorf("%w: %w", errLockNotFound, err)
+	}
+	return err
+}
+
 // --- S3 ---
 
 type s3Ops struct {
@@ -139,12 +151,7 @@ func (o *s3Ops) Delete(ctx context.Context, key string, attrs *blob.Attributes) 
 	if err != nil {
 		var respErr *smithyhttp.ResponseError
 		if errors.As(err, &respErr) {
-			switch respErr.HTTPStatusCode() {
-			case 412:
-				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-			case 404:
-				return fmt.Errorf("%w: %w", errLockNotFound, err)
-			}
+			return mapDeleteStatus(respErr.HTTPStatusCode(), err)
 		}
 	}
 	return err
@@ -189,12 +196,7 @@ func (o *gcsOps) Delete(ctx context.Context, key string, attrs *blob.Attributes)
 		// GCS uses REST by default (*googleapi.Error), but may use gRPC. Check both.
 		var apiErr *googleapi.Error
 		if errors.As(err, &apiErr) {
-			switch apiErr.Code {
-			case 412:
-				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-			case 404:
-				return fmt.Errorf("%w: %w", errLockNotFound, err)
-			}
+			return mapDeleteStatus(apiErr.Code, err)
 		}
 		if s, ok := status.FromError(err); ok {
 			switch s.Code() { //nolint:exhaustive
@@ -244,12 +246,7 @@ func (o *azureOps) Delete(ctx context.Context, key string, attrs *blob.Attribute
 	if err != nil {
 		var respErr *azcore.ResponseError
 		if errors.As(err, &respErr) {
-			switch respErr.StatusCode {
-			case 412:
-				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-			case 404:
-				return fmt.Errorf("%w: %w", errLockNotFound, err)
-			}
+			return mapDeleteStatus(respErr.StatusCode, err)
 		}
 	}
 	return err
