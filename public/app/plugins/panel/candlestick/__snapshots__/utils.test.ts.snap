@@ -1236,7 +1236,7 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
 ]
 `;
 
-exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
+exports[`drawMarkers options Color strategy: OpenClose draw 1`] = `
 [
   {
     "props": {
@@ -1306,7 +1306,7 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
 ]
 `;
 
-exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
+exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
 [
   {
     "props": {},
@@ -1438,7 +1438,7 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
 ]
 `;
 
-exports[`drawMarkers options Color strategy: OpenOpen path 1`] = `
+exports[`drawMarkers options Color strategy: OpenClose path 1`] = `
 [
   {
     "props": {},

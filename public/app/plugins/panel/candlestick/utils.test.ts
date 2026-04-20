@@ -4,6 +4,7 @@ import uPlot, { type AlignedData } from 'uplot';
 
 import { CandleStyle, ColorStrategy, VizDisplayMode } from './panelcfg.gen';
 import { drawMarkers } from './utils';
+
 /**
  * Since this method only has outputs in the canvas, I'm not sure how it can be tested otherwise without mocks that are probably more wedded to implementation
  * TL;DR if this test is failing after updating uPlot, delete the __snapshot__/utils.test.ts.snap and re-run the tests and commit the output
@@ -82,7 +83,7 @@ describe('drawMarkers', () => {
 
   describe('options', () => {
     describe.each([
-      ['Color strategy: OpenOpen'],
+      ['Color strategy: OpenClose', { colorStrategy: ColorStrategy.OpenClose }],
       ['Color strategy: CloseClose', { colorStrategy: ColorStrategy.CloseClose }],
       ['Candle Style: CandleStyle.OHLCBars', { candleStyle: CandleStyle.OHLCBars }],
     ] satisfies TestCase[])(
