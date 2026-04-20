@@ -3,6 +3,7 @@ package graphite
 import (
 	"compress/flate"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 
@@ -16,6 +17,10 @@ import (
 // pressure from the parse path.
 const logBodyMaxBytes = 4 << 10
 
+// errResponseBodyTooLarge is returned by decode when the decoded body
+// exceeds the caller-supplied maxBytes ceiling.
+var errResponseBodyTooLarge = errors.New("response body exceeds maximum allowed size")
+
 // truncateForLog returns body truncated to logBodyMaxBytes, appending an
 // indicator when bytes were dropped.
 func truncateForLog(body []byte) string {
@@ -25,7 +30,13 @@ func truncateForLog(body []byte) string {
 	return string(body[:logBodyMaxBytes]) + "...[truncated]"
 }
 
-func decode(encoding string, original io.ReadCloser) ([]byte, error) {
+// decode decompresses original according to the Content-Encoding header and
+// returns the decoded body. When maxBytes > 0 the decoded size is capped at
+// maxBytes and errResponseBodyTooLarge is returned on overflow. maxBytes <= 0
+// disables the cap (for callers that have already bounded the input).
+// The cap applies to decoded bytes, so compression-bomb inputs cannot
+// breach it.
+func decode(encoding string, original io.ReadCloser, maxBytes int64) ([]byte, error) {
 	var reader io.Reader
 	var err error
 	switch encoding {
@@ -52,6 +63,17 @@ func decode(encoding string, original io.ReadCloser) ([]byte, error) {
 		reader = original
 	default:
 		return nil, fmt.Errorf("unexpected encoding type %v", err)
+	}
+
+	if maxBytes > 0 {
+		body, err := io.ReadAll(io.LimitReader(reader, maxBytes+1))
+		if err != nil {
+			return nil, err
+		}
+		if int64(len(body)) > maxBytes {
+			return nil, errResponseBodyTooLarge
+		}
+		return body, nil
 	}
 
 	body, err := io.ReadAll(reader)
