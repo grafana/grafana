@@ -399,9 +399,9 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
-	// FlagZanzanaSearchUsersPermissions
-	// Search users permissions using Zanzana.
-	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+	// FlagZanzanaMergeUserPermissions
+	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
+	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -918,10 +918,6 @@ const (
 	// Enables heatmap visualization support for Pyroscope profiles
 	FlagProfilesHeatmap = "profilesHeatmap"
 
-	// FlagQueryServiceQueryCaching
-	// Enables the query service to do query caching
-	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
-
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
@@ -933,6 +929,10 @@ const (
 	// FlagQuerycachingEnableConnectionsClient
 	// Use connections client instead of storage to resolve datasource plugin ID in query caching
 	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
+
+	// FlagQuerycachingUseInQueryService
+	// Enables the query service to do query caching
+	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script

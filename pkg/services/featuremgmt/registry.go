@@ -1218,8 +1218,8 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "zanzanaSearchUsersPermissions",
-			Description:  "Search users permissions using Zanzana.",
+			Name:         "zanzanaMergeUserPermissions",
+			Description:  "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2921,14 +2921,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryServiceQueryCaching",
-			Description: "Enables the query service to do query caching",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "tracesDrilldownTimeSeeker",
 			Description: "Enables the time seeker in traces drilldown",
 			Stage:       FeatureStageExperimental,
@@ -2973,6 +2965,14 @@ var (
 		{
 			Name:        "querycaching.enableConnectionsClient",
 			Description: "Use connections client instead of storage to resolve datasource plugin ID in query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:        "querycaching.useInQueryService",
+			Description: "Enables the query service to do query caching",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
