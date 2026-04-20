@@ -32,7 +32,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
   const { currentLog, closeDetails, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } =
     useLogDetailsContext();
   const [search, setSearch] = useState('');
-  const [detailsWidth, setDetailsWidth] = useState(window.innerWidth * 0.4);
+  const [detailsWidth, setDetailsWidth] = useState(options.logDetailsWidth ?? getDefaultLogDetailsWidth());
   const { onAddAdHocFilter, app } = usePanelContext();
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -172,7 +172,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
   );
 };
 
-export function getLogDetailsWidth() {
+export function getDefaultLogDetailsWidth() {
   return Math.max(Math.round(window.innerWidth * 0.4), 400);
 }
 

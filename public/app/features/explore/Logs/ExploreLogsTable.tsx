@@ -14,7 +14,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
-import { getLogDetailsWidth } from 'app/plugins/panel/logstable/LogsTableDetails';
+import { getDefaultLogDetailsWidth } from 'app/plugins/panel/logstable/LogsTableDetails';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
@@ -106,7 +106,7 @@ export function ExploreLogsTable(props: Props) {
       ...props.externalOptions,
       isLabelFilterActive: props.isLabelFilterActive,
       permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
-      logDetailsWidth: parseInt(store.get(`${SETTING_KEY_ROOT}.logDetailsWidth`) ?? getLogDetailsWidth(), 10),
+      logDetailsWidth: parseInt(store.get(`${SETTING_KEY_ROOT}.logDetailsWidth`) ?? getDefaultLogDetailsWidth(), 10),
       wrapText,
     }),
     [props.buildLinkToLogLine, props.externalOptions, props.isLabelFilterActive, selectedLogInfo?.id, wrapText]
