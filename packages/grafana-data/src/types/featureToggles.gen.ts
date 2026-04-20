@@ -49,11 +49,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Run the GRPC server
-  * @default false
-  */
-  grpcServer?: boolean;
-  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */
@@ -249,11 +244,6 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
-  * Adds support for Kubernetes unified storage quotas
-  * @default false
-  */
-  kubernetesUnifiedStorageQuotas?: boolean;
-  /**
   * Adds support for Kubernetes logs drilldown
   * @default false
   */
@@ -405,7 +395,7 @@ export interface FeatureToggles {
   unlimitedLayoutsNesting?: boolean;
   /**
   * Enables CSV export using scenes dashboard architecture
-  * @default false
+  * @default true
   */
   sceneCsvExport?: boolean;
   /**
@@ -1711,11 +1701,6 @@ export interface FeatureToggles {
   * @default false
   */
   profilesHeatmap?: boolean;
-  /**
-  * Enables the query service to do query caching
-  * @default false
-  */
-  queryServiceQueryCaching?: boolean;
   /**
   * Enables the time seeker in traces drilldown
   * @default false

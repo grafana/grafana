@@ -59,16 +59,21 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 			if dualWriteSupported {
 				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
 					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-					storage, err = NewDualWriter(
-						gr,
-						s.storageOpts,
-						legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-						unifiedStorage,
-						s.dualWriteService,
-						s.builderMetrics,
-					)
-					if err != nil {
-						return err
+					legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
+					if legacyStorage == nil {
+						log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+					} else {
+						storage, err = NewDualWriter(
+							gr,
+							s.storageOpts,
+							legacyStorage,
+							unifiedStorage,
+							s.dualWriteService,
+							s.builderMetrics,
+						)
+						if err != nil {
+							return err
+						}
 					}
 				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
 					parentPath := strings.TrimSuffix(storagePath, "/status")

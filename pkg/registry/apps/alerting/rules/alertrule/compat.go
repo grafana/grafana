@@ -318,7 +318,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 
 	sourceSettings := k8sRule.Spec.NotificationSettings
 	if sourceSettings != nil {
-		settings, err := convertNotificationSettings(sourceSettings)
+		settings, err := ConvertNotificationSettings(sourceSettings)
 		if err != nil {
 			return nil, err
 		}
@@ -328,7 +328,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 	return domainRule, nil
 }
 
-func convertNotificationSettings(sourceSettings *model.AlertRuleNotificationSettings) (ngmodels.NotificationSettings, error) {
+func ConvertNotificationSettings(sourceSettings *model.AlertRuleNotificationSettings) (ngmodels.NotificationSettings, error) {
 	res := ngmodels.NotificationSettings{}
 
 	if sourceSettings.SimplifiedRouting != nil {
