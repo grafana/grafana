@@ -12,7 +12,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/globalrole"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -58,9 +57,7 @@ func (r *InMemoryGlobalRoleApiInstaller) RegisterStorage(
 	opts *builder.APIGroupOptions,
 	storage map[string]rest.Storage,
 ) error {
-	inMemoryREST := NewReadOnlyGlobalRoleREST(r.acService)
-	appIdentityWrapper := &globalrole.GlobalRoleIdentityWrapper{Storage: inMemoryREST}
-	storage[iamv0.GlobalRoleInfo.StoragePath()] = appIdentityWrapper
+	storage[iamv0.GlobalRoleInfo.StoragePath()] = NewReadOnlyGlobalRoleREST(r.acService)
 	return nil
 }
 

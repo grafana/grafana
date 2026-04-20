@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -49,8 +50,13 @@ func (r *ReadOnlyGlobalRoleREST) GetSingularName() string {
 
 func (r *ReadOnlyGlobalRoleREST) Destroy() {}
 
+// Get swaps in the app service identity before reading because regular users
+// cannot authenticate in the "*" (cluster) namespace, but GlobalRoles are
+// cluster-scoped. Authorization for reads is enforced at the k8s authorization
+// layer by GetAuthorizer() before this is reached.
 func (r *ReadOnlyGlobalRoleREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	roles := r.acService.GetStaticRoles(ctx)
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	roles := r.acService.GetStaticRoles(srvCtx)
 	for _, dto := range roles {
 		if dto.UID == name {
 			return roleDTOToV0GlobalRole(dto), nil
@@ -59,8 +65,10 @@ func (r *ReadOnlyGlobalRoleREST) Get(ctx context.Context, name string, options *
 	return nil, apierrors.NewNotFound(iamv0.GlobalRoleInfo.GroupResource(), name)
 }
 
+// List swaps in the app service identity for the same reason as Get.
 func (r *ReadOnlyGlobalRoleREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	roles := r.acService.GetStaticRoles(ctx)
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	roles := r.acService.GetStaticRoles(srvCtx)
 	items := make([]iamv0.GlobalRole, 0, len(roles))
 	for _, dto := range roles {
 		items = append(items, *roleDTOToV0GlobalRole(dto))

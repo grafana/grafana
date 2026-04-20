@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -74,10 +75,12 @@ func newTestStaticRoles() map[string]*accesscontrol.RoleDTO {
 
 type mockACService struct {
 	accesscontrol.Service
-	roles map[string]*accesscontrol.RoleDTO
+	roles      map[string]*accesscontrol.RoleDTO
+	lastCallCtx context.Context
 }
 
-func (m *mockACService) GetStaticRoles(_ context.Context) map[string]*accesscontrol.RoleDTO {
+func (m *mockACService) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
+	m.lastCallCtx = ctx
 	return m.roles
 }
 
@@ -167,6 +170,24 @@ func TestDeleteCollectionReturnsMethodNotSupported(t *testing.T) {
 func TestNamespaceScoped(t *testing.T) {
 	r := newTestREST()
 	assert.False(t, r.NamespaceScoped())
+}
+
+func TestGetSwitchesToServiceIdentity(t *testing.T) {
+	svc := &mockACService{roles: newTestStaticRoles()}
+	r := NewReadOnlyGlobalRoleREST(svc)
+
+	_, err := r.Get(context.Background(), "basic_admin", &metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.True(t, identity.IsServiceIdentity(svc.lastCallCtx))
+}
+
+func TestListSwitchesToServiceIdentity(t *testing.T) {
+	svc := &mockACService{roles: newTestStaticRoles()}
+	r := NewReadOnlyGlobalRoleREST(svc)
+
+	_, err := r.List(context.Background(), nil)
+	require.NoError(t, err)
+	assert.True(t, identity.IsServiceIdentity(svc.lastCallCtx))
 }
 
 func TestConvertToTable(t *testing.T) {
