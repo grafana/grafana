@@ -10,6 +10,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
@@ -34,12 +36,14 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 		{
 			name: "inline github token encrypted",
 			values: map[string]any{
-				"SecureTokenCreate":         "some-token",
-				"SecureWebhookSecretCreate": "some-secret",
-				"SyncEnabled":               true,
-				"Target":                    "folder",
+				"Token":         "some-token",
+				"WebhookSecret": "some-secret",
+				"SyncEnabled":   true,
+				"SyncTarget":    "folder",
+				"GenerateName":  "test-",
+				"WorkflowsJSON": `[]`,
 			},
-			inputFile: "testdata/github-with-inline-secrets.json.tmpl",
+			inputFile: common.TestdataPath("github.json.tmpl"),
 			expectedFields: []expectedField{
 				{
 					Path:           []string{"secure", "token", "name"},
