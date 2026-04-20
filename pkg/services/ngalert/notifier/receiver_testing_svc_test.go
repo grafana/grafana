@@ -319,4 +319,3 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		amMock.AssertCalled(t, "TestIntegration", mock.Anything, existingReceiver.Name, i, expectedAlert)
 	})
 }
-
