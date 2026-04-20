@@ -63,7 +63,7 @@ func RegisterAppInstaller(
 	}
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
 	}
 
 	localManifest := apis.LocalManifest()
