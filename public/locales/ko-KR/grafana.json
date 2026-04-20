@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "데이터 소스를 찾을 수 없습니다."
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15333,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "대시",
         "label-dots": "점",
         "label-solid": "단색"

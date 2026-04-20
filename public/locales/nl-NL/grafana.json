@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15421,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Liggend streepje",
         "label-dots": "Dots",
         "label-solid": "Stevig"
