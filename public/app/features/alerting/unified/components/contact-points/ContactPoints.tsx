@@ -20,10 +20,8 @@ import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/ut
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
 import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
-
-import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
-
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
@@ -66,7 +64,7 @@ const ContactPointsTab = () => {
   });
 
   const addContactPointAbility = useContactPointAbility({ action: ContactPointAction.Create });
-  const exportContactPointsAbility = useContactPointAbility({ action: ContactPointAction.Export });
+  const exportContactPointsAbility = useContactPointAbility({ action: ContactPointAction.BulkExport });
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 

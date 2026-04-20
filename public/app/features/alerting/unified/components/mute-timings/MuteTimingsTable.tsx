@@ -11,9 +11,8 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
-import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';;
-
 import { TimeIntervalAction } from '../../hooks/abilities/types';
+import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -78,16 +77,14 @@ export const TimeIntervalsTable = () => {
           </Trans>
         </Text>
         <Spacer />
-        {!hideActions && items.length > 0 && (
-          {isGranted(createAbility) && (
-            <LinkButton
-              icon="plus"
-              variant="primary"
-              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-            >
-              <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
-            </LinkButton>
-          )}
+        {!hideActions && items.length > 0 && isGranted(createAbility) && (
+          <LinkButton
+            icon="plus"
+            variant="primary"
+            href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+          >
+            <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
+          </LinkButton>
         )}
         {isAvailable(exportAbility) && (
           <>

@@ -36,6 +36,7 @@ export enum ContactPointAction {
   Update = 'edit-contact-points',
   Delete = 'delete-contact-point',
   Export = 'export-contact-point',
+  BulkExport = 'bulk-export-contact-points',
 }
 
 export enum NotificationTemplateAction {
