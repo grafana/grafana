@@ -12724,6 +12724,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@uiw/codemirror-theme-basic@npm:^4.25.9":
+  version: 4.25.9
+  resolution: "@uiw/codemirror-theme-basic@npm:4.25.9"
+  dependencies:
+    "@uiw/codemirror-themes": "npm:4.25.9"
+  checksum: 10/76e736e80b1fd14c262e4481ad30d4fb8ddb768d73e1f138636fe0e734dd4f9c11e0cb5076a6f811425a14e30a8641d09b4e33da39020e94c9d847e2185cb44a
+  languageName: node
+  linkType: hard
+
+"@uiw/codemirror-themes@npm:4.25.9":
+  version: 4.25.9
+  resolution: "@uiw/codemirror-themes@npm:4.25.9"
+  dependencies:
+    "@codemirror/language": "npm:^6.0.0"
+    "@codemirror/state": "npm:^6.0.0"
+    "@codemirror/view": "npm:^6.0.0"
+  peerDependencies:
+    "@codemirror/language": ">=6.0.0"
+    "@codemirror/state": ">=6.0.0"
+    "@codemirror/view": ">=6.0.0"
+  checksum: 10/4a4fe7ae5f6c2bd37170b46c75ccabb67b47b7d3cee0de45c63fafe4f2b7569461b009e0ff5386480574e651627ed03c077833d53b6d3391102b79107ae39d15
+  languageName: node
+  linkType: hard
+
 "@uiw/react-codemirror@npm:^4.25.9":
   version: 4.25.9
   resolution: "@uiw/react-codemirror@npm:4.25.9"
@@ -20998,6 +21022,7 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
+    "@uiw/codemirror-theme-basic": "npm:^4.25.9"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"

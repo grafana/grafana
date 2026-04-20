@@ -1,6 +1,8 @@
 import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { loadLanguage, type LanguageName } from '@uiw/codemirror-extensions-langs';
+import { basicDark } from '@uiw/codemirror-theme-basic/dark';
+import { basicLight } from '@uiw/codemirror-theme-basic/light';
 import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
@@ -96,7 +98,7 @@ export const CodeEditor = memo(function CodeEditor({
   );
   return (
     <CodeMirror
-      theme={theme.isDark ? 'dark' : 'light'}
+      theme={theme.isDark ? basicDark : basicLight}
       value={value}
       height={height}
       extensions={extensions}
