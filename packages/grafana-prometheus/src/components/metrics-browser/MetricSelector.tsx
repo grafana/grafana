@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,11 +13,36 @@ import { getStylesMetricSelector } from './styles';
 export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
+  const [limitInputValue, setLimitInputValue] = useState('');
   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
+
+  // Sync external seriesLimit into local input state when it changes externally
+  if (String(seriesLimit) !== limitInputValue && limitInputValue === '') {
+    setLimitInputValue(String(seriesLimit));
+  }
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
   }, [metrics, selectedMetric, metricSearchTerm]);
+
+  // Apply series limit change only on blur or Enter key — not on every keystroke
+  // This prevents unnecessary API fetches while the user is typing
+  const handleSeriesLimitBlur = useCallback(() => {
+    const trimmed = limitInputValue.trim();
+    if (trimmed === '' || trimmed === String(seriesLimit)) {
+      return;
+    }
+    setSeriesLimit(parseInt(trimmed, 10));
+  }, [limitInputValue, seriesLimit, setSeriesLimit]);
+
+  const handleSeriesLimitKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.currentTarget.blur(); // Trigger blur → handleSeriesLimitBlur
+      }
+    },
+    []
+  );
 
   return (
     <div>
@@ -51,12 +76,14 @@ export function MetricSelector() {
         </Label>
         <div>
           <Input
-            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
+            onBlur={handleSeriesLimitBlur}
+            onKeyDown={handleSeriesLimitKeyDown}
+            onChange={(e) => setLimitInputValue(e.currentTarget.value)}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'
             )}
-            value={seriesLimit}
+            value={limitInputValue || String(seriesLimit)}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
           />
         </div>
