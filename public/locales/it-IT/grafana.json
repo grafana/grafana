@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Nessuna origine dati trovata"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Valore corrente: {{currentValue}} ",
       "label-state-name": "Nome stato"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15418,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Trattino",
         "label-dots": "Punti",
         "label-solid": "Linea continua"

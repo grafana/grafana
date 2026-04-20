@@ -8055,6 +8055,15 @@
     },
     "empty-state": {
       "message": "Nebyly nalezeny žádné zdroje dat"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8274,6 +8283,9 @@
       "current-value": "Aktuální hodnota: {{currentValue}} ",
       "label-state-name": "Název stavu"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15594,6 +15606,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Pomlčka",
         "label-dots": "Tečky",
         "label-solid": "Pevný"

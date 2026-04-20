@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Aktueller Wert: {{currentValue}} ",
       "label-state-name": "Statusname"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15418,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Strich",
         "label-dots": "Punkte",
         "label-solid": "Durchgezogen"
