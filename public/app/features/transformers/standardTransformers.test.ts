@@ -1,4 +1,6 @@
-import { DataTransformerID } from '@grafana/data';
+import { type ComponentType } from 'react';
+
+import { DataTransformerID, type TransformerRegistryItem, type TransformerUIProps } from '@grafana/data';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
@@ -31,6 +33,31 @@ const SPECIAL_CASES = [
 ];
 
 describe('getStandardTransformers', () => {
+  function isLazyComponent(component: ComponentType<TransformerUIProps<unknown>>): boolean {
+    // @ts-ignore - $$typeof is an internal React property which we use here for identifying that the component is a lazy component
+    return component && typeof component === 'object' && component.$$typeof === Symbol.for('react.lazy');
+  }
+
+  function defaultAssertions(item: TransformerRegistryItem) {
+    it('editor is a React lazy component', () => {
+      expect(isLazyComponent(item.editor)).toBe(true);
+    });
+
+    it('transformation resolves to a DataTransformerInfo', async () => {
+      const info = await item.transformation();
+      expect(info).toBeDefined();
+      expect(typeof info.operator).toBe('function');
+    });
+
+    // append intentionally reuses the noop transformer, so resolved id differs
+    if (item && item.id !== DataTransformerID.append) {
+      it('transformation id is the same as item.id', async () => {
+        const info = await item.transformation();
+        expect(info.id).toBe(item.id);
+      });
+    }
+  }
+
   describe('hiddenTransformer items', () => {
     it('have excludeFromPicker set to true', () => {
       const hidden = getStandardTransformers().filter((i) => i.excludeFromPicker);
@@ -79,27 +106,29 @@ describe('getStandardTransformers', () => {
     });
   });
 
+  describe.each(getStandardTransformers())('standard transformer for $id', (item) => defaultAssertions(item));
+
   describe('smoothing feature toggle', () => {
-    it('excludes smoothing when smoothingTransformation toggle is off', () => {
-      const items = getStandardTransformers();
-      expect(items.find((i) => i.id === DataTransformerID.smoothing)).toBeUndefined();
+    describe('toggle off', () => {
+      it('excludes smoothing when smoothingTransformation toggle is off', () => {
+        const items = getStandardTransformers();
+        expect(items.find((i) => i.id === DataTransformerID.smoothing)).toBeUndefined();
+      });
     });
 
-    it('includes smoothing when smoothingTransformation toggle is on', () => {
+    describe('toggle on', () => {
       const mockConfig = jest.requireMock('@grafana/runtime');
       mockConfig.config.featureToggles.smoothingTransformation = true;
-
+      const smoothing = getStandardTransformers().find((i) => i.id === DataTransformerID.smoothing);
       try {
-        const items = getStandardTransformers();
-        const smoothing = items.find((i) => i.id === DataTransformerID.smoothing);
-        expect(smoothing).toBeDefined();
+        defaultAssertions(smoothing!);
       } finally {
         mockConfig.config.featureToggles.smoothingTransformation = false;
       }
     });
   });
 
-  describe('isApplicable wiring', () => {
+  describe('isApplicable', () => {
     it('wires heatmap isApplicable to isHeatmapApplicable', () => {
       const heatmap = getStandardTransformers().find((i) => i.id === DataTransformerID.heatmap);
       expect(heatmap?.isApplicable).toBe(isHeatmapApplicable);
@@ -142,18 +171,15 @@ describe('getStandardTransformers', () => {
   });
 
   describe('eager transformation resolution', () => {
-    it('transformation() for reduce resolves to a DataTransformerInfo with operator', async () => {
-      const reduce = getStandardTransformers().find((i) => i.id === DataTransformerID.reduce)!;
-      const info = await reduce.transformation();
-      expect(info.id).toBe(DataTransformerID.reduce);
-      expect(typeof info.operator).toBe('function');
-    });
-
-    it('transformation() for merge resolves to a DataTransformerInfo with operator', async () => {
-      const merge = getStandardTransformers().find((i) => i.id === DataTransformerID.merge)!;
-      const info = await merge.transformation();
-      expect(info.id).toBe(DataTransformerID.merge);
-      expect(typeof info.operator).toBe('function');
-    });
+    it.each([DataTransformerID.reduce, DataTransformerID.merge])(
+      'resolves %s transformation without error and includes operator',
+      async (id) => {
+        const item = getStandardTransformers().find((i) => i.id === id);
+        expect(item).toBeDefined();
+        const info = await item!.transformation();
+        expect(info).toBeDefined();
+        expect(typeof info.operator).toBe('function');
+      }
+    );
   });
 });
