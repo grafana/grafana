@@ -5,15 +5,15 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
+import { isAvailable } from '../abilityUtils';
+import { TimeIntervalAction } from '../types';
+
 import {
   createAlertmanagerWrapper,
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
-} from '../abilityTestUtils';
-import { isAvailable } from '../abilityUtils';
-import { TimeIntervalAction } from '../types';
-
+} from './abilityTestUtils';
 import { useTimeIntervalAbility } from './useTimeIntervalAbility';
 
 setupMswServer();

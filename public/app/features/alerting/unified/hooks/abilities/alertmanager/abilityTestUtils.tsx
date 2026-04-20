@@ -6,10 +6,10 @@ import {
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { mockDataSource } from '../../mocks';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { setupDataSources } from '../../testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { mockDataSource } from '../../../mocks';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { setupDataSources } from '../../../testSetup/datasources';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 export function createAlertmanagerWrapper(alertmanagerSourceName: string) {
   const ProviderWrapper = getWrapper({ renderWithRouter: true });

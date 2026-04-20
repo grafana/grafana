@@ -6,7 +6,7 @@ import { AlertGroupAction } from 'app/features/alerting/unified/hooks/abilities/
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useAlertGroupAbility } from '../../hooks/abilities/rules/useAlertGroupAbility';
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
 import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';

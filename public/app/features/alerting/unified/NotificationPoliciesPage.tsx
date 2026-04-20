@@ -40,9 +40,9 @@ import {
   trackNotificationPoliciesFilterPolicyTree,
   trackNotificationPoliciesToggledAll,
 } from './components/notification-policies/notificationPolicyAnalytics';
+import { useAlertGroupAbility } from './hooks/abilities/alertmanager/useAlertGroupAbility';
 import { useNotificationPolicyAbility } from './hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { useTimeIntervalAbility } from './hooks/abilities/alertmanager/useTimeIntervalAbility';
-import { useAlertGroupAbility } from './hooks/abilities/rules/useAlertGroupAbility';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';

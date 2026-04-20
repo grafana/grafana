@@ -5,10 +5,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
-import { createAlertmanagerWrapper, setupGrafanaAlertmanager, setupMimirAlertmanager } from '../abilityTestUtils';
 import { isAvailable } from '../abilityUtils';
 import { SilenceAction } from '../types';
 
+import { createAlertmanagerWrapper, setupGrafanaAlertmanager, setupMimirAlertmanager } from './abilityTestUtils';
 import { useSilenceAbility } from './useSilenceAbility';
 
 setupMswServer();

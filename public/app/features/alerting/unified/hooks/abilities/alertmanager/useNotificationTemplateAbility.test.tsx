@@ -5,15 +5,15 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
+import { isAvailable } from '../abilityUtils';
+import { NotificationTemplateAction } from '../types';
+
 import {
   createAlertmanagerWrapper,
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
-} from '../abilityTestUtils';
-import { isAvailable } from '../abilityUtils';
-import { NotificationTemplateAction } from '../types';
-
+} from './abilityTestUtils';
 import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
 
 setupMswServer();

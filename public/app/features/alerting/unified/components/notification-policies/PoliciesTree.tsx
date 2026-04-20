@@ -17,8 +17,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
-import { useAlertGroupAbility } from '../../hooks/abilities/rules/useAlertGroupAbility';
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type ContactPointsState } from '../../types/alerting';
