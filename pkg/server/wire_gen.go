@@ -667,7 +667,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
 	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service14)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
-	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service14, accessControl, inProcBus, quotaService, cfg, clientGenerator)
+	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service14, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1363,7 +1363,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
 	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service14)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
-	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service14, accessControl, inProcBus, quotaService, cfg, clientGenerator)
+	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service14, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, resourceClient)
 	if err != nil {
 		return nil, err
 	}

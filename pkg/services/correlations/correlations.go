@@ -4,18 +4,18 @@ import (
 	"context"
 	"sync"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
-	v0alpha1 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -136,8 +136,7 @@ type CorrelationsK8sService struct {
 	QuotaService      quota.Service
 	k8sClientInitOnce sync.Once
 	clientGen         resource.ClientGenerator
-	k8sClient         *v0alpha1.CorrelationClient
-	k8sClientInitErr  error
+	k8sClient         client.K8sHandler
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
@@ -150,7 +149,7 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		return Correlation{}, ErrCorrelationsQuotaReached
 	}
 
-	client, err := s.getK8sClient()
+	//client, err := s.getK8sClient()
 	if err != nil {
 		return Correlation{}, err
 	}
@@ -167,14 +166,15 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		Type:        cmd.Type,
 	}
 
-	corrSpec, err := ToResource(correlation)
+	corrSpec, err := convertCorrelationToUnstructured(correlation)
 
-	appPlatformCorr, err := client.Create(ctx, corrSpec, resource.CreateOptions{DryRun: false})
+	//appPlatformCorr, err := client.Create(ctx, corrSpec, resource.CreateOptions{DryRun: false})
+	appPlatformCorr, err := s.k8sClient.Create(ctx, corrSpec, cmd.OrgId, v1.CreateOptions{})
 	if err != nil {
 		return Correlation{}, err
 	}
-
-	legacyCorr, err := ToCorrelation(appPlatformCorr)
+	strucCorr, _ := convertUnstructuredToCorrelation(appPlatformCorr)
+	legacyCorr, err := ToCorrelation(strucCorr)
 	if err != nil {
 		return Correlation{}, err
 	}
@@ -188,23 +188,20 @@ func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, 
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	client, err := s.getK8sClient()
-	if err != nil {
-		return err
-	}
-
-	identifier := resource.Identifier{
+	/*identifier := resource.Identifier{
 		Namespace: authlib.OrgNamespaceFormatter(cmd.OrgId),
 		Name:      cmd.UID,
 	}
 
-	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
+	s.k8sClient.Delete()*/
 
-	return err
+	//err = client.Delete(ctx, identifier, resource.DeleteOptions{})
+
+	return nil //err
 }
 
 func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
-	client, err := s.getK8sClient()
+	/*client, err := s.getK8sClient()
 	if err != nil {
 		return Correlation{}, err
 	}
@@ -227,27 +224,20 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 
 	appPlatformCorr, err := client.Update(ctx, corrSpec, resource.UpdateOptions{})
 
-	legacyCorr, err := ToCorrelation(appPlatformCorr)
+	legacyCorr, err := ToCorrelation(appPlatformCorr)*/
 
-	return *legacyCorr, nil
+	return Correlation{}, nil //*legacyCorr, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
-	client, err := s.getK8sClient()
+	unstructCorr, err := s.k8sClient.Get(ctx, cmd.UID, cmd.OrgId, v1.GetOptions{}, "")
 	if err != nil {
 		return Correlation{}, err
 	}
-
-	identifier := resource.Identifier{
-		Namespace: authlib.OrgNamespaceFormatter(cmd.OrgId),
-		Name:      cmd.UID,
-	}
-
-	appPlatformCorr, err := client.Get(ctx, identifier)
+	appPlatformCorr, err := convertUnstructuredToCorrelation(unstructCorr)
 	if err != nil {
 		return Correlation{}, err
 	}
-
 	legacyCorr, err := ToCorrelation(appPlatformCorr)
 	if err != nil {
 		return Correlation{}, err
@@ -257,7 +247,7 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	client, err := s.getK8sClient()
+	/*client, err := s.getK8sClient()
 	if err != nil {
 		return []Correlation{}, err
 	}
@@ -269,30 +259,34 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 	for i, val := range appPlatformCorrs.Items {
 		legacyCorr, _ := ToCorrelation(&val) //TODO error handling here?
 		correlations[i] = *legacyCorr
-	}
+	}*/
 
 	// TODO pagination
 	return []Correlation{}, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	client, err := s.getK8sClient()
+	/*client, err := s.getK8sClient()
 	if err != nil {
 		return GetCorrelationsResponseBody{}, err
 	}
 
-	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{})
+	appPlatformCorrs, _ := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{})
 
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
 	for i, val := range appPlatformCorrs.Items {
-		legacyCorr, _ := ToCorrelation(&val) //TODO error handling here?
+		strucCorr, _ := convertUnstructuredToCorrelation(&val) // todo error handling
+		legacyCorr, _ := ToCorrelation(strucCorr) //TODO error handling here?
 		correlations[i] = *legacyCorr
 	}
 
 	// TODO pagination
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
+	}, nil*/
+	return GetCorrelationsResponseBody{
+		Correlations: []Correlation{},
 	}, nil
 }
 
@@ -329,9 +323,10 @@ NewCorrelationClientFromGenerator is blocking, so we can't run this in startup
 and lazy load it on the first call instead
 */
 
-func (s *CorrelationsK8sService) getK8sClient() (*v0alpha1.CorrelationClient, error) {
+/*func (s *CorrelationsK8sService) getK8sClient() (*v0alpha1.CorrelationClient, error) {
 	s.k8sClientInitOnce.Do(func() {
 		s.k8sClient, s.k8sClientInitErr = v0alpha1.NewCorrelationClientFromGenerator(s.clientGen)
 	})
 	return s.k8sClient, s.k8sClientInitErr
 }
+*/

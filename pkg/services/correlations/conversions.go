@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
@@ -150,4 +152,21 @@ func ToCreateCorrelationCommand(obj *correlationsV0.Correlation) (*CreateCorrela
 		Type:        tmp.Type,
 		Provisioned: tmp.Provisioned,
 	}, nil
+}
+
+func convertUnstructuredToCorrelation(item *unstructured.Unstructured) (*correlationsV0.Correlation, error) {
+	obj := &correlationsV0.Correlation{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, obj)
+	if err != nil {
+		return obj, err
+	}
+	return obj, nil
+}
+
+func convertCorrelationToUnstructured(item Correlation) (*unstructured.Unstructured, error) {
+	unstructCorr, err := runtime.DefaultUnstructuredConverter.ToUnstructured(item)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: unstructCorr}, nil
 }
