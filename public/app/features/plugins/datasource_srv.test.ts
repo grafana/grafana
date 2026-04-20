@@ -370,19 +370,17 @@ describe('datasource_srv', () => {
         expect(importDataSourceMock).toHaveBeenCalledWith(apiMeta);
       });
 
-      it('should reject when getDatasourcePluginMeta returns null', async () => {
+      it('should fall back to instanceSettings.meta when getDatasourcePluginMeta returns null', async () => {
         const freshSrv = new DatasourceSrv(templateSrv);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         freshSrv.init(dataSourceInit as any, 'BBB');
         getDatasourcePluginMeta.mockResolvedValueOnce(null);
         importDataSourceMock.mockClear();
 
-        await expect(freshSrv.loadDatasource('ZZZ')).rejects.toEqual({
-          message: 'Meta for datasource ZZZ was not found',
-        });
+        await freshSrv.loadDatasource('ZZZ');
 
         expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
-        expect(importDataSourceMock).not.toHaveBeenCalled();
+        expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
       });
     });
 

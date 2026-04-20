@@ -221,9 +221,11 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const meta = await getDatasourcePluginMeta(instanceSettings.type);
+      const meta = (await getDatasourcePluginMeta(instanceSettings.type)) ?? instanceSettings.meta;
       if (!meta) {
-        return Promise.reject({ message: `Meta for datasource ${key} was not found` });
+        return Promise.reject({
+          message: `Meta for datasource ${key} (type: ${instanceSettings.type}) was not found`,
+        });
       }
       const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
