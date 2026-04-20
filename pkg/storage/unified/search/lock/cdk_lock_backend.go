@@ -47,6 +47,9 @@ func newCDKLockBackend(bucket resource.CDKBucket, opts cdkLockBackendOptions) *c
 // takeover. Returns errLockHeld if the lock is live or if another instance wins the
 // takeover race.
 func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
+	}
 	data, err := json.Marshal(info)
 	if err != nil {
 		return fmt.Errorf("marshal lock info: %w", err)
@@ -134,6 +137,9 @@ func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data 
 
 // Update atomically updates an existing lock, verifying ownership via conditional write.
 func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
+	}
 	attrs, err := b.bucket.Attributes(ctx, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
@@ -171,6 +177,9 @@ func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) 
 
 // Delete atomically deletes a lock, verifying ownership.
 func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
+	}
 	attrs, err := b.bucket.Attributes(ctx, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
@@ -209,6 +218,9 @@ func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) e
 
 // Read returns the current lock info, or errLockNotFound if no lock exists.
 func (b *cdkLockBackend) Read(ctx context.Context, key string) (*lockInfo, error) {
+	if err := validateObjectKey(key); err != nil {
+		return nil, err
+	}
 	info, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
