@@ -16,12 +16,12 @@ const mockChain: EvaluationChain = {
 describe('EvaluationChainsList', () => {
   it('renders loading state', () => {
     render(<EvaluationChainsList chains={[]} isLoading={true} />);
-    expect(screen.getByText(/loading chains/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading groups/i)).toBeInTheDocument();
   });
 
   it('renders empty state when no chains', () => {
     render(<EvaluationChainsList chains={[]} isLoading={false} />);
-    expect(screen.getByText(/no evaluation chains found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no evaluation groups found/i)).toBeInTheDocument();
   });
 
   it('renders folder section and chain name', () => {
