@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { type ReactNode, useMemo, useState } from 'react';
 
 import {
   type CreateNotificationqueryNotificationEntry,
@@ -195,9 +195,15 @@ interface InstanceTimelineProps {
   records: LogRecord[];
   notifications: NotificationEntry[];
   filter?: TimelineFilter;
+  onOpenContactPoint?: (receiverName: string) => void;
 }
 
-export function InstanceTimeline({ records, notifications, filter = 'all' }: InstanceTimelineProps) {
+export function InstanceTimeline({
+  records,
+  notifications,
+  filter = 'all',
+  onOpenContactPoint,
+}: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
 
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
@@ -241,7 +247,7 @@ export function InstanceTimeline({ records, notifications, filter = 'all' }: Ins
               </div>
               <div className={styles.contentCell}>
                 {entry.type === 'notifications' && entry.notifications && (
-                  <NotificationSummary notifications={entry.notifications} />
+                  <NotificationSummary notifications={entry.notifications} onOpenContactPoint={onOpenContactPoint} />
                 )}
                 {entry.type === 'state-change' && entry.previous && entry.current && (
                   <div className={styles.stateChangeRow}>
@@ -268,7 +274,13 @@ export function InstanceTimeline({ records, notifications, filter = 'all' }: Ins
   );
 }
 
-function NotificationSummary({ notifications }: { notifications: NotificationEntry[] }) {
+function NotificationSummary({
+  notifications,
+  onOpenContactPoint,
+}: {
+  notifications: NotificationEntry[];
+  onOpenContactPoint?: (receiverName: string) => void;
+}) {
   const byStatus = useMemo(() => {
     const grouped: Record<CreateNotificationqueryNotificationStatus, NotificationEntry[]> = {
       firing: [],
@@ -285,7 +297,12 @@ function NotificationSummary({ notifications }: { notifications: NotificationEnt
   return (
     <Stack direction="column" gap={0.5}>
       {byStatus.map(([status, items]) => (
-        <NotificationStatusGroup key={status} status={status} notifications={items} />
+        <NotificationStatusGroup
+          key={status}
+          status={status}
+          notifications={items}
+          onOpenContactPoint={onOpenContactPoint}
+        />
       ))}
     </Stack>
   );
@@ -294,9 +311,11 @@ function NotificationSummary({ notifications }: { notifications: NotificationEnt
 function NotificationStatusGroup({
   status,
   notifications,
+  onOpenContactPoint,
 }: {
   status: CreateNotificationqueryNotificationStatus;
   notifications: NotificationEntry[];
+  onOpenContactPoint?: (receiverName: string) => void;
 }) {
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
@@ -335,6 +354,45 @@ function NotificationStatusGroup({
 
   const variantStyle = isFiring ? styles.summaryRowFiring : styles.summaryRowResolved;
 
+  let receiverControl: ReactNode;
+  if (uniqueReceivers.length === 1) {
+    const singleReceiver = uniqueReceivers[0];
+    if (onOpenContactPoint) {
+      receiverControl = (
+        <button
+          type="button"
+          className={cx(styles.receiverLink, styles.receiverLinkButton)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenContactPoint(singleReceiver);
+          }}
+        >
+          <Text variant="bodySmall">{receiverLabel}</Text>
+        </button>
+      );
+    } else {
+      receiverControl = (
+        <a
+          href={textUtil.sanitizeUrl(
+            createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(singleReceiver)}`)
+          )}
+          className={styles.receiverLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Text variant="bodySmall">{receiverLabel}</Text>
+        </a>
+      );
+    }
+  } else {
+    receiverControl = (
+      <Text variant="bodySmall" truncate>
+        {receiverLabel}
+      </Text>
+    );
+  }
+
   return (
     <div>
       <button
@@ -366,23 +424,7 @@ function NotificationStatusGroup({
             →
           </Text>
           <Icon name="at" size="sm" />
-          {uniqueReceivers.length === 1 ? (
-            <a
-              href={textUtil.sanitizeUrl(
-                createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(uniqueReceivers[0])}`)
-              )}
-              className={styles.receiverLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Text variant="bodySmall">{receiverLabel}</Text>
-            </a>
-          ) : (
-            <Text variant="bodySmall" truncate>
-              {receiverLabel}
-            </Text>
-          )}
+          {receiverControl}
         </Stack>
         <Icon name={expanded ? 'angle-up' : 'angle-down'} size="sm" />
       </button>
@@ -603,6 +645,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
     },
+  }),
+
+  receiverLinkButton: css({
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    font: 'inherit',
+    textAlign: 'inherit',
   }),
 
   lowercaseText: css({
