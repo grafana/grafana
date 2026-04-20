@@ -8,7 +8,7 @@ import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
-import type { DatasourcePluginMetas, PluginMetasResponse } from './types';
+import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
 
 let datasources: DatasourcePluginMetas = {};
 let datasourcesByAliasIDs: DatasourcePluginMetas = {};
@@ -115,8 +115,6 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
 
   setDatasourcesAndAliases(structuredClone(override));
 }
-
-type FrontendSettings = { datasources: Record<string, { type: string; meta: DataSourcePluginMeta }> };
 
 export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {

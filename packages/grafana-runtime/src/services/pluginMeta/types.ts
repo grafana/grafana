@@ -13,3 +13,7 @@ export type PanelPluginMetasMapper<T> = (response: T) => PanelPluginMetas;
 export interface PluginMetasResponse {
   items: Meta[];
 }
+
+export type FrontendSettings = {
+  datasources: Record<string, { type: string; meta: DataSourcePluginMeta }>;
+};
