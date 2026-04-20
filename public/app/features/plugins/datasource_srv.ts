@@ -221,7 +221,15 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const meta = (await getDatasourcePluginMeta(instanceSettings.type)) ?? instanceSettings.meta;
+      // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
+      // runtime-registered datasources (which aren't in the plugin meta map) still load.
+      let meta = await getDatasourcePluginMeta(instanceSettings.type);
+      if (!meta) {
+        console.warn(
+          `Plugin meta for datasource ${key} (type: ${instanceSettings.type}) was not found, falling back to instanceSettings.meta`
+        );
+        meta = instanceSettings.meta;
+      }
       if (!meta) {
         return Promise.reject({
           message: `Meta for datasource ${key} (type: ${instanceSettings.type}) was not found`,

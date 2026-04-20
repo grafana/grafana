@@ -376,11 +376,15 @@ describe('datasource_srv', () => {
         freshSrv.init(dataSourceInit as any, 'BBB');
         getDatasourcePluginMeta.mockResolvedValueOnce(null);
         importDataSourceMock.mockClear();
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         await freshSrv.loadDatasource('ZZZ');
 
         expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
         expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('falling back to instanceSettings.meta'));
+
+        warnSpy.mockRestore();
       });
     });
 
