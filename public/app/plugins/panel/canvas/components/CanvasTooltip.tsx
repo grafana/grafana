@@ -14,7 +14,7 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
+import { Portal, useStyles2, VizTooltipContainer, usePanelContext, useTheme2 } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
@@ -142,7 +143,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   return (
     <>
       {scene.tooltipPayload?.element && scene.tooltipPayload.anchorPoint && (
-        <Portal>
+        <Portal zIndex={theme.zIndex.tooltip}>
           <VizTooltipContainer
             className={cx(styles.tooltipWrapper, scene.tooltipPayload.isOpen && styles.pinned)}
             position={{ x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y }}

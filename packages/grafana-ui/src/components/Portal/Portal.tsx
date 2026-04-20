@@ -15,10 +15,12 @@ const PortalContext = createContext<HTMLDivElement | null>(null);
 interface Props {
   className?: string;
   root?: HTMLElement;
+  // the zIndex of the node; defaults to theme.zIndex.portal
+  zIndex?: number;
 }
 
 export function Portal(props: PropsWithChildren<Props>) {
-  const { children, className, root } = props;
+  const { children, className, root, zIndex } = props;
   const theme = useTheme2();
   const parentPortal = useContext(PortalContext);
   const portalRef = useRef<HTMLDivElement | null>(null);
@@ -27,7 +29,11 @@ export function Portal(props: PropsWithChildren<Props>) {
 
   return ReactDOM.createPortal(
     <PortalContext.Provider value={portalRef.current}>
-      <div className={className} ref={portalRef} style={{ position: 'relative', zIndex: theme.zIndex.portal }}>
+      <div
+        className={className}
+        ref={portalRef}
+        style={{ position: 'relative', zIndex: zIndex ?? theme.zIndex.portal }}
+      >
         {children}
       </div>
     </PortalContext.Provider>,
