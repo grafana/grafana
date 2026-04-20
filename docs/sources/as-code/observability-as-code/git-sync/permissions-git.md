@@ -12,24 +12,13 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Configure Git repository protection 
+title: Configure Git repository protection
 menuTitle: Git repository protection
 weight: 710
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/repository-protection/
-refs:
-  git-sync-setup:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/as-code/git-sync/git-sync-setup/
-  git-sync-permissions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-and-access-control/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/as-code/git-sync/permissions-and-access-control/
 ---
 
-# Configure Git repository protection 
+# Configure Git repository protection
 
 {{< admonition type="caution" >}}
 
@@ -45,19 +34,38 @@ When you use Git Sync, your dashboard configurations are stored as code in a Git
 Repository protection works as an additional security layer after Grafana internal permissions. For information about Grafana permissions, refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
 {{< /admonition >}}
 
-## Access points for dashboard source code
+## Required permissions at the Git provider level
 
-Dashboard source code can be accessed through two paths, each with its own protection mechanism:
+Git Sync authentication credentials must have specific permissions at your Git provider:
 
-**Git repository**: Users with repository access can view and modify dashboard files directly in Git. Repository permissions at your Git provider control this access.
+**Required for all configurations**:
 
-**Grafana files endpoint**: Users can view and edit dashboard source code through Grafana internal API endpoint. Grafana folder and dashboard permissions control this access.
+- Read access to repository contents
+- Read access to branch information
 
-Both access points must be properly protected to secure your dashboard configurations.
+**Required for writing changes**:
 
-## Files endpoint protection
+- Write access to create commits
+- Permission to create pull requests (when branch protection is enabled)
+- Permission to push to feature branches (for creating pull requests)
 
-The Grafana files endpoint allows users to interact with dashboard source code through the Grafana API. Access to this endpoint is controlled by Grafana folder and dashboard permissions, not by Git repository permissions.
+**Optional for instant synchronization**:
+
+- Permission to create and manage webhooks
+
+Refer to the [Git Sync setup documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for detailed instructions on configuring authentication for your Git provider.
+
+## Control access to the dashboards source code
+
+You can access dashboard source code through two paths, each with its own protection mechanism:
+
+- **Grafana files endpoint**: Users can view and edit dashboard source code through the Grafana files API endpoint. Use Grafana folder and dashboard permissions to control this access. Refer to [Manage access to dashboard source code via the API](#manage-access-to-dashboard-source-code-via-the-api) for more information.
+
+- **Git repository**: Users with repository access can view and modify dashboard files directly in Git. You can control repository permissions in your Git provider. Refer to [Control access to your Git repository ](#control-access-to-your-git-repository) for more information.
+
+Protect both access points to secure your dashboard configurations.
+
+## Manage access to dashboard source code via the API
 
 ### View dashboard source code
 
@@ -78,9 +86,9 @@ You can modify dashboard source code through the files endpoint if you have **Ed
 
 When you save changes through this endpoint, Git Sync commits those changes to the Git repository (or creates pull requests if branch protection is enabled), subject to Git repository permissions.
 
-For detailed information about configuring folder and dashboard permissions in Grafana, refer to [Git Sync permissions and access control](ref:git-sync-permissions).
+For detailed information about configuring folder and dashboard permissions in Grafana, refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
 
-## Repository access control
+## Control access to your Git repository
 
 Access control at the Git provider level determines who can view and modify your dashboard source code. Configure repository access based on your security and compliance requirements.
 
@@ -102,9 +110,9 @@ Write access controls who can push changes to your repository. This determines w
 
 **Protected branches**: Branch protection rules can restrict direct writes and require changes to go through pull requests with review and approval, even for users with write access.
 
-Refer to the [Git Sync setup documentation](ref:git-sync-setup) for provider-specific instructions on configuring repository access and authentication.
+Refer to the [Git Sync setup documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for detailed instructions on configuring authentication for your Git provider.
 
-## Control how changes are written
+## Control how changes are written in Git Sync
 
 Git Sync supports different modes for writing dashboard changes to your repository, from allowing direct commits to requiring formal review processes.
 
@@ -126,11 +134,12 @@ When branch protection is enabled at your Git provider, Git Sync creates pull re
 
 **Use when**: Changes require review and approval, such as in production environments or when multiple teams collaborate on dashboards.
 
-## Branch protection
+## Protect your branch
 
 Branch protection rules at your Git provider enforce how changes are made to specific branches. When enabled on the branch that Git Sync targets, these rules require Git Sync to create pull requests instead of pushing commits directly.
 
 **Common use cases for branch protection**:
+
 - Production environments requiring change approval
 - Compliance requirements for audit trails and review
 - Multi-team environments where changes need visibility
@@ -147,24 +156,6 @@ This ensures dashboard changes are reviewed by the teams responsible for those d
 
 Refer to your Git provider's documentation for instructions on configuring `CODEOWNERS` files.
 
-## Required permissions
-
-The authentication credentials configured for Git Sync must have specific permissions at your Git provider:
-
-**Required for all configurations**:
-- Read access to repository contents
-- Read access to branch information
-
-**Required for writing changes**:
-- Write access to create commits
-- Permission to create pull requests (when branch protection is enabled)
-- Permission to push to feature branches (for creating pull requests)
-
-**Optional for instant synchronization**:
-- Permission to create and manage webhooks
-
-Refer to the [Git Sync setup documentation](ref:git-sync-setup) for detailed instructions on configuring authentication for your Git provider.
-
 ## Troubleshooting
 
 ### Git Sync fails with "403 Forbidden" or "Unauthorized"
@@ -172,6 +163,7 @@ Refer to the [Git Sync setup documentation](ref:git-sync-setup) for detailed ins
 **Cause**: The authentication credentials lack the required repository permissions.
 
 **Solution**:
+
 1. Verify the credentials have read and write access to the repository
 2. Check that the credentials can create pull requests (if branch protection is enabled)
 3. Verify authentication credentials haven't expired
@@ -182,6 +174,7 @@ Refer to the [Git Sync setup documentation](ref:git-sync-setup) for detailed ins
 **Cause**: Branch protection is not configured at the Git provider.
 
 **Solution**:
+
 1. Enable branch protection on the target branch at your Git provider
 2. Configure the branch to require pull requests before merging
 3. Verify the branch name in protection rules matches the branch configured in Grafana
@@ -191,8 +184,7 @@ Refer to the [Git Sync setup documentation](ref:git-sync-setup) for detailed ins
 **Cause**: Branch protection is not enabled or the authentication credentials lack pull request creation permission.
 
 **Solution**:
+
 1. Verify branch protection is enabled on the correct branch
 2. Check that the credentials have permission to create pull requests
 3. Ensure the branch name in Git Sync settings matches the protected branch exactly
-
-

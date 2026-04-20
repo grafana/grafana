@@ -99,15 +99,15 @@ To update or delete your repository configuration after you complete setup:
 
 ## Manage folder permissions
 
-By default, users keep their roles in folders provisioned with Git Sync.  
+By default, users keep their roles in folders provisioned with Git Sync.
 
 | Grafana Role | Folder Permission |
-|--------------|-------------------|
+| ------------ | ----------------- |
 | Admin        | Admin             |
 | Editor       | Editor            |
 | Viewer       | Viewer            |
 
-Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-permissions) to understand and set up permissions in Git Sync. 
+Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-permissions) to understand and set up permissions in Git Sync.
 
 ### Modify folder permissions
 
