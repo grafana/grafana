@@ -688,9 +688,9 @@ var (
 		{
 			Name:        "sceneCsvExport",
 			Description: "Enables CSV export using scenes dashboard architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{

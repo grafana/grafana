@@ -5095,14 +5095,17 @@
     {
       "metadata": {
         "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
+        "resourceVersion": "1776334251375",
+        "creationTimestamp": "2026-02-11T10:49:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
