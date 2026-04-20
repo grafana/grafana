@@ -8654,6 +8654,7 @@
         "copy-link": "Copy link to log line",
         "copy-to-clipboard": "Copy to Clipboard",
         "inspect-value": "Inspect value",
+        "show-details": "Show details",
         "view-log-line": "View log line"
       }
     },
