@@ -12,6 +12,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type Spec as DashboardV3alpha0Spec } from '@grafana/schema/apis/dashboard.grafana.app/v3alpha0';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
+import { createDebugLog } from 'app/core/utils/debugLog';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -84,6 +85,8 @@ interface ImportOptions {
 interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
+
+const debugLog = createDebugLog('dashboardAPI', 'browseDashboards');
 
 // We need to do this as the API will return different responses depending on the type of storage used and existing
 // resource types, even when we are using the old api/ endpoint.
@@ -477,18 +480,21 @@ export const browseDashboardsAPI = createApi({
           // Rules are v3alpha0-exclusive. Dashboards with rules go to v3; everything
           // else stays on v2 stable to avoid mass-upgrading users to an alpha API.
           if (isV3DashboardCommand(cmd)) {
+            debugLog(`saveDashboard -> v3alpha0 (rules=${cmd.dashboard.rules?.length ?? 0})`);
             const api = await getDashboardAPI('v3alpha0');
             const response = await api.saveDashboard(cmd);
             return { data: response };
           }
 
           if (isV2DashboardCommand(cmd)) {
+            debugLog('saveDashboard -> v2');
             const api = await getDashboardAPI('v2');
             const response = await api.saveDashboard(cmd);
             return { data: response };
           }
 
           if (isV1DashboardCommand(cmd)) {
+            debugLog('saveDashboard -> v1');
             const api = await getDashboardAPI('v1');
             const rsp = await api.saveDashboard(cmd);
             return { data: rsp };
