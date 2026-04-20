@@ -675,6 +675,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         value: datasource ?? '',
       },
     ]);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
@@ -703,6 +704,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     // Interpolate in the frontend — no backend round-trip needed
     const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 

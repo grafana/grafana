@@ -353,6 +353,7 @@ export function interpolateV1Dashboard(
     //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
     //   }
     if (pluginId === ExpressionDatasourceRef.type) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       formDataSources.push({
         uid: ExpressionDatasourceRef.uid,
         type: ExpressionDatasourceRef.type,
@@ -374,6 +375,7 @@ export function interpolateV1Dashboard(
   // Ensure expression datasources are included even when not explicitly mapped
   for (const dsInput of dsInputs) {
     if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       formDataSources.push({
         uid: ExpressionDatasourceRef.uid,
         type: ExpressionDatasourceRef.type,
@@ -404,7 +406,9 @@ export function interpolateV1Dashboard(
     elements: [],
     folder: { uid: '' },
   };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const interpolated = { ...result } as DashboardJson;
   delete interpolated.__inputs;
   delete interpolated.__elements;
