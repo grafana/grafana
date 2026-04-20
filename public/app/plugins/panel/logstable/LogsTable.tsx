@@ -287,7 +287,7 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <LogDetailsContextProvider enableLogDetails logs={logRows}>
+        <LogDetailsContextProvider enableLogDetails={options.enableLogDetails ?? true} logs={logRows}>
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}

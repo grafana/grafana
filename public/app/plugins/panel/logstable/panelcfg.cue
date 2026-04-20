@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			schema: {
 				Options: {
 					permalinkedLogId?:   string
-					showInspectLogLine?: bool | *true
+					enableLogDetails?: bool | *true
 					showCopyLogLink?:    bool | *false
 					showControls?:       bool | *true
 					sortOrder?:          common.LogsSortOrder | (*"Descending" | _)

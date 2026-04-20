@@ -296,7 +296,7 @@ describe('LogsTable', () => {
       const { container } = setUp(
         { onOptionsChange },
         {
-          showInspectLogLine: true,
+          enableLogDetails: true,
         }
       );
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
@@ -315,7 +315,7 @@ describe('LogsTable', () => {
       const { container } = setUp(
         { onOptionsChange },
         {
-          showInspectLogLine: true,
+          enableLogDetails: true,
           displayedFields: ['level', LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME],
         }
       );
@@ -332,7 +332,7 @@ describe('LogsTable', () => {
 
   describe('Log details', () => {
     it('opens the log details view when "Show details" is clicked', async () => {
-      setUp(undefined, { showInspectLogLine: true });
+      setUp(undefined, { enableLogDetails: true });
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
 
       expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
@@ -346,7 +346,7 @@ describe('LogsTable', () => {
 
     it('calls onAddAdHocFilter when using filter-for from log details', async () => {
       const onAddAdHocFilter = jest.fn();
-      setUp(undefined, { showInspectLogLine: true }, CoreApp.Dashboard, { onAddAdHocFilter });
+      setUp(undefined, { enableLogDetails: true }, CoreApp.Dashboard, { onAddAdHocFilter });
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
 
       await userEvent.click(screen.getAllByLabelText('Show details')[0]);

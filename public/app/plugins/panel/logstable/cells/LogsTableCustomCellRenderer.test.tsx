@@ -35,7 +35,6 @@ if (!testLogsFrame) {
 }
 
 const ShowDetailsLabelText = 'Show details';
-const ViewLogLineLabelText = 'View log line';
 const CopyLogLineLabelText = 'Copy link to log line';
 const CellValueText = 'Value';
 
@@ -46,7 +45,7 @@ describe('LogsTableCustomCellRenderer', () => {
         supportsPermalink={true}
         logsFrame={testLogsFrame}
         options={{
-          showInspectLogLine: false,
+          enableLogDetails: false,
           showCopyLogLink: false,
         }}
         cellProps={{
@@ -58,7 +57,6 @@ describe('LogsTableCustomCellRenderer', () => {
       />
     );
 
-    expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(CopyLogLineLabelText)).not.toBeInTheDocument();
     expect(screen.getByText(CellValueText)).toBeVisible();
   });
@@ -72,7 +70,7 @@ describe('LogsTableCustomCellRenderer', () => {
             supportsPermalink={true}
             logsFrame={testLogsFrame}
             options={{
-              showInspectLogLine: true,
+              enableLogDetails: true,
               showCopyLogLink: false,
             }}
             cellProps={{
@@ -85,83 +83,10 @@ describe('LogsTableCustomCellRenderer', () => {
         </LogDetailsContextProvider>
       );
 
-      expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
       expect(screen.getByLabelText(ShowDetailsLabelText)).toBeInTheDocument();
     });
   });
 
-  describe('Inspect row', () => {
-    it('should render', () => {
-      render(
-        <LogsTableCustomCellRenderer
-          supportsPermalink={true}
-          logsFrame={testLogsFrame}
-          options={{
-            showInspectLogLine: true,
-            showCopyLogLink: false,
-          }}
-          cellProps={{
-            field: testLogsDataFrame[0].fields[1],
-            rowIndex: 0,
-            frame: testLogsDataFrame[0],
-            value: CellValueText,
-          }}
-        />
-      );
-
-      expect(screen.queryByLabelText(ViewLogLineLabelText)).toBeInTheDocument();
-      expect(screen.queryByLabelText(CopyLogLineLabelText)).not.toBeInTheDocument();
-      expect(screen.getByText(CellValueText)).toBeVisible();
-    });
-
-    it('should show body text in inspect modal', async () => {
-      render(
-        <LogsTableCustomCellRenderer
-          supportsPermalink={true}
-          logsFrame={testLogsFrame}
-          options={{
-            showInspectLogLine: true,
-            showCopyLogLink: false,
-          }}
-          cellProps={{
-            field: testLogsDataFrame[0].fields[1],
-            rowIndex: 0,
-            frame: testLogsDataFrame[0],
-            value: CellValueText,
-          }}
-        />
-      );
-      expect(screen.queryByText('log 1')).not.toBeInTheDocument();
-      await userEvent.click(screen.getByLabelText(ViewLogLineLabelText));
-      await waitFor(() => expect(screen.queryByText('log 1')).toBeInTheDocument());
-    });
-
-    it('Should inspect body if body is not selected', async () => {
-      // Something is complaining about invalid timezone, ignore it for now
-      jest.spyOn(console, 'warn').mockImplementation();
-      // Remove body from data frame passed to the table (but it should be in the logs frame)
-      const dataFrame: DataFrame = { ...testLogsDataFrame[0], fields: [testLogsDataFrame[0].fields[0]] };
-      render(
-        <LogsTableCustomCellRenderer
-          supportsPermalink={true}
-          logsFrame={testLogsFrame}
-          options={{
-            showInspectLogLine: true,
-            showCopyLogLink: false,
-          }}
-          cellProps={{
-            field: dataFrame.fields[0],
-            rowIndex: 0,
-            frame: testLogsDataFrame[0],
-            value: CellValueText,
-          }}
-        />
-      );
-      expect(screen.queryByText('log 1')).not.toBeInTheDocument();
-      await userEvent.click(screen.getByLabelText(ViewLogLineLabelText));
-      await waitFor(() => expect(screen.queryByText('log 1')).toBeInTheDocument());
-    });
-  });
   describe('Copy link to log line', () => {
     it('Should not show if permalink support is false', () => {
       render(
@@ -169,7 +94,7 @@ describe('LogsTableCustomCellRenderer', () => {
           supportsPermalink={false}
           logsFrame={testLogsFrame}
           options={{
-            showInspectLogLine: false,
+            enableLogDetails: false,
             showCopyLogLink: true,
           }}
           cellProps={{
@@ -182,7 +107,6 @@ describe('LogsTableCustomCellRenderer', () => {
         />
       );
 
-      expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(CopyLogLineLabelText)).not.toBeInTheDocument();
       expect(screen.getByText(CellValueText)).toBeVisible();
     });
@@ -192,7 +116,7 @@ describe('LogsTableCustomCellRenderer', () => {
           supportsPermalink={true}
           logsFrame={testLogsFrame}
           options={{
-            showInspectLogLine: false,
+            enableLogDetails: false,
             showCopyLogLink: true,
           }}
           cellProps={{
@@ -205,7 +129,6 @@ describe('LogsTableCustomCellRenderer', () => {
         />
       );
 
-      expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
       await waitFor(() => expect(screen.queryByLabelText(CopyLogLineLabelText)).toBeInTheDocument());
 
       expect(screen.getByText(CellValueText)).toBeVisible();
