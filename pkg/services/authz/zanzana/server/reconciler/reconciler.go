@@ -62,9 +62,10 @@ type Reconciler struct {
 type Config struct {
 	Workers             int
 	Interval            time.Duration
-	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
-	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
+	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
 func (c Config) queueSize() int {
@@ -81,11 +82,9 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
-var reconcileGVRs = []schema.GroupVersionResource{
+// defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
+var DefaultCRDs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
-	iamv0.RoleInfo.GroupVersionResource(),
-	iamv0.RoleBindingInfo.GroupVersionResource(),
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),

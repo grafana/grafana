@@ -7972,6 +7972,12 @@
     },
     "list": {
       "label": "Data sources"
+    },
+    "run-advisor-checks-button": {
+      "label": "Enable Advisor checks",
+      "running": "Running checks",
+      "success": "Advisor checks created successfully. Go to Administration > Advisor for more details.",
+      "tooltip": "Advisor checks helps you find issues with your data sources and plugins"
     }
   },
   "datasources": {
@@ -15424,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "Accessible",
         "label-dash": "Dash",
         "label-dots": "Dots",
         "label-solid": "Solid"

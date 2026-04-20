@@ -8055,6 +8055,15 @@
     },
     "empty-state": {
       "message": "Источники данных не найдены"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15597,6 +15606,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Тире",
         "label-dots": "Точки",
         "label-solid": "Сплошная"
