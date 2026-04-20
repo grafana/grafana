@@ -10,18 +10,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (hs *HTTPServer) GetAlertNotifiers(cfg *setting.Cfg) func(*contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
 	return func(r *contextmodel.ReqContext) response.Response {
 		v2 := notify.GetSchemaForAllIntegrations()
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
 			return strings.Compare(string(a.Type), string(b.Type))
 		})
-		if cfg.UnifiedAlerting.AllowedNotifiers != nil {
+		if hs.Cfg.UnifiedAlerting.AllowedNotifiers != nil {
 			v2 = slices.DeleteFunc(v2, func(s schema.IntegrationTypeSchema) bool {
-				_, allowed := cfg.UnifiedAlerting.AllowedNotifiers[s.Type]
+				_, allowed := hs.Cfg.UnifiedAlerting.AllowedNotifiers[s.Type]
 				return !allowed
 			})
 		}
