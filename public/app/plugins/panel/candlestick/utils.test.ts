@@ -160,9 +160,6 @@ describe('drawMarkers', () => {
       [5, 6], // low
       [12, 13], // close
       [150000, 200000], // volume
-      [0.19, 0.2], // sma
-      [0.3, 0.29], // bolup
-      [0.5, 0.39], // boldown
     ];
     const volumeSeries: uPlot.Series[] = [
       { idxs: [0, 0], scale: 'x' },
