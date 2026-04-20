@@ -1,4 +1,11 @@
-import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
+import {
+  type EchoBackend,
+  type EchoMeta,
+  type EchoEvent,
+  type EchoSrv,
+  MAX_PAGE_URL_LENGTH,
+  TRUNCATION_MARKER,
+} from '@grafana/runtime';
 
 import { contextSrv } from '../context_srv';
 
@@ -86,7 +93,10 @@ export class Echo implements EchoSrv {
       ts: new Date().getTime(),
       timeSinceNavigationStart: performance.now(),
       path: window.location.pathname,
-      url: window.location.href,
+      url:
+        window.location.href.length > MAX_PAGE_URL_LENGTH
+          ? `${window.location.href.substring(0, MAX_PAGE_URL_LENGTH - TRUNCATION_MARKER.length)}${TRUNCATION_MARKER}`
+          : window.location.href,
     };
   };
 }

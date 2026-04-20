@@ -12,17 +12,11 @@ The `grpcserver` package provides the implementation of the gRPC server for hand
 
 ## Usage
 
-Enable the gRPC server in Grafana by setting the `grpcServer` feature toggle to `true` in your `custom.ini` configuration file.
-
-```ini
-[feature_toggles]
-grpcServer = true
-```
-
-You can specify the gRPC server specific settings in the `grpc_server` section of the configuration file.
+Enable the gRPC server in Grafana by setting `enabled = true` in the `grpc_server` section of your `custom.ini` configuration file.
 
 ```ini
 [grpc_server]
+enabled = true
 network = "tcp"
 address = "127.0.0.1:10000"
 use_tls = false

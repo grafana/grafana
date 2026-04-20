@@ -1,44 +1,44 @@
 package common
 
 // TODO docs
-AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
+AxisPlacement: "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
-AxisColorMode:      "text" | "series"                                       @cuetsy(kind="enum")
+AxisColorMode: "text" | "series" @cuetsy(kind="enum")
 
 // TODO docs
-VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
+VisibilityMode: "auto" | "never" | "always" @cuetsy(kind="enum")
 
 // TODO docs
-GraphDrawStyle:     "line" | "bars" | "points"                              @cuetsy(kind="enum")
+GraphDrawStyle: "line" | "bars" | "points" @cuetsy(kind="enum")
 
 // TODO docs
-GraphTransform:     "constant" | "negative-Y"                               @cuetsy(kind="enum",memberNames="Constant|NegativeY")
+GraphTransform: "constant" | "negative-Y" @cuetsy(kind="enum",memberNames="Constant|NegativeY")
 
 // TODO docs
-LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
+LineInterpolation: "linear" | "smooth" | "stepBefore" | "stepAfter" @cuetsy(kind="enum")
 
 // TODO docs
-ScaleDistribution:  "linear" | "log" | "ordinal" | "symlog"                 @cuetsy(kind="enum")
+ScaleDistribution: "linear" | "log" | "ordinal" | "symlog" @cuetsy(kind="enum")
 
 // TODO docs
-GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
+GraphGradientMode: "none" | "opacity" | "hue" | "scheme" @cuetsy(kind="enum")
 
 // TODO docs
-StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
+StackingMode: "none" | "normal" | "percent" @cuetsy(kind="enum")
 
 // TODO docs
-BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
+BarAlignment: -1 | 0 | 1 @cuetsy(kind="enum",memberNames="Before|Center|After")
 
 // TODO docs
-ScaleOrientation:   0 | 1                                                   @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
+ScaleOrientation: 0 | 1 @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
 
 // TODO docs
-ScaleDirection:     1 | 1 | -1 | -1                                         @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
+ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
 
 // TODO docs
 LineStyle: {
-	fill?: "solid" | "dash" | "dot" | "square"
+	fill?: "solid" | "dash" | "dot" | "square" | "accessible"
 	dash?: [...number]
 } @cuetsy(kind="interface")
 
@@ -52,7 +52,7 @@ LineConfig: {
 	// Indicate if null values should be treated as gaps or connected.
 	// When the value is a number, it represents the maximum delta in the
 	// X axis that should be considered connected.  For timeseries, this is milliseconds
-	spanNulls?:         bool | number
+	spanNulls?: bool | number
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -79,8 +79,8 @@ PointsConfig: {
 
 // TODO docs
 ScaleDistributionConfig: {
-	type: ScaleDistribution
-	log?: number
+	type:             ScaleDistribution
+	log?:             number
 	linearThreshold?: number
 } @cuetsy(kind="interface")
 
@@ -159,7 +159,7 @@ ReduceDataOptions: {
 VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 
 VizAnnotations: {
-    // Breaks out each annotation frame into multiple lanes on the x-axis
+	// Breaks out each annotation frame into multiple lanes on the x-axis
 	multiLane?: bool
 	// Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
 	clustering?: number
@@ -168,12 +168,12 @@ VizAnnotations: {
 } @cuetsy(kind="interface")
 
 AnnotationDisplayOptions: {
-    lines?: {
-        width?: number
-    },
-    regions?: {
-        opacity?: number
-    }
+	lines?: {
+		width?: number
+	}
+	regions?: {
+		opacity?: number
+	}
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -258,16 +258,16 @@ GraphFieldConfig: {
 
 // TODO docs
 VizLegendOptions: {
-	displayMode:  LegendDisplayMode
-	placement:    LegendPlacement
-	showLegend: 	bool
-	asTable?:     bool
-	isVisible?:   bool
-	sortBy?:      string
-	sortDesc?:    bool
-	width?:       number
-	limit?:       number
-	calcs:        [...string]
+	displayMode: LegendDisplayMode
+	placement:   LegendPlacement
+	showLegend:  bool
+	asTable?:    bool
+	isVisible?:  bool
+	sortBy?:     string
+	sortDesc?:   bool
+	width?:      number
+	limit?:      number
+	calcs: [...string]
 } @cuetsy(kind="interface")
 
 // Enum expressing the possible display modes
@@ -285,9 +285,9 @@ BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 
 // TODO docs
 VizTooltipOptions: {
-	mode: TooltipDisplayMode
-	sort: SortOrder
-	maxWidth?: number
+	mode:       TooltipDisplayMode
+	sort:       SortOrder
+	maxWidth?:  number
 	maxHeight?: number
 	hideZeros?: bool
 } @cuetsy(kind="interface")

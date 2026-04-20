@@ -21,8 +21,10 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
+	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -40,6 +42,7 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"), // These don't stop when index is closed.
+		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),               // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
 	)
 }
 
@@ -428,7 +431,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					{
 						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
-							RV: 1,
+							RV:   1,
+							Name: "zzz",
 							Key: &resourcepb.ResourceKey{
 								Name:      "zzz",
 								Namespace: "ns",
@@ -453,7 +457,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					{
 						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
-							RV: 2,
+							RV:   2,
+							Name: "yyy",
 							Key: &resourcepb.ResourceKey{
 								Name:      "yyy",
 								Namespace: "ns",
@@ -490,6 +495,57 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.Nil(t, rsp.Facet)
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
+	})
+
+	t.Run("folder NotIn field filter excludes matching names", func(t *testing.T) {
+		require.NotNil(t, foldersIndex)
+		key := folderKey
+
+		// NotIn should exclude the named folder from results
+		rsp, err := foldersIndex.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_NAME,
+					Operator: string(selection.NotIn),
+					Values:   []string{"zzz"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "yyy", rsp.Results.Rows[0].Key.Name)
+	})
+
+	t.Run("folder In and NotIn on same field compose correctly", func(t *testing.T) {
+		require.NotNil(t, foldersIndex)
+		key := folderKey
+
+		// In selects both folders, NotIn excludes one — should return only the non-excluded one.
+		// This is the exact query pattern used by GetChildren to exclude the k6 folder
+		// while also filtering by allowed folder UIDs.
+		rsp, err := foldersIndex.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.In),
+						Values:   []string{"zzz", "yyy"},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{"zzz"},
+					},
+				},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "yyy", rsp.Results.Rows[0].Key.Name)
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
@@ -1386,7 +1442,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				}
 
 				idx := be.GetIndex(ns)
-				_, err = idx.UpdateIndex(ctx)
+				_, err := idx.UpdateIndex(ctx)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue

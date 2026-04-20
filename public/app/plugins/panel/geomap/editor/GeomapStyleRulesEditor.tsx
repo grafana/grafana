@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 
-import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { type StandardEditorProps, type StandardEditorsRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { defaultStyleConfig } from '../style/types';
-import { FeatureStyleConfig } from '../types';
+import { type FeatureStyleConfig } from '../types';
 
-import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
+import { StyleRuleEditor, type StyleRuleEditorSettings } from './StyleRuleEditor';
 
 type Props = StandardEditorProps<FeatureStyleConfig[], StyleRuleEditorSettings, unknown>;
 

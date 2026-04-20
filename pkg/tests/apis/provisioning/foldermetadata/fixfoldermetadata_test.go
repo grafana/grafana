@@ -11,35 +11,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const folderMetadataFileName = "_folder.json"
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // TestIntegrationProvisioning_FixFolderMetadata_MissingFile verifies that the
 // fix-folder-metadata job creates _folder.json files for folders that don't
 // have them yet.
 func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-no-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			// A dashboard inside parent/child/ causes both folders to be
 			// created in Grafana during sync.
@@ -68,18 +61,17 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 // TestIntegrationProvisioning_FixFolderMetadata_ValidFile verifies that the
 // fix-folder-metadata job leaves already-correct _folder.json files unchanged.
 func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-valid-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -108,17 +100,16 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 // that the fix-folder-metadata job does not overwrite a _folder.json that is
 // already present.
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -145,17 +136,16 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 // that the fix-folder-metadata job does not overwrite a _folder.json that is
 // already present, even when its content is not a valid Folder resource.
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -204,7 +194,7 @@ func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.Pro
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", filePath)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", filePath)
+	require.Equal(t, "folder.grafana.app/v1", apiVersion, "%s: unexpected apiVersion", filePath)
 	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 	require.Equal(t, "Folder", kind, "%s: unexpected kind", filePath)
 

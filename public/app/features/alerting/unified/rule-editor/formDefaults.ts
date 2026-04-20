@@ -3,10 +3,10 @@ import z from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
+import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
@@ -251,10 +251,12 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
     parsedRule = alertingAlertRuleFormSchema.parse(rule);
   }
 
-  return revealHiddenQueries({
-    ...getDefaultFormValues(rule.type),
-    ...parsedRule,
-  });
+  return setQueryEditorSettings(
+    revealHiddenQueries({
+      ...getDefaultFormValues(rule.type),
+      ...parsedRule,
+    })
+  );
 }
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {

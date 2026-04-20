@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 
 import { guessFieldTypeForField } from './processDataFrame';
 

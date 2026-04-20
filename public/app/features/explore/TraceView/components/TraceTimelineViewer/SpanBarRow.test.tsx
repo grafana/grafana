@@ -17,10 +17,10 @@ import userEvent from '@testing-library/user-event';
 
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 
-import { SpanLinkDef } from '../types/links';
-import { TraceSpan } from '../types/trace';
+import { type SpanLinkDef } from '../types/links';
+import { type TraceSpan } from '../types/trace';
 
-import SpanBarRow, { SpanBarRowProps } from './SpanBarRow';
+import SpanBarRow, { type SpanBarRowProps } from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
@@ -142,6 +142,24 @@ describe('<SpanBarRow>', () => {
       />
     );
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
+  });
+
+  it('shows adaptive traces restored info icon when span has grafana.adaptivetraces.restored=true', () => {
+    const span = {
+      ...props.span,
+      tags: [{ key: 'grafana.adaptivetraces.restored', value: 'true' }],
+    } as unknown as TraceSpan;
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} span={span} />);
+    expect(screen.getByTestId('SpanBarRow-adaptiveTracesRestored')).toBeInTheDocument();
+  });
+
+  it('does not show adaptive traces restored icon without the tag', () => {
+    const span = {
+      ...props.span,
+      tags: [{ key: 'other.tag', value: 'true' }],
+    } as unknown as TraceSpan;
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} span={span} />);
+    expect(screen.queryByTestId('SpanBarRow-adaptiveTracesRestored')).not.toBeInTheDocument();
   });
 
   it('render referenced to by multiple span', () => {

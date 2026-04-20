@@ -1,14 +1,20 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataQuery, LogsSortOrder } from '@grafana/schema';
+import { type DataQuery, type LogsSortOrder } from '@grafana/schema';
 
 import { BusEventWithPayload } from '../events/types';
 
-import { ScopedVars } from './ScopedVars';
-import { KeyValue, Labels } from './data';
-import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
-import { AbsoluteTimeRange } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type KeyValue, type Labels } from './data';
+import { type DataFrame } from './dataFrame';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type QueryFixAction,
+  type QueryFixType,
+} from './datasource';
+import { type AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
@@ -17,6 +23,7 @@ export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
  */
 export enum LogLevel {
   emerg = 'critical',
+  emergency = 'critical',
   fatal = 'critical',
   alert = 'critical',
   crit = 'critical',

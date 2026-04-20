@@ -1,17 +1,14 @@
 import { css } from '@emotion/css';
-import WKT from 'ol/format/WKT';
-import { Geometry } from 'ol/geom';
 
-import { GeoCellProps, TableCellStyles } from '../types';
+import { useOpenLayersContext, isGeometry } from '../../geo';
+import type { GeoCellProps, TableCellStyles } from '../types';
 
 export function GeoCell({ value }: GeoCellProps) {
+  const { formatGeometry } = useOpenLayersContext();
   let disp = null;
 
-  if (value instanceof Geometry) {
-    disp = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (formatGeometry && isGeometry(value)) {
+    disp = formatGeometry(value);
   } else if (value != null) {
     disp = `${value}`;
   }

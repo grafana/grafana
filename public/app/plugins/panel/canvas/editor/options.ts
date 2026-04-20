@@ -1,5 +1,5 @@
 import { FieldType } from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/internal';
+import { type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { ConnectionDirection, DirectionDimensionMode } from '@grafana/schema';
 import { SVGElements } from 'app/features/canvas/runtime/element';
@@ -9,7 +9,7 @@ import { DirectionDimensionEditor } from 'app/features/dimensions/editors/Direct
 import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
 
-import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
+import { type CanvasConnection, type CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';
 
 import { LineStyleEditor } from './LineStyleEditor';

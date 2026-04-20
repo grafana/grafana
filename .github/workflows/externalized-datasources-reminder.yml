@@ -4,14 +4,17 @@ on:
   pull_request:
     types: [opened]
     paths:
-      - "public/app/plugins/datasource/elasticsearch/**"
+      - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/cloud-monitoring/**"
+      - "public/app/plugins/datasource/graphite/**"
       - "public/app/plugins/datasource/zipkin/**"
-      - "pkg/tsdb/elasticsearch/**"
+      - "public/app/plugins/datasource/opentsdb/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/cloud-monitoring/**"
+      - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/zipkin/**"
+      - "pkg/tsdb/opentsdb/**"
 
 jobs:
   add-comment:
