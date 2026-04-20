@@ -524,7 +524,7 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedNotifiers)
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))

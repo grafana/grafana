@@ -51,7 +51,7 @@ type ContactPointService struct {
 	receiverService           receiverService
 	log                       log.Logger
 	resourcePermissions       ac.ReceiverPermissionsService
-	allowedNotifiers          map[schema.IntegrationType]struct{}
+	allowedIntegrations       map[schema.IntegrationType]struct{}
 }
 
 type receiverService interface {
@@ -70,7 +70,7 @@ func NewContactPointService(
 	log log.Logger,
 	nsStore AlertRuleNotificationSettingsStore,
 	resourcePermissions ac.ReceiverPermissionsService,
-	allowedNotifiers map[schema.IntegrationType]struct{},
+	allowedIntegrations map[schema.IntegrationType]struct{},
 ) *ContactPointService {
 	return &ContactPointService{
 		authz:                     authz,
@@ -82,7 +82,7 @@ func NewContactPointService(
 		log:                       log,
 		notificationSettingsStore: nsStore,
 		resourcePermissions:       resourcePermissions,
-		allowedNotifiers:          allowedNotifiers,
+		allowedIntegrations:       allowedIntegrations,
 	}
 }
 
@@ -169,7 +169,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedNotifiers); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -291,7 +291,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedNotifiers); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -644,7 +644,7 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedNotifiers map[schema.IntegrationType]struct{}) error {
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
@@ -652,8 +652,8 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 	if err != nil {
 		return err
 	}
-	if allowedNotifiers != nil {
-		if _, allowed := allowedNotifiers[iType]; !allowed {
+	if allowedIntegrations != nil {
+		if _, allowed := allowedIntegrations[iType]; !allowed {
 			return fmt.Errorf("contact point type %s is not allowed", e.Type)
 		}
 	}

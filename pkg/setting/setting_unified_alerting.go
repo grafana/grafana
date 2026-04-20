@@ -115,8 +115,8 @@ type UnifiedAlertingSettings struct {
 	DisableJitter                             bool
 	ExecuteAlerts                             bool
 	DefaultConfiguration                      string
-	Enabled                                   *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
-	AllowedNotifiers                          map[schema.IntegrationType]struct{} // nil means all allowed
+	Enabled                                   *bool                               // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	AllowedIntegrations                       map[schema.IntegrationType]struct{} // nil means all allowed
 	DisabledOrgs                              map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
@@ -270,15 +270,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
-	notifiersStr := valueAsString(ua, "allowed_notifiers", "")
-	if notifiersStr != "" {
-		uaCfg.AllowedNotifiers = make(map[schema.IntegrationType]struct{})
-		for _, notifier := range util.SplitString(notifiersStr) {
-			iType, err := alertingNotify.IntegrationTypeFromString(notifier)
+	integrationsStr := valueAsString(ua, "allowed_integrations", "")
+	if integrationsStr != "" {
+		uaCfg.AllowedIntegrations = make(map[schema.IntegrationType]struct{})
+		for _, integration := range util.SplitString(integrationsStr) {
+			iType, err := alertingNotify.IntegrationTypeFromString(integration)
 			if err != nil {
 				return err
 			}
-			uaCfg.AllowedNotifiers[iType] = struct{}{}
+			uaCfg.AllowedIntegrations[iType] = struct{}{}
 		}
 	}
 

@@ -1770,9 +1770,9 @@ Enable or disable Grafana Alerting. The default value is `true`.
 
 Alerting rules migrated from dashboards and panels include a link back via the `annotations`.
 
-#### `allowed_notifiers`
+#### `allowed_integrations`
 
-Comma-separated list of contact point types to allow. If empty, all types are allowed.
+Comma-separated list of contact point integration types to allow. If empty, all types are allowed.
 
 #### `disabled_orgs`
 
