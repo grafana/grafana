@@ -6,7 +6,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, type SceneVariable, type SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -24,7 +24,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 import { openAddVariablePane } from './VariableTypeSelectionPane';
-import { isAdHocVariable, isEditableVariableType } from './utils';
+import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -62,7 +62,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     );
 
     if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-      variables = variables.filter((variable) => !isAdHocVariable(variable));
+      variables = variables.filter((variable) => !sceneUtils.isAdHocVariable(variable));
     }
 
     const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(variables);

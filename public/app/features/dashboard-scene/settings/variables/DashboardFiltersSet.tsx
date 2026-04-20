@@ -9,6 +9,7 @@ import {
   type SceneVariable,
   SceneVariableSet,
   sceneGraph,
+  sceneUtils,
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -20,8 +21,6 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-
-import { isAdHocVariable } from './utils';
 
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -93,7 +92,7 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
     if (!(variableSet instanceof SceneVariableSet)) {
       return [];
     }
-    return variableSet.state.variables.filter(isAdHocVariable);
+    return variableSet.state.variables.filter(sceneUtils.isAdHocVariable);
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);
