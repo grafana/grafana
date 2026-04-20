@@ -229,11 +229,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       // This will be mutated when loadMoreItems is called.
       view,
 
-      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
-      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
-      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
-      //  anything.
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
@@ -383,7 +379,7 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
     totalRows: 0,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+    loadMoreItems: async (stopIndex: number): Promise<void> => {
       return;
     },
     isItemLoaded: (index: number): boolean => {

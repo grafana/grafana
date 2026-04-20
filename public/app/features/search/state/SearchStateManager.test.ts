@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import { delay, http, HttpResponse } from 'msw';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -93,50 +94,41 @@ describe('SearchStateManager', () => {
     });
 
     it('updates search results in order', async () => {
+      jest.useRealTimers();
       const stm = createSearchStateManager();
-      let now = 0;
-      jest.spyOn(Date, 'now').mockImplementation(() => ++now);
-      jest.spyOn(backendSrv, 'get').mockImplementation((url) => {
-        const requestUrl = typeof url === 'string' ? url : '';
-        const parsedUrl = new URL(requestUrl, 'http://localhost');
-        const query = parsedUrl.searchParams.get('query');
-        const typeFilters = parsedUrl.searchParams.getAll('type');
 
-        if (typeFilters.includes('folder') && query === null) {
-          return Promise.resolve({ totalHits: 0, hits: [] });
-        }
+      server.use(
+        http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', async ({ request }) => {
+          const url = new URL(request.url);
+          const query = url.searchParams.get('query');
+          const typeFilters = url.searchParams.getAll('type');
 
-        if (query === 'd') {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              resolve({
-                totalHits: 100,
-                hits: [{ resource: 'dashboard', name: 'dash-d', title: 'Dash D', field: {} }],
-              });
-            }, 100);
-          });
-        }
+          if (typeFilters.includes('folder') && query === null) {
+            return HttpResponse.json({ totalHits: 0, hits: [] });
+          }
 
-        if (query === 'debugging') {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              resolve({
-                totalHits: 10,
-                hits: [{ resource: 'dashboard', name: 'dash-debugging', title: 'Dash Debugging', field: {} }],
-              });
-            }, 50);
-          });
-        }
+          if (query === 'd') {
+            await delay(100);
+            return HttpResponse.json({
+              totalHits: 100,
+              hits: [{ resource: 'dashboards', name: 'dash-d', title: 'Dash D', field: {} }],
+            });
+          }
 
-        return Promise.resolve({ totalHits: 0, hits: [] });
-      });
+          if (query === 'debugging') {
+            await delay(50);
+            return HttpResponse.json({
+              totalHits: 10,
+              hits: [{ resource: 'dashboard', name: 'dash-debugging', title: 'Dash Debugging', field: {} }],
+            });
+          }
+
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        })
+      );
 
       stm.onQueryChange('d');
       stm.onQueryChange('debugging');
-
-      jest.advanceTimersByTime(150);
-      jest.runOnlyPendingTimers();
-      await Promise.resolve();
 
       await waitFor(() => expect(stm.state.result?.totalRows).toEqual(10));
     });

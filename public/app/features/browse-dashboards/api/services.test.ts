@@ -77,11 +77,6 @@ describe('browse-dashboards services', () => {
       });
 
       it('returns folders in correct format', async () => {
-        // const mockFolders = [
-        //   { uid: 'folder-1', title: 'Folder 1', managedBy: 'terraform' },
-        //   { uid: 'folder-2', title: 'Folder 2' },
-        // ];
-
         const result = await listFolders(undefined, 'Parent Title', 1, PAGE_SIZE);
 
         expect(result).toHaveLength(2);

@@ -89,7 +89,7 @@ describe('Unified Storage Searcher', () => {
 
     expect(response.view.length).toBe(1);
 
-    await response.loadMoreItems(0, 1);
+    await response.loadMoreItems(1);
 
     expect(response.view.length).toBe(2);
     // TODO: right now this does not work (see unified.ts#getNextPage() for details) once the frame appending is fixed
