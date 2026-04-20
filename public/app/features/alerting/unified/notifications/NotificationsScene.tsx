@@ -145,7 +145,6 @@ export const NotificationsScene = ({
       name: LABELS_FILTER,
       label: t('alerting.notifications-scene.labels-filter-variable.label.group-labels', 'Group Labels'),
       allowCustomValue: true,
-      layout: 'combobox',
       applyMode: 'manual',
       supportsMultiValueOperators: true,
       expressionBuilder: prometheusExpressionBuilder,
