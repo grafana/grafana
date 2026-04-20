@@ -4428,6 +4428,7 @@ __metadata:
     "@grafana/i18n": "npm:13.1.0-pre"
     "@grafana/schema": "npm:13.1.0-pre"
     "@hello-pangea/dnd": "npm:18.0.1"
+    "@lezer/highlight": "npm:^1.2.3"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@rc-component/cascader": "npm:1.9.0"
@@ -4486,6 +4487,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:10.0.0"
     "@uiw/codemirror-extensions-langs": "npm:^4.25.9"
+    "@uiw/codemirror-themes": "npm:^4.25.9"
     "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:1.1.1"
     chance: "npm:^1.1.13"
@@ -6047,7 +6049,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.2.3, @lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.1.3, @lezer/highlight@npm:^1.1.6, @lezer/highlight@npm:^1.2.0":
+"@lezer/highlight@npm:1.2.3, @lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.1.3, @lezer/highlight@npm:^1.1.6, @lezer/highlight@npm:^1.2.0, @lezer/highlight@npm:^1.2.3":
   version: 1.2.3
   resolution: "@lezer/highlight@npm:1.2.3"
   dependencies:
@@ -12733,7 +12735,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/codemirror-themes@npm:4.25.9":
+"@uiw/codemirror-themes@npm:4.25.9, @uiw/codemirror-themes@npm:^4.25.9":
   version: 4.25.9
   resolution: "@uiw/codemirror-themes@npm:4.25.9"
   dependencies:
