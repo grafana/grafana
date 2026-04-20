@@ -144,7 +144,6 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		return Correlation{}, ErrCorrelationsQuotaReached
 	}
 
-	//client, err := s.getK8sClient()
 	if err != nil {
 		return Correlation{}, err
 	}
@@ -163,7 +162,6 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 
 	corrSpec, err := convertCorrelationToUnstructured(correlation)
 
-	//appPlatformCorr, err := client.Create(ctx, corrSpec, resource.CreateOptions{DryRun: false})
 	appPlatformCorr, err := s.k8sClient.Create(ctx, corrSpec, cmd.OrgId, v1.CreateOptions{})
 	if err != nil {
 		return Correlation{}, err
@@ -177,30 +175,11 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 	return *legacyCorr, nil
 }
 
-// This will be removed in https://github.com/grafana/grafana/pull/122977 and does not need to be converted
-func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
-	return nil
-}
-
 func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	/*identifier := resource.Identifier{
-		Namespace: authlib.OrgNamespaceFormatter(cmd.OrgId),
-		Name:      cmd.UID,
-	}
-
-	s.k8sClient.Delete()*/
-
-	//err = client.Delete(ctx, identifier, resource.DeleteOptions{})
-
-	return nil //err
+	return s.k8sClient.Delete(ctx, cmd.UID, cmd.OrgId, v1.DeleteOptions{})
 }
 
 func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
-	/*client, err := s.getK8sClient()
-	if err != nil {
-		return Correlation{}, err
-	}
-
 	correlation := Correlation{
 		UID:         cmd.UID,
 		OrgID:       cmd.OrgId,
@@ -215,13 +194,27 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 		Type: *cmd.Type,
 	}
 
-	corrSpec, err := ToResource(correlation)
+	unstructCorr, err := convertCorrelationToUnstructured(correlation)
+	if err != nil {
+		return Correlation{}, err
+	}
 
-	appPlatformCorr, err := client.Update(ctx, corrSpec, resource.UpdateOptions{})
+	returnedUnstructCorr, err := s.k8sClient.Update(ctx, unstructCorr, cmd.OrgId, v1.UpdateOptions{})
+	if err != nil {
+		return Correlation{}, err
+	}
 
-	legacyCorr, err := ToCorrelation(appPlatformCorr)*/
+	returnedCorr, err := convertUnstructuredToCorrelation(returnedUnstructCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
 
-	return Correlation{}, nil //*legacyCorr, nil
+	legacyCorr, err := ToCorrelation(returnedCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	return *legacyCorr, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
@@ -233,6 +226,7 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 	if err != nil {
 		return Correlation{}, err
 	}
+
 	legacyCorr, err := ToCorrelation(appPlatformCorr)
 	if err != nil {
 		return Correlation{}, err
@@ -242,69 +236,67 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	/*client, err := s.getK8sClient()
+	// todo: we will need the datasource type here
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
 	if err != nil {
 		return []Correlation{}, err
 	}
-	// todo: we will need the datasource type here
-	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{LabelFilters: []string{"correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID}})
 
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
 	for i, val := range appPlatformCorrs.Items {
-		legacyCorr, _ := ToCorrelation(&val) //TODO error handling here?
+		appPlatformCorr, err := convertUnstructuredToCorrelation(&val)
+		if err != nil {
+			return []Correlation{}, err
+		}
+		legacyCorr, err := ToCorrelation(appPlatformCorr)
+		if err != nil {
+			return []Correlation{}, err
+		}
 		correlations[i] = *legacyCorr
-	}*/
-
-	// TODO pagination
-	return []Correlation{}, nil
+	}
+	return correlations, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	/*client, err := s.getK8sClient()
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{})
 	if err != nil {
-		return GetCorrelationsResponseBody{}, err
+		return GetCorrelationsResponseBody{
+			Correlations: []Correlation{},
+		}, err
 	}
-
-	appPlatformCorrs, _ := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{})
 
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
 	for i, val := range appPlatformCorrs.Items {
 		strucCorr, _ := convertUnstructuredToCorrelation(&val) // todo error handling
-		legacyCorr, _ := ToCorrelation(strucCorr) //TODO error handling here?
+		legacyCorr, _ := ToCorrelation(strucCorr)              //TODO error handling here?
 		correlations[i] = *legacyCorr
 	}
 
 	// TODO pagination
+
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
-	}, nil*/
-	return GetCorrelationsResponseBody{
-		Correlations: []Correlation{},
 	}, nil
 }
 
-// todo - best option for deleting multiple resources at once?
-// the frontend client generates a delete collection endpoint that must communicate directly with kubernetes - but that is not provided by the generator of go code
-// with delete collection and a label selector, this should be easy - I think I should implement it in pkg/registry/apis/correlations ?
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	/*client, err := s.getK8sClient()
-	if err != nil {
-		return GetCorrelationsResponseBody{}, err
-	}*/
-	return nil
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
 }
 
 // todo - best option for deleting multiple resources at once?
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
-	return nil
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/targetDS-ref=" + cmd.TargetUID})
 }
 
 // this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
-	// TODO
-	return nil
+	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID})
+	if err != nil {
+		return err
+	}
+	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID})
 }
 
 // what's the best way to return just a count of records
