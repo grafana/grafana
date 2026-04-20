@@ -248,15 +248,13 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 }
 
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+	// Closing res.Body is the caller's responsibility: RunQuery already
+	// defers res.Body.Close() on the same response before calling
+	// toDataFrames -> parseResponse.
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, backend.DownstreamError(err)
 	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			s.logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
 
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
