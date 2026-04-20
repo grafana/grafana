@@ -5633,7 +5633,6 @@
         "panels": "Panelen",
         "row": "Rij",
         "rows": "Rijen",
-        "section-variable": "Sectievariabelen",
         "tab": "Tabblad",
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
@@ -5698,6 +5697,7 @@
       },
       "variables": {
         "add-variable": "Variabele toevoegen",
+        "change-type": "",
         "reorder": "Verslepen om de volgorde te wijzigen",
         "select-type": "Kies type variabele",
         "select-type-card-tooltip": "Klik om te selecteren",
@@ -6302,6 +6302,8 @@
       "export": {
         "title": "Exporteren"
       },
+      "filters": "",
+      "open": "",
       "outline": {
         "title": "Overzicht",
         "tooltip": "Inhoudsoverzicht"
@@ -7904,8 +7906,7 @@
   "dashboards": {
     "filters-overview": {
       "all-filters": "Alle filters",
-      "filters": "Filters",
-      "open": "Deelvenster met filteroverzicht openen"
+      "open": ""
     },
     "panel-queries": {
       "add-from-saved-queries": ""
@@ -7968,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8187,6 +8197,9 @@
       "current-value": "Huidige waarde: {{currentValue}} ",
       "label-state-name": "Statusnaam"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -9770,6 +9783,7 @@
         },
         "length": {
           "formats": {
+            "name-centimeter": "",
             "name-feet": "voet (ft)",
             "name-inch": "inch (in)",
             "name-kilometer": "kilometer (km)",
@@ -10717,6 +10731,7 @@
       "description": "Beschrijving",
       "keys": "Sleutels"
     },
+    "shortcuts-aria-label": "",
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Geconcentreerd paneel",
@@ -12447,7 +12462,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Titel bewerken"
+      "cancel-tooltip": "",
+      "edit-tooltip": "Titel bewerken",
+      "error": "",
+      "label": "",
+      "placeholder": "",
+      "required": "",
+      "save-tooltip": ""
     }
   },
   "panel": {
@@ -15409,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Liggend streepje",
         "label-dots": "Dots",
         "label-solid": "Stevig"

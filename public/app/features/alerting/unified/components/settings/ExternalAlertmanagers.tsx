@@ -1,6 +1,6 @@
 import { Stack } from '@grafana/ui';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerImplementation, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { type ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import {
@@ -67,7 +67,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
             provisioned={isProvisioned}
             readOnly={isReadOnly}
             showStatus={!forwardingDisabled}
-            implementation={jsonData.implementation ?? 'Prometheus'}
+            implementation={jsonData.implementation ?? AlertManagerImplementation.mimir}
             receiving={isReceiving}
             status={status}
             onEditConfiguration={handleEditConfiguration}

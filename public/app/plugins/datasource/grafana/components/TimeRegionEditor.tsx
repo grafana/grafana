@@ -16,7 +16,7 @@ import {
   TimeZonePicker,
   useStyles2,
 } from '@grafana/ui';
-import { TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
+import { getTimeZoneTitle, TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
 import { type TimeRegionConfig, type TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -73,7 +73,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const renderTimezonePicker = () => {
     const timezone = (
       <>
-        <TimeZoneTitle title={timezoneInfo?.name} />
+        <TimeZoneTitle title={timezoneInfo ? getTimeZoneTitle(timezoneInfo) : ''} />
         <TimeZoneOffset timeZone={value.timezone} timestamp={timestamp} />
       </>
     );

@@ -416,7 +416,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch)
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch, cmd.SendInitialEvents)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }
@@ -817,8 +817,8 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// "will be at least 'resourceVersion'".
 	if rvMin > rvActual {
 		// NOTE, the etcd3 flavor throws a 504 using storage.NewTooLargeResourceVersionError
-		// We are throwing a 401 because this is a client error rather than a server error
-		return apierrors.NewResourceExpired(
+		// We are throwing a 400 because this is a client error rather than a server error in our case.
+		return apierrors.NewBadRequest(
 			fmt.Sprintf("too large resource version: %d (current %d)", rvMin, rvActual),
 		)
 	}

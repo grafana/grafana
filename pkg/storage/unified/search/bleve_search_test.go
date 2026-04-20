@@ -319,6 +319,130 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 	})
 }
 
+func TestWildcardQuery(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	t.Run("wildcard query matches title", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello World",
+			"name2": "Goodbye Moon",
+		})
+
+		checkSearchQuery(t, index, newTestQuery("hell*"), []string{"name1"})
+		// title field also has a keyword mapping that preserves original case,
+		// so capitalized wildcards also match
+		checkSearchQuery(t, index, newTestQuery("Hell*"), []string{"name1"})
+	})
+
+	t.Run("wildcard query with QueryFields searches specified fields", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello World",
+			"name2": "Goodbye Moon",
+		})
+
+		req := newTestQuery("hell*")
+		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+
+		// QueryFields pointing at a non-matching field should return no results
+		req2 := newTestQuery("hell*")
+		req2.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_FOLDER},
+		}
+		res2, err := index.Search(context.Background(), nil, req2, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), res2.TotalHits)
+	})
+
+	t.Run("wildcard query matches multiple documents", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Dashboard One",
+			"name2": "Dashboard Two",
+			"name3": "Alert Rules",
+		})
+
+		res, err := index.Search(context.Background(), nil, newTestQuery("dashboard*"), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+	})
+
+	t.Run("multi-word wildcard matches via title_phrase", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Grafana Dev Overview",
+			"name2": "Production Alerts",
+		})
+
+		// Legacy dashboard search wraps queries as "*<lowered title>*".
+		// Multi-word wildcards can't match word tokens in the standard-analyzed
+		// title field, but DO match the keyword-analyzed title_phrase field.
+		checkSearchQuery(t, index, newTestQuery("*grafana dev overview*"), []string{"name1"})
+		// Partial multi-word match
+		checkSearchQuery(t, index, newTestQuery("*dev overview*"), []string{"name1"})
+	})
+
+	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
+		// Use an index with keyword-analyzed email/login fields (matching
+		// production IAM config) so wildcards match full email addresses.
+		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+			{Name: "email", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+			{Name: "login", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+		})
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: "user1", Title: "First User",
+					Key:    &resourcepb.ResourceKey{Name: "user1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+					Fields: map[string]any{"email": "uniquemail@grafana.com", "login": "firstlogin"},
+				}},
+				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: "user2", Title: "Second User",
+					Key:    &resourcepb.ResourceKey{Name: "user2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+					Fields: map[string]any{"email": "othermail@grafana.com", "login": "secondlogin"},
+				}},
+			},
+		}))
+
+		// Default wildcard (no QueryFields) should match email field
+		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), []string{"user1"})
+		// Default wildcard should match login field
+		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
+		// Wildcard matching domain across both users (order is non-deterministic)
+		res, err := index.Search(context.Background(), nil, newTestQuery("*grafana.com*"), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+	})
+
+	t.Run("QueryFields with title also searches title_phrase", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Grafana Dev Overview",
+			"name2": "Production Alerts",
+		})
+
+		// When QueryFields includes title, multi-word wildcards should still
+		// work because title is auto-expanded to title + title_phrase.
+		req := newTestQuery("*grafana dev overview*")
+		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+	})
+}
+
 func TestScoringHierarchy(t *testing.T) {
 	key := resource.NamespacedResource{
 		Namespace: "default",
@@ -509,6 +633,25 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	}, size, info.Fields, "test", writer, nil, false, time.Time{})
 	require.NoError(t, err)
 
+	return index
+}
+
+// newTestIndexWithFields creates a test index with custom searchable fields
+// (e.g. keyword-analyzed email/login for IAM-like tests).
+func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	fields, err := resource.NewSearchableDocumentFields(columns)
+	require.NoError(t, err)
+
+	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{})
+	require.NoError(t, err)
 	return index
 }
 
