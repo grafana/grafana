@@ -231,7 +231,7 @@ To use this feature, enable the `dashboardSectionVariables` feature toggle in yo
 You can add variables and filters to groupings that apply only to the panels in that grouping.
 
 For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
-Grouping-level variables and filters address this by letting each row or tab have its own independent filters.
+Grouping-level variables and filters address this by letting each row or tab have its own independent scope.
 In the API gateway and database scenario, the API gateway grouping can use one set of instances, while a database grouping uses another set.
 However, both groupings still share the same time range, and the underlying dashboard remains unchanged.
 
