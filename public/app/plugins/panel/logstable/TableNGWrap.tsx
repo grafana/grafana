@@ -61,7 +61,7 @@ export function TableNGWrap({
 
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
-  const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth, !!title);
+  const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth);
 
   const handleSortOrderChange = useCallback(
     (sortOrder: LogsSortOrder) => {
@@ -133,23 +133,18 @@ export function TableNGWrap({
 }
 
 const getStyles = (
-  theme: GrafanaTheme2,
+  _: GrafanaTheme2,
   fieldSelectorWidth: number,
   height: number,
   tableWidth: number,
-  controlsWidth: number,
-  hasTitle: boolean
+  controlsWidth: number
 ) => {
-  const listControlsWrapperTableHeaderOffset = '-5px';
   return {
     listControlsWrapper: css({
       height: '100%',
       width: controlsWidth,
       label: 'listControlsWrapper',
       // Needed to keep the panel menu from overlapping the logs options when there's no title
-      marginTop: hasTitle
-        ? 0
-        : `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px + ${listControlsWrapperTableHeaderOffset})`,
       position: 'absolute',
       right: 0,
       top: 0,
