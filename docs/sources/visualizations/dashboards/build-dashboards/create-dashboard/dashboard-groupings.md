@@ -219,7 +219,7 @@ In the following image, the panels are grouped into two rows, but the header of 
 
 When you hide the header of a row, you can't collapse the row.
 
-## Grouping-level variables
+## Grouping-level variables and filters
 
 {{< admonition type="note" >}}
 Grouping-level variables is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
