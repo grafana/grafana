@@ -18,6 +18,11 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
+// maxInboundResourceBodyBytes caps the size of inbound resource-handler
+// POST bodies. The resource handler only accepts small JSON control
+// payloads (filter query, from/until, tag prefixes); 1 MiB is generous.
+const maxInboundResourceBodyBytes = 1 << 20
+
 // maxResourceBodyBytes caps upstream Graphite response bodies read during
 // resource calls (metrics/find, metrics/expand, tags/*, events/*, functions,
 // version). These are config/metadata endpoints -- render data is handled
@@ -50,6 +55,13 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 			return
 		}
 
+		if req.Body != nil {
+			// MaxBytesReader returns an error on the Read that crosses the
+			// cap, which io.ReadAll propagates. Bounds per-request allocation
+			// regardless of Content-Length.
+			req.Body = http.MaxBytesReader(rw, req.Body, maxInboundResourceBodyBytes)
+		}
+
 		defer func() {
 			if req.Body != nil {
 				if err := req.Body.Close(); err != nil {
@@ -65,6 +77,13 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				s.logger.Error("Failed to read request body", "error", err)
+				// Surface MaxBytesReader overflow as a specific 413 rather
+				// than a generic 500.
+				var maxBytesErr *http.MaxBytesError
+				if errors.As(err, &maxBytesErr) {
+					writeErrorResponse(rw, http.StatusRequestEntityTooLarge, fmt.Sprintf("request body exceeds %d bytes", maxInboundResourceBodyBytes))
+					return
+				}
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 				return
 			}
