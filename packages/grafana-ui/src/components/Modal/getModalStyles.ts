@@ -11,7 +11,6 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       boxShadow: theme.shadows.z3,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
-      backgroundClip: 'padding-box',
       outline: 'none',
       width: '750px',
       maxWidth: '100%',
