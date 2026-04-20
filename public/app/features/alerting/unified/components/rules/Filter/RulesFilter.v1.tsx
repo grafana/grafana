@@ -11,8 +11,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../../hooks/abilities/useContactPointAbility';;
-
+import { useContactPointAbility } from '../../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../../hooks/abilities/types';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';

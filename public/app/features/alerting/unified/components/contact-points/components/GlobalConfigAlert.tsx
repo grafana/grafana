@@ -2,8 +2,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton } from '@grafana/ui';
 
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useExternalAlertmanagerAbility } from '../../../hooks/abilities/useExternalAlertmanagerAbility';;
-
+import { useExternalAlertmanagerAbility } from '../../../hooks/abilities/alertmanager/useExternalAlertmanagerAbility';
 import { ExternalAlertmanagerAction } from '../../../hooks/abilities/types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';

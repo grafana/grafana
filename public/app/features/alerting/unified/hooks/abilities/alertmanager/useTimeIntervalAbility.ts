@@ -1,10 +1,9 @@
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type MuteTiming } from '../../components/mute-timings/useMuteTimings';
-import { notificationsPermissions } from '../../utils/access-control';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, Provisioned, TimeIntervalAction } from './types';
+import { type MuteTiming } from '../../../components/mute-timings/useMuteTimings';
+import { notificationsPermissions } from '../../../utils/access-control';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, Provisioned, TimeIntervalAction } from '../types';
 
 export type TimeIntervalAbilityParam =
   | { action: TimeIntervalAction.View }

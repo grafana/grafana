@@ -21,12 +21,10 @@ import {
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
-
-import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';;
-
 import { TimeIntervalAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type FormAmRoute } from '../../types/amroutes';
 import { matcherFieldOptions } from '../../utils/alertmanager';

@@ -4,9 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { MetadataRow } from 'app/features/alerting/unified/components/notification-policies/Policy';
-
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
-
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import {
   type AlertmanagerGroup,
@@ -15,6 +12,7 @@ import {
   type Route,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';

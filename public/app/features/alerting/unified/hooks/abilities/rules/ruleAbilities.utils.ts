@@ -6,12 +6,11 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useGetPluginSettingsQuery } from '../../api/pluginsApi';
-import { getRulesPermissions } from '../../utils/access-control';
-import { getRulePluginOrigin } from '../../utils/rules';
-
-import { type Ability, Granted, InsufficientPermissions, Loading, NotSupported } from './types';
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useGetPluginSettingsQuery } from '../../../api/pluginsApi';
+import { getRulesPermissions } from '../../../utils/access-control';
+import { getRulePluginOrigin } from '../../../utils/rules';
+import { type Ability, Granted, InsufficientPermissions, Loading, NotSupported } from '../types';
 
 // ── Sentinel token ────────────────────────────────────────────────────────────
 

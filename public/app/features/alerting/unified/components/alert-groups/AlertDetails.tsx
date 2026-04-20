@@ -6,9 +6,8 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
-
-import { useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { RuleAction, SilenceAction } from '../../hooks/abilities/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';

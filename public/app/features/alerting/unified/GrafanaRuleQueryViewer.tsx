@@ -32,7 +32,7 @@ import { type ThresholdDefinition, getThresholdsForQueries } from './components/
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { isGranted } from './hooks/abilities/abilityUtils';
-import { useRuleExploreAbility } from './hooks/abilities/ruleAbilities';
+import { useRuleExploreAbility } from './hooks/abilities/rules/ruleAbilities';
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;

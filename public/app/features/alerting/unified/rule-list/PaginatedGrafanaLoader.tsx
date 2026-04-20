@@ -11,7 +11,7 @@ import { WithReturnButton } from '../components/WithReturnButton';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
-import { useGlobalRuleAbility } from '../hooks/abilities/ruleAbilities';
+import { useGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { RuleAction } from '../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';

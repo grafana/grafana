@@ -5,8 +5,7 @@ import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { isAvailable } from '../../../hooks/abilities/abilityUtils';
-import { useNotificationPolicyAbility } from '../../../hooks/abilities/useNotificationPolicyAbility';;
-
+import { useNotificationPolicyAbility } from '../../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';

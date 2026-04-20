@@ -8,11 +8,9 @@ import { appEvents } from 'app/core/app_events';
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
 import { isGranted } from '../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../hooks/abilities/alertmanager/useContactPointAbility';
+import { useSilenceAbility } from '../hooks/abilities/alertmanager/useSilenceAbility';
 import { ContactPointAction, SilenceAction } from '../hooks/abilities/types';
-import { useContactPointAbility } from '../hooks/abilities/useContactPointAbility';;
-
-import { useSilenceAbility } from '../hooks/abilities/useSilenceAbility';;
-
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 

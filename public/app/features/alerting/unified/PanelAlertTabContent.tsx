@@ -11,7 +11,7 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
 import { isGranted } from './hooks/abilities/abilityUtils';
-import { useGlobalRuleAbility } from './hooks/abilities/ruleAbilities';
+import { useGlobalRuleAbility } from './hooks/abilities/rules/ruleAbilities';
 import { RuleAction } from './hooks/abilities/types';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 import { stringifyErrorLike } from './utils/misc';

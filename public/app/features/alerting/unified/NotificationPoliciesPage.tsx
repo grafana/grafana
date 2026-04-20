@@ -20,14 +20,11 @@ import {
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
-
-import { useAlertGroupAbility } from './hooks/abilities/useAlertGroupAbility';;
-
-import { useNotificationPolicyAbility } from './hooks/abilities/useNotificationPolicyAbility';;
-
-import { useTimeIntervalAbility } from './hooks/abilities/useTimeIntervalAbility';;
-
-import { AlertGroupAction, NotificationPolicyAction, TimeIntervalAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import {
+  AlertGroupAction,
+  NotificationPolicyAction,
+  TimeIntervalAction,
+} from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -43,6 +40,9 @@ import {
   trackNotificationPoliciesFilterPolicyTree,
   trackNotificationPoliciesToggledAll,
 } from './components/notification-policies/notificationPolicyAnalytics';
+import { useNotificationPolicyAbility } from './hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useTimeIntervalAbility } from './hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { useAlertGroupAbility } from './hooks/abilities/rules/useAlertGroupAbility';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';

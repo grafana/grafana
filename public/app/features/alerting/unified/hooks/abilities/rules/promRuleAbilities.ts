@@ -16,9 +16,19 @@ import { useMemo } from 'react';
 import { type AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { getRulesPermissions } from '../../utils/access-control';
-import { isAdmin } from '../../utils/misc';
-import { isProvisionedPromRule, prometheusRuleType } from '../../utils/rules';
+import { getRulesPermissions } from '../../../utils/access-control';
+import { isAdmin } from '../../../utils/misc';
+import { isProvisionedPromRule, prometheusRuleType } from '../../../utils/rules';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  IsPluginManaged,
+  Loading,
+  NotSupported,
+  Provisioned,
+  RuleAction,
+} from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
@@ -32,16 +42,6 @@ import {
   useIsGrafanaPromRuleEditable,
   useRulePluginImmutability,
 } from './ruleAbilities.utils';
-import {
-  type Ability,
-  Granted,
-  InsufficientPermissions,
-  IsPluginManaged,
-  Loading,
-  NotSupported,
-  Provisioned,
-  RuleAction,
-} from './types';
 
 // ── usePromRuleAdministrationAbility ─────────────────────────────────────────
 

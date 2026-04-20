@@ -6,8 +6,8 @@ import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { type RuleEditAbilityResult } from 'app/features/alerting/unified/hooks/abilities/ruleAbilities.utils';
-import * as alertingAbilities from 'app/features/alerting/unified/hooks/abilities/rulerRuleAbilities';
+import { type RuleEditAbilityResult } from 'app/features/alerting/unified/hooks/abilities/rules/ruleAbilities.utils';
+import * as alertingAbilities from 'app/features/alerting/unified/hooks/abilities/rules/rulerRuleAbilities';
 import { Granted } from 'app/features/alerting/unified/hooks/abilities/types';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {

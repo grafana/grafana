@@ -8,9 +8,8 @@ import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
-
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';

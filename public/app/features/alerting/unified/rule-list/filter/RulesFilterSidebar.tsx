@@ -29,8 +29,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
-
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';

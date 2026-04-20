@@ -9,9 +9,8 @@ import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
-import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
-
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
 import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';

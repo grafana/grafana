@@ -10,7 +10,7 @@ import {
 } from 'app/types/unified-alerting';
 import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { useExternalGlobalRuleAbility } from '../hooks/abilities/ruleAbilities';
+import { useExternalGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction } from '../hooks/abilities/types';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';

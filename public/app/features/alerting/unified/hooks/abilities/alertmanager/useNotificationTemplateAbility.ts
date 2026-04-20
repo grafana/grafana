@@ -1,11 +1,10 @@
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type NotificationTemplate } from '../../components/contact-points/useNotificationTemplates';
-import { notificationsPermissions } from '../../utils/access-control';
-import { isProvisionedResource } from '../../utils/k8s/utils';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, NotificationTemplateAction, Provisioned } from './types';
+import { type NotificationTemplate } from '../../../components/contact-points/useNotificationTemplates';
+import { notificationsPermissions } from '../../../utils/access-control';
+import { isProvisionedResource } from '../../../utils/k8s/utils';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, NotificationTemplateAction, Provisioned } from '../types';
 
 export type NotificationTemplateAbilityParam =
   | { action: NotificationTemplateAction.View }

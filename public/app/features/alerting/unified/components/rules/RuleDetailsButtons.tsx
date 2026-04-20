@@ -6,7 +6,7 @@ import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
-import { useRuleExploreAbility } from '../../hooks/abilities/ruleAbilities';
+import { useRuleExploreAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';

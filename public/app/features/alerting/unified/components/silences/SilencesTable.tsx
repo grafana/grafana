@@ -23,8 +23,7 @@ import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
-import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
-
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
@@ -52,6 +51,7 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 const SilencesTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
   const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
+  const canCreateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Create }));
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
@@ -149,7 +149,7 @@ const SilencesTable = () => {
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter silences={silences} />
-          {isGranted(useSilenceAbility({ action: SilenceAction.Create })) && (
+          {canCreateSilence && (
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>

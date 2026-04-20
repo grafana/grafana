@@ -33,8 +33,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { MatcherOperator, type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
-import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
-
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type SilenceFormFields } from '../../types/silence-form';

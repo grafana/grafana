@@ -9,14 +9,14 @@ import {
   usePromRuleAdministrationAbility,
   usePromRuleExportAbility,
   usePromRuleSilenceAbility,
-} from '../../hooks/abilities/promRuleAbilities';
-import { useRuleExploreAbility } from '../../hooks/abilities/ruleAbilities';
-import { type RuleEditAbilityResult } from '../../hooks/abilities/ruleAbilities.utils';
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import { useRuleExploreAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { type RuleEditAbilityResult } from '../../hooks/abilities/rules/ruleAbilities.utils';
 import {
   useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
-} from '../../hooks/abilities/rulerRuleAbilities';
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { type Ability, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';

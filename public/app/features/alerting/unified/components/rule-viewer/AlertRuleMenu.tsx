@@ -23,13 +23,13 @@ import {
   usePromRuleAdministrationAbility,
   usePromRuleExportAbility,
   usePromRuleSilenceAbility,
-} from '../../hooks/abilities/promRuleAbilities';
-import { skipToken } from '../../hooks/abilities/ruleAbilities.utils';
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import { skipToken } from '../../hooks/abilities/rules/ruleAbilities.utils';
 import {
   useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
-} from '../../hooks/abilities/rulerRuleAbilities';
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';

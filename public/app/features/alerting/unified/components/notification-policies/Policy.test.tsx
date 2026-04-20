@@ -14,8 +14,14 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { type Ability, Granted, InsufficientPermissions, NotSupported, NotificationPolicyAction } from '../../hooks/abilities/types';
-import { useNotificationPolicyAbility } from '../../hooks/abilities/useNotificationPolicyAbility';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  NotificationPolicyAction,
+} from '../../hooks/abilities/types';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -200,7 +206,8 @@ describe('Policy', () => {
     const routeTree = mockRoutes;
 
     useNotificationPolicyAbilityMock.mockImplementation(({ action }) =>
-          action === NotificationPolicyAction.Export ? toAbility([false, true]) : toAbility([true, true]));
+      action === NotificationPolicyAction.Export ? toAbility([false, true]) : toAbility([true, true])
+    );
 
     const user = userEvent.setup();
 
@@ -234,7 +241,8 @@ describe('Policy', () => {
     const routeTree = mockRoutes;
 
     useNotificationPolicyAbilityMock.mockImplementation(({ action }) =>
-          action === NotificationPolicyAction.Export ? toAbility([true, false]) : toAbility([true, true]));
+      action === NotificationPolicyAction.Export ? toAbility([true, false]) : toAbility([true, true])
+    );
 
     const user = userEvent.setup();
 

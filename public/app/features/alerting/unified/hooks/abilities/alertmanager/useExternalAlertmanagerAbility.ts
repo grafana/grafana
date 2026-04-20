@@ -2,10 +2,9 @@ import { useMemo } from 'react';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertmanager } from '../../state/AlertmanagerContext';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, ExternalAlertmanagerAction } from './types';
+import { useAlertmanager } from '../../../state/AlertmanagerContext';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, ExternalAlertmanagerAction } from '../types';
 
 export function useExternalAlertmanagerAbility(action: ExternalAlertmanagerAction): Ability {
   const { hasConfigurationAPI } = useAlertmanager();

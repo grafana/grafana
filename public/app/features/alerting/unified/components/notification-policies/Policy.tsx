@@ -35,10 +35,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useNotificationPolicyAbility } from '../../hooks/abilities/useNotificationPolicyAbility';;
-
-import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';;
-
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { NotificationPolicyAction, TimeIntervalAction } from '../../hooks/abilities/types';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';

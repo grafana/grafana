@@ -3,17 +3,17 @@ import { renderHook } from 'test/test-utils';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions } from '../../mocks';
-
+import { setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
 import {
   createAlertmanagerWrapper,
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
-} from './abilityTestUtils';
-import { isAvailable } from './abilityUtils';
-import { ContactPointAction, isInsufficientPermissions } from './types';
+} from '../abilityTestUtils';
+import { isAvailable } from '../abilityUtils';
+import { ContactPointAction, isInsufficientPermissions } from '../types';
+
 import { useContactPointAbility } from './useContactPointAbility';
 
 setupMswServer();

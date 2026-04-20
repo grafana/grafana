@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
-import { getInstancesPermissions } from '../../utils/access-control';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability } from './types';
+import { getInstancesPermissions } from '../../../utils/access-control';
+import { makeAbility } from '../abilityUtils';
+import { type Ability } from '../types';
 
 /**
  * Returns the silence-create ability for the given alertmanager source.

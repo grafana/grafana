@@ -13,8 +13,7 @@ import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constant
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
-
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';

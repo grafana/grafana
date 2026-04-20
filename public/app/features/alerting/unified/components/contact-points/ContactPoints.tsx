@@ -19,9 +19,9 @@ import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
-import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';

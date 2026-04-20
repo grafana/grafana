@@ -3,19 +3,19 @@ import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { setupMswServer } from '../../mockApi';
-import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../../mocks';
-import { setFolderAccessControl } from '../../mocks/server/configure';
-import { setupDataSources } from '../../testSetup/datasources';
-import { groupIdentifier } from '../../utils/groupIdentifier';
-import * as misc from '../../utils/misc';
+import { setupMswServer } from '../../../mockApi';
+import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../../../mocks';
+import { setFolderAccessControl } from '../../../mocks/server/configure';
+import { setupDataSources } from '../../../testSetup/datasources';
+import { groupIdentifier } from '../../../utils/groupIdentifier';
+import * as misc from '../../../utils/misc';
+import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from '../abilityUtils';
+import { isInsufficientPermissions } from '../types';
 
-import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from './abilityUtils';
 import { usePromRuleAdministrationAbility } from './promRuleAbilities';
 import { useRuleExploreAbility } from './ruleAbilities';
 import { skipToken } from './ruleAbilities.utils';
 import { useRuleAdministrationAbility, useRuleExportAbility, useRuleSilenceAbility } from './rulerRuleAbilities';
-import { isInsufficientPermissions } from './types';
 
 setupMswServer();
 

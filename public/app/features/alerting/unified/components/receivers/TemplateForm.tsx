@@ -31,8 +31,7 @@ import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/type
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
-
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';

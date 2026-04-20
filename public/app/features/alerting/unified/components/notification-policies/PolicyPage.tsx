@@ -2,13 +2,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-
-import { useAlertGroupAbility } from '../../hooks/abilities/useAlertGroupAbility';;
-
 import { AlertGroupAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useAlertGroupAbility } from '../../hooks/abilities/rules/useAlertGroupAbility';
 import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';

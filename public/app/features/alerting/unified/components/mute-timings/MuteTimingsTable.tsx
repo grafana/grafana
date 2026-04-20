@@ -11,8 +11,8 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
-import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';

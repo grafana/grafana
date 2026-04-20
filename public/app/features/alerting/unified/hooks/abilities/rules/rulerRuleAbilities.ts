@@ -16,11 +16,21 @@ import { type AccessControlAction } from 'app/types/accessControl';
 import { type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { getRulesPermissions } from '../../utils/access-control';
-import { getGroupOriginName } from '../../utils/groupIdentifier';
-import { isAdmin } from '../../utils/misc';
-import { isProvisionedRule, rulerRuleType } from '../../utils/rules';
-import { useIsRuleEditable } from '../useIsRuleEditable';
+import { getRulesPermissions } from '../../../utils/access-control';
+import { getGroupOriginName } from '../../../utils/groupIdentifier';
+import { isAdmin } from '../../../utils/misc';
+import { isProvisionedRule, rulerRuleType } from '../../../utils/rules';
+import { useIsRuleEditable } from '../../useIsRuleEditable';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  IsPluginManaged,
+  Loading,
+  NotSupported,
+  Provisioned,
+  RuleAction,
+} from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
@@ -31,16 +41,6 @@ import {
   useGrafanaRulesSilenceSupport,
   useRulePluginImmutability,
 } from './ruleAbilities.utils';
-import {
-  type Ability,
-  Granted,
-  InsufficientPermissions,
-  IsPluginManaged,
-  Loading,
-  NotSupported,
-  Provisioned,
-  RuleAction,
-} from './types';
 
 // ── useRuleAdministrationAbility ──────────────────────────────────────────────
 

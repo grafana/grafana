@@ -11,7 +11,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
-import { useExternalGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
+import { useExternalGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction } from '../../hooks/abilities/types';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

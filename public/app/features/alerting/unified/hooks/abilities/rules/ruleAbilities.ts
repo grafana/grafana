@@ -13,7 +13,6 @@ import { useMemo } from 'react';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildAbility } from './ruleAbilities.utils';
 import {
   type Abilities,
   type Ability,
@@ -22,7 +21,9 @@ import {
   InsufficientPermissions,
   NotSupported,
   RuleAction,
-} from './types';
+} from '../types';
+
+import { buildAbility } from './ruleAbilities.utils';
 
 // ── Grafana-managed rule abilities (global / list level) ──────────────────────
 

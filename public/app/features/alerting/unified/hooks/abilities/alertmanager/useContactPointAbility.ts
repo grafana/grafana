@@ -1,10 +1,9 @@
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { notificationsPermissions } from '../../utils/access-control';
-import { type EntityToCheck, canDeleteEntity, canEditEntity, isK8sEntityProvisioned } from '../../utils/k8s/utils';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, ContactPointAction, InsufficientPermissions, Provisioned } from './types';
+import { notificationsPermissions } from '../../../utils/access-control';
+import { type EntityToCheck, canDeleteEntity, canEditEntity, isK8sEntityProvisioned } from '../../../utils/k8s/utils';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, ContactPointAction, InsufficientPermissions, Provisioned } from '../types';
 
 export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }

@@ -2,8 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
-
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';

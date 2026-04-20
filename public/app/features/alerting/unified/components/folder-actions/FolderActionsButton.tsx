@@ -8,7 +8,7 @@ import { useDispatch } from 'app/types/store';
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useFolderBulkActionAbility } from '../../hooks/abilities/otherAbilities';
-import { useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
+import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { FolderBulkAction, RuleAction } from '../../hooks/abilities/types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';

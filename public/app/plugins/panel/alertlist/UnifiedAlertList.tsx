@@ -45,7 +45,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import {
   useExternalGlobalRuleAbility,
   useGlobalRuleAbility,
-} from '../../../features/alerting/unified/hooks/abilities/ruleAbilities';
+} from '../../../features/alerting/unified/hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../../../features/alerting/unified/hooks/abilities/types';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { type AlertingRule, type CombinedRuleWithLocation } from '../../../types/unified-alerting';

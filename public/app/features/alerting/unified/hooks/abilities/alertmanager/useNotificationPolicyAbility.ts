@@ -1,10 +1,9 @@
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { notificationsPermissions } from '../../utils/access-control';
-import { isProvisionedResource } from '../../utils/k8s/utils';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, NotificationPolicyAction, Provisioned } from './types';
+import { notificationsPermissions } from '../../../utils/access-control';
+import { isProvisionedResource } from '../../../utils/k8s/utils';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, NotificationPolicyAction, Provisioned } from '../types';
 
 /** Minimal shape needed to check provenance on a notification policy/route. */
 export type NotificationPolicyContext = { provenance?: string };

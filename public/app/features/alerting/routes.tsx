@@ -6,14 +6,14 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
-import { PERMISSIONS_CONTACT_POINTS } from './unified/hooks/abilities/useContactPointAbility';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from './unified/hooks/abilities/useNotificationPolicyAbility';
-import { PERMISSIONS_TEMPLATES } from './unified/hooks/abilities/useNotificationTemplateAbility';
+import { PERMISSIONS_CONTACT_POINTS } from './unified/hooks/abilities/alertmanager/useContactPointAbility';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from './unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { PERMISSIONS_TEMPLATES } from './unified/hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import {
   PERMISSIONS_TIME_INTERVALS,
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from './unified/hooks/abilities/useTimeIntervalAbility';
+} from './unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {

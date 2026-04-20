@@ -3,12 +3,12 @@ import { renderHook } from 'test/test-utils';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions } from '../../mocks';
+import { setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
+import { createAlertmanagerWrapper, setupGrafanaAlertmanager, setupMimirAlertmanager } from '../abilityTestUtils';
+import { isAvailable } from '../abilityUtils';
+import { SilenceAction } from '../types';
 
-import { createAlertmanagerWrapper, setupGrafanaAlertmanager, setupMimirAlertmanager } from './abilityTestUtils';
-import { isAvailable } from './abilityUtils';
-import { SilenceAction } from './types';
 import { useSilenceAbility } from './useSilenceAbility';
 
 setupMswServer();

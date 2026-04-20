@@ -1,9 +1,8 @@
 import { type AccessControlAction } from 'app/types/accessControl';
 
-import { instancesPermissions } from '../../utils/access-control';
-
-import { makeAbility } from './abilityUtils';
-import { type Ability, AlertGroupAction } from './types';
+import { instancesPermissions } from '../../../utils/access-control';
+import { makeAbility } from '../abilityUtils';
+import { type Ability, AlertGroupAction } from '../types';
 
 const PERMISSIONS: Record<AlertGroupAction, AccessControlAction[]> = {
   [AlertGroupAction.View]: [instancesPermissions.read.grafana],

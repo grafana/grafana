@@ -6,7 +6,7 @@ import { LinkButton, Stack } from '@grafana/ui';
 
 import { LogMessages } from '../../Analytics';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
+import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../../hooks/abilities/types';
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';

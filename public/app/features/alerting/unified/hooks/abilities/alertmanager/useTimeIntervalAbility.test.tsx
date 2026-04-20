@@ -3,30 +3,30 @@ import { renderHook } from 'test/test-utils';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions } from '../../mocks';
-
+import { setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
 import {
   createAlertmanagerWrapper,
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
-} from './abilityTestUtils';
-import { isAvailable } from './abilityUtils';
-import { NotificationTemplateAction } from './types';
-import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
+} from '../abilityTestUtils';
+import { isAvailable } from '../abilityUtils';
+import { TimeIntervalAction } from '../types';
+
+import { useTimeIntervalAbility } from './useTimeIntervalAbility';
 
 setupMswServer();
 
-describe('useNotificationTemplateAbility', () => {
+describe('useTimeIntervalAbility', () => {
   it("should report Create / Update / Delete aren't supported for vanilla prometheus alertmanager", () => {
     const amSource = setupVanillaPrometheusAlertmanager();
 
     const { result } = renderHook(
       () => ({
-        create: useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }),
-        update: useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }),
-        delete: useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }),
+        create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
+        update: useTimeIntervalAbility({ action: TimeIntervalAction.Update }),
+        delete: useTimeIntervalAbility({ action: TimeIntervalAction.Delete }),
       }),
       { wrapper: createAlertmanagerWrapper(amSource) }
     );
@@ -40,8 +40,9 @@ describe('useNotificationTemplateAbility', () => {
 
     const { result } = renderHook(
       () => ({
-        view: useNotificationTemplateAbility({ action: NotificationTemplateAction.View }),
-        create: useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }),
+        view: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
+        create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
+        export: useTimeIntervalAbility({ action: TimeIntervalAction.Export }),
       }),
       { wrapper: createAlertmanagerWrapper(amSource) }
     );
@@ -51,30 +52,18 @@ describe('useNotificationTemplateAbility', () => {
     expect(result.current.create.granted).toBe(false);
   });
 
-  it('should return Provisioned for Update/Delete when template is provisioned', () => {
+  it('should return Provisioned for Update/Delete when time interval is provisioned', () => {
     const amSource = setupGrafanaAlertmanager();
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
-    const provisionedTemplate = {
-      provenance: 'terraform',
-      uid: 'x',
-      title: 'x',
-      content: '',
-      kind: 'grafana' as const,
-    };
+    const provisioned = { provisioned: true } as never;
 
     const { result } = renderHook(
       () => ({
-        update: useNotificationTemplateAbility({
-          action: NotificationTemplateAction.Update,
-          context: provisionedTemplate,
-        }),
-        delete: useNotificationTemplateAbility({
-          action: NotificationTemplateAction.Delete,
-          context: provisionedTemplate,
-        }),
+        update: useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: provisioned }),
+        delete: useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: provisioned }),
       }),
       { wrapper: createAlertmanagerWrapper(amSource) }
     );
@@ -83,7 +72,7 @@ describe('useNotificationTemplateAbility', () => {
     expect(result.current.delete.granted).toBe(false);
   });
 
-  it('should report template actions for Mimir alertmanager', () => {
+  it('should report time interval actions for Mimir alertmanager', () => {
     setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsExternalRead,
@@ -92,8 +81,8 @@ describe('useNotificationTemplateAbility', () => {
 
     const { result } = renderHook(
       () => ({
-        view: useNotificationTemplateAbility({ action: NotificationTemplateAction.View }),
-        create: useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }),
+        view: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
+        create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
       }),
       { wrapper: createAlertmanagerWrapper('mimir') }
     );

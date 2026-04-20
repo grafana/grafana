@@ -19,10 +19,10 @@ import {
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/useContactPointAbility';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/useNotificationPolicyAbility';
-import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/useNotificationTemplateAbility';
-import { PERMISSIONS_TIME_INTERVALS } from '../hooks/abilities/useTimeIntervalAbility';
+import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/alertmanager/useContactPointAbility';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { PERMISSIONS_TIME_INTERVALS } from '../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
