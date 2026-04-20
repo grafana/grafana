@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useTimeIntervalAbility should report Create / Update / Delete aren't supported for vanilla prometheus alertmanager 1`] = `
+{
+  "create": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.time-intervals:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "delete": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.time-intervals:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "update": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.time-intervals:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+}
+`;
+
+exports[`useTimeIntervalAbility should report time interval actions for Mimir alertmanager 1`] = `
+{
+  "create": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.time-intervals:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "view": {
+    "anyOfPermissions": [
+      "alert.notifications:read",
+      "alert.notifications.time-intervals:read",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+}
+`;
