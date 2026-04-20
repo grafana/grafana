@@ -33,6 +33,7 @@ var (
 // to treat them as warnings rather than hard errors. This includes:
 // - Kubernetes field validation errors
 // - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
+// - Kubernetes API Invalid errors
 // - Dashboard validation errors (all DashboardErr types)
 // - Duplicate resource errors
 // - Resource already in repository errors
@@ -67,6 +68,14 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 
 	// Check if it's a duplicate name error or already in repository error
 	if errors.Is(err, ErrDuplicateName) || errors.Is(err, ErrAlreadyInRepository) {
+		return NewResourceValidationError(err)
+	}
+
+	// Kubernetes API Invalid errors (StatusReason=Invalid, HTTP 422) cover CUE
+	// schema mismatches from admission Validate hooks and immutable-field
+	// rejections from the meta validator. Surface them as warnings so a single
+	// broken resource does not abort the whole sync.
+	if apierrors.IsInvalid(err) {
 		return NewResourceValidationError(err)
 	}
 

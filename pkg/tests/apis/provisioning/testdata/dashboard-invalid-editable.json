@@ -1,0 +1,17 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "invalid-editable"
+  },
+  "spec": {
+    "title": "dashboard with invalid editable type",
+    "editable": "maybe",
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": []
+      }
+    }
+  }
+}

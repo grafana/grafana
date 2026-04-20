@@ -2,7 +2,9 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -11,10 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 // Use a GVR not in SupportsFolderAnnotation to avoid FolderManager dependency
@@ -474,4 +478,141 @@ func TestDeleteOldResource(t *testing.T) {
 		require.NoError(t, err)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
+}
+
+func TestWrapAsValidationError(t *testing.T) {
+	t.Parallel()
+
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+
+	invalidRefreshBool := apierrors.NewInvalid(dashboardGK, "AWSLambda", field.ErrorList{
+		field.Invalid(field.NewPath("spec", "refresh"), false, "mismatched types bool and string"),
+	})
+	invalidDatasourceStruct := apierrors.NewInvalid(dashboardGK, "dash", field.ErrorList{
+		field.Invalid(field.NewPath("spec", "templating", "list").Index(0).Child("datasource"), "Loki", "mismatched types string and struct"),
+	})
+	invalidImmutableName := apierrors.NewInvalid(dashboardGK, "API-initiation-monitor", field.ErrorList{
+		field.Forbidden(field.NewPath("metadata", "name"), "field is immutable"),
+	})
+
+	type assertion func(t *testing.T, input, got error)
+
+	passThroughUnchanged := func(t *testing.T, input, got error) {
+		t.Helper()
+		require.Same(t, input, got, "pass-through case must return the exact same error value")
+	}
+
+	returnsNil := func(t *testing.T, _, got error) {
+		t.Helper()
+		require.NoError(t, got)
+	}
+
+	wrappedAsValidationError := func(substrings ...string) assertion {
+		return func(t *testing.T, _, got error) {
+			t.Helper()
+			var validationErr *ResourceValidationError
+			require.True(t, errors.As(got, &validationErr), "expected *ResourceValidationError, got %T: %v", got, got)
+			require.NotNil(t, validationErr)
+			for _, s := range substrings {
+				require.True(t, strings.Contains(got.Error(), s), "expected error text to contain %q, got %q", s, got.Error())
+			}
+		}
+	}
+
+	// wrappedAsValidationErrorKeepsIsInvalid asserts both that the error is
+	// wrapped and that apierrors.IsInvalid still returns true on the wrapped
+	// value — downstream consumers must still be able to introspect.
+	wrappedAsValidationErrorKeepsIsInvalid := func(substrings ...string) assertion {
+		inner := wrappedAsValidationError(substrings...)
+		return func(t *testing.T, input, got error) {
+			t.Helper()
+			inner(t, input, got)
+			require.True(t, apierrors.IsInvalid(got), "apierrors.IsInvalid(got) must still be true after wrapping")
+		}
+	}
+
+	cases := []struct {
+		name   string
+		input  error
+		assert assertion
+	}{
+		{
+			name:   "nil_input",
+			input:  nil,
+			assert: returnsNil,
+		},
+		{
+			name:   "already_wrapped_pass_through",
+			input:  NewResourceValidationError(errors.New("x")),
+			assert: passThroughUnchanged,
+		},
+		{
+			name:   "field_error",
+			input:  field.Required(field.NewPath("spec", "name"), "missing"),
+			assert: wrappedAsValidationError("spec.name", "missing"),
+		},
+		{
+			name:   "bad_request",
+			input:  apierrors.NewBadRequest("dashboard validation failed"),
+			assert: wrappedAsValidationError("dashboard validation failed"),
+		},
+		{
+			name:   "dashboard_err",
+			input:  dashboardaccess.DashboardErr{StatusCode: 400, Status: "invalid", Reason: "bad dashboard"},
+			assert: wrappedAsValidationError("bad dashboard"),
+		},
+		{
+			name:   "duplicate_name",
+			input:  fmt.Errorf("wrapped: %w", ErrDuplicateName),
+			assert: wrappedAsValidationError("duplicate name"),
+		},
+		{
+			name:   "already_in_repository",
+			input:  fmt.Errorf("wrapped: %w", ErrAlreadyInRepository),
+			assert: wrappedAsValidationError("already in repository"),
+		},
+		{
+			name:   "invalid_cue_refresh_bool",
+			input:  invalidRefreshBool,
+			assert: wrappedAsValidationErrorKeepsIsInvalid("spec.refresh", "mismatched types"),
+		},
+		{
+			name:   "invalid_cue_datasource_struct",
+			input:  invalidDatasourceStruct,
+			assert: wrappedAsValidationErrorKeepsIsInvalid("spec.templating.list[0].datasource"),
+		},
+		{
+			name:   "invalid_immutable_name",
+			input:  invalidImmutableName,
+			assert: wrappedAsValidationErrorKeepsIsInvalid("metadata.name", "field is immutable"),
+		},
+		{
+			name:   "invalid_wrapped_in_fmt_errorf",
+			input:  fmt.Errorf("writing resource: %w", invalidImmutableName),
+			assert: wrappedAsValidationErrorKeepsIsInvalid("field is immutable"),
+		},
+		{
+			name:   "default_passthrough_generic_error",
+			input:  errors.New("connection refused"),
+			assert: passThroughUnchanged,
+		},
+		{
+			name:   "default_passthrough_internal_server_error",
+			input:  apierrors.NewInternalError(errors.New("etcd down")),
+			assert: passThroughUnchanged,
+		},
+		{
+			name:   "default_passthrough_not_found",
+			input:  apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "x"),
+			assert: passThroughUnchanged,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := wrapAsValidationErrorIfNeeded(tc.input)
+			tc.assert(t, tc.input, got)
+		})
+	}
 }

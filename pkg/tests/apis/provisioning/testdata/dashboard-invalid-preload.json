@@ -1,0 +1,17 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "invalid-preload"
+  },
+  "spec": {
+    "title": "dashboard with invalid preload type",
+    "preload": "yes",
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": []
+      }
+    }
+  }
+}
