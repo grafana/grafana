@@ -222,7 +222,7 @@ When you hide the header of a row, you can't collapse the row.
 ## Grouping-level variables and filters
 
 {{< admonition type="note" >}}
-Grouping-level variables is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+Grouping-level variables and filters is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
 To use this feature, enable the `dashboardSectionVariables` feature toggle in your Grafana configuration file.
 {{< /admonition >}}
@@ -230,7 +230,7 @@ To use this feature, enable the `dashboardSectionVariables` feature toggle in yo
 You can add variables and filters to groupings that apply only to the panels in that grouping.
 
 For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
-Grouping-level variables address this by letting each row or tab have its own independent filters.
+Grouping-level variables and filters address this by letting each row or tab have its own independent filters.
 In the API gateway and database scenario, the API gateway grouping can use one set of instances, while a database grouping uses another set.
 However, both groupings still share the same time range, and the underlying dashboard remains unchanged.
 
@@ -238,7 +238,7 @@ The following image shows an example using two rows of panels:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
-Panels in the grouping resolve grouping-level variables first, then fall back to dashboard-level variables.
+Panels in the grouping resolve grouping-level variables and filters first, then fall back to dashboard-level variables.
 
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
 Also, grouping-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
