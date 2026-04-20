@@ -227,7 +227,7 @@ Grouping-level variables is currently in [public preview](http://grafana.com/doc
 To use this feature, enable the `dashboardSectionVariables` feature toggle in your Grafana configuration file.
 {{< /admonition >}}
 
-You can add variables to groupings that apply only to the panels in that grouping.
+You can add variables and filters to groupings that apply only to the panels in that grouping.
 
 For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
 Grouping-level variables address this by letting each row or tab have its own independent filters.
