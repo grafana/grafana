@@ -60,6 +60,16 @@ describe('MultiCombobox', () => {
     expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
   });
 
+  it('exposes the dropdown toggle as a button with an accessible name', () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Toggle options' })).toBeInTheDocument();
+  });
+
   it('should render with value', () => {
     const options = [
       { label: 'A', value: 'a' },

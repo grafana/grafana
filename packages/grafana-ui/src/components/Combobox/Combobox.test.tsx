@@ -80,6 +80,11 @@ describe('Combobox', () => {
     expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
   });
 
+  it('exposes the dropdown toggle as a button with an accessible name', () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+    expect(screen.getByRole('button', { name: 'Toggle options' })).toBeInTheDocument();
+  });
+
   it('should allow selecting a value by clicking directly', async () => {
     render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
 
