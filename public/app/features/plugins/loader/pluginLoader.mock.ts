@@ -82,17 +82,7 @@ const server = setupServer(
         },
       })
   ),
-  http.get(
-    '/public/plugins/test-panel/locales/pt-BR/no-default-export.json',
-    () =>
-      new HttpResponse(mockTranslationWithNoDefaultExport, {
-        headers: {
-          'Content-Type': 'text/javascript',
-        },
-      })
-  ),
-  http.get('/public/plugins/test-panel/locales/en-US/unknown.json', () => HttpResponse.error()),
-  http.get('/public/plugins/test-panel/locales/pt-BR/unknown.json', () => HttpResponse.error())
+  http.get('/public/plugins/test-panel/locales/en-US/unknown.json', () => HttpResponse.error())
 );
 
 export { server };
