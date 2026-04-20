@@ -303,7 +303,7 @@
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "^0.13.1",
-    "@grafana/prometheus": "workspace:*",
+    "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "7.4.0",
     "@grafana/scenes-react": "7.4.0",
