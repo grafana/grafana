@@ -9,7 +9,7 @@ import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } fro
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
-import { Button, CodeMirrorEditor, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
@@ -235,12 +235,6 @@ LIMIT
       <Stack direction="column" gap={1}>
         {renderButtons()}
         {renderMainContent()}
-        <CodeMirrorEditor
-          value={query.expression || initialQuery}
-          language="sql"
-          height="200px"
-          onChange={onEditorChange}
-        />
       </Stack>
     </div>
   );
