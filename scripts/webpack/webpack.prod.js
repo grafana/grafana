@@ -30,7 +30,7 @@ const envConfig = getEnvConfig();
 module.exports = (env = {}) =>
   merge(common(env), {
     mode: 'production',
-    devtool: 'source-map',
+    devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 
     entry: {
       dark: './public/sass/grafana.dark.scss',

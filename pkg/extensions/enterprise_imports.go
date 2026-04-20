@@ -41,6 +41,8 @@ import (
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"
 	_ "gocloud.dev/secrets/hashivault"
+	_ "google.golang.org/genproto/googleapis/api"
+	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 	_ "k8s.io/api"
 	_ "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	_ "k8s.io/apimachinery/pkg/util/httpstream/spdy"
@@ -53,5 +55,6 @@ import (
 	_ "github.com/grafana/gomemcache/memcache"
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+	_ "github.com/grafana/schemads"
 	_ "github.com/grafana/tempo/pkg/traceql"
 )

@@ -1,11 +1,11 @@
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
 import Datasource from '../datasource';
-import { AzureMonitorDataSourceInstanceSettings, AzureMonitorLocations } from '../types/types';
+import { type AzureMonitorDataSourceInstanceSettings, type AzureMonitorLocations } from '../types/types';
 
 import { createMockInstanceSetttings } from './instanceSettings';
-import { DeepPartial } from './utils';
+import { type DeepPartial } from './utils';
 
 export interface Context {
   instanceSettings: AzureMonitorDataSourceInstanceSettings;

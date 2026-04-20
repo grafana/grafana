@@ -1,0 +1,33 @@
+{{- /*
+Based on the template at https://github.com/open-feature/cli/blob/main/internal/generators/react/react.tmpl
+With some modifications to fit our preferences:
+- Remove the suspense hooks
+- Rename the hooks to `useFlag<FlagName>` instead of just `use<FlagName>`
+- Hooks return the value instead of the details object
+*/ -}}
+import {
+  type ReactFlagEvaluationOptions,
+  useFlag,
+} from "@openfeature/react-sdk";
+
+// Flag key constants for programmatic access
+export const FlagKeys = {
+{{- range .Flagset.Flags }}
+  /** {{ if .Description }}{{ .Description }}{{ else }}{{ .Key }}{{ end }} */
+  {{ .Key | ToPascal }}: {{ .Key | Quote }},
+{{- end }}
+} as const;
+
+{{ range .Flagset.Flags }}
+/**
+* {{ if .Description }}{{ .Description }}{{ else }}Feature flag{{ end }}
+*
+* **Details:**
+* - flag key: `{{ .Key }}`
+* - default value: `{{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue }}{{ end }}`
+*/
+export const useFlag{{ .Key | ToPascal }} = (options?: ReactFlagEvaluationOptions): {{ if eq .Type "object" }}JsonValue{{ else }}{{ .Type }}{{ end }} => {
+  return useFlag({{ .Key | Quote }}, {{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue | QuoteString }}{{ end }}, options).value;
+};
+
+{{ end }}

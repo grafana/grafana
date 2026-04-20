@@ -44,6 +44,7 @@ refs:
 On the **Dashboards** page, you can perform dashboard management tasks such as:
 
 - [Browsing](#browse-dashboards) and [creating](#create-a-dashboard-folder) dashboard folders
+- [Working with team folders](../../../administration/team-management/team-folders/)
 - [Managing folder permissions](#folder-permissions)
 - [Adding generative AI features to dashboards](#set-up-generative-ai-features-for-dashboards)
 
@@ -67,11 +68,17 @@ The **Shared with me** section displays folders and dashboards that are directly
 
 If you have permission to view all folders, you won't see a **Shared with me**.
 
+### Team folders
+
+If the `teamFolders` feature toggle is enabled and you belong to teams that own folders, the **Dashboards** page displays a **My team folders** section near the top of the page.
+
+For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/team-folders/).
+
 ## Create a dashboard folder
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-> **Before you begin:** Ensure you have organization Editor permissions or greater to create root level folders or Edit or Admin access to a parent folder to create subfolders. For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
+> **Before you begin:** Ensure you have permission to create root-level folders, or Edit or Admin access to a parent folder to create subfolders. For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 **To create a dashboard folder:**
 
@@ -119,15 +126,9 @@ For more information about dashboard permissions, refer to [Dashboard permission
 
 **Folders** - When you delete folders, the action is immediate and can't be reversed.
 
-**Dashboards** - Deleted dashboards are stored in the deletion history and can be [restored](#restore-dashboards) if needed (Cloud only).
+**Dashboards** - Deleted dashboards are stored in the deletion history and can be [restored](#restore-dashboards) if needed.
 
 ## Restore deleted dashboards
-
-{{% admonition type="caution" %}}
-Restoring deleted dashboards is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-The feature is only available in Grafana Cloud.
-{{% /admonition %}}
 
 When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
 The deletion history can contain a maximum of 1000 dashboards.

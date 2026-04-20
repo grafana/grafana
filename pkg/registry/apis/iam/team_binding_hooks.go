@@ -31,7 +31,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 	go func(tb *iamv0.TeamBinding) {
 		start := time.Now()
@@ -41,8 +41,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("writing team binding to zanzana",
@@ -53,7 +53,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 			"permission", tb.Spec.Permission,
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
@@ -83,7 +83,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 			)
 		} else {
 			// Record successful tuple write
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Inc()
+			HooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Inc()
 		}
 	}(tb.DeepCopy()) // Pass a copy of the object
 }
@@ -152,7 +152,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 
 		wait := time.Now()
 		b.zTickets <- true
-		hooksWaitHistogram.WithLabelValues("teambinding", "update").Observe(time.Since(wait).Seconds())
+		HooksWaitHistogram.WithLabelValues("teambinding", "update").Observe(time.Since(wait).Seconds())
 
 		go func() {
 			start := time.Now()
@@ -161,8 +161,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 			defer func() {
 				<-b.zTickets
 				// Record operation duration and count
-				hooksDurationHistogram.WithLabelValues("teambinding", "update", status).Observe(time.Since(start).Seconds())
-				hooksOperationCounter.WithLabelValues("teambinding", "update", status).Inc()
+				HooksDurationHistogram.WithLabelValues("teambinding", "update", status).Observe(time.Since(start).Seconds())
+				HooksOperationCounter.WithLabelValues("teambinding", "update", status).Inc()
 			}()
 
 			b.logger.Debug("updating team binding in zanzana",
@@ -176,7 +176,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 				"newPermission", newTB.Spec.Permission,
 			)
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 			defer cancel()
 
 			// Only make the request if there are deletes or writes
@@ -193,8 +193,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 				)
 			} else {
 				// Record successful tuple operations
-				hooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
-				hooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
+				HooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
+				HooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
 			}
 		}()
 	}, nil
@@ -219,7 +219,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 	go func(tb *iamv0.TeamBinding) {
 		start := time.Now()
@@ -229,8 +229,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("deleting team binding from zanzana",
@@ -241,7 +241,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 			"permission", tb.Spec.Permission,
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
@@ -269,7 +269,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 			)
 		} else {
 			// Record successful tuple deletion
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Inc()
+			HooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Inc()
 		}
 	}(tb.DeepCopy()) // Pass a copy of the object
 }

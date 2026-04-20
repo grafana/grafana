@@ -18,12 +18,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -780,6 +780,72 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("deleted=true should return deleted rules sorted by deletion time descending", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+
+		now := time.Now()
+		// Create three deleted rules with distinct deletion times.
+		// The fake store returns them in the order they are appended (oldest first),
+		// which is the wrong order the fix must correct.
+		rule1 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule1.Updated = now.Add(-2 * time.Minute) // deleted earliest
+
+		rule2 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule2.Updated = now.Add(-1 * time.Minute) // deleted in the middle
+
+		rule3 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule3.Updated = now // deleted most recently
+
+		// Intentionally append in oldest-first order so that any accidental
+		// reliance on insertion order would produce the wrong answer.
+		ruleStore.Deleted = map[int64][]*models.AlertRule{
+			orgID: {&rule1, &rule2, &rule3},
+		}
+
+		uri, _ := url.Parse("http://localhost?deleted=true")
+		ctx := web.Context{
+			Req: &http.Request{
+				URL:    uri,
+				Header: make(http.Header),
+				// Form must not be pre-initialised so that web.Context.Query
+				// calls ParseForm and picks up the URL query parameters.
+			},
+			Resp: web.NewResponseWriter("GET", httptest.NewRecorder()),
+		}
+		req := &contextmodel.ReqContext{
+			IsSignedIn: true,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   orgID,
+				OrgRole: identity.RoleAdmin,
+				Permissions: map[int64]map[string][]string{
+					orgID: {datasources.ActionQuery: {datasources.ScopeAll}},
+				},
+			},
+			Context: &ctx,
+		}
+
+		svc := createService(ruleStore, nil)
+		svc.featureManager = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
+
+		response := svc.RouteGetRulesConfig(req)
+		require.Equal(t, http.StatusOK, response.Status())
+
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+
+		groups, ok := (*result)[""]
+		require.True(t, ok)
+		require.Len(t, groups, 1)
+		rules := groups[0].Rules
+		require.Len(t, rules, 3)
+
+		// Most recently deleted rule (rule3) should be first.
+		assert.Equal(t, rule3.GUID, rules[0].GrafanaManagedAlert.GUID, "first rule should be the most recently deleted")
+		assert.Equal(t, rule2.GUID, rules[1].GrafanaManagedAlert.GUID, "second rule should be the second most recently deleted")
+		assert.Equal(t, rule1.GUID, rules[2].GrafanaManagedAlert.GUID, "third rule should be the oldest deleted")
+	})
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
@@ -1014,8 +1080,8 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 type fakeAMRefresher struct {
 }
 
-func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
-	return nil
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) (bool, error) {
+	return true, nil
 }
 
 func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
@@ -1056,8 +1122,8 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			permissions[ac.ActionAlertingRuleUpdate] = append(permissions[ac.ActionAlertingRuleUpdate], scope)
 			ns[rule.NamespaceUID] = struct{}{}
@@ -1074,8 +1140,8 @@ func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) 
 	permissions := map[string][]string{}
 	for _, rule := range rules {
 		if _, ok := ns[rule.NamespaceUID]; !ok {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
-			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			scope := folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[folder.ActionFoldersRead] = append(permissions[folder.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
 			ns[rule.NamespaceUID] = struct{}{}
 		}
@@ -1336,7 +1402,7 @@ func TestRoutePostNameRulesConfig(t *testing.T) {
 
 		permissions := map[int64]map[string][]string{
 			orgID: {
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {dashboards.ActionFoldersRead},
+				folder.ScopeFoldersProvider.GetResourceScopeUID(managedFolder.UID): {folder.ActionFoldersRead},
 			},
 		}
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)

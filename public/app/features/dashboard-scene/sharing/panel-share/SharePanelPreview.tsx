@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';

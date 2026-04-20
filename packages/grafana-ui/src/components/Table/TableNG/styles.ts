@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
-import memoize, { Key, RawKey } from 'micro-memoize';
+import { type Property } from 'csstype';
+import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
-import { TableCellStyles } from './types';
-import { getJustifyContent, IS_SAFARI_26, TextAlign } from './utils';
+import { type TableCellStyles } from './types';
+import { getJustifyContent, IS_SAFARI_26, type TextAlign } from './utils';
 
 /**
  * @internal
@@ -126,8 +126,15 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       overflowY: 'hidden',
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
+      // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
+      '&[aria-expanded="false"]': {
+        display: 'none',
+      },
     }),
-    cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+    cellNested: css({
+      '&[aria-selected=true]': { outline: 'none' },
+      '&:hover': { backgroundColor: 'transparent' },
+    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',

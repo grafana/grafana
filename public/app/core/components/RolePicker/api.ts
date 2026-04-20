@@ -10,7 +10,7 @@
 
 import { getBackendSrv } from '@grafana/runtime';
 import { addDisplayNameForFixedRole, addFilteredDisplayName } from 'app/core/utils/roles';
-import { Role } from 'app/types/accessControl';
+import { type Role } from 'app/types/accessControl';
 
 export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';

@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import {
-  GrafanaTheme2,
-  PanelData,
-  PanelModel,
-  PanelPluginMeta,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelModel,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { type VizPanel } from '@grafana/scenes';
+import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
@@ -22,10 +22,10 @@ import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
-import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
@@ -36,14 +36,14 @@ export interface Props {
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
   const structureRev = useStructureRev(data?.series ?? []);
 
   const { value, loading, error, retry } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
-    setHasFetched(true);
+    await new Promise((resolve) => setTimeout(resolve, hasFetchedRef.current ? 75 : 0));
+    hasFetchedRef.current = true;
     return await getAllSuggestions(data?.series);
-  }, [hasFetched, structureRev]);
+  }, [structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
@@ -118,7 +118,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   const handleSuggestionClick = useCallback(
     (suggestion: PanelPluginVisualizationSuggestion, suggestionIndex: number) => {
-      VizSuggestionsInteractions.suggestionAccepted({
+      VizSuggestionsInteractions.suggestionApplied({
         pluginId: suggestion.pluginId,
         suggestionName: suggestion.name,
         panelState,
@@ -156,13 +156,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash) {
-      VizSuggestionsInteractions.suggestionPreviewed({
-        pluginId: suggestions[0].pluginId,
-        suggestionName: suggestions[0].name,
-        panelState,
-        isAutoSelected: true,
-      });
-
       onChange({
         pluginId: suggestions[0].pluginId,
         options: suggestions[0].options,
@@ -198,6 +191,16 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
+  if (suggestions && suggestions.length === 0 && searchQuery) {
+    return (
+      <EmptySearchResult>
+        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
+          Could not find anything matching your query
+        </Trans>
+      </EmptySearchResult>
+    );
+  }
+
   return (
     <>
       {hasLoadingErrors && (
@@ -220,6 +223,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         data={data!}
         onItemClick={(item) => handleSuggestionClick(item, suggestionIndexMap.get(item.hash) ?? -1)}
         getItemKey={(item) => item.hash}
+        selectedKey={firstCardHash ?? undefined}
       />
     </>
   );

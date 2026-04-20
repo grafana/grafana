@@ -1,15 +1,15 @@
-import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
+import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
-import { AdHocFilterItem, PanelContext } from '@grafana/ui';
+import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
+import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -39,21 +39,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canEdit);
+    return false;
   };
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canDelete);
+    return false;
   };
 
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
@@ -142,15 +142,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const datasource = getDatasourceFromQueryRunner(queryRunner);
     const groupByVar = getGroupByVariableFor(dashboard, datasource);
 
-    if (!groupByVar) {
-      return [];
+    let currentValues: string[] = [];
+
+    if (groupByVar) {
+      const val = groupByVar.state.value;
+      currentValues = Array.isArray(val) ? val.map(String) : val ? [String(val)] : [];
+    } else {
+      const adhocVar = getAdHocGroupByVariableFor(dashboard, datasource);
+      if (adhocVar) {
+        currentValues = adhocVar.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
+      }
     }
 
-    const currentValues = Array.isArray(groupByVar.state.value)
-      ? groupByVar.state.value
-      : groupByVar.state.value
-        ? [groupByVar.state.value]
-        : [];
+    if (currentValues.length === 0) {
+      return [];
+    }
 
     return items
       .map((item) => (currentValues.find((key) => key === item.key) ? item : undefined))
@@ -229,6 +235,21 @@ function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null |
   return null;
 }
 
+function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isAdHocVariable(variable) && variable.state.enableGroupBy) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
@@ -246,7 +267,6 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
     datasource: ds,
     supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
-    layout: 'combobox',
   });
 
   // Add it to the scene

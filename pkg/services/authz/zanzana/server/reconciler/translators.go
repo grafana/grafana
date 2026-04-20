@@ -7,12 +7,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -36,8 +37,8 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 		return nil, nil
 	}
 
-	// Create parent relationship tuple: folder:parent -> parent -> folder:child
-	tuple := common.NewFolderParentTuple(parentFolder, folder.Name)
+	// Create parent relationship tuple: folder:child has parent folder:parent
+	tuple := common.NewFolderParentTuple(folder.Name, parentFolder)
 	return []*openfgav1.TupleKey{tuple}, nil
 }
 
@@ -48,7 +49,7 @@ func TranslateRoleToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 }
 
 // translateRoleToTuples is the implementation of TranslateRoleToTuples.
-// globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted.
+// globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted via the shared resolver.
 func translateRoleToTuples(
 	obj *unstructured.Unstructured,
 	globalRolePerms map[string][]*authzextv1.RolePermission,
@@ -58,32 +59,42 @@ func translateRoleToTuples(
 		return nil, err
 	}
 
-	effective := make(map[string]*authzextv1.RolePermission)
-
-	if len(role.Spec.RoleRefs) > 0 && globalRolePerms != nil {
-		// Basic role: compose from referenced GlobalRole, then apply own delta.
-		omitted := make(map[string]bool, len(role.Spec.PermissionsOmitted))
-		for _, p := range role.Spec.PermissionsOmitted {
-			omitted[p.Action+"|"+p.Scope] = true
-		}
-		for _, roleRef := range role.Spec.RoleRefs {
-			for _, p := range globalRolePerms[roleRef.Name] {
-				if !omitted[p.Action+"|"+p.Scope] {
-					effective[p.Action+"|"+p.Scope] = p
-				}
+	var effective []roleeffective.ActionScope
+	if globalRolePerms != nil {
+		getter := func(roleName string) ([]roleeffective.ActionScope, error) {
+			perms := globalRolePerms[roleName]
+			out := make([]roleeffective.ActionScope, 0, len(perms))
+			for _, p := range perms {
+				out = append(out, roleeffective.ActionScope{Action: p.Action, Scope: p.Scope})
 			}
+			return out, nil
 		}
-	}
-	// Own permissions are always applied: additions for basic roles, full set for custom roles.
-	for _, p := range role.Spec.Permissions {
-		effective[p.Action+"|"+p.Scope] = &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope}
+		var hasRefs bool
+		var err error
+		effective, hasRefs, err = roleeffective.ResolveEffective(&role, getter)
+		if err != nil {
+			return nil, err
+		}
+		if !hasRefs {
+			effective = roleSpecPermsToActionScopes(role.Spec.Permissions)
+		}
+	} else {
+		effective = roleSpecPermsToActionScopes(role.Spec.Permissions)
 	}
 
 	perms := make([]*authzextv1.RolePermission, 0, len(effective))
 	for _, p := range effective {
-		perms = append(perms, p)
+		perms = append(perms, &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope})
 	}
 	return zanzana.RoleToTuples(role.Name, perms)
+}
+
+func roleSpecPermsToActionScopes(perms []iamv0.RolespecPermission) []roleeffective.ActionScope {
+	out := make([]roleeffective.ActionScope, 0, len(perms))
+	for _, p := range perms {
+		out = append(out, roleeffective.ActionScope{Action: p.Action, Scope: p.Scope})
+	}
+	return out
 }
 
 // TranslateRoleBindingToTuples converts a RoleBinding CRD to assignee tuples.
@@ -199,6 +210,31 @@ func TranslateUserToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 
 	tuple := &openfgav1.TupleKey{
 		User:     common.NewTupleEntry(common.TypeUser, user.Name, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+	}
+	return []*openfgav1.TupleKey{tuple}, nil
+}
+
+// TranslateServiceAccountToTuples converts a ServiceAccount CRD to basic role assignment tuples.
+func TranslateServiceAccountToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var sa iamv0.ServiceAccount
+	if err := convertUnstructured(obj, &sa); err != nil {
+		return nil, err
+	}
+
+	role := string(sa.Spec.Role)
+	if sa.Spec.Role == "" {
+		return nil, nil
+	}
+
+	basicRole := common.TranslateBasicRole(role)
+	if basicRole == "" {
+		return nil, fmt.Errorf("invalid basic role: %s", role)
+	}
+
+	tuple := &openfgav1.TupleKey{
+		User:     common.NewTupleEntry(common.TypeServiceAccount, sa.Name, ""),
 		Relation: common.RelationAssignee,
 		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}

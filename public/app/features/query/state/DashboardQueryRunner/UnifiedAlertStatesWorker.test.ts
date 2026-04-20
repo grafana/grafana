@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { AlertState, getDefaultTimeRange, type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -18,7 +18,7 @@ import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceCons
 import * as store from '../../../../store/store';
 
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
-import { DashboardQueryRunnerOptions } from './types';
+import { type DashboardQueryRunnerOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

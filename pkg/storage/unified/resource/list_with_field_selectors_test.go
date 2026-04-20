@@ -433,11 +433,13 @@ func (*fakeBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(
 func (*fakeBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
-func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(func(*ModifiedResource, error) bool) {}
 }
-func (*fakeBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+func (*fakeBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, nil

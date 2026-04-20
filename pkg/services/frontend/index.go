@@ -6,16 +6,20 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type IndexProvider struct {
@@ -24,6 +28,7 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
+	bootScript   template.JS
 }
 
 type IndexViewData struct {
@@ -43,6 +48,11 @@ type IndexViewData struct {
 	Nonce string
 
 	PublicDashboardAccessToken string
+
+	// Feature flag for image-renderer to check support for binding calls
+	RenderBindingSupported bool
+
+	BootScript template.JS
 }
 
 // Templates setup.
@@ -60,6 +70,11 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		return nil, fmt.Errorf("missing index template")
 	}
 
+	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
+	if err != nil {
+		bootScriptRaw = []byte{}
+	}
+
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
 	// subset of frontend settings needed for the login page
@@ -71,6 +86,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
+		//nolint:gosec
+		bootScript: template.JS(bootScriptRaw),
 	}, nil
 }
 
@@ -102,6 +119,10 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	// make a copy of the settings
 	fsSettings := requestConfig.FSFrontendSettings
 
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
 		AppSubUrl:                  p.config.AppSubURL,
@@ -111,6 +132,14 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Nonce:                      reqCtx.RequestNonce,
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
+		RenderBindingSupported:     renderBindingSupported,
+	}
+
+	if compiledBootScript {
+		data.BootScript = p.bootScript
+		if p.bootScript == "" {
+			p.log.Error("compiledBootScript feature flag enabled but boot.js not found — falling back to inline boot script.")
+		}
 	}
 
 	// TODO -- reevaluate with mt authnz

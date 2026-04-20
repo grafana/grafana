@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -35,7 +37,7 @@ func ProvidePullRequestWorker(
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
 	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients)
+	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
@@ -84,7 +86,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
-) error {
+) (processErr error) {
 	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
@@ -98,7 +100,20 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.pr")
 	}
 
-	logger := logging.FromContext(ctx).With("pr", opts.PR, "repo", repo.Config().GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", opts)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.pullrequest.process")
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("pr.number", opts.PR),
+		attribute.String("pr.ref", opts.Ref),
+		attribute.String("pr.hash", opts.Hash),
+	)
 
 	if opts.Ref == "" {
 		logger.Debug("missing spec.ref")

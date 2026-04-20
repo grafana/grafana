@@ -93,7 +93,7 @@ func getPluginsPath(cfgProvider configprovider.ConfigProvider) (string, error) {
 		return pluginsPath, nil
 	}
 
-	pluginsPath := filepath.Join(cfg.StaticRootPath, "public", "app", "plugins")
+	pluginsPath := filepath.Join(cfg.StaticRootPath, "app", "plugins")
 	if _, err = os.Stat(pluginsPath); err != nil {
 		return "", errors.New("could not find core plugins directory")
 	}

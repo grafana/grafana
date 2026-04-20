@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
-import { SaveDashboardData, SaveDashboardOptions } from '../types';
+import { type SaveDashboardData, type SaveDashboardOptions } from '../types';
 
 export type SaveProps = {
   dashboard: DashboardModel; // original
@@ -77,7 +77,7 @@ export const SaveDashboardForm = ({
               'dashboard.save-dashboard-form.label-current-range-dashboard-default',
               'Save current time range as dashboard default'
             )}
-            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+            data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
           />
         )}
         {hasVariableChanged && (
@@ -93,7 +93,7 @@ export const SaveDashboardForm = ({
               'dashboard.save-dashboard-form.label-current-variable-values-dashboard-default',
               'Save current variable values as dashboard default'
             )}
-            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+            data-testid={selectors.pages.SaveDashboardModal.saveVariables}
           />
         )}
         <div className={styles.message}>
@@ -136,7 +136,7 @@ export const SaveDashboardForm = ({
             type="submit"
             disabled={!saveModel.hasChanges || isLoading}
             icon={saving ? 'spinner' : undefined}
-            aria-label={selectors.pages.SaveDashboardModal.save}
+            data-testid={selectors.pages.SaveDashboardModal.save}
           >
             {isLoading
               ? t('dashboard.save-dashboard-form.saving', 'Saving...')

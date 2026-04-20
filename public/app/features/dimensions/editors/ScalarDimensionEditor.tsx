@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { FieldType, type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { ScalarDimensionMode, type ScalarDimensionConfig } from '@grafana/schema';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { ScalarDimensionOptions } from '../types';
+import { type ScalarDimensionOptions } from '../types';
 
 type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
 
@@ -47,7 +47,10 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, FieldType.number);
+  const selectOptions = useMatcherSelectOptions(names, fieldName, {
+    firstItem: fixedValueOption,
+    fieldType: FieldType.number,
+  });
 
   const styles = useStyles2(getStyles);
 
@@ -105,7 +108,8 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
             <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
-        <Select
+        <Combobox
+          aria-label={t('dimensions.scalar-dimension-editor.label', 'Scalar')}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

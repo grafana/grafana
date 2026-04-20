@@ -16,6 +16,7 @@ func registerMigrations(cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
 	client resourcepb.ResourceIndexClient,
 	registry *MigrationRegistry,
 ) error {
@@ -28,7 +29,7 @@ func registerMigrations(cfg *setting.Cfg,
 			logger.Info("Migration is disabled in config, skipping", "migration", def.ID)
 			continue
 		}
-		registerMigration(mg, migrator, tableLocker, cfg, client, def)
+		registerMigration(mg, migrator, tableLocker, tableRenamer, cfg, client, def)
 	}
 	return nil
 }
@@ -36,14 +37,14 @@ func registerMigrations(cfg *setting.Cfg,
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
 	cfg *setting.Cfg,
 	client resourcepb.ResourceIndexClient,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, tableLocker, def, validators, opts...)
-	migration.runner.cfg = cfg
+	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }
 
@@ -71,11 +72,13 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 
 const migrationLogTableName = "unifiedstorage_migration_log"
 
-func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
+func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		count, err = sess.Table(migrationLogTableName).Where("migration_id = ?", migrationID).Count()
+		count, err = sess.Table(migrationLogTableName).
+			Where("migration_id = ? AND success = ?", migrationID, true).
+			Count()
 		return err
 	})
 	if err != nil {
@@ -85,9 +88,11 @@ func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (b
 }
 
 func buildResourceKey(gr schema.GroupResource, namespace string, registry *MigrationRegistry) *resourcepb.ResourceKey {
-	if !registry.HasResource(gr) {
-		return nil
-	}
+	// TODO: commenting this out so migrations can handle
+	// dynamically registered group names
+	//if !registry.HasResource(gr) {
+	//	return nil
+	//}
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     gr.Group,

@@ -9,7 +9,7 @@ labels:
     - enterprise
 menuTitle: Provisioning RBAC with Terraform
 title: Provisioning RBAC with Terraform
-weight: 60
+weight: 310
 refs:
   api-rbac-create-and-manage-custom-roles:
     - pattern: /docs/grafana/

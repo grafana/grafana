@@ -10,7 +10,7 @@ import { t } from '@grafana/i18n';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 
 import { useRepositoryStatus } from '../Wizard/hooks/useRepositoryStatus';
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import { DEFAULT_BRANCH_NAMES } from '../constants';
 import { isGitProvider } from '../utils/repositoryTypes';
 

@@ -1,10 +1,15 @@
 import { noop } from 'lodash';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, getDataSourceRef } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type SelectableValue,
+  getDataSourceRef,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { GroupByVariable, SceneVariable } from '@grafana/scenes';
+import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
@@ -54,14 +59,15 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
         defaultValue: undefined,
         restorable: false,
       });
+      variable.changeValueTo([], []);
     } else {
+      const value = options.map((opt) => opt.value!);
+      const text = options.map((opt) => opt.label ?? opt.value!);
       variable.setState({
-        defaultValue: {
-          value: options.map((opt) => opt.value!),
-          text: options.map((opt) => opt.label ?? opt.value!),
-        },
+        defaultValue: { value, text },
         restorable: false,
       });
+      variable.changeValueTo(value, text);
     }
     onRunQuery();
   };

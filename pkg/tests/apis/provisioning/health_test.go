@@ -20,25 +20,23 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 func TestIntegrationHealth(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
 	// Verify the health status before calling the endpoint
 	repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 	require.NoError(t, err)
-	originalRepo := unstructuredToRepository(t, repoObj)
+	originalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
 	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
@@ -46,7 +44,7 @@ func TestIntegrationHealth(t *testing.T) {
 	require.Empty(t, originalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 	// Verify Ready condition is set
 	require.NotEmpty(t, originalRepo.Status.Conditions, "conditions should be set")
-	readyCondition := findCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+	readyCondition := common.FindCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
 	require.NotNil(t, readyCondition, "Ready condition should exist")
 	require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 	require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -172,7 +170,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after update
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := unstructuredToRepository(t, repoObj)
+		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
@@ -180,7 +178,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Empty(t, afterTest.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 		// Verify Ready condition is set
 		require.NotEmpty(t, afterTest.Status.Conditions, "conditions should be set")
-		readyCondition := findCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := common.FindCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -199,7 +197,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Get the repository status before the test
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		beforeTest := unstructuredToRepository(t, repoObj)
+		beforeTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
 
 		// Call the test endpoint
@@ -225,7 +223,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after test - timestamp should change
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := unstructuredToRepository(t, repoObj)
+		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
@@ -257,7 +255,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status is now healthy again
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		finalRepo := unstructuredToRepository(t, repoObj)
+		finalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
@@ -265,7 +263,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Empty(t, finalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy again")
 		// Verify Ready condition is set
 		require.NotEmpty(t, finalRepo.Status.Conditions, "conditions should be set")
-		readyCondition := findCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := common.FindCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -293,12 +291,10 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 }
 
 func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("dryRun call with App's insufficient permissions returns 403", func(t *testing.T) {
 		// Setup mock with insufficient permissions
@@ -544,4 +540,289 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		require.NoError(t, err)
 		require.NotNil(t, c)
 	})
+}
+
+func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
+	// This tests that:
+	// - With workflows: write permission check FAILS (we can't write to public repo without token)
+	// - Without workflows: succeeds (only needs read access)
+
+	t.Run("git repository with workflows requires token via Test endpoint", func(t *testing.T) {
+		// Test a new repository configuration without actually creating it
+		repoConfig := map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-git-write-denied",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Git Write Permission Denied",
+				"type":  "git",
+				"git": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+					"branch": "integration-test",
+				},
+				"workflows": []string{"write"}, // Write workflow configured
+				"sync": map[string]any{
+					"enabled":         false,
+					"target":          "folder",
+					"intervalSeconds": 10,
+				},
+			},
+			// No secure token - should fail validation for repositories with workflows
+		}
+
+		configBytes, err := json.Marshal(repoConfig)
+		require.NoError(t, err)
+
+		// Test the repository configuration using the test endpoint
+		// This should fail validation because repositories with workflows need a token
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-git-write-denied").
+			SubResource("test").
+			Body(configBytes).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		// Validation errors can be returned as HTTP errors or as TestResults
+		if result.Error() != nil {
+			// HTTP error - this is expected for validation failures
+			// The validator should have rejected the repository with workflows but no token
+			require.Error(t, result.Error(), "should fail validation")
+		} else {
+			// TestResults with validation errors
+			obj, err := result.Get()
+			require.NoError(t, err)
+
+			testResults := parseTestResults(t, obj)
+			require.False(t, testResults.Success, "git repository with workflows but no token should fail validation")
+
+			// Should fail with validation error about missing token/connection
+			require.NotEmpty(t, testResults.Errors, "should have error details")
+			foundTokenError := false
+			for _, e := range testResults.Errors {
+				if strings.Contains(e.Field, "token") || strings.Contains(e.Field, "connection") {
+					foundTokenError = true
+					break
+				}
+			}
+			require.True(t, foundTokenError, "error should mention missing token or connection")
+		}
+	})
+
+	t.Run("read-only git repository succeeds without write permission check via Test endpoint", func(t *testing.T) {
+		// Create a git repository WITHOUT workflows (read-only)
+		// No token needed - only read access required
+		repoConfig := map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-git-readonly",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Git Read-Only",
+				"type":  "git",
+				"git": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+					"branch": "integration-test",
+				},
+				// No workflows = read-only, no write permission check
+				"sync": map[string]any{
+					"enabled":         false,
+					"target":          "folder",
+					"intervalSeconds": 10,
+				},
+			},
+		}
+
+		configBytes, err := json.Marshal(repoConfig)
+		require.NoError(t, err)
+
+		// Test endpoint should succeed - only needs read access
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-git-readonly").
+			SubResource("test").
+			Body(configBytes).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "read-only git repository should succeed")
+		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
+	})
+
+	t.Run("git repository with workflows shows unhealthy after creation", func(t *testing.T) {
+		// Create a git repo with workflows - it should be created but become unhealthy
+		// when health check detects missing write permission
+		repoConfig := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "test-git-unhealthy",
+					"namespace": "default",
+					"finalizers": []string{
+						"remove-orphan-resources",
+						"cleanup",
+					},
+				},
+				"spec": map[string]any{
+					"title": "Test Git Unhealthy",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
+					},
+					"workflows": []string{"write"},
+					"sync": map[string]any{
+						"enabled":         false,
+						"target":          "folder",
+						"intervalSeconds": 10,
+					},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+					},
+				},
+			},
+		}
+
+		// Create the repository
+		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+		require.NotNil(t, repo)
+
+		// Wait for health check to complete and verify repository is unhealthy
+		helper.WaitForUnhealthyRepository(t, "test-git-unhealthy")
+
+		// Cleanup
+		err = helper.Repositories.Resource.Delete(ctx, "test-git-unhealthy", metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("git repository without workflows shows healthy after creation", func(t *testing.T) {
+		// Create a git repo WITHOUT workflows (read-only) - it should be created and become healthy
+		// No write permission check is needed for read-only repositories
+		repoConfig := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "test-git-healthy-readonly",
+					"namespace": "default",
+					"finalizers": []string{
+						"remove-orphan-resources",
+						"cleanup",
+					},
+				},
+				"spec": map[string]any{
+					"title": "Test Git Healthy Read-Only",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
+					},
+					// No workflows = read-only, no write permission needed
+					"sync": map[string]any{
+						"enabled":         false,
+						"target":          "folder",
+						"intervalSeconds": 10,
+					},
+				},
+				// No secure token needed for public read-only repository
+			},
+		}
+
+		// Create the repository
+		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+		require.NotNil(t, repo)
+
+		// Wait for health check to complete and verify repository is healthy
+		helper.WaitForHealthyRepository(t, "test-git-healthy-readonly")
+
+		// Cleanup
+		err = helper.Repositories.Resource.Delete(ctx, "test-git-healthy-readonly", metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+}
+
+func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
+	app := &github.App{
+		ID:   github.Ptr(id),
+		Slug: github.Ptr("test-app"),
+		Owner: &github.User{
+			Login: github.Ptr("test-owner"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		app.Permissions = installationPerms
+	}
+
+	return app
+}
+
+func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
+	installation := &github.Installation{
+		ID: github.Ptr(id),
+		Permissions: &github.InstallationPermissions{
+			Contents:        github.Ptr("write"),
+			Metadata:        github.Ptr("read"),
+			PullRequests:    github.Ptr("write"),
+			RepositoryHooks: github.Ptr("write"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		installation.Permissions = installationPerms
+	}
+
+	return installation
 }

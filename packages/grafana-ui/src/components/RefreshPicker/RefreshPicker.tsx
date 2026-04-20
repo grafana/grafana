@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { formatDuration } from 'date-fns';
+import { formatDuration } from 'date-fns/formatDuration';
 import { memo } from 'react';
 
-import { SelectableValue, parseDuration } from '@grafana/data';
+import { type SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
+import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];

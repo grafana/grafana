@@ -36,12 +36,6 @@ var (
 	// MApiUserSignUpInvite is a metric amount of users who have been invited
 	MApiUserSignUpInvite prometheus.Counter
 
-	// MApiDashboardSave is a metric summary for dashboard save duration
-	MApiDashboardSave prometheus.Summary
-
-	// MApiDashboardGet is a metric summary for dashboard get duration
-	MApiDashboardGet prometheus.Summary
-
 	// MApiDashboardSearch is a metric summary for dashboard search duration
 	MApiDashboardSearch prometheus.Summary
 
@@ -198,9 +192,6 @@ var (
 	// StatsTotalRuleGroups is a metric of total number of alert rule groups stored in Grafana.
 	StatsTotalRuleGroups prometheus.Gauge
 
-	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
-	StatsTotalDashboardVersions prometheus.Gauge
-
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 
 	grafanaPluginTargetInfoDesc *prometheus.GaugeVec
@@ -308,20 +299,6 @@ func init() {
 		Name:      "api_user_signup_invite_total",
 		Help:      "amount of users who have been invited",
 		Namespace: ExporterName,
-	})
-
-	MApiDashboardSave = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       "api_dashboard_save_milliseconds",
-		Help:       "summary for dashboard save duration",
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
-	})
-
-	MApiDashboardGet = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       "api_dashboard_get_milliseconds",
-		Help:       "summary for dashboard get duration",
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
 	})
 
 	MApiDashboardSearch = prometheus.NewSummary(prometheus.SummaryOpts{
@@ -609,12 +586,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "provisioning_method"})
 
-	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "stat_totals_dashboard_versions",
-		Help:      "total amount of dashboard versions in the database",
-		Namespace: ExporterName,
-	})
-
 	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_annotations",
 		Help:      "total amount of annotations in the database",
@@ -791,8 +762,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MApiUserSignUpStarted,
 		MApiUserSignUpCompleted,
 		MApiUserSignUpInvite,
-		MApiDashboardSave,
-		MApiDashboardGet,
 		MApiDashboardSearch,
 		MDataSourceProxyReqTimer,
 		MAlertingExecutionTime,
@@ -841,7 +810,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		grafanaPluginFileSystemInfoDesc,
 		grafanaPluginAssetInfoDesc,
 		grafanaPluginProvisioningInfoDesc,
-		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		StatsTotalAlertRules,
 		StatsTotalRuleGroups,

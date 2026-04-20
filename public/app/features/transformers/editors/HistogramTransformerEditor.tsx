@@ -3,15 +3,14 @@ import { useCallback, useState } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import { histogramFieldInfo, type HistogramTransformerInputs } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/histogram.svg';
 import lightImage from '../images/light/histogram.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -148,7 +147,6 @@ export const getHistogramTransformRegistryItem: () => TransformerRegistryItem<Hi
     'Calculate a histogram from input data.'
   ),
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getTransformationContent(DataTransformerID.histogram).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

@@ -33,27 +33,30 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config     *provisioning.Repository
-	owner      string
-	repo       string
-	secret     common.RawSecureValue
-	gh         Client
-	webhookURL string
+	config                *provisioning.Repository
+	owner                 string
+	repo                  string
+	secret                common.RawSecureValue
+	gh                    Client
+	webhookURL            string
+	folderMetadataEnabled bool
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
+	folderMetadataEnabled bool,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
-		GithubRepository: basic,
-		config:           basic.Config(),
-		owner:            basic.Owner(),
-		repo:             basic.Repo(),
-		gh:               basic.Client(),
-		webhookURL:       webhookURL,
-		secret:           secret,
+		GithubRepository:      basic,
+		config:                basic.Config(),
+		owner:                 basic.Owner(),
+		repo:                  basic.Repo(),
+		gh:                    basic.Client(),
+		webhookURL:            webhookURL,
+		secret:                secret,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
 
@@ -128,7 +131,7 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSync(deletedPaths)
+	incremental := repository.CanUseIncrementalSync(deletedPaths, r.folderMetadataEnabled)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
@@ -236,7 +239,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookCon
 
 	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
 	switch {
-	case errors.Is(err, ErrResourceNotFound):
+	case errors.Is(err, repository.ErrFileNotFound):
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
 			return WebhookConfig{}, false, err
@@ -285,14 +288,14 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	id := r.config.Status.Webhook.ID
 
 	err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id)
-	if err != nil && !errors.Is(err, ErrResourceNotFound) && !errors.Is(err, ErrUnauthorized) {
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
-	if errors.Is(err, ErrResourceNotFound) {
+	if errors.Is(err, repository.ErrFileNotFound) {
 		logger.Warn("webhook no longer exists", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
-	if errors.Is(err, ErrUnauthorized) {
+	if errors.Is(err, repository.ErrUnauthorized) {
 		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}

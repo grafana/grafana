@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import {
   Alert,
   Button,
@@ -20,12 +20,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDTO } from 'app/types/dashboard';
 
-import { DashboardResponse, useDashboardQuery } from './useDashboardQuery';
+import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 export interface PanelDTO {
   id?: number;
@@ -257,7 +257,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
           {!isDashSearchFetching && (
             <AutoSizer>
-              {({ height, width }) => (
+              {({ height, width }: Size) => (
                 <FixedSizeList
                   ref={scrollToItem}
                   itemSize={50}
@@ -291,7 +291,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
           {selectedDashboardUid && !isDashboardFetching && (
             <AutoSizer>
-              {({ width, height }) => (
+              {({ width, height }: Size) => (
                 <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
                   {PanelRow}
                 </FixedSizeList>

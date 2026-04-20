@@ -4,11 +4,13 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetSearchTeamsTeamHit struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Email       string `json:"email"`
-	Provisioned bool   `json:"provisioned"`
-	ExternalUID string `json:"externalUID"`
+	Name          string          `json:"name"`
+	Title         string          `json:"title"`
+	Email         string          `json:"email"`
+	Provisioned   bool            `json:"provisioned"`
+	ExternalUID   string          `json:"externalUID"`
+	MemberCount   *int64          `json:"memberCount,omitempty"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 // NewGetSearchTeamsTeamHit creates a new GetSearchTeamsTeamHit object.

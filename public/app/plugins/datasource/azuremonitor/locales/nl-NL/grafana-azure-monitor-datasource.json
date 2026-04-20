@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Clientcertificaat",
       "aria-label-client-id": "Klantnummer",
       "aria-label-client-secret": "Gebruikerssleutel",
+      "aria-label-private-key": "Persoonlijke sleutel",
+      "aria-label-private-key-password": "Certificaatwachtwoord",
       "aria-label-symbol-client-secret": "Gebruikerssleutel",
       "aria-label-tenant-id": "Tenant-id",
+      "description-certificate-format": "Kies de indeling van het certificaat (PEM-certificaten moeten de PEM-indeling in platte tekst hebben, PFX-certificaten moeten de base64-gecodeerde PFX-indeling hebben)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formaat",
+      "label-client-certificate": "Clientcertificaat",
       "label-client-id": "Client-id applicatie",
       "label-client-secret": "Gebruikerssleutel",
+      "label-private-key": "Persoonlijke sleutel",
       "label-symbol-client-secret": "Gebruikerssleutel",
+      "label-symbol-private-key-password": "Certificaatwachtwoord",
       "label-tenant-id": "Directory-id (tenant)",
       "placeholder-symbol-client-secret": "geconfigureerd",
       "reset-symbol-client-secret": "Resetten"
@@ -63,11 +71,11 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Kies het type authenticatie voor Azure-services",
-      "label-authentication": "Autorisate",
+      "label-authentication": "Authenticatietype",
       "title-authentication": "Autorisate"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "Basislogs",
+      "aria-label-enable-basic-logs": "Basislogboeken",
       "description-basic-logs": "Als je deze functie inschakelt, worden Azure Monitor-kosten per query gemaakt op dashboardpanelen die tabellen opvragen die zijn geconfigureerd voor <2>Basislogboeken</2>.",
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
