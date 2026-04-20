@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useDebounce } from 'react-use';
 
 import { type TimeRange } from '@grafana/data';
 
@@ -192,18 +191,14 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // We use debounce here to prevent fetching data on every keystroke
-  // We also track the seriesLimit change to prevent fetching twice right after the initialization
-  useDebounce(
-    () => {
-      if (isInitializedRef.current && lastSeriesLimitRef.current !== seriesLimit) {
-        initialize(selectedMetric, selectedLabelValues);
-        lastSeriesLimitRef.current = seriesLimit;
-      }
-    },
-    300,
-    [seriesLimit]
-  );
+  // Fetch new data when seriesLimit changes (triggered onBlur from the input)
+  useEffect(() => {
+    if (isInitializedRef.current && lastSeriesLimitRef.current !== seriesLimit) {
+      initialize(selectedMetric, selectedLabelValues);
+      lastSeriesLimitRef.current = seriesLimit;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesLimit]);
 
   // Handles metric selection changes.
   // If a metric selected it fetches the labels of that metric
