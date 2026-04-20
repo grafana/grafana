@@ -106,7 +106,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       if (!isEditableVariableType(variable.state.type)) {
         return false;
       }
-      if (config.featureToggles.dashboardUnifiedDrilldownControls && isAdHocVariable(variable)) {
+      if (config.featureToggles.dashboardUnifiedDrilldownControls && sceneUtils.isAdHocVariable(variable)) {
         return false;
       }
       return true;
