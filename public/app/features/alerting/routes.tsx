@@ -52,7 +52,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
-      path: '/alerting/evaluation-chains',
+      path: '/alerting/evaluation-groups',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: cfg.featureToggles['alerting.rulesAPIV2']
         ? importAlertingComponent(

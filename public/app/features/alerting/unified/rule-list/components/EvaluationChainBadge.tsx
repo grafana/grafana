@@ -17,7 +17,7 @@ export function EvaluationChainBadge({ chainName, chainUid }: EvaluationChainBad
       text={chainName}
       icon="link"
       color="orange"
-      tooltip={t('alerting.evaluation-chain-badge.tooltip', 'Part of evaluation chain: {{chainName}}', { chainName })}
+      tooltip={t('alerting.evaluation-chain-badge.tooltip', 'Part of evaluation group: {{chainName}}', { chainName })}
       onClick={handleClick}
     />
   );

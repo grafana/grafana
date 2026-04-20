@@ -62,9 +62,9 @@ export function useAlertRulesNav() {
       },
       {
         id: 'alert-rules-evaluation-chains',
-        text: t('alerting.navigation.evaluation-chains', 'Evaluation chains'),
-        url: '/alerting/evaluation-chains',
-        active: location.pathname === '/alerting/evaluation-chains',
+        text: t('alerting.navigation.evaluation-chains', 'Evaluation groups'),
+        url: '/alerting/evaluation-groups',
+        active: location.pathname === '/alerting/evaluation-groups',
         parentItem: alertRulesNav,
       }
     );

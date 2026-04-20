@@ -11,7 +11,7 @@ export function EvaluationChainsTab() {
     <Stack direction="column" gap={2}>
       <Text variant="body" color="secondary">
         <Trans i18nKey="alerting.rule-list.tabs.evaluation-chains.description">
-          Evaluation chains define the order in which recording and alert rules are evaluated, ensuring recording rules
+          Evaluation groups define the order in which recording and alert rules are evaluated, ensuring recording rules
           always run before the alert rules that depend on them.
         </Trans>
       </Text>

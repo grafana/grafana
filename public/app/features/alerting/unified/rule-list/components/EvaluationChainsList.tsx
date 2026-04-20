@@ -15,7 +15,7 @@ interface EvaluationChainsListProps {
 
 export function EvaluationChainsList({ chains, isLoading }: EvaluationChainsListProps) {
   if (isLoading) {
-    return <LoadingPlaceholder text={t('alerting.evaluation-chains-list.loading', 'Loading chains...')} />;
+    return <LoadingPlaceholder text={t('alerting.evaluation-chains-list.loading', 'Loading groups...')} />;
   }
 
   if (chains.length === 0) {
@@ -23,7 +23,7 @@ export function EvaluationChainsList({ chains, isLoading }: EvaluationChainsList
       <Box padding={4}>
         <Text color="secondary">
           <Trans i18nKey="alerting.evaluation-chains-list.empty">
-            No evaluation chains found. Evaluation chains are created when you link recording and alert rules together
+            No evaluation groups found. Evaluation groups are created when you link recording and alert rules together
             for sequential evaluation.
           </Trans>
         </Text>
@@ -63,7 +63,7 @@ function FolderSection({ folder, chains }: { folder: string; chains: EvaluationC
           <Icon name="folder" className={styles.folderIcon} size="sm" />
           <Text weight="medium">{folder}</Text>
           <Text variant="bodySmall" color="secondary">
-            {t('alerting.evaluation-chains-list.folder-count', '{{count}} chain', { count: chains.length })}
+            {t('alerting.evaluation-chains-list.folder-count', '{{count}} group', { count: chains.length })}
           </Text>
         </Stack>
       </button>
