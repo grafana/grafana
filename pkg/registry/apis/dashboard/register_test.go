@@ -210,7 +210,9 @@ func (m *mockK8sHandler) Update(_ context.Context, _ *unstructured.Unstructured,
 func (m *mockK8sHandler) Delete(_ context.Context, _ string, _ int64, _ metav1.DeleteOptions) error {
 	return nil
 }
-func (m *mockK8sHandler) DeleteCollection(_ context.Context, _ int64) error { return nil }
+func (m *mockK8sHandler) DeleteCollection(_ context.Context, _ int64, _ metav1.ListOptions) error {
+	return nil
+}
 func (m *mockK8sHandler) List(_ context.Context, _ int64, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	return nil, nil
 }
