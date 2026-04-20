@@ -30,6 +30,12 @@ const PERMISSIONS: Record<TimeIntervalAction, AccessControlAction[]> = {
   [TimeIntervalAction.Export]: [notificationsPermissions.read.grafana],
 };
 
+/** Granular permissions that allow viewing time intervals. */
+export const PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
+
+/** Granular permissions that allow modifying time intervals. */
+export const PERMISSIONS_TIME_INTERVALS_MODIFY = [AccessControlAction.AlertingTimeIntervalsWrite];
+
 /** All permissions that gate time interval functionality — used by datasource access-control checks. */
 export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
   (permissions) => permissions
