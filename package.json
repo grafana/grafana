@@ -474,7 +474,8 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.12",
-    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch"
+    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch",
+    "protobufjs@npm:8.0.0": "8.0.1"
   },
   "workspaces": {
     "packages": [
