@@ -87,7 +87,6 @@ export const sharedDependenciesMap = {
   'app/features/dashboard/impression_store': {
     impressions: impressionSrv,
   },
-  d3: () => import('d3'),
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
   i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),

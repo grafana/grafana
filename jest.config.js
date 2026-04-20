@@ -6,7 +6,7 @@ process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylig
 const esModules = [
   '@wojtekmaj/date-utils',
   'ol',
-  'd3',
+  'd3-scale',
   'd3-color',
   'd3-interpolate',
   'delaunator',
