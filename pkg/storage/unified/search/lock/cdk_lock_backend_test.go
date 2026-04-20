@@ -110,6 +110,7 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		assert.Equal(t, "owner-1", info.Owner)
 
 		require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-2", time.Minute)), errLockHeld)
+		require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)), errLockHeld)
 	})
 
 	// --- tests below need fake bucket for internal manipulation ---
@@ -133,6 +134,28 @@ func TestCDKLockBackend_Create(t *testing.T) {
 
 		err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
 		require.ErrorIs(t, err, errLockHeld)
+	})
+
+	t.Run("retries create when lock deleted before attrs read", func(t *testing.T) {
+		bucket := newConditionalBucket()
+		backend := newFakeBackend(bucket)
+		ctx := context.Background()
+
+		// Seed a live lock so the initial IfNotExist write fails with "exists".
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
+
+		// Simulate: lock object deleted between the IfNotExist-exists signal and
+		// the Attributes read. fetchAttrsAndData returns errLockNotFound, so Create
+		// retries with a fresh IfNotExist write.
+		backend.bucket = &notFoundOnAttributesBucket{CDKBucket: bucket}
+
+		err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
+		require.NoError(t, err)
+
+		backend.bucket = bucket
+		info, err := backend.Read(ctx, "lock-1")
+		require.NoError(t, err)
+		assert.Equal(t, "owner-2", info.Owner)
 	})
 
 	t.Run("takeover retries create when lock deleted during conditional write", func(t *testing.T) {
@@ -368,34 +391,6 @@ func TestCDKLockBackend_HeartbeatPreserved(t *testing.T) {
 
 // --- tests that always use fake bucket (need internal manipulation) ---
 
-func TestCDKLockBackend_NoConditionalFuncs(t *testing.T) {
-	t.Run("fallback to unconditional writes when conditional funcs are nil", func(t *testing.T) {
-		bucket := newConditionalBucket()
-		backend := newCDKLockBackend(bucket, cdkLockBackendOptions{})
-
-		ctx := context.Background()
-		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
-		require.NoError(t, backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute)))
-		require.NoError(t, backend.Delete(ctx, "lock-1", "owner-1"))
-	})
-
-	t.Run("expired takeover without conditional write", func(t *testing.T) {
-		bucket := newConditionalBucket()
-		backend := newCDKLockBackend(bucket, cdkLockBackendOptions{})
-		backend.clockSkewAllowance = 0
-		ctx := context.Background()
-
-		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", 100*time.Millisecond)))
-		backend.now = func() time.Time { return time.Now().Add(200 * time.Millisecond) }
-
-		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute)))
-
-		info, err := backend.Read(ctx, "lock-1")
-		require.NoError(t, err)
-		assert.Equal(t, "owner-2", info.Owner)
-	})
-}
-
 func TestCDKLockBackend_CorruptData(t *testing.T) {
 	tests := []struct {
 		name string
@@ -479,6 +474,31 @@ func (b *s3ConflictBucket) WriteAll(ctx context.Context, key string, data []byte
 		}
 	}
 	return b.CDKBucket.WriteAll(ctx, key, data, opts)
+}
+
+// notFoundOnAttributesBucket simulates a lock object deleted between our
+// initial IfNotExist-exists signal and the subsequent Attributes read.
+// The first Attributes call deletes the key and delegates, producing
+// gcerrors.NotFound; subsequent calls delegate normally.
+type notFoundOnAttributesBucket struct {
+	resource.CDKBucket
+	mu      sync.Mutex
+	tripped bool
+}
+
+func (b *notFoundOnAttributesBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
+	b.mu.Lock()
+	alreadyTripped := b.tripped
+	if !alreadyTripped {
+		b.tripped = true
+		b.mu.Unlock()
+		// Delete the object so the retry's IfNotExist write succeeds, then
+		// delegate to produce a real gcerrors.NotFound from the now-missing key.
+		_ = b.CDKBucket.Delete(ctx, key)
+		return b.CDKBucket.Attributes(ctx, key)
+	}
+	b.mu.Unlock()
+	return b.CDKBucket.Attributes(ctx, key)
 }
 
 // notFoundOnWriteBucket simulates a lock object deleted between read and conditional write.

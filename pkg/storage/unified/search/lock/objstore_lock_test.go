@@ -226,6 +226,66 @@ func TestObjectStorageLock_TransientHeartbeatRecovery(t *testing.T) {
 	require.NoError(t, lock.Release())
 }
 
+// TestObjectStorageLock_ReleaseWaitsForInFlightUpdate locks in the design decision
+// that heartbeat Update uses context.Background(): Release must wait for an
+// in-flight Update to finish before issuing Delete, and must not fire Lost.
+// A future change that re-wires updateCtx to hbCtx would fail this test.
+func TestObjectStorageLock_ReleaseWaitsForInFlightUpdate(t *testing.T) {
+	inner := newFakeBackend(newConditionalBucket())
+	backend := &slowUpdateBackend{
+		lockBackend:   inner,
+		updateStarted: make(chan struct{}),
+		release:       make(chan struct{}),
+	}
+
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 300*time.Millisecond, 50*time.Millisecond)
+
+	ctx := context.Background()
+	require.NoError(t, lock.Acquire(ctx))
+
+	// Wait for the first heartbeat tick to enter Update (and block there).
+	select {
+	case <-backend.updateStarted:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("expected heartbeat Update to start")
+	}
+
+	// Release must wait for the in-flight Update to complete.
+	released := make(chan error, 1)
+	go func() { released <- lock.Release() }()
+
+	select {
+	case err := <-released:
+		t.Fatalf("Release returned while Update was still in flight: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	// And must not fire Lost during the wait.
+	select {
+	case <-lock.Lost():
+		t.Fatal("Lost signalled while Release was waiting on in-flight Update")
+	default:
+	}
+
+	close(backend.release)
+
+	select {
+	case err := <-released:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("Release did not return after Update completed")
+	}
+
+	_, err := inner.Read(ctx, "test-lock")
+	require.ErrorIs(t, err, errLockNotFound)
+
+	select {
+	case <-lock.Lost():
+		t.Fatal("Lost signalled after successful Release")
+	default:
+	}
+}
+
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	backend := &failingUpdateBackend{
 		lockBackend:   newFakeBackend(newConditionalBucket()),
@@ -253,6 +313,21 @@ type failingUpdateBackend struct {
 	updateCount   int
 	failAfterN    int
 	updateErrFunc func() error
+}
+
+// slowUpdateBackend blocks the first Update on a release channel, so tests
+// can exercise Release's wait-for-in-flight-Update contract.
+type slowUpdateBackend struct {
+	lockBackend
+	updateStarted chan struct{} // closed when the first Update enters
+	release       chan struct{} // close to let the blocked Update proceed
+	once          sync.Once
+}
+
+func (b *slowUpdateBackend) Update(ctx context.Context, key string, info lockInfo) error {
+	b.once.Do(func() { close(b.updateStarted) })
+	<-b.release
+	return b.lockBackend.Update(ctx, key, info)
 }
 
 func (b *failingUpdateBackend) Update(ctx context.Context, key string, info lockInfo) error {

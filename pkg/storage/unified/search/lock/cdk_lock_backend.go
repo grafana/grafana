@@ -101,11 +101,11 @@ func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) 
 	return err
 }
 
-// conditionalWrite writes with optional conditional (If-Match) semantics.
+// conditionalWrite writes with If-Match semantics via the provider's ops.
 func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data []byte, attrs *blob.Attributes) error {
-	opts := &blob.WriterOptions{ContentType: "application/json"}
-	if b.ops != nil && attrs != nil {
-		opts.BeforeWrite = b.ops.BeforeWrite(attrs)
+	opts := &blob.WriterOptions{
+		ContentType: "application/json",
+		BeforeWrite: b.ops.BeforeWrite(attrs),
 	}
 	err := b.bucket.WriteAll(ctx, key, data, opts)
 	if err != nil {
@@ -154,15 +154,7 @@ func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) e
 		return errLockHeld
 	}
 
-	if b.ops != nil {
-		err = b.ops.Delete(ctx, key, attrs)
-	} else {
-		err = b.bucket.Delete(ctx, key)
-		if err != nil && gcerrors.Code(err) == gcerrors.NotFound {
-			return errLockNotFound
-		}
-	}
-	if err != nil {
+	if err := b.ops.Delete(ctx, key, attrs); err != nil {
 		if errors.Is(err, errPreconditionFailed) || gcerrors.Code(err) == gcerrors.FailedPrecondition {
 			return fmt.Errorf("lock was modified during delete: %w", errLockHeld)
 		}
