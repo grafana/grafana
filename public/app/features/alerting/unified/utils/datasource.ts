@@ -1,8 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -21,8 +19,10 @@ import {
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { PERMISSIONS_TEMPLATES } from '../components/templates/permissions';
 import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/useContactPointAbility';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/useNotificationPolicyAbility';
+import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/useNotificationTemplateAbility';
+import { PERMISSIONS_TIME_INTERVALS } from '../hooks/abilities/useTimeIntervalAbility';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 

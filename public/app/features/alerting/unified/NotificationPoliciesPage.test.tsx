@@ -6,7 +6,7 @@ import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/useNotificationPolicyAbility';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,

@@ -40,8 +40,15 @@ export function useNotificationTemplateAbility(payload: NotificationTemplateAbil
     case NotificationTemplateAction.Update:
     case NotificationTemplateAction.Delete:
     case NotificationTemplateAction.Test: {
-      if (payload.context && isProvisionedResource(payload.context.provenance)) {return Provisioned;}
+      if (payload.context && isProvisionedResource(payload.context.provenance)) {
+        return Provisioned;
+      }
       return makeAbility(true, PERMISSIONS[payload.action]);
     }
   }
 }
+
+/** All permissions that gate template functionality — used by datasource access-control checks. */
+export const PERMISSIONS_TEMPLATES: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
+  (permissions) => permissions
+);
