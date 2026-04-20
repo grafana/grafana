@@ -94,6 +94,7 @@ const setup = (
   const mockEditPane = {
     state: { selection: null },
     clearSelection: jest.fn(),
+    getOnGetBackCallback: () => jest.fn(),
   } as unknown as DashboardEditPane;
 
   switch (layout) {
