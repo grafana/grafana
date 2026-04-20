@@ -1778,7 +1778,7 @@ Valid types:
 
 ```
 prometheus-alertmanager, dingding, discord, email, googlechat, jira, kafka,
-line, mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
+mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
 telegram, threema, victorops, webex, webhook, wechat, wecom
 ```
 
