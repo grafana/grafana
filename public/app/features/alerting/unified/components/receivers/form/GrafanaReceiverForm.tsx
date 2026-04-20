@@ -21,7 +21,6 @@ import {
 
 import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
-import { type NotifierType } from '../../../types/alerting';
 import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { canCreateNotifier, hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
@@ -77,7 +76,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       emailNotifier && canCreateNotifier(emailNotifier) ? emailNotifier : grafanaNotifiers.find(canCreateNotifier);
     return {
       ...baseDefaultChannelValues,
-      type: (defaultNotifier?.type ?? 'email') as NotifierType,
+      type: defaultNotifier?.type ?? 'email',
     };
   }, [grafanaNotifiers]);
 
