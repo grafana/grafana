@@ -224,7 +224,8 @@ func (ng *AlertNG) init() error {
 			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
 		}
 		runtimeConfig := remoteClient.RuntimeConfig{
-			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
+			DispatchTimer:          notifier.GetDispatchTimer(ng.FeatureToggles).String(),
+			NotificationRateLimits: ng.Cfg.UnifiedAlerting.NotificationRateLimits,
 		}
 
 		cfg := remote.AlertmanagerConfig{
