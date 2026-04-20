@@ -33,7 +33,7 @@ refs:
 
 As your alerting grows in production, not every alert works as expected. Sometimes, they fire too often or resolve immediately before anyone responds. You start wondering if the problem is the alert.
 
-When this happens, the instinct is to tune the query or threshold, or maybe just delete it. Sometimes the alert is telling you that you're measuring reliability wrong, and implementing [service level objectives (SLOs)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/) can be the right answer.
+When this happens, your instinct may be to tune the query or threshold, or maybe just delete it. Sometimes the alert is telling you that you're measuring reliability wrong, and implementing [service level objectives (SLOs)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/) could be the right answer.
 
 This guide covers the three most common patterns where SLOs can help reduce alert noise and improve reliability coverage, and how to recognize them in your own setup.
 
