@@ -84,8 +84,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const { fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize);
+  const { fontSize, onClickShowField } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
