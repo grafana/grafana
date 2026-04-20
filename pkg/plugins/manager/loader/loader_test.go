@@ -418,7 +418,7 @@ func TestLoader_Load(t *testing.T) {
 						},
 						Includes: []*plugins.Includes{
 							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: identity.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-							{Name: "Root Page (react)", Type: "page", Role: identity.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+							{Name: "Root Page (react)", Type: "page", Role: identity.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: plugins.AddToNavBool(true), Slug: "root-page-react"},
 						},
 						Extensions: plugins.Extensions{
 							AddedLinks:      []plugins.AddedLink{},

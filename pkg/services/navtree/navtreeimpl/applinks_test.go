@@ -44,14 +44,14 @@ func TestAddAppLinks(t *testing.T) {
 					Name:       "Catalog",
 					Path:       "/a/test-app1/catalog",
 					Type:       "page",
-					AddToNav:   true,
+					AddToNav:   plugins.AddToNavBool(true),
 					DefaultNav: true,
 				},
 				{
 					Name:     "Page2",
 					Path:     "/a/test-app1/page2",
 					Type:     "page",
-					AddToNav: true,
+					AddToNav: plugins.AddToNavBool(true),
 				},
 			},
 		},
@@ -67,7 +67,7 @@ func TestAddAppLinks(t *testing.T) {
 					Name:       "Hello",
 					Path:       "/a/quick-app/catalog",
 					Type:       "page",
-					AddToNav:   true,
+					AddToNav:   plugins.AddToNavBool(true),
 					DefaultNav: true,
 				},
 			},
@@ -84,20 +84,20 @@ func TestAddAppLinks(t *testing.T) {
 					Name:       "Default page",
 					Path:       "/a/test-app3/default",
 					Type:       "page",
-					AddToNav:   true,
+					AddToNav:   plugins.AddToNavBool(true),
 					DefaultNav: true,
 				},
 				{
 					Name:     "Random page",
 					Path:     "/a/test-app3/random-page",
 					Type:     "page",
-					AddToNav: true,
+					AddToNav: plugins.AddToNavBool(true),
 				},
 				{
 					Name:     "Add new connection",
 					Path:     "/connections/add-new-connection",
 					Type:     "page",
-					AddToNav: false,
+					AddToNav: plugins.AddToNavBool(false),
 				},
 			},
 		},
@@ -376,6 +376,235 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestFeatureFlagGatedNavItems(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	appWithFlaggedNav := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "test-flagged-app",
+			Name: "Flagged app",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Always visible",
+					Path:       "/a/test-flagged-app/always",
+					Type:       "page",
+					AddToNav:   plugins.AddToNavBool(true),
+					DefaultNav: true,
+				},
+				{
+					Name:     "Behind flag",
+					Path:     "/a/test-flagged-app/gated",
+					Type:     "page",
+					AddToNav: plugins.AddToNavFeatureFlag("my-test-flag"),
+				},
+				{
+					Name:     "Behind different flag",
+					Path:     "/a/test-flagged-app/other-gated",
+					Type:     "page",
+					AddToNav: plugins.AddToNavFeatureFlag("other-flag"),
+				},
+			},
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		appWithFlaggedNav.ID: {ID: 0, OrgID: 1, PluginID: appWithFlaggedNav.ID, PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	t.Run("Feature-flagged nav items appear when flag is enabled", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures("my-test-flag", "other-flag"),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithFlaggedNav},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-test-flagged-app")
+		require.NotNil(t, appNode)
+		// DefaultNav page is removed from children, leaving the two flag-gated pages
+		require.Len(t, appNode.Children, 2)
+		require.Equal(t, "Behind flag", appNode.Children[0].Text)
+		require.Equal(t, "Behind different flag", appNode.Children[1].Text)
+	})
+
+	t.Run("Feature-flagged nav items hidden when flag is disabled", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures(), // no flags enabled
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithFlaggedNav},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-test-flagged-app")
+		require.NotNil(t, appNode)
+		// Only the DefaultNav page exists (removed from children), flag-gated items hidden
+		require.Len(t, appNode.Children, 0)
+	})
+
+	t.Run("Only the enabled flag's nav item appears", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures("my-test-flag"), // only one flag
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithFlaggedNav},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-test-flagged-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Behind flag", appNode.Children[0].Text)
+	})
+
+	t.Run("DefaultNav with feature flag sets app URL only when flag is enabled", func(t *testing.T) {
+		appWithFlaggedDefault := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test-flagged-default",
+				Name: "Flagged default",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:       "Gated default",
+						Path:       "/a/test-flagged-default/main",
+						Type:       "page",
+						AddToNav:   plugins.AddToNavFeatureFlag("gated-default-flag"),
+						DefaultNav: true,
+					},
+					{
+						Name:     "Fallback",
+						Path:     "/a/test-flagged-default/fallback",
+						Type:     "page",
+						AddToNav: plugins.AddToNavBool(true),
+					},
+				},
+			},
+		}
+
+		flaggedDefaultSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			appWithFlaggedDefault.ID: {ID: 0, OrgID: 1, PluginID: appWithFlaggedDefault.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+
+		// When flag is disabled, DefaultNav URL should NOT be set from the gated include
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &flaggedDefaultSettings,
+			features:       featuremgmt.WithFeatures(), // flag disabled
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithFlaggedDefault},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-test-flagged-default")
+		require.NotNil(t, appNode)
+		// The app URL should be the default /a/{pluginID}, not the gated default page
+		require.Equal(t, "/a/test-flagged-default", appNode.Url)
+
+		// When flag is enabled, DefaultNav URL should be set
+		service.features = featuremgmt.WithFeatures("gated-default-flag")
+		treeRoot = navtree.NavTreeRoot{}
+		err = service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode = treeRoot.FindById("plugin-page-test-flagged-default")
+		require.NotNil(t, appNode)
+		require.Equal(t, "/a/test-flagged-default/main", appNode.Url)
+	})
+
+	t.Run("Dashboard include with feature flag is gated", func(t *testing.T) {
+		appWithFlaggedDashboard := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test-flagged-dashboard",
+				Name: "Flagged dashboard app",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:       "Home",
+						Path:       "/a/test-flagged-dashboard",
+						Type:       "page",
+						AddToNav:   plugins.AddToNavBool(true),
+						DefaultNav: true,
+					},
+					{
+						Name:     "My Dashboard",
+						Type:     "dashboard",
+						UID:      "abc123",
+						AddToNav: plugins.AddToNavFeatureFlag("dashboard-flag"),
+					},
+				},
+			},
+		}
+
+		flaggedDashSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			appWithFlaggedDashboard.ID: {ID: 0, OrgID: 1, PluginID: appWithFlaggedDashboard.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+
+		// Flag disabled — dashboard should not appear
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &flaggedDashSettings,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithFlaggedDashboard},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-test-flagged-dashboard")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 0)
+
+		// Flag enabled — dashboard should appear
+		service.features = featuremgmt.WithFeatures("dashboard-flag")
+		treeRoot = navtree.NavTreeRoot{}
+		err = service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode = treeRoot.FindById("plugin-page-test-flagged-dashboard")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "My Dashboard", appNode.Children[0].Text)
+	})
+}
+
 func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
@@ -428,7 +657,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Name:       "Home",
 					Path:       "/a/test-app1/home",
 					Type:       "page",
-					AddToNav:   true,
+					AddToNav:   plugins.AddToNavBool(true),
 					DefaultNav: true,
 					Role:       identity.RoleViewer,
 				},
@@ -436,7 +665,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Name:     "Catalog",
 					Path:     "/a/test-app1/catalog",
 					Type:     "page",
-					AddToNav: true,
+					AddToNav: plugins.AddToNavBool(true),
 					Role:     identity.RoleEditor,
 					Action:   catalogReadAction,
 				},
@@ -444,7 +673,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Name:     "Announcements",
 					Path:     "/a/test-app1/announcements",
 					Type:     "page",
-					AddToNav: true,
+					AddToNav: plugins.AddToNavBool(true),
 					Role:     identity.RoleViewer,
 					Action:   pluginaccesscontrol.ActionAppAccess,
 				},

@@ -272,8 +272,10 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			if include.Path != "" {
 				v0Include.Path = &include.Path
 			}
-			if include.AddToNav {
-				v0Include.AddToNav = &include.AddToNav
+			if include.AddToNav.Enabled != nil {
+				v0Include.AddToNav = &pluginsv0alpha1.MetaBoolOrString{Bool: include.AddToNav.Enabled}
+			} else if include.AddToNav.FeatureFlag != "" {
+				v0Include.AddToNav = &pluginsv0alpha1.MetaBoolOrString{String: &include.AddToNav.FeatureFlag}
 			}
 			if include.DefaultNav {
 				v0Include.DefaultNav = &include.DefaultNav

@@ -306,8 +306,8 @@
             "description": "Used for app plugins."
           },
           "addToNav": {
-            "type": "boolean",
-            "description": "Add the include to the navigation menu."
+            "oneOf": [{ "type": "boolean" }, { "type": "string" }],
+            "description": "Add the include to the navigation menu. Set to `true` to always include, `false` to never include, or a feature flag name (string) to include only when that flag is enabled. An unrecognised flag name is treated as disabled (the item will not appear)."
           },
           "defaultNav": {
             "type": "boolean",
