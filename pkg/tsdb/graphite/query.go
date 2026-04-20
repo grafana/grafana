@@ -31,12 +31,13 @@ type queryModel struct {
 // maxRenderBodyBytes caps the /render response body we read into memory.
 // Inuse profiling on prod pods under a 20 GiB GOMEMLIMIT showed individual
 // in-flight /render responses retaining 10+ GB of live heap (the io.ReadAll
-// buffer plus the json.Unmarshal slice growth that follows). 64 MiB is
-// well above the 99th-percentile legitimate Graphite payload seen in
-// production and still two orders of magnitude below the pod memory
-// ceiling, so oversized responses fail the one request rather than
-// the whole process.
-const maxRenderBodyBytes = 64 << 20
+// buffer plus the json.Unmarshal slice growth that follows). 200 MiB aligns
+// with the plugin gRPC receive ceiling: anything larger can't traverse the
+// plugin boundary anyway, so the cap only rejects payloads Grafana could
+// not have delivered. Legitimate Graphite responses sit orders of magnitude
+// below this; the cap exists so oversized responses fail the one request
+// rather than the whole pod.
+const maxRenderBodyBytes = 200 << 20
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
