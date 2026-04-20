@@ -368,11 +368,14 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
       await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
     }
 
-    await addSqlExpression();
-    await page.locator('.monaco-editor textarea').first().fill('SELECT 1 FROM A');
+    const fillActiveSqlEditor = (text: string) =>
+      page.getByTestId('sql-expression-editor').locator('.monaco-editor textarea').fill(text);
 
     await addSqlExpression();
-    await page.locator('.monaco-editor textarea').first().fill('SELECT 2 FROM A');
+    await fillActiveSqlEditor('SELECT 1 FROM A');
+
+    await addSqlExpression();
+    await fillActiveSqlEditor('SELECT 2 FROM A');
 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
     const cardC = page.locator('[data-query-sidebar-card="C"]');
