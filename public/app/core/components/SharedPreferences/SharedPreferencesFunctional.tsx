@@ -101,7 +101,12 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     }
 
     const prefsData = state;
-    await updatePreferences(prefsData);
+    try {
+      await updatePreferences(prefsData);
+    } catch {
+      // error is surfaced via isUpdateError — just prevent the reload below
+      return;
+    }
 
     window.location.reload();
   };
