@@ -38,6 +38,7 @@ posts:
       - whats-new/2026-04-01-query-experience-next.md
   - title: AI
     items:
+      - whats-new/2026-04-20-grafana-assistant-becomes-available-on-prem.md
       - whats-new/2026-04-03-sql-expressions-support-in-grafana-assistant.md
   - title: Data sources
     items:
