@@ -96,10 +96,9 @@ describe('drawMarkers', () => {
           ['clipping region', (u) => u.ctx.__getClippingRegion()],
         ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
           const u = await getPlot(dataOverrides, seriesOverrides);
-          const canvasEvents = setup(u);
           expect(() => getDraw(drawOverrides)(u)).not.toThrow();
           if (testName === 'clipping region') {
-            expect(canvasEvents).toEqual([]);
+            expect(setup(u)).toEqual([]);
           } else {
             expect(scrubOutput(setup(u))).toMatchSnapshot();
           }
@@ -144,10 +143,9 @@ describe('drawMarkers', () => {
       ['clipping region', (u) => u.ctx.__getClippingRegion()],
     ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
-      const canvasEvents = setup(u);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       if (testName === 'clipping region') {
-        expect(canvasEvents).toEqual([]);
+        expect(setup(u)).toEqual([]);
       } else {
         expect(scrubOutput(setup(u))).toMatchSnapshot();
       }
@@ -192,10 +190,9 @@ describe('drawMarkers', () => {
       ['clipping region', (u) => u.ctx.__getClippingRegion()],
     ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
-      const canvasEvents = setup(u);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       if (testName === 'clipping region') {
-        expect(canvasEvents).toEqual([]);
+        expect(setup(u)).toEqual([]);
       } else {
         expect(scrubOutput(setup(u))).toMatchSnapshot();
       }
