@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "データソースが見つかりません"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15333,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "破線",
         "label-dots": "点線",
         "label-solid": "実線"

@@ -90,6 +90,13 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		repositoryResources.SetTree(tree)
 	}
 
+	// Temporarily raise the quota limit for net-zero folder replacements so
+	// TryAcquire succeeds when creating the new folder before the old one is
+	// deleted in the cleanup phase.
+	if len(replaced) > 0 {
+		quotaTracker.AllowOverLimit(len(replaced))
+	}
+
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
