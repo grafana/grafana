@@ -517,3 +517,75 @@ func TestIntegrationServerBatchCheck_SubBatching(t *testing.T) {
 		assert.True(t, res.GetResults()["f3-b"].GetAllowed())
 	})
 }
+
+func TestIntegrationServerBatchCheck_FolderCheckListPath(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	// Force ListObjects resolution for folder phases (threshold applies to unique folder checks).
+	server.cfg.FolderCheckBatchThreshold = 1
+
+	newBatchReq := func(subject string, items []*authzv1.BatchCheckItem) *authzv1.BatchCheckRequest {
+		return &authzv1.BatchCheckRequest{
+			Namespace: namespace,
+			Subject:   subject,
+			Checks:    items,
+		}
+	}
+
+	newItem := func(correlationID, verb, group, resource, subresource, folder, name string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: correlationID,
+			Verb:          verb,
+			Group:         group,
+			Resource:      resource,
+			Subresource:   subresource,
+			Name:          name,
+			Folder:        folder,
+		}
+	}
+
+	t.Run("phase 2: folder permission via list path matches batch path", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "3", "2"),
+			newItem("check3", utils.VerbGet, dashboardGroup, dashboardResource, "", "2", "3"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:4", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.False(t, res.GetResults()["check3"].GetAllowed())
+	})
+
+	t.Run("phase 2: inherited folder hierarchy via list path", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "10"),
+			newItem("check2", utils.VerbGet, dashboardGroup, dashboardResource, "", "5", "11"),
+			newItem("check3", utils.VerbGet, folderGroup, folderResource, "", "4", "12"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:8", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.False(t, res.GetResults()["check3"].GetAllowed())
+	})
+
+	t.Run("phase 3: folder subresource set_edit via list path", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "100"),
+			newItem("check2", utils.VerbUpdate, dashboardGroup, dashboardResource, "", "1", "100"),
+			newItem("check3", utils.VerbGet, dashboardGroup, dashboardResource, "", "2", "200"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:5", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+		assert.True(t, res.GetResults()["check2"].GetAllowed())
+		assert.False(t, res.GetResults()["check3"].GetAllowed())
+	})
+}
