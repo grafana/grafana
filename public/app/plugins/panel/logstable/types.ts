@@ -1,3 +1,5 @@
+import { CoreApp } from '@grafana/data';
+
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
 import type { Options as LogsTableOptions } from './panelcfg.gen';
@@ -16,4 +18,8 @@ export function isBuildLinkToLogLine(callback: unknown): callback is BuildLinkTo
 
 export function isIsLabelFilterActive(callback: unknown): callback is LabelFilterActiveType {
   return typeof callback === 'function';
+}
+
+export function isCoreApp(app: unknown): app is CoreApp {
+  return typeof app === 'string' && app in CoreApp;
 }

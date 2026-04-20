@@ -20,7 +20,7 @@ import { LogListContextProvider } from 'app/features/logs/components/panel/LogLi
 import { useLogDetailsContext } from './LogDetailsContext';
 import { SETTING_KEY_ROOT } from './constants';
 import { type Options } from './options/types';
-import { isIsLabelFilterActive } from './types';
+import { isCoreApp, isIsLabelFilterActive } from './types';
 
 interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
   options: Options;
@@ -134,7 +134,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
             </TabsBar>
           )}
           <LogListContextProvider
-            app={app ?? CoreApp.Unknown}
+            app={isCoreApp(app) ? app : CoreApp.Unknown}
             isLabelFilterActive={
               isIsLabelFilterActive(options.isLabelFilterActive) ? options.isLabelFilterActive : undefined
             }
