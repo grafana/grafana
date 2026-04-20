@@ -189,7 +189,8 @@ func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request, evalCtx evalCon
 		attribute.String("eval_ctx_namespace", evalCtx.namespace),
 	)
 
-	valid := evalCtx.namespace == authNamespace
+	// Wildcard auth namespace grants cluster-wide access — valid for any specific namespace.
+	valid := evalCtx.namespace == authNamespace || authNamespace == "*"
 	span.SetAttributes(attribute.Bool("validation.success", valid))
 	return authNamespace, valid
 }

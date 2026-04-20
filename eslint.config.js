@@ -1,4 +1,5 @@
-// @ts-check
+// TODO: Migrate to Typescript.
+// @ts-nocheck
 const emotionPlugin = require('@emotion/eslint-plugin');
 const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
@@ -170,6 +171,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      '@grafana/no-direct-date-fns': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options

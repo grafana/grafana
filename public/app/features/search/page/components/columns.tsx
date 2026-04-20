@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {

@@ -84,6 +84,12 @@ func TestPreferencesQueries(t *testing.T) {
 						q.TeamUID = "ttt"
 					}),
 				},
+				{
+					Name: "namespace",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.Namespace = true
+					}),
+				},
 			},
 			sqlPreferencesRV: {
 				{
