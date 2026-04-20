@@ -100,7 +100,7 @@ describe('drawMarkers', () => {
           if (testName === 'clipping region') {
             expect(setup(u)).toEqual([]);
           } else {
-            expect(scrubOutput(setup(u))).toMatchSnapshot();
+            expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
           }
         });
       }
@@ -147,7 +147,7 @@ describe('drawMarkers', () => {
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchSnapshot();
+        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
       }
     });
   });
@@ -191,7 +191,7 @@ describe('drawMarkers', () => {
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchSnapshot();
+        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
       }
     });
   });

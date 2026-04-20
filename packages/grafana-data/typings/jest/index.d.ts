@@ -12,6 +12,7 @@ declare global {
        * test fails.
        */
       toEmitValuesWith<E = ObservableType<T>>(expectations: (received: E[]) => void): Promise<CustomMatcherResult>;
+      toMatchCanvasSnapshot(hint?: string): CustomMatcherResult;
     }
   }
 }

@@ -1,5 +1,7 @@
 import { type Observable } from 'rxjs';
 
+import { type ToMatchSnapshotRest } from './toMatchCanvasSnapshot';
+
 export const OBSERVABLE_TEST_TIMEOUT_IN_MS = 1000;
 
 export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
@@ -8,6 +10,7 @@ export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
     received: Observable<T>,
     expectations: (received: T[]) => void
   ): Promise<jest.CustomMatcherResult>;
+  toMatchCanvasSnapshot(received: unknown, ...rest: ToMatchSnapshotRest): Promise<jest.CustomMatcherResult>;
 }
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;

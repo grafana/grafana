@@ -766,7 +766,483 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
 ]
 `;
 
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw: hintty boi 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": -167,
+            "y": 335,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 50,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 320,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+]
+`;
+
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw: hintyboi 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": -167,
+            "y": 335,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 50,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 320,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+]
+`;
+
 exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": -167,
+            "y": 335,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 50,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 320,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": -167,
+            "y": 335,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 50,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 320,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events: hintyboi 1`] = `
 [
   {
     "props": {},
@@ -955,7 +1431,265 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path 1`] = `
 ]
 `;
 
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
+exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path: hintyboi 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
 exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 278,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 431,
+            "x": -165,
+            "y": 307,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 57,
+            "width": 431,
+            "x": 560,
+            "y": 261,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: CloseClose draw: hintty boi 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 431,
+            "x": -165,
+            "y": 307,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 57,
+            "width": 431,
+            "x": 560,
+            "y": 261,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: CloseClose draw: hintyboi 1`] = `
 [
   {
     "props": {
@@ -1197,6 +1931,310 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
 ]
 `;
 
+exports[`drawMarkers options Color strategy: CloseClose events: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 431,
+            "x": -165,
+            "y": 307,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 57,
+            "width": 431,
+            "x": 560,
+            "y": 261,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: CloseClose events: hintyboi 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 26,
+            "width": 431,
+            "x": -165,
+            "y": 307,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 57,
+            "width": 431,
+            "x": 560,
+            "y": 261,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
 [
   {
@@ -1236,7 +2274,225 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
 ]
 `;
 
+exports[`drawMarkers options Color strategy: CloseClose path: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: CloseClose path: hintyboi 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
 exports[`drawMarkers options Color strategy: OpenClose draw 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: OpenClose draw: hintty boi 1`] = `
+[
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: OpenClose draw: hintyboi 1`] = `
 [
   {
     "props": {
@@ -1438,7 +2694,349 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
 ]
 `;
 
+exports[`drawMarkers options Color strategy: OpenClose events: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: OpenClose events: hintyboi 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 139,
+            "width": 2,
+            "x": 49,
+            "y": 199,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 30,
+            "width": 435,
+            "x": -167,
+            "y": 305,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 279,
+            "width": 2,
+            "x": 774,
+            "y": 47,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 61,
+            "width": 435,
+            "x": 558,
+            "y": 259,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`drawMarkers options Color strategy: OpenClose path 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: OpenClose path: hintty boi 1`] = `
+[
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+]
+`;
+
+exports[`drawMarkers options Color strategy: OpenClose path: hintyboi 1`] = `
 [
   {
     "props": {},
