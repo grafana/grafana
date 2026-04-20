@@ -996,7 +996,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		// Fetch the latest RV
 		latestRV := k.snowflake.Generate().Int64()
 		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
-			latestRV = lastEventKey.ResourceVersion
+			latestRV = toSnowflakeRV(lastEventKey.ResourceVersion)
 		} else if !errors.Is(err, ErrNotFound) {
 			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
@@ -1093,7 +1093,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	// If no events exist yet, we generate a new snowflake.
 	listRV := k.snowflake.Generate().Int64()
 	if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
-		listRV = lastEventKey.ResourceVersion
+		listRV = toSnowflakeRV(lastEventKey.ResourceVersion)
 	} else if !errors.Is(err, ErrNotFound) {
 		return 0, fmt.Errorf("failed to fetch last event: %w", err)
 	}
