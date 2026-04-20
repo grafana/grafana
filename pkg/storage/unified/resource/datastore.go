@@ -860,7 +860,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	// In compatibility mode, the previous RV, when available, is saved as a microsecond
 	// timestamp, as is done in the SQL backend.
 	previousRV := event.PreviousRV
-	if event.PreviousRV > 0 && isSnowflake(event.PreviousRV) {
+	if event.PreviousRV > 0 && IsSnowflake(event.PreviousRV) {
 		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
 	}
 
@@ -1030,9 +1030,9 @@ func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db
 	return nil
 }
 
-// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// IsSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
 // Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
 // to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
-func isSnowflake(rv int64) bool {
+func IsSnowflake(rv int64) bool {
 	return rv >= 1e18
 }
