@@ -1702,11 +1702,6 @@ export interface FeatureToggles {
   */
   profilesHeatmap?: boolean;
   /**
-  * Enables the query service to do query caching
-  * @default false
-  */
-  queryServiceQueryCaching?: boolean;
-  /**
   * Enables the time seeker in traces drilldown
   * @default false
   */
