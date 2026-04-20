@@ -207,7 +207,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			sql.WriteString(` and team.name = ?`)
+			sql.WriteString(` and LOWER(team.name) = LOWER(?)`)
 			params = append(params, query.Name)
 		}
 
@@ -263,7 +263,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		if query.Name != "" {
-			countSess.Where("name=?", query.Name)
+			countSess.Where("LOWER(name) = LOWER(?)", query.Name)
 		}
 
 		// Only count teams user can see

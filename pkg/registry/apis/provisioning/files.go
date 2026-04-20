@@ -33,15 +33,17 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
+	folderAPIVersion      string
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
+		folderAPIVersion:      folderAPIVersion,
 	}
 }
 
@@ -168,12 +170,12 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder(ctx)
+	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), nil
 }
@@ -291,6 +293,9 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	if isDir {
+		if c.folderMetadataEnabled {
+			return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
+		}
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
@@ -305,6 +310,15 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, err
 	}
 	return resource.AsResourceWrapper(), nil
+}
+
+func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+	data, err := readBody(r, filesMaxBodySize)
+	if err != nil {
+		return nil, err
+	}
+	opts.Data = data
+	return dualReadWriter.UpdateFolderMetadata(ctx, opts)
 }
 
 func (c *filesConnector) handleDelete(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {

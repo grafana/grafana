@@ -11,7 +11,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution verifies that
@@ -21,17 +20,15 @@ import (
 // The observable proof is that a pull job does NOT delete a Grafana dashboard even
 // though the backing file has been removed from disk – something a real pull would do.
 func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const repoName = "pending-delete-skip-job"
 
 	// Create a local repository with one dashboard and run the initial sync so
 	// the resource is present in Grafana.
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repoName,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1, // folder sync creates a root folder for the repository
 		Copies: map[string]string{

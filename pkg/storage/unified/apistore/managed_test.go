@@ -13,7 +13,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -22,6 +22,8 @@ import (
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
+	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
+	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 
@@ -52,7 +54,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not create provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "this resource is managed by a repository",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
@@ -65,7 +67,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not update provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "Can not remove resource manager from resource",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 1,
@@ -187,6 +189,96 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			name: "terraform: legacy (User-Agent) → new (simple ID) allowed (migration)",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → new (different simple ID) blocked",
+			auth: user,
+			err:  "Cannot change Terraform manager ID; stable custom IDs are immutable",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: legacy (User-Agent) → legacy (different User-Agent) allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
+			auth: user,
+			err:  "Cannot change Terraform manager ID back to User-Agent format",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
+					},
+				},
+			},
+		},
+		{
 			name: "audience includes provisioning group",
 			auth: &serviceauthn.Identity{
 				Type: authtypes.TypeAccessPolicy,
@@ -201,6 +293,83 @@ func TestManagedAuthorizer(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo),
+					},
+				},
+			},
+		},
+		{
+			name: "server admin can release repo-managed dashboard",
+			auth: serverAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "server admin can release repo-managed folder",
+			auth: serverAdmin,
+			obj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(1),
+					},
+				},
+			},
+			old: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(2),
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "org admin can release repo-managed dashboard",
+			auth: orgAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "non-admin user cannot release repo-managed resource",
+			auth: user,
+			err:  "Can not remove resource manager from resource",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
 					},
 				},
 			},
@@ -220,7 +389,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			}
 
 			if tt.err != "" {
-				require.Error(t, err, tt.err)
+				require.ErrorContains(t, err, tt.err)
 			} else {
 				require.NoError(t, err)
 			}

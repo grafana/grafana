@@ -1,4 +1,4 @@
-import { DecimalCount, TimeZone } from '@grafana/data';
+import { type DecimalCount, type TimeZone } from '@grafana/data';
 
 import kbn from './kbn';
 

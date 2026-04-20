@@ -1,4 +1,4 @@
-import { UseFieldArrayRemove } from 'react-hook-form';
+import { type UseFieldArrayRemove } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';

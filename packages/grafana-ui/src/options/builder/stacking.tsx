@@ -1,12 +1,12 @@
 import {
-  FieldConfigEditorBuilder,
-  StandardEditorProps,
+  type FieldConfigEditorBuilder,
+  type StandardEditorProps,
   FieldType,
   identityOverrideProcessor,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
+import { type GraphFieldConfig, type StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';

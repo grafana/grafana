@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 
-import { AzureMonitorResource } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import { type AzureMonitorResource } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorErrorish, type AzureMonitorOption } from '../../types/types';
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
 
@@ -179,19 +179,27 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
   useEffect(() => {
     const newAggregation = aggregation || metricMetadata.primaryAggType;
     const newTimeGrain = timeGrain || 'auto';
+    const newAllowedTimeGrainsMs = metricMetadata.timeGrains
+      .filter((timeGrain) => timeGrain.value !== 'auto')
+      .map((timeGrain) => rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value)));
 
-    if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {
+    const currentAllowedTimeGrainsMs = query.azureMonitor?.allowedTimeGrainsMs ?? [];
+    // Only consider the time grains changed when we have actual metadata with non-empty time grains.
+    // An empty list means either metadata hasn't loaded yet or the metric has no grains reported —
+    // in either case we should not overwrite existing allowedTimeGrainsMs.
+    const allowedTimeGrainsChanged =
+      newAllowedTimeGrainsMs.length > 0 &&
+      (newAllowedTimeGrainsMs.length !== currentAllowedTimeGrainsMs.length ||
+        newAllowedTimeGrainsMs.some((v, i) => v !== currentAllowedTimeGrainsMs[i]));
+
+    if (newAggregation !== aggregation || newTimeGrain !== timeGrain || allowedTimeGrainsChanged) {
       onChange({
         ...query,
         azureMonitor: {
           ...query.azureMonitor,
           aggregation: newAggregation,
           timeGrain: newTimeGrain,
-          allowedTimeGrainsMs: metricMetadata.timeGrains
-            .filter((timeGrain) => timeGrain.value !== 'auto')
-            .map((timeGrain) =>
-              rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
-            ),
+          allowedTimeGrainsMs: newAllowedTimeGrainsMs,
         },
       });
     }

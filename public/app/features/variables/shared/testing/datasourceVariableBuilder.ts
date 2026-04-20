@@ -1,4 +1,4 @@
-import { DataSourceVariableModel, QueryVariableModel, VariableRefresh } from '@grafana/data';
+import { type DataSourceVariableModel, type QueryVariableModel, type VariableRefresh } from '@grafana/data';
 
 import { MultiVariableBuilder } from './multiVariableBuilder';
 

@@ -45,7 +45,11 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 		// Strip BOMs from all string values in the parsed JSON
-		value = util.StripBOMFromInterface(value).(map[string]any)
+		stripped, ok := util.StripBOMFromInterface(value).(map[string]any)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("unexpected type after BOM stripping")
+		}
+		value = stripped
 	} else {
 		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
@@ -60,11 +64,19 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 		logging.FromContext(ctx).Debug("TODO... likely a provisioning",
 			"apiVersion", value["apiVersion"],
 			"kind", value["Kind"])
-		gv, err := schema.ParseGroupVersion(value["apiVersion"].(string))
+		apiVersion, ok := value["apiVersion"].(string)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("invalid apiVersion: not a string")
+		}
+		gv, err := schema.ParseGroupVersion(apiVersion)
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("invalid apiVersion")
 		}
-		gvk := gv.WithKind(value["Kind"].(string))
+		kind, ok := value["Kind"].(string)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("invalid Kind: not a string")
+		}
+		gvk := gv.WithKind(kind)
 		return &unstructured.Unstructured{Object: value}, &gvk, "", nil
 	}
 
@@ -138,7 +150,11 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	val, ok := obj.(*unstructured.Unstructured)
 	if ok {
 		// Strip BOMs from all string values in the parsed object
-		val.Object = util.StripBOMFromInterface(val.Object).(map[string]any)
+		strippedObj, ok := util.StripBOMFromInterface(val.Object).(map[string]any)
+		if !ok {
+			return nil, gvk, fmt.Errorf("unexpected type after BOM stripping")
+		}
+		val.Object = strippedObj
 		return val, gvk, err
 	}
 
@@ -147,6 +163,10 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 		return nil, gvk, err
 	}
 	// Strip BOMs from all string values in the converted object
-	unstructuredMap = util.StripBOMFromInterface(unstructuredMap).(map[string]any)
+	strippedMap, ok := util.StripBOMFromInterface(unstructuredMap).(map[string]any)
+	if !ok {
+		return nil, gvk, fmt.Errorf("unexpected type after BOM stripping")
+	}
+	unstructuredMap = strippedMap
 	return &unstructured.Unstructured{Object: unstructuredMap}, gvk, err
 }

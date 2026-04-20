@@ -15,22 +15,18 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("out of limit repo works fine with deletions", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -38,7 +34,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify both dashboards were created with no quota restriction
@@ -67,23 +63,22 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 5
-		})
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 5})
 
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
@@ -114,14 +109,14 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("on the limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -129,7 +124,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 2 dashboards were created with no quota restriction
@@ -146,7 +141,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify the repo is over quota using the quotas package
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		typedRepo := common.UnstructuredToRepository(t, repoObj)
+		typedRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
@@ -175,26 +170,25 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			// Allow 3 total resources: 1 folder + 2 dashboards
-			opts.ProvisioningMaxResourcesPerRepository = 3
-		})
+		// Allow 3 total resources: 1 folder + 2 dashboards
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 
 		const repo = "quota-partial-sync-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
 		// Step 1: Create a repo with 1 dashboard (2 resources total: 1 root folder + 1 dashboard)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -261,19 +255,18 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
-			opts.ProvisioningMaxResourcesPerRepository = 6
-		})
+		// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 6})
 
 		const repo = "quota-nested-folders-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
 		// Total: 5 resources → 5/6, within quota.
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"../testdata/text-options.json": "subfolder/nested/dashboard2.json",
@@ -281,7 +274,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -382,14 +375,14 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("out of limit repo allows delete-only sync", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",
@@ -398,7 +391,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction
@@ -430,14 +423,14 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("out of limit repo allows delete-only sync when result is still over quota", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",
@@ -446,7 +439,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction

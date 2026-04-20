@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useController, useFormContext } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { type Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { RuleFormValues } from '../../../types/rule-form';
+import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
 import { trackNotificationPolicySelectorChanged } from '../../notification-policies/notificationPolicyAnalytics';
 import {
@@ -35,17 +36,28 @@ function isDefaultPolicy(policy: Route): boolean {
  * - A "Reset to default" button allows quickly returning to the default policy
  */
 export function PolicyTreeSelector() {
-  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
+  const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
+
+  const { watch, setValue, getValues, control } = useFormContext<RuleFormValues>();
 
   const labels = watch('labels');
 
+  const { field: selectedPolicyField } = useController({
+    name: 'selectedPolicy',
+    control,
+    defaultValue: '',
+  });
+
   const { currentData: policies, isLoading, error } = useListNotificationPolicyRoutes();
 
-  // Get current value from labels
+  // Get current value: from selectedPolicy field (new) or from labels (old)
   const currentPolicyValue = useMemo(() => {
+    if (usePolicyRoutingSettings) {
+      return selectedPolicyField.value ?? '';
+    }
     const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
     return existingLabel?.value ?? '';
-  }, [labels]);
+  }, [usePolicyRoutingSettings, selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
 
@@ -96,8 +108,11 @@ export function PolicyTreeSelector() {
     return options;
   }, [policies]);
 
-  // Validate that existing label value is still valid when policies load
+  // Validate that existing label value is still valid when policies load (legacy label path only)
   useEffect(() => {
+    if (usePolicyRoutingSettings) {
+      return;
+    }
     if (isLoading || !policies || policies.length === 0) {
       return;
     }
@@ -121,10 +136,15 @@ export function PolicyTreeSelector() {
       const newLabels = labels.filter((label) => label.key !== NAMED_ROOT_LABEL_NAME);
       setValue('labels', newLabels);
     }
-  }, [isLoading, policies, labels, setValue]);
+  }, [usePolicyRoutingSettings, isLoading, policies, labels, setValue]);
 
-  const updatePolicyLabel = useCallback(
+  const updatePolicyValue = useCallback(
     (newValue: string) => {
+      if (usePolicyRoutingSettings) {
+        selectedPolicyField.onChange(newValue || undefined);
+        return;
+      }
+
       const currentLabels = getValues('labels');
       const existingLabelIndex = currentLabels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
 
@@ -146,7 +166,7 @@ export function PolicyTreeSelector() {
 
       setValue('labels', newLabels);
     },
-    [getValues, setValue]
+    [usePolicyRoutingSettings, selectedPolicyField, getValues, setValue]
   );
 
   const handlePolicyChange = (option: SelectableValue<string>) => {
@@ -157,7 +177,7 @@ export function PolicyTreeSelector() {
       toDefault: newValue === '',
     });
 
-    updatePolicyLabel(newValue);
+    updatePolicyValue(newValue);
 
     if (newValue === '') {
       setIsExpanded(false);
@@ -166,7 +186,7 @@ export function PolicyTreeSelector() {
 
   const handleResetToDefault = () => {
     trackNotificationPolicySelectorChanged({ fromDefault: false, toDefault: true });
-    updatePolicyLabel('');
+    updatePolicyValue('');
     setIsExpanded(false);
   };
 

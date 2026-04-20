@@ -1,6 +1,6 @@
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { Button, IconName, LinkButton, Tooltip } from '@grafana/ui';
+import { Button, type IconName, LinkButton, type Tooltip } from '@grafana/ui';
 
 type TooltipProps = ComponentProps<typeof Tooltip>;
 

@@ -1,8 +1,8 @@
-import { DataQueryRequest, DataQueryResponse, dateMath, FieldType } from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { CloudWatchQuery } from '../types';
+import { type CloudWatchQuery } from '../types';
 
 import { addDataLinksToLogsResponse } from './datalinks';
 

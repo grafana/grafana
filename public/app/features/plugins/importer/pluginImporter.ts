@@ -1,26 +1,26 @@
 import {
   AppPlugin,
-  AppPluginMeta,
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
+  type AppPluginMeta,
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataSourcePlugin,
-  DataSourcePluginMeta,
-  PanelPlugin,
-  PanelPluginMeta,
+  type DataSourcePluginMeta,
+  type PanelPlugin,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GenericDataSourcePlugin } from 'app/features/datasources/types';
+import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
 import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
-import { PluginImporter, PostImportStrategy, PreImportStrategy } from './types';
+import { type PluginImporter, type PostImportStrategy, type PreImportStrategy } from './types';
 
 const defaultPreImport: PreImportStrategy = (plugin) => {
   throwIfAngular(plugin);

@@ -1,15 +1,15 @@
 import { gte, compare, valid } from 'semver';
 
 import {
-  FunctionSelector,
-  Selectors,
-  SelectorsOf,
-  StringSelector,
-  VersionedSelectorGroup,
-  VersionedSelectors,
-  CssSelector,
-  UrlSelector,
-  FunctionSelectorTwoArgs,
+  type FunctionSelector,
+  type Selectors,
+  type SelectorsOf,
+  type StringSelector,
+  type VersionedSelectorGroup,
+  type VersionedSelectors,
+  type CssSelector,
+  type UrlSelector,
+  type FunctionSelectorTwoArgs,
 } from './types';
 
 /**

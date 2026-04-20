@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent, useRef, type ChangeEvent } from 'react';
 
-import { colorManipulator, GrafanaTheme2, LogRowModel, store } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineDetailsMode } from './LogLineDetails';
+import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface Props {
   focusLogLine?: (log: LogListModel) => void;
