@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"iter"
+	"sync"
 	"time"
 
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -36,7 +38,9 @@ type PendingDeleteRecord struct {
 // an in-memory cache of which tenants have records so that the common-path
 // "tenant is not pending delete" check is a map lookup with no I/O.
 type PendingDeleteStore struct {
-	kv          KV
+	kv KV
+	mu sync.Mutex
+	// cachedSet and cacheExpiry are guarded by mu.
 	cachedSet   map[string]struct{}
 	cacheExpiry time.Time
 }
@@ -48,9 +52,12 @@ func newPendingDeleteStore(kv KV) *PendingDeleteStore {
 // RefreshCache reloads the set of pending-delete tenant names from the KV
 // store if the cache has expired.
 func (s *PendingDeleteStore) RefreshCache(ctx context.Context) {
+	s.mu.Lock()
 	if time.Now().Before(s.cacheExpiry) {
+		s.mu.Unlock()
 		return
 	}
+	s.mu.Unlock()
 
 	set := make(map[string]struct{})
 	for key, err := range s.kv.Keys(ctx, pendingDeleteSection, ListOptions{}) {
@@ -60,15 +67,26 @@ func (s *PendingDeleteStore) RefreshCache(ctx context.Context) {
 		set[key] = struct{}{}
 	}
 
+	s.mu.Lock()
 	s.cachedSet = set
 	s.cacheExpiry = time.Now().Add(pendingDeleteCacheTTL)
+	s.mu.Unlock()
 }
 
 // Has returns whether a tenant has a pending-delete record according to the
 // in-memory cache.
 func (s *PendingDeleteStore) Has(name string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_, ok := s.cachedSet[name]
 	return ok
+}
+
+// Names streams tenant names that currently have pending-delete records,
+// reading directly from the KV store (bypassing the in-memory cache). Used by
+// startup reconciliation to get a fresh view without depending on cache state.
+func (s *PendingDeleteStore) Names(ctx context.Context) iter.Seq2[string, error] {
+	return s.kv.Keys(ctx, pendingDeleteSection, ListOptions{})
 }
 
 // Get retrieves the PendingDeleteRecord for a tenant. Returns ErrNotFound if
@@ -106,10 +124,12 @@ func (s *PendingDeleteStore) Upsert(ctx context.Context, name string, record Pen
 		return fmt.Errorf("closing writer: %w", err)
 	}
 
+	s.mu.Lock()
 	if s.cachedSet == nil {
 		s.cachedSet = make(map[string]struct{})
 	}
 	s.cachedSet[name] = struct{}{}
+	s.mu.Unlock()
 
 	return nil
 }
@@ -121,7 +141,9 @@ func (s *PendingDeleteStore) Delete(ctx context.Context, name string) error {
 		return err
 	}
 
+	s.mu.Lock()
 	delete(s.cachedSet, name)
+	s.mu.Unlock()
 
 	return nil
 }

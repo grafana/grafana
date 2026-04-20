@@ -13,6 +13,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -204,7 +205,13 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		retryMaxDelay:      retryMaxDelay,
 	}
 
-	tw.factory = dynamicinformer.NewDynamicSharedInformerFactory(client, resync)
+	// Only watch tenants currently labeled pending-delete. At prod scale the full
+	// tenant set is too large to cache as unstructured objects; filtering server-side
+	// keeps the informer working set bounded to the pending-delete cohort.
+	tweakFn := func(opts *metav1.ListOptions) {
+		opts.LabelSelector = labelPendingDelete + "=true"
+	}
+	tw.factory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, resync, metav1.NamespaceAll, tweakFn)
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
 	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -214,15 +221,86 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		UpdateFunc: func(_, newObj interface{}) {
 			tw.handleTenant(newObj.(*unstructured.Unstructured))
 		},
+		// With a label selector, a tenant losing the pending-delete label appears as
+		// a delete event — that's when we want to clear our pending-delete state.
+		DeleteFunc: func(obj interface{}) {
+			var tenant *unstructured.Unstructured
+			switch x := obj.(type) {
+			case *unstructured.Unstructured:
+				tenant = x
+			case cache.DeletedFinalStateUnknown:
+				tenant, _ = x.Obj.(*unstructured.Unstructured)
+			}
+			if tenant == nil {
+				return
+			}
+			tw.clearTenantPendingDelete(tenant.GetName())
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	tw.factory.Start(tw.stopCh)
+
+	// Catch tenants whose pending-delete label was cleared while the pod was
+	// down: the label-selected LIST won't include them, so they never generate
+	// a delete event. After the informer syncs, diff its cache against the KV
+	// store and clear anything that's no longer live.
+	go tw.reconcileStaleRecordsOnStartup(informer)
+
 	logger.Info("tenant watcher started")
 
 	return tw, nil
+}
+
+// reconcileStaleRecordsOnStartup clears pending-delete records whose tenants
+// are not in the informer's synced cache. This closes the gap introduced by
+// the label-selected informer, which cannot observe label-removal transitions
+// that happened while the pod was offline.
+func (tw *TenantWatcher) reconcileStaleRecordsOnStartup(informer cache.SharedIndexInformer) {
+	if !cache.WaitForCacheSync(tw.stopCh, informer.HasSynced) {
+		tw.log.Warn("informer cache did not sync before stop; skipping startup reconciliation")
+		return
+	}
+
+	liveNames := make(map[string]struct{})
+	for _, obj := range informer.GetIndexer().List() {
+		u, ok := obj.(*unstructured.Unstructured)
+		if !ok {
+			continue
+		}
+		liveNames[u.GetName()] = struct{}{}
+	}
+
+	tw.reconcileStaleRecords(liveNames)
+}
+
+// reconcileStaleRecords iterates the pending-delete KV store and calls
+// clearTenantPendingDelete for any record whose tenant is not in liveNames.
+// Split out from reconcileStaleRecordsOnStartup for testing without a real
+// informer.
+func (tw *TenantWatcher) reconcileStaleRecords(liveNames map[string]struct{}) {
+	var stale []string
+	for name, err := range tw.pendingDeleteStore.Names(tw.ctx) {
+		if err != nil {
+			tw.log.Error("startup reconciliation: failed to list pending-delete records", "error", err)
+			return
+		}
+		if _, live := liveNames[name]; !live {
+			stale = append(stale, name)
+		}
+	}
+
+	if len(stale) == 0 {
+		tw.log.Info("startup reconciliation complete", "stale_records", 0, "live_tenants", len(liveNames))
+		return
+	}
+
+	tw.log.Info("startup reconciliation clearing stale records", "stale_records", len(stale), "live_tenants", len(liveNames))
+	for _, name := range stale {
+		tw.clearTenantPendingDelete(name)
+	}
 }
 
 // Stop stops the tenant watcher and waits for the informer goroutines to exit.
