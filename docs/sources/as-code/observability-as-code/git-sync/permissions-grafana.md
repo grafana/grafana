@@ -56,7 +56,7 @@ For Git Sync you need to configure permissions at two layers to function correct
 
 ## Grafana role-based permissions
 
-Git Sync integrates with Grafana's standard role-based permission model, which has three levels:
+Git Sync integrates with the Grafana standard role-based permission model, which has three levels:
 
 1. **Organization-level:** Default permissions of the `Admin`, `Editor`, or `Viewer` role. Refer to [Roles and permissions](ref:roles-and-permission) for more details.
 2. **Folder-level:** They also apply to all dashboards within it. Refer to [Folder permissions](ref:manage-folder-permissions) for more details.
@@ -68,15 +68,15 @@ Dashboard-level permissions override folder-level permissions, which override or
 
 {{< /admonition >}}
 
-Key points for Git Sync:
+The following applies for Git Sync:
 
-- **Dashboard changes**: When users with appropriate dashboard or folder permissions modify dashboard content, those changes automatically sync to Git (or create pull requests if branch protection is enabled)
-- **Folder structure**: Creating, renaming, or deleting folders syncs to Git
 - **Permissions don't sync**: Folder and dashboard permissions are managed in Grafana only and don't sync to Git. You must configure permissions separately in each Grafana instance that uses the repository
+- **Dashboard changes**: When users with appropriate dashboard or folder permissions modify dashboard content, those changes automatically sync to Git, or create pull requests if branch protection is enabled
+- **Folder structure**: Creating, renaming, or deleting folders syncs to Git
 
 ## Use org-level permissions in Git Sync
 
-The following describes what users with each Grafana role can do with Git Sync:
+If you apply org-level permissions, users can do the following with Git Sync:
 
 ### Admin users
 
@@ -131,7 +131,9 @@ Editors don't need access to the Provisioning admin UI or repository configurati
 
 ## Configure folder and dashboard permissions
 
-Folder-level role permissions determine who can view, edit, or delete provisioned resources. These roles grant standard Grafana permissions (`dashboards:read`, `dashboards:write`, `folders:create`...) that are checked when users interact with provisioned resources through the Git Sync files endpoint. Dashboards within a provisioned folder inherit the folder's permissions.
+Folder-level role permissions determine who can view, edit, or delete provisioned resources.
+
+These roles grant Grafana permissions (`dashboards:read`, `dashboards:write`, `folders:create`...) that are checked when users interact with provisioned resources through the Git Sync files endpoint. Dashboards within a provisioned folder inherit the folder's permissions.
 
 When Git Sync creates a provisioned folder, it assigns these default permissions:
 
@@ -181,9 +183,13 @@ If you're a Grafana Enterprise or Grafana Cloud user with RBAC enabled, Git Sync
 
 Understanding which permissions each basic role receives helps you create custom roles or understand exactly what access users have. The tables below show which Git Sync permissions are granted to each role by default.
 
+{{< admonition type="note" >}}
+The `provisioning.settings:read` permission is granted to all roles (Viewer and above) and allows viewing Git Sync system settings, which is necessary for the UI to display properly. This does not grant access to modify settings or manage repositories.
+{{< /admonition >}}
+
 #### Admin role
 
-Users with Admin role receive full access to Git Sync infrastructure:
+Users with the `Admin` role receive full access to Git Sync infrastructure:
 
 | Permission Category      | Specific Permissions                                                                                                                              | What This Allows                                                                                                                        |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -195,14 +201,14 @@ Users with Admin role receive full access to Git Sync infrastructure:
 
 #### Editor role
 
-Users with Editor role can manage sync operations but not infrastructure configuration:
+Users with the `Editor` role can manage sync operations but not infrastructure configuration:
 
 | Permission Category  | Specific Permissions                                                                                              | What This Allows                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | **Jobs**             | `provisioning.jobs:create`<br>`provisioning.jobs:read`<br>`provisioning.jobs:write`<br>`provisioning.jobs:delete` | Trigger manual syncs<br>View sync jobs<br>Modify sync job settings<br>Cancel/delete sync jobs |
 | **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                      |
 
-**Plus, resource permissions based on folder/dashboard assignments**:
+`Editors` can access resources based on the folder/dashboard assignments:
 
 - `dashboards:create`, `dashboards:read`, `dashboards:write`, `dashboards:delete` - On folders/dashboards where assigned Folder Editor or Dashboard Editor
 - `folders:create`, `folders:read`, `folders:write`, `folders:delete` - On folders where assigned Folder Editor
@@ -215,23 +221,19 @@ Users with Viewer role have read-only access to Git Sync:
 | -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read` | View repository configurations<br>View Git Sync settings (required for UI) |
 
-**Plus, resource permissions based on folder/dashboard assignments**:
+`Viewers` can access resources based on the folder/dashboard assignments:
 
 - `dashboards:read` - On folders/dashboards where assigned Folder Viewer or Dashboard Viewer
 - `folders:read` - On folders where assigned Folder Viewer
 
-{{< admonition type="note" >}}
-**Settings permission**: The `provisioning.settings:read` permission is granted to all roles (Viewer and above) and allows viewing Git Sync system settings, which is necessary for the UI to display properly. This does not grant access to modify settings or manage repositories.
-{{< /admonition >}}
-
 ### RBAC for dashboards and folders
 
-Provisioned dashboards and folders use Grafana's standard permission model. If you modify provisioned resources, Git Sync automatically syncs changes to Git based on your dashboard and folder permissions.
+Provisioned dashboards and folders use the Grafana standard permission model. If you modify provisioned resources, Git Sync automatically syncs changes to Git based on your dashboard and folder permissions.
 
-**Key points**:
+The following applies for Git Sync:
 
 - Users need standard `dashboards:*` and `folders:*` permissions to work with provisioned resources
-- Editors and Viewers need `provisioning.settings:read` and `provisioning.repositories:read` to view Git Sync configuration
+- `Editors` and `Viewers` need `provisioning.settings:read` and `provisioning.repositories:read` to view Git Sync configuration
 - Users do **not** need repository write/delete or connection permissions to edit dashboards
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
