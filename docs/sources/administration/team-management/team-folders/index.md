@@ -17,6 +17,8 @@ weight: 350
 
 # Manage team folders
 
+![Folder detail page showing a team folder.](/media/whats-new/team-folders/0-Team-Folders-Overview.png)
+
 Team Folders help you associate folders with teams so admins and team members can find the right dashboards, library panels, and alert rules faster. They streamline setup by letting admins create and assign a dedicated folder when creating a team, establishing clear ownership from the start. A Team Folder is still a regular folder—the team association adds ownership metadata and team-aware navigation, but it doesn’t change or replace folder permission.
 
 Team Folders is in public preview.
@@ -47,7 +49,7 @@ To create a team and its folder, complete the following steps:
 
 Grafana creates a folder with the same name as the team and assigns that team as the folder owner. After the folder is created, review the folder permissions and update them if needed.
 
-<!-- Screenshot placeholder: New team page with the Team folder section visible and Auto-create a team folder selected. -->
+![New team page with the Team folder section visible and Auto-create a team folder selected.](/media/whats-new/team-folders/2-new-team-detail.png)
 
 For more information about creating teams, refer to [Configure Grafana Teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/configure-grafana-teams/).
 
@@ -68,7 +70,7 @@ To create a new team folder, complete the following steps:
 
 Grafana creates a regular folder and stores the selected team as the folder owner.
 
-<!-- Screenshot placeholder: New folder drawer with Assign an owner to the folder enabled and a team selected in the Team field. -->
+![New folder drawer with Assign an owner to the folder enabled and a team selected in the Team field.](/media/whats-new/team-folders/3-New-Folder-for-Team.png)
 
 ### Assign or change the owner of an existing folder
 
@@ -82,7 +84,7 @@ To assign or change the owner of an existing folder, complete the following step
 
 If a folder has a team owner, Grafana displays an **Owned by** label in the folder header.
 
-<!-- Screenshot placeholder: Folder page header showing the Owned by label and the Manage folder owner modal open from Folder actions. -->
+![Folder page header showing the Owned by label and the Manage folder owner modal open from Folder actions.](/media/whats-new/team-folders/4-Manage-Owner-Folder.png)
 
 ## Find team folders
 
@@ -92,19 +94,19 @@ When team folders are enabled, Grafana surfaces them in the browse dashboards pa
 
 The **Dashboards** page displays a **My team folders** section near the top when you belong to teams that own folders. Expand that section to open the folders owned by your teams.
 
-<!-- Screenshot placeholder: Dashboards page with the My team folders section expanded and at least two team-owned folders listed. -->
+![Dashboards page with the My team folders section expanded and two team-owned folders listed.](/media/whats-new/team-folders/5-Find-you-team-folders.png)
 
 ### Save or move dashboards
 
 When you are saving or moving dashboard the folder picker shows a **Team folders** section at the top of the folder tree. Your first teams folder will be preselected by default.
 
-<!-- Screenshot placeholder: Folder picker in a save or move flow with Team folders shown at the top of the tree and one team folder selected. -->
+![Folder picker in a save or move flow with Team folders shown at the top of the tree and one team folder selected.](/media/whats-new/team-folders/6-Save-dashboard.png)
 
 ### Review folders owned by a team
 
 Each team page includes a **Folders** tab that lists all the folders owned by that team.
 
-<!-- Screenshot placeholder: Team details page on the Folders tab showing the owned folders table with Name and Full path columns. -->
+![Team details page on the Folders tab showing the owned folders table with Name and Full path columns.](/media/whats-new/team-folders/8-Team-Folders---list-view-in-Team.png)
 
 ## Manage access for team folders
 
