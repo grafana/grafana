@@ -123,6 +123,16 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(result).toEqual(null);
     });
+
+    it('getDatasourcePluginMeta should resolve a plugin by aliasIDs', async () => {
+      const aliased = { ...prometheusMeta, aliasIDs: ['some-alias'] };
+      setDatasourcePluginMetas({ 'aliased-datasource': aliased });
+
+      const result = await getDatasourcePluginMeta('some-alias');
+
+      expect(result).toEqual(aliased);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
   });
 
   describe('and refetchDatasourcePluginMetas is called', () => {
