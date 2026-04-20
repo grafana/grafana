@@ -4,12 +4,7 @@ import { t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import {
-  getNextAvailableId,
-  getVariableNamePrefix,
-  getVariableScene,
-  ADHOC_VARIABLE_TYPE,
-} from '../../settings/variables/utils';
+import { getNextAvailableId, getVariableNamePrefix, getVariableScene } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
@@ -23,8 +18,9 @@ export function openAddFilterForm(dashboard: DashboardScene, sectionOwner: Scene
     sectionOwner.setState({ $variables: variablesSet });
   }
 
-  const name = getVariableNamePrefix(ADHOC_VARIABLE_TYPE);
-  const newVar = getVariableScene(ADHOC_VARIABLE_TYPE, {
+  const type = 'adhoc';
+  const name = getVariableNamePrefix(type);
+  const newVar = getVariableScene(type, {
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 

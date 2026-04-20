@@ -142,12 +142,6 @@ export function getEditableVariableDefinition(type: string): EditableVariableCon
   return editableVariable;
 }
 
-export const ADHOC_VARIABLE_TYPE = 'adhoc';
-
-export function isAdHocVariable(variable: SceneVariable): boolean {
-  return variable.state.type === ADHOC_VARIABLE_TYPE;
-}
-
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
   'custom',
@@ -232,7 +226,7 @@ export function getVariableDefault(variables: Array<SceneVariable<SceneVariableS
 }
 
 export function getVariableNamePrefix(type: EditableVariableType): string {
-  return type === ADHOC_VARIABLE_TYPE ? 'filter' : type;
+  return type === 'adhoc' ? 'filter' : type;
 }
 
 export function getNextAvailableId(

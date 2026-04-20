@@ -1,8 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
-import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
-import { isAdHocVariable } from '../settings/variables/utils';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -18,7 +17,8 @@ export function SectionFiltersCategoryTitle({ sectionOwner, isExpanded }: Sectio
   const variableSet = sectionOwner.state.$variables;
   const filterCount =
     variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet).filter(isAdHocVariable).length
+      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet).filter(sceneUtils.isAdHocVariable)
+          .length
       : 0;
 
   return (
@@ -40,7 +40,9 @@ export function SectionFiltersList({ sectionOwner }: SectionFiltersListProps) {
   const variableSet = sectionOwner.state.$variables;
   const filters =
     variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet).filter(isAdHocVariable)
+      ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet).filter(
+          sceneUtils.isAdHocVariable
+        )
       : [];
   const dashboard = getDashboardSceneFor(sectionOwner);
 

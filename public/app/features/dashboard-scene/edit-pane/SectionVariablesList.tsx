@@ -1,11 +1,10 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableTypeSelectionPane';
-import { isAdHocVariable } from '../settings/variables/utils';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -23,7 +22,7 @@ export function SectionVariablesCategoryTitle({ sectionOwner, isExpanded }: Sect
       ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet)
       : [];
   const variableCount = config.featureToggles.dashboardUnifiedDrilldownControls
-    ? allVariables.filter((v) => !isAdHocVariable(v)).length
+    ? allVariables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
     : allVariables.length;
 
   return (
@@ -49,7 +48,7 @@ export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps
       ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet)
       : [];
   const variables = config.featureToggles.dashboardUnifiedDrilldownControls
-    ? allVariables.filter((v) => !isAdHocVariable(v))
+    ? allVariables.filter((v) => !sceneUtils.isAdHocVariable(v))
     : allVariables;
   const dashboard = getDashboardSceneFor(sectionOwner);
 
