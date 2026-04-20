@@ -293,7 +293,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
               loading={isLoading}
               disabled={isLoading}
               label={
-                <Label htmlFor="locale-preference">
+                <Label htmlFor="locale-preference-select">
                   <span className={styles.labelText}>
                     <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
                   </span>
