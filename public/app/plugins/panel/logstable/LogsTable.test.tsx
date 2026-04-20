@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -24,6 +24,10 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
+
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -56,12 +60,20 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(() => ({
     publish: publishMockFn,
   })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: () => Promise.resolve(null),
+  })),
+  usePluginLinks: jest.fn().mockReturnValue({
+    links: [],
+    isLoading: false,
+  }),
 }));
 
 const setUp = (
   props?: Partial<React.ComponentProps<typeof LogsTable>>,
   options?: Partial<Options>,
-  app = CoreApp.Dashboard
+  app = CoreApp.Dashboard,
+  panelContext?: Partial<PanelContext>
 ) => {
   return render(
     <PanelContextProvider
@@ -69,6 +81,7 @@ const setUp = (
         app,
         eventsScope: 'test',
         eventBus: new EventBusSrv(),
+        ...panelContext,
       }}
     >
       <LogsTable
@@ -293,7 +306,7 @@ describe('LogsTable', () => {
       expect(headers[0].textContent).toEqual('timestamp');
       expect(headers[1].textContent).toEqual('level');
 
-      // Two log rows; inspect control exists only in the custom timestamp column (one per row).
+      // Two log rows; show details exists only in the custom timestamp column (one per row).
       expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
     });
 
@@ -314,6 +327,47 @@ describe('LogsTable', () => {
       expect(headers[1].textContent).toEqual('timestamp');
 
       expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
+    });
+  });
+
+  describe('Log details', () => {
+    it('opens the log details view when "Show details" is clicked', async () => {
+      setUp(undefined, { showInspectLogLine: true });
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByLabelText('Show details')[0]);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close log details sidebar')).toBeInTheDocument();
+      });
+    });
+
+    it('calls onAddAdHocFilter when using filter-for from log details', async () => {
+      const onAddAdHocFilter = jest.fn();
+      setUp(undefined, { showInspectLogLine: true }, CoreApp.Dashboard, { onAddAdHocFilter });
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      await userEvent.click(screen.getAllByLabelText('Show details')[0]);
+
+      await userEvent.click(screen.getAllByLabelText('Filter for value')[0]);
+
+      expect(onAddAdHocFilter).toHaveBeenCalledTimes(1);
+      expect(onAddAdHocFilter).toHaveBeenCalledWith({
+        key: 'level',
+        value: 'info',
+        operator: '=',
+      });
+
+      await userEvent.click(screen.getAllByLabelText('Filter out value')[0]);
+
+      expect(onAddAdHocFilter).toHaveBeenCalledTimes(2);
+      expect(onAddAdHocFilter).toHaveBeenCalledWith({
+        key: 'level',
+        value: 'info',
+        operator: '!=',
+      });
     });
   });
 });
