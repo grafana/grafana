@@ -6,7 +6,17 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, ClipboardButton, Stack, CodeEditor, Box, Label, RadioButtonGroup, Spinner, TextLink } from '@grafana/ui';
+import {
+  Button,
+  ClipboardButton,
+  Stack,
+  CodeEditor,
+  Box,
+  Label,
+  RadioButtonGroup,
+  Spinner,
+  TextLink,
+} from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -61,7 +71,10 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
   }, [changeInfo.changedSaveModel.title, displayJson]);
 
   const formatOptions = [
-    { label: t('dashboard-scene.save-provisioned-dashboard-form.format.classic', 'Classic'), value: ExportFormat.Classic },
+    {
+      label: t('dashboard-scene.save-provisioned-dashboard-form.format.classic', 'Classic'),
+      value: ExportFormat.Classic,
+    },
     {
       label: t('dashboard-scene.save-provisioned-dashboard-form.format.k8s-resource', 'K8s Resource'),
       value: ExportFormat.V2Resource,
