@@ -19,6 +19,23 @@ type ResourceFileChange struct {
 	Path   string
 	Action repository.FileAction
 
+	// PreviousPath is the source path for Renamed changes when the rename was
+	// detected by the repository (incremental sync). DetectRenames-produced
+	// renames in full sync leave this empty and rely on Existing.Path instead.
+	PreviousPath string
+
+	// Ref is the ref at which the new-side content should be read. When empty,
+	// apply falls back to the outer currentRef. Incremental changes populate
+	// this from VersionedFileChange.Ref.
+	Ref string
+
+	// PreviousRef is populated for incremental-originated Deleted/Updated/Renamed
+	// changes so apply can dispatch to the previous-ref-aware primitives
+	// (RemoveResourceFromFile, ReplaceResourceFromFileByRef, RenameResourceFile).
+	// Empty on full-sync-originated changes, which use the managed-list Existing
+	// identity to drive the equivalent primitives.
+	PreviousRef string
+
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
@@ -40,6 +57,31 @@ type ResourceFileChange struct {
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
 	OrphanCleanup bool
+
+	// RelocatingUIDs carries per-change folder UID allowlists that must bypass
+	// the ID-conflict check when the folder is re-parented or relocated in this
+	// sync. Populated by the incremental converter from the folder-metadata
+	// rebuilder's relocations map; full sync's equivalent is inlined via
+	// the FolderRenamed Existing name.
+	RelocatingUIDs []string
+
+	// RecordOnly marks a change that should be recorded in job progress with
+	// its Action and Path (and no side effect on Grafana). This preserves
+	// incremental sync's behavior of emitting Created/Deleted records for
+	// directory entries produced by cross-boundary renames while skipping the
+	// actual folder operation — the individual file-level changes already
+	// handle folder creation (via EnsureFolderPathExist) and deletion (via
+	// affectedFolders / orphan cleanup).
+	RecordOnly bool
+
+	// UnsupportedSafeSegment marks an incremental-origin change whose path is
+	// unsupported but whose safe segment is. apply checks skip state against
+	// Path (the original unsupported file path) and then creates the folder
+	// at UnsupportedSafeSegment, recording the result at that path. This
+	// mirrors pre-refactor incremental behavior where HasDirPathFailedCreation
+	// ran against the raw diff path even though the folder was materialised
+	// at the safe ancestor.
+	UnsupportedSafeSegment string
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
