@@ -73,9 +73,12 @@ jest.mock('./importer/pluginImporter', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getDatasourcePluginMeta: jest.fn(),
+  refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
+  logPluginMetaError: jest.fn(),
 }));
 
-const { getDatasourcePluginMeta } = jest.requireMock('@grafana/runtime/internal');
+const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError } =
+  jest.requireMock('@grafana/runtime/internal');
 
 const getBackendSrvGetMock = jest.fn();
 
@@ -618,6 +621,36 @@ describe('datasource_srv', () => {
         await dataSourceSrv.reload();
         const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
         expect(ds).toBe(runtimeDataSource);
+      });
+
+      it('should forward the fetched settings to refetchDatasourcePluginMetas to avoid a second /api/frontend/settings request', async () => {
+        const settings = {
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        };
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce(settings);
+        refetchDatasourcePluginMetas.mockClear();
+
+        await dataSourceSrv.reload();
+
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
+        expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+      });
+
+      it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+        const error = new Error('boom');
+        refetchDatasourcePluginMetas.mockReturnValueOnce(Promise.reject(error));
+        logPluginMetaError.mockClear();
+
+        await dataSourceSrv.reload();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(logPluginMetaError).toHaveBeenCalledWith('Failed to refresh datasource plugin metadata', error);
       });
     });
 

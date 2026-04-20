@@ -21,6 +21,7 @@ import {
 import {
   ExpressionDatasourceRef,
   getDatasourcePluginMeta,
+  logPluginMetaError,
   refetchDatasourcePluginMetas,
   UserStorage,
 } from '@grafana/runtime/internal';
@@ -395,7 +396,7 @@ export class DatasourceSrv implements DataSourceService {
     // Refresh the deduplicated plugin metadata cache in the background.
     // This does not need to block reload since init() already has the full data.
     refetchDatasourcePluginMetas(settings).catch((error) => {
-      console.warn('Failed to refresh datasource plugin metadata', error);
+      logPluginMetaError('Failed to refresh datasource plugin metadata', error);
     });
   }
 }
