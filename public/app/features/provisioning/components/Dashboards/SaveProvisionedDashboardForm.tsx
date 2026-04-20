@@ -57,8 +57,6 @@ export function SaveProvisionedDashboardForm({
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
-
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const {
     handleSubmit,
@@ -70,10 +68,18 @@ export function SaveProvisionedDashboardForm({
     getValues,
     formState: { dirtyFields },
   } = methods;
+
+  const path = watch('path');
+  const originalPath = isNew ? undefined : defaultValues.path;
+  const isRename = Boolean(originalPath && path !== originalPath);
+
+  const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
+
   // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
-  const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
+  const isDirtyState =
+    Boolean(dirtyFields.comment) || Boolean(dirtyFields.path) || isDirty || Boolean(rawDashboardJSON);
+  const [workflow, ref] = watch(['workflow', 'ref']);
   const title = watch('title');
 
   // Update the form if default values change
@@ -244,6 +250,7 @@ export function SaveProvisionedDashboardForm({
       path,
       message,
       body,
+      originalPath: isRename ? originalPath : undefined,
     });
   };
 
@@ -327,6 +334,7 @@ export function SaveProvisionedDashboardForm({
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
+            allowPathEdit={!isNew && !readOnly}
           />
 
           {saveAsCopy && (

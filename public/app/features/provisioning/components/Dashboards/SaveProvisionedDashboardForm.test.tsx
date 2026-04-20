@@ -182,7 +182,8 @@ describe('SaveProvisionedDashboardForm', () => {
     setup({ isNew: false });
 
     expect(await screen.findByTestId('common-options')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
@@ -292,8 +293,7 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    const pathInput = screen.getByRole('textbox', { name: /path/i });
-    expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
+    expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
@@ -310,6 +310,201 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Update dashboard');
     expect(request.body).toEqual(updatedDashboard);
+  });
+
+  it('should rename file when path changes on existing dashboard', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
+
+    const updatedDashboard = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: {
+        name: 'test-dashboard',
+        annotations: {
+          [AnnoKeyFolder]: 'folder-uid',
+          [AnnoKeySourcePath]: 'old-path/dashboard.json',
+        },
+      },
+      spec: { title: 'Test Dashboard', description: 'Test Description' },
+    };
+
+    const { user } = setup({
+      isNew: false,
+      defaultValues: {
+        ref: 'main',
+        path: 'old-path/dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'write',
+      },
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'renamed-dashboard.json');
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.type(commentInput, 'Rename dashboard');
+
+    const submitButton = screen.getByRole('button', { name: /save/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    // POST goes to the NEW path
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/old-path/renamed-dashboard.json');
+    // originalPath contains the OLD path
+    expect(request.url.searchParams.get('originalPath')).toBe('old-path/dashboard.json');
+    expect(request.url.searchParams.get('message')).toBe('Rename dashboard');
+  });
+
+  it('should keep using PUT when path is unchanged on existing dashboard', async () => {
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
+
+    const updatedDashboard = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: {
+        name: 'test-dashboard',
+        annotations: {
+          [AnnoKeyFolder]: 'folder-uid',
+          [AnnoKeySourcePath]: 'existing-dashboard.json',
+        },
+      },
+      spec: { title: 'Test Dashboard', description: 'Test Description' },
+    };
+
+    const { user } = setup({
+      isNew: false,
+      defaultValues: {
+        ref: 'main',
+        path: 'existing-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'write',
+      },
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.type(commentInput, 'Update dashboard');
+
+    const submitButton = screen.getByRole('button', { name: /save/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    // PUT goes to the same path
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/existing-dashboard.json');
+    // No originalPath param
+    expect(request.url.searchParams.get('originalPath')).toBeNull();
+  });
+
+  it('should enable save button when only the path changes on existing dashboard', async () => {
+    const { user } = setup({
+      isNew: false,
+      defaultValues: {
+        ref: 'main',
+        path: 'existing-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'write',
+      },
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+    const saveButton = screen.getByRole('button', { name: /save/i });
+
+    expect(saveButton).toBeDisabled();
+
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'new-name.json');
+
+    await waitFor(() => {
+      expect(saveButton).toBeEnabled();
+    });
   });
 
   it('should send correct request body when save returns an error', async () => {
@@ -570,8 +765,8 @@ describe('SaveProvisionedDashboardForm', () => {
         },
       });
 
-      const pathInput = screen.getByRole('textbox', { name: /path/i });
-      expect(pathInput).toHaveValue('existing-dashboard.json');
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      expect(filenameInput).toHaveValue('existing-dashboard.json');
     });
   });
 
