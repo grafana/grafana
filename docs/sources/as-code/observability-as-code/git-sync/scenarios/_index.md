@@ -2,7 +2,7 @@
 title: Git Sync deployment scenarios
 menuTitle: Deployment scenarios
 description: Learn about common Git Sync deployment patterns and configurations for different organizational needs
-weight: 500
+weight: 1000
 keywords:
   - git sync
   - deployment patterns

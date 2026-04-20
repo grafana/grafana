@@ -14,7 +14,7 @@ labels:
     - cloud
 title: Git Sync permissions and access control
 menuTitle: Permissions and access control
-weight: 200
+weight: 700
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/permissions-and-access-control/
 refs:
   roles-and-permissions:
@@ -51,15 +51,15 @@ refs:
 
 Git Sync requires permissions at multiple layers to function correctly: within Grafana for repository management and resource access, and at your Git provider to protect your repository. Read on to learn how to set up the permissions you need to use Git Sync.
 
-## Role capabilities in Git Sync  
+## Role capabilities 
 
 Git Sync integrates with Grafana's standard role-based permission model. For more information, refer to [Grafana roles and permissions](ref:roles-and-permissions).
 
 The following describes what users with each Grafana role can do with Git Sync:
 
-### Admin users in Git Sync
+### Admin users 
 
-Users with the Admin role can set up and manage Git Sync repositories and connections.
+Users with the `Admin` role can set up and manage Git Sync repositories and connections.
 
 {{< admonition type="note" >}}
 In Grafana Cloud, the equivalent role is **Grafana Cloud Admin** or **Admin** at the organization level.
@@ -75,9 +75,9 @@ In Grafana Cloud, the equivalent role is **Grafana Cloud Admin** or **Admin** at
 - View sync status, logs, and statistics
 - Access the Provisioning admin UI at **Administration > General > Provisioning**
 
-### Viewer users in Git Sync
+### Viewer users 
 
-Users with the Viewer role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
+Users with the `Viewer` role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
 
 **Organization-level capabilities**:
 
@@ -92,29 +92,29 @@ Users with the Viewer role can view provisioned resources. Their access to speci
 
 ### Editor users in Git Sync
 
-Users with the Editor role can work with provisioned dashboards and folders. Their specific capabilities depend on the folder-level and dashboard-level permissions assigned to them.
+Users with the `Editor` role can work with provisioned dashboards and folders. Their specific capabilities depend on the folder-level and dashboard-level permissions assigned to them.
 
 **Organization-level capabilities**:
 
 - View dashboard preview links in pull requests
 - Trigger manual sync operations via jobs API
 
-**Resource access** (depends on folder/dashboard permissions):
+**Resource access** depends on folder/dashboard permissions:
 
 - **Folder Editor or Admin**: Create, edit, and delete dashboards within the folder; create subfolders; changes sync to Git
 - **Folder Viewer**: View dashboards only within that folder
 - **Dashboard Editor or Admin**: Edit specific dashboards; changes sync to Git (even without folder edit access)
 - **Dashboard Viewer**: View specific dashboards only
 
-Editors don't need access to the Provisioning admin UI or repository configuration. Refer to [Folder and dashboard permissions](#folder-and-dashboard-permissions) and [Fine-grained access control (RBAC)](#fine-grained-access-control-rbac) for details.
+Editors don't need access to the Provisioning admin UI or repository configuration. Refer to [Configure folder and dashboard permissions](#configure-folder-and-dashboard-permissions) and [Configure fine-grained access control (RBAC)](#configure-fine-grained-access-control-rbac) for details.
 
-## Configure permissions at the resource level
+## Configure folder and dashboard permissions
 
-Provisioned resources follow Grafana's standard permission model. You can assign resource permissions at three levels:
+Provisioned resources follow the Grafana standard permission model, which has three levels:
 
-1. **Organization-level:** Default permissions of the `Admin`, `Editor`, or `Viewer` role. Refer to [Manage dashboard permissions](ref:manage-dashboard-permissions) for more details.
-2. **Folder-level:** Permissions on a specific folder, which applies to all dashboards within it. Refer to [Manage folder permissions](ref:manage-folder-permissions) for more details.
-3. **Dashboard-level:** Permissions on a specific dashboard, which overrides folder permissions. Refer to [Dashboard and folder permissions](ref:roles-and-permissions) for more details.
+1. **Organization-level:** Default permissions of the `Admin`, `Editor`, or `Viewer` role. Refer to [Roles and permissions](ref:roles-and-permission) for more details.
+2. **Folder-level:** They also apply to all dashboards within it. Refer to [Folder permissions](ref:manage-folder-permissions) for more details.
+3. **Dashboard-level:** Refer to [Dashboard permissions](ref:manage-dashboard-permissions) for more details.
 
 {{< admonition type="caution" >}}
 
@@ -130,9 +130,7 @@ Key points for Git Sync:
 
 ### Configure permissions for provisioned folders
 
-Provisioned folders and dashboards follow Grafana's standard permission model. Folder-level permissions determine who can view, edit, or delete provisioned resources. Dashboards within a provisioned folder inherit the folder's permissions. 
-
-#### Default folder permissions
+Folder-level role permissions determine who can view, edit, or delete provisioned resources. These roles grant standard Grafana permissions (`dashboards:read`, `dashboards:write`, `folders:create`...) that are checked when users interact with provisioned resources through the Git Sync files endpoint. Dashboards within a provisioned folder inherit the folder's permissions. 
 
 When Git Sync creates a provisioned folder, it assigns these default permissions:
 
@@ -142,31 +140,26 @@ When Git Sync creates a provisioned folder, it assigns these default permissions
 | Editor       | Editor            |
 | Viewer       | Viewer            |
 
-These folder-level roles grant standard Grafana permissions (`dashboards:read`, `dashboards:write`, `folders:create`, etc.) that are checked when users interact with provisioned resources through the Git Sync files endpoint. The folder-level role determines which actions a user can perform:
-
-**Viewer**:
+**Folder-level `Viewer` users**:
 
 - View dashboards and folders
 - Cannot create, edit, or delete resources
 
-**Editor**:
+**Folder-level `Editor` users**:
 
-- All Viewer permissions
-- Create new dashboards
-- Edit existing dashboards
-- Delete dashboards
+- Have all `Viewer` permissions
+- Create, edit and delete dashboards
 - Create subfolders
-- When an Editor saves dashboard changes, Git Sync automatically commits the changes to Git (or creates a pull request if branch protection is enabled)
+- When an `Editor` saves dashboard changes, Git Sync automatically commits the changes to Git, or creates a pull request if branch protection is enabled
 
-**Admin**:
+**Folder-level `Admin` users**:
 
-- All Editor permissions
-- Update folder settings and rename folders
-- Delete folders
+- Have all `Editor` permissions
+- Update folder settings, rename and delete folders
 - Modify folder permissions
 - Full control over the folder and all its contents
 
-#### Modify folder permissions
+### Modify folder-level permissions
 
 {{< admonition type="caution" >}}
 To safely modify permissions, each provisioned folder should include a `.folder.json` metadata file with the folder's UID. Without this file, folder permissions may be lost if the folder is moved to a different path in the Git repository.
@@ -240,7 +233,7 @@ Provisioned dashboards and folders use Grafana's standard permission model. If y
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
 
-## Protect your repository 
+## Configure Git repository protection 
 
 After you've configured your Grafana permissions, set up the appropriate permissions at your Git provider to write changes. Repository protection settings control write access, branch protection rules, and code review requirements.
 

@@ -12,9 +12,9 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Repository protection for Git Sync
-menuTitle: Repository protection
-weight: 210
+title: Configure Git repository protection 
+menuTitle: Git repository protection
+weight: 710
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/repository-protection/
 refs:
   git-sync-setup:
@@ -29,7 +29,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/as-code/git-sync/permissions-and-access-control/
 ---
 
-# Repository protection for Git Sync
+# Configure Git repository protection 
 
 {{< admonition type="caution" >}}
 
@@ -39,10 +39,10 @@ refs:
 
 {{< /admonition >}}
 
-When you use Git Sync, your dashboard configurations are stored as code in a Git repository. Repository protection controls who can access this source code and who can modify it. This guide explains how to configure repository access at your Git provider to protect your dashboard source code.
+When you use Git Sync, your dashboard configurations are stored as code in a Git repository. Git repository protection controls who can access this source code and who can modify it. This guide explains how to configure repository access at your Git provider to protect your dashboard source code.
 
 {{< admonition type="note" >}}
-Repository protection works as an additional security layer after Grafana's internal permissions. For information about Grafana permissions, refer to [Git Sync permissions and access control](ref:git-sync-permissions).
+Repository protection works as an additional security layer after Grafana internal permissions. For information about Grafana permissions, refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
 {{< /admonition >}}
 
 ## Access points for dashboard source code
@@ -51,13 +51,13 @@ Dashboard source code can be accessed through two paths, each with its own prote
 
 **Git repository**: Users with repository access can view and modify dashboard files directly in Git. Repository permissions at your Git provider control this access.
 
-**Grafana files endpoint**: Users can view and edit dashboard source code through Grafana's internal API endpoint. Grafana folder and dashboard permissions control this access.
+**Grafana files endpoint**: Users can view and edit dashboard source code through Grafana internal API endpoint. Grafana folder and dashboard permissions control this access.
 
 Both access points must be properly protected to secure your dashboard configurations.
 
 ## Files endpoint protection
 
-The Grafana files endpoint allows users to interact with dashboard source code through the Grafana API. Access to this endpoint is controlled by Grafana's folder and dashboard permissions, not by Git repository permissions.
+The Grafana files endpoint allows users to interact with dashboard source code through the Grafana API. Access to this endpoint is controlled by Grafana folder and dashboard permissions, not by Git repository permissions.
 
 ### View dashboard source code
 
@@ -195,8 +195,4 @@ Refer to the [Git Sync setup documentation](ref:git-sync-setup) for detailed ins
 2. Check that the credentials have permission to create pull requests
 3. Ensure the branch name in Git Sync settings matches the protected branch exactly
 
-## Related documentation
 
-- [Git Sync permissions and access control](ref:git-sync-permissions)
-- [Set up Git Sync](ref:git-sync-setup)
-- [Work with provisioned repositories](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync/)
