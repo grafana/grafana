@@ -28,6 +28,16 @@ type queryModel struct {
 	rawTarget string
 }
 
+// maxRenderBodyBytes caps the /render response body we read into memory.
+// Inuse profiling on prod pods under a 20 GiB GOMEMLIMIT showed individual
+// in-flight /render responses retaining 10+ GB of live heap (the io.ReadAll
+// buffer plus the json.Unmarshal slice growth that follows). 64 MiB is
+// well above the 99th-percentile legitimate Graphite payload seen in
+// production and still two orders of magnitude below the pod memory
+// ceiling, so oversized responses fail the one request rather than
+// the whole process.
+const maxRenderBodyBytes = 64 << 20
+
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
 	graphiteQueries := map[string]queryModel{}
@@ -251,9 +261,16 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	// Closing res.Body is the caller's responsibility: RunQuery already
 	// defers res.Body.Close() on the same response before calling
 	// toDataFrames -> parseResponse.
-	body, err := io.ReadAll(res.Body)
+	//
+	// Read at most maxRenderBodyBytes+1 so we can distinguish "exactly at
+	// the cap" from "over the cap".
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxRenderBodyBytes+1))
 	if err != nil {
 		return nil, backend.DownstreamError(err)
+	}
+	if int64(len(body)) > maxRenderBodyBytes {
+		s.logger.Error("Graphite /render response exceeded maximum allowed size", "status", res.Status, "limit", maxRenderBodyBytes)
+		return nil, backend.DownstreamError(fmt.Errorf("graphite response exceeded maximum allowed size of %d bytes", maxRenderBodyBytes))
 	}
 
 	if res.StatusCode/100 != 2 {
