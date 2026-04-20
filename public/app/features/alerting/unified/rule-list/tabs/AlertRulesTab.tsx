@@ -1,5 +1,6 @@
 import { Trans } from '@grafana/i18n';
 import { Box, Stack, Text } from '@grafana/ui';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { useListViewMode } from '../../components/rules/Filter/RulesViewModeSelector';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
@@ -12,7 +13,7 @@ export function AlertRulesTab() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
-  const alertFilterState = { ...filterState, ruleType: 'alerting' as const };
+  const alertFilterState = { ...filterState, ruleType: PromRuleType.Alerting };
 
   return (
     <Stack direction="column" gap={2}>
