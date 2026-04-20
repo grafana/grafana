@@ -209,6 +209,37 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		return err
 	}
 
+	existing, getErr := client.Get(ctx, identifier)
+	if getErr != nil {
+		if errorsK8s.IsNotFound(getErr) {
+			_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
+			if err == nil || errorsK8s.IsAlreadyExists(err) {
+				metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+				return nil
+			}
+			logger.Error("Failed to create plugin after stale already-exists error", "error", err)
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+			return err
+		}
+		logger.Error("Failed to get existing plugin after create conflict", "error", getErr)
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+		return getErr
+	}
+	if !install.ShouldUpdate(existing) {
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+		return nil
+	}
+	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != install.Source {
+		if install.MatchesSpec(existing) {
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			return nil
+		}
+		conflictErr := errorsK8s.NewConflict(pluginInstallGroupResource(), install.ID, fmt.Errorf("plugin install is owned by source %q", existingSource))
+		logger.Error("Refused to patch plugin owned by different source", "error", conflictErr, "existingSource", existingSource)
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+		return conflictErr
+	}
+
 	_, err = client.Patch(ctx, identifier, install.ToOwnedPatchRequest(), resource.PatchOptions{})
 	if err == nil {
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
@@ -222,7 +253,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		}
 	}
 
-	existing, getErr := client.Get(ctx, identifier)
+	existing, getErr = client.Get(ctx, identifier)
 	if getErr != nil {
 		if errorsK8s.IsNotFound(getErr) {
 			_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})

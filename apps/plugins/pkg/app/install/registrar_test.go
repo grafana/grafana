@@ -91,7 +91,9 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		name            string
 		install         *PluginInstall
 		createErr       error
+		existing        *pluginsv0alpha1.Plugin
 		expectedCreates int
+		expectedGets    int
 		expectedPatches int
 		expectError     bool
 	}{
@@ -111,20 +113,47 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Version: "2.0.0",
 				Source:  SourcePluginStore,
 			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
 			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
 			expectedCreates: 1,
+			expectedGets:    1,
 			expectedPatches: 1,
 		},
 		{
-			name: "patches existing plugin when create reports already exists",
+			name: "skips patch when existing plugin already matches desired state",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				Source:  SourcePluginStore,
 			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
 			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
 			expectedCreates: 1,
-			expectedPatches: 1,
+			expectedGets:    1,
 		},
 		{
 			name: "returns error on unexpected create failure",
@@ -142,6 +171,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			createCalls := 0
+			getCalls := 0
 			patchCalls := 0
 			var patchRequests []resource.PatchRequest
 
@@ -152,6 +182,13 @@ func TestInstallRegistrar_Register(t *testing.T) {
 						return nil, tt.createErr
 					}
 					return tt.install.ToPluginInstallV0Alpha1("org-1"), nil
+				},
+				getFunc: func(_ context.Context, _ resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					getCalls++
+					if tt.existing != nil {
+						return tt.existing.DeepCopy(), nil
+					}
+					return nil, errorsK8s.NewNotFound(pluginGroupResource(), tt.install.ID)
 				},
 				patchFunc: func(_ context.Context, _ resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
 					patchCalls++
@@ -169,6 +206,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.expectedCreates, createCalls)
+			require.Equal(t, tt.expectedGets, getCalls)
 			require.Equal(t, tt.expectedPatches, patchCalls)
 
 			if tt.expectedPatches > 0 {

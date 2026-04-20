@@ -93,34 +93,32 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	}()
 
 	plugin := req.Object
-	logger := r.logger.WithContext(ctx).With(
-		"pluginId", plugin.Spec.Id,
-		"requestNamespace", plugin.Namespace,
-		"version", plugin.Spec.Version,
-		"action", req.Action,
-		"parentId", plugin.Spec.ParentId,
-	)
+	baseLogger := r.logger.WithContext(ctx)
 
 	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
-		logger.Debug("Plugin is a child plugin, skipping child discovery")
 		return operator.ReconcileResult{}, nil
 	}
 
 	ownsPlugin, err := r.ownershipFilter.OwnsPlugin(ctx, plugin)
 	if err != nil {
+		logger := baseLogger.With(
+			"pluginId", plugin.Spec.Id,
+			"requestNamespace", plugin.Namespace,
+			"version", plugin.Spec.Version,
+			"action", req.Action,
+			"parentId", plugin.Spec.ParentId,
+		)
 		logger.Error("Failed to determine child reconciler shard ownership", "error", err)
 		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, err
 	}
 	if !ownsPlugin {
-		logger.Debug("Plugin assigned to a different child reconciler shard, skipping")
 		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
 	stored := getStoredChildState(plugin)
 	if req.Action == operator.ReconcileActionUpdated && stored.shouldSkipGeneration(plugin.Generation) {
-		logger.Debug("Plugin already reconciled for current generation, skipping")
 		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, nil
 	}
