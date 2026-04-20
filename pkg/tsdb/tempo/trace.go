@@ -101,6 +101,14 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 			span.SetStatus(codes.Error, err.Error())
 			return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 		}
+
+		if frame == nil {
+			result.Status = http.StatusNotFound
+			err := fmt.Errorf("failed to get trace with id: %s Status: %s", *model.Query, result.Status)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, backend.DownstreamError(err)
+		}
 	} else {
 		var tr tempopb.TraceByIDResponse
 		err = proto.Unmarshal(traceBody, &tr)
