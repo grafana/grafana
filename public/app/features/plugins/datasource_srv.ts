@@ -3,6 +3,7 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
+  PluginType,
   type ScopedVars,
   isObject,
   matchPluginId,
@@ -22,6 +23,7 @@ import {
   ExpressionDatasourceRef,
   getDatasourcePluginMeta,
   logPluginMetaError,
+  logPluginMetaWarning,
   refetchDatasourcePluginMetas,
   UserStorage,
 } from '@grafana/runtime/internal';
@@ -226,15 +228,11 @@ export class DatasourceSrv implements DataSourceService {
       // runtime-registered datasources (which aren't in the plugin meta map) still load.
       let meta = await getDatasourcePluginMeta(instanceSettings.type);
       if (!meta) {
-        console.warn(
-          `Plugin meta for datasource ${key} (type: ${instanceSettings.type}) was not found, falling back to instanceSettings.meta`
+        logPluginMetaWarning(
+          `Plugin meta for datasource ${key} (type: ${instanceSettings.type}) was not found, falling back to instanceSettings.meta`,
+          PluginType.datasource
         );
         meta = instanceSettings.meta;
-      }
-      if (!meta) {
-        return Promise.reject({
-          message: `Meta for datasource ${key} (type: ${instanceSettings.type}) was not found`,
-        });
       }
       const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now

@@ -62,4 +62,4 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
-export { logPluginMetaError } from '../services/pluginMeta/logging';
+export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';

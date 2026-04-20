@@ -75,9 +75,10 @@ jest.mock('@grafana/runtime/internal', () => ({
   getDatasourcePluginMeta: jest.fn(),
   refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
   logPluginMetaError: jest.fn(),
+  logPluginMetaWarning: jest.fn(),
 }));
 
-const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError } =
+const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError, logPluginMetaWarning } =
   jest.requireMock('@grafana/runtime/internal');
 
 const getBackendSrvGetMock = jest.fn();
@@ -379,15 +380,16 @@ describe('datasource_srv', () => {
         freshSrv.init(dataSourceInit as any, 'BBB');
         getDatasourcePluginMeta.mockResolvedValueOnce(null);
         importDataSourceMock.mockClear();
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        logPluginMetaWarning.mockClear();
 
         await freshSrv.loadDatasource('ZZZ');
 
         expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
         expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('falling back to instanceSettings.meta'));
-
-        warnSpy.mockRestore();
+        expect(logPluginMetaWarning).toHaveBeenCalledWith(
+          expect.stringContaining('falling back to instanceSettings.meta'),
+          'datasource'
+        );
       });
     });
 
