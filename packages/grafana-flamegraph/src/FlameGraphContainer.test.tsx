@@ -276,8 +276,8 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(screen.getAllByText(/Top Table/).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/Flame Graph/).length).toBeGreaterThanOrEqual(2);
     // View mode options: Single/Split (as radio buttons)
-    expect(screen.getByRole('radio', { name: /Single view/ })).toBeDefined();
-    expect(screen.getByRole('radio', { name: /Split view/ })).toBeDefined();
+    expect(screen.getByRole('radio', { name: /Single/ })).toBeDefined();
+    expect(screen.getByRole('radio', { name: /Split/ })).toBeDefined();
   });
 
   it('should switch to single view mode', async () => {
@@ -288,7 +288,7 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(screen.getByTestId('topTable')).toBeDefined();
 
     // Switch to Single mode using the ViewMode radio button
-    await userEvent.click(screen.getByRole('radio', { name: /Single view/ }));
+    await userEvent.click(screen.getByRole('radio', { name: /Single/ }));
 
     // In single mode, only one pane selector should be present
     expect(screen.getAllByText(/Top Table/).length).toBe(1);

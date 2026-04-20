@@ -46,7 +46,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     ref
   ) => {
     const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
-    const adjustedTitle = title ?? description ?? ariaLabel;
+    const adjustedTitle = title ?? ariaLabel;
 
     const inputRadioButton = (
       <input
