@@ -15,8 +15,8 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      // View log line button should be defined by default
-      await expect(page.getByLabel('View log line').first(), 'View log line button defined by default').toBeVisible();
+      // Show details button should be defined by default
+      await expect(page.getByLabel('Show details').first(), 'Show details button defined by default').toBeVisible();
 
       // timestamp and log body headers should be visible
       await expect(
@@ -142,7 +142,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         .toEqual(false);
 
       // Click inspect on 9th row
-      await page.getByRole('gridcell').getByLabel('View log line').nth(9).click();
+      await page.getByRole('gridcell').getByLabel('Show details').nth(9).click();
 
       // Assert drawer header is visible
       await expect(
@@ -172,7 +172,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
 
       const optionWrapper = page.getByTestId('data-testid Logs Table Show inspect button field property editor');
       const option = optionWrapper.getByLabel(/Show inspect button/);
-      const inspectLogLineButton = page.getByLabel('View log line');
+      const inspectLogLineButton = page.getByLabel('Show details');
       await expect(option, 'Inspect button panel option is in the document').toHaveCount(1);
       await expect(option, 'Inspect button panel option is initially checked').toBeChecked();
       await expect(inspectLogLineButton.nth(0), 'Inspect button is visible in the logs table viz').toBeVisible();

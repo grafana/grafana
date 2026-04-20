@@ -2,7 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
+
+import { LogDetailsContextProvider } from '../LogDetailsContext';
 
 import { LogsTableCustomCellRenderer } from './LogsTableCustomCellRenderer';
 
@@ -31,6 +34,7 @@ if (!testLogsFrame) {
   throw new Error('Failed to parse logs frame');
 }
 
+const ShowDetailsLabelText = 'Show details';
 const ViewLogLineLabelText = 'View log line';
 const CopyLogLineLabelText = 'Copy link to log line';
 const CellValueText = 'Value';
@@ -57,6 +61,33 @@ describe('LogsTableCustomCellRenderer', () => {
     expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(CopyLogLineLabelText)).not.toBeInTheDocument();
     expect(screen.getByText(CellValueText)).toBeVisible();
+  });
+
+  describe('Show details', () => {
+    it('should render', () => {
+      const logs = [createLogLine()];
+      render(
+        <LogDetailsContextProvider enableLogDetails logs={logs}>
+          <LogsTableCustomCellRenderer
+            supportsPermalink={true}
+            logsFrame={testLogsFrame}
+            options={{
+              showInspectLogLine: true,
+              showCopyLogLink: false,
+            }}
+            cellProps={{
+              field: testLogsDataFrame[0].fields[1],
+              rowIndex: 0,
+              frame: testLogsDataFrame[0],
+              value: CellValueText,
+            }}
+          />
+        </LogDetailsContextProvider>
+      );
+
+      expect(screen.queryByLabelText(ViewLogLineLabelText)).not.toBeInTheDocument();
+      expect(screen.getByLabelText(ShowDetailsLabelText)).toBeInTheDocument();
+    });
   });
 
   describe('Inspect row', () => {
