@@ -972,6 +972,24 @@
     },
     {
       "metadata": {
+        "name": "anyPageReporting",
+        "resourceVersion": "1776396837578",
+        "creationTimestamp": "2026-04-17T01:00:25Z",
+        "deletionTimestamp": "2026-04-17T03:36:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-17 03:33:57.578996 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-14T10:47:18Z"
@@ -4914,6 +4932,19 @@
         "description": "Enables render binding support for report rendering",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.anyPageReporting",
+        "resourceVersion": "1776397017304",
+        "creationTimestamp": "2026-04-17T03:36:57Z"
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
