@@ -1774,6 +1774,14 @@ Alerting rules migrated from dashboards and panels include a link back via the `
 
 Comma-separated list of contact point integration types to allow. If empty, all types are allowed.
 
+Valid types:
+
+```
+prometheus-alertmanager, dingding, discord, email, googlechat, jira, kafka,
+line, mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
+telegram, threema, victorops, webex, webhook, wechat, wecom
+```
+
 #### `disabled_orgs`
 
 Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
