@@ -370,6 +370,22 @@ function handleRedirectTo(): void {
     window.location.replace(urlToRedirectTo);
     return;
   }
+
+  if (URL.canParse(decodedRedirectTo, window.location.origin)) {
+    const redirectUrl = new URL(decodedRedirectTo, window.location.origin);
+    const redirectOrgId = redirectUrl.searchParams.get('orgId');
+
+    if (redirectOrgId !== null && redirectOrgId !== '') {
+      const targetOrgId = Number(redirectOrgId);
+
+      if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
+        const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
+        window.location.replace(urlToRedirectTo);
+        return;
+      }
+    }
+  }
+  
   // Ensure that the appsuburl is stripped from the redirect to in case of a frontend redirect
   const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
   locationService.replace(stripped);
