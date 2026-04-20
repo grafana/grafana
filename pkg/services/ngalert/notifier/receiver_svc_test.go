@@ -580,6 +580,13 @@ func TestReceiverService_Create(t *testing.T) {
 			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
 		{
+			name:        "create with multiple integrations rejects when any is not in allowlist",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
+		},
+		{
 			name:     "should be able to create receiver with the same name as imported ones",
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver1")),
@@ -871,6 +878,23 @@ func TestReceiverService_Update(t *testing.T) {
 			existing:       util.Pointer(models.CopyReceiverWith(baseReceiver)),
 			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
 			opts:           []createReceiverServiceSutOpt{withImportedIncluded, withInvalidExtraConfig},
+		},
+		{
+			name:        "update with integration not in allowlist fails",
+			user:        writer,
+			receiver:    baseReceiver.Clone(),
+			existing:    util.Pointer(baseReceiver.Clone()),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.EmailType)},
+		},
+		{
+			name:                "update with integration in allowlist succeeds",
+			user:                writer,
+			receiver:            baseReceiver.Clone(),
+			existing:            util.Pointer(baseReceiver.Clone()),
+			expectedUpdate:      models.CopyReceiverWith(baseReceiver, rm.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
