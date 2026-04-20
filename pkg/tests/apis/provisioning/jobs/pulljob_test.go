@@ -26,19 +26,19 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	const repo1 = "pulljob-repo-1"
 	const repo2 = "pulljob-repo-2"
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo1,
-		Path:   path.Join(helper.ProvisioningPath, "repo1"),
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo1,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo1"),
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
 		SkipResourceAssertions: true, // will check both at the same time below
 	})
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo2,
-		Path:   path.Join(helper.ProvisioningPath, "repo2"),
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo2,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo2"),
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/timeline-demo.json": "dashboard2.json",
 		},

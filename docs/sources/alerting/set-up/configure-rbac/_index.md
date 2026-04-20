@@ -23,6 +23,10 @@ A user is any individual who can log in to Grafana. Each user has a role that in
 
 Each permission contains one or more actions and a scope.
 
+{{< admonition type="note" >}}
+Several legacy notification permission actions have been deprecated and are no longer granted to Editor or Viewer roles. If you use custom roles or automation that rely on these actions, refer to [Deprecated permissions](#deprecated-permissions) for details and recommended replacements.
+{{< /admonition >}}
+
 ## Role types
 
 Grafana has three types of roles for managing access:
@@ -114,19 +118,9 @@ Permissions for managing contact points (notification receivers).
 | `alert.notifications.receivers:create`       | n/a                                                     | Create a new contact points. The creator is automatically granted full access to the created contact point.                 |
 | `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*`                      | Update existing contact points.                                                                                             |
 | `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*`                      | Update and delete existing contact points.                                                                                  |
-| `alert.notifications.receivers:test`         | n/a                                                     | Test contact points to verify their configuration. Deprecated. Use "alert.notifications.receivers.test:create"              |
 | `alert.notifications.receivers.test:create`  | `receivers:*`<br>`receivers:uid:*`<br>`receivers:uid:-` | Test contact points to verify their configuration. Use scope `receivers:uid:-` to grant permission to test new integrations |
 | `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*`                      | Read permissions for contact points.                                                                                        |
 | `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*`                      | Manage permissions for contact points.                                                                                      |
-
-### Notification policies
-
-Permissions for managing notification policies (routing rules).
-
-| Action                             | Applicable scope | Description                                                                                                                                                                                                                        |
-| ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications.routes:read`  | n/a              | **Deprecated.** Read notification policies. Use `notifications.alerting.grafana.app/routingtrees:get` with an appropriate scope instead.                                                                                           |
-| `alert.notifications.routes:write` | n/a              | **Deprecated.** Create new, update, and delete notification policies. Use `notifications.alerting.grafana.app/routingtrees:update` and `notifications.alerting.grafana.app/routingtrees:delete` with an appropriate scope instead. |
 
 ### Time intervals
 
@@ -148,15 +142,6 @@ Permissions for managing notification templates.
 | `alert.notifications.templates:write`      | n/a              | Create new or update existing templates.                                        |
 | `alert.notifications.templates:delete`     | n/a              | Delete existing templates.                                                      |
 | `alert.notifications.templates.test:write` | n/a              | Test templates with custom payloads (preview and payload editor functionality). |
-
-### General notifications
-
-Legacy permissions for managing all notification resources. These actions are deprecated; use the granular per-resource actions above instead.
-
-| Action                      | Applicable scope | Description                                                                                                                                                                                                                                   |
-| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications:read`  | n/a              | **Deprecated.** Read all templates, contact points, notification policies, and mute timings in the current organization. Use the granular actions (`alert.notifications.templates:read`, `alert.notifications.receivers:read`, etc.) instead. |
-| `alert.notifications:write` | n/a              | **Deprecated.** Manage templates, contact points, notification policies, and mute timings in the current organization. Use the granular actions (`alert.notifications.templates:write`, `alert.notifications.receivers:write`, etc.) instead. |
 
 ### External notifications
 
@@ -192,3 +177,33 @@ Permissions for managing alert enrichments.
 | `alert.enrichments:write` | n/a              | Create, update, and delete alert enrichment configurations in the current organization. |
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).
+
+## Deprecated permissions
+
+The following permission actions are deprecated and only retained for backward compatibility. They are granted exclusively to organization **Admins**. **Editor** and **Viewer** basic roles are not granted these actions.
+
+Use the recommended replacements listed below for custom roles and automation.
+
+### General notifications (deprecated)
+
+These broad actions have been replaced by granular per-resource actions for contact points, templates, time intervals, and notification policies.
+
+| Action                      | Applicable scope | Replacement                                                                                                                                                                                         |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications:read`  | n/a              | Use `alert.notifications.receivers:read`, `alert.notifications.templates:read`, `alert.notifications.time-intervals:read`, and `notifications.alerting.grafana.app/routingtrees:get` instead.       |
+| `alert.notifications:write` | n/a              | Use `alert.notifications.receivers:write`, `alert.notifications.templates:write`, `alert.notifications.time-intervals:write`, and `notifications.alerting.grafana.app/routingtrees:update` instead. |
+
+### Notification policies (deprecated)
+
+These unscoped actions have been replaced by resource-scoped actions on the `notifications.alerting.grafana.app/routingtrees` resource.
+
+| Action                             | Applicable scope | Replacement                                                                                                                                                            |
+| ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | Use `notifications.alerting.grafana.app/routingtrees:get` with scope `notifications.alerting.grafana.app/routingtrees:*` instead.                                      |
+| `alert.notifications.routes:write` | n/a              | Use `notifications.alerting.grafana.app/routingtrees:update` and `notifications.alerting.grafana.app/routingtrees:delete` with the appropriate resource scope instead. |
+
+### Contact point testing (deprecated)
+
+| Action                               | Applicable scope | Replacement                                                                                                                          |
+| ------------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `alert.notifications.receivers:test` | n/a              | Use `alert.notifications.receivers.test:create` with scope `receivers:uid:-` (new integrations) or `receivers:*` (existing) instead. |

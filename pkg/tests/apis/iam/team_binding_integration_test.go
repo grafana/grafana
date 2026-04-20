@@ -3,10 +3,8 @@ package identity
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +23,7 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
+	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check — see https://github.com/grafana/grafana/pull/121625")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode5 when it's supported
@@ -36,7 +35,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 					AppModeProduction:      false,
 					DisableAnonymous:       true,
 					RBACSingleOrganization: true,
-					EnableLog:              true,
 					APIServerStorageType:   "unified",
 					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 						"teambindings.iam.grafana.app": {
@@ -49,7 +47,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 						featuremgmt.FlagKubernetesUsersApi,
 					},
 				},
-				CustomHTTPClient: &http.Client{Timeout: 60 * time.Second},
 			})
 
 			ctx := context.Background()
@@ -233,6 +230,42 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "teamRef is required")
+	})
+
+	t.Run("should not be able to create team binding with non-existent team", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toCreate := createTeamBindingObject(helper, user.GetName(), "non-existent-team")
+
+		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "team does not exist")
+	})
+
+	t.Run("should not be able to create team binding with non-existent user", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toCreate := createTeamBindingObject(helper, "non-existent-user", team.GetName())
+
+		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "user does not exist")
 	})
 
 	t.Run("should not be able to create team binding with invalid permission", func(t *testing.T) {

@@ -30,7 +30,6 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
-  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -56,7 +55,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     customValueDescription,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
-    portalContainer,
     prefixIcon,
     id,
   } = props;
@@ -318,6 +316,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               }),
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+                // so that only the dropdown menu closes, not the parent.
+                if (event.key === 'Escape' && isOpen) {
+                  event.stopPropagation();
+                }
+              },
             })}
           />
 
@@ -344,7 +349,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal root={portalContainer}>
+      <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{

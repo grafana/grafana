@@ -271,9 +271,6 @@ Quotas will make unified storage impose resource limits on a namespace. By defau
 
 Then add the following to your grafana ini:
 ```ini
-[feature_toggles]
-kubernetesUnifiedStorageQuotas = true
-
 [unified_storage]
 overrides_path = overrides.yaml
 overrides_reload_period = 5s
