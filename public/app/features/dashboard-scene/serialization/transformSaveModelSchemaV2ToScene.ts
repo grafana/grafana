@@ -375,7 +375,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
-      layout: 'combobox',
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -604,7 +603,6 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
             applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),

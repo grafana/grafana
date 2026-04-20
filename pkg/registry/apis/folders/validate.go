@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -80,8 +81,14 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return dashboards.ErrDashboardUidTooLong
 	}
 
+	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
+
 	if f.Spec.Title == "" {
 		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	parentName := meta.GetFolder()
@@ -125,8 +132,14 @@ func validateOnUpdate(ctx context.Context,
 		return err
 	}
 
+	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
+
 	if obj.Spec.Title == "" {
 		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {

@@ -49,11 +49,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Run the GRPC server
-  * @default false
-  */
-  grpcServer?: boolean;
-  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */
@@ -249,11 +244,6 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
-  * Adds support for Kubernetes unified storage quotas
-  * @default false
-  */
-  kubernetesUnifiedStorageQuotas?: boolean;
-  /**
   * Adds support for Kubernetes logs drilldown
   * @default false
   */
@@ -278,11 +268,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardSchemaValidationLogging?: boolean;
-  /**
-  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-  * @default false
-  */
-  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Register legacy datasource apis that use the numeric id
   * @default false
@@ -410,7 +395,7 @@ export interface FeatureToggles {
   unlimitedLayoutsNesting?: boolean;
   /**
   * Enables CSV export using scenes dashboard architecture
-  * @default false
+  * @default true
   */
   sceneCsvExport?: boolean;
   /**
@@ -809,11 +794,6 @@ export interface FeatureToggles {
   * @default false
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Pick the dual write mode from database configs
-  * @default false
-  */
-  managedDualWriter?: boolean;
   /**
   * Enables SRI checks for plugin assets
   * @default false
@@ -1260,11 +1240,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
@@ -1722,10 +1697,10 @@ export interface FeatureToggles {
   */
   queryFetchConfigFromSettingsService?: boolean;
   /**
-  * Enables the query service to do query caching
+  * Enables heatmap visualization support for Pyroscope profiles
   * @default false
   */
-  queryServiceQueryCaching?: boolean;
+  profilesHeatmap?: boolean;
   /**
   * Enables the time seeker in traces drilldown
   * @default false

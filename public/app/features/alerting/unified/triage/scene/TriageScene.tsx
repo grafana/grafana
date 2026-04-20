@@ -58,7 +58,6 @@ export const triageScene = new EmbeddedSceneWithContext({
         supportsMultiValueOperators: true,
         filters: [],
         baseFilters: [],
-        layout: 'combobox',
         expressionBuilder: prometheusExpressionBuilder,
         getTagKeysProvider: getAdHocTagKeysProvider,
         getTagValuesProvider: getAdHocTagValuesProvider,
