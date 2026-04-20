@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
   type ElementSelectionContextItem,
@@ -299,7 +297,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     if (this.state.previousState) {
       this.goBackToPrevious();
     } else {
-      this.clearSelection();
+      this.clearSelection(true);
     }
   }
 
@@ -329,10 +327,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
-    }
-
-    if (isEqual(selected, this.state.selectionContext.selected)) {
-      return;
     }
 
     this.setState({
