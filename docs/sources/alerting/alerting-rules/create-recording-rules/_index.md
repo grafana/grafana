@@ -51,7 +51,6 @@ Recording rules can be helpful in various scenarios, such as:
 - **Simplifying complex aggregations:** Create a new metric from complex aggregations to facilitate alert and dashboard setup.
 - **Reusing queries to reduce costs:** Improve efficiency by reusing the same query across similar alert rules and dashboards.
 
-
 ## How recorded metrics work
 
 A recording rule generates a new recorded metric by evaluating its rule definition on a fixed [evaluation interval](ref:evaluation-within-a-group) (for example, every `1m` or `5m`) and writing the result as a new data point in the recorded metric.
@@ -63,7 +62,6 @@ Recorded metrics are not guaranteed to exactly match the original raw data.
 Aggregations in the recording rule query and evaluation lags can produce results that differ from the original raw data. Shorter evaluation intervals can reduce this gap by improving resolution.
 
 For PromQL recommendations in recording rules, refer to [Prometheus recording rules best practices](https://prometheus.io/docs/practices/rules/).
-
 
 ## Alerting on recorded metrics
 
