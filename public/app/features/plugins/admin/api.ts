@@ -267,4 +267,22 @@ export async function updatePluginSettings(id: string, data: Partial<PluginMeta>
   return response?.data;
 }
 
+export async function getPluginEntitlement(id: string): Promise<boolean> {
+  try {
+    await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
+    return true;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+      if (error.status === 404 || error.status === 403) {
+        return false;
+      }
+      console.warn(`Failed to fetch entitlement for plugin "${id}" (status ${error.status})`);
+    } else {
+      console.warn(`Failed to fetch entitlement for plugin "${id}": unexpected error`);
+    }
+    return false;
+  }
+}
+
 export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };
