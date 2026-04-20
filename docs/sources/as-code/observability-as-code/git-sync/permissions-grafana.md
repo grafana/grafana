@@ -58,7 +58,7 @@ For Git Sync you need to configure permissions at two layers to function correct
 
 Git Sync integrates with the Grafana standard role-based permission model, which has three levels:
 
-1. **Organization-level:** Default permissions of the `Admin`, `Editor`, or `Viewer` role. Refer to [Roles and permissions](ref:roles-and-permission) for more details.
+1. **Organization-level:** Default permissions of the `Admin`, `Editor`, or `Viewer` role. Refer to [Roles and permissions](ref:roles-and-permissions) for more details.
 2. **Folder-level:** They also apply to all dashboards within it. Refer to [Folder permissions](ref:manage-folder-permissions) for more details.
 3. **Dashboard-level:** Refer to [Dashboard permissions](ref:manage-dashboard-permissions) for more details.
 
