@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,12 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
+
+// maxResourceBodyBytes caps upstream Graphite response bodies read during
+// resource calls (metrics/find, metrics/expand, tags/*, events/*, functions,
+// version). These are config/metadata endpoints -- render data is handled
+// separately in query.go with its own larger cap.
+const maxResourceBodyBytes = 32 << 20
 
 type resourceHandler[T any] func(context.Context, *datasourceInfo, *T) ([]byte, int, error)
 
@@ -353,8 +360,11 @@ func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) 
 
 func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger) (*V, *[]byte, error) {
 	encoding := res.Header.Get("Content-Encoding")
-	body, err := decode(encoding, res.Body)
+	body, err := decode(encoding, res.Body, maxResourceBodyBytes)
 	if err != nil {
+		if errors.Is(err, errResponseBodyTooLarge) {
+			logger.Error("Graphite resource response exceeded maximum allowed size", "status", res.Status, "limit", maxResourceBodyBytes)
+		}
 		return nil, nil, fmt.Errorf("failed to read response: %v", err)
 	}
 
