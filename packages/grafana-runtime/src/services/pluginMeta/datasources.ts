@@ -86,10 +86,12 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
   setDatasources(structuredClone(override));
 }
 
-export async function refetchDatasourcePluginMetas(): Promise<void> {
+type FrontendSettings = { datasources: Record<string, { type: string; meta: DataSourcePluginMeta }> };
+
+export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    const settings = await getBackendSrv().get('/api/frontend/settings');
-    setDatasources(extractFromConfig(settings.datasources));
+    const resolved = settings ?? (await getBackendSrv().get<FrontendSettings>('/api/frontend/settings'));
+    setDatasources(extractFromConfig(resolved.datasources));
     return;
   }
 

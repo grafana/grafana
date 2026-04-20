@@ -384,7 +384,7 @@ export class DatasourceSrv implements DataSourceService {
     this.init(settings.datasources, settings.defaultDatasource);
     // Refresh the deduplicated plugin metadata cache in the background.
     // This does not need to block reload since init() already has the full data.
-    refetchDatasourcePluginMetas().catch(() => {});
+    refetchDatasourcePluginMetas(settings).catch(() => {});
   }
 }
 

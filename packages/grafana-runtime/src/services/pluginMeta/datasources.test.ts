@@ -309,6 +309,20 @@ describe('when useMTPlugins flag is disabled', () => {
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('prometheus');
     });
+
+    it('should use passed-in settings without calling /api/frontend/settings', async () => {
+      await refetchDatasourcePluginMetas({
+        datasources: {
+          Prometheus: { type: 'prometheus', meta: prometheusMeta },
+        },
+      });
+
+      const result = await getDatasourcePluginMetas();
+
+      expect(backendSrv.get).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('prometheus');
+    });
   });
 });
 
