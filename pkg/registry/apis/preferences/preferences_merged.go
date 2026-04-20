@@ -6,14 +6,10 @@ import (
 
 	"dario.cat/mergo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -31,58 +27,6 @@ func newMerger(cfg *setting.Cfg, sql *legacy.LegacySQL) *merger {
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
 			WeekStart: &cfg.DateFormats.DefaultWeekStart,
 			Language:  &cfg.DefaultLanguage,
-		},
-	}
-}
-
-func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	schema := defs[preferences.Preferences{}.OpenAPIModelName()].Schema
-
-	return &builder.APIRoutes{
-		Namespace: []builder.APIRouteHandler{
-			{
-				Path: "preferences/merged",
-				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "mergedPreferences",
-							Tags:        []string{"Preferences"},
-							Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-									// Allow getting theme+language from accept
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &schema,
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Handler: s.Current,
-			},
 		},
 	}
 }

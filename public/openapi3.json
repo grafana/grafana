@@ -8939,6 +8939,11 @@
       "PreferencesSpec": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
+          "helpFlags1": {
+            "description": "Bitwise flags that will hide help modals in the UI\nNOTE: this property is only valid on user preferences",
+            "format": "uint64",
+            "type": "integer"
+          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"

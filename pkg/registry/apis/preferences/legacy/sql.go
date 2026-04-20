@@ -26,6 +26,7 @@ type preferenceModel struct {
 	Timezone         sql.NullString
 	Theme            sql.NullString
 	WeekStart        sql.NullString
+	HelpFlags1       sql.NullInt64
 	Created          time.Time
 	Updated          time.Time
 }
@@ -90,7 +91,7 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			&pref.Theme,
 			&pref.WeekStart,
 			&pref.HomeDashboardUID,
-			&pref.UserUID, &pref.TeamUID,
+			&pref.UserUID, &pref.TeamUID, &pref.HelpFlags1,
 			&pref.Created, &pref.Updated)
 		if err != nil {
 			return nil, 0, err
@@ -202,6 +203,17 @@ func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team strin
 
 	var id int64
 	sess := sql.DB.GetSqlxSession()
-	err = sess.Get(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	err = sess.Get(ctx, &id, "SELECT id FROM "+sql.Table("team")+" WHERE org_id=? AND uid=?", orgId, team)
 	return id, err
+}
+
+func (s *LegacySQL) updateHelpFlags(ctx context.Context, orgId int64, userUID string, flag uint64) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, "UPDATE "+sql.Table("user")+" SET help_flags1=? WHERE org_id=? AND uid=?",
+		flag, orgId, userUID)
+	return err
 }

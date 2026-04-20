@@ -191,6 +191,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			"timezone":"Africa/Johannesburg",
 			"weekStart":"saturday",
 			"theme":"dark",
+			"helpFlags1": 0,
 			"language":"en-US", `+ // FROM global default!
 			`"regionalFormat": ""}`, // why empty?
 			string(jj))

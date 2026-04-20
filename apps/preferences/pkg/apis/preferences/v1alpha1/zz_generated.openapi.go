@@ -218,6 +218,13 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 							Ref:         ref(PreferencesNavbarPreference{}.OpenAPIModelName()),
 						},
 					},
+					"helpFlags1": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Bitwise flags that will hide help modals in the UI NOTE: this property is only valid on user preferences",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 			},
 		},

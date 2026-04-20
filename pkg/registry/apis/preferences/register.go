@@ -13,7 +13,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -65,6 +64,7 @@ func RegisterAPIService(
 					utils.UserResourceOwner,
 				},
 			},
+			OKResources: []string{"helpflags"}, // no auth required because it is based on who you are
 		},
 	}
 
@@ -123,11 +123,6 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return preferences.GetOpenAPIDefinitions
 }
 
-func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.merger.GetAPIRoutes(defs)
-}
-
 // Validate validates that the preference object has valid theme and timezone (if specified)
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	if a.GetResource().Resource != "preferences" {
@@ -145,12 +140,21 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", obj))
 	}
 
+	owner, ok := utils.ParseOwnerFromName(p.Name)
+	if !ok {
+		return apierrors.NewBadRequest("invalid name, but be user-{uid}, team-{uid}, or namespace")
+	}
+
 	if p.Spec.Timezone != nil && !pref.IsValidTimezone(*p.Spec.Timezone) {
 		return apierrors.NewBadRequest("invalid timezone: must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string")
 	}
 
 	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
 		return apierrors.NewBadRequest("invalid theme")
+	}
+
+	if p.Spec.HelpFlags1 != nil && owner.Owner != utils.UserResourceOwner {
+		return apierrors.NewBadRequest("the help flag property is only valid on user preferences")
 	}
 
 	return nil

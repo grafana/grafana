@@ -15,6 +15,9 @@ type AuthorizeFromName struct {
 	Teams    TeamService
 	OKNames  []string
 	Resource map[string][]ResourceOwner // may include unknown
+
+	// For non-name based resource (eg, helpflags)
+	OKResources []string
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -29,6 +32,9 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	owners, ok := a.Resource[attr.GetResource()]
 	if !ok {
+		if a.OKResources != nil && slices.Contains(a.OKResources, attr.GetResource()) {
+			return authorizer.DecisionAllow, "", nil
+		}
 		return authorizer.DecisionDeny, "missing resource name", nil
 	}
 
