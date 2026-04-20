@@ -183,26 +183,24 @@ export function ChannelSubForm<R extends ChannelValues>({
     // of a now-disallowed type can still be viewed and edited.
     const currentType = initialValues?.type || defaultValues.type;
 
-    return sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-      ({ dto, meta }) => {
-        const metaDisabled = meta ? !meta.enabled : false;
-        const notCreatable = !canCreateNotifier(dto) && dto.type !== currentType;
-        return {
-          // ReactNode is supported in Select label, but types don't reflect it
-          /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
-          label: (
-            <Stack alignItems="center" gap={1}>
-              {dto.name}
-              {meta?.badge}
-            </Stack>
-          ) as any,
-          /* eslint-enable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
-          value: dto.type,
-          description: meta?.description,
-          isDisabled: metaDisabled || notCreatable,
-        };
-      }
-    );
+    return sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(({ dto, meta }) => {
+      const metaDisabled = meta ? !meta.enabled : false;
+      const notCreatable = !canCreateNotifier(dto) && dto.type !== currentType;
+      return {
+        // ReactNode is supported in Select label, but types don't reflect it
+        /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
+        label: (
+          <Stack alignItems="center" gap={1}>
+            {dto.name}
+            {meta?.badge}
+          </Stack>
+        ) as any,
+        /* eslint-enable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
+        value: dto.type,
+        description: meta?.description,
+        isDisabled: metaDisabled || notCreatable,
+      };
+    });
   }, [notifiers, initialValues?.type, defaultValues.type]);
 
   const handleTest = async () => {
