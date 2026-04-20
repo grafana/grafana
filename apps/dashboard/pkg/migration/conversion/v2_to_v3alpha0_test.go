@@ -102,6 +102,14 @@ func TestV2ToV3alpha0_AutoGridVisibilityPromoted(t *testing.T) {
 	require.Len(t, rule.Spec.Conditions.Items, 1)
 	require.NotNil(t, rule.Spec.Conditions.Items[0].ConditionalRenderingTimeRangeSizeKind)
 	assert.Equal(t, "1h", rule.Spec.Conditions.Items[0].ConditionalRenderingTimeRangeSizeKind.Spec.Value)
+
+	// The legacy conditionalRendering block must be cleared on the v3alpha0 output
+	// so the visibility predicate isn't double-represented (once as a rule, once
+	// inline on the layout item).
+	require.NotNil(t, out.Spec.Layout.AutoGridLayoutKind)
+	require.Len(t, out.Spec.Layout.AutoGridLayoutKind.Spec.Items, 1)
+	assert.Nil(t, out.Spec.Layout.AutoGridLayoutKind.Spec.Items[0].Spec.ConditionalRendering,
+		"conditionalRendering must be cleared on the v3alpha0 output after promotion to a rule")
 }
 
 // TestV2ToV3alpha0_RowVisibilityPromotedAsLayoutItem verifies that a
@@ -153,6 +161,12 @@ func TestV2ToV3alpha0_RowVisibilityPromotedAsLayoutItem(t *testing.T) {
 	require.NotNil(t, rule.Spec.Targets[0].LayoutItemReference)
 	assert.Equal(t, "SRE", rule.Spec.Targets[0].LayoutItemReference.Name)
 	assert.Equal(t, dashv3alpha0.DashboardDashboardRuleOutcomeVisibilitySpecVisibilityHide, rule.Spec.Outcomes[0].DashboardRuleOutcomeVisibilityKind.Spec.Visibility)
+
+	// Row-level conditionalRendering must be cleared on the v3alpha0 output.
+	require.NotNil(t, out.Spec.Layout.RowsLayoutKind)
+	require.Len(t, out.Spec.Layout.RowsLayoutKind.Spec.Rows, 1)
+	assert.Nil(t, out.Spec.Layout.RowsLayoutKind.Spec.Rows[0].Spec.ConditionalRendering,
+		"row-level conditionalRendering must be cleared on the v3alpha0 output after promotion")
 }
 
 // TestV2ToV3alpha0_ViaScheme exercises the conversion via the runtime scheme
