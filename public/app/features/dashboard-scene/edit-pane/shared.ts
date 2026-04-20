@@ -37,8 +37,10 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementFor(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
