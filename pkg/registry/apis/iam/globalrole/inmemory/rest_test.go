@@ -75,7 +75,7 @@ func newTestStaticRoles() map[string]*accesscontrol.RoleDTO {
 
 type mockACService struct {
 	accesscontrol.Service
-	roles      map[string]*accesscontrol.RoleDTO
+	roles       map[string]*accesscontrol.RoleDTO
 	lastCallCtx context.Context
 }
 
