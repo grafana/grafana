@@ -894,6 +894,34 @@ func TestHandleResourceReq_NilHandler(t *testing.T) {
 	assert.Equal(t, "responseFn should not be nil", errorResp["error"])
 }
 
+func TestHandleResourceReq_InboundBodyTooLarge(t *testing.T) {
+	dsInfo := datasourceInfo{
+		Id:         1,
+		URL:        "http://graphite.grafana",
+		HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("{}"), status: 200}},
+	}
+
+	svc := &Service{
+		logger: log.NewNullLogger(),
+		im:     &mockInstanceManager{instance: dsInfo},
+	}
+
+	// One byte over the inbound cap.
+	oversized := bytes.Repeat([]byte("x"), maxInboundResourceBodyBytes+1)
+	req := httptest.NewRequest("POST", "/events", bytes.NewReader(oversized))
+	req = req.WithContext(backend.WithPluginContext(context.Background(), backend.PluginContext{}))
+	rr := httptest.NewRecorder()
+
+	handler := handleResourceReq(svc.handleEvents, svc)
+	handler(rr, req)
+
+	assert.Equal(t, http.StatusRequestEntityTooLarge, rr.Code)
+
+	var errorResp map[string]string
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errorResp))
+	assert.Contains(t, errorResp["error"], "request body exceeds")
+}
+
 func TestWriteErrorResponse(t *testing.T) {
 	rr := httptest.NewRecorder()
 	writeErrorResponse(rr, http.StatusBadRequest, "test error message")
