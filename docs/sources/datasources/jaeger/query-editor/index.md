@@ -46,14 +46,14 @@ To search for traces:
 1. Select **Search** from the **Query type** selector.
 1. Fill out the search form:
 
-| Field              | Description                                                                                                                       |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Service Name**   | Select a service from the drop-down list, or type to filter. Supports template variables.                                         |
+| Field              | Description                                                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Service Name**   | Select a service from the drop-down list, or type to filter. Supports template variables.                                              |
 | **Operation Name** | Select an operation for the chosen service. Select **All** to query all operations. This field is disabled until you select a service. |
-| **Tags**           | Enter tags in [logfmt](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`.               |
-| **Min Duration**   | Filter traces with a duration greater than this value. Use formats like `1.2s`, `100ms`, or `500us`.                              |
-| **Max Duration**   | Filter traces with a duration less than this value. Use the same format as **Min Duration**.                                      |
-| **Limit**          | Maximum number of traces to return.                                                                                               |
+| **Tags**           | Enter tags in [`logfmt`](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`.                   |
+| **Min Duration**   | Filter traces with a duration greater than this value. Use formats like `1.2s`, `100ms`, or `500us`.                                   |
+| **Max Duration**   | Filter traces with a duration less than this value. Use the same format as **Min Duration**.                                           |
+| **Limit**          | Maximum number of traces to return.                                                                                                    |
 
 {{< figure src="/static/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Jaeger query editor showing a search query" >}}
 
@@ -77,7 +77,7 @@ To visualize the dependency graph:
 1. Set the dashboard time range to the period you want to analyze.
 1. Run the query.
 
-The dependency graph uses the dashboard time range to query Jaeger's `/api/dependencies` endpoint. Grafana displays the result as a Node Graph with:
+The dependency graph uses the dashboard time range to query the Jaeger `/api/dependencies` endpoint. Grafana displays the result as a Node Graph with:
 
 - **Nodes:** Each node represents a service.
 - **Edges:** Each edge represents calls between services, with the call count shown as the edge label.

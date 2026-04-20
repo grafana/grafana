@@ -37,12 +37,12 @@ These errors occur when Grafana can't reach the Jaeger instance.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Jaeger isn't running | Verify Jaeger is running and accessible at the configured URL. |
-| Incorrect URL | Check the **URL** setting in the data source configuration. The default Jaeger query endpoint is `http://localhost:16686`. |
-| Firewall blocking access | Ensure firewall rules allow traffic from the Grafana server to the Jaeger endpoint. |
-| Network segmentation | For Grafana Cloud accessing private Jaeger instances, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/). |
+| Cause                    | Solution                                                                                                                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jaeger isn't running     | Verify Jaeger is running and accessible at the configured URL.                                                                                                                                |
+| Incorrect URL            | Check the **URL** setting in the data source configuration. The default Jaeger query endpoint is `http://localhost:16686`.                                                                    |
+| Firewall blocking access | Ensure firewall rules allow traffic from the Grafana server to the Jaeger endpoint.                                                                                                           |
+| Network segmentation     | For Grafana Cloud accessing private Jaeger instances, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/). |
 
 ### "request failed: 404 Not Found"
 
@@ -98,12 +98,12 @@ These errors occur when credentials are invalid or missing.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Invalid credentials | Verify the **User** and **Password** values in the data source configuration. |
-| Missing authentication | If Jaeger requires authentication, toggle on the appropriate auth method. |
-| Incorrect custom headers | Verify custom header names and values in **Additional settings**. |
-| OAuth forwarding issues | If using **Forward OAuth identity**, verify the upstream OAuth provider is configured correctly. |
+| Cause                    | Solution                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| Invalid credentials      | Verify the **User** and **Password** values in the data source configuration.                    |
+| Missing authentication   | If Jaeger requires authentication, toggle on the appropriate auth method.                        |
+| Incorrect custom headers | Verify custom header names and values in **Additional settings**.                                |
+| OAuth forwarding issues  | If using **Forward OAuth identity**, verify the upstream OAuth provider is configured correctly. |
 
 ## Query errors
 
@@ -130,13 +130,13 @@ These errors occur when executing queries against Jaeger.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Time range doesn't contain data | Expand the dashboard or Explore time range. Verify traces exist in Jaeger for the selected period. |
-| Service or operation doesn't exist | Verify the selected service and operation names match what's in Jaeger. |
-| Tags syntax error | Ensure tags use [logfmt](https://brandur.org/logfmt) format: `error=true db.statement="select * from User"`. |
-| Duration format error | Use supported duration formats: `1.2s`, `100ms`, `500us`. |
-| Limit set too low | Increase the **Limit** value or leave it empty for the default. |
+| Cause                              | Solution                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data    | Expand the dashboard or Explore time range. Verify traces exist in Jaeger for the selected period.             |
+| Service or operation doesn't exist | Verify the selected service and operation names match what's in Jaeger.                                        |
+| Tags syntax error                  | Ensure tags use [`logfmt`](https://brandur.org/logfmt) format: `error=true db.statement="select * from User"`. |
+| Duration format error              | Use supported duration formats: `1.2s`, `100ms`, `500us`.                                                      |
+| Limit set too low                  | Increase the **Limit** value or leave it empty for the default.                                                |
 
 ### "The JSON file uploaded is not in a valid Jaeger format"
 
@@ -177,10 +177,10 @@ These errors relate to the dependency graph query type.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| No dependency data | Verify Jaeger is collecting and processing service dependency information. |
-| Time range too narrow | Expand the dashboard time range. Dependencies are calculated over the selected period. |
+| Cause                  | Solution                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No dependency data     | Verify Jaeger is collecting and processing service dependency information.                                                                                             |
+| Time range too narrow  | Expand the dashboard time range. Dependencies are calculated over the selected period.                                                                                 |
 | Jaeger storage backend | Some Jaeger storage backends may not support dependency queries. Refer to the [Jaeger documentation](https://www.jaegertracing.io/docs/) for storage-specific details. |
 
 ## gRPC endpoint errors

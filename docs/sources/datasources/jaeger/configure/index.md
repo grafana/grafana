@@ -44,11 +44,11 @@ To add the Jaeger data source:
 
 Configure the basic connection options for the data source.
 
-| Setting     | Description                                                            |
-| ----------- | ---------------------------------------------------------------------- |
-| **Name**    | The name used to refer to the data source in panels and queries.       |
-| **Default** | Toggle to make this the default data source for new panels.            |
-| **URL**     | The URL of your Jaeger instance, such as `http://localhost:16686`.      |
+| Setting     | Description                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| **Name**    | The name used to refer to the data source in panels and queries.   |
+| **Default** | Toggle to make this the default data source for new panels.        |
+| **URL**     | The URL of your Jaeger instance, such as `http://localhost:16686`. |
 
 ## Authentication
 
@@ -76,12 +76,12 @@ To add custom headers, expand the **Additional settings** section and configure 
 
 To configure TLS/mTLS for the connection, expand the **Additional settings** section and configure the following options:
 
-| Setting              | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| **TLS client auth**  | Toggle to enable client certificate authentication.          |
-| **With CA cert**     | Toggle to provide a custom CA certificate.                   |
-| **Skip TLS verify**  | Toggle to skip TLS certificate verification (testing only).  |
-| **Server name**      | Server name for TLS certificate validation.                  |
+| Setting             | Description                                                 |
+| ------------------- | ----------------------------------------------------------- |
+| **TLS client auth** | Toggle to enable client certificate authentication.         |
+| **With CA cert**    | Toggle to provide a custom CA certificate.                  |
+| **Skip TLS verify** | Toggle to skip TLS certificate verification (testing only). |
+| **Server name**     | Server name for TLS certificate validation.                 |
 
 ## Trace to logs
 
@@ -117,30 +117,30 @@ There are two ways to configure trace to logs:
 
 To use a variable, wrap it in `${}`. For example: `${__span.name}`.
 
-| Variable               | Description                                                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **\_\_tags**           | Interpolates mapped tags as a label matcher string in the target data source syntax. Only includes tags present in the span.                       |
-| **\_\_span.spanId**    | The ID of the span.                                                                                                                               |
-| **\_\_span.traceId**   | The ID of the trace.                                                                                                                              |
-| **\_\_span.duration**  | The duration of the span.                                                                                                                         |
-| **\_\_span.name**      | The name of the span.                                                                                                                             |
-| **\_\_span.tags**      | Namespace for span tags. Access a specific tag with `${__span.tags.version}`. For tags with dots, use `${__span.tags["http.status"]}`.             |
-| **\_\_trace.traceId**  | The ID of the trace.                                                                                                                              |
-| **\_\_trace.duration** | The duration of the trace.                                                                                                                        |
-| **\_\_trace.name**     | The name of the trace.                                                                                                                            |
+| Variable               | Description                                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **\_\_tags**           | Interpolates mapped tags as a label matcher string in the target data source syntax. Only includes tags present in the span.           |
+| **\_\_span.spanId**    | The ID of the span.                                                                                                                    |
+| **\_\_span.traceId**   | The ID of the trace.                                                                                                                   |
+| **\_\_span.duration**  | The duration of the span.                                                                                                              |
+| **\_\_span.name**      | The name of the span.                                                                                                                  |
+| **\_\_span.tags**      | Namespace for span tags. Access a specific tag with `${__span.tags.version}`. For tags with dots, use `${__span.tags["http.status"]}`. |
+| **\_\_trace.traceId**  | The ID of the trace.                                                                                                                   |
+| **\_\_trace.duration** | The duration of the trace.                                                                                                             |
+| **\_\_trace.name**     | The name of the trace.                                                                                                                 |
 
 ### Trace to logs settings
 
-| Setting                   | Description                                                                                                      |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | The target logs data source. You can select Loki or Splunk logs data sources.                                    |
+| Setting                   | Description                                                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | The target logs data source. You can select Loki or Splunk logs data sources.                                                                                              |
 | **Span start time shift** | Shifts the start time for the logs query based on the span's start time. Use time units such as `5s`, `1m`, `3h`. Use negative values to extend to the past. Default: `0`. |
-| **Span end time shift**   | Shifts the end time for the logs query based on the span's end time. Default: `0`.                               |
-| **Tags**                  | Tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                        |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                         |
-| **Use custom query**      | Toggles the use of a custom query with variable interpolation.                                                   |
-| **Query**                 | The custom query. Use variable interpolation to customize with values from the span.                             |
+| **Span end time shift**   | Shifts the end time for the logs query based on the span's end time. Default: `0`.                                                                                         |
+| **Tags**                  | Tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`.                                                    |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                  |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                   |
+| **Use custom query**      | Toggles the use of a custom query with variable interpolation.                                                                                                             |
+| **Query**                 | The custom query. Use variable interpolation to customize with values from the span.                                                                                       |
 
 ## Trace to metrics
 
@@ -172,11 +172,11 @@ When enabled, Grafana displays the Node Graph above the trace view, showing the 
 
 The **Span bar** setting controls what additional information appears in the span bar row of the trace view.
 
-| Option       | Description                                                                                                      |
-| ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| **None**     | Adds nothing to the span bar row.                                                                                |
-| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                      |
-| **Tag**      | Displays a span tag value on the span bar row. Specify the tag key to use, such as `component`.                  |
+| Option       | Description                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| **None**     | Adds nothing to the span bar row.                                                               |
+| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                     |
+| **Tag**      | Displays a span tag value on the span bar row. Specify the tag key to use, such as `component`. |
 
 ## Trace ID time parameters
 
@@ -192,7 +192,7 @@ If the test fails, refer to [Troubleshoot Jaeger data source issues](https://gra
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system. For more information about provisioning, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### Provisioning example
 

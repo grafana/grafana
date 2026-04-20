@@ -25,13 +25,13 @@ Grafana ships with built-in support for [Jaeger](https://www.jaegertracing.io/),
 
 ## Supported features
 
-| Feature | Supported |
+| Feature     | Supported |
 | ----------- | --------- |
-| Traces | Yes |
-| Metrics | No |
-| Logs | No |
-| Alerting | No |
-| Annotations | No |
+| Traces      | Yes       |
+| Metrics     | No        |
+| Logs        | No        |
+| Alerting    | No        |
+| Annotations | No        |
 
 ## Get started
 
