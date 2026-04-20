@@ -177,7 +177,8 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it sets the basic authentication header for each RPC call.
 		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
+			Header:                   basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
+			requireTransportSecurity: secure,
 		}))
 	}
 
@@ -329,7 +330,8 @@ func MetricsStreamInterceptor() grpc.StreamClientInterceptor {
 }
 
 type basicAuth struct {
-	Header string
+	Header                   string
+	requireTransportSecurity bool
 }
 
 func (c *basicAuth) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
@@ -339,7 +341,7 @@ func (c *basicAuth) GetRequestMetadata(context.Context, ...string) (map[string]s
 }
 
 func (c *basicAuth) RequireTransportSecurity() bool {
-	return true
+	return c.requireTransportSecurity
 }
 
 func basicHeaderForAuth(username, password string) string {

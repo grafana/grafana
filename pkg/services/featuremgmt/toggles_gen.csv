@@ -78,7 +78,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
-2026-02-11,sceneCsvExport,experimental,@grafana/dashboards-squad,false,false,false
+2026-02-11,sceneCsvExport,GA,@grafana/dashboards-squad,false,false,false
 2025-12-17,drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-28,panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true
@@ -277,6 +277,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+2026-04-15,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
@@ -339,7 +340,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-04-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
-2026-03-28,queryServiceQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-01,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-04-01,clearPreviousFieldValues,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
@@ -347,9 +347,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-13,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+2026-04-17,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-02,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2026-04-15,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
+2026-04-17,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false

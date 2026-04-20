@@ -395,7 +395,7 @@ export interface FeatureToggles {
   unlimitedLayoutsNesting?: boolean;
   /**
   * Enables CSV export using scenes dashboard architecture
-  * @default false
+  * @default true
   */
   sceneCsvExport?: boolean;
   /**
@@ -1701,11 +1701,6 @@ export interface FeatureToggles {
   * @default false
   */
   profilesHeatmap?: boolean;
-  /**
-  * Enables the query service to do query caching
-  * @default false
-  */
-  queryServiceQueryCaching?: boolean;
   /**
   * Enables the time seeker in traces drilldown
   * @default false
