@@ -1,24 +1,70 @@
 ---
-description: Configuration guide for Grafana CLI, a command line tool for managing Grafana resources as code.
+description: Installation guide for Grafana CLI, a command line tool for managing Grafana Observability as Code
 keywords:
   - configuration
   - Grafana CLI
   - CLI
   - command line
   - grafanactl
+  - installation
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Set up Grafana CLI
+title: Install and set up the grafanactl CLI
+menuTitle: grafanactl CLI (deprecated)
 weight: 200
-canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/set-up-grafana-cli/
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/install-grafana-cli/
 aliases:
+  - ../../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
   - ../../../observability-as-code/grafana-cli/set-up-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/set-up-grafana-cli/
+  - ../../observability-as-code/grafana-cli/set-up-grafana-cli/
+  - ../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
 ---
 
-# Set up Grafana CLI
+# Install and set up the `grafanactl` CLI
+
+{{< admonition type="caution" >}}
+
+`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx).
+
+To migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl` with `gcx`.
+
+{{< /admonition >}}
+
+The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.
+
+## Install the Grafana CLI `grafanactl`
+
+You can install the project using one of the following supported methods:
+
+### 1. Download a pre-built binary
+
+Download the latest binary for your platform from the [Releases page](https://github.com/grafana/grafanactl/releases).
+
+Prebuilt binaries are available for a variety of operating systems and architectures. Visit the latest release page, and scroll down to the Assets section.
+
+To install the binary, follow the instructions below:
+
+1. Download the archive for the desired operating system and architecture
+1. Extract the archive
+1. Move the executable to the desired directory
+1. Ensure this directory is included in the PATH environment variable
+1. Verify that you have execute permission on the file
+
+### 2. Build from source
+
+To build `grafanactl` from source you must:
+
+- Have `git` installed
+- Have `go` v1.24 (or greater) installed
+
+```bash
+go install github.com/grafana/grafanactl/cmd/grafanactl@latest
+```
+
+## Configure `grafanactl`
 
 You can configure Grafana CLI in two ways: using environment variables or through a configuration file.
 
@@ -29,7 +75,7 @@ You can configure Grafana CLI in two ways: using environment variables or throug
 Configuration items may change depending on your set-up. For example, use `org-id` for Grafana on-prem, but use `stack-id` for Grafana Cloud.
 {{< /admonition >}}
 
-## Configure Grafana CLI with environment variables
+### Configure Grafana CLI with environment variables
 
 Grafana CLI communicates with Grafana via its REST API, which requires authentication credentials.
 
@@ -46,7 +92,7 @@ Depending on your authentication method, you may also need to set:
 
 To persist your configuration, consider [creating a context](#use-configuration-contexts).
 
-### Use configuration contexts
+#### Use configuration contexts
 
 Contexts allow you to easily switch between multiple Grafana instances.
 
@@ -75,7 +121,7 @@ grafanactl config set contexts.staging.grafana.org-id 1
 In these examples, `default` and `staging` are the names of the contexts.
 {{< /admonition >}}
 
-## Configure Grafana CLI with configuration files
+### Configure Grafana CLI with configuration files
 
 Grafana CLI stores its configuration in a YAML file. The CLI determines the configuration file location in the following order:
 
