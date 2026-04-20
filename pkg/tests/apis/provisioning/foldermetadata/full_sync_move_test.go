@@ -37,7 +37,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because teamC and teamC/teamD have no _folder.json metadata
+	// (teamC/teamD is a legacy .keep folder).
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "team-a-uid", "Team A Display", "teamA", repo)
 	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B Display", "teamB", repo)
@@ -127,7 +129,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because root/child/grand and other/ are legacy folders
+	// (tracked via .keep) with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
 	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "root/child", "root-uid")
@@ -177,7 +181,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because plainB is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "meta-a-uid", "Meta A", "metaA", repo)
 	plainBUID := findFolderUIDBySourcePath(t, helper, repo, "plainB")

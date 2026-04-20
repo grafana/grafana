@@ -719,6 +719,14 @@ type TestRepo struct {
 	SkipSync               bool
 	SkipResourceAssertions bool
 	Template               string
+
+	// InitialSyncExpectation overrides the matcher applied to the automatic
+	// initial sync that CreateLocalRepo triggers (unless SkipSync is set).
+	// When nil, the initial sync must finish in state "success" with no errors.
+	// Use common.Warning() for repository states whose first sync is legitimately
+	// expected to produce warnings (e.g. legacy folders tracked only via .keep
+	// without _folder.json metadata).
+	InitialSyncExpectation SyncOption
 }
 
 type LocalRepositorySpec struct {
@@ -827,7 +835,11 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	}
 
 	if !repo.SkipSync {
-		SyncAndWait(t, h, Repo(repo.Name), Succeeded())
+		expect := repo.InitialSyncExpectation
+		if expect == nil {
+			expect = Succeeded()
+		}
+		SyncAndWait(t, h, Repo(repo.Name), expect)
 		h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")

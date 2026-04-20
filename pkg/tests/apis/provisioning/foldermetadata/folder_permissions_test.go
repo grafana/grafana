@@ -26,6 +26,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 			"../testdata/all-panels.json": "folder/subfolder/dashboard.json",
 		},
 		SkipResourceAssertions: true,
+		// Initial sync warns because folder and folder/subfolder have no _folder.json metadata.
+		InitialSyncExpectation: common.Warning(),
 	})
 	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})

@@ -121,7 +121,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because "plain" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
@@ -194,7 +196,9 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because "destination" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
 	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "root/child", "root-uid")
@@ -359,7 +363,9 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 		SkipResourceAssertions: true,
 	})
 
-	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+	// Initial sync warns because "legacy-parent" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "child-meta-uid", "Child With Meta", "child-with-meta", repo)
 	legacyParentUID := findFolderUIDBySourcePath(t, helper, repo, "legacy-parent")

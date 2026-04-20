@@ -41,6 +41,9 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 		ExpectedDashboards: 1,
 		// root folder + parent + parent/child
 		ExpectedFolders: 3,
+		// parent and parent/child have no _folder.json metadata — that is the
+		// exact state the fix-folder-metadata job is exercised against.
+		InitialSyncExpectation: common.Warning(),
 	})
 
 	// Confirm the metadata files do not exist before the job runs.
@@ -77,6 +80,8 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    3,
+		// Initial sync warns because parent and parent/child have no _folder.json metadata.
+		InitialSyncExpectation: common.Warning(),
 	})
 
 	// First run: let the job create the metadata files.
@@ -115,6 +120,8 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    3,
+		// Initial sync warns because parent and parent/child have no _folder.json metadata.
+		InitialSyncExpectation: common.Warning(),
 	})
 
 	// Plant _folder.json files with arbitrary UIDs so we can verify the job
@@ -151,6 +158,8 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    3,
+		// Initial sync warns because parent and parent/child have no _folder.json metadata.
+		InitialSyncExpectation: common.Warning(),
 	})
 
 	// Write _folder.json files that are valid JSON but not Folder resources.
