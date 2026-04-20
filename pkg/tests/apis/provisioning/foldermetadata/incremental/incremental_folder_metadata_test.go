@@ -243,7 +243,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("warning-dash", "Warning Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Initial sync warns because myfolder has no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		hashUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", hashUID, "folder should start with a hash-based UID")
@@ -314,7 +315,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("my-dash", "My Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Initial sync warns because myfolder has no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -347,7 +349,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/child/dash.json": common.DashboardJSON("child-dash", "Child Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Initial sync warns because myfolder and myfolder/child have no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -385,7 +388,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("my-dash", "My Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Initial sync warns because myfolder has no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -419,7 +423,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"parent/child/dash.json": common.DashboardJSON("nested-create-dash", "Nested Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Initial sync warns because parent and parent/child have no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "parent")
 		oldChildUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "child")
