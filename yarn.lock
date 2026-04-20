@@ -3742,9 +3742,9 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.5.2"
+    "@lezer/common": "npm:1.3.0"
     "@lezer/highlight": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.8"
+    "@lezer/lr": "npm:1.4.3"
     "@prometheus-io/lezer-promql": "npm:0.307.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/lodash": "npm:4.17.20"
@@ -3783,6 +3783,77 @@ __metadata:
   checksum: 10/49655aa7e41faf04995b5d38def0ded48edc7e354551a13da1d8324963c6f52b0f4d844d9b03c8a4f3fa103d83473973a4e63fc74e42532dc26c864739f689a3
   languageName: node
   linkType: hard
+
+"@grafana/prometheus@workspace:packages/grafana-prometheus":
+  version: 0.0.0-use.local
+  resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@floating-ui/react": "npm:0.27.19"
+    "@grafana/assistant": "npm:0.1.24"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
+    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
+    "@hello-pangea/dnd": "npm:18.0.1"
+    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@lezer/common": "npm:1.3.0"
+    "@lezer/highlight": "npm:1.2.3"
+    "@lezer/lr": "npm:1.4.3"
+    "@prometheus-io/lezer-promql": "npm:0.307.3"
+    "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
+    "@rollup/plugin-image": "npm:3.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
+    "@testing-library/react": "npm:16.3.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/debounce-promise": "npm:3.1.9"
+    "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:4.17.20"
+    "@types/node": "npm:24.10.1"
+    "@types/pluralize": "npm:^0.0.33"
+    "@types/prismjs": "npm:1.26.5"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/react-highlight-words": "npm:0.20.0"
+    "@types/semver": "npm:7.7.1"
+    "@types/uuid": "npm:11.0.0"
+    debounce-promise: "npm:3.1.2"
+    esbuild: "npm:0.25.8"
+    i18next-cli: "npm:^1.48.0"
+    jest: "npm:29.7.0"
+    jest-environment-jsdom: "npm:29.7.0"
+    lodash: "npm:^4.17.23"
+    moment: "npm:2.30.1"
+    moment-timezone: "npm:0.5.47"
+    monaco-editor: "npm:0.34.1"
+    monaco-promql: "npm:1.8.0"
+    pluralize: "npm:8.0.0"
+    prismjs: "npm:1.30.0"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-highlight-words: "npm:0.21.0"
+    react-select-event: "npm:5.5.1"
+    react-use: "npm:17.6.0"
+    react-window: "npm:1.8.11"
+    rimraf: "npm:6.0.1"
+    rollup: "npm:^4.60.1"
+    rollup-plugin-esbuild: "npm:6.2.1"
+    rollup-plugin-node-externals: "npm:^8.0.0"
+    rxjs: "npm:7.8.2"
+    semver: "npm:7.7.4"
+    testing-library-selector: "npm:0.3.1"
+    typescript: "npm:6.0.2"
+    uuid: "npm:13.0.0"
+  peerDependencies:
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  languageName: unknown
+  linkType: soft
 
 "@grafana/runtime@npm:13.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
@@ -5607,6 +5678,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lezer/common@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@lezer/common@npm:1.3.0"
+  checksum: 10/8e195a8e426bc18d4339b3f2a1a7ad39c3b2cfa740c7108657a241985f63bdee5255a5f5cf8d863b878881744288bcb679d16170f0e5bcebb141188b53cfd8c0
+  languageName: node
+  linkType: hard
+
 "@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.3.0":
   version: 1.5.2
   resolution: "@lezer/common@npm:1.5.2"
@@ -5620,6 +5698,15 @@ __metadata:
   dependencies:
     "@lezer/common": "npm:^1.3.0"
   checksum: 10/8f787d464f8a036f117a0b23e73ac034d224a57d72501c6559089098a28f127c9e495b90ac7d132acc86199e0b64d4c038f75f9293a37c7c61add52fa1acdb4e
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.4.3":
+  version: 1.4.3
+  resolution: "@lezer/lr@npm:1.4.3"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10/d6dfecedcd51027b38bac756026bcbdffa2e086d9a48a4ef0f84176ca28b300d9da0e508fc77d8d64181540b6027571a7fe1dc3705abdcc5d6db45386d6fb482
   languageName: node
   linkType: hard
 
@@ -11697,6 +11784,15 @@ __metadata:
   version: 10.0.0
   resolution: "@types/uuid@npm:10.0.0"
   checksum: 10/e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:11.0.0":
+  version: 11.0.0
+  resolution: "@types/uuid@npm:11.0.0"
+  dependencies:
+    uuid: "npm:*"
+  checksum: 10/9f94bd34e5d220c53cc58ea9f48a0061d3bc343e29bc33a17edc705f5e21fedda21553318151f2bc227c2b2b03727bbb536da2b82a61f84d2e1ca38abc5e5c3f
   languageName: node
   linkType: hard
 
@@ -31281,21 +31377,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:7.7.4, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3":
+  version: 7.7.4
+  resolution: "semver@npm:7.7.4"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/26bdc6d58b29528f4142d29afb8526bc335f4fc04c4a10f2b98b217f277a031c66736bf82d3d3bb354a2f6a3ae50f18fd62b053c4ac3f294a3d10a61f5075b75
+  languageName: node
+  linkType: hard
+
 "semver@npm:^6.0.0, semver@npm:^6.3.0, semver@npm:^6.3.1":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3":
-  version: 7.7.4
-  resolution: "semver@npm:7.7.4"
-  bin:
-    semver: bin/semver.js
-  checksum: 10/26bdc6d58b29528f4142d29afb8526bc335f4fc04c4a10f2b98b217f277a031c66736bf82d3d3bb354a2f6a3ae50f18fd62b053c4ac3f294a3d10a61f5075b75
   languageName: node
   linkType: hard
 
@@ -34461,6 +34557,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"uuid@npm:*":
+  version: 14.0.0
+  resolution: "uuid@npm:14.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
+  languageName: node
+  linkType: hard
+
 "uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.5, uuid@npm:^11.1.0":
   version: 11.1.0
   resolution: "uuid@npm:11.1.0"
@@ -34470,7 +34575,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^13.0.0":
+"uuid@npm:13.0.0, uuid@npm:^13.0.0":
   version: 13.0.0
   resolution: "uuid@npm:13.0.0"
   bin:
