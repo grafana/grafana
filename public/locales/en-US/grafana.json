@@ -1176,7 +1176,7 @@
       "label-pending-period": "Pending period"
     },
     "evaluation-chain-badge": {
-      "tooltip": "Part of evaluation chain: {{chainName}}"
+      "tooltip": "Part of evaluation group: {{chainName}}"
     },
     "evaluation-chain-row": {
       "alert-count_one": "{{count}} alert rule",
@@ -1187,10 +1187,10 @@
       "recording-rules": "Recording rules"
     },
     "evaluation-chains-list": {
-      "empty": "No evaluation chains found. Evaluation chains are created when you link recording and alert rules together for sequential evaluation.",
+      "empty": "No evaluation groups found. Evaluation groups are created when you link recording and alert rules together for sequential evaluation.",
       "folder-count_one": "{{count}} chain",
       "folder-count_other": "{{count}} chain",
-      "loading": "Loading chains..."
+      "loading": "Loading groups..."
     },
     "evaluation-group": {
       "label-delete": "Delete",
@@ -2195,7 +2195,7 @@
       "alert-rules": "Alert rules",
       "alerts": "Alerts",
       "contact-points": "Contact points",
-      "evaluation-chains": "Evaluation chains",
+      "evaluation-chains": "Evaluation groups",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
       "recording-rules": "Recording rules",
@@ -3023,7 +3023,7 @@
           "description": "Alert rules define when a notification for a particular condition should be sent out."
         },
         "evaluation-chains": {
-          "description": "Evaluation chains define the order in which recording and alert rules are evaluated, ensuring recording rules always run before the alert rules that depend on them."
+          "description": "Evaluation groups define the order in which recording and alert rules are evaluated, ensuring recording rules always run before the alert rules that depend on them."
         },
         "recording-rules": {
           "description": "Recording rules pre-compute frequently used queries and store their results as new metrics."
