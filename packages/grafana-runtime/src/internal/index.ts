@@ -55,3 +55,6 @@ export {
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError } from '../services/pluginMeta/logging';
+
+export { init as initDataSources, upsertRuntimeDataSource } from '../services/dataSource/instanceSettings';
+export { setDataSourcePluginImporter, type DataSourcePluginImporter } from '../services/dataSource/plugin';
