@@ -5,16 +5,16 @@ import uPlot, { type AlignedData } from 'uplot';
 import { CandleStyle, ColorStrategy, VizDisplayMode } from './panelcfg.gen';
 import { drawMarkers } from './utils';
 
-/**
- * Since this method only has outputs in the canvas, I'm not sure how it can be tested otherwise without mocks that are probably more wedded to implementation
- * TL;DR if this test is failing after updating uPlot, delete the __snapshot__/utils.test.ts.snap and re-run the tests and commit the output
- * If this test is failing after making changes to drawMarkers, verify that you intended to change the canvas and then do the same.
- *
- * @todo replace with screenshot regression testing
- */
-
 type DrawOverrides = Partial<Parameters<typeof drawMarkers>[0]>;
 type TestCase = [string, DrawOverrides?, uPlot.AlignedData?, uPlot.Series[]?];
+
+const defaultData: AlignedData = [
+  [1000, 2000], // time
+  [5, 10], // open
+  [50, 100], // high
+  [4, 8], // low
+  [15, 30], // close
+];
 
 describe('drawMarkers', () => {
   const height = 400;
@@ -37,7 +37,7 @@ describe('drawMarkers', () => {
       ...overrides,
     });
 
-  const getPlot = async (data?: uPlot.AlignedData, series?: uPlot.Series[]) => {
+  const getPlot = async (data: uPlot.AlignedData, series?: uPlot.Series[]): Promise<{ u: uPlot }> => {
     const u = new uPlot(
       {
         height,
@@ -52,13 +52,7 @@ describe('drawMarkers', () => {
             { scale: 'y' }, // close
           ] as uPlot.Series[]),
       },
-      data ?? [
-        [1000, 2000], // time
-        [5, 10], // open
-        [50, 100], // high
-        [4, 8], // low
-        [15, 30], // close
-      ]
+      data
     );
 
     // uPlot does some async work after construction, let's wait until that is complete
@@ -69,7 +63,7 @@ describe('drawMarkers', () => {
     u.ctx.__clearEvents();
     u.ctx.__clearPath();
 
-    return u;
+    return { u };
   };
 
   function scrubOutput(
@@ -95,12 +89,12 @@ describe('drawMarkers', () => {
           ['draw', (u) => u.ctx.__getDrawCalls()],
           ['clipping region', (u) => u.ctx.__getClippingRegion()],
         ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
-          const u = await getPlot(dataOverrides, seriesOverrides);
+          const { u } = await getPlot(dataOverrides ?? defaultData, seriesOverrides);
           expect(() => getDraw(drawOverrides)(u)).not.toThrow();
           if (testName === 'clipping region') {
             expect(setup(u)).toEqual([]);
           } else {
-            expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
+            expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(dataOverrides ?? defaultData, seriesOverrides);
           }
         });
       }
@@ -142,12 +136,12 @@ describe('drawMarkers', () => {
       ['draw', (u) => u.ctx.__getDrawCalls()],
       ['clipping region', (u) => u.ctx.__getClippingRegion()],
     ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
+      const { u } = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
+        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(volumeAlignedData, volumeSeries);
       }
     });
   });
@@ -186,12 +180,12 @@ describe('drawMarkers', () => {
       ['draw', (u) => u.ctx.__getDrawCalls()],
       ['clipping region', (u) => u.ctx.__getClippingRegion()],
     ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
+      const { u } = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot();
+        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(volumeAlignedData, volumeSeries);
       }
     });
   });

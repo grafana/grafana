@@ -10,6 +10,8 @@ type SnapshotMismatch = jest.CustomMatcherResult & {
 export function toMatchCanvasSnapshot(
   this: Context,
   received: CanvasRenderingContext2DEvent[],
+  data: uPlot.AlignedData,
+  series?: uPlot.Series[],
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
   const result = toMatchSnapshot.call(this, received, ...rest) as SnapshotMismatch; // @todo how to properly get actual from jest?
@@ -18,13 +20,14 @@ export function toMatchCanvasSnapshot(
     const parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
     const expectedCanvasCalls = eventsToCanvasScript(parsedExpected, 'expected');
     const receivedCanvasCalls = eventsToCanvasScript(received, 'actual');
-
-    // canvas output
+    const expectedUrlParam = encodeURIComponent(expectedCanvasCalls);
+    const actualUrlParam = encodeURIComponent(receivedCanvasCalls);
+    const dataUrlParam = encodeURIComponent(JSON.stringify(data));
+    const seriesUrlParam = series ? encodeURIComponent(JSON.stringify(series)) : '';
+    // @todo codepen hits URL length limits, local?
     console.log(
-      `// To debug: paste the output into the following codepen: https://codepen.io/gtk-dev/pen/MYjLdGO\n\n// expected: \n${expectedCanvasCalls}\n\n// actual: \n${receivedCanvasCalls}`
+      `https://codepen.io/gtk-dev/pen/emdoxvB?expected=${expectedUrlParam}&actual=${actualUrlParam}&uPlotData=${dataUrlParam}&uPlotSeries=${seriesUrlParam}`
     );
-    // console.log('expectedCanvasCalls', expectedCanvasCalls);
-    // console.log('receivedCanvasCalls', receivedCanvasCalls);
   }
 
   return result;
@@ -135,7 +138,7 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
       const p = props.path;
       const fillRule = props.fillRule ?? 'nonzero';
       emitSubpath(p, ctx, lines);
-      lines.push(`${ctx}.clip(${fillRule});`);
+      lines.push(`${ctx}.clip("${fillRule}");`);
       return;
     }
     case 'fill': {
@@ -155,31 +158,32 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'fillText': {
       const mw = props.maxWidth;
       if (mw == null) {
-        lines.push(`${ctx}.fillText(${props.text}, ${props.x}, ${props.y});`);
+        lines.push(`${ctx}.fillText("${props.text}", ${props.x}, ${props.y});`);
       } else {
-        lines.push(`${ctx}.fillText(${props.text}, ${props.x}, ${props.y}, ${mw});`);
+        lines.push(`${ctx}.fillText("${props.text}", ${props.x}, ${props.y}, ${mw});`);
       }
       return;
     }
     case 'strokeText': {
       const mw = props.maxWidth;
       if (mw == null) {
-        lines.push(`${ctx}.strokeText(${props.text}, ${props.x}, ${props.y});`);
+        lines.push(`${ctx}.strokeText("${props.text}", ${props.x}, ${props.y});`);
       } else {
-        lines.push(`${ctx}.strokeText(${props.text}, ${props.x}, ${props.y}, ${mw});`);
+        lines.push(`${ctx}.strokeText("${props.text}", ${props.x}, ${props.y}, ${mw});`);
       }
       return;
     }
     case 'measureText':
-      lines.push(`${ctx}.measureText(${props.text});`);
+      lines.push(`${ctx}.measureText("${props.text}");`);
       return;
 
     case 'setLineDash': {
-      const segs = props.segments ?? [];
-      lines.push(`${ctx}.setLineDash(${segs});`);
+      const segs = props.segments;
+      if (segs && Array.isArray(segs) && segs.length) {
+        lines.push(`${ctx}.setLineDash(${segs});`);
+      }
       return;
     }
-
     case 'fillStyle':
     case 'strokeStyle':
     case 'globalAlpha':
@@ -199,9 +203,11 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'shadowBlur':
     case 'shadowColor':
     case 'shadowOffsetX':
-    case 'shadowOffsetY':
-      lines.push(`${ctx}.${type} = ${props.value};`);
+    case 'shadowOffsetY': {
+      const value = typeof props.value === 'number' ? props.value : `"${props.value.replaceAll('"', '\\"')}"`;
+      lines.push(`${ctx}.${type} = ${value};`);
       return;
+    }
     case 'createLinearGradient':
       lines.push(`${ctx}.createLinearGradient(${props.x0}, ${props.y0}, ${props.x1}, ${props.y1});`);
       return;
@@ -225,7 +231,7 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
           emitPathBuilding(seg, ctx, lines);
         }
       }
-      lines.push(`${ctx}.isPointInPath(${props.x}, ${props.y}, ${props.fillRule ?? 'nonzero'});`);
+      lines.push(`${ctx}.isPointInPath(${props.x}, ${props.y}, "${props.fillRule ?? 'nonzero'}");`);
       return;
     }
 
@@ -306,7 +312,7 @@ function emitPathBuilding(ev: CanvasRenderingContext2DEvent, ctx: string, lines:
           emitPathBuilding(seg, ctx, lines);
         }
       }
-      lines.push(`${ctx}.clip(${fillRule});`);
+      lines.push(`${ctx}.clip("${fillRule}");`);
       break;
     }
     default:

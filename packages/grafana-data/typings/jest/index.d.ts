@@ -1,4 +1,5 @@
 import { type Observable } from 'rxjs';
+import type uPlot from 'uplot';
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
@@ -12,7 +13,18 @@ declare global {
        * test fails.
        */
       toEmitValuesWith<E = ObservableType<T>>(expectations: (received: E[]) => void): Promise<CustomMatcherResult>;
-      toMatchCanvasSnapshot(hint?: string): CustomMatcherResult;
+
+      /**
+       * WIP
+       * Canvas snapshot tests to be used on the output of jest-canvas-mock
+       * Failed tests will generate a link to view the diff between canvas outputs
+       * See public/app/plugins/panel/candlestick/utils.test.ts for an example
+       *
+       * @param data
+       * @param series
+       * @param hint
+       */
+      toMatchCanvasSnapshot(data: uPlot.AlignedData, series?: uPlot.Series[], hint?: string): CustomMatcherResult;
     }
   }
 }
