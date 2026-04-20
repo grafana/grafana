@@ -8055,6 +8055,15 @@
     },
     "empty-state": {
       "message": "Nie znaleziono źródeł danych"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -15597,6 +15606,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Myślnik",
         "label-dots": "Kropki",
         "label-solid": "Ciągła"

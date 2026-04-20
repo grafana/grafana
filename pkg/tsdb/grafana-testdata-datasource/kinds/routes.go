@@ -191,12 +191,14 @@ func Routes() *pluginschema.Routes {
 					Examples: map[string]*spec3.Example{
 						"1hz": {
 							ExampleProps: spec3.ExampleProps{
-								Value: "1hz",
+								Value:   "1hz",
+								Summary: "Once every second",
 							},
 						},
 						"10hz": {
 							ExampleProps: spec3.ExampleProps{
-								Value: "10hz",
+								Value:   "10hz",
+								Summary: "10 times a second",
 							},
 						},
 					},

@@ -67,7 +67,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return nil, nil
 	}
 
@@ -107,7 +107,7 @@ func RegisterAPIService(
 			DataSourceAPIBuilderConfig{
 				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 				LoadOpenAPISpec:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
-				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},
@@ -123,9 +123,9 @@ func RegisterAPIService(
 			apiVersion := "v0alpha1" // hardcoded for now
 			schema, err := pluginInfo.Schemas.Get(apiVersion)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error loading plugin schema %s %w", pluginInfo.JSON.ID, err)
 			}
-			if schema != nil {
+			if schema != nil && !schema.IsZero() {
 				builder.schemas = map[string]*pluginschema.PluginSchema{
 					apiVersion: schema,
 				}

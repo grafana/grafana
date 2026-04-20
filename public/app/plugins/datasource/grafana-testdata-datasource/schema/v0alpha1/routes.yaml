@@ -50,8 +50,10 @@ paths:
     - description: simulation key (should include hz)
       examples:
         10hz:
+          summary: 10 times a second
           value: 10hz
         1hz:
+          summary: Once every second
           value: 1hz
       in: path
       name: key

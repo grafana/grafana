@@ -36,20 +36,20 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	examples := options.QueryExamples
 	resourceName := dsV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
-	schema := schemabuilder.QuerySchemaOptions{
+	builder := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{""},
 		QueryTypes: []data.QueryTypeDefinition{},
 	}
 	if options.PluginJSON != nil {
-		schema.PluginID = []string{options.PluginJSON.ID}
+		builder.PluginID = []string{options.PluginJSON.ID}
 		if options.PluginJSON.AliasIDs != nil {
-			schema.PluginID = append(schema.PluginID, options.PluginJSON.AliasIDs...)
+			builder.PluginID = append(builder.PluginID, options.PluginJSON.AliasIDs...)
 		}
 	}
 	if options.QueryTypes != nil {
 		// The SDK type and api type are not the same so we just recreate it here
 		for _, qt := range options.QueryTypes.Items {
-			schema.QueryTypes = append(schema.QueryTypes, data.QueryTypeDefinition{
+			builder.QueryTypes = append(builder.QueryTypes, data.QueryTypeDefinition{
 				ObjectMeta: data.ObjectMeta{
 					Name: qt.Name,
 				},
@@ -109,8 +109,8 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	}
 
 	// Query Request
-	schema.Mode = schemabuilder.SchemaTypeQueryRequest
-	s, err := schemabuilder.GetQuerySchema(schema)
+	builder.Mode = schemabuilder.SchemaTypeQueryRequest
+	s, err := schemabuilder.GetQuerySchema(builder)
 	if err != nil {
 		return err
 	}

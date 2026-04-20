@@ -1040,13 +1040,6 @@
       "get": {
         "tags": ["Resources"],
         "operationId": "get_resources_sim_key",
-        "parameters": [
-          {
-            "name": "key",
-            "in": "path",
-            "description": "simulation key (should include hz)"
-          }
-        ],
         "responses": {
           "default": {
             "content": {
@@ -1063,13 +1056,6 @@
       "post": {
         "tags": ["Resources"],
         "operationId": "post_resources_sim_key",
-        "parameters": [
-          {
-            "name": "key",
-            "in": "path",
-            "description": "simulation key (should include hz)"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1102,6 +1088,26 @@
           "schema": {
             "type": "string",
             "uniqueItems": true
+          }
+        },
+        {
+          "name": "key",
+          "in": "path",
+          "description": "simulation key (should include hz)",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "examples": {
+            "10hz": {
+              "summary": "10 times a second",
+              "value": "10hz"
+            },
+            "1hz": {
+              "summary": "Once every second",
+              "value": "1hz"
+            }
           }
         }
       ]
