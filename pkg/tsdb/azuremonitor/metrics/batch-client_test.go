@@ -343,3 +343,22 @@ func TestExecuteBatchRequests(t *testing.T) {
 		assert.Empty(t, results)
 	})
 }
+
+func TestBuildBatchRequestRegionValidation(t *testing.T) {
+	from := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC)
+
+	valid := []string{"eastus", "westeurope", "northcentralus", "WestUS2", ""}
+	for _, region := range valid {
+		_, err := buildBatchRequest(context.Background(),
+			makeBatch(region, "sub-1", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", "", from, to, nil, nil))
+		assert.NoErrorf(t, err, "region %q should be accepted", region)
+	}
+
+	invalid := []string{"east.us", "west/europe", "us-east-1", "foo bar", "eastus\n"}
+	for _, region := range invalid {
+		_, err := buildBatchRequest(context.Background(),
+			makeBatch(region, "sub-1", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", "", from, to, nil, nil))
+		assert.Errorf(t, err, "region %q should be rejected", region)
+	}
+}

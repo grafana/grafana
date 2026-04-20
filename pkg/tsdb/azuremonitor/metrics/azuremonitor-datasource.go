@@ -231,14 +231,14 @@ func isBatchableQuery(query backend.DataQuery) bool {
 func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	armURL := dsInfo.Routes["Azure Monitor"].URL
+	armURL := dsInfo.Routes[types.RouteAzureMonitor].URL
 
 	// Use the dedicated data-plane client for batch requests so that requests to
 	// *.metrics.monitor.azure.com carry a token scoped to that audience rather
 	// than the ARM audience.
-	svc, ok := dsInfo.Services["Azure Monitor Batch Metrics"]
+	svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]
 	if !ok {
-		return nil, fmt.Errorf("batch API requires the %q service to be configured; ensure the datasource has a data-plane route for metrics.monitor.azure.com", "Azure Monitor Batch Metrics")
+		return nil, fmt.Errorf("batch API requires the %q service to be configured; ensure the datasource has a data-plane route for metrics.monitor.azure.com", types.RouteAzureMonitorBatchMetrics)
 	}
 	batchClient := svc.HTTPClient
 
@@ -308,28 +308,39 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	batches := createBatches(groupQueriesForBatch(azureQueries))
 	batchResults := executeBatchRequests(ctx, batches, batchClient)
 
-	// Distribute successful frames into per-RefID responses first, so that
-	// partial data from successful batches is never discarded by a failed batch.
-	azurePortalURL := dsInfo.Routes["Azure Portal"].URL
-	frames, parseErr := distributeBatchResults(batchResults, azurePortalURL)
-	if parseErr != nil {
-		e.Logger.Warn("partial error distributing batch results", "err", parseErr)
-	}
-	for _, frame := range frames {
-		dr := result.Responses[frame.RefID]
-		dr.Frames = append(dr.Frames, frame)
-		result.Responses[frame.RefID] = dr
-	}
-
-	// Map batch-level errors to every query in the failed batch. If a query
-	// already has frames (from a different successful batch), preserve them and
-	// record the error alongside — Grafana renders partial data with an error indicator.
+	// For each batch: distribute frames to their RefID responses, then attribute
+	// any error (HTTP failure or per-metric parse error) to the affected queries.
+	// Frames from successful batches are preserved even when another batch fails.
+	azurePortalURL := dsInfo.Routes[types.RouteAzurePortal].URL
 	for _, br := range batchResults {
 		if br.Err != nil {
+			// HTTP-level failure: attribute the error to every query in the batch.
 			for _, q := range br.Batch.Queries {
 				dr := result.Responses[q.RefID]
 				if dr.Error == nil {
 					errResp := backend.ErrorResponseWithErrorSource(br.Err)
+					dr.Error = errResp.Error
+					dr.ErrorSource = errResp.ErrorSource
+					result.Responses[q.RefID] = dr
+				}
+			}
+			continue
+		}
+
+		// Successful HTTP response: parse and distribute frames.
+		frames, parseErr := parseBatchResponse(br, azurePortalURL)
+		for _, frame := range frames {
+			dr := result.Responses[frame.RefID]
+			dr.Frames = append(dr.Frames, frame)
+			result.Responses[frame.RefID] = dr
+		}
+		if parseErr != nil {
+			// Per-metric or parse error: surface to every query in the batch so
+			// users see it in the Grafana UI rather than it being silently dropped.
+			for _, q := range br.Batch.Queries {
+				dr := result.Responses[q.RefID]
+				if dr.Error == nil {
+					errResp := backend.ErrorResponseWithErrorSource(parseErr)
 					dr.Error = errResp.Error
 					dr.ErrorSource = errResp.ErrorSource
 					result.Responses[q.RefID] = dr

@@ -19,6 +19,17 @@ var (
 	LegendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
+// Route name constants shared across the azuremonitor package and its subpackages.
+const (
+	RouteAzureMonitor             = "Azure Monitor"
+	RouteAzureLogAnalytics        = "Azure Log Analytics"
+	RouteAzureResourceGraph       = "Azure Resource Graph"
+	RouteAzureTraces              = "Azure Traces"
+	RouteAzurePortal              = "Azure Portal"
+	RouteTraceExemplar            = "traceql"
+	RouteAzureMonitorBatchMetrics = "Azure Monitor Batch Metrics"
+)
+
 type AzRoute struct {
 	URL     string
 	Scopes  []string

@@ -12,15 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-// Azure cloud query types
+// Azure cloud query types — package-local aliases for the exported constants in types.
 const (
-	azureMonitor             = "Azure Monitor"
-	azureLogAnalytics        = "Azure Log Analytics"
-	azureResourceGraph       = "Azure Resource Graph"
-	azureTraces              = "Azure Traces"
-	azurePortal              = "Azure Portal"
-	traceExemplar            = "traceql"
-	azureMonitorBatchMetrics = "Azure Monitor Batch Metrics"
+	azureMonitor             = types.RouteAzureMonitor
+	azureLogAnalytics        = types.RouteAzureLogAnalytics
+	azureResourceGraph       = types.RouteAzureResourceGraph
+	azureTraces              = types.RouteAzureTraces
+	azurePortal              = types.RouteAzurePortal
+	traceExemplar            = types.RouteTraceExemplar
+	azureMonitorBatchMetrics = types.RouteAzureMonitorBatchMetrics
 )
 
 func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials, jsonData json.RawMessage) (map[string]types.AzRoute, error) {

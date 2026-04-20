@@ -278,7 +278,7 @@ describe('MetricsQueryEditor', () => {
 
     expect(
       await screen.findByText(
-        'You can select items of the same resource type across any subscription. To select resources of a different resource type, please first uncheck your current selection.'
+        'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
       )
     ).toBeInTheDocument();
   });

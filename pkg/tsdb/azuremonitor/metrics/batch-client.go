@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -17,6 +18,11 @@ import (
 )
 
 const batchAPIVersion = "2023-10-01"
+
+// validRegionRe matches valid Azure region names: non-empty sequences of ASCII
+// letters and digits (e.g. "eastus", "westeurope", "northcentralus").
+// An empty string is also accepted — it maps to the global endpoint.
+var validRegionRe = regexp.MustCompile(`^[a-zA-Z0-9]*$`)
 
 // maxConcurrentBatches limits how many Metrics Batch API requests run in parallel.
 const maxConcurrentBatches = 10
@@ -154,6 +160,10 @@ func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client
 // buildBatchRequest creates the HTTP POST request for a Metrics Batch API call.
 // The request URL carries all query parameters; the body carries the resource IDs.
 func buildBatchRequest(ctx context.Context, batch Batch) (*http.Request, error) {
+	if !validRegionRe.MatchString(batch.Key.Region) {
+		return nil, fmt.Errorf("invalid batch region %q: must contain only ASCII letters and digits", batch.Key.Region)
+	}
+
 	rawURL := buildBatchURL(batch)
 
 	bodyBytes, err := json.Marshal(batchRequestBody{ResourceIDs: batch.ResourceIDs})

@@ -98,7 +98,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
       if (!subscription || !metricNamespace || !resourceGroup || !resourceName) {
         return;
       }
-      if (multipleResources && !region) {
+      if (!datasource.azureMonitorDatasource.batchAPIEnabled && multipleResources && !region) {
         return;
       }
       const results = await datasource.azureMonitorDatasource.getMetricNames(
