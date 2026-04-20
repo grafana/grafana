@@ -2,7 +2,9 @@ import { autocompletion, type CompletionSource } from '@codemirror/autocomplete'
 import { EditorState } from '@codemirror/state';
 import { render } from '@testing-library/react';
 
-let capturedProps: { extensions?: unknown[] } | undefined;
+import { CodeEditor } from './CodeEditor';
+
+let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
 
 jest.mock('@uiw/react-codemirror', () => {
   const actual = jest.requireActual('@uiw/react-codemirror');
@@ -25,8 +27,6 @@ jest.mock('@codemirror/autocomplete', () => {
     autocompletion: jest.fn(() => []),
   };
 });
-
-import { CodeEditor } from './CodeEditor';
 
 const autocompletionMock = autocompletion as jest.MockedFunction<typeof autocompletion>;
 

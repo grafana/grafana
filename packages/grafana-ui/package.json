@@ -92,7 +92,6 @@
     "@types/lodash": "4.17.20",
     "@types/react-table": "7.7.20",
     "@uiw/codemirror-extensions-langs": "^4.25.9",
-    "@uiw/codemirror-theme-basic": "^4.25.9",
     "@uiw/react-codemirror": "^4.25.9",
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
