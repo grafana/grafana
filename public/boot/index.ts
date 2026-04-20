@@ -226,6 +226,11 @@ async function initGrafana() {
 
   document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
 
+  const lang = window.grafanaBootData.user.language;
+  if (lang) {
+    document.documentElement.lang = lang;
+  }
+
   cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
   document.head.appendChild(cssLink);
 
