@@ -241,5 +241,5 @@ The following image shows an example using two rows of panels:
 Panels in the grouping resolve grouping-level variables first, then fall back to dashboard-level variables.
 
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
-Also, grouping-level variables carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
+Also, grouping-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
 
