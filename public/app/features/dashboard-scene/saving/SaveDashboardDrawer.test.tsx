@@ -28,6 +28,18 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useSaveDashboardMutation: () => [saveDashboardMutationMock],
 }));
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
+  getDashboardAPI: jest.fn().mockResolvedValue({
+    getDashboardDTO: jest.fn().mockResolvedValue({
+      apiVersion: 'dashboard.grafana.app/v2beta1',
+      kind: 'Dashboard',
+      metadata: {},
+      spec: {},
+    }),
+  }),
+}));
+
 const ui = {
   saveDashbordText: byText('Save dashboard'),
   saveVariablesCheckbox: byTestId(selectors.pages.SaveDashboardModal.saveVariables),
@@ -245,6 +257,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
 
@@ -256,6 +269,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
 
@@ -269,6 +283,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
   });

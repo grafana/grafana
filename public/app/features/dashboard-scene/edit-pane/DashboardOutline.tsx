@@ -9,6 +9,7 @@ import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyl
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
+import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -72,8 +73,12 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     e.stopPropagation();
 
     if (!isSelected) {
-      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
-        // Select directly via editPane.selectObject because link objects are not
+      if (
+        sceneObject instanceof LinkEdit ||
+        sceneObject instanceof DashboardLinksSet ||
+        sceneObject instanceof DashboardFiltersSet
+      ) {
+        // Select directly via editPane.selectObject because these objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
         editPane.selectObject(sceneObject);
       } else {
