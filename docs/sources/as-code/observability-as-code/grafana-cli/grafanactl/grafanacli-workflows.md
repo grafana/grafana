@@ -12,16 +12,22 @@ labels:
     - enterprise
     - oss
 title: Manage resources with Grafana CLI
-weight: 300
+menuTitle: Use grafanactl
+weight: 210
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanacli-workflows/
 aliases:
   - ../../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
+  - ../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
 ---
 
-# Manage resources with Grafana CLI
+# Manage resources with `grafanactl`
 
-{{< admonition type="note" >}}
-`grafanactl` is under active development. Command-line flags and subcommands described here may change. This document outlines the target workflows the tool is expected to support. You can find a full list of supported commands [in this page](https://grafana.github.io/grafanactl/reference/cli/grafanactl/).
+{{< admonition type="caution" >}}
+
+`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx).
+
+To migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
+
 {{< /admonition >}}
 
 ## Migrate resources between environments
