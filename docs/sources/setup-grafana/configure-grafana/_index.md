@@ -1777,6 +1777,20 @@ Enable or disable Grafana Alerting. The default value is `true`.
 
 Alerting rules migrated from dashboards and panels include a link back via the `annotations`.
 
+#### `allowed_integrations`
+
+Comma-separated list of contact point integration types to allow. If empty, all types are allowed.
+
+Valid types:
+
+```
+prometheus-alertmanager, dingding, discord, email, googlechat, jira, kafka,
+mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
+telegram, threema, victorops, webex, webhook, wecom
+```
+
+Changing this setting does not affect existing integrations of a now-disallowed type. They remain in the Alertmanager configuration and continue to deliver notifications. However, any attempt to create or modify such a contact point through the UI or API returns a validation error, so they become effectively read-only until the type is re-allowed or the contact point is deleted. As provisioning files are validated at startup, a disallowed type there prevents Grafana from starting.
+
 #### `disabled_orgs`
 
 Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
