@@ -347,7 +347,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
-            <span className={styles.suffixIcon} {...getToggleButtonProps({ disabled })}>
+            <span
+              className={styles.suffixIcon}
+              role="button"
+              aria-label={t('multicombobox.toggle.title', 'Toggle options')}
+              {...getToggleButtonProps({ disabled })}
+            >
               <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
             </span>
           </div>

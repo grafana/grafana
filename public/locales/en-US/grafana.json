@@ -4918,6 +4918,9 @@
     "options": {
       "loading": "Loading options...",
       "no-found": "No options found."
+    },
+    "toggle": {
+      "title": "Toggle options"
     }
   },
   "command-palette": {
@@ -11865,6 +11868,9 @@
     },
     "clear": {
       "title": "Clear all"
+    },
+    "toggle": {
+      "title": "Toggle options"
     }
   },
   "nav": {

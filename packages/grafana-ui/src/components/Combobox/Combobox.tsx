@@ -386,7 +386,12 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         />
       )}
 
-      <span className={styles.suffixIcon} {...getToggleButtonProps({ disabled })}>
+      <span
+        className={styles.suffixIcon}
+        role="button"
+        aria-label={t('combobox.toggle.title', 'Toggle options')}
+        {...getToggleButtonProps({ disabled })}
+      >
         <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
       </span>
     </>
