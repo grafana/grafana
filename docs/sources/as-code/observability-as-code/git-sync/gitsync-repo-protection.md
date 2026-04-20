@@ -104,7 +104,7 @@ Write access controls who can push changes to your repository. This determines w
 
 Refer to the [Git Sync setup documentation](ref:git-sync-setup) for provider-specific instructions on configuring repository access and authentication.
 
-## Controlling how changes are written
+## Control how changes are written
 
 Git Sync supports different modes for writing dashboard changes to your repository, from allowing direct commits to requiring formal review processes.
 
