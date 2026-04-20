@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -353,6 +354,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracer,
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		apiserver.WithoutRestConfig,
 	)
 	require.NoError(t, err)
 	_, err = usrSvc.Create(context.Background(), &cmd)

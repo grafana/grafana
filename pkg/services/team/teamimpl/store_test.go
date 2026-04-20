@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -56,6 +57,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
+			apiserver.WithoutRestConfig,
 		)
 		require.NoError(t, err)
 
@@ -484,6 +486,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 					quotaService, supportbundlestest.NewFakeBundleService(), nil,
+					apiserver.WithoutRestConfig,
 				)
 				require.NoError(t, err)
 				setup()
@@ -640,6 +643,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
+			apiserver.WithoutRestConfig,
 		)
 		require.NoError(t, err)
 
