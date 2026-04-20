@@ -85,16 +85,16 @@ describe('KBarResults', () => {
       expect(screen.getByRole('option')).toBeInTheDocument();
     });
 
-    it('includes the group name in aria-label when preceded by a group header', () => {
+    it('includes the group name in the accessible name when preceded by a group header', () => {
       render(<KBarResults items={['Dashboards', createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
 
-      expect(screen.getByRole('option')).toHaveAttribute('aria-label', 'Dashboards: Home');
+      expect(screen.getByRole('option')).toHaveAccessibleName('Dashboards: Home');
     });
 
     it('does not add a group prefix when there is no preceding group header', () => {
       render(<KBarResults items={[createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
 
-      expect(screen.getByRole('option')).not.toHaveAttribute('aria-label');
+      expect(screen.getByRole('option')).toHaveAccessibleName('Home');
     });
 
     it('uses the most recent group label when there are multiple groups', () => {
@@ -111,8 +111,8 @@ describe('KBarResults', () => {
       );
 
       const options = screen.getAllByRole('option');
-      expect(options[0]).toHaveAttribute('aria-label', 'Dashboards: Home');
-      expect(options[1]).toHaveAttribute('aria-label', 'Folders: My Folder');
+      expect(options[0]).toHaveAccessibleName('Dashboards: Home');
+      expect(options[1]).toHaveAccessibleName('Folders: My Folder');
     });
 
     it('marks the active item with aria-selected="true" and others with aria-selected="false"', () => {
