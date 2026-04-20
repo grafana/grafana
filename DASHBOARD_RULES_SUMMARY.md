@@ -1,14 +1,13 @@
 # Dashboard rules -- comprehensive work summary
 
-This document describes the complete body of work on the `dashboard-rules` branch in `/Users/dominik/Projects/worktrees/dashboard-rules`. It is intended to give another agent full context to continue or review this work.
+This document describes the complete body of work on the `dashboard-rules-v3` branch in `/Users/dominik/Projects/worktrees/dashboard-rules-v3`. It is intended to give another agent full context to continue or review this work.
 
 ## Branch status
 
-- **Branch**: `dashboard-rules` (git worktree at `/Users/dominik/Projects/worktrees/dashboard-rules`)
-- **Base**: rebased on `origin/main` as of 2026-02-12
-- **Commits**: 17 committed + uncommitted working tree changes
-- **Changeset**: 34 files changed, +5,203 / -220 lines
-- **Feature toggle**: `dashboardRules` (must be enabled in `custom.ini`)
+- **Branch**: `dashboard-rules-v3` (git worktree at `/Users/dominik/Projects/worktrees/dashboard-rules-v3`)
+- **Base**: rebased on `origin/main` as of 2026-04-18 (post v2 stable launch)
+- **Schema home**: rules live on `v3alpha0`. v2 stable, v2alpha1, and v2beta1 are byte-identical to main.
+- **Feature toggle**: `dashboardRules` (must be enabled in `custom.ini`). When on and the backend advertises v3alpha0, the frontend reads and writes through the v3alpha0 client.
 
 ## What this feature does
 
@@ -26,14 +25,12 @@ Rules are evaluated reactively. When conditions stop being met, outcomes revert 
 
 ### Schema layer (CUE + codegen)
 
-Files modified:
-- `apps/dashboard/kinds/v2alpha1/dashboard_spec.cue`
-- `apps/dashboard/kinds/v2beta1/dashboard_spec.cue`
-- `apps/dashboard/pkg/apis/dashboard/v2alpha1/dashboard_spec.cue`
-- `apps/dashboard/pkg/apis/dashboard/v2beta1/dashboard_spec.cue`
-- Generated Go types: `dashboard_spec_gen.go`, `zz_generated.openapi.go` (both v2alpha1 and v2beta1)
-- Generated TS types: `packages/grafana-schema/src/schema/dashboard/v2*/types.spec.gen.ts`
-- Conversion functions: `v2alpha1_to_v2beta1.go`, `v2beta1_to_v2alpha1.go`
+Files (all under `v3alpha0`; v2 / v2alpha1 / v2beta1 are byte-identical to main):
+- `apps/dashboard/kinds/v3alpha0/dashboard_spec.cue` — CUE source of truth
+- `apps/dashboard/pkg/apis/dashboard/v3alpha0/` — hand-written `constants.go`, `conversion.go`, `doc.go`, `register.go`, `types.go`, `validation.go` plus generated `dashboard_*_gen.go` and `zz_generated.*`
+- `packages/grafana-schema/src/schema/dashboard/v3alpha0/` — generated TS types
+- Conversion functions: `v2_to_v3alpha0.go`, `v3alpha0_to_v2.go` (primary direct pair), plus eight chained converters registered in `conversion.go` for v3alpha0 ↔ {v0, v1, v1beta1, v2alpha1, v2beta1} via the v2 hub
+- Data-loss detection: `conversion_data_loss_detection.go` flags `ruleCount` drops on down-conversion (non-visibility outcomes, multi-target rules, and UserTeam conditions are lossy)
 
 Key schema types added:
 - `DashboardRule` -- top-level rule container with name, targets, conditions (match + items), and outcomes array
@@ -218,7 +215,7 @@ Bash script that provisions a complete demo environment:
 2. Creates 3 users: `sre-user`, `product-user`, `business-user`
 3. Creates 3 teams: `platform-sre`, `product-eng`, `business`
 4. Adds users to appropriate teams (admin to all 3)
-5. Imports the demo dashboard via v2beta1 API
+5. Imports the demo dashboard via the v3alpha0 API
 6. With `--rules` flag: applies 11 rules via PATCH API
 
 The 11 demo rules:
@@ -295,7 +292,7 @@ Includes an appendix comparing "with rules" vs "without rules" (1 dashboard vs 4
 | CUE schema files (x4) | +14 each | New outcome/condition types |
 | Go codegen files (x4) | +73-157 each | Generated types |
 | TS codegen files (x2) | +23 each | Generated types |
-| Conversion files (x2) | +12 each | v2alpha1 <-> v2beta1 |
+| Conversion files (x2) | +~280 each | v2 <-> v3alpha0 (primary pair, plus 8 chained converters registered in conversion.go) |
 | Various others | small | Integration points |
 
 ## How to test
