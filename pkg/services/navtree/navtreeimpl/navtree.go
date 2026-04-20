@@ -161,9 +161,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-		treeRoot.AddSection(connectionsSection)
-	}
+	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
 
 	orgAdminNode, err := s.getAdminNode(c)
 
@@ -618,12 +616,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink
-	var navLink *navtree.NavLink
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
-		// Add new connection
+		// Add new connection — requires create/write permissions
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
 			Text:     "Add new connection",
@@ -633,7 +630,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
-		// Data sources
+		// Data sources — also requires write permissions to be useful
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-datasources",
 			Text:     "Data sources",
@@ -643,18 +640,17 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		})
 	}
 
-	if len(children) > 0 {
-		// Connections (main)
-		navLink = &navtree.NavLink{
-			Text:       "Connections",
-			Icon:       "adjust-circle",
-			Id:         "connections",
-			Url:        baseUrl,
-			Children:   children,
-			SortWeight: navtree.WeightDataConnections,
-		}
-
-		return navLink
+	// Always return the section so that plugin pages registered under the
+	// "connections" section ID (via addAppLinks) can be attached regardless
+	// of the user's datasource permissions. The section is pruned after all
+	// app links are processed if it still has no children (see
+	// NavTreeRoot.RemoveEmptyConnectionsSection called in setIndexViewData).
+	return &navtree.NavLink{
+		Text:       "Connections",
+		Icon:       "adjust-circle",
+		Id:         "connections",
+		Url:        baseUrl,
+		Children:   children,
+		SortWeight: navtree.WeightDataConnections,
 	}
-	return nil
 }
