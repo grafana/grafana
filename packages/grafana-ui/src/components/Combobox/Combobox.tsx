@@ -226,7 +226,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
 
-      if (changes.isOpen && changes.inputValue === '') {
+      if (changes.isOpen && (changes.inputValue ?? '') === '') {
         updateOptions('');
       }
 
