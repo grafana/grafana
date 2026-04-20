@@ -896,6 +896,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		tracing.InitializeTracerForTest(),
 		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
 	)
 
 	return NewContactPointService(
@@ -1853,13 +1854,13 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 			name:            "type not in allowlist is rejected",
 			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
 			integrationType: "slack",
-			wantErr:         "contact point type slack is not allowed",
+			wantErr:         "integration type slack is not allowed",
 		},
 		{
 			name:            "empty non-nil allowlist rejects all types",
 			allowed:         map[schema.IntegrationType]struct{}{},
 			integrationType: "slack",
-			wantErr:         "contact point type slack is not allowed",
+			wantErr:         "integration type slack is not allowed",
 		},
 		{
 			name:            "allowlist match is case-insensitive via canonical resolution",

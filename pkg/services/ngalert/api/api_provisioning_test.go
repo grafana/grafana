@@ -2311,6 +2311,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		tracer,
 		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,

@@ -654,7 +654,7 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 	}
 	if allowedIntegrations != nil {
 		if _, allowed := allowedIntegrations[iType]; !allowed {
-			return fmt.Errorf("contact point type %s is not allowed", e.Type)
+			return fmt.Errorf("integration type %s is not allowed", iType)
 		}
 	}
 	e.Type = string(iType)

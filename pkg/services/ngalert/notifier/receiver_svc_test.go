@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/receivers/line"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -562,6 +563,21 @@ func TestReceiverService_Create(t *testing.T) {
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("")),
 			expectedErr: models.ErrReceiverInvalidBase,
+		},
+		{
+			name:        "create with integration not in allowlist fails",
+			user:        writer,
+			receiver:    baseReceiver.Clone(),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.EmailType)},
+		},
+		{
+			name:                "create with integration in allowlist succeeds",
+			user:                writer,
+			receiver:            baseReceiver.Clone(),
+			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
 		{
 			name:     "should be able to create receiver with the same name as imported ones",
@@ -1783,6 +1799,16 @@ func withImportedIncluded(_ *testing.T, sut *ReceiverService) {
 	sut.includeImported = true
 }
 
+func withAllowedIntegrations(types ...schema.IntegrationType) createReceiverServiceSutOpt {
+	allowed := make(map[schema.IntegrationType]struct{}, len(types))
+	for _, t := range types {
+		allowed[t] = struct{}{}
+	}
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.allowedIntegrations = allowed
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc, getExtraConfig())
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -1802,6 +1828,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		tracing.InitializeTracerForTest(),
 		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
 	)
 	for _, opt := range opts {
 		opt(t, sut)
