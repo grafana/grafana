@@ -176,7 +176,7 @@ func setupDB(b testing.TB) benchScenario {
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil, apiserver.WithoutRestConfig,
 	)
 	require.NoError(b, err)
 
