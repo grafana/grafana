@@ -31,6 +31,7 @@ type Service struct {
 	openFeatureClient *openfeature.Client
 	logger            log.Logger
 	tracer            tracing.Tracer
+	cfg               *setting.Cfg
 }
 
 var _ user.Service = (*Service)(nil)
@@ -41,13 +42,14 @@ func ProvideService(db db.DB,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
-	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
+	configProvider apiserver.DirectRestConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider) (*Service, error) {
 	legacyService, err := NewLegacyService(db, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
 	if err != nil {
 		return nil, err
 	}
 
-	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider, tracer)
+	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider, restConfigProvider, tracer)
 
 	return &Service{
 		legacyService:     legacyService,
@@ -55,6 +57,7 @@ func ProvideService(db db.DB,
 		openFeatureClient: openfeature.NewDefaultClient(),
 		logger:            log.New("user"),
 		tracer:            tracer,
+		cfg:               cfg,
 	}, nil
 }
 
@@ -186,19 +189,17 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		if hasOrgID(ctx) || cmd.OrgID > 0 {
-			result, err := s.k8sService.GetSignedInUser(ctx, cmd)
-			if err == nil {
-				span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-				return result, nil
-			}
-			// Fall back to legacy is needed on the following cases:
-			// -  When the user is not found in k8s. It happens with integration tests where the user is created in the legacy store but not in k8s.
-			// -  When there is no request context (e.g. calls from the k8s API server handler).
-			ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
-		} else {
-			ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetSignedInUser")
+		k8sCmd := *cmd
+		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
+			k8sCmd.OrgID = s.cfg.DefaultOrgID()
 		}
+
+		result, err := s.k8sService.GetSignedInUser(ctx, &k8sCmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))

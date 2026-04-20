@@ -3,6 +3,7 @@ package userk8s
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -1253,10 +1254,11 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:         "returns error when no request context",
+			name:         "succeeds with service identity when no request context",
 			cmd:          &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			cfg:          &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
 			noReqContext: true,
-			expectErr:    true,
+			serverFn:     makeListResponse(42, 0),
 		},
 		{
 			name:        "returns error when config provider not initialized",
@@ -1552,10 +1554,21 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 			expectErr:   true,
 		},
 		{
-			name:         "returns error when no request context",
-			cmd:          &user.GetSignedInUserQuery{UserID: 42, OrgID: 1},
-			noReqContext: true,
-			expectErr:    true,
+			name:           "succeeds with service identity when no request context",
+			cmd:            &user.GetSignedInUserQuery{UserID: 42, OrgID: 1},
+			noReqContext:   true,
+			serverResponse: makeUserListResponse(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com")),
+			expectUser: &user.SignedInUser{
+				UserUID:        "some-uid",
+				OrgID:          1,
+				OrgRole:        "Admin",
+				Login:          "jdoe",
+				Email:          "jdoe@example.com",
+				Name:           "John Doe",
+				IsGrafanaAdmin: true,
+				EmailVerified:  true,
+				LastSeenAt:     time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
 		},
 		{
 			name:        "returns error when no requester and no OrgID in query",
@@ -1684,6 +1697,17 @@ func (m *mockDirectRestConfigProvider) IsReady() bool {
 	return true
 }
 
+type mockRestConfigProvider struct {
+	restConfig *rest.Config
+}
+
+func (m *mockRestConfigProvider) GetRestConfig(_ context.Context) (*rest.Config, error) {
+	if m.restConfig == nil {
+		return nil, errors.New("rest config not available")
+	}
+	return m.restConfig, nil
+}
+
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
@@ -1704,12 +1728,15 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 
 	var svc *UserK8sService
 	if s.nilProvider {
-		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, nil, tracer)
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, nil, nil, tracer)
 	} else {
 		ts := httptest.NewServer(http.HandlerFunc(s.serverResponse))
 		t.Cleanup(ts.Close)
+		restCfg := &rest.Config{Host: ts.URL}
 		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, &mockDirectRestConfigProvider{
-			restConfig: &rest.Config{Host: ts.URL},
+			restConfig: restCfg,
+		}, &mockRestConfigProvider{
+			restConfig: restCfg,
 		}, tracer)
 	}
 

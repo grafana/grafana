@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -37,41 +38,59 @@ var userGVR = schema.GroupVersionResource{
 }
 
 type UserK8sService struct {
-	logger          log.Logger
-	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
-	config          *setting.Cfg
-	tracer          tracing.Tracer
+	logger             log.Logger
+	namespaceMapper    request.NamespaceMapper
+	configProvider     apiserver.DirectRestConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
+	config             *setting.Cfg
+	tracer             tracing.Tracer
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
-func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
+func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, restConfigProvider apiserver.RestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
-		logger:          logger,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
-		config:          cfg,
-		tracer:          tracer,
+		logger:             logger,
+		namespaceMapper:    request.GetNamespaceMapper(cfg),
+		configProvider:     configProvider,
+		restConfigProvider: restConfigProvider,
+		config:             cfg,
+		tracer:             tracer,
 	}
 }
 
-func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+func (s *UserK8sService) getClient(ctx context.Context, orgID int64, namespace string) (dynamic.ResourceInterface, context.Context, error) {
 	if s.configProvider == nil {
-		return nil, errors.New("config provider not initialized")
+		return nil, ctx, errors.New("config provider not initialized")
 	}
 
+	var restCfg *clientrest.Config
 	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
+	if reqCtx != nil && reqCtx.IsSignedIn {
+		restCfg = s.configProvider.GetDirectRestConfig(reqCtx)
+	} else {
+		// No authenticated user: either called from an auth hook before authentication
+		// completes (reqCtx.IsSignedIn is false), or outside an HTTP request entirely.
+		// Use the loopback REST config with service identity so the in-process apiserver
+		// can authorise the request.
+		var err error
+		ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+		restCfg, err = s.restConfigProvider.GetRestConfig(ctx)
+		if err != nil {
+			return nil, ctx, err
+		}
 	}
 
-	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
+	if restCfg == nil {
+		return nil, ctx, errors.New("failed to get rest config")
+	}
+
+	dyn, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
-		return nil, err
+		return nil, ctx, err
 	}
 
-	return dyn.Resource(userGVR).Namespace(namespace), nil
+	return dyn.Resource(userGVR).Namespace(namespace), ctx, nil
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -91,7 +110,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -179,7 +198,7 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -228,7 +247,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -271,7 +290,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -305,7 +324,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -371,7 +390,7 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	namespace := s.namespaceMapper(cmd.OrgID)
 	span.SetAttributes(attribute.Int64("orgID", cmd.OrgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, cmd.OrgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -437,7 +456,7 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, ctx, err := s.getClient(ctx, orgID, namespace)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)

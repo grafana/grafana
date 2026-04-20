@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -45,7 +46,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usrSvc, err := ProvideService(
 		ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil, apiserver.WithoutRestConfig,
 	)
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
@@ -585,7 +586,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
 			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(), nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil, apiserver.WithoutRestConfig,
 		)
 		require.NoError(t, err)
 
@@ -1136,7 +1137,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil, apiserver.WithoutRestConfig,
 	)
 	require.NoError(t, err)
 
