@@ -3,11 +3,10 @@ import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { isAdHocVariable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterPane } from '../add-new/AddFilters';
@@ -28,7 +27,7 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 
 export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariableSet }) {
   const { variables } = variableSet.useState();
-  const filters = useMemo(() => variables.filter(isAdHocVariable), [variables]);
+  const filters = useMemo(() => variables.filter(sceneUtils.isAdHocVariable), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
 
   const onClickFilter = useCallback((variable: SceneVariable) => {

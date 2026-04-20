@@ -2,7 +2,7 @@ import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -16,7 +16,6 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
-import { isAdHocVariable } from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
@@ -145,7 +144,8 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
       id: 'dashboard-filters',
     });
 
-    const hasFilters = $variables instanceof SceneVariableSet && $variables.state.variables.some(isAdHocVariable);
+    const hasFilters =
+      $variables instanceof SceneVariableSet && $variables.state.variables.some(sceneUtils.isAdHocVariable);
 
     if (hasFilters) {
       category.addItem(
@@ -184,7 +184,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
 
     if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
       const hasVariables = config.featureToggles.dashboardUnifiedDrilldownControls
-        ? $variables.state.variables.some((v) => !isAdHocVariable(v))
+        ? $variables.state.variables.some((v) => !sceneUtils.isAdHocVariable(v))
         : true;
 
       if (hasVariables) {

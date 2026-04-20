@@ -5,12 +5,12 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { isAdHocVariable, isEditableVariableType } from '../../settings/variables/utils';
+import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -35,7 +35,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
     if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
       return editable;
     }
-    return editable.filter((v) => !isAdHocVariable(v));
+    return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
   }, [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
