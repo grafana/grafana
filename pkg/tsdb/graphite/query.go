@@ -260,7 +260,7 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
-		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
+		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", truncateForLog(body))
 		err := fmt.Errorf("request failed with error: %s", graphiteError)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
@@ -275,7 +275,7 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 		var legacyData LegacyTargetResponseDTO
 		err = json.Unmarshal(body, &legacyData)
 		if err != nil {
-			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", string(body))
+			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", truncateForLog(body))
 			return nil, backend.PluginError(err)
 		}
 		return legacyData.Series, nil

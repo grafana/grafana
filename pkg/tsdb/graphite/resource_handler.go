@@ -359,7 +359,7 @@ func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger) (*V
 	}
 
 	if res.StatusCode/100 != 2 {
-		logger.Warn("Request failed", "status", res.Status, "body", string(body))
+		logger.Warn("Request failed", "status", res.Status, "body", truncateForLog(body))
 		return nil, nil, fmt.Errorf("request failed, status: %d", res.StatusCode)
 	}
 
