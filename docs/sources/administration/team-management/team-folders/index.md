@@ -44,7 +44,7 @@ To create a team and its folder, complete the following steps:
 1. Open **Administration** and go to **Users and access** > **Teams**.
 1. Click **New team**.
 1. Enter the team details.
-1. In **Team folder**, select **Auto-create a team folder**.
+1. Under **Team folder**, select **Auto-create a team folder**.
 1. Click **Create**.
 
 Grafana creates a folder with the same name as the team and assigns that team as the folder owner. After the folder is created, review the folder permissions and update them if needed.
