@@ -294,7 +294,7 @@ describe('LogsTable', () => {
       expect(headers[1].textContent).toEqual('level');
 
       // Two log rows; inspect control exists only in the custom timestamp column (one per row).
-      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+      expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
     });
 
     it('when level is the first column, renders exactly one custom cell per data row', async () => {
@@ -313,7 +313,7 @@ describe('LogsTable', () => {
       expect(headers[0].textContent).toEqual('level');
       expect(headers[1].textContent).toEqual('timestamp');
 
-      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+      expect(screen.getAllByLabelText('Show details')).toHaveLength(2);
     });
   });
 });
