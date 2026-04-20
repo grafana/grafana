@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
-import { type CombinedRuleGroup, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type CombinedRuleGroup, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { grantUserPermissions, mockUnifiedAlertingStore } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
