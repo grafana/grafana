@@ -18,7 +18,7 @@ const typeFilterMap: Record<string, string> = {
   folders: 'folder',
 };
 
-const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
+export const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
 
 type HitFilterArray = Array<(hit: DashboardHit) => boolean>;
 

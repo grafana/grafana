@@ -2,7 +2,7 @@ import { waitFor } from '@testing-library/react';
 import { delay, http, HttpResponse } from 'msw';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -98,7 +98,7 @@ describe('SearchStateManager', () => {
       const stm = createSearchStateManager();
 
       server.use(
-        http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', async ({ request }) => {
+        http.get(searchRoute, async ({ request }) => {
           const url = new URL(request.url);
           const query = url.searchParams.get('query');
           const typeFilters = url.searchParams.getAll('type');
