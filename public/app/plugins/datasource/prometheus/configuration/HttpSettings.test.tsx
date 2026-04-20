@@ -85,9 +85,7 @@ describe('HttpSettings', () => {
       />
     );
     await userEvent.click(screen.getByRole('button', { name: 'Basic auth' }));
-    expect(onOptionsChange).toHaveBeenCalledWith(
-      expect.objectContaining({ basicAuth: true, withCredentials: false })
-    );
+    expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ basicAuth: true, withCredentials: false }));
   });
 
   it('calls onOptionsChange with oauthPassThru:true when OAuthForward is selected', async () => {
@@ -119,8 +117,6 @@ describe('HttpSettings', () => {
       />
     );
     await userEvent.click(screen.getByRole('button', { name: 'Cross-site credentials' }));
-    expect(onOptionsChange).toHaveBeenCalledWith(
-      expect.objectContaining({ basicAuth: false, withCredentials: true })
-    );
+    expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ basicAuth: false, withCredentials: true }));
   });
 });
