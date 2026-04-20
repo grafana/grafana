@@ -949,4 +949,8 @@ const (
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
+
+	// FlagReportingAnyPageReporting
+	// Enables reporting for any page in Grafana
+	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
 )

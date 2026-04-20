@@ -972,6 +972,24 @@
     },
     {
       "metadata": {
+        "name": "anyPageReporting",
+        "resourceVersion": "1776396837578",
+        "creationTimestamp": "2026-04-17T01:00:25Z",
+        "deletionTimestamp": "2026-04-17T03:36:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-17 03:33:57.578996 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-14T10:47:18Z"
@@ -4920,6 +4938,19 @@
     },
     {
       "metadata": {
+        "name": "reporting.anyPageReporting",
+        "resourceVersion": "1776397017304",
+        "creationTimestamp": "2026-04-17T03:36:57Z"
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
@@ -5065,14 +5096,17 @@
     {
       "metadata": {
         "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
+        "resourceVersion": "1776334251375",
+        "creationTimestamp": "2026-02-11T10:49:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
