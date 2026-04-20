@@ -36,8 +36,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize);
+  const { onClickShowField, fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -112,11 +112,15 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
+const getFieldsStyles = (
+  theme: GrafanaTheme2,
+  fontSize: LogListFontSize,
+  onClickShowField?: (key: string) => void
+) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(10) : theme.spacing(11.5)} fit-content(30%) 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -304,7 +308,7 @@ export const LogLineDetailsField = ({
                   onClick={filterOutLabel}
                 />
               )}
-              {singleKey && displayedFields.includes(keys[0]) && (
+              {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
                   variant="primary"
                   size={fontSize === 'small' ? 'sm' : undefined}
@@ -313,7 +317,7 @@ export const LogLineDetailsField = ({
                   onClick={hideField}
                 />
               )}
-              {singleKey && !displayedFields.includes(keys[0]) && (
+              {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
