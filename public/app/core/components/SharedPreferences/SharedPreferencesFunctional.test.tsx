@@ -4,7 +4,7 @@ import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionIn
 import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { listPreferencesHandler, updatePreferencesHandler } from '@grafana/test-utils/handlers';
+import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -192,12 +192,16 @@ describe('SharedPreferencesFunctional', () => {
     expect(mockReload).toHaveBeenCalled();
   });
   it('shows an error alert when preferences fail to load', async () => {
-    server.use(listPreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 })));
+    server.use(
+      preferencesHandlers.listPreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+    );
     render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" />);
     expect(await screen.findByText('Error loading preferences')).toBeInTheDocument();
   });
   it('shows an error alert when saving preferences fails', async () => {
-    server.use(updatePreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 })));
+    server.use(
+      preferencesHandlers.updatePreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+    );
     const { user } = await setup();
     await user.click(screen.getByText('Save preferences'));
 

@@ -4,7 +4,7 @@ import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [_, { dashbdD }] = wellFormedTree();
 
-export const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
+const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
   http.get('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences', () => {
     return (
       override ??
@@ -29,7 +29,7 @@ export const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse
     );
   });
 
-export const updatePreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
+const updatePreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
   http.patch('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/:name', () => {
     return (
       override ??
@@ -39,3 +39,9 @@ export const updatePreferencesHandler = (override?: ReturnType<typeof HttpRespon
       })
     );
   });
+
+export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler };
+
+const handlers = [listPreferencesHandler(), updatePreferencesHandler()];
+
+export default handlers;
