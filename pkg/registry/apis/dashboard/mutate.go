@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -69,6 +70,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -78,6 +81,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
@@ -96,6 +101,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -107,6 +114,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
@@ -116,6 +125,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
 	default:
@@ -124,6 +135,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 
 	if internalID != 0 {
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
+	}
+
+	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+}
+
+// validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
+func (b *DashboardsAPIBuilder) validateDashboardIfStrict(ctx context.Context, a admission.Attributes, migrationErr error, resourceInfo utils.ResourceInfo) error {
+	obj := a.GetObject()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
 	}
 
 	fieldValidationMode := getFieldValidationMode(a)
