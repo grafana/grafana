@@ -27,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagGrpcServer
-	// Run the GRPC server
-	FlagGrpcServer = "grpcServer"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -147,10 +143,6 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
-	// FlagKubernetesUnifiedStorageQuotas
-	// Adds support for Kubernetes unified storage quotas
-	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
-
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
@@ -170,10 +162,6 @@ const (
 	// FlagDashboardSchemaValidationLogging
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
-
-	// FlagScanRowInvalidDashboardParseFallbackEnabled
-	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
 	// FlagDatasourcesQueryTypes
 	// Load Query types from spec.{version}.query.{yaml|json}
@@ -459,10 +447,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagManagedDualWriter
-	// Pick the dual write mode from database configs
-	FlagManagedDualWriter = "managedDualWriter"
-
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -702,10 +686,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagUnifiedStorageSearchDualReaderEnabled
-	// Enable dual reader for unified storage search
-	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
-
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
@@ -761,6 +741,10 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagOnlyStoreServiceAccountActionSets
+	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
+	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
@@ -930,6 +914,10 @@ const (
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 
+	// FlagProfilesHeatmap
+	// Enables heatmap visualization support for Pyroscope profiles
+	FlagProfilesHeatmap = "profilesHeatmap"
+
 	// FlagQueryServiceQueryCaching
 	// Enables the query service to do query caching
 	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
@@ -957,4 +945,8 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagDatasourceUseNewCRUDAPIs
+	// Use the new datasource API groups for datasource CRUD requests, backend flag
+	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
 )

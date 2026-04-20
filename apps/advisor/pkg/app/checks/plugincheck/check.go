@@ -132,5 +132,6 @@ func (c *check) Steps() []checks.Step {
 		&unsignedStep{
 			pluginIndex: c.pluginIndex,
 		},
+		&twinmakerSceneViewerStep{},
 	}
 }

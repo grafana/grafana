@@ -75,6 +75,7 @@ func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconcil
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
+		cfg:           Config{CRDs: DefaultCRDs},
 		logger:        log.NewNopLogger(),
 		tracer:        tracing.NewNoopTracerService(),
 		metrics:       newReconcilerMetrics(prometheus.NewRegistry()),
