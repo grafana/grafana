@@ -76,7 +76,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
       value: ExportFormat.Classic,
     },
     {
-      label: t('dashboard-scene.save-provisioned-dashboard-form.format.k8s-resource', 'K8s Resource'),
+      label: t('dashboard-scene.save-provisioned-dashboard-form.format.v2-resource', 'V2 Resource'),
       value: ExportFormat.V2Resource,
     },
   ];

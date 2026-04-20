@@ -7532,8 +7532,8 @@
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
         "classic": "Classic",
-        "k8s-resource": "K8s Resource",
-        "model-label": "Model"
+        "model-label": "Model",
+        "v2-resource": "V2 Resource"
       },
       "label-description": "Description",
       "label-target-folder": "Target folder",
