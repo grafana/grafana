@@ -21,8 +21,8 @@ import {
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
 import { PERMISSIONS_TEMPLATES } from '../components/templates/permissions';
+import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/useContactPointAbility';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 

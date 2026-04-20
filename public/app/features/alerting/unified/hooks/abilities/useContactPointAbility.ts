@@ -1,4 +1,3 @@
-import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { notificationsPermissions } from '../../utils/access-control';
@@ -16,13 +15,17 @@ export type ContactPointAbilityParam =
   | { action: ContactPointAction.Export; context: EntityToCheck };
 
 const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
-  [ContactPointAction.View]: [notificationsPermissions.read.grafana, ...PERMISSIONS_CONTACT_POINTS_READ],
+  [ContactPointAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
   [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
   [ContactPointAction.Update]: [notificationsPermissions.update.grafana, AccessControlAction.AlertingReceiversWrite],
   [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversWrite],
   [ContactPointAction.Export]: [notificationsPermissions.read.grafana],
   [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana],
 };
+
+export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
+  (permissions) => permissions
+);
 
 export function useContactPointAbility(payload: ContactPointAbilityParam): Ability {
   switch (payload.action) {
