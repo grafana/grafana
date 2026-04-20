@@ -100,6 +100,14 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
+  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_filter_button_clicked', properties);
+  },
+
+  addSectionFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_section_filter_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
   variableTypeSelected: (properties: { type: string }) => {
