@@ -605,15 +605,24 @@ func TestRunPollCycle(t *testing.T) {
 		tw.writeEvent = collector.append
 		saveTestResource(t, tw.dataStore, "tenant-1", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
 
-		// Pre-seed a complete record so the fast path triggers.
-		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
-			DeleteAfter:      "2026-03-01T00:00:00Z",
+		// Pre-seed a record with DeleteAfter that differs from the tenant's
+		// annotation. If the fast path fires, the record is untouched. If the
+		// slow path runs, it overwrites DeleteAfter with the annotation value.
+		// This lets us distinguish fast-vs-slow by record state alone (the
+		// final LabelingComplete=true is the same in both paths).
+		original := PendingDeleteRecord{
+			DeleteAfter:      "2099-12-31T00:00:00Z",
 			LabelingComplete: true,
-		}))
+		}
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", original))
 
 		tw.client = newFakeTenantClient(t, pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 		tw.runPollCycle(t.Context())
 
+		after, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.Equal(t, "2099-12-31T00:00:00Z", after.DeleteAfter,
+			"fast path must not overwrite DeleteAfter with tenant's annotation")
 		assert.Empty(t, collector.all(), "fast path should not produce write events")
 	})
 
@@ -623,10 +632,9 @@ func TestRunPollCycle(t *testing.T) {
 		tw.writeEvent = collector.append
 		saveTestResource(t, tw.dataStore, "tenant-restored", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
 
-		// KV record exists, but the tenant no longer matches the label selector.
-		// The tenant still exists without the label — simulate by seeding one
-		// labeled tenant (so the sweep isn't empty) and one unlabeled tenant
-		// whose name matches the stale KV record.
+		// Stale KV record + unlabeled tenant in the fake client (keeps liveNames
+		// non-empty via tenant-active). GET returns the unlabeled tenant, so we
+		// take the clear branch.
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-restored", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
@@ -643,6 +651,16 @@ func TestRunPollCycle(t *testing.T) {
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-restored")
 		assert.ErrorIs(t, err, ErrNotFound, "restored tenant's record should be cleared")
+
+		// Clear must also unlabel the tenant's resources. Without this
+		// assertion, a broken clearTenantPendingDelete that removed the KV
+		// record without touching resources would pass.
+		events := collector.all()
+		require.Len(t, events, 1, "exactly one unlabel write event expected")
+		assert.Equal(t, "tenant-restored", events[0].Key.Namespace)
+		assert.Equal(t, "dash1", events[0].Key.Name)
+		assert.NotEqual(t, "true", events[0].Object.GetLabels()[labelPendingDelete],
+			"pending-delete label should have been removed")
 	})
 
 	t.Run("stale record with tenant NotFound preserves record for deleter", func(t *testing.T) {
@@ -670,6 +688,7 @@ func TestRunPollCycle(t *testing.T) {
 
 	t.Run("empty live set skips clear phase to avoid wiping records", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
+		saveTestResource(t, tw.dataStore, "tenant-1", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
 
 		// Pre-seed a record that would otherwise be considered stale.
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
@@ -677,33 +696,59 @@ func TestRunPollCycle(t *testing.T) {
 			LabelingComplete: true,
 		}))
 
-		// Fake client with zero objects — empty filtered LIST.
-		tw.client = newFakeTenantClient(t)
+		// Seed the tenant in the fake client WITHOUT the pending-delete label.
+		// The label selector excludes it from LIST → liveNames is empty. But if
+		// the zero-live-tenants guard were removed, the clear phase would GET
+		// tenant-1, find it without the label, and incorrectly clear the record.
+		unlabeled := &unstructured.Unstructured{}
+		unlabeled.SetName("tenant-1")
+		tw.client = newFakeTenantClient(t, unlabeled)
 		tw.runPollCycle(t.Context())
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err, "zero-live-tenants should skip clear phase, record preserved")
 	})
 
-	t.Run("LIST error aborts cycle without clearing records", func(t *testing.T) {
+	t.Run("LIST error mid-sweep aborts cycle without clearing records", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
+		saveTestResource(t, tw.dataStore, "tenant-stale", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
 
-		// Pre-seed a record that would otherwise be considered stale.
-		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+		// Pre-seed a record. In the fake client, seed the tenant WITHOUT the
+		// label so the clear phase (if it ran) would GET tenant-stale, find it
+		// unlabeled, and clear the record. This distinguishes the LIST-abort
+		// guard from the zero-live-tenants guard: the two-page scenario ensures
+		// liveNames is non-empty after page 1, so empty-guard can't save us.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-stale", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
 		}))
 
-		fake := newFakeTenantClient(t)
+		unlabeled := &unstructured.Unstructured{}
+		unlabeled.SetName("tenant-stale")
+		fake := newFakeTenantClient(t, unlabeled)
+
+		var listCalls int
 		fake.PrependReactor("list", "tenants", func(k8stesting.Action) (bool, runtime.Object, error) {
-			return true, nil, errors.New("tenant API unavailable")
+			listCalls++
+			if listCalls == 1 {
+				// Page 1: return an active labeled tenant AND a continue token
+				// to force a second page.
+				page := &unstructured.UnstructuredList{}
+				page.SetGroupVersionKind(tenantGVR.GroupVersion().WithKind("TenantList"))
+				page.SetContinue("continue-token")
+				page.Items = []unstructured.Unstructured{*pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z")}
+				return true, page, nil
+			}
+			// Page 2: error — mid-sweep LIST failure.
+			return true, nil, errors.New("tenant API unavailable mid-sweep")
 		})
 		tw.client = fake
 
 		tw.runPollCycle(t.Context())
 
-		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
-		require.NoError(t, err, "list error should skip clear phase, record preserved")
+		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-stale")
+		require.NoError(t, err, "mid-sweep LIST error should skip clear phase, record preserved")
+		assert.True(t, r.LabelingComplete)
 	})
 
 	t.Run("GET transient error preserves record for next cycle", func(t *testing.T) {
