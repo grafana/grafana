@@ -53,7 +53,9 @@ Recording rules can be helpful in various scenarios, such as:
 
 ## How recorded metrics work
 
-A recording rule generates a new recorded metric by evaluating its rule definition on a fixed [evaluation interval](ref:evaluation-within-a-group) (for example, every `1m` or `5m`) and writing the result as a new data point in the recorded metric.
+A recording rule generates a new recorded metric by evaluating its rule definition on a fixed [evaluation interval](ref:evaluation-within-a-group) (for example, every `1m` or `5m`) and writing a single value as a new data point in the recorded metric.
+
+The rule definition must return that single value, either from an instant query or a range query combined with a **Reduce** expression.
 
 {{< figure src="/media/docs/alerting/recording-rules-diagram-v3.svg" alt="How recording rules generate recorded metrics" >}}
 
