@@ -17,8 +17,9 @@ import (
 var _ appsdkapiserver.GenericAPIServer = (*customStorageWrapper)(nil)
 
 type customStorageWrapper struct {
-	wrapped appsdkapiserver.GenericAPIServer
-	replace map[schema.GroupVersionResource]rest.Storage
+	wrapped  appsdkapiserver.GenericAPIServer
+	replace  map[schema.GroupVersionResource]rest.Storage
+	captured map[schema.GroupVersionResource]rest.Storage
 }
 
 func (c *customStorageWrapper) InstallAPIGroup(
@@ -39,6 +40,11 @@ func (c *customStorageWrapper) InstallAPIGroup(
 	for gvr, storage := range c.replace {
 		if _, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version]; !ok {
 			apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = map[string]rest.Storage{}
+		}
+		if c.captured != nil {
+			if existing, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version][gvr.Resource]; ok {
+				c.captured[gvr] = existing
+			}
 		}
 		apiGroupInfo.VersionedResourcesStorageMap[gvr.Version][gvr.Resource] = storage
 	}

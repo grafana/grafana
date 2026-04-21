@@ -76,6 +76,7 @@ func New(cfg app.Config) (app.App, error) {
 type PluginAppConfig struct {
 	MetaProviderManager   *meta.ProviderManager
 	EnableChildReconciler bool
+	InstallManager        install.InstallManager
 }
 
 func NewPluginsAppInstaller(
@@ -83,10 +84,12 @@ func NewPluginsAppInstaller(
 	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
 	enableChildReconciler bool,
+	installManager install.InstallManager,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager:   metaProviderManager,
 		EnableChildReconciler: enableChildReconciler,
+		InstallManager:        installManager,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -100,20 +103,22 @@ func NewPluginsAppInstaller(
 	}
 
 	appInstaller := &PluginAppInstaller{
-		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
-		ready:        make(chan struct{}),
+		AppInstaller:   defaultInstaller,
+		authorizer:     authorizer,
+		metaManager:    metaProviderManager,
+		installManager: installManager,
+		logger:         logger,
+		ready:          make(chan struct{}),
 	}
 	return appInstaller, nil
 }
 
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	metaManager *meta.ProviderManager
-	authorizer  authorizer.Authorizer
-	logger      logging.Logger
+	metaManager    *meta.ProviderManager
+	installManager install.InstallManager
+	authorizer     authorizer.Authorizer
+	logger         logging.Logger
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -135,7 +140,7 @@ func (p *PluginAppInstaller) InstallAPIs(
 	server appsdkapiserver.GenericAPIServer,
 	restOptsGetter generic.RESTOptionsGetter,
 ) error {
-	// Create a client factory function that will be called lazily when the client is needed.
+	// Create a client factory function for MetaStorage, which needs to list Plugin resources.
 	// This uses the rest config from the app, which is set during InitializeApp.
 	clientFactory := func(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
 		<-p.ready
@@ -153,14 +158,44 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	pluginGVR := pluginsv0alpha1.PluginKind().GroupVersionResource()
+
+	// captured holds the SDK's default storage for GVRs we replace, so PluginStorage
+	// can delegate List/Get/persistence to it directly (no loopback HTTP calls).
+	captured := map[schema.GroupVersionResource]rest.Storage{}
+
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
+		pluginMetaGVR: meta.NewMetaStorage(p.logger, p.metaManager, clientFactory),
 	}
+
+	// Only register custom PluginStorage if install manager is provided
+	var pluginStorage *install.PluginStorage
+	if p.installManager != nil {
+		pluginStorage = install.NewPluginStorage(p.logger, p.installManager)
+		replacedStorage[pluginGVR] = pluginStorage
+	}
+
 	wrappedServer := &customStorageWrapper{
-		wrapped: server,
-		replace: replacedStorage,
+		wrapped:  server,
+		replace:  replacedStorage,
+		captured: captured,
 	}
-	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
+
+	if err := p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter); err != nil {
+		return err
+	}
+
+	// Wire the captured SDK default storage into PluginStorage so it can delegate
+	// List/Get and persistence without making loopback HTTP calls.
+	if pluginStorage != nil {
+		if delegate, ok := captured[pluginGVR]; ok {
+			if err := pluginStorage.SetDelegateStorage(delegate); err != nil {
+				return fmt.Errorf("wiring plugin storage delegate: %w", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {

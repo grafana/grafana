@@ -1,4 +1,4 @@
-package app
+package meta
 
 import (
 	"context"
@@ -19,7 +19,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -33,7 +32,7 @@ var (
 )
 
 type MetaStorage struct {
-	metaManager   *meta.ProviderManager
+	metaManager   *ProviderManager
 	client        *pluginsv0alpha1.PluginClient
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error)
 	clientErr     error
@@ -46,7 +45,7 @@ type MetaStorage struct {
 
 func NewMetaStorage(
 	logger logging.Logger,
-	metaManager *meta.ProviderManager,
+	metaManager *ProviderManager,
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
 ) *MetaStorage {
 	gr := schema.GroupResource{
@@ -138,7 +137,7 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	g.SetLimit(10)
 	for i, plugin := range plugins.Items {
 		g.Go(func() error {
-			result, err := s.metaManager.GetMeta(gCtx, meta.PluginRef{
+			result, err := s.metaManager.GetMeta(gCtx, PluginRef{
 				ID:       plugin.Spec.Id,
 				Version:  plugin.Spec.Version,
 				ParentID: plugin.Spec.ParentId,
@@ -217,13 +216,13 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
-	result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+	result, err := s.metaManager.GetMeta(ctx, PluginRef{
 		ID:       plugin.Spec.Id,
 		Version:  plugin.Spec.Version,
 		ParentID: plugin.Spec.ParentId,
 	})
 	if err != nil {
-		if errors.Is(err, meta.ErrMetaNotFound) {
+		if errors.Is(err, ErrMetaNotFound) {
 			gr := schema.GroupResource{
 				Group:    pluginsv0alpha1.APIGroup,
 				Resource: name,

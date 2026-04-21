@@ -1,4 +1,4 @@
-package app
+package meta
 
 import (
 	"context"
@@ -14,14 +14,13 @@ import (
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
 func TestMetaStorage_List_Parallel(t *testing.T) {
 	var active atomic.Int32
 	var concurrent atomic.Bool
 
-	provider := meta.NewProviderManager(&slowProvider{
+	provider := NewProviderManager(&slowProvider{
 		delay: 20 * time.Millisecond,
 		meta: pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{Id: "test"},
@@ -58,7 +57,7 @@ func TestMetaStorage_List_Parallel(t *testing.T) {
 }
 
 func TestMetaStorage_List_PreservesOrder(t *testing.T) {
-	provider := meta.NewProviderManager(&stubProvider{
+	provider := NewProviderManager(&stubProvider{
 		meta: pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{Id: "test"},
 		},
@@ -96,7 +95,7 @@ func TestMetaStorage_List_PreservesOrder(t *testing.T) {
 }
 
 func TestMetaStorage_List_SkipsFailedPlugins(t *testing.T) {
-	provider := meta.NewProviderManager(&selectiveProvider{
+	provider := NewProviderManager(&selectiveProvider{
 		succeedIDs: map[string]bool{"good-plugin": true},
 	})
 
@@ -133,8 +132,8 @@ func (s *stubProvider) Name() string {
 	return "stub"
 }
 
-func (s *stubProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Result, error) {
-	return &meta.Result{Meta: s.meta, TTL: time.Hour}, nil
+func (s *stubProvider) GetMeta(_ context.Context, _ PluginRef) (*Result, error) {
+	return &Result{Meta: s.meta, TTL: time.Hour}, nil
 }
 
 // slowProvider simulates latency per GetMeta call and tracks whether
@@ -150,13 +149,13 @@ func (s *slowProvider) Name() string {
 	return "slow"
 }
 
-func (s *slowProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Result, error) {
+func (s *slowProvider) GetMeta(_ context.Context, _ PluginRef) (*Result, error) {
 	if s.active.Add(1) > 1 {
 		s.concurrent.Store(true)
 	}
 	time.Sleep(s.delay)
 	s.active.Add(-1)
-	return &meta.Result{Meta: s.meta, TTL: time.Hour}, nil
+	return &Result{Meta: s.meta, TTL: time.Hour}, nil
 }
 
 // selectiveProvider only succeeds for plugins in succeedIDs.
@@ -168,14 +167,14 @@ func (s *selectiveProvider) Name() string {
 	return "selective"
 }
 
-func (s *selectiveProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*meta.Result, error) {
+func (s *selectiveProvider) GetMeta(_ context.Context, ref PluginRef) (*Result, error) {
 	if s.succeedIDs[ref.ID] {
-		return &meta.Result{
+		return &Result{
 			Meta: pluginsv0alpha1.MetaSpec{PluginJson: pluginsv0alpha1.MetaJSONData{Id: ref.ID}},
 			TTL:  time.Hour,
 		}, nil
 	}
-	return nil, meta.ErrMetaNotFound
+	return nil, ErrMetaNotFound
 }
 
 // mockResourceClient implements resource.Client with only List wired up.
