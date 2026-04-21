@@ -111,6 +111,7 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
 		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
 		UsePolling:         cfg.TenantWatcherUsePolling,
+		PollInterval:       cfg.TenantWatcherPollInterval,
 		Log:                logger,
 	}
 
