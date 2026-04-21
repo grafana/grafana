@@ -331,6 +331,8 @@ export interface GrafanaConfig {
   quickRanges?: TimeOption[];
   pluginRestrictedAPIsAllowList?: Record<string, string[]>;
   pluginRestrictedAPIsBlockList?: Record<string, string[]>;
+  dangerousMeticulousAIEnabled?: boolean;
+  dangerousMeticulousAIScriptUrl?: string;
   openFeatureContext: Record<string, unknown>;
 
   // The namespace to use for kubernetes apiserver requests
