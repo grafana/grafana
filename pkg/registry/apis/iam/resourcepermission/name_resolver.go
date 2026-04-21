@@ -137,6 +137,11 @@ func (r *serviceAccountNameResolver) IDToUID(ctx context.Context, namespace, id 
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		r.logger.FromContext(ctx).Warn("failed to list service accounts by id", "namespace", namespace, "id", id, "error", err)
+		// K8s 404 means the SA resource type is not yet available (e.g. dual-write mode 0/1).
+		// Treat it as "SA not found" so callers can handle it as an orphaned scope.
+		if apierrors.IsNotFound(err) {
+			return "", serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %q not found in namespace %q", id, namespace)
+		}
 		return "", fmt.Errorf("resolving service account id %q to uid: %w", id, err)
 	}
 
@@ -173,6 +178,13 @@ func (r *serviceAccountNameResolver) IDToUIDMap(ctx context.Context, namespace s
 	}
 	list, err := client.ListAll(ctx, namespace, resource.ListOptions{})
 	if err != nil {
+		// K8s 404 means the SA resource type is not yet available (e.g. dual-write mode 0/1).
+		// Return an empty map so callers skip the bulk pre-load and each scope falls through
+		// to IDToUID, which also handles the 404 gracefully.
+		if apierrors.IsNotFound(err) {
+			r.logger.FromContext(ctx).Debug("SA K8s API unavailable for bulk id→uid pre-load, skipping", "namespace", namespace)
+			return make(map[string]string), nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		r.logger.FromContext(ctx).Warn("failed to list all service accounts", "namespace", namespace, "error", err)
 		return nil, fmt.Errorf("building id→uid map for namespace %q: %w", namespace, err)
