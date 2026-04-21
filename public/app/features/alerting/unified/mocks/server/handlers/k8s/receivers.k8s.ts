@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { API_GROUP, API_VERSION, type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   getAlertmanagerConfig,
@@ -29,6 +30,23 @@ function parseMetadataNameFromFieldSelector(fieldSelector: string | null): strin
     }
   }
   return undefined;
+}
+
+/**
+ * listReceiver fieldSelector may use plain `metadata.name` or base64url-encoded title
+ * (see ContactPointSelector + notifications API); mock data uses plain names from alertmanager config.
+ */
+function receiverMetadataNameMatchesFieldSelector(
+  receiverName: string | undefined,
+  fieldSelectorName: string
+): boolean {
+  if (!receiverName) {
+    return false;
+  }
+  if (receiverName === fieldSelectorName) {
+    return true;
+  }
+  return base64UrlEncode(receiverName) === fieldSelectorName;
 }
 
 const getReceiversList = () => {
@@ -77,7 +95,9 @@ const listNamespacedReceiverHandler = () =>
     const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
     const wantedName = parseMetadataNameFromFieldSelector(fieldSelector);
     if (wantedName !== undefined) {
-      const filtered = list.items.filter((receiver) => receiver.metadata?.name === wantedName);
+      const filtered = list.items.filter((receiver) =>
+        receiverMetadataNameMatchesFieldSelector(receiver.metadata?.name, wantedName)
+      );
       return HttpResponse.json({ ...list, items: filtered });
     }
     return HttpResponse.json(list);
