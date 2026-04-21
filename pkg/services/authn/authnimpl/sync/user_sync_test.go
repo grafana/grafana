@@ -1846,8 +1846,8 @@ func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, o
 	return args.Error(0)
 }
 
-func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
-	args := m.Called(ctx, orgID)
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, orgID, listOptions)
 	return args.Error(0)
 }
 
