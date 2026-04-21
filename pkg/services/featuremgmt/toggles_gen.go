@@ -866,6 +866,10 @@ const (
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
 
+	// FlagFrontendServiceSettingsSourceFilter
+	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
+	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
+
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
