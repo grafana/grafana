@@ -1,9 +1,9 @@
 import { Node, type SourceFile } from 'ts-morph';
 
-import type { EventData, EventNamespace, EventPropertySchema } from '../types';
+import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
-import { parseEvents } from './eventParser.ts';
-import { resolveType } from './typeResolution.ts';
+import { parseEvents } from './eventParser.mts';
+import { resolveType } from './typeResolution.mts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
   const allEvents: EventData[] = files.flatMap((file) => {

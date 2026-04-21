@@ -11,7 +11,7 @@ import {
 
 import type { EventData, EventNamespace, EventPropertySchema } from '../types';
 
-import { getMetadataFromJSDocs, resolveType } from './typeResolution.ts';
+import { getMetadataFromJSDocs, resolveType } from './typeResolution.mts';
 
 /**
  * Finds all events declared in a file. Supports two patterns:

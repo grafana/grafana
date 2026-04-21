@@ -2,8 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Project } from 'ts-morph';
 
-import { findAllEvents } from './findAllEvents.ts';
-import { formatEventsAsMarkdown } from './generateMarkdown.ts';
+import { findAllEvents } from './findAllEvents.mts';
+import { formatEventsAsMarkdown } from './generateMarkdown.mts';
 
 const DEFINE_FEATURE_EVENTS_PATH = '@grafana/runtime/internal';
 const SOURCE_FILE_PATTERNS = ['**/*.ts'];
@@ -20,8 +20,7 @@ if (OUTPUT_FORMAT === 'markdown') {
   const markdown = await formatEventsAsMarkdown(events);
   console.log(markdown);
 
-  const outputPath = path.resolve('docs/sources/analytics/analytics-report.md');
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  const outputPath = path.resolve('./analytics-report.md');
   await fs.writeFile(outputPath, markdown);
 } else {
   console.log(JSON.stringify(events, null, 2));
