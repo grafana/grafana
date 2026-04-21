@@ -11329,6 +11329,8 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "inline-no-scrolls": "Switch to condensed view",
+      "inline-with-scrolls": "Switch to expanded view",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
