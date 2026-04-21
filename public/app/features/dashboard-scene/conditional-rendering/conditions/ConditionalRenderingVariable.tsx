@@ -228,7 +228,6 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   useEffect(() => setNewValue(value), [value]);
 
-  // CODE: list of options in the dropdown
   const variables = useUserDefinedVariables(model);
 
   const variableNames: ComboboxOption[] = useMemo(
