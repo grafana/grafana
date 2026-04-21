@@ -11,7 +11,7 @@ import (
 
 // TestIntegrationProvisioning_IncrementalDiffThreshold_Zero_DisablesSizeCheck
 // verifies the `0 = unlimited` contract end-to-end: when
-// `provisioning.max_incremental_diff_size` is set to 0 the controller must
+// `provisioning.max_incremental_changes` is set to 0 the controller must
 // schedule an INCREMENTAL sync even for diffs that would be above any positive
 // threshold. The package-level shared env uses threshold=5, so this test
 // constructs its own Grafana instance with threshold=0 via
@@ -24,12 +24,12 @@ import (
 func TestIntegrationProvisioning_IncrementalDiffThreshold_Zero_DisablesSizeCheck(t *testing.T) {
 	h := common.RunGrafanaWithGitServer(t,
 		common.WithoutProvisioningFolderMetadata,
-		common.WithProvisioningMaxIncrementalDiffSize(0),
+		common.WithProvisioningMaxIncrementalChanges(0),
 	)
 
 	const (
 		repoName  = "diff-threshold-unlimited"
-		fileCount = testMaxIncrementalDiffSize + 5 // deliberately above the shared env's threshold
+		fileCount = testMaxIncrementalChanges + 5 // deliberately above the shared env's threshold
 	)
 
 	_, local := createGitRepoWithSyncEnabled(t, h, repoName, testSyncIntervalSeconds, map[string][]byte{
@@ -47,6 +47,6 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_Zero_DisablesSizeCheck
 	require.NotNil(t, intervalJob.Spec.Pull,
 		"interval-scheduled pull job must have Pull options set")
 	require.True(t, intervalJob.Spec.Pull.Incremental,
-		"with max_incremental_diff_size=0 the controller must schedule incremental "+
+		"with max_incremental_changes=0 the controller must schedule incremental "+
 			"regardless of diff size (got full sync for a diff of %d files)", fileCount)
 }

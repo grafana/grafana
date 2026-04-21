@@ -160,7 +160,7 @@ type Cfg struct {
 	ProvisioningMaxResourcesPerRepository int64  // 0 = unlimited
 	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
-	ProvisioningMaxIncrementalDiffSize    int    // default 100, 0 in config = unlimited
+	ProvisioningMaxIncrementalChanges     int    // default 100, 0 in config = unlimited
 	DataPath                              string
 	LogsPath                              string
 	EnterpriseLicensePath                 string
@@ -2411,7 +2411,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
-	cfg.ProvisioningMaxIncrementalDiffSize = iniFile.Section("provisioning").Key("max_incremental_diff_size").MustInt(100)
+	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

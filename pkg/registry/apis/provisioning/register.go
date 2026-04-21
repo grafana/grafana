@@ -135,12 +135,12 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter       func(context.Context) (*clientrest.Config, error)
-	registry               prometheus.Registerer
-	quotaGetter            quotas.QuotaGetter
-	folderMetadataEnabled  bool
-	maxIncrementalDiffSize int
-	folderAPIVersion       string
+	restConfigGetter      func(context.Context) (*clientrest.Config, error)
+	registry              prometheus.Registerer
+	quotaGetter           quotas.QuotaGetter
+	folderMetadataEnabled bool
+	maxIncrementalChanges int
+	folderAPIVersion      string
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -187,7 +187,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
-	maxIncrementalDiffSize int,
+	maxIncrementalChanges int,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -239,7 +239,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
-		maxIncrementalDiffSize:              maxIncrementalDiffSize,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
@@ -314,7 +314,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
-	maxIncrementalDiffSize := cfg.ProvisioningMaxIncrementalDiffSize
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -346,7 +346,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalDiffSize,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -383,7 +383,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalDiffSize,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -1026,7 +1026,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.quotaGetter,
 				b.folderMetadataEnabled,
 				b.folderAPIVersion,
-				b.maxIncrementalDiffSize,
+				b.maxIncrementalChanges,
 			)
 			if err != nil {
 				return err

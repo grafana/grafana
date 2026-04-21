@@ -473,124 +473,124 @@ func createdChanges(count int) []VersionedFileChange {
 
 func TestCanUseIncrementalSyncInController(t *testing.T) {
 	tests := []struct {
-		name                   string
-		changes                []VersionedFileChange
-		folderMetadataEnabled  bool
-		maxIncrementalDiffSize int
-		want                   bool
+		name                  string
+		changes               []VersionedFileChange
+		folderMetadataEnabled bool
+		maxIncrementalChanges int
+		want                  bool
 	}{
 		// ─── size-threshold boundary cases (the new behaviour added by FD-007) ──
 		{
-			name:                   "empty diff stays incremental",
-			changes:                nil,
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "empty diff stays incremental",
+			changes:               nil,
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		{
-			name:                   "diff one-under threshold stays incremental",
-			changes:                createdChanges(99),
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "diff one-under threshold stays incremental",
+			changes:               createdChanges(99),
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		{
-			name:                   "diff at threshold forces full sync (inclusive greater-or-equal)",
-			changes:                createdChanges(100),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "diff at threshold forces full sync (inclusive greater-or-equal)",
+			changes:               createdChanges(100),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "diff above threshold forces full sync",
-			changes:                createdChanges(101),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "diff above threshold forces full sync",
+			changes:               createdChanges(101),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "diff far above threshold forces full sync",
-			changes:                createdChanges(1000),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "diff far above threshold forces full sync",
+			changes:               createdChanges(1000),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "threshold of 0 disables size check - falls through to folder-metadata guard",
-			changes:                createdChanges(1000),
-			maxIncrementalDiffSize: 0,
-			want:                   true,
+			name:                  "threshold of 0 disables size check - falls through to folder-metadata guard",
+			changes:               createdChanges(1000),
+			maxIncrementalChanges: 0,
+			want:                  true,
 		},
 		{
-			name:                   "negative threshold disables size check - falls through to folder-metadata guard",
-			changes:                createdChanges(1000),
-			maxIncrementalDiffSize: -1,
-			want:                   true,
+			name:                  "negative threshold disables size check - falls through to folder-metadata guard",
+			changes:               createdChanges(1000),
+			maxIncrementalChanges: -1,
+			want:                  true,
 		},
 		{
-			name:                   "threshold of 0 with empty diff stays incremental",
-			changes:                nil,
-			maxIncrementalDiffSize: 0,
-			want:                   true,
+			name:                  "threshold of 0 with empty diff stays incremental",
+			changes:               nil,
+			maxIncrementalChanges: 0,
+			want:                  true,
 		},
 		{
-			name:                   "threshold of 0 with folder-metadata-only-delete still forces full",
-			changes:                deletedChanges("folder1/.keep"),
-			maxIncrementalDiffSize: 0,
-			want:                   false,
+			name:                  "threshold of 0 with folder-metadata-only-delete still forces full",
+			changes:               deletedChanges("folder1/.keep"),
+			maxIncrementalChanges: 0,
+			want:                  false,
 		},
 		// ─── pre-existing folder-metadata-only deletion cases (preserved) ──────
 		{
-			name:                   "no keep-file deletions",
-			changes:                deletedChanges("test.json"),
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "no keep-file deletions",
+			changes:               deletedChanges("test.json"),
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		{
-			name:                   "keep file deletion alone forces full sync",
-			changes:                deletedChanges(".keep"),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "keep file deletion alone forces full sync",
+			changes:               deletedChanges(".keep"),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "keep file with sibling deletion stays incremental",
-			changes:                deletedChanges("test/.keep", "test/test.json"),
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "keep file with sibling deletion stays incremental",
+			changes:               deletedChanges("test/.keep", "test/test.json"),
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		{
-			name:                   "_folder.json alone forces full sync - flag on",
-			changes:                deletedChanges("folder1/_folder.json"),
-			folderMetadataEnabled:  true,
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "_folder.json alone forces full sync - flag on",
+			changes:               deletedChanges("folder1/_folder.json"),
+			folderMetadataEnabled: true,
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "_folder.json alone stays incremental - flag off",
-			changes:                deletedChanges("folder1/_folder.json"),
-			folderMetadataEnabled:  false,
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "_folder.json alone stays incremental - flag off",
+			changes:               deletedChanges("folder1/_folder.json"),
+			folderMetadataEnabled: false,
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		{
-			name:                   "_folder.json with sibling deletion stays incremental - flag on",
-			changes:                deletedChanges("folder1/_folder.json", "folder1/dashboard.json"),
-			folderMetadataEnabled:  true,
-			maxIncrementalDiffSize: 100,
-			want:                   true,
+			name:                  "_folder.json with sibling deletion stays incremental - flag on",
+			changes:               deletedChanges("folder1/_folder.json", "folder1/dashboard.json"),
+			folderMetadataEnabled: true,
+			maxIncrementalChanges: 100,
+			want:                  true,
 		},
 		// ─── size check is evaluated before the folder-metadata guard ──────────
 		{
-			name:                   "above threshold overrides folder-metadata guard",
-			changes:                append(createdChanges(200), VersionedFileChange{Action: FileActionDeleted, Path: "folder1/.keep"}),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "above threshold overrides folder-metadata guard",
+			changes:               append(createdChanges(200), VersionedFileChange{Action: FileActionDeleted, Path: "folder1/.keep"}),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 		{
-			name:                   "created-only diff above threshold forces full sync",
-			changes:                createdChanges(150),
-			maxIncrementalDiffSize: 100,
-			want:                   false,
+			name:                  "created-only diff above threshold forces full sync",
+			changes:               createdChanges(150),
+			maxIncrementalChanges: 100,
+			want:                  false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CanUseIncrementalSyncInController(tt.changes, tt.folderMetadataEnabled, tt.maxIncrementalDiffSize)
+			got := CanUseIncrementalSyncInController(tt.changes, tt.folderMetadataEnabled, tt.maxIncrementalChanges)
 			require.Equal(t, tt.want, got)
 		})
 	}

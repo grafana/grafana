@@ -23,7 +23,7 @@ const testSyncIntervalSeconds = 10
 
 // TestIntegrationProvisioning_IncrementalDiffThreshold_AboveThreshold_SchedulesFullSync
 // verifies that when the number of changed files in a new commit exceeds the
-// controller-level `max_incremental_diff_size` threshold, the next interval
+// controller-level `max_incremental_changes` threshold, the next interval
 // reconcile schedules a FULL sync (Job.Spec.Pull.Incremental == false).
 func TestIntegrationProvisioning_IncrementalDiffThreshold_AboveThreshold_SchedulesFullSync(t *testing.T) {
 	h := sharedGitHelper(t)
@@ -44,9 +44,9 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_AboveThreshold_Schedul
 	seenJobs := snapshotPullJobNames(t, h, repoName)
 
 	// Push (threshold + 1) files in a single commit. CompareFiles will report
-	// `len(changes) > maxIncrementalDiffSize`, so CanUseIncrementalSyncInController
+	// `len(changes) >= maxIncrementalChanges`, so CanUseIncrementalSyncInController
 	// must return false.
-	const fileCount = testMaxIncrementalDiffSize + 1
+	const fileCount = testMaxIncrementalChanges + 1
 	addDashboardFiles(t, local, "above", fileCount)
 	commitAndPush(t, local, fmt.Sprintf("add %d dashboards (above threshold)", fileCount))
 
@@ -55,7 +55,7 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_AboveThreshold_Schedul
 		"interval-scheduled pull job must have Pull options set")
 	require.False(t, intervalJob.Spec.Pull.Incremental,
 		"diff of %d files (> threshold %d) should be scheduled as a full sync",
-		fileCount, testMaxIncrementalDiffSize)
+		fileCount, testMaxIncrementalChanges)
 }
 
 // TestIntegrationProvisioning_IncrementalDiffThreshold_BelowThreshold_SchedulesIncrementalSync
@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_BelowThreshold_Schedul
 	// Push (threshold - 1) files. The size guard passes and, with no
 	// folder-metadata-only deletions in this diff, the controller picks
 	// incremental.
-	const fileCount = testMaxIncrementalDiffSize - 1
+	const fileCount = testMaxIncrementalChanges - 1
 	require.Greater(t, fileCount, 0, "below-threshold file count must be positive")
 	addDashboardFiles(t, local, "below", fileCount)
 	commitAndPush(t, local, fmt.Sprintf("add %d dashboards (below threshold)", fileCount))
@@ -88,7 +88,7 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_BelowThreshold_Schedul
 		"interval-scheduled pull job must have Pull options set")
 	require.True(t, intervalJob.Spec.Pull.Incremental,
 		"diff of %d files (< threshold %d) should be scheduled as an incremental sync",
-		fileCount, testMaxIncrementalDiffSize)
+		fileCount, testMaxIncrementalChanges)
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_BelowThreshold_Schedul
 // createGitRepoWithSyncEnabled provisions a git-backed Grafana repository with
 // sync enabled and a custom interval. Unlike GitTestHelper.CreateGitRepo, this
 // exposes the sync config because the interval-scheduled reconcile path is
-// what exercises the max_incremental_diff_size threshold.
+// what exercises the max_incremental_changes threshold.
 func createGitRepoWithSyncEnabled(
 	t *testing.T,
 	h *common.GitTestHelper,

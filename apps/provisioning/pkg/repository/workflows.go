@@ -47,7 +47,7 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 
 // CanUseIncrementalSyncInController determines if an incremental sync is permitted in the controller, based on the given file changes,
 // the folder metadata feature flag, and the maximum allowed changes. It returns false to require a full sync if:
-//   - The number of changes equals or exceeds maxIncrementalDiffSize,
+//   - The number of changes equals or exceeds maxIncrementalChanges,
 //   - Any directory only has its folder-metadata file removed (.keep, or _folder.json if folderMetadataEnabled) without
 //     any Grafana resources in that directory being deleted. In such cases, a full sync is needed because the incremental
 //     sync cannot determine whether an entire folder (not just its metadata) was deleted, and these metadata files do not
@@ -55,9 +55,9 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 func CanUseIncrementalSyncInController(
 	changes []VersionedFileChange,
 	folderMetadataEnabled bool,
-	maxIncrementalDiffSize int,
+	maxIncrementalChanges int,
 ) bool {
-	if maxIncrementalDiffSize > 0 && len(changes) >= maxIncrementalDiffSize {
+	if maxIncrementalChanges > 0 && len(changes) >= maxIncrementalChanges {
 		return false
 	}
 

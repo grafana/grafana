@@ -461,7 +461,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, 0)
 		assert.NoError(t, err)
-		assert.True(t, got, "max_incremental_diff_size=0 disables the size check (unlimited)")
+		assert.True(t, got, "max_incremental_changes=0 disables the size check (unlimited)")
 	})
 
 	t.Run("propagates CompareFiles error without deciding", func(t *testing.T) {

@@ -78,12 +78,12 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry               prometheus.Registerer
-	tracer                 tracing.Tracer
-	quotaGetter            quotas.QuotaGetter
-	tokenMetrics           *repositoryTokenMetrics
-	folderMetadataEnabled  bool
-	maxIncrementalDiffSize int
+	registry              prometheus.Registerer
+	tracer                tracing.Tracer
+	quotaGetter           quotas.QuotaGetter
+	tokenMetrics          *repositoryTokenMetrics
+	folderMetadataEnabled bool
+	maxIncrementalChanges int
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -109,7 +109,7 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
-	maxIncrementalDiffSize int,
+	maxIncrementalChanges int,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -136,17 +136,17 @@ func NewRepositoryController(
 			maxWorkers:       parallelOperations,
 			folderAPIVersion: folderAPIVersion,
 		},
-		jobs:                   jobs,
-		logger:                 logging.DefaultLogger.With("logger", loggerName),
-		registry:               registry,
-		tracer:                 tracer,
-		resyncInterval:         resyncInterval,
-		minSyncInterval:        minSyncInterval,
-		drainTimeout:           drainTimeout,
-		quotaGetter:            quotaGetter,
-		tokenMetrics:           repoTokenMetrics,
-		folderMetadataEnabled:  folderMetadataEnabled,
-		maxIncrementalDiffSize: maxIncrementalDiffSize,
+		jobs:                  jobs,
+		logger:                logging.DefaultLogger.With("logger", loggerName),
+		registry:              registry,
+		tracer:                tracer,
+		resyncInterval:        resyncInterval,
+		minSyncInterval:       minSyncInterval,
+		drainTimeout:          drainTimeout,
+		quotaGetter:           quotaGetter,
+		tokenMetrics:          repoTokenMetrics,
+		folderMetadataEnabled: folderMetadataEnabled,
+		maxIncrementalChanges: maxIncrementalChanges,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -463,7 +463,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
 		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
 		// to do a full sync to see if the folder was deleted as well in git.
-		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled, rc.maxIncrementalDiffSize)
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled, rc.maxIncrementalChanges)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
 			return &provisioning.SyncJobOptions{}
@@ -482,14 +482,14 @@ func shouldUseIncrementalSync(
 	obj *provisioning.Repository,
 	latestRef string,
 	folderMetadataEnabled bool,
-	maxIncrementalDiffSize int,
+	maxIncrementalChanges int,
 ) (bool, error) {
 	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
 	if err != nil {
 		return false, err
 	}
 
-	return repository.CanUseIncrementalSyncInController(changes, folderMetadataEnabled, maxIncrementalDiffSize), nil
+	return repository.CanUseIncrementalSyncInController(changes, folderMetadataEnabled, maxIncrementalChanges), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
