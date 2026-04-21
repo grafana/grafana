@@ -20,11 +20,11 @@ import {
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { convertSpecToWireFormat } from '../serialization/transformationCompat';
 
-import { isDashboardV2Spec } from './DetectChangesWorker';
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { type DashboardChangeInfo } from './shared';
