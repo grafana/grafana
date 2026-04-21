@@ -187,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
-    zIndex: 99999,
+    zIndex: theme.zIndex.navbarFixed,
     height: '100%',
   }),
 });
