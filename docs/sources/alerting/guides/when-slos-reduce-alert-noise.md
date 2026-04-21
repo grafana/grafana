@@ -59,7 +59,7 @@ SLOs track failures against the [error budget](/grafana-cloud/alerting-and-irm/s
 
 {{< figure src="/media/docs/alerting/slo-guide-remaining-error-budget-panel.png" max-width="750px" alt="SLO error budget" >}}
 
-Another key difference is [SLO alerts](/grafana-cloud/alerting-and-irm/slo/set-up/configure-burn-rate-notifications/#burn-rate-alert-rule-conditions). Rather than firing when the error budget is consumed and the objective is breached, they **fire when the objective is at risk**.
+Another key difference is how [SLO alerts](/grafana-cloud/alerting-and-irm/slo/set-up/configure-burn-rate-notifications/#burn-rate-alert-rule-conditions) work. Rather than firing when the error budget is consumed and the objective is breached, they **fire when the objective is at risk**.
 
 SLO alerts page you when the system is degrading quickly, so you have time to act before breaching the SLO.
 
