@@ -1,0 +1,11 @@
+pkg/**
+e2e-playwright/**
+devenv/**
+emails/**
+scripts/**
+.github/actions/**
+.github/workflows/scripts/**
+packages/grafana-eslint-rules/**
+*.config.js
+jest.config.js
+eslint.config.js

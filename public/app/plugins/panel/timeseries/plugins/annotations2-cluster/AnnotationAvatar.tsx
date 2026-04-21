@@ -9,7 +9,15 @@ interface Props {
 
 export function AnnotationAvatar({ src }: Props) {
   const styles = useStyles2(getStyles);
-  return src && <img className={styles.avatar} alt="Annotation avatar" src={textUtil.sanitizeUrl(src)} />;
+  return (
+    src && (
+      <img
+        className={`${styles.avatar} met-image-avatar-user`}
+        alt="Annotation avatar"
+        src={textUtil.sanitizeUrl(src)}
+      />
+    )
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

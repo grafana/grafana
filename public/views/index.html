@@ -29,6 +29,14 @@
     <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
+    [[ if .EnableMeticulousRecorder ]]
+    <script
+      src="https://snippet.meticulous.ai/v1/meticulous.js"
+      data-token="ceD9Uoa4XN0ST1SjIHfzgAgYrK0WrKQzJ4QTTsrZ"
+      nonce="[[.Nonce]]"
+    ></script>
+    [[ end ]]
+
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
     </script>

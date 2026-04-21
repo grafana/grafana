@@ -81,7 +81,12 @@ export const AnonUsersDevicesTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt={'User avatar'} />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) =>
+          value && (
+            <span className="met-image-avatar-user">
+              <Avatar src={value} alt={'User avatar'} />
+            </span>
+          ),
       },
       {
         id: 'login',

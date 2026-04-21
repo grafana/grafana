@@ -43,6 +43,8 @@ import {
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  FlagKeys,
+  getFeatureFlagClient,
   getPanelPluginMetas,
   initOpenFeature,
   setGetObservablePluginComponents,
@@ -147,8 +149,28 @@ export class GrafanaApp {
       if (contextSrv.user.isSignedIn) {
         try {
           await initOpenFeature();
+
+          const ofClient = getFeatureFlagClient();
+          for (const [, flagKey] of Object.entries(FlagKeys)) {
+            const result = ofClient.getBooleanDetails(flagKey, false);
+            window.Meticulous?.context.recordFeatureFlag(flagKey, result.value);
+          }
         } catch (err) {
           console.error('Failed to initialize OpenFeature provider', err);
+        }
+
+        window.Meticulous?.context.recordUserId(String(contextSrv.user.id));
+        window.Meticulous?.context.recordUserEmail(contextSrv.user.email);
+        window.Meticulous?.context.recordCustomContext('orgRole', contextSrv.user.orgRole);
+        window.Meticulous?.context.recordCustomContext('isGrafanaAdmin', contextSrv.user.isGrafanaAdmin);
+        window.Meticulous?.context.recordCustomContext('orgId', String(contextSrv.user.orgId));
+        window.Meticulous?.context.recordCustomContext('theme', contextSrv.user.theme);
+        window.Meticulous?.context.recordCustomContext('language', contextSrv.user.language || 'default');
+      }
+
+      for (const [key, value] of Object.entries(config.featureToggles)) {
+        if (typeof value === 'boolean') {
+          window.Meticulous?.context.recordFeatureFlag(key, value);
         }
       }
 

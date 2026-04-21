@@ -71,7 +71,11 @@ export const AnnotationTooltip2 = ({
 
   let avatar;
   if (annoVals.login?.[annoIdx] && annoVals.avatarUrl?.[annoIdx]) {
-    avatar = <img className={styles.avatar} alt="Annotation avatar" src={annoVals.avatarUrl[annoIdx]} />;
+    avatar = (
+      <span className="met-image-avatar-user">
+        <img className={styles.avatar} alt="Annotation avatar" src={annoVals.avatarUrl[annoIdx]} />
+      </span>
+    );
   }
 
   let state: React.ReactNode | null = null;

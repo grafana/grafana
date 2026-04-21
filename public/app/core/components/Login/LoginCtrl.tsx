@@ -109,6 +109,7 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
         .then((result) => {
           setResult(result);
           if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
+            window.Meticulous?.context.recordCustomContext('loginUser', formModel.user);
             toGrafana();
             return;
           } else {

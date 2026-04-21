@@ -30,6 +30,9 @@ type IndexViewData struct {
 	CSPContent                          string               `json:"-"`
 	CSPEnabled                          bool                 `json:"-"`
 	IsDevelopmentEnv                    bool                 `json:"-"`
+	// EnableMeticulousRecorder is true in all environments except production.
+	// It gates the Meticulous recorder script so it never loads in production.
+	EnableMeticulousRecorder bool `json:"-"`
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce                  string            `json:"-"`
 	NewsFeedEnabled        bool              `json:"-"`
