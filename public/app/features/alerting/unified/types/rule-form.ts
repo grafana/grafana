@@ -59,6 +59,11 @@ export interface RuleFormValues {
   editorSettings?: SimplifiedEditor;
   metric?: string;
   targetDatasourceUid?: string;
+
+  // Evaluation chain fields (only used when alerting.rulesAPIV2 flag is on)
+  evaluationChainUid?: string;
+  evaluationChainName?: string;
+
   // cortex / loki rules
   namespace: string;
   forTime: number;

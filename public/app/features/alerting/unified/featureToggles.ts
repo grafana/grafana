@@ -37,3 +37,5 @@ export const shouldUseFullyCompatibleBackendFilters = () =>
  */
 export const shouldShowAlertsActivityBanner = () =>
   (config.featureToggles.alertingAlertsActivityBanner && config.featureToggles.alertingTriage) ?? false;
+
+export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;

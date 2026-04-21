@@ -25,6 +25,7 @@ import {
 } from '@grafana/ui';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { shouldUseRulesAPIV2 } from '../../featureToggles';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
@@ -49,6 +50,7 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { EvaluationBehaviorV2 } from './evaluation-v2/EvaluationBehaviorV2';
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
@@ -115,6 +117,20 @@ const forValidationOptions = (getEvaluateEvery: () => string): RegisterOptions<{
 });
 
 export function GrafanaEvaluationBehaviorStep({
+  existing,
+  enableProvisionedGroups,
+}: {
+  existing: boolean;
+  enableProvisionedGroups: boolean;
+}) {
+  if (shouldUseRulesAPIV2()) {
+    return <EvaluationBehaviorV2 existing={existing} />;
+  }
+
+  return <LegacyEvaluationBehavior existing={existing} enableProvisionedGroups={enableProvisionedGroups} />;
+}
+
+function LegacyEvaluationBehavior({
   existing,
   enableProvisionedGroups,
 }: {
