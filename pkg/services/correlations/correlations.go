@@ -280,6 +280,9 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
+		TotalCount:   int64(len(correlations)),
+		Page:         0,
+		Limit:        100000,
 	}, nil
 }
 
