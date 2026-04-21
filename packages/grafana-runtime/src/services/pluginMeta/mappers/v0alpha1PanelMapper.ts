@@ -1,66 +1,9 @@
-import {
-  type PanelPluginMeta,
-  type PluginMetaInfo,
-  PluginSignatureStatus,
-  PluginState,
-  PluginType,
-} from '@grafana/data';
+import { type PanelPluginMeta, PluginSignatureStatus, PluginState, PluginType } from '@grafana/data';
 
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, loadingStrategyMapper } from './shared';
-
-function toCDNUrl(spec: v0alpha1Spec, path: string): string {
-  try {
-    const normalizedBase = spec.baseURL.endsWith('/') ? spec.baseURL : `${spec.baseURL}/`;
-    const url = new URL(path, normalizedBase);
-    return url.toString();
-  } catch (error) {
-    return path; // plugin without proper CDN URL or builtin plugin
-  }
-}
-
-function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
-  if (!spec.pluginJson.info.screenshots) {
-    return [];
-  }
-
-  return spec.pluginJson.info.screenshots.map((s) => ({
-    ...s,
-    name: s.name ?? '',
-    path: toCDNUrl(spec, s.path ?? ''),
-  }));
-}
-
-function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
-  return {
-    ...spec.pluginJson.info.logos,
-    large: toCDNUrl(spec, spec.pluginJson.info.logos.large),
-    small: toCDNUrl(spec, spec.pluginJson.info.logos.small),
-  };
-}
-
-function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
-  const { updated, version, description = '', keywords } = spec.pluginJson.info;
-  const author = { ...spec.pluginJson.info.author, name: spec.pluginJson.info.author?.name ?? '' };
-  const links = (spec.pluginJson.info.links || []).map((l) => ({ ...l, name: l.name ?? '', url: l.url ?? '' }));
-  const screenshots = screenshotsMapper(spec);
-  const build = {};
-  const logos = logosMapper(spec);
-
-  return {
-    author,
-    description,
-    links,
-    logos,
-    build,
-    screenshots,
-    updated,
-    version,
-    keywords,
-  };
-}
+import { angularMapper, infoMapper, loadingStrategyMapper } from './shared';
 
 function stateMapper(spec: v0alpha1Spec): PluginState | undefined {
   const state = spec.pluginJson.state;

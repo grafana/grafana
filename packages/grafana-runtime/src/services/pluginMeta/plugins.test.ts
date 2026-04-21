@@ -3,7 +3,14 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { invalidateCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
-import { initPluginMetas, installPluginMeta, refetchPluginMetas, uninstallPluginMeta } from './plugins';
+import {
+  getPluginMetaFromCache,
+  initPluginMetas,
+  installPluginMeta,
+  refetchPluginMeta,
+  refetchPluginMetas,
+  uninstallPluginMeta,
+} from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
@@ -227,6 +234,82 @@ describe('when useMTPlugins flag is enabled', () => {
       await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow('Network Error');
     });
   });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should get meta from cache if that exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should not get meta from cache if that does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always refetch meta even if cache exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await refetchPluginMeta('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+  });
 });
 
 describe('when useMTPlugins flag is disabled', () => {
@@ -287,6 +370,34 @@ describe('when useMTPlugins flag is disabled', () => {
 
       await uninstallPluginMeta('myorg-test-panel');
 
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });

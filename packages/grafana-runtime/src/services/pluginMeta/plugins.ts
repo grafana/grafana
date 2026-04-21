@@ -3,6 +3,7 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import type { PluginMetasResponse } from './types';
+import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
 import { defaultSpec } from './types/plugin/types.spec.gen';
 
@@ -69,9 +70,33 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
 }
 
 export function initPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
+  return getCachedPromise(loadPluginMetas, { cacheKey: 'loadPluginMetas', defaultValue: { items: [] } });
 }
 
 export function refetchPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] }, invalidate: true });
+  return getCachedPromise(loadPluginMetas, {
+    cacheKey: 'loadPluginMetas',
+    defaultValue: { items: [] },
+    invalidate: true,
+  });
+}
+
+export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | null> {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+    return null;
+  }
+
+  const metas = await initPluginMetas();
+  const meta = metas.items.find((i) => i.spec.pluginJson.id === pluginId);
+  return meta ? structuredClone(meta) : null;
+}
+
+export async function refetchPluginMeta(pluginId: string): Promise<Meta | null> {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+    return null;
+  }
+
+  const metas = await refetchPluginMetas();
+  const meta = metas.items.find((i) => i.spec.pluginJson.id === pluginId);
+  return meta ? structuredClone(meta) : null;
 }

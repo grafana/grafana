@@ -1,56 +1,9 @@
-import { type AppPluginConfig, type PluginDependencies, type PluginExtensions, type PluginType } from '@grafana/data';
+import { type AppPluginConfig } from '@grafana/data';
 
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, loadingStrategyMapper } from './shared';
-
-function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {
-  const plugins = (spec.pluginJson.dependencies?.plugins ?? []).map((v) => ({
-    ...v,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    type: v.type as PluginType,
-    version: '',
-  }));
-
-  const dependencies: PluginDependencies = {
-    ...spec.pluginJson.dependencies,
-    extensions: {
-      exposedComponents: spec.pluginJson.dependencies.extensions?.exposedComponents ?? [],
-    },
-    grafanaDependency: spec.pluginJson.dependencies.grafanaDependency,
-    grafanaVersion: spec.pluginJson.dependencies.grafanaVersion ?? '',
-    plugins,
-  };
-
-  return dependencies;
-}
-
-function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
-  const addedComponents = spec.pluginJson.extensions?.addedComponents ?? [];
-  const addedFunctions = spec.pluginJson.extensions?.addedFunctions ?? [];
-  const addedLinks = spec.pluginJson.extensions?.addedLinks ?? [];
-  const exposedComponents = (spec.pluginJson.extensions?.exposedComponents ?? []).map((v) => ({
-    ...v,
-    description: v.description ?? '',
-    title: v.title ?? '',
-  }));
-  const extensionPoints = (spec.pluginJson.extensions?.extensionPoints ?? []).map((v) => ({
-    ...v,
-    description: v.description ?? '',
-    title: v.title ?? '',
-  }));
-
-  const extensions: PluginExtensions = {
-    addedComponents,
-    addedFunctions,
-    addedLinks,
-    exposedComponents,
-    extensionPoints,
-  };
-
-  return extensions;
-}
+import { angularMapper, dependenciesMapper, extensionsMapper, loadingStrategyMapper } from './shared';
 
 function specMapper(spec: v0alpha1Spec): AppPluginConfig {
   const { id, info, preload = false } = spec.pluginJson;
