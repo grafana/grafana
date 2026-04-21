@@ -929,7 +929,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder, err := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService, clientGenerator)
+	apiBuilder, err := preferences.RegisterAPIService(cfg, sqlStore, prefService, accessClient, apiserverService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1633,7 +1633,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder, err := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService, clientGenerator)
+	apiBuilder, err := preferences.RegisterAPIService(cfg, sqlStore, prefService, accessClient, apiserverService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}

@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -43,6 +44,7 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	db db.DB,
 	prefs pref.Service,
+	accessClient authlib.AccessClient,
 	apiregistration builder.APIRegistrar,
 	clientGenerator resource.ClientGenerator,
 ) (*APIBuilder, error) {
@@ -55,8 +57,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		merger: newMerger(cfg, client),
 		authorizer: &utils.AuthorizeFromName{
-			OKNames: []string{"merged"},
-			Teams:   sql, // should be from the IAM service
+			OKNames:      []string{"merged"},
+			AccessClient: accessClient, // can i edit a team
 			Resource: map[string][]utils.ResourceOwner{
 				"preferences": {
 					utils.NamespaceResourceOwner,
