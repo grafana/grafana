@@ -14,7 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure 
+menuTitle: Configure
 title: Configure the Parca data source
 weight: 200
 review_date: 2026-04-10
@@ -52,36 +52,36 @@ The **Settings** tab contains the following configuration sections.
 
 ### Basic settings
 
-| Setting     | Description                                                        |
-| ----------- | ------------------------------------------------------------------ |
+| Setting     | Description                                                          |
+| ----------- | -------------------------------------------------------------------- |
 | **Name**    | A name to identify this data source in panels, queries, and Explore. |
-| **Default** | Toggle to make this the default data source for new panels.        |
+| **Default** | Toggle to make this the default data source for new panels.          |
 
 ### Connection
 
-| Setting | Description                                                                                                                                               |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting | Description                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **URL** | The URL of your Parca instance. For example, `http://localhost:7070`. Grafana connects to Parca using gRPC-Web, so the URL should point to the Parca HTTP endpoint. |
 
 ### Authentication
 
 Use this section to select an authentication method to access the data source. The available methods are:
 
-| Method                    | Description                                                                                           |
-| ------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Basic authentication**  | Authenticate with a username and password. Enter values in the **User** and **Password** fields.      |
-| **Forward OAuth Identity** | Forward the logged-in user's OAuth token to the data source.                                         |
-| **No Authentication**     | Connect without credentials. Use this when the Parca instance doesn't require authentication.        |
+| Method                     | Description                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Basic authentication**   | Authenticate with a username and password. Enter values in the **User** and **Password** fields. |
+| **Forward OAuth Identity** | Forward the logged-in user's OAuth token to the data source.                                     |
+| **No Authentication**      | Connect without credentials. Use this when the Parca instance doesn't require authentication.    |
 
 ### TLS settings
 
 Configure TLS for secure communication with your Parca instance.
 
-| Setting                              | Description                                                                                              |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| **Add self-signed certificate**      | Toggle to provide a CA certificate. When enabled, paste the CA certificate in the **CA Certificate** field. |
-| **TLS Client Authentication**        | Toggle to enable mutual TLS. When enabled, provide the **Server Name**, **Client Certificate**, and **Client Key**. |
-| **Skip TLS certificate validation** | Toggle to skip server certificate verification. Use only for testing.                                    |
+| Setting                             | Description                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Add self-signed certificate**     | Toggle to provide a CA certificate. When enabled, paste the CA certificate in the **CA Certificate** field.         |
+| **TLS Client Authentication**       | Toggle to enable mutual TLS. When enabled, provide the **Server Name**, **Client Certificate**, and **Client Key**. |
+| **Skip TLS certificate validation** | Toggle to skip server certificate verification. Use only for testing.                                               |
 
 {{< admonition type="note" >}}
 Use Transport Layer Security (TLS) for an additional layer of security when working with Parca.
@@ -99,10 +99,10 @@ Click the down arrow to expand the **Additional settings** section. These settin
 
 ### Advanced HTTP settings
 
-| Setting             | Description                                                                                        |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Setting             | Description                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
 | **Allowed cookies** | Cookies that should be forwarded to the data source. The Grafana proxy strips all cookies by default. |
-| **Timeout**         | The HTTP request timeout in seconds.                                                               |
+| **Timeout**         | The HTTP request timeout in seconds.                                                                  |
 
 ### Secure SOCKS proxy
 
@@ -110,13 +110,13 @@ Click the down arrow to expand the **Additional settings** section. These settin
 This section is only visible when the Grafana server has the secure SOCKS proxy feature enabled.
 {{< /admonition >}}
 
-| Setting     | Description                                                     |
-| ----------- | --------------------------------------------------------------- |
+| Setting     | Description                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
 | **Enabled** | Toggle to route requests to the Parca instance through a secure SOCKS proxy. |
 
 ## Verify the connection
 
-Click **Save & test** to verify that Grafana can connect to your Parca instance. The health check queries the available profile types from the Parca server. A successful connection displays the message 
+Click **Save & test** to verify that Grafana can connect to your Parca instance. The health check queries the available profile types from the Parca server. A successful connection displays the message
 
 **Data source is working**.
 
@@ -124,7 +124,7 @@ If the test fails, verify that the URL is correct and that your Parca instance i
 
 ## Provision the data source
 
-You can define the data source in YAML files as part of Grafana's provisioning system.
+You can define the data source in YAML files as part of the Grafana provisioning system.
 For more information, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### YAML provisioning example

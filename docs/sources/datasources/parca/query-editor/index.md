@@ -55,11 +55,11 @@ Each profile type has an ID in the format `name:sampleType:sampleUnit:periodType
 
 Examples of profile type IDs:
 
-| Profile type ID                                    | Description                              |
-| -------------------------------------------------- | ---------------------------------------- |
-| `process_cpu:samples:count:cpu:nanoseconds`        | CPU profile measuring sample counts.     |
+| Profile type ID                                     | Description                                 |
+| --------------------------------------------------- | ------------------------------------------- |
+| `process_cpu:samples:count:cpu:nanoseconds`         | CPU profile measuring sample counts.        |
 | `memory:alloc_objects:count:space:bytes`            | Memory profile measuring allocated objects. |
-| `process_cpu:cpu:nanoseconds:cpu:nanoseconds:delta` | Delta CPU profile measuring nanoseconds. |
+| `process_cpu:cpu:nanoseconds:cpu:nanoseconds:delta` | Delta CPU profile measuring nanoseconds.    |
 
 ## Label selector
 
@@ -71,12 +71,12 @@ Parca uses a syntax similar to Prometheus for label filtering. Wrap label matche
 
 The following operators are supported:
 
-| Operator | Description            | Example                             |
-| -------- | ---------------------- | ----------------------------------- |
-| `=`      | Equals                 | `{job="my-service"}`                |
-| `!=`     | Not equals             | `{job!="test-service"}`             |
-| `=~`     | Regex match            | `{job=~"prod-.*"}`                  |
-| `!~`     | Negative regex match   | `{job!~"test-.*"}`                  |
+| Operator | Description                       | Example                 |
+| -------- | --------------------------------- | ----------------------- |
+| `=`      | Equals                            | `{job="my-service"}`    |
+| `!=`     | Not equals                        | `{job!="test-service"}` |
+| `=~`     | Regular expression match          | `{job=~"prod-.*"}`      |
+| `!~`     | Negative regular expression match | `{job!~"test-.*"}`      |
 
 You can combine multiple label matchers separated by commas:
 
@@ -105,11 +105,11 @@ The label selector provides autocomplete suggestions as you type. Autocomplete i
 
 Expand the **Options** section to select a query type. The query type controls what data is returned and how it's visualized.
 
-| Query type  | Description                                                       |
-| ----------- | ----------------------------------------------------------------- |
-| **Metric**  | Returns aggregated metric data visualized as a time series.       |
-| **Profile** | Returns a merged profile visualized as a flame graph.             |
-| **Both**    | Returns both metric and profile data. Only available in Explore.  |
+| Query type  | Description                                                      |
+| ----------- | ---------------------------------------------------------------- |
+| **Metric**  | Returns aggregated metric data visualized as a time series.      |
+| **Profile** | Returns a merged profile visualized as a flame graph.            |
+| **Both**    | Returns both metric and profile data. Only available in Explore. |
 
 {{< admonition type="note" >}}
 The **Both** option is only available in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). In dashboard panels, you can select either **Metric** or **Profile** because panels support only one visualization type. If a query set to **Both** is moved from Explore to a dashboard, Grafana automatically changes it to **Profile**.
@@ -153,7 +153,7 @@ The following examples show common profiling queries.
 
 1. Set both queries to **Metric** to compare time-series data across instances.
 
-### Find memory allocation hotspots
+### Find memory allocation hot spots
 
 1. Select **memory** > **alloc_objects** from the profile type drop-down.
 1. Optionally filter by service:
@@ -173,12 +173,12 @@ Parca returns profiles aggregated over the selected time range. The absolute val
 
 The flame graph displays the following columns:
 
-| Column    | Description                                    |
-| --------- | ---------------------------------------------- |
-| **level** | The depth of the function in the call stack.   |
+| Column    | Description                                     |
+| --------- | ----------------------------------------------- |
+| **level** | The depth of the function in the call stack.    |
 | **value** | The cumulative value including child functions. |
-| **self**  | The value attributable to this function only.  |
-| **label** | The function name or symbol.                   |
+| **self**  | The value attributable to this function only.   |
+| **label** | The function name or symbol.                    |
 
 Units are automatically mapped from Parca to Grafana formats: `nanoseconds` displays as `ns` and `count` displays as a short number.
 

@@ -72,7 +72,7 @@ These errors occur when running queries against the Parca data source.
 
 1. Upgrade your Parca server to v0.19 or later. This error occurs because older versions of Parca don't support the flame graph Arrow format that Grafana requires.
 
-### "Unknown report type returned from query. update parca"
+### `Unknown report type returned from query. update parca`
 
 **Symptoms:**
 
@@ -92,13 +92,13 @@ These errors occur when running queries against the Parca data source.
 
 **Possible causes and solutions:**
 
-| Cause                           | Solution                                                                                        |
-| ------------------------------- | ----------------------------------------------------------------------------------------------- |
-| No profile type selected        | Select a profile type from the drop-down menu. This field is required -- queries silently return empty data without it. |
-| Time range doesn't contain data | Expand the dashboard time range or verify that profiling data exists for the selected period.    |
-| Label selector too restrictive  | Remove or broaden label filters to verify that matching profiles exist.                         |
+| Cause                           | Solution                                                                                                                                                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No profile type selected        | Select a profile type from the drop-down menu. This field is required -- queries silently return empty data without it.                                                                                                                 |
+| Time range doesn't contain data | Expand the dashboard time range or verify that profiling data exists for the selected period.                                                                                                                                           |
+| Label selector too restrictive  | Remove or broaden label filters to verify that matching profiles exist.                                                                                                                                                                 |
 | Label selector syntax error     | Verify the label selector uses valid syntax (for example, `{job="my-service"}`). Refer to the [query editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/query-editor/) for supported operators. |
-| Parca isn't scraping targets    | Check your Parca configuration to verify that targets are being scraped and profiles collected.  |
+| Parca isn't scraping targets    | Check your Parca configuration to verify that targets are being scraped and profiles collected.                                                                                                                                         |
 
 ## Query editor issues
 
@@ -113,11 +113,11 @@ These issues relate to the query editor interface.
 
 **Possible causes and solutions:**
 
-| Cause                       | Solution                                                                                         |
-| --------------------------- | ------------------------------------------------------------------------------------------------ |
-| Connection to Parca failed  | Verify the data source connection using **Save & test** in the data source settings.             |
-| Parca has no scraped data   | Verify that Parca is scraping targets and has collected profile data.                            |
-| Network or auth error       | Check the browser developer console for failed requests to the `profileTypes` resource endpoint. |
+| Cause                      | Solution                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| Connection to Parca failed | Verify the data source connection using **Save & test** in the data source settings.             |
+| Parca has no scraped data  | Verify that Parca is scraping targets and has collected profile data.                            |
+| Network or auth error      | Check the browser developer console for failed requests to the `profileTypes` resource endpoint. |
 
 ### "Both" query type is missing
 
@@ -139,11 +139,11 @@ This is expected behavior. The **Both** query type is only available in [Explore
 
 **Possible causes and solutions:**
 
-| Cause                            | Solution                                                                                        |
-| -------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Label names haven't loaded       | Wait a moment after opening the query editor. Autocomplete loads label names from Parca on initialization. |
-| Connection to Parca failed       | Verify the data source connection. Autocomplete queries the `labelNames` and `labelValues` resource endpoints. |
-| Cursor position not recognized   | Place your cursor inside curly braces `{}` and after an `=` sign for value suggestions. Autocomplete triggers on specific characters: `{`, `,`, `=`, `~`, `"`, space. |
+| Cause                          | Solution                                                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Label names haven't loaded     | Wait a moment after opening the query editor. Autocomplete loads label names from Parca on initialization.                                                            |
+| Connection to Parca failed     | Verify the data source connection. Autocomplete queries the `labelNames` and `labelValues` resource endpoints.                                                        |
+| Cursor position not recognized | Place your cursor inside curly braces `{}` and after an `=` sign for value suggestions. Autocomplete triggers on specific characters: `{`, `,`, `=`, `~`, `"`, space. |
 
 ## Template variable issues
 
@@ -158,11 +158,11 @@ These issues relate to using template variables with the Parca data source.
 
 **Possible causes and solutions:**
 
-| Cause                              | Solution                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Variable used in profile type      | Template variables are only supported in the **label selector** field. The profile type drop-down doesn't support variable interpolation. |
-| Variable not defined               | Verify the variable exists in **Dashboard settings** > **Variables** and has valid values.       |
-| Wrong variable syntax              | Use `$variablename` or `${variablename}`. Verify there are no typos in the variable name.       |
+| Cause                         | Solution                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable used in profile type | Template variables are only supported in the **label selector** field. The profile type drop-down doesn't support variable interpolation. |
+| Variable not defined          | Verify the variable exists in **Dashboard settings** > **Variables** and has valid values.                                                |
+| Wrong variable syntax         | Use `$variablename` or `${variablename}`. Verify there are no typos in the variable name.                                                 |
 
 ### Can't use Parca to populate variable options
 
