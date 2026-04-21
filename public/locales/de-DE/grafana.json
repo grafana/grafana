@@ -4400,12 +4400,13 @@
       "button-label": "Ordner auswählen",
       "clear-selection": "Auswahl löschen",
       "empty-message": "Keine Ordner gefunden",
-      "error-title": "Fehler beim Laden der Ordner",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} nicht im Ordner enthalten",
       "root-title": "Dashboards",
       "search-placeholder": "Ordner suchen",
       "shared-with-me": "Mit mir geteilt",
       "team-folders": "Teamordner",
+      "team-folders-error-title": "",
       "unknown-error": "Unbekannter Fehler"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anmerkungen und Warnungen",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Lokale Variable",
         "multiple-elements": "Mehrere Elemente",
@@ -5650,8 +5653,10 @@
           "title": "Kopfzeile"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Variable hinzufügen",
         "title": "Variablen"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Kopfzeile ausblenden",
           "title": "Titel"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variablen"
         },
@@ -6361,6 +6369,9 @@
             "description": "Wiederholen Sie diese Registerkarte für jeden Wert in der ausgewählten Variable.",
             "title": "Nach Variable wiederholen"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variablen"
@@ -7074,6 +7085,16 @@
       "sql-name": "Mit SQL transformieren",
       "sql-transformation-description": "Bearbeiten Sie Ihre Daten mit MySQL-ähnlicher Syntax"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1> Die folgenden Dashboards, die das Panel nutzen, sind betroffen:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Abbrechen",
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Dateipfad:</strong> {{filePath}}",
       "form-loading-error": "Fehler beim Laden des Formulars",
       "form-loading-error-unknown": "Beim Laden des Formulars ist ein unerwarteter Fehler aufgetreten.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Beschreibung",
       "label-target-folder": "Zielordner",
       "label-title": "Titel",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Speichern Sie das Dashboard, bevor Sie Warnregeln erstellen",
       "new-alert-rule": "Neue Warnregel",
       "title-no-alerting-capable-query-found": "Keine für Benachrichtigungen geeignete Abfrage gefunden"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Ermöglicht die gleichzeitige Auswahl mehrerer Werte",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Einstellungen"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },

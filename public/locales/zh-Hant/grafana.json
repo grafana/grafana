@@ -4373,12 +4373,13 @@
       "button-label": "選擇資料夾",
       "clear-selection": "清空選項",
       "empty-message": "未發現資料夾",
-      "error-title": "載入資料夾時發生錯誤",
+      "error-title": "",
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
       "root-title": "儀表板",
       "search-placeholder": "搜尋資料夾",
       "shared-with-me": "與我共用",
       "team-folders": "團隊資料夾",
+      "team-folders-error-title": "",
       "unknown-error": "未知錯誤"
     },
     "manage-folder-nav": {
@@ -5592,6 +5593,8 @@
         "annotation-set": "註解與警示",
         "dashboard": "儀表板",
         "element": "元件",
+        "filter": "",
+        "filters-set": "",
         "link-set": "連結",
         "local-variable": "本機變數",
         "multiple-elements": "多個元素",
@@ -5620,8 +5623,10 @@
           "title": "行標題"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "新增變數",
         "title": "變數"
       },
       "variable": {
@@ -6172,6 +6177,9 @@
           "hide-header": "隱藏列標題",
           "title": "標題"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "變數"
         },
@@ -6330,6 +6338,9 @@
             "description": "對所選變數中的每個值重複此分頁。",
             "title": "依據變數重複"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "變數"
@@ -7039,6 +7050,13 @@
       "sql-name": "使用 SQL 轉換",
       "sql-transformation-description": "使用類似 MySQL 的語法操控資料"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7483,6 +7501,7 @@
       "affected-dashboards_other": "此更新將影響 <1>{{count}} 個儀表板。</1>使用面板的以下儀表板將受到影響："
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "取消",
       "cannot-be-saved": "此儀表板無法從 Grafana UI 儲存，因為其已從其他來源設定。複製 JSON 或將其儲存到下方的檔案中，然後您可以在佈建來源中更新您的儀表板。",
       "copy-json-to-clipboard": "複製 JSON 到剪貼簿",
@@ -7490,6 +7509,11 @@
       "file-path": "<strong>檔案路徑：</strong>{{filePath}}",
       "form-loading-error": "載入表單時發生錯誤",
       "form-loading-error-unknown": "載入表單時發生未預期的錯誤。",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "說明",
       "label-target-folder": "目標資料夾",
       "label-title": "標題",
@@ -7507,6 +7531,9 @@
       "disabled-tooltip": "在建立警示規則之前，請先儲存儀表板",
       "new-alert-rule": "新的警報規則",
       "title-no-alerting-capable-query-found": "找不到警報功能的查詢"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "啟用同時選取多個值",
@@ -7603,6 +7630,13 @@
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
