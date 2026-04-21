@@ -20,7 +20,13 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import {
+  generateUniqueTitle,
+  ungroupLayout,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+  getLegacySlugForRowOrTab,
+} from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
@@ -72,7 +78,7 @@ export class TabsLayoutManager
 
   public readonly descriptor = TabsLayoutManager.descriptor;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: () => [this.getUrlKey()] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: () => getTabsLayoutUrlKeysToTry(this) });
 
   public constructor(state: Partial<TabsLayoutManagerState>) {
     super({
@@ -103,15 +109,18 @@ export class TabsLayoutManager
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    const key = this.getUrlKey();
-    const urlValue = values[key];
-
-    if (!urlValue) {
-      return;
+    const keysToTry = getTabsLayoutUrlKeysToTry(this);
+    let urlValue;
+    for (const key of keysToTry) {
+      const match = values[key];
+      if (match) {
+        urlValue = Array.isArray(match) ? match[0] : match;
+        break;
+      }
     }
-
-    if (typeof values[key] === 'string') {
-      this.setState({ currentTabSlug: values[key] });
+    if (urlValue && typeof urlValue === 'string' && urlValue.length > 0) {
+      this.setState({ currentTabSlug: urlValue });
+      return;
     }
   }
 
@@ -121,7 +130,7 @@ export class TabsLayoutManager
 
   public getCurrentTab(): TabItem | undefined {
     const tabs = this.getTabsIncludingRepeats();
-    const selectedTab = tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
+    const selectedTab = findTabBySlug(tabs, this.state.currentTabSlug);
     if (selectedTab) {
       return selectedTab;
     }
@@ -503,23 +512,7 @@ export class TabsLayoutManager
   }
 
   public getUrlKey(): string {
-    let parent = this.parent;
-    // Panel edit uses `tab` key already so we are using `dtab` here to not conflict
-    let key = 'dtab';
-
-    while (parent) {
-      if (parent instanceof TabItem) {
-        key = `${parent.getSlug()}-${key}`;
-      }
-
-      if (parent instanceof RowItem) {
-        key = `${parent.getSlug()}-${key}`;
-      }
-
-      parent = parent.parent;
-    }
-
-    return key;
+    return buildUrlKeyForTabs(this, (node) => node.getSlug());
   }
 
   public duplicateTitles() {
@@ -537,4 +530,43 @@ export class TabsLayoutManager
 
     return duplicateTitles;
   }
+}
+
+function findTabBySlug(tabs: TabItem[], slug: string | undefined): TabItem | undefined {
+  if (!slug) {
+    return;
+  }
+  const exactMatch = tabs.find((tab) => tab.getSlug() === slug);
+  if (!exactMatch) {
+    // fallback to legacy slugifyForUrl for backward compatibility with existing links
+    // kbn.slugifyForUrl removed special characters and lowercased the title
+    // find first tab that matches the legacy slug
+    return tabs.find((tab) => getLegacySlugForRowOrTab(tab) === slug);
+  }
+  return exactMatch;
+}
+
+function buildUrlKeyForTabs(manager: TabsLayoutManager, getSegment: (node: TabItem | RowItem) => string): string {
+  let parent = manager.parent;
+  // Panel edit uses `tab` key already so we are using `dtab` here to not conflict
+  let key = 'dtab';
+  while (parent) {
+    if (parent instanceof TabItem) {
+      key = `${getSegment(parent)}-${key}`;
+    }
+    if (parent instanceof RowItem) {
+      key = `${getSegment(parent)}-${key}`;
+    }
+    parent = parent.parent;
+  }
+  return key;
+}
+
+// export for testing purposes
+/** push current key to march with first, then legacy keys to account for old url encoding way */
+export function getTabsLayoutUrlKeysToTry(manager: TabsLayoutManager): string[] {
+  const currentKey = manager.getUrlKey();
+  const slugifyKey = buildUrlKeyForTabs(manager, (node) => getLegacySlugForRowOrTab(node));
+  // deduplicate keys in case current and legacy keys are the same
+  return [currentKey, slugifyKey].filter((key, index, arr) => arr.indexOf(key) === index);
 }

@@ -7,9 +7,10 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { getLegacySlugForRowOrTab, getSlugForRowOrTab } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
 
@@ -49,7 +50,7 @@ describe('TabsLayoutManager', () => {
       tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
 
       const urlState = tabsLayoutManager.getUrlState();
-      expect(urlState).toEqual({ dtab: 'performance' });
+      expect(urlState).toEqual({ dtab: 'Performance' });
     });
 
     it('when nested under row and parent tab', () => {
@@ -73,7 +74,168 @@ describe('TabsLayoutManager', () => {
 
       const urlState = innerMostTabsLayoutManager.getUrlState();
       expect(urlState).toEqual({
-        ['overview-frontend-dtab']: 'performance',
+        ['Overview-Frontend-dtab']: 'Performance',
+      });
+    });
+  });
+
+  describe('updateFromUrl', () => {
+    it('does not select tab when no known key is present', () => {
+      const [tabsLayoutManager] = setupRowWithTabs([new TabItem({ title: 'major-tom' })]);
+
+      tabsLayoutManager.setState({ currentTabSlug: 'major-tom' });
+      tabsLayoutManager.updateFromUrl({ dtabInvalid: 'value' });
+
+      expect(tabsLayoutManager.state.currentTabSlug).toBe('major-tom');
+    });
+    describe('non-legacy URL', () => {
+      it('top-level: selects correct tab when dtab in url matches tab title', () => {
+        const tab1 = new TabItem({ title: 'Some-Tab!' });
+        const tab2 = new TabItem({ title: 'Another-Tab!' });
+        const tabsLayoutManager = buildTabsLayoutManager([tab1, tab2]);
+
+        const slug = tab2.getSlug();
+        expect(slug).toBe('Another-Tab!');
+
+        assertSelectedTab(tabsLayoutManager, { dtab: slug }, { slug, title: tab2.state.title! });
+      });
+
+      it('nested: selects correct tab when row slug and dtab in url matches the row and tab titles', () => {
+        const tab1 = new TabItem({ title: 'question?' });
+        const tab2 = new TabItem({ title: 'Gamma Ray!!' });
+
+        const [tabManager] = setupRowWithTabs([tab1, tab2]);
+
+        const primaryKey = tabManager.getUrlKey();
+        expect(primaryKey).toBe('UPPER-row!-dtab');
+
+        const slug = tab2.getSlug();
+
+        assertSelectedTab(tabManager, { [primaryKey]: slug }, { slug, title: tab2.state.title! });
+      });
+
+      it('adds a suffix to slug if two tabs generate the same slug, and selects the correct one based on the URL value', () => {
+        const tab1 = new TabItem({ title: 'New tab' });
+        const tab2 = new TabItem({ title: 'New-tab' });
+
+        const tabsLayoutManager = buildTabsLayoutManager([tab1, tab2]);
+        const slug1 = tab1.getSlug();
+        const slug2 = tab2.getSlug();
+        expect(slug1).toBe('New-tab');
+        expect(slug2).toBe('New-tab__2');
+
+        tabsLayoutManager.setState({ currentTabSlug: undefined });
+        tabsLayoutManager.updateFromUrl({ dtab: slug2 });
+
+        expect(tabsLayoutManager.state.currentTabSlug).toBe(slug2);
+        expect(tabsLayoutManager.getCurrentTab()?.state.title).toBe(tab2.state.title);
+      });
+
+      it('prefers primary query key when both primary and legacy keys are present (first hit wins)', () => {
+        const tab1 = new TabItem({ title: 'gamma-ray' });
+        const tab2 = new TabItem({ title: 'Gamma Ray!!' });
+        const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+        const canonicalSlug = getSlugForRowOrTab(tab2);
+        const legacySlug = getLegacySlugForRowOrTab(tab2);
+
+        const updateFromUrlArgs = {
+          [urlKeys[0]]: canonicalSlug, // valid primary key should be used
+          [urlKeys[1]]: legacySlug, // even though this matches the legacy slug, it should be ignored in favor of the primary key
+        };
+        assertSelectedTab(tabManager, updateFromUrlArgs, { slug: canonicalSlug, title: tab2.state.title! });
+      });
+    });
+
+    describe('legacy URL (slugifyForUrl differs from current slug / getUrlKey)', () => {
+      it('should select the correct tab when legacy tab slug has had its punctuation and special characters stripped', () => {
+        const tab1 = new TabItem({ title: 'question?' });
+        const tab2 = new TabItem({ title: 'Amaze!' });
+        const tabsLayoutManager = buildTabsLayoutManager([tab1, tab2]);
+
+        const legacyValue = getLegacySlugForRowOrTab(tab2);
+        expect(tab2.getSlug()).toBe('Amaze!');
+        expect(legacyValue).toBe('amaze');
+
+        const updateFromUrlArgs = { dtab: legacyValue };
+        assertSelectedTab(tabsLayoutManager, updateFromUrlArgs, { slug: legacyValue, title: tab2.state.title! });
+      });
+
+      it('should select the correct tab inside a row when legacy row and tab slugs have had their special characters stripped', () => {
+        const tab1 = new TabItem({ title: 'question?' });
+        const tab2 = new TabItem({ title: 'Gamma Ray!!' });
+        const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+        const updateFromUrlArgs = {
+          [urlKeys[0]]: getLegacySlugForRowOrTab(tab2),
+          [urlKeys[1]]: 'some value',
+        };
+
+        assertSelectedTab(tabManager, updateFromUrlArgs, {
+          slug: getLegacySlugForRowOrTab(tab2),
+          title: tab2.state.title!,
+        });
+      });
+    });
+  });
+
+  describe('getSlug', () => {
+    it('generates slugs based on tab titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'My Tab Title' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Another Tab!' }));
+
+      expect(tab1.getSlug()).toBe('My-Tab-Title');
+      expect(tab2.getSlug()).toBe('Another-Tab!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab 1' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab-1' }));
+
+      expect(firstTab.getSlug()).toBe('New-tab-1');
+      expect(secondTab.getSlug()).toBe('New-tab-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab One' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab Two' }));
+
+      expect(firstTab.getSlug()).toBe('Tab-One');
+      expect(secondTab.getSlug()).toBe('Tab-Two');
+    });
+
+    it('keeps slug values stable across different tab layout instances', () => {
+      const titles = ['New tab 1', 'New tab-1', 'Other tab'];
+
+      const getSlugsFromFreshLayout = () => {
+        const tabs = titles.map((title) => new TabItem({ title }));
+        buildTabsLayoutManager(tabs);
+        return tabs.map((tab) => tab.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-tab-1', 'New-tab-1__2', 'Other-tab']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+
+    it('skips empty primary query value and falls back to legacy slugified key', () => {
+      const tab1 = new TabItem({ title: 'question?' });
+      const tab2 = new TabItem({ title: 'Performance' });
+      const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+      const updateFromUrlArgs = {
+        [urlKeys[0]]: '',
+        [urlKeys[1]]: getLegacySlugForRowOrTab(tab2),
+      };
+
+      assertSelectedTab(tabManager, updateFromUrlArgs, {
+        slug: getLegacySlugForRowOrTab(tab2),
+        title: tab2.state.title!,
       });
     });
   });
@@ -492,3 +654,34 @@ describe('TabsLayoutManager', () => {
     });
   });
 });
+
+function setupRowWithTabs(tabs: TabItem[]): [TabsLayoutManager, string[]] {
+  const tabManager = new TabsLayoutManager({
+    tabs: [...tabs],
+  });
+  new RowsLayoutManager({
+    rows: [
+      new RowItem({
+        title: 'UPPER row!',
+        layout: tabManager,
+      }),
+    ],
+  });
+
+  const possibleKeys = getTabsLayoutUrlKeysToTry(tabManager);
+  expect(possibleKeys).toEqual(['UPPER-row!-dtab', 'upper-row-dtab']);
+
+  return [tabManager, possibleKeys];
+}
+
+function assertSelectedTab(
+  manager: TabsLayoutManager,
+  updateFromUrlValues: Record<string, string>,
+  { slug, title }: { slug: string; title: string }
+) {
+  manager.setState({ currentTabSlug: undefined });
+  manager.updateFromUrl(updateFromUrlValues);
+
+  expect(manager.state.currentTabSlug).toBe(slug);
+  expect(manager.getCurrentTab()?.state.title).toBe(title);
+}
