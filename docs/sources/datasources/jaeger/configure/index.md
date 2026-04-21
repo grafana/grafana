@@ -58,13 +58,13 @@ The Jaeger data source supports the following authentication methods.
 
 To use basic authentication:
 
-1. Toggle on **Basic auth**.
+1. Select **Basic auth** from the drop-down.
 1. Enter the **User** name.
 1. Enter the **Password**.
 
 ### Forward OAuth identity
 
-Toggle on **Forward OAuth identity** to forward the user's upstream OAuth identity to the data source. This is useful when Jaeger is behind an authenticating proxy.
+Select **Forward OAuth identity** from the drop-down to forward the user's upstream OAuth identity to the data source. This is useful when Jaeger is behind an authenticating proxy.
 
 ### Custom headers
 
@@ -82,6 +82,18 @@ To configure TLS/mTLS for the connection, expand the **Additional settings** sec
 | **With CA cert**    | Toggle to provide a custom CA certificate.                  |
 | **Skip TLS verify** | Toggle to skip TLS certificate verification (testing only). |
 | **Server name**     | Server name for TLS certificate validation.                 |
+
+### Private data source connect
+
+**Private data source connect** - _Only for Grafana Cloud users._
+
+{{< admonition type="note" >}}
+This section is only visible when the Grafana instance has the secure SOCKS proxy feature enabled.
+{{< /admonition >}}
+
+Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for instructions on setting up a PDC connection.
+
+Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
 ## Trace to logs
 
@@ -164,11 +176,15 @@ Each linked query consists of:
 
 ## Node graph
 
+The **Node graph** setting is located under **Additional settings**, which is collapsed by default. Expand the **Additional settings** section on the data source configuration page to access it.
+
 The **Node graph** setting enables the [Node Graph visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/), which is disabled by default.
 
 When enabled, Grafana displays the Node Graph above the trace view, showing the relationships between services in the trace.
 
 ## Span bar
+
+The **Span bar** setting is located under **Additional settings**, which is collapsed by default. Expand the **Additional settings** section on the data source configuration page to access it.
 
 The **Span bar** setting controls what additional information appears in the span bar row of the trace view.
 
@@ -180,9 +196,9 @@ The **Span bar** setting controls what additional information appears in the spa
 
 ## Trace ID time parameters
 
-The **Enable Time Parameters** toggle controls whether Grafana sends `start` and `end` time parameters when querying a trace by ID. Enable this if your Jaeger instance benefits from time-bounded trace lookups.
+The **Query Trace by ID with Time Params** setting is located under **Additional settings**, which is collapsed by default. Expand the **Additional settings** section on the data source configuration page to access it.
 
-This setting is found under **Additional settings** > **Query Trace by ID with Time Params**.
+The **Enable Time Parameters** toggle controls whether Grafana sends `start` and `end` time parameters when querying a trace by ID. Enable this if your Jaeger instance benefits from time-bounded trace lookups.
 
 ## Verify the connection
 

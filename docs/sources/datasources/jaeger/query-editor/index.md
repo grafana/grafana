@@ -149,21 +149,6 @@ The JSON file must follow the Jaeger trace format with a `data` array containing
 }
 ```
 
-## Span filters
-
-{{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="800px" class="docs-image--no-shadow" caption="Span filters in the trace timeline viewer" >}}
-
-You can filter spans in the trace timeline viewer to narrow down the spans displayed. The more filters you add, the more specific the results.
-
-You can filter by one or more of the following:
-
-- **Service name:** Filter by the service that produced the span.
-- **Span name:** Filter by the operation or span name.
-- **Duration:** Filter by span duration.
-- **Tags:** Filter by tags, process tags, and log fields.
-
-Toggle **Show matches only** to hide spans that don't match your filters.
-
 ## Query data via gRPC endpoint (public preview)
 
 Jaeger offers an alternative method for querying data that uses their gRPC service over HTTP. For detailed information about the API and setup requirements, refer to the [Jaeger API documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
