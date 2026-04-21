@@ -328,7 +328,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 
 	// Go through all pending delete records and reconcile against the pending-delete tenants from the List above
 	clearStart := time.Now()
-	var cleared, leftForDeleter, scanned int
+	var cleared, leftForDeleter, scanned, raced int
 	for name, err := range tw.pendingDeleteStore.Names(ctx) {
 		if err != nil {
 			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
@@ -338,7 +338,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		if _, live := liveNames[name]; live {
 			continue
 		}
-		_, err = tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
+		got, err := tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
 		// if not found then the tenant was deleted in the tenant api - so keep the record
 		if apierrors.IsNotFound(err) {
 			leftForDeleter++
@@ -348,6 +348,13 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 			tw.log.Warn("tenant watcher poll cycle: failed to check tenant existence, leaving record",
 				"tenant", name, "error", err)
 			leftForDeleter++
+			continue
+		}
+		// Defend against a race: the label was re-added between our LIST and
+		// this GET. If the tenant is back in the pending-delete cohort, skip
+		// clearing — the next cycle will reconcile it.
+		if got == nil || got.GetLabels()[labelPendingDelete] == "true" {
+			raced++
 			continue
 		}
 		tw.clearTenantPendingDelete(name)
@@ -360,6 +367,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		"kv_records_scanned", scanned,
 		"cleared", cleared,
 		"left_for_deleter", leftForDeleter,
+		"raced", raced,
 		"list_duration", listDuration,
 		"clear_duration", time.Since(clearStart),
 		"total_duration", time.Since(start),

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -681,6 +683,87 @@ func TestRunPollCycle(t *testing.T) {
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err, "zero-live-tenants should skip clear phase, record preserved")
+	})
+
+	t.Run("LIST error aborts cycle without clearing records", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		// Pre-seed a record that would otherwise be considered stale.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		fake := newFakeTenantClient(t)
+		fake.PrependReactor("list", "tenants", func(k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.New("tenant API unavailable")
+		})
+		tw.client = fake
+
+		tw.runPollCycle(t.Context())
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err, "list error should skip clear phase, record preserved")
+	})
+
+	t.Run("GET transient error preserves record for next cycle", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		// KV record that will look stale (absent from liveNames).
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-stale", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		// One labeled tenant so liveNames is non-empty and clear phase runs.
+		fake := newFakeTenantClient(t, pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z"))
+		fake.PrependReactor("get", "tenants", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			if ga, ok := action.(k8stesting.GetAction); ok && ga.GetName() == "tenant-stale" {
+				return true, nil, errors.New("tenant API timeout")
+			}
+			return false, nil, nil
+		})
+		tw.client = fake
+
+		tw.runPollCycle(t.Context())
+
+		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-stale")
+		require.NoError(t, err, "transient GET error should preserve record")
+		assert.True(t, r.LabelingComplete)
+	})
+
+	t.Run("race: label re-added between LIST and GET skips clearing", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		collector := &writeEventCollector{}
+		tw.writeEvent = collector.append
+
+		// KV record exists for tenant-raced.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-raced", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		// Fake client knows about both tenants (both labeled). Use a List reactor
+		// to hide tenant-raced from the LIST response, simulating a race where it
+		// got the label after the LIST snapshot.
+		fake := newFakeTenantClient(t,
+			pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z"),
+			pendingDeleteTenant("tenant-raced", "2026-03-01T00:00:00Z"),
+		)
+		fake.PrependReactor("list", "tenants", func(k8stesting.Action) (bool, runtime.Object, error) {
+			list := &unstructured.UnstructuredList{}
+			list.SetGroupVersionKind(tenantGVR.GroupVersion().WithKind("TenantList"))
+			list.Items = []unstructured.Unstructured{*pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z")}
+			return true, list, nil
+		})
+		tw.client = fake
+
+		tw.runPollCycle(t.Context())
+
+		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-raced")
+		require.NoError(t, err, "raced record must be preserved")
+		assert.True(t, r.LabelingComplete)
+		assert.Empty(t, collector.all(), "no unlabel writes for raced tenant")
 	})
 }
 
