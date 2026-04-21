@@ -219,9 +219,21 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	// there will only ever be one label selector
-	wat, wat2 := listOptions.LabelSelector.Requirements()
-	return nil, fmt.Errorf("DeleteCollection for correlation not implemented", wat, wat2)
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// there will only ever be one label selector / datasource at a time for this
+	labelSelectors, _ := listOptions.LabelSelector.Requirements()
+	datasourceUIDs := labelSelectors[0].Values().List()
+	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDS-ref" {
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceUIDs[0], OrgId: orgID, OnlyProvisioned: true})
+	}
+	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceUIDs[0], OrgId: orgID})
+	}
+	return nil, fmt.Errorf("DeleteCollection key not implemented for passthrough to legacy")
 }
 
 type continueToken struct {

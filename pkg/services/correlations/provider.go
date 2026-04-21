@@ -25,7 +25,6 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 ) (Service, error) {
 	client := openfeature.NewDefaultClient()
 	if client.Boolean(ctx, featuremgmt.FlagGrafanaCorrelationsSkipLegacy, false, openfeature.TransactionContext(ctx)) {
-
 		k8sHandler := apiClient.NewK8sHandler(
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.CorrelationKind().GroupVersionResource(),

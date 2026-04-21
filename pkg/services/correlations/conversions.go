@@ -164,7 +164,11 @@ func convertUnstructuredToCorrelation(item *unstructured.Unstructured) (*correla
 }
 
 func convertCorrelationToUnstructured(item Correlation) (*unstructured.Unstructured, error) {
-	unstructCorr, err := runtime.DefaultUnstructuredConverter.ToUnstructured(item)
+	corrK8s, err := ToResource(item)
+	if err != nil {
+		return &unstructured.Unstructured{}, err
+	}
+	unstructCorr, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&corrK8s)
 	if err != nil {
 		return nil, err
 	}
