@@ -175,18 +175,18 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	revision, err := svc.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
+	err := svc.xact.InTransaction(ctx, func(ctx context.Context) error {
+		revision, err := svc.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
 
-	if grafanaTimeIntervalExists(revision, mt.Name) {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
-	}
+		if grafanaTimeIntervalExists(revision, mt.Name) {
+			return ErrTimeIntervalExists.Errorf("")
+		}
 
-	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, definitions.TimeInterval(mt.MuteTimeInterval))
+		revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, definitions.TimeInterval(mt.MuteTimeInterval))
 
-	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
@@ -205,48 +205,47 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
-	revision, err := svc.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
-	var found bool
-	var existing definitions.MuteTimeInterval
-	if mt.UID != "" {
-		existing, found, err = svc.getMuteTimingByUID(ctx, revision, orgID, mt.UID)
-	} else {
-		existing, found, err = svc.getMuteTimingByName(ctx, revision, orgID, mt.Name)
-	}
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	} else if !found {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
-	}
-
-	if existing.Name != mt.Name { // if mute timing is renamed, check if this name is already taken
-		if grafanaTimeIntervalExists(revision, mt.Name) {
-			return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
-		}
-	}
-
-	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
-		return definitions.MuteTimeInterval{}, makeErrMuteTimeIntervalOrigin(existing, "update")
-	}
-
-	// check that provenance is not changed in an invalid way
-	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
-	existingInterval := existing.MuteTimeInterval
-
-	// check optimistic concurrency
-	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(mt.Provenance), mt.Version, "update"); err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
 	// TODO add diff and noop detection
-	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err := svc.xact.InTransaction(ctx, func(ctx context.Context) error {
+		revision, err := svc.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		var found bool
+		var existing definitions.MuteTimeInterval
+		if mt.UID != "" {
+			existing, found, err = svc.getMuteTimingByUID(ctx, revision, orgID, mt.UID)
+		} else {
+			existing, found, err = svc.getMuteTimingByName(ctx, revision, orgID, mt.Name)
+		}
+		if err != nil {
+			return err
+		} else if !found {
+			return ErrTimeIntervalNotFound.Errorf("")
+		}
+
+		if existing.Name != mt.Name { // if mute timing is renamed, check if this name is already taken
+			if grafanaTimeIntervalExists(revision, mt.Name) {
+				return ErrTimeIntervalExists.Errorf("")
+			}
+		}
+
+		if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+			return makeErrMuteTimeIntervalOrigin(existing, "update")
+		}
+
+		// check that provenance is not changed in an invalid way
+		if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
+			return err
+		}
+
+		existingInterval := existing.MuteTimeInterval
+
+		// check optimistic concurrency
+		if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(mt.Provenance), mt.Version, "update"); err != nil {
+			return err
+		}
 		// if the name of the time interval changed
 		if existingInterval.Name != mt.Name {
 			deleteTimeInterval(revision, existingInterval)
@@ -264,6 +263,23 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		} else {
 			updateTimeInterval(revision, mt.MuteTimeInterval)
 		}
+		
+		// Verify the time interval appears exactly once in the config before saving
+		count := 0
+		for _, ti := range revision.Config.AlertmanagerConfig.MuteTimeIntervals {
+			if ti.Name == mt.Name {
+				count++
+			}
+		}
+		for _, ti := range revision.Config.AlertmanagerConfig.TimeIntervals {
+			if ti.Name == mt.Name {
+				count++
+			}
+		}
+		if count != 1 {
+			return fmt.Errorf("expected time interval %q to appear exactly once after update, but found %d occurrences", mt.Name, count)
+		}
+		
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
