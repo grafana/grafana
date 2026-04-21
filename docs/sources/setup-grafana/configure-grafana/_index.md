@@ -21,7 +21,7 @@ Grafana has default and custom configuration files.
 
 You can customize your Grafana instance by modifying the custom configuration file or by using environment variables.
 
-- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
+- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
 - After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file and restart Grafana for your changes to take effect.
 
 {{< admonition type="note" >}}
