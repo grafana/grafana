@@ -25,12 +25,12 @@ For an introduction to Grafana template variables, refer to [Variables](https://
 
 ## Supported variable types
 
-| Variable type | Description | Supported |
-| ------------- | ----------- | --------- |
-| Custom        | Define a fixed list of trace IDs or other values. | Yes |
-| Text box      | Let users type a trace ID at dashboard view time. | Yes |
-| Data source   | Let users switch between Zipkin instances. | Yes |
-| Query         | Populate options from a data source query. | No |
+| Variable type | Description                                       | Supported |
+| ------------- | ------------------------------------------------- | --------- |
+| Custom        | Define a fixed list of trace IDs or other values. | Yes       |
+| Text box      | Let users type a trace ID at dashboard view time. | Yes       |
+| Data source   | Let users switch between Zipkin instances.        | Yes       |
+| Query         | Populate options from a data source query.        | No        |
 
 The Zipkin data source doesn't support query-based variables, but you can use custom or text box variables to parameterize trace ID queries.
 

@@ -45,11 +45,11 @@ To add the Zipkin data source:
 
 The following table describes the basic configuration settings for the Zipkin data source.
 
-| Setting     | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| **Name**    | The name used to refer to the data source in panels and queries.         |
-| **Default** | Toggle to make this the default data source for new panels.              |
-| **URL**     | The URL of the Zipkin instance, such as `http://localhost:9411`.          |
+| Setting     | Description                                                      |
+| ----------- | ---------------------------------------------------------------- |
+| **Name**    | The name used to refer to the data source in panels and queries. |
+| **Default** | Toggle to make this the default data source for new panels.      |
+| **URL**     | The URL of the Zipkin instance, such as `http://localhost:9411`. |
 
 ## Authentication
 
@@ -103,32 +103,32 @@ There are two ways to configure the trace to logs feature:
 
 To use a variable, wrap it in `${}`. For example: `${__span.name}`.
 
-| Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable name          | Description                                                                                                                                                                                                                                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **\_\_tags**           | This variable uses the tag mapping from the UI to create a label matcher string in the specific data source syntax. The variable only uses tags that are present in the span. The link is still created even if only one of those tags is present in the span. You can use this if all tags aren't required for the query to be useful. |
-| **\_\_span.spanId**    | The ID of the span.                                                                                                                                                                                                                                                                                                                      |
-| **\_\_span.traceId**   | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
-| **\_\_span.duration**  | The duration of the span.                                                                                                                                                                                                                                                                                                                |
-| **\_\_span.name**      | The name of the span.                                                                                                                                                                                                                                                                                                                    |
-| **\_\_span.tags**      | Namespace for the tags in the span. To access a specific tag named `version`, you would use `${__span.tags.version}`. If the tag contains a dot, access it as `${__span.tags["http.status"]}`.                                                                                                                                           |
-| **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
-| **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
-| **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
+| **\_\_span.spanId**    | The ID of the span.                                                                                                                                                                                                                                                                                                                     |
+| **\_\_span.traceId**   | The ID of the trace.                                                                                                                                                                                                                                                                                                                    |
+| **\_\_span.duration**  | The duration of the span.                                                                                                                                                                                                                                                                                                               |
+| **\_\_span.name**      | The name of the span.                                                                                                                                                                                                                                                                                                                   |
+| **\_\_span.tags**      | Namespace for the tags in the span. To access a specific tag named `version`, you would use `${__span.tags.version}`. If the tag contains a dot, access it as `${__span.tags["http.status"]}`.                                                                                                                                          |
+| **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                    |
+| **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                              |
+| **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                  |
 
 ### Trace to logs settings
 
 The following table describes the trace to logs configuration options.
 
-| Setting name              | Description                                                                                                                                                                                                                                                                                                  |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Data source**           | Defines the target data source. You can select Loki, Elasticsearch, Splunk, OpenSearch, FalconLogScale, Google Cloud Logging, and VictoriaMetrics Logs data sources.                                                                                                                                         |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                                                              |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                                                  |
-| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name to remove dots from the name if they aren't allowed in the target data source. For example, map `http.status` to `http_status`.               |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                                                    |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                                                     |
-| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                                                              |
-| **Query**                 | Input to write a custom query. Use variable interpolation to customize it with variables from the span.                                                                                                                                                                                                      |
+| Setting name              | Description                                                                                                                                                                                                                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select Loki, Elasticsearch, Splunk, OpenSearch, FalconLogScale, Google Cloud Logging, and VictoriaMetrics Logs data sources.                                                                                                                            |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                                                 |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                                     |
+| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name to remove dots from the name if they aren't allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                                       |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                                        |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                                                 |
+| **Query**                 | Input to write a custom query. Use variable interpolation to customize it with variables from the span.                                                                                                                                                                                         |
 
 ## Trace to metrics
 
@@ -168,10 +168,10 @@ The **Span bar** setting lets you display additional information in the span bar
 
 The **Label** drop-down has three options:
 
-| Label        | Description                                                                                                                          |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **None**     | Adds nothing to the span bar row.                                                                                                    |
-| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                          |
+| Label        | Description                                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| **None**     | Adds nothing to the span bar row.                                                                                            |
+| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                  |
 | **Tag**      | Displays the span tag on the span bar row. Enter the **Tag key** to specify which tag value to display, such as `component`. |
 
 ## Verify the connection

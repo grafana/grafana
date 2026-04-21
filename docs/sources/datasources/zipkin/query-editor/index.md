@@ -134,12 +134,12 @@ Using span filters, you can filter spans in the trace timeline viewer. The more 
 
 You can add one or more of the following filters:
 
-| Filter | Description | Example |
-| ------ | ----------- | ------- |
-| **Service name** | Filter by the service that produced the span. | `frontend` |
-| **Span name** | Filter by the operation name. | `GET /api/users` |
-| **Duration** | Filter by minimum and/or maximum span duration. | Min: `10ms`, Max: `500ms` |
-| **Tags** | Filter by span tags, process tags, or log fields. | `http.status_code=500` |
+| Filter           | Description                                       | Example                   |
+| ---------------- | ------------------------------------------------- | ------------------------- |
+| **Service name** | Filter by the service that produced the span.     | `frontend`                |
+| **Span name**    | Filter by the operation name.                     | `GET /api/users`          |
+| **Duration**     | Filter by minimum and/or maximum span duration.   | Min: `10ms`, Max: `500ms` |
+| **Tags**         | Filter by span tags, process tags, or log fields. | `http.status_code=500`    |
 
 To only show the spans you have matched, toggle on **Show matches only**.
 

@@ -46,12 +46,12 @@ These errors occur when Grafana can't connect to the Zipkin instance.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Incorrect URL or port | Verify the URL and port. The default Zipkin port is `9411`. Ensure you haven't accidentally used the Jaeger port (`16686`). |
-| Missing `/api/v2` path | The Zipkin data source calls `/api/v2/services`, `/api/v2/traces`, etc. Verify these endpoints are accessible at the configured URL. |
-| Reverse proxy misconfiguration | If using a reverse proxy, ensure it correctly forwards requests to the Zipkin API. |
-| Authentication failure | If the Zipkin instance requires authentication, verify your credentials are correct. |
+| Cause                          | Solution                                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Incorrect URL or port          | Verify the URL and port. The default Zipkin port is `9411`. Ensure you haven't accidentally used the Jaeger port (`16686`).          |
+| Missing `/api/v2` path         | The Zipkin data source calls `/api/v2/services`, `/api/v2/traces`, etc. Verify these endpoints are accessible at the configured URL. |
+| Reverse proxy misconfiguration | If using a reverse proxy, ensure it correctly forwards requests to the Zipkin API.                                                   |
+| Authentication failure         | If the Zipkin instance requires authentication, verify your credentials are correct.                                                 |
 
 ### `error creating http client` or TLS errors
 
@@ -75,11 +75,11 @@ These errors occur when Grafana can't connect to the Zipkin instance.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Zipkin instance is down | Confirm the Zipkin instance is running and accessible from the Grafana server. |
+| Cause                     | Solution                                                                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Zipkin instance is down   | Confirm the Zipkin instance is running and accessible from the Grafana server.                                                    |
 | Firewall or network rules | Ensure the Grafana server can reach the Zipkin instance. Check that firewall rules allow outbound traffic on the configured port. |
-| DNS resolution failure | Verify the hostname in the URL resolves correctly from the Grafana server. |
+| DNS resolution failure    | Verify the hostname in the URL resolves correctly from the Grafana server.                                                        |
 
 For Grafana Cloud, if you're accessing a private Zipkin instance, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
@@ -128,13 +128,13 @@ This is a generic error returned by the Zipkin plugin backend when an internal e
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Invalid trace ID | Verify the trace ID is correct. Zipkin trace IDs are 16 or 32 character hex strings. |
-| Empty trace ID | Ensure the **Trace ID** field isn't empty. The backend rejects queries with `invalid/empty traceId`. |
-| Time range doesn't contain data | Expand the dashboard or Explore time range. Traces must fall within the selected time range for the cascading selector to find them. |
-| Trace has expired | Zipkin may have purged old trace data based on its retention settings. Check your Zipkin storage configuration. |
-| No services registered | If the cascading selector shows "No traces found" at the top level, your Zipkin instance may have no data. Verify data is being collected. |
+| Cause                           | Solution                                                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invalid trace ID                | Verify the trace ID is correct. Zipkin trace IDs are 16 or 32 character hex strings.                                                       |
+| Empty trace ID                  | Ensure the **Trace ID** field isn't empty. The backend rejects queries with `invalid/empty traceId`.                                       |
+| Time range doesn't contain data | Expand the dashboard or Explore time range. Traces must fall within the selected time range for the cascading selector to find them.       |
+| Trace has expired               | Zipkin may have purged old trace data based on its retention settings. Check your Zipkin storage configuration.                            |
+| No services registered          | If the cascading selector shows "No traces found" at the top level, your Zipkin instance may have no data. Verify data is being collected. |
 
 ## Upload errors
 
@@ -149,12 +149,12 @@ These errors occur when importing a JSON trace file.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Invalid JSON syntax | Validate the file with a JSON linter. Common issues include trailing commas, missing quotes, or unclosed brackets. |
-| Wrong JSON structure | The file must be a JSON array of span objects (`[{...}, {...}]`), not a single object. Refer to the [Zipkin v2 span format](https://zipkin.io/zipkin-api/#/). |
-| Missing required fields | Each span must include `traceId`, `id`, `name`, `timestamp`, and `duration`. |
-| Wrong file type | Ensure you're uploading a `.json` file, not a different format. |
+| Cause                   | Solution                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid JSON syntax     | Validate the file with a JSON linter. Common issues include trailing commas, missing quotes, or unclosed brackets.                                            |
+| Wrong JSON structure    | The file must be a JSON array of span objects (`[{...}, {...}]`), not a single object. Refer to the [Zipkin v2 span format](https://zipkin.io/zipkin-api/#/). |
+| Missing required fields | Each span must include `traceId`, `id`, `name`, `timestamp`, and `duration`.                                                                                  |
+| Wrong file type         | Ensure you're uploading a `.json` file, not a different format.                                                                                               |
 
 ### "unsupported query type upload"
 
@@ -194,12 +194,12 @@ These errors relate to data source configuration settings.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Tags not present in span | The tags configured in trace to logs settings must exist in the span attributes for the link to appear. Verify the span contains the expected tags. |
-| Logs data source not configured | Ensure the target logs data source (Loki, Elasticsearch, Splunk, OpenSearch, FalconLogScale, Google Cloud Logging, or VictoriaMetrics Logs) is configured and working. |
-| Custom query variables not resolved | If using a custom query, the link only appears when all variables resolve to non-empty values. Verify the span contains the referenced tags. |
-| Wrong data source type selected | The trace to logs data source must be a supported logs data source. Other data source types don't appear in the drop-down. |
+| Cause                               | Solution                                                                                                                                                               |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tags not present in span            | The tags configured in trace to logs settings must exist in the span attributes for the link to appear. Verify the span contains the expected tags.                    |
+| Logs data source not configured     | Ensure the target logs data source (Loki, Elasticsearch, Splunk, OpenSearch, FalconLogScale, Google Cloud Logging, or VictoriaMetrics Logs) is configured and working. |
+| Custom query variables not resolved | If using a custom query, the link only appears when all variables resolve to non-empty values. Verify the span contains the referenced tags.                           |
+| Wrong data source type selected     | The trace to logs data source must be a supported logs data source. Other data source types don't appear in the drop-down.                                             |
 
 ### Trace to metrics links don't appear
 
