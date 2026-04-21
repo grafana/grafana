@@ -463,7 +463,6 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
-      layout: 'combobox',
     });
   });
 
@@ -551,7 +550,6 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
-      layout: 'combobox',
     });
   });
 
