@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 )
@@ -373,13 +374,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug)
+	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug, logger)
 
 	queryResult.dataResponse.Frames = data.Frames{frame}
 	ch <- queryResult
 }
 
-func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource)) *data.Frame {
+func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource), logger log.Logger) *data.Frame {
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
@@ -460,7 +461,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 			}
 		}
 		if qm.FillMissing != nil {
-			frame = e.applyFill(frame, qm)
+			frame = e.applyFill(frame, qm, logger)
 		}
 	}
 
@@ -470,7 +471,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 // applyFill resamples frame using the fill configuration in qm. If the number
 // of fill points would exceed the row limit the fill is skipped and a warning
 // notice is appended to the frame instead.
-func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel) *data.Frame {
+func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel, logger log.Logger) *data.Frame {
 	// we align the start-time
 	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
 	alignedTimeRange := backend.TimeRange{

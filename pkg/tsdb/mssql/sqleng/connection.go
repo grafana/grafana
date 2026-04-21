@@ -10,11 +10,12 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	mssql "github.com/microsoft/go-mssqldb"
+	"github.com/microsoft/go-mssqldb/azuread"
+
 	"github.com/grafana/grafana/pkg/tsdb/mssql/azure"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
-	mssql "github.com/microsoft/go-mssqldb"
-	"github.com/microsoft/go-mssqldb/azuread"
 )
 
 // odbcNeedsEscape returns true if the value contains semicolon or closing brace,
@@ -143,7 +144,7 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 			pass = escapeOdbcValue(pass)
 		}
 
-		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth, logger)
 		if useOdbc {
 			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:")
 		}
