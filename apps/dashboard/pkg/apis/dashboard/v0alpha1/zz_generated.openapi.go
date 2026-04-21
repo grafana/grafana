@@ -421,7 +421,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"resource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Dashboard or folder",
+							Description: "Dashboards or folders",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",

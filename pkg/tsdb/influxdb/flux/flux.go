@@ -8,12 +8,11 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 var (
-	glog = log.New("tsdb.influx_flux")
+	glog = backend.NewLoggerWith("logger", "tsdb.influx_flux")
 )
 
 // Query builds flux queries, executes them, and returns the results.

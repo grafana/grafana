@@ -171,7 +171,7 @@ const RuleViewer = () => {
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <div className={styles.layout}>
-        <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={2} minWidth={0}>
           {/* tabs and tab content */}
           <TabContent>
             {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
