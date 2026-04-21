@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import React from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
@@ -13,7 +13,9 @@ const server = setupMswServer();
 
 function getWrapper() {
   const store = configureStore();
-  return ({ children }: React.PropsWithChildren<{}>) => React.createElement(Provider, { store }, children);
+  return function Wrapper({ children }: React.PropsWithChildren<{}>) {
+    return <Provider store={store}>{children}</Provider>;
+  };
 }
 
 describe('useRecordingRulesByMetric', () => {

@@ -53,13 +53,13 @@ afterEach(() => {
 });
 
 describe('GrafanaEvaluationBehaviorStep — feature flag branching', () => {
-  it('renders legacy evaluation behavior when alertingRulesAPIV2 flag is disabled', () => {
+  it('renders legacy evaluation behavior when alertingRulesAPIV2 flag is disabled', async () => {
     render(<GrafanaEvaluationBehaviorStep existing={false} enableProvisionedGroups={false} />, {
       wrapper: makeWrapper(false),
     });
 
     // Legacy behavior shows group selector
-    expect(screen.getByTestId('group-picker')).toBeInTheDocument();
+    expect(await screen.findByTestId('group-picker')).toBeInTheDocument();
   });
 
   it('renders EvaluationBehaviorV2 when alertingRulesAPIV2 flag is enabled', async () => {

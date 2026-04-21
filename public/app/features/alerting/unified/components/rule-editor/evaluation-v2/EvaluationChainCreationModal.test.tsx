@@ -26,8 +26,7 @@ describe('EvaluationChainCreationModal', () => {
     expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
   });
 
-  it('validates name is required', async () => {
-    const user = userEvent.setup();
+  it('validates name is required', () => {
     render(<EvaluationChainCreationModal recordingRuleRefs={['rule-1']} onClose={jest.fn()} />, {
       wrapper: makeWrapper(),
     });

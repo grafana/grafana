@@ -50,7 +50,7 @@ describe('ChainRecommendation', () => {
       wrapper: makeWrapper(),
     });
 
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /recording rule dependency detected/i })).toBeInTheDocument();
     expect(screen.getByText(/recording rule dependency detected/i)).toBeInTheDocument();
   });
 

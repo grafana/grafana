@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
@@ -8,7 +7,6 @@ import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../../mockApi';
-import { EvaluationScenario } from '../../../types/evaluation-chain';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 
 import { EvaluationBehaviorV2 } from './EvaluationBehaviorV2';
@@ -46,10 +44,10 @@ describe('EvaluationBehaviorV2', () => {
     expect(await screen.findByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
   });
 
-  it('renders section with correct title', () => {
+  it('renders section with correct title', async () => {
     render(<EvaluationBehaviorV2 existing={false} />, { wrapper: makeWrapper() });
 
-    expect(screen.getByText(/set evaluation behavior/i)).toBeInTheDocument();
+    expect(await screen.findByText(/set evaluation behavior/i)).toBeInTheDocument();
   });
 
   it('always renders CommonEvaluationFields regardless of scenario', async () => {
@@ -60,8 +58,6 @@ describe('EvaluationBehaviorV2', () => {
   });
 
   it('switches to manual mode when user clicks opt-out link', async () => {
-    const user = userEvent.setup();
-
     // Render with a scenario that shows an opt-out link
     // Since the mock API returns no recording rules, we start with NoRecordingRules/StandaloneEvaluation
     // We can't easily test opt-out without mocking the detection hook, so we test

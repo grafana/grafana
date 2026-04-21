@@ -44,7 +44,7 @@ export function StandaloneEvaluation({ onOptIn, showOptInLink }: StandaloneEvalu
           id="evaluate-every-input"
           width={16}
           placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
-          {...register('evaluateEvery', evaluateEveryValidationOptions([]))}
+          {...register('evaluateEvery', evaluateEveryValidationOptions<Pick<RuleFormValues, 'evaluateEvery'>>([]))}
         />
       </Field>
       <EvaluationGroupQuickPick currentInterval={evaluateEvery} onSelect={setEvaluationInterval} />

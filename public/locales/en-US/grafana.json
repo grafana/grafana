@@ -1197,6 +1197,45 @@
       "body-minimum-interval": "A minimum evaluation interval of <strong>{{minInterval}}</strong> has been configured in Grafana.<br/>Please contact the administrator to configure a lower interval.",
       "title-global-evaluation-interval-limit-exceeded": "Global evaluation interval limit exceeded"
     },
+    "evaluation-v2": {
+      "chain-info": {
+        "interval": "Interval: <1></1>",
+        "members_one": "{{count}} members",
+        "members_other": "{{count}} members"
+      },
+      "chain-recommendation": {
+        "message": "This alert rule queries a recording rule that belongs to an evaluation chain. We recommend adding this alert rule to the same chain to ensure the recording rule always evaluates first.",
+        "opt-out": "I don't want to use a chain, let me configure evaluation manually",
+        "title": "Recording rule dependency detected"
+      },
+      "create-chain": {
+        "create-button": "Create evaluation chain",
+        "message": "This alert rule queries recording rules ({{ruleNames}}) that don't belong to any evaluation chain. We recommend creating a new chain to ensure the recording rules always evaluate first.",
+        "opt-out": "I don't want to use a chain, let me configure evaluation manually",
+        "title": "Recording rule dependency detected"
+      },
+      "create-chain-modal": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "interval-label": "Evaluation interval",
+        "name-label": "Evaluation chain name",
+        "name-required": "Required.",
+        "title": "New evaluation chain"
+      },
+      "multi-chain": {
+        "message": "This alert rule queries recording rules from different evaluation chains. Sequential execution of the entire chain cannot be guaranteed. You can choose one of the chains or set a custom evaluation interval.",
+        "opt-out": "I don't want to use a chain, let me configure evaluation manually",
+        "select-label": "Select evaluation chain",
+        "select-placeholder": "Choose a chain...",
+        "title": "Multiple evaluation chains detected"
+      },
+      "section-title": "Set evaluation behavior",
+      "standalone": {
+        "interval-description": "How often this rule is evaluated.",
+        "interval-label": "Evaluation interval",
+        "opt-in": "I want to add to an evaluation chain"
+      }
+    },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
