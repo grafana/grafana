@@ -86,7 +86,6 @@ export const CodeEditor = memo(function CodeEditor({
   extensions: additionalExtensions,
 }: CodeEditorProps) {
   const theme = useTheme2();
-  //const codeEditorTheme = useMemo(() => getCodeEditorTheme(theme), [theme]);
   const extensions = useMemo(
     () => [
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
