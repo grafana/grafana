@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -41,6 +42,10 @@ type AlertRuleNotificationSettingsStore interface {
 	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
+type emailIntegrationValidator interface {
+	ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error
+}
+
 type ContactPointService struct {
 	authz                     receiverAuthz
 	configStore               alertmanagerConfigStore
@@ -52,6 +57,7 @@ type ContactPointService struct {
 	log                       log.Logger
 	resourcePermissions       ac.ReceiverPermissionsService
 	allowedIntegrations       map[schema.IntegrationType]struct{}
+	emailValidator            emailIntegrationValidator
 }
 
 type receiverService interface {
@@ -71,6 +77,7 @@ func NewContactPointService(
 	nsStore AlertRuleNotificationSettingsStore,
 	resourcePermissions ac.ReceiverPermissionsService,
 	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator emailIntegrationValidator,
 ) *ContactPointService {
 	return &ContactPointService{
 		authz:                     authz,
@@ -83,6 +90,7 @@ func NewContactPointService(
 		notificationSettingsStore: nsStore,
 		resourcePermissions:       resourcePermissions,
 		allowedIntegrations:       allowedIntegrations,
+		emailValidator:            emailValidator,
 	}
 }
 
@@ -169,7 +177,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -291,7 +299,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -644,7 +652,7 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}, emailValidator emailIntegrationValidator) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
@@ -662,7 +670,13 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 	if err != nil {
 		return err
 	}
-	return models.ValidateIntegration(ctx, integration, decryptFunc)
+	if err = models.ValidateIntegration(ctx, integration, decryptFunc); err != nil {
+		return err
+	}
+	if iType == schema.EmailType {
+		return emailValidator.ValidateIntegrationConfig(ctx, integration)
+	}
+	return nil
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.

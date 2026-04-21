@@ -444,6 +444,32 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
@@ -897,6 +923,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		validation.ValidateProvenanceRelaxed,
 		false,
 		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 
 	return NewContactPointService(
@@ -910,6 +937,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
 		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 }
 
@@ -918,6 +946,15 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
 		Settings: settings,
 	}
 }
@@ -1871,7 +1908,7 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed, &notifier.NoopOrgEmailValidator{})
 			if tc.wantErr == "" {
 				require.NoError(t, err)
 			} else {
@@ -1880,4 +1917,42 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateContactPointEmailValidation(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newEmailCP := func() *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-email-cp",
+			Type:     "email",
+			Settings: settings,
+		}
+	}
+	newSlackCP := func() *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"#test","token":"token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-slack-cp",
+			Type:     "slack",
+			Settings: settings,
+		}
+	}
+
+	t.Run("email type with passing validator succeeds", func(t *testing.T) {
+		err := ValidateContactPoint(context.Background(), newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, nil))
+		require.NoError(t, err)
+	})
+
+	t.Run("email type with failing validator returns error", func(t *testing.T) {
+		validationErr := fmt.Errorf("email not in org")
+		err := ValidateContactPoint(context.Background(), newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, validationErr))
+		require.ErrorIs(t, err, validationErr)
+	})
+
+	t.Run("non-email type with failing validator is not validated", func(t *testing.T) {
+		err := ValidateContactPoint(context.Background(), newSlackCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, fmt.Errorf("should not be called")))
+		require.NoError(t, err)
+	})
 }
