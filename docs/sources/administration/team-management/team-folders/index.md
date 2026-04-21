@@ -19,7 +19,7 @@ weight: 350
 
 ![Folder detail page showing a team folder.](/media/whats-new/team-folders/0-Team-Folders-Overview.png)
 
-Team folders help you associate folders with teams so admins and team members can find the right dashboards, library panels, and alert rules faster. They streamline setup by letting admins create and assign a dedicated folder when creating a team, establishing clear ownership from the start. A Team folder is still a regular folder—the team association adds ownership metadata and team-aware navigation, but it doesn’t change or replace folder permission.
+Team folders help you associate folders with teams so admins and team members can find the right dashboards, library panels, and alert rules faster. They streamline setup by letting admins create and assign a dedicated folder when creating a team, establishing clear ownership from the start. A team folder is still a regular folder—the team association adds ownership metadata and team-aware navigation, but it doesn’t change or replace folder permission.
 
 Team folders is in public preview.
 
