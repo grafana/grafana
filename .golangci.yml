@@ -125,8 +125,6 @@ linters:
             - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
-            - '**/pkg/tsdb/elasticsearch/*'
-            - '**/pkg/tsdb/elasticsearch/**/*'
             - '**/pkg/tsdb/influxdb/*'
             - '**/pkg/tsdb/influxdb/**/*'
           deny:
