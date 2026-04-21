@@ -4487,6 +4487,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:10.0.0"
     "@uiw/codemirror-extensions-langs": "npm:^4.25.9"
+    "@uiw/codemirror-theme-vscode": "npm:^4.25.9"
     "@uiw/codemirror-themes": "npm:^4.25.9"
     "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:1.1.1"
@@ -12732,6 +12733,15 @@ __metadata:
   dependencies:
     "@uiw/codemirror-themes": "npm:4.25.9"
   checksum: 10/76e736e80b1fd14c262e4481ad30d4fb8ddb768d73e1f138636fe0e734dd4f9c11e0cb5076a6f811425a14e30a8641d09b4e33da39020e94c9d847e2185cb44a
+  languageName: node
+  linkType: hard
+
+"@uiw/codemirror-theme-vscode@npm:^4.25.9":
+  version: 4.25.9
+  resolution: "@uiw/codemirror-theme-vscode@npm:4.25.9"
+  dependencies:
+    "@uiw/codemirror-themes": "npm:4.25.9"
+  checksum: 10/aaee13250bcba9d4aede26316747e9a9227a42a7c07eed1751cf7830c4a118228b632119be6ed86e08445fe27132d35089141d0e749704018c8dadcf3018b946
   languageName: node
   linkType: hard
 

@@ -1,20 +1,8 @@
 import { tags as t } from '@lezer/highlight';
-import { createTheme, type CreateThemeOptions, type Settings } from '@uiw/codemirror-themes';
+import { createTheme, type CreateThemeOptions } from '@uiw/codemirror-themes';
 import { type Extension } from '@uiw/react-codemirror';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-
-export const defaultSettingsBasicLight: Settings = {
-  background: '#ffffff',
-  foreground: '#2e3440',
-  caret: '#3b4252',
-  selection: '#eceff4',
-  selectionMatch: '#e5e9f0',
-  gutterBackground: '#eceff4',
-  gutterForeground: '#2e3440',
-  gutterBorder: 'none',
-  lineHighlight: '#02255f11',
-};
 
 export const basicLightStyle: CreateThemeOptions['styles'] = [
   { tag: t.keyword, color: '#5e81ac' },
@@ -69,18 +57,6 @@ export const basicLightStyle: CreateThemeOptions['styles'] = [
   { tag: t.invalid, color: '#434c5e', borderBottom: '1px dotted #d30102' },
 ];
 
-export const defaultSettingsBasicDark: Settings = {
-  background: '#181b1f',
-  foreground: '#DDDDDD',
-  caret: '#DDDDDD',
-  selection: '#202325',
-  selectionMatch: '#202325',
-  gutterBackground: '#292d30',
-  gutterForeground: '#808080',
-  gutterBorder: '1px solid #ffffff10',
-  lineHighlight: '#B9D2FF30',
-};
-
 export const basicDarkStyle: CreateThemeOptions['styles'] = [
   { tag: t.keyword, color: '#fda331' },
   { tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName], color: '#b5bd68' },
@@ -129,35 +105,39 @@ export const basicDarkStyle: CreateThemeOptions['styles'] = [
   { tag: t.invalid, color: '#B9D2FF', borderBottom: '1px dotted #fc6d24' },
 ];
 
-const basicLightInit = (theme: GrafanaTheme2, options?: Partial<CreateThemeOptions>) => {
-  const { theme: mode = 'light', settings = {}, styles = [] } = options || {};
-  void theme;
-
+const basicLightInit = (theme: GrafanaTheme2) => {
   return createTheme({
-    theme: mode,
+    theme: 'light',
     settings: {
-      ...defaultSettingsBasicLight,
-      ...settings,
+      background: theme.colors.background.canvas,
+      foreground: '#2e3440',
+      caret: '#3b4252',
+      selection: '#eceff4',
+      selectionMatch: '#e5e9f0',
+      gutterBackground: '#eceff4',
+      gutterForeground: '#2e3440',
+      gutterBorder: 'none',
+      lineHighlight: '#02255f11',
     },
-    // Keep the Grafana theme object available here so colors can move
-    // to Grafana tokens incrementally without reshaping this file.
-    styles: [...basicLightStyle, ...styles],
+    styles: basicLightStyle,
   });
 };
 
-const basicDarkInit = (theme: GrafanaTheme2, options?: Partial<CreateThemeOptions>) => {
-  const { theme: mode = 'dark', settings = {}, styles = [] } = options || {};
-  void theme;
-
+const basicDarkInit = (theme: GrafanaTheme2) => {
   return createTheme({
-    theme: mode,
+    theme: 'dark',
     settings: {
-      ...defaultSettingsBasicDark,
-      ...settings,
+      background: theme.colors.background.canvas,
+      foreground: '#DDDDDD',
+      caret: '#DDDDDD',
+      selection: '#202325',
+      selectionMatch: '#202325',
+      gutterBackground: '#292d30',
+      gutterForeground: '#808080',
+      gutterBorder: '1px solid #ffffff10',
+      lineHighlight: '#B9D2FF30',
     },
-    // Keep the Grafana theme object available here so colors can move
-    // to Grafana tokens incrementally without reshaping this file.
-    styles: [...basicDarkStyle, ...styles],
+    styles: basicDarkStyle,
   });
 };
 
