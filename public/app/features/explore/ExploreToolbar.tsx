@@ -216,7 +216,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
             aria-expanded={isContentOutlineOpen}
-            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+            aria-controls={isContentOutlineOpen ? `content-outline-container-${exploreId}` : undefined}
             className={styles.toolbarButton}
           >
             <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
