@@ -36,7 +36,6 @@ COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
-COPY e2e e2e
 
 #
 # Set the node env according to defaults or argument passed
