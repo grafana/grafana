@@ -263,7 +263,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		} else {
 			updateTimeInterval(revision, mt.MuteTimeInterval)
 		}
-		
+
 		// Verify the time interval appears exactly once in the config before saving
 		count := 0
 		for _, ti := range revision.Config.AlertmanagerConfig.MuteTimeIntervals {
@@ -279,7 +279,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		if count != 1 {
 			return fmt.Errorf("expected time interval %q to appear exactly once after update, but found %d occurrences", mt.Name, count)
 		}
-		
+
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
