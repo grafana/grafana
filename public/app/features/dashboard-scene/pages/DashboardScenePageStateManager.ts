@@ -182,8 +182,9 @@ abstract class DashboardScenePageStateManagerBase<T>
 
   /**
    * Hook for subclasses to merge async data (e.g. global dashboard variables) into load options before scene creation.
+   * Public so the unified manager can delegate to the active version-specific manager.
    */
-  protected async prepareLoadOptions(options: LoadDashboardOptions, _rsp: T | null): Promise<LoadDashboardOptions> {
+  public async prepareLoadOptions(options: LoadDashboardOptions, _rsp: T | null): Promise<LoadDashboardOptions> {
     return options;
   }
 
@@ -986,7 +987,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 > {
   private dashboardLoader = new DashboardLoaderSrvV2();
 
-  protected async prepareLoadOptions(
+  public async prepareLoadOptions(
     options: LoadDashboardOptions,
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null
   ): Promise<LoadDashboardOptions> {
@@ -998,8 +999,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     try {
-      const folderUid =
-        rsp.metadata.annotations?.[AnnoKeyFolder] ?? options.folderUid ?? options.urlFolderUid;
+      const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] ?? options.folderUid ?? options.urlFolderUid;
       const globals = await fetchGlobalDashboardVariablesForLoad(rsp, folderUid);
       return {
         ...options,
@@ -1308,6 +1308,28 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
 
     return this.v1Manager.transformResponseToScene(rsp, options);
+  }
+
+  /**
+   * Dispatch prepareLoadOptions to the appropriate version-specific manager.
+   *
+   * This is needed because the unified manager invokes the base `loadDashboard` via
+   * `.call(this, options)` which rebinds `this` to the unified instance. Without this
+   * override, `this.prepareLoadOptions(...)` inside `loadScene` resolves to the base
+   * no-op and version-specific hooks (e.g. merging global dashboard variables on V2)
+   * are skipped on initial dashboard load.
+   */
+  public async prepareLoadOptions(
+    options: LoadDashboardOptions,
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null
+  ): Promise<LoadDashboardOptions> {
+    if (!rsp) {
+      return options;
+    }
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.prepareLoadOptions(options, rsp);
+    }
+    return this.v1Manager.prepareLoadOptions(options, rsp);
   }
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
