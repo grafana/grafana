@@ -3,7 +3,6 @@ import { type ReactElement, useState } from 'react';
 import { ButtonGroup, Dropdown, ToolbarButton } from '@grafana/ui';
 
 import { type ToolbarActionProps } from '../types';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 interface Props extends ToolbarActionProps {
   menu: ReactElement | (() => ReactElement);
