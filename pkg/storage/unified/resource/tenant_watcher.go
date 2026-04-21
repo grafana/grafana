@@ -326,8 +326,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		return
 	}
 
-	// Go through all pending delete records
-	// If they're in the set
+	// Go through all pending delete records and reconcile against the pending-delete tenants from the List above
 	clearStart := time.Now()
 	var cleared, leftForDeleter, scanned int
 	for name, err := range tw.pendingDeleteStore.Names(ctx) {
@@ -595,79 +594,4 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 		return
 	}
 	tw.log.Info("cleared tenant pending delete", "tenant", name)
-}
-
-// TEMPORARY DIAGNOSTIC — remove after investigation.
-// Paginates through tenants with the pending-delete label via direct LIST so
-// we can compare the server-side filtered count against what the informer
-// actually delivers to handleTenant.
-func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger log.Logger, apiURL string) {
-	logger.Info("diag: starting", "api_url", apiURL)
-	const pageSize = 500
-	start := time.Now()
-	var totalCount, totalBytes, pageCount int
-	var continueToken string
-	unique := make(map[string]struct{})
-	duplicateHits := 0
-	for {
-		page, err := dyn.Resource(tenantGVR).List(ctx, metav1.ListOptions{
-			Limit:         pageSize,
-			Continue:      continueToken,
-			LabelSelector: labelPendingDelete + "=true",
-		})
-		if err != nil {
-			logger.Error("diag: pending list",
-				"err", err,
-				"pages_so_far", pageCount,
-				"count_so_far", totalCount,
-				"unique_so_far", len(unique),
-				"bytes_so_far", totalBytes,
-			)
-			return
-		}
-		pageCount++
-		firstName := ""
-		lastName := ""
-		if len(page.Items) > 0 {
-			firstName = page.Items[0].GetName()
-			lastName = page.Items[len(page.Items)-1].GetName()
-		}
-		for _, item := range page.Items {
-			name := item.GetName()
-			if _, seen := unique[name]; seen {
-				duplicateHits++
-			}
-			unique[name] = struct{}{}
-			b, _ := item.MarshalJSON()
-			totalBytes += len(b)
-		}
-		totalCount += len(page.Items)
-		// Log every 50 pages (and the first few) so we can see pagination advancing.
-		if pageCount <= 3 || pageCount%50 == 0 {
-			logger.Info("diag: page sample",
-				"page", pageCount,
-				"items", len(page.Items),
-				"first", firstName,
-				"last", lastName,
-				"continue_len", len(continueToken),
-			)
-		}
-		continueToken = page.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-	avg := 0
-	if totalCount > 0 {
-		avg = totalBytes / totalCount
-	}
-	logger.Info("diag: pending count",
-		"count", totalCount,
-		"unique_count", len(unique),
-		"duplicate_hits", duplicateHits,
-		"total_bytes", totalBytes,
-		"avg_bytes", avg,
-		"pages", pageCount,
-		"elapsed", time.Since(start),
-	)
 }
