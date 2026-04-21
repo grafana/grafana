@@ -18,7 +18,6 @@ import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
-import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
@@ -38,7 +37,7 @@ interface LogLineDetailsComponentProps {
 
 export const LogLineDetailsComponent = memo(
   ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
-    const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
+    const { noInteractions, logOptionsStorageKey, syntaxHighlighting } =
       useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
@@ -108,9 +107,6 @@ export const LogLineDetailsComponent = memo(
     const fieldsOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, true)
       : true;
-    const displayedFieldsOpen = logOptionsStorageKey
-      ? store.getBool(`${logOptionsStorageKey}.log-details.displayedFieldsOpen`, false)
-      : false;
     const traceOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.traceOpen`, false)
       : false;
@@ -176,15 +172,6 @@ export const LogLineDetailsComponent = memo(
         >
           <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
         </ControlledCollapse>
-        {displayedFields.length > 0 && setDisplayedFields && (
-          <ControlledCollapse
-            label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-            isOpen={displayedFieldsOpen}
-            onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
-          >
-            <LogLineDetailsDisplayedFields />
-          </ControlledCollapse>
-        )}
         {allLinks.length > 0 && (
           <ControlledCollapse
             className={styles.collapsable}
