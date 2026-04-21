@@ -49,12 +49,18 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	m := newConnectMetric("resource", r.builder.pluginJSON.ID)
+
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
@@ -62,9 +68,12 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		clonedReq, err := resourceRequest(req)
 		if err != nil {
 			backend.Logger.Error("failed to create resource request", "error", err)
+			m.SetError()
 			responder.Error(err)
 			return
 		}
@@ -72,6 +81,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			backend.Logger.Error("failed to read request body", "error", err)
+			m.SetError()
 			responder.Error(err)
 			return
 		}
@@ -87,7 +97,9 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 
 		if err != nil {
 			backend.Logger.Error("plugin resource request failed", "error", err)
+			m.SetError()
 			responder.Error(err)
+			return
 		}
 	}), nil
 }

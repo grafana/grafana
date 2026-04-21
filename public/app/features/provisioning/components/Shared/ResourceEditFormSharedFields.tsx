@@ -173,7 +173,9 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       id="folder-path"
                       value={dir}
                       onChange={(option) => {
-                        onChange(joinPath(option?.value ?? '', file));
+                        // setValue (not onChange) so folder picks don't dirty the path field,
+                        // preserving title→filename auto-sync until the filename is edited.
+                        setValue('path', joinPath(option?.value ?? '', file));
                       }}
                       options={folderOptions}
                       loading={isFoldersLoading}

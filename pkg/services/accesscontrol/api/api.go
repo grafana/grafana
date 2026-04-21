@@ -42,7 +42,7 @@ func NewAccessControlAPI(
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaSearchUsersPermissions) && zanzanaClient != nil {
+	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
 		api.zanzanaResolver = newZanzanaPermissionResolver(zanzanaClient, userSvc)
 	}
 
@@ -78,6 +78,15 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 		return response.JSON(http.StatusInternalServerError, err)
 	}
 
+	if api.zanzanaResolver != nil {
+		zanzanaPerms, zErr := api.zanzanaResolver.resolveCurrentUserPermissions(ctx, c.SignedInUser)
+		if zErr == nil {
+			permissions = mergeUserPermissions(permissions, zanzanaPerms)
+		} else {
+			logger.Warn("could not get zanzana user actions, using legacy only", "error", zErr)
+		}
+	}
+
 	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
 }
 
@@ -90,6 +99,15 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	permissions, err := api.Service.GetUserPermissions(ctx, c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
+	}
+
+	if api.zanzanaResolver != nil {
+		zanzanaPerms, zErr := api.zanzanaResolver.resolveCurrentUserPermissions(ctx, c.SignedInUser)
+		if zErr == nil {
+			permissions = mergeUserPermissions(permissions, zanzanaPerms)
+		} else {
+			logger.Warn("could not get zanzana user permissions, using legacy only", "error", zErr)
+		}
 	}
 
 	return response.JSON(http.StatusOK, ac.GroupScopesByActionContext(ctx, permissions))
@@ -194,6 +212,23 @@ func mergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission 
 	}
 
 	return result
+}
+
+// mergeUserPermissions unions permissions from legacy RBAC and Zanzana for a single user,
+// deduplicating by action+scope.
+func mergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
+	seen := make(map[string]struct{}, len(legacy))
+	for _, p := range legacy {
+		seen[p.Action+"|"+p.Scope] = struct{}{}
+	}
+	for _, p := range zanzana {
+		key := p.Action + "|" + p.Scope
+		if _, ok := seen[key]; !ok {
+			legacy = append(legacy, p)
+			seen[key] = struct{}{}
+		}
+	}
+	return legacy
 }
 
 func (api *AccessControlAPI) ComputeUserID(ctx context.Context, typedID string) (int64, error) {

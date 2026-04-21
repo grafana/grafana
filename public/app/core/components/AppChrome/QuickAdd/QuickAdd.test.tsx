@@ -118,29 +118,29 @@ describe('QuickAdd', () => {
     expect(within(ungroupedGroup!).getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
   });
 
-  describe('Dashboard from template button', () => {
+  describe('Use template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
     });
 
-    it('shows a `From template` button when the feature flag is enabled', async () => {
+    it('shows a `Use template` button when the feature flag is enabled', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('does not show a `Dashboard from template` button when the feature flag is disabled', async () => {
+    it('does not show a `Use template` button when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.queryByRole('menuitem', { name: 'From template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {
       setup();
 
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const link = screen.getByRole('menuitem', { name: 'From template' });
+      const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
   });
