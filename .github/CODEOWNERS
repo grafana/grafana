@@ -432,7 +432,6 @@
 i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
-/e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
@@ -642,9 +641,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
-# @grafana/prometheus
-/packages/grafana-prometheus/ @grafana/data-sources-plugins
-
 # @grafana/runtime
 /packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
@@ -808,7 +804,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
