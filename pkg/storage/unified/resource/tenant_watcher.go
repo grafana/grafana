@@ -43,10 +43,14 @@ const (
 
 	editLabelMaxAttempts   = 4
 	editLabelMaxRetryDelay = 2 * time.Second
+
+	defaultPollInterval = 5 * time.Minute
+	pollPageSize        = 500
 )
 
-// TenantWatcher watches Tenant CRDs via a Kubernetes informer and syncs
-// pending-delete state to the KV store.
+// TenantWatcher watches Tenant CRDs and syncs pending-delete state to the KV
+// store. It runs either a Kubernetes informer or a periodic polling loop
+// depending on config.
 type TenantWatcher struct {
 	log                log.Logger
 	pendingDeleteStore *PendingDeleteStore
@@ -54,8 +58,12 @@ type TenantWatcher struct {
 	writeEvent         EventAppender
 	ctx                context.Context
 	stopCh             chan struct{}
-	factory            dynamicinformer.DynamicSharedInformerFactory
 	retryMaxDelay      time.Duration
+	// Informer-path state. Nil when UsePolling is true.
+	factory dynamicinformer.DynamicSharedInformerFactory
+	// Polling-path state. Nil when UsePolling is false.
+	client       dynamic.Interface
+	pollInterval time.Duration
 }
 
 // TenantWatcherConfig holds configuration for the TenantWatcher.
@@ -74,7 +82,15 @@ type TenantWatcherConfig struct {
 	ResyncInterval time.Duration
 	// RetryMaxDelay is the maximum delay between retries in case of write conflicts when updating resource labels.
 	RetryMaxDelay time.Duration
-	Log           log.Logger
+	// UsePolling selects the periodic polling strategy instead of a Kubernetes
+	// informer. Required for clusters where the pending-delete cohort is too
+	// large to cache in memory (millions of tenants) or where the tenant API's
+	// WatchList implementation is incompatible with client-go's streaming sync.
+	UsePolling bool
+	// PollInterval is the delay between poll cycles when UsePolling is true.
+	// Defaults to 5 minutes if zero.
+	PollInterval time.Duration
+	Log          log.Logger
 }
 
 // NewTenantWatcherConfig creates TenantWatcherConfig from Grafana settings and returns nil
@@ -94,6 +110,7 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
 		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
 		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
+		UsePolling:         cfg.TenantWatcherUsePolling,
 		Log:                logger,
 	}
 
@@ -195,11 +212,6 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		return nil, fmt.Errorf("creating dynamic client: %w", err)
 	}
 
-	// TEMPORARY DIAGNOSTIC — paginated count of tenants with the pending-delete
-	// label via direct LIST. Compare against how many the informer actually
-	// delivers to handleTenant.
-	diagnoseTenantListSize(ctx, client, logger)
-
 	tw := &TenantWatcher{
 		log:                logger,
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),
@@ -210,6 +222,30 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		retryMaxDelay:      retryMaxDelay,
 	}
 
+	if cfg.UsePolling {
+		interval := cfg.PollInterval
+		if interval <= 0 {
+			interval = defaultPollInterval
+		}
+		tw.client = client
+		tw.pollInterval = interval
+		go tw.startPolling(ctx)
+		logger.Info("tenant watcher started", "strategy", "polling", "poll_interval", interval)
+		return tw, nil
+	}
+
+	if err := tw.startInformer(client, resync); err != nil {
+		return nil, err
+	}
+	logger.Info("tenant watcher started", "strategy", "informer")
+
+	return tw, nil
+}
+
+// startInformer wires up the Kubernetes informer path. Used for clusters where
+// the pending-delete cohort is small enough to cache in memory and the tenant
+// API server correctly implements the WatchList streaming protocol.
+func (tw *TenantWatcher) startInformer(client dynamic.Interface, resync time.Duration) error {
 	// Only watch tenants currently labeled pending-delete. At prod scale the full
 	// tenant set is too large to cache as unstructured objects; filtering server-side
 	// keeps the informer working set bounded to the pending-delete cohort.
@@ -218,7 +254,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 	})
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
-	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			tw.handleTenant(obj.(*unstructured.Unstructured))
 		},
@@ -242,7 +278,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tw.factory.Start(tw.stopCh)
@@ -253,9 +289,116 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 	// store and clear anything that's no longer live.
 	go tw.reconcileStaleRecordsOnStartup(informer)
 
-	logger.Info("tenant watcher started")
+	return nil
+}
 
-	return tw, nil
+// startPolling drives the polling strategy: one immediate cycle, then a
+// serialized loop that sleeps pollInterval between cycles. Serializing via
+// sleep-after-completion prevents overlap if a cycle takes longer than the
+// interval (each full sweep is ~4 min at 500/page × 313 pages on the biggest
+// clusters).
+func (tw *TenantWatcher) startPolling(ctx context.Context) {
+	tw.runPollCycle(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tw.stopCh:
+			return
+		case <-time.After(tw.pollInterval):
+			tw.runPollCycle(ctx)
+		}
+	}
+}
+
+// runPollCycle does one poll cycle: paginated LIST of pending-delete tenants,
+// reconcile each, then clear KV records for tenants that dropped out of the
+// filtered view. Memory is bounded to one page plus the liveNames set.
+func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
+	start := time.Now()
+	liveNames := make(map[string]struct{})
+
+	var continueToken string
+	var pageCount int
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tw.stopCh:
+			return
+		default:
+		}
+
+		page, err := tw.client.Resource(tenantGVR).List(ctx, metav1.ListOptions{
+			Limit:         pollPageSize,
+			Continue:      continueToken,
+			LabelSelector: labelPendingDelete + "=true",
+		})
+		if err != nil {
+			tw.log.Error("tenant watcher poll cycle: list failed, skipping clear phase",
+				"error", err, "pages_so_far", pageCount, "names_so_far", len(liveNames))
+			return
+		}
+		pageCount++
+		for i := range page.Items {
+			item := &page.Items[i]
+			liveNames[item.GetName()] = struct{}{}
+			tw.handleTenant(item)
+		}
+		continueToken = page.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	listDuration := time.Since(start)
+
+	// Defensive: a zero-live-tenants result against a non-empty KV store would
+	// otherwise mark every record stale. Legitimate zero sweeps are rare; skip
+	// the clear phase rather than risk wiping everything on a silent API error
+	// that didn't raise.
+	if len(liveNames) == 0 {
+		tw.log.Warn("tenant watcher poll cycle: zero live tenants, skipping clear phase",
+			"pages", pageCount, "list_duration", listDuration)
+		return
+	}
+
+	// Clear KV records for tenants not currently in the pending-delete view.
+	// GET each stale record to disambiguate: found = label removed (restore);
+	// NotFound = tenant CR deleted, leave the KV record so the deleter's GCOM
+	// backstop handles data cleanup.
+	var cleared, leftForDeleter int
+	for name, err := range tw.pendingDeleteStore.Names(ctx) {
+		if err != nil {
+			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
+			return
+		}
+		if _, live := liveNames[name]; live {
+			continue
+		}
+		_, err = tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			leftForDeleter++
+			continue
+		}
+		if err != nil {
+			tw.log.Warn("tenant watcher poll cycle: failed to check tenant existence, leaving record",
+				"tenant", name, "error", err)
+			leftForDeleter++
+			continue
+		}
+		tw.clearTenantPendingDelete(name)
+		cleared++
+	}
+
+	tw.log.Info("tenant watcher poll cycle complete",
+		"live_tenants", len(liveNames),
+		"pages", pageCount,
+		"cleared", cleared,
+		"left_for_deleter", leftForDeleter,
+		"list_duration", listDuration,
+		"total_duration", time.Since(start),
+	)
 }
 
 // reconcileStaleRecordsOnStartup clears pending-delete records whose tenants
@@ -553,11 +696,14 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 // Paginates through tenants with the pending-delete label via direct LIST so
 // we can compare the server-side filtered count against what the informer
 // actually delivers to handleTenant.
-func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger log.Logger) {
+func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger log.Logger, apiURL string) {
+	logger.Info("diag: starting", "api_url", apiURL)
 	const pageSize = 500
 	start := time.Now()
 	var totalCount, totalBytes, pageCount int
 	var continueToken string
+	unique := make(map[string]struct{})
+	duplicateHits := 0
 	for {
 		page, err := dyn.Resource(tenantGVR).List(ctx, metav1.ListOptions{
 			Limit:         pageSize,
@@ -569,16 +715,38 @@ func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger l
 				"err", err,
 				"pages_so_far", pageCount,
 				"count_so_far", totalCount,
+				"unique_so_far", len(unique),
 				"bytes_so_far", totalBytes,
 			)
 			return
 		}
 		pageCount++
+		firstName := ""
+		lastName := ""
+		if len(page.Items) > 0 {
+			firstName = page.Items[0].GetName()
+			lastName = page.Items[len(page.Items)-1].GetName()
+		}
 		for _, item := range page.Items {
+			name := item.GetName()
+			if _, seen := unique[name]; seen {
+				duplicateHits++
+			}
+			unique[name] = struct{}{}
 			b, _ := item.MarshalJSON()
 			totalBytes += len(b)
 		}
 		totalCount += len(page.Items)
+		// Log every 50 pages (and the first few) so we can see pagination advancing.
+		if pageCount <= 3 || pageCount%50 == 0 {
+			logger.Info("diag: page sample",
+				"page", pageCount,
+				"items", len(page.Items),
+				"first", firstName,
+				"last", lastName,
+				"continue_len", len(continueToken),
+			)
+		}
 		continueToken = page.GetContinue()
 		if continueToken == "" {
 			break
@@ -590,6 +758,8 @@ func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger l
 	}
 	logger.Info("diag: pending count",
 		"count", totalCount,
+		"unique_count", len(unique),
+		"duplicate_hits", duplicateHits,
 		"total_bytes", totalBytes,
 		"avg_bytes", avg,
 		"pages", pageCount,

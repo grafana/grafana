@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -666,6 +668,137 @@ func TestReconcileStaleRecords(t *testing.T) {
 		tw.reconcileStaleRecords(map[string]struct{}{"tenant-1": {}})
 		// Nothing to assert — test passes if it doesn't panic or error.
 	})
+}
+
+func TestRunPollCycle(t *testing.T) {
+	t.Run("reconciles pending-delete tenants and creates records", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		collector := &writeEventCollector{}
+		tw.writeEvent = collector.append
+		// Seed resources for tenant-1 so the reconcile actually has something to label.
+		saveTestResource(t, tw.dataStore, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+
+		tw.client = newFakeTenantClient(t,
+			pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"),
+			pendingDeleteTenant("tenant-2", "2026-03-01T00:00:00Z"),
+		)
+
+		tw.runPollCycle(t.Context())
+
+		r1, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.Equal(t, "2026-03-01T00:00:00Z", r1.DeleteAfter)
+		assert.True(t, r1.LabelingComplete, "tenant-1 should be marked labeling complete")
+
+		r2, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-2")
+		require.NoError(t, err)
+		assert.True(t, r2.LabelingComplete, "tenant-2 should be marked labeling complete")
+	})
+
+	t.Run("fast-paths already-reconciled tenants with no write events", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		collector := &writeEventCollector{}
+		tw.writeEvent = collector.append
+		saveTestResource(t, tw.dataStore, "tenant-1", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
+
+		// Pre-seed a complete record so the fast path triggers.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		tw.client = newFakeTenantClient(t, pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.runPollCycle(t.Context())
+
+		assert.Empty(t, collector.all(), "fast path should not produce write events")
+	})
+
+	t.Run("stale record with tenant still present clears (label removed)", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		collector := &writeEventCollector{}
+		tw.writeEvent = collector.append
+		saveTestResource(t, tw.dataStore, "tenant-restored", "apps", "dashboards", "dash1", 100, map[string]string{labelPendingDelete: "true"})
+
+		// KV record exists, but the tenant no longer matches the label selector.
+		// The tenant still exists without the label — simulate by seeding one
+		// labeled tenant (so the sweep isn't empty) and one unlabeled tenant
+		// whose name matches the stale KV record.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-restored", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		unlabeled := &unstructured.Unstructured{}
+		unlabeled.SetName("tenant-restored")
+		tw.client = newFakeTenantClient(t,
+			pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z"),
+			unlabeled,
+		)
+
+		tw.runPollCycle(t.Context())
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-restored")
+		assert.ErrorIs(t, err, ErrNotFound, "restored tenant's record should be cleared")
+	})
+
+	t.Run("stale record with tenant NotFound preserves record for deleter", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		collector := &writeEventCollector{}
+		tw.writeEvent = collector.append
+
+		// KV record exists but tenant is completely gone from the tenant API.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-deleted", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		// Seed one labeled tenant so the sweep isn't empty; tenant-deleted is absent.
+		tw.client = newFakeTenantClient(t,
+			pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z"),
+		)
+
+		tw.runPollCycle(t.Context())
+
+		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-deleted")
+		require.NoError(t, err, "KV record should be preserved for the deleter")
+		assert.True(t, r.LabelingComplete)
+	})
+
+	t.Run("empty live set skips clear phase to avoid wiping records", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		// Pre-seed a record that would otherwise be considered stale.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		// Fake client with zero objects — empty filtered LIST.
+		tw.client = newFakeTenantClient(t)
+		tw.runPollCycle(t.Context())
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err, "zero-live-tenants should skip clear phase, record preserved")
+	})
+}
+
+// newFakeTenantClient builds a fake dynamic client seeded with the given
+// unstructured tenants. The fake client applies label selectors on LIST and
+// supports GET by name, which is all runPollCycle needs.
+func newFakeTenantClient(t *testing.T, tenants ...*unstructured.Unstructured) *dynamicfake.FakeDynamicClient {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	scheme.AddKnownTypeWithName(tenantGVR.GroupVersion().WithKind("Tenant"), &unstructured.Unstructured{})
+	scheme.AddKnownTypeWithName(tenantGVR.GroupVersion().WithKind("TenantList"), &unstructured.UnstructuredList{})
+
+	objs := make([]runtime.Object, 0, len(tenants))
+	for _, tenant := range tenants {
+		tenant.GetObjectKind().SetGroupVersionKind(tenantGVR.GroupVersion().WithKind("Tenant"))
+		objs = append(objs, tenant)
+	}
+	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+		tenantGVR: "TenantList",
+	}, objs...)
 }
 
 func newTestTenantWatcher(t *testing.T) *TenantWatcher {

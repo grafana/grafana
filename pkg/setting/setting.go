@@ -708,6 +708,7 @@ type Cfg struct {
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
 	TenantWatcherCAFile           string
+	TenantWatcherUsePolling       bool
 	EnableTenantDeleter           bool
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
