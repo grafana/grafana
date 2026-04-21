@@ -1,11 +1,14 @@
+import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
-import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import type { BootData } from '@grafana/data';
 
-import { calculatePanRange, setupXAxisPan } from './XAxisInteractionAreaPlugin';
+import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
+
+import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';
 
 const asUPlot = (partial: Partial<uPlot>) => partial as uPlot;
-const asConfigBuilder = (partial: Partial<UPlotConfigBuilder>) => partial as UPlotConfigBuilder;
+const asConfigBuilder = (partial: Partial<UPlotConfigBuilderType>) => partial as UPlotConfigBuilderType;
 
 const createMockXAxis = () => {
   const element = document.createElement('div');
@@ -168,6 +171,71 @@ describe('XAxisInteractionAreaPlugin', () => {
       document.dispatchEvent(new MouseEvent('mouseup', { clientX: 402, bubbles: true }));
 
       expect(mockConfigBuilder.setState).toHaveBeenCalledWith({ isPanning: false });
+    });
+  });
+
+  describe('event listeners', () => {
+    let prevBootData: typeof window.grafanaBootData;
+
+    beforeEach(() => {
+      prevBootData = window.grafanaBootData;
+      window.grafanaBootData = {
+        settings: { featureToggles: { timeRangePan: true } },
+      } as BootData;
+    });
+
+    afterEach(() => {
+      window.grafanaBootData = prevBootData;
+      document.body.innerHTML = '';
+    });
+
+    it('removes all event listeners on unmount, including document listeners during an active drag', () => {
+      const runUnmountCleanupAssertions = (options: { midDrag: boolean }) => {
+        const config = new UPlotConfigBuilder();
+        const addHookSpy = jest.spyOn(config, 'addHook');
+        const { unmount } = render(<XAxisInteractionAreaPlugin config={config} queryZoom={jest.fn()} />);
+
+        const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
+
+        const xAxisElement = createMockXAxis();
+        const mockU = createMockUPlot(xAxisElement);
+
+        const removeSpy = jest.spyOn(xAxisElement, 'removeEventListener');
+        const addSpy = jest.spyOn(xAxisElement, 'addEventListener');
+        const docRemoveSpy = jest.spyOn(document, 'removeEventListener');
+        const docAddSpy = jest.spyOn(document, 'addEventListener');
+
+        initCallback(asUPlot(mockU));
+
+        if (options.midDrag) {
+          xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400 }));
+        }
+
+        unmount();
+
+        expect(removeSpy).toHaveBeenCalledWith('mouseenter', expect.any(Function));
+        expect(removeSpy).toHaveBeenCalledWith('mouseleave', expect.any(Function));
+        expect(removeSpy).toHaveBeenCalledWith('mousedown', expect.any(Function));
+        expect(removeSpy).toHaveBeenCalledTimes(3);
+        expect(addSpy).toHaveBeenCalledTimes(3);
+
+        if (options.midDrag) {
+          expect(docRemoveSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+          expect(docRemoveSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+          expect(docRemoveSpy).toHaveBeenCalledTimes(2);
+          expect(docAddSpy).toHaveBeenCalledTimes(2);
+        } else {
+          expect(docRemoveSpy).not.toHaveBeenCalled();
+        }
+
+        removeSpy.mockRestore();
+        docRemoveSpy.mockRestore();
+        docAddSpy.mockRestore();
+        docRemoveSpy.mockRestore();
+      };
+
+      runUnmountCleanupAssertions({ midDrag: false });
+      runUnmountCleanupAssertions({ midDrag: true });
     });
   });
 });

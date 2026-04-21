@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -97,34 +96,32 @@ func (f *fakeResourceIndexClient) RebuildIndexes(ctx context.Context, in *resour
 	return f.rebuildResponse, f.rebuildErr
 }
 
-func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceIndexClient, *fakeResourceIndexClient, featuremgmt.FeatureToggles) {
+func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceIndexClient, *fakeResourceIndexClient) {
 	t.Helper()
 	gr := schema.GroupResource{Group: "test", Resource: "items"}
 	unifiedClient := newFakeResourceIndexClient()
 	legacyClient := newFakeResourceIndexClient()
-	features := featuremgmt.WithFeatures()
-	return gr, unifiedClient, legacyClient, features
+	return gr, unifiedClient, legacyClient
 }
 
-func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *fakeResourceIndexClient, features featuremgmt.FeatureToggles, gr schema.GroupResource) *searchWrapper {
+func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *fakeResourceIndexClient, gr schema.GroupResource) *searchWrapper {
 	t.Helper()
 	return &searchWrapper{
 		dual:          dual,
 		groupResource: gr,
 		unifiedClient: unifiedClient,
 		legacyClient:  legacyClient,
-		features:      features,
 		logger:        log.NewNopLogger(),
 	}
 }
 
 func TestSearchClient_NewSearchClient(t *testing.T) {
-	gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+	gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 	t.Run("always returns wrapper", func(t *testing.T) {
 		dual := &fakeDualWriter{}
 
-		client := NewSearchClient(dual, gr, unifiedClient, legacyClient, features)
+		client := NewSearchClient(dual, gr, unifiedClient, legacyClient)
 
 		wrapper, ok := client.(*searchWrapper)
 		require.True(t, ok)
@@ -136,19 +133,18 @@ func TestSearchClient_NewSearchClient(t *testing.T) {
 }
 
 func TestSearchWrapper_Search(t *testing.T) {
-	// gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
 	req := &resourcepb.ResourceSearchRequest{Query: "test"}
 	expectedResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
 	t.Run("uses unified client when reading from unified", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: true, status: dualwrite.StorageStatus{ReadUnified: true, WriteUnified: true}}
 
 		unifiedClient.searchResponse = expectedResponse
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.Search(ctx, req)
 
@@ -159,33 +155,30 @@ func TestSearchWrapper_Search(t *testing.T) {
 	})
 
 	t.Run("uses legacy client when not reading from unified", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 
 		legacyClient.searchResponse = expectedResponse
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.Search(ctx, req)
 
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
-
-		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
 
-	t.Run("do not make a background call to unified when feature flag enabled and using legacy with mode 0", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+	t.Run("does not make background call when not dual writing", func(t *testing.T) {
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: false}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.searchResponse = expectedResponse
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.Search(ctx, req)
 
@@ -199,19 +192,18 @@ func TestSearchWrapper_Search(t *testing.T) {
 		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
 
-	t.Run("makes background call to unified when feature flag enabled and using legacy", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+	t.Run("makes background call to unified when dual writing with legacy primary", func(t *testing.T) {
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.searchResponse = expectedResponse
 
 		// Configure background call to unified client
 		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.Search(ctx, req)
 
@@ -228,18 +220,17 @@ func TestSearchWrapper_Search(t *testing.T) {
 	})
 
 	t.Run("handles background call error gracefully", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.searchResponse = expectedResponse
 
 		// Background call returns error - should be handled gracefully
 		unifiedClient.searchErr = assert.AnError
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.Search(ctx, req)
 
@@ -257,18 +248,17 @@ func TestSearchWrapper_Search(t *testing.T) {
 	})
 
 	t.Run("background request times out after 500ms", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.searchResponse = expectedResponse
 
 		// Configure unified client to take longer than the 500ms timeout
 		unifiedClient.searchDelay = 600 * time.Millisecond // Longer than 500ms timeout
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		start := time.Now()
 		resp, err := wrapper.Search(ctx, req)
@@ -290,11 +280,10 @@ func TestSearchWrapper_Search(t *testing.T) {
 	})
 
 	t.Run("background request completes successfully when within timeout", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.searchResponse = expectedResponse
 
@@ -302,7 +291,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		unifiedClient.searchDelay = 100 * time.Millisecond // Well within 500ms timeout
 		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		start := time.Now()
 		resp, err := wrapper.Search(ctx, req)
@@ -324,19 +313,18 @@ func TestSearchWrapper_Search(t *testing.T) {
 }
 
 func TestSearchWrapper_GetStats(t *testing.T) {
-	// gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
 	req := &resourcepb.ResourceStatsRequest{Namespace: "test"}
 	expectedResponse := &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 100}}}
 
 	t.Run("uses unified client when reading from unified", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: true, status: dualwrite.StorageStatus{ReadUnified: true, WriteUnified: true}}
 
 		unifiedClient.statsResponse = expectedResponse
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.GetStats(ctx, req)
 
@@ -346,16 +334,15 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		assert.Empty(t, legacyClient.statsCalled, "legacy GetStats should not have been called")
 	})
 
-	t.Run("Do not make background call to unified when feature flag enabled and using legacy with mode 0", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+	t.Run("does not make background call when not dual writing", func(t *testing.T) {
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: false}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.statsResponse = expectedResponse
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.GetStats(ctx, req)
 
@@ -369,19 +356,18 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		assert.Empty(t, unifiedClient.statsCalled, "unified GetStats should not have been called")
 	})
 
-	t.Run("makes background call to unified when feature flag enabled and using legacy", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+	t.Run("makes background call to unified when dual writing with legacy primary", func(t *testing.T) {
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.statsResponse = expectedResponse
 
 		// Configure background call to unified client
 		unifiedClient.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 50}}}
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		resp, err := wrapper.GetStats(ctx, req)
 
@@ -398,18 +384,17 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 	})
 
 	t.Run("background GetStats request times out after 500ms", func(t *testing.T) {
-		gr, unifiedClient, legacyClient, _ := setupTestSearchClient(t)
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
 		legacyClient.statsResponse = expectedResponse
 
 		// Configure unified client to take longer than the 500ms timeout
 		unifiedClient.statsDelay = 600 * time.Millisecond // Longer than 500ms timeout
 
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
 
 		start := time.Now()
 		resp, err := wrapper.GetStats(ctx, req)

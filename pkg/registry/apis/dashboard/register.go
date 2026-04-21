@@ -86,27 +86,19 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
-type simpleFolderClientProvider struct {
+// simpleClientProvider is a K8sHandlerProvider that always returns the same
+// pre-built handler regardless of namespace. It is used when a caller has
+// already obtained a handler (e.g. folder or variable client) and just needs
+// to satisfy the provider interface.
+type simpleClientProvider struct {
 	handler client.K8sHandler
 }
 
-type simpleVariableClientProvider struct {
-	handler client.K8sHandler
+func newSimpleClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleClientProvider{handler: handler}
 }
 
-func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleFolderClientProvider{handler: handler}
-}
-
-func newSimpleVariableClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleVariableClientProvider{handler: handler}
-}
-
-func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
-	return p.handler
-}
-
-func (p *simpleVariableClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
@@ -198,8 +190,8 @@ func RegisterAPIService(
 		minRefreshInterval:       cfg.MinRefreshInterval,
 		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
-		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
-		variableClientProvider:   newSimpleVariableClientProvider(variableClient),
+		folderClientProvider:     newSimpleClientProvider(folderClient),
+		variableClientProvider:   newSimpleClientProvider(variableClient),
 		libraryPanels:            libraryPanels,
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
@@ -347,6 +339,14 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2 Variable storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
+	// dashboard.grafana.app version registers a standalone Variable resource,
+	// so without the flag the apiserver has no route and admission never
+	// dispatches here. If Variable is ever added to another version or moved
+	// to a subresource, update both the storage registration and this switch
+	// in lockstep.
 	case dashv2.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -932,7 +932,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2.VERSION]
-		storage[dashv2.VariableResourceInfo.StoragePath()] = gvStore
+		storage[dashv2.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
 	}
 
 	return nil

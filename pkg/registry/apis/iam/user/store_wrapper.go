@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
@@ -76,7 +77,12 @@ func (f *StoreWrapper) getHiddenUsers(ctx context.Context) (map[string]struct{},
 
 // AfterGet returns NotFound if the user's login is in the hidden users list
 // and the requester is not the user themselves.
+// Service identities (e.g. Zanzana) bypass hidden user filtering entirely.
 func (f *StoreWrapper) AfterGet(ctx context.Context, obj runtime.Object) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+
 	hiddenUsers, err := f.getHiddenUsers(ctx)
 	if err != nil {
 		return err
@@ -104,7 +110,12 @@ func (f *StoreWrapper) AfterGet(ctx context.Context, obj runtime.Object) error {
 }
 
 // FilterList removes hidden users from the list, except for the requester themselves.
+// Service identities (e.g. Zanzana) bypass hidden user filtering entirely.
 func (f *StoreWrapper) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	if identity.IsServiceIdentity(ctx) {
+		return list, nil
+	}
+
 	hiddenUsers, err := f.getHiddenUsers(ctx)
 	if err != nil {
 		return nil, err
@@ -135,7 +146,12 @@ func (f *StoreWrapper) FilterList(ctx context.Context, list runtime.Object) (run
 }
 
 // BeforeCreate returns Forbidden if the new user's login is in the hidden users list.
+// Service identities bypass hidden user restrictions.
 func (f *StoreWrapper) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+
 	hiddenUsers, err := f.getHiddenUsers(ctx)
 	if err != nil {
 		return err
@@ -158,7 +174,12 @@ func (f *StoreWrapper) BeforeCreate(ctx context.Context, obj runtime.Object) err
 }
 
 // BeforeUpdate returns Forbidden if the target user (old object) or the new login is in the hidden users list.
+// Service identities bypass hidden user restrictions.
 func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+
 	hiddenUsers, err := f.getHiddenUsers(ctx)
 	if err != nil {
 		return err
@@ -192,7 +213,12 @@ func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Obj
 }
 
 // BeforeDelete returns Forbidden if the target user is in the hidden users list.
+// Service identities bypass hidden user restrictions.
 func (f *StoreWrapper) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+
 	hiddenUsers, err := f.getHiddenUsers(ctx)
 	if err != nil {
 		return err

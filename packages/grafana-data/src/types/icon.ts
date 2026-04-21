@@ -244,6 +244,7 @@ export const availableIconsIndex = {
   'share-alt': true,
   shield: true,
   'shield-exclamation': true,
+  sigil: true,
   signal: true,
   signin: true,
   signout: true,

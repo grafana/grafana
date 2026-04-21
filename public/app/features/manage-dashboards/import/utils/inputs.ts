@@ -14,6 +14,7 @@ import { LibraryElementKind } from '../../../library-panels/types';
 import {
   type DashboardInput,
   type DashboardInputs,
+  type DashboardJson,
   type DataSourceInput,
   type ImportDashboardDTO,
   type ImportFormDataV2,
@@ -290,6 +291,129 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
   }
 
   return `Select a ${pluginId} data source`;
+}
+
+/**
+ * Input mapping shape used by the community dashboard / suggested dashboards flow.
+ * Matches the format previously sent to POST /api/dashboards/interpolate.
+ */
+export interface InterpolateInputMapping {
+  name: string;
+  type: 'datasource' | 'constant';
+  pluginId?: string;
+  value: string;
+}
+
+/**
+ * Interpolate a v1 dashboard in the frontend using applyV1Inputs, replacing the
+ * backend POST /api/dashboards/interpolate round-trip.
+ *
+ * Converts InputMapping[] (the format used by the community/suggested dashboard flow)
+ * into the shape that applyV1Inputs expects and applies the substitution.
+ */
+export function interpolateV1Dashboard(
+  dashboard: DashboardJson,
+  inputMappings: InterpolateInputMapping[]
+): DashboardJson {
+  const rawInputs = dashboard.__inputs;
+  const dsInputs: DataSourceInput[] = (rawInputs ?? [])
+    .filter((input) => input.type === 'datasource' && 'pluginId' in input && typeof input.pluginId === 'string')
+    .map((input) => ({
+      name: String(input.name ?? ''),
+      label: String(input.label ?? ''),
+      info: String(input.description ?? ''),
+      value: String(input.value ?? ''),
+      type: InputType.DataSource,
+      pluginId: String('pluginId' in input ? input.pluginId : ''),
+    }));
+  const constantRawInputs = (rawInputs ?? []).filter((input) => input.type === 'constant');
+
+  const wildcardMapping = inputMappings.find((m) => m.name === '*' && m.type === 'datasource');
+  const effectiveMappings = wildcardMapping
+    ? dsInputs.map((input) => ({
+        name: input.name,
+        type: 'datasource' as const,
+        pluginId: input.pluginId,
+        value: wildcardMapping.value,
+      }))
+    : inputMappings;
+
+  const formDataSources: DataSourceInstanceSettings[] = [];
+  const seenPluginIds = new Set<string>();
+  for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
+    const dsInput = dsInputs.find((i) => i.name === mapping.name);
+    const pluginId = mapping.pluginId ?? dsInput?.pluginId;
+    if (!pluginId || seenPluginIds.has(pluginId)) {
+      continue;
+    }
+
+    // Expression datasources are always forced to __expr__ regardless of user input,
+    // matching the backend behavior:
+    //   if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
+    //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
+    //   }
+    if (pluginId === ExpressionDatasourceRef.type) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(pluginId);
+      continue;
+    }
+
+    const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+    if (!settings) {
+      throw new Error(
+        `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`
+      );
+    }
+    formDataSources.push(settings);
+    seenPluginIds.add(pluginId);
+  }
+  // Ensure expression datasources are included even when not explicitly mapped
+  for (const dsInput of dsInputs) {
+    if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(ExpressionDatasourceRef.type);
+    }
+  }
+
+  const constants: DashboardInput[] = constantRawInputs.map((input) => ({
+    name: String(input.name ?? ''),
+    label: String(input.label ?? ''),
+    info: String(input.description ?? 'Specify a string constant'),
+    value: String(input.value ?? ''),
+    type: InputType.Constant,
+  }));
+  const formConstants: string[] = constants.map((c) => {
+    const mapping = effectiveMappings.find((m) => m.type === 'constant' && m.name === c.name);
+    return mapping ? mapping.value : c.value;
+  });
+
+  const form: ImportDashboardDTO = {
+    title: dashboard.title ?? '',
+    uid: dashboard.uid ?? '',
+    gnetId: '',
+    constants: formConstants,
+    dataSources: formDataSources,
+    elements: [],
+    folder: { uid: '' },
+  };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const interpolated = { ...result } as DashboardJson;
+  delete interpolated.__inputs;
+  delete interpolated.__elements;
+  delete interpolated.__requires;
+  return interpolated;
 }
 
 /**

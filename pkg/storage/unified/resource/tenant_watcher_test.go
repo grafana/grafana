@@ -135,13 +135,13 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
 
-	t.Run("force record persists through reconcile and clear events", func(t *testing.T) {
+	t.Run("orphaned record persists through reconcile and clear events", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
-			Force:            true,
+			Orphaned:         true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -150,7 +150,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
-		assert.True(t, record.Force)
+		assert.True(t, record.Orphaned)
 
 		// Clear path: tenant CRD says active.
 		restored := &unstructured.Unstructured{}
@@ -159,7 +159,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 
 		record, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
-		assert.True(t, record.Force)
+		assert.True(t, record.Orphaned)
 		assert.True(t, record.LabelingComplete)
 	})
 }
@@ -529,7 +529,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		assert.True(t, record.LabelingComplete, "record should be complete after retry")
 	})
 
-	t.Run("force record prevents unlabelling during clear", func(t *testing.T) {
+	t.Run("orphaned record prevents unlabelling during clear", func(t *testing.T) {
 		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
@@ -547,7 +547,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
-			Force:            true,
+			Orphaned:         true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -555,23 +555,23 @@ func TestTenantResourceLabelling(t *testing.T) {
 		restored.SetName("tenant-1")
 		tw.handleTenant(restored)
 
-		assert.Empty(t, collector.all(), "no unlabelling should occur for force records")
+		assert.Empty(t, collector.all(), "no unlabelling should occur for orphaned records")
 	})
 
-	t.Run("reconcile preserves Force field on incomplete record", func(t *testing.T) {
+	t.Run("reconcile preserves Orphaned field on incomplete record", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: false,
-			Force:            true,
+			Orphaned:         true,
 		}))
 
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
-		assert.True(t, record.Force, "Force field should be preserved after reconcile")
+		assert.True(t, record.Orphaned, "Orphaned field should be preserved after reconcile")
 		assert.True(t, record.LabelingComplete, "labeling should be marked complete")
 	})
 }

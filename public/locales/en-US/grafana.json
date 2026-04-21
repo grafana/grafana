@@ -4323,15 +4323,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4400,12 +4400,13 @@
       "button-label": "Select folder",
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
-      "error-title": "Error loading folders",
+      "error-title": "Error loading some folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
       "team-folders": "Team folders",
+      "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -5471,6 +5472,9 @@
       "cancel-loading-dashboard": "Cancel loading dashboard"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "Back to dashboards",
+      "provisioning-message": "Dashboard preview could not be loaded",
+      "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
       }
@@ -5619,6 +5623,8 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "Filter",
+        "filters-set": "Filters",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -5630,7 +5636,6 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
-        "section-variable": "Section Variables",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -5648,8 +5653,10 @@
           "title": "Row header"
         }
       },
+      "section-filters": {
+        "title": "Filters"
+      },
       "section-variables": {
-        "add-tooltip": "Add variable",
         "title": "Variables"
       },
       "variable": {
@@ -5695,6 +5702,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "change-type": "Change variable type",
         "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
@@ -6200,6 +6208,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-filters": {
+          "title": "Filters"
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6299,6 +6310,8 @@
       "export": {
         "title": "Export"
       },
+      "filters": "Filters",
+      "open": "Filters overview",
       "outline": {
         "title": "Outline",
         "tooltip": "Content outline"
@@ -6356,6 +6369,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-filters": {
+          "title": "Filters"
         },
         "section-variables": {
           "title": "Variables"
@@ -6508,6 +6524,10 @@
       "sql-expressions-title": "SQL Expressions",
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "Add SQL expression",
+      "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
@@ -7065,6 +7085,16 @@
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
+    "filters-list": {
+      "add-filter": "Add filter",
+      "reorder-description": "Reorder filters list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7513,6 +7543,7 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "Advanced options",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
@@ -7520,6 +7551,11 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
+      "format": {
+        "classic": "Classic",
+        "model-label": "Model",
+        "v2-resource": "V2 Resource"
+      },
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -7537,6 +7573,9 @@
       "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "section-filters-list": {
+      "add-filter": "Add filter"
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
@@ -7633,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
         }
       }
     },
@@ -7897,8 +7943,7 @@
   "dashboards": {
     "filters-overview": {
       "all-filters": "All filters",
-      "filters": "Filters",
-      "open": "Open filters overview pane"
+      "open": "Filters overview"
     },
     "panel-queries": {
       "add-from-saved-queries": "Add from saved queries"
@@ -7961,6 +8006,15 @@
     },
     "empty-state": {
       "message": "No data sources found"
+    },
+    "list": {
+      "label": "Data sources"
+    },
+    "run-advisor-checks-button": {
+      "label": "Enable Advisor checks",
+      "running": "Running checks",
+      "success": "Advisor checks created successfully. Go to Administration > Advisor for more details.",
+      "tooltip": "Advisor checks helps you find issues with your data sources and plugins"
     }
   },
   "datasources": {
@@ -8180,6 +8234,9 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
+  },
+  "diff-viewer": {
+    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -8806,6 +8863,9 @@
     "show-all-spans": "Show all spans",
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-bar-section": {
       "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
@@ -9760,6 +9820,7 @@
         },
         "length": {
           "formats": {
+            "name-centimeter": "centimeter (cm)",
             "name-feet": "feet (ft)",
             "name-inch": "inch (in)",
             "name-kilometer": "kilometer (km)",
@@ -10707,6 +10768,7 @@
       "description": "Description",
       "keys": "Keys"
     },
+    "shortcuts-aria-label": "List of keyboard shortcuts",
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -12234,7 +12296,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "From template"
+      "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -12437,7 +12499,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Edit title"
+      "cancel-tooltip": "Cancel",
+      "edit-tooltip": "Edit title",
+      "error": "An unknown error occurred",
+      "label": "Name",
+      "placeholder": "Name",
+      "required": "Please enter a title",
+      "save-tooltip": "Save"
     }
   },
   "panel": {
@@ -15399,6 +15467,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "Accessible",
         "label-dash": "Dash",
         "label-dots": "Dots",
         "label-solid": "Solid"

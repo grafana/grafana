@@ -272,7 +272,7 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 	record = PendingDeleteRecord{
 		DeleteAfter:      deleteAfter,
 		LabelingComplete: false,
-		Force:            record.Force,
+		Orphaned:         record.Orphaned,
 	}
 	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 		tw.log.Error("failed to save pending delete record", "tenant", name, "error", err)
@@ -431,8 +431,8 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 		return
 	}
 
-	if record.Force {
-		tw.log.Warn("tenant has force pending-delete record, skipping clear", "tenant", name)
+	if record.Orphaned {
+		tw.log.Warn("tenant has orphaned pending-delete record, skipping clear", "tenant", name)
 		return
 	}
 

@@ -37,10 +37,6 @@ interface ComboboxStaticProps<T extends string | number>
    * Defaults to "Use custom value".
    */
   customValueDescription?: string;
-  /**
-   * Custom container for rendering the dropdown menu via Portal
-   */
-  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -153,7 +149,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
-    portalContainer,
     invalid,
     prefixIcon,
     noOptionsMessage,
@@ -424,7 +419,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           },
         })}
       />
-      <Portal root={portalContainer}>
+      <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{

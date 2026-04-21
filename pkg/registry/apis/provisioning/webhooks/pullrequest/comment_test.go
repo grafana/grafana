@@ -155,6 +155,55 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
+		{"single dashboard with stripped metadata", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "dashboard.json",
+						},
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						Action: v0alpha1.ResourceActionUpdate,
+					},
+					Title:              "My Dashboard",
+					GrafanaURL:         "http://grafana/d/uid",
+					PreviewURL:         "http://grafana/admin/preview",
+					HasRemovedMetadata: true,
+				},
+			},
+		}},
+		{"multiple files with stripped metadata", changeInfo{
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "good.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Dashboard A",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "stripped.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:              "Dashboard B",
+					GrafanaURL:         "http://grafana/d/bbb",
+					PreviewURL:         "http://grafana/admin/preview",
+					HasRemovedMetadata: true,
+				},
+			},
+		}},
 		{"multiple files with errors", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{

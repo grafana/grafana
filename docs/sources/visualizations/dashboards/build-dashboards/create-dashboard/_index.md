@@ -74,11 +74,17 @@ Each panel needs at least one query to display a visualization.
 
 To create a dashboard, follow these steps:
 
+{{< docs/list >}}
+
+{{< shared id="create-dashboard" >}}
+
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
 1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+
+{{< /shared >}}
 
 1. On the new panel, select one of the following options:
    - **Configure visualization**: Opens panel edit mode with the default data source for your instance preselected. Configure a query and set panel and visualization options.
@@ -137,6 +143,8 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Exit edit**.
+
+{{< /docs/list >}}
 
 ## Dashboard edit
 

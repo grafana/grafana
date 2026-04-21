@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 )
@@ -130,8 +130,7 @@ func TestInstrumentedBucket(t *testing.T) {
 				}
 			},
 			call: func(instrumentedBucket *InstrumentedBucket) error {
-				err := instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
-				return err
+				return instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
 			},
 		},
 		{
@@ -226,6 +225,25 @@ func TestInstrumentedBucket(t *testing.T) {
 				return err
 			},
 		},
+		{
+			name:      "ListPage",
+			operation: "ListPage",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return []*blob.ListObject{}, nil, nil
+					}
+				} else {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return nil, nil, fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, _, err := instrumentedBucket.ListPage(context.Background(), nil, 10, nil)
+				return err
+			},
+		},
 	}
 
 	for _, op := range operations {
@@ -259,8 +277,11 @@ func TestInstrumentedBucket(t *testing.T) {
 					require.Error(t, err)
 				}
 
-				count := testutil.ToFloat64(instrumentedBucket.requests.WithLabelValues(op.operation, tc.expectedCountLabel))
-				require.Equal(t, 1.0, count)
+				obs, err := instrumentedBucket.latency.GetMetricWithLabelValues(op.operation, tc.expectedCountLabel)
+				require.NoError(t, err)
+				m := &dto.Metric{}
+				require.NoError(t, obs.(prometheus.Metric).Write(m))
+				require.Equal(t, uint64(1), m.Histogram.GetSampleCount())
 			})
 		}
 	}

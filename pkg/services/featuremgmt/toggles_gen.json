@@ -434,10 +434,10 @@
     {
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
-        "resourceVersion": "1775152842792",
+        "resourceVersion": "1776254526995",
         "creationTimestamp": "2025-04-22T08:50:34Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-02 18:00:42.792501 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-15 12:02:06.995878 +0000 UTC"
         }
       },
       "spec": {
@@ -445,7 +445,7 @@
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -966,6 +966,24 @@
         "description": "Enables annotation clustering and switches to refactored annotation code",
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "anyPageReporting",
+        "resourceVersion": "1776396837578",
+        "creationTimestamp": "2026-04-17T01:00:25Z",
+        "deletionTimestamp": "2026-04-17T03:36:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-17 03:33:57.578996 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -1670,6 +1688,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasource.useNewCRUDAPIs",
+        "resourceVersion": "1776199197997",
+        "creationTimestamp": "2026-04-14T20:39:57Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests, backend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -2605,7 +2636,8 @@
       "metadata": {
         "name": "grpcServer",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2022-09-26T20:25:34Z"
+        "creationTimestamp": "2022-09-26T20:25:34Z",
+        "deletionTimestamp": "2026-04-16T20:17:36Z"
       },
       "spec": {
         "description": "Run the GRPC server",
@@ -3468,7 +3500,8 @@
       "metadata": {
         "name": "kubernetesUnifiedStorageQuotas",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-09T15:40:34Z"
+        "creationTimestamp": "2025-12-09T15:40:34Z",
+        "deletionTimestamp": "2026-04-16T18:07:54Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes unified storage quotas",
@@ -3734,7 +3767,8 @@
       "metadata": {
         "name": "managedDualWriter",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-19T14:50:39Z"
+        "creationTimestamp": "2025-02-19T14:50:39Z",
+        "deletionTimestamp": "2026-04-16T15:30:19Z"
       },
       "spec": {
         "description": "Pick the dual write mode from database configs",
@@ -3761,12 +3795,15 @@
     {
       "metadata": {
         "name": "metricsFromProfiles",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-09T10:55:28Z"
+        "resourceVersion": "1776334714934",
+        "creationTimestamp": "2025-04-09T10:55:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:18:34.934728 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating metrics from profiles and storing them as recording rules",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -4047,6 +4084,20 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "onlyStoreServiceAccountActionSets",
+        "resourceVersion": "1776254687768",
+        "creationTimestamp": "2026-04-15T12:04:47Z"
+      },
+      "spec": {
+        "description": "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4373,11 +4424,27 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1776334714934",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:18:34.934728 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "profilesHeatmap",
+        "resourceVersion": "1776332619529",
+        "creationTimestamp": "2026-04-16T09:43:39Z"
+      },
+      "spec": {
+        "description": "Enables heatmap visualization support for Pyroscope profiles",
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "expression": "false"
@@ -4614,7 +4681,8 @@
       "metadata": {
         "name": "queryServiceQueryCaching",
         "resourceVersion": "1774711941702",
-        "creationTimestamp": "2026-03-28T15:32:21Z"
+        "creationTimestamp": "2026-03-28T15:32:21Z",
+        "deletionTimestamp": "2026-04-17T12:18:03Z"
       },
       "spec": {
         "description": "Enables the query service to do query caching",
@@ -4732,6 +4800,19 @@
       },
       "spec": {
         "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.useInQueryService",
+        "resourceVersion": "1776428829461",
+        "creationTimestamp": "2026-04-17T12:27:09Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
@@ -4884,6 +4965,19 @@
     },
     {
       "metadata": {
+        "name": "reporting.anyPageReporting",
+        "resourceVersion": "1776397017304",
+        "creationTimestamp": "2026-04-17T03:36:57Z"
+      },
+      "spec": {
+        "description": "Enables reporting for any page in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
@@ -5016,7 +5110,8 @@
       "metadata": {
         "name": "scanRowInvalidDashboardParseFallbackEnabled",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-30T14:18:38Z"
+        "creationTimestamp": "2025-07-30T14:18:38Z",
+        "deletionTimestamp": "2026-04-16T15:30:19Z"
       },
       "spec": {
         "description": "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
@@ -5028,14 +5123,17 @@
     {
       "metadata": {
         "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
+        "resourceVersion": "1776334251375",
+        "creationTimestamp": "2026-02-11T10:49:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5542,7 +5640,8 @@
       "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-18T12:43:56Z"
+        "creationTimestamp": "2025-07-18T12:43:56Z",
+        "deletionTimestamp": "2026-04-16T15:44:59Z"
       },
       "spec": {
         "description": "Enable dual reader for unified storage search",
@@ -5791,6 +5890,20 @@
     },
     {
       "metadata": {
+        "name": "zanzanaMergeUserPermissions",
+        "resourceVersion": "1776107616688",
+        "creationTimestamp": "2026-04-13T19:13:36Z"
+      },
+      "spec": {
+        "description": "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzanaNoLegacyClient",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-21T14:03:17Z"
@@ -5808,6 +5921,7 @@
         "name": "zanzanaSearchUsersPermissions",
         "resourceVersion": "1776076870099",
         "creationTimestamp": "2026-03-25T09:17:53Z",
+        "deletionTimestamp": "2026-04-13T19:13:36Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
         }

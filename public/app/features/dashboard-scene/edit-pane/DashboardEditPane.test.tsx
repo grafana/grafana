@@ -27,6 +27,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
+import { DashboardOutline } from './DashboardOutline';
 import { dashboardEditActions } from './shared';
 
 jest.mock('@grafana/runtime', () => ({
@@ -59,7 +60,7 @@ describe('DashboardEditPane', () => {
       // Selecting same object should clear selection
       editPane.selectObject(panel1);
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       const panel2 = scene.onCreateNewPanel();
       editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
@@ -80,7 +81,7 @@ describe('DashboardEditPane', () => {
       const panel = scene.onCreateNewPanel();
       editPane.clearSelection();
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       editPane.setState({ isDocked: true });
       editPane.selectObject(panel);
@@ -109,19 +110,36 @@ describe('DashboardEditPane', () => {
       expect(editPane.state.selectionContext.selected).toHaveLength(1);
     });
 
+    it('Selecting when none element pane is open should not toggle selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+
+      editPane.openPane(new DashboardOutline({}));
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+
+      // Select panel again (when it is still selected)
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { force: false });
+
+      // Should still be selected
+      expect(editPane.getSelectedObject()).toBe(panel);
+    });
+
     it('Selecting tab with closed edit pane should not select tab', () => {
       const { editPane, tab1 } = setupWithTwoTabs();
 
       // Selecting tab with closed edit pane should not select tab
       editPane.selectObject(tab1);
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
     });
 
     it('Selecting tab with open edit pane should select tab', () => {
       const { editPane, tab1 } = setupWithTwoTabs();
 
       // Selecting tab with closed edit pane should not select tab
-      editPane.openPane('code');
+      editPane.openPane(new DashboardOutline({}));
       editPane.selectObject(tab1);
       expect(editPane.getSelectedObject()).toBe(tab1);
     });
@@ -150,7 +168,7 @@ describe('DashboardEditPane', () => {
     expect(editPane.state.undoStack).toHaveLength(0);
 
     // should clear selection
-    expect(editPane.getSelectedObject()).toBeNull();
+    expect(editPane.getSelectedObject()).toBeUndefined();
   });
 
   it('when new action comes in clears redo stack', () => {
