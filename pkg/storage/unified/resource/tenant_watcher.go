@@ -44,8 +44,8 @@ const (
 	editLabelMaxAttempts   = 4
 	editLabelMaxRetryDelay = 2 * time.Second
 
-	defaultPollInterval = 5 * time.Minute
-	pollPageSize        = 500
+	defaultPollInterval = 1 * time.Hour
+	pollPageSize        = 2000
 )
 
 // TenantWatcher watches Tenant CRDs and syncs pending-delete state to the KV
@@ -83,9 +83,8 @@ type TenantWatcherConfig struct {
 	// RetryMaxDelay is the maximum delay between retries in case of write conflicts when updating resource labels.
 	RetryMaxDelay time.Duration
 	// UsePolling selects the periodic polling strategy instead of a Kubernetes
-	// informer. Required for clusters where the pending-delete cohort is too
-	// large to cache in memory (millions of tenants) or where the tenant API's
-	// WatchList implementation is incompatible with client-go's streaming sync.
+	// informer. Better memory usage than informer since informer reads all pending delete tenants into cache.
+	// Polling is only memory bound by page size.
 	UsePolling bool
 	// PollInterval is the delay between poll cycles when UsePolling is true.
 	// Defaults to 5 minutes if zero.
@@ -354,20 +353,21 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		return
 	}
 
-	// Clear KV records for tenants not currently in the pending-delete view.
-	// GET each stale record to disambiguate: found = label removed (restore);
-	// NotFound = tenant CR deleted, leave the KV record so the deleter's GCOM
-	// backstop handles data cleanup.
-	var cleared, leftForDeleter int
+	// Go through all pending delete records
+	// If they're in the set
+	clearStart := time.Now()
+	var cleared, leftForDeleter, scanned int
 	for name, err := range tw.pendingDeleteStore.Names(ctx) {
 		if err != nil {
 			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
 			return
 		}
+		scanned++
 		if _, live := liveNames[name]; live {
 			continue
 		}
 		_, err = tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
+		// if not found then the tenant was deleted in the tenant api - so keep the record
 		if apierrors.IsNotFound(err) {
 			leftForDeleter++
 			continue
@@ -385,9 +385,11 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 	tw.log.Info("tenant watcher poll cycle complete",
 		"live_tenants", len(liveNames),
 		"pages", pageCount,
+		"kv_records_scanned", scanned,
 		"cleared", cleared,
 		"left_for_deleter", leftForDeleter,
 		"list_duration", listDuration,
+		"clear_duration", time.Since(clearStart),
 		"total_duration", time.Since(start),
 	)
 }
