@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, dateTime, EventBusSrv, LogLevel } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, usePluginLinks } from '@grafana/runtime';
 import { defaultTableOptions } from '@grafana/schema';
-import { PanelContext, PanelContextProvider } from '@grafana/ui';
+import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
