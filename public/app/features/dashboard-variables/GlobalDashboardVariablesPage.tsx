@@ -1,7 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-
 import { PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -236,7 +235,10 @@ export default function GlobalDashboardVariablesPage() {
           <Stack direction="column" gap={2}>
             <div>
               <Text element="p" variant="bodySmall" color="secondary">
-                {t('global-variables.page.folder-help', 'Optional: scope this variable to a folder. Leave empty for org-wide.')}
+                {t(
+                  'global-variables.page.folder-help',
+                  'Optional: scope this variable to a folder. Leave empty for org-wide.'
+                )}
               </Text>
               <NestedFolderPicker
                 value={folderUid}
@@ -282,9 +284,11 @@ export default function GlobalDashboardVariablesPage() {
     <Page navId="dashboards/variables" pageNav={pageNav} layout={PageLayoutType.Canvas}>
       <Page.Contents>
         <Stack direction="column" gap={2}>
-          <Button icon="plus" onClick={openNew}>
-            {t('global-variables.page.add', 'New variable')}
-          </Button>
+          <Stack justifyContent="flex-start">
+            <Button icon="plus" onClick={openNew}>
+              {t('global-variables.page.add', 'New variable')}
+            </Button>
+          </Stack>
           {loadError && (
             <Alert title={t('global-variables.page.load-error', 'Failed to load variables')} severity="error">
               {loadError}
