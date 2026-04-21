@@ -161,7 +161,7 @@ const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
         ],
       },
       {
-        name: 'OnCall Conctact point',
+        name: 'OnCall Contact point',
         grafana_managed_receiver_configs: [
           {
             name: 'Oncall-integration',

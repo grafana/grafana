@@ -65,9 +65,8 @@ const getReceiversList = () => {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Receiver',
         metadata: {
-          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
+          // Not exact K8s semantics; shared mock data for AM config and K8s list responses (`name` and `uid`).
           name: contactPoint.name,
-          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
           uid: contactPoint.name,
           annotations: {
             [K8sAnnotations.Provenance]: provenance,

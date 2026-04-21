@@ -184,7 +184,7 @@ describe('useOnCallIntegration', () => {
       const { extendOnCallReceivers } = result.current;
 
       const receiver = extendOnCallReceivers({
-        name: 'OnCall Conctact point',
+        name: 'OnCall Contact point',
         grafana_managed_receiver_configs: [
           {
             name: 'Oncall-integration',
@@ -237,7 +237,7 @@ describe('useOnCallIntegration', () => {
       const { extendOnCallReceivers } = result.current;
 
       const receiver = extendOnCallReceivers({
-        name: 'OnCall Conctact point',
+        name: 'OnCall Contact point',
         grafana_managed_receiver_configs: [
           {
             name: 'Oncall-integration',
