@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { LoadingState, QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/data';
+import { LoadingState, type QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/data';
 
 const initialState: QueryVariableModel = {
   id: '00000000-0000-0000-0000-000000000000',
@@ -32,6 +32,7 @@ class QueryVariableBuilder {
 
   constructor() {
     const { id, index, global, ...rest } = initialState;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     this.variable = cloneDeep({ ...rest, name: rest.type }) as QueryVariableModel;
   }
 

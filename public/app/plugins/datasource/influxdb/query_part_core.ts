@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, each, map } from 'lodash';
 
 export class QueryPartDef {

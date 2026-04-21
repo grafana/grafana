@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '../../../../../test/helpers/selectOptionInTest';
 
+import { selectOptionInTest } from '../../../../../test/helpers/selectOptionInTest';
 import { type InfluxQuery } from '../../../../../types';
 
 import { RawInfluxQLEditor } from './RawInfluxQLEditor';

@@ -1,4 +1,4 @@
-import { Column, TableData, QueryResultMeta } from '@grafana/data';
+import { type Column, type TableData, type QueryResultMeta } from '@grafana/data';
 
 /**
  * Extends the standard Column class with variables that get
@@ -13,12 +13,14 @@ export interface MutableColumn extends Column {
 
 export default class TableModel implements TableData {
   columns: MutableColumn[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rows: any[];
   type: string;
   columnMap: Record<string, Column>;
   refId?: string;
   meta?: QueryResultMeta;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(table?: any) {
     this.columns = [];
     this.columnMap = {};
