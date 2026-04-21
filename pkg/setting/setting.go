@@ -443,6 +443,10 @@ type Cfg struct {
 	IntercomSecret                      string
 	FrontendAnalyticsConsoleReporting   bool
 
+	DangerousMeticulousAIEnabled      bool
+	DangerousMeticulousAIProjectToken string
+	DangerousMeticulousAIScriptURL    string
+
 	// LDAP
 	LDAPAuthEnabled       bool
 	LDAPSkipOrgRoleSync   bool
@@ -1513,6 +1517,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
+
+	cfg.DangerousMeticulousAIEnabled = analytics.Key("dangerous_meticulous_ai_enabled").MustBool(false)
+	cfg.DangerousMeticulousAIProjectToken = analytics.Key("dangerous_meticulous_ai_project_token").String()
+	cfg.DangerousMeticulousAIScriptURL = analytics.Key("dangerous_meticulous_ai_script_url").MustString("https://snippet.meticulous.ai/v1/meticulous.js")
 
 	// parse reporting static context string of key=value, key=value pairs into an object
 	cfg.ReportingStaticContext = make(map[string]string)
