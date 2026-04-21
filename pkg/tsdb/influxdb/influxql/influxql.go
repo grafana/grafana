@@ -15,8 +15,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -30,7 +30,7 @@ const (
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 	ErrInvalidUrl      = errors.New("URL must contain scheme and host")
-	glog               = backend.NewLoggerWith("logger", "tsdb.influx_influxql")
+	glog               = log.New("tsdb.influx_influxql")
 )
 
 func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -68,7 +68,9 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 			query.RefID = reqQuery.RefID
 			query.RawQuery = rawQuery
 
-			logger.Debug("Influxdb query", "raw query", rawQuery)
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
 
 			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
 			if err != nil {
@@ -113,7 +115,9 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 			query.RefID = reqQuery.RefID
 			query.RawQuery = rawQuery
 
-			logger.Debug("Influxdb query", "raw query", rawQuery)
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
 
 			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
 			if err != nil {

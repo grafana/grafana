@@ -10,21 +10,23 @@ import (
 	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 type fakeHttpClientProvider struct {
-	opts httpclient.Options
+	httpclient.Provider
+	opts sdkhttpclient.Options
 	res  *http.Response
 	rt   RoundTripper
 }
 
-func (p *fakeHttpClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
+func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
 	p.opts = opts[0]
-	c, err := httpclient.New(opts[0])
+	c, err := sdkhttpclient.New(opts[0])
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +34,7 @@ func (p *fakeHttpClientProvider) New(opts ...httpclient.Options) (*http.Client, 
 	return c, nil
 }
 
-func (p *fakeHttpClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
+func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
 	p.opts = opts[0]
 	return http.DefaultTransport, nil
 }
@@ -48,8 +50,8 @@ type fakeInstance struct {
 
 func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	fp := &fakeHttpClientProvider{
-		opts: httpclient.Options{
-			Timeouts: &httpclient.DefaultTimeoutOptions,
+		opts: sdkhttpclient.Options{
+			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
 		},
 		res: &http.Response{
 			StatusCode: 200,
@@ -58,7 +60,7 @@ func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instance
 		rt: f.fakeRoundTripper,
 	}
 
-	client, err := fp.New(httpclient.Options{})
+	client, err := fp.New(sdkhttpclient.Options{})
 	if err != nil {
 		return nil, err
 	}

@@ -13,26 +13,25 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-var logger log.Logger = backend.NewLoggerWith("logger", "tsdb.influxdb")
+var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClient *httpclient.Provider) *Service {
+func ProvideService(httpClient httpclient.Provider) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(NewInstanceSettings(httpClient)),
+		im: datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
 }
 
-func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
