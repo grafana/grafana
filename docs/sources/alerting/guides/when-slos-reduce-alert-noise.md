@@ -93,7 +93,7 @@ In other cases, the SLO is driven by the business, such as a customer commitment
 
 Before creating a shared SLO, teams need to agree on clear ownership.
 
-In both cases, the shift is often from internal metrics to user-facing reliability metrics, as recommended in [prioritize symptoms over causes](ref:prioritize-symptoms-but-dont-ignore-infrastructure-signals).
+In both cases, the shift is often from internal metrics to user-facing reliability metrics, as recommended in the [best practice to prioritize symptoms over causes](ref:prioritize-symptoms-but-dont-ignore-infrastructure-signals).
 
 Creating a shared SLO should not eliminate existing related alerts. This is a good moment to evaluate whether existing alerts trigger immediate action. If you notice these alerts are less actionable, and that the underlying reliability metric is better measured as an SLO, then migrate the existing alert to a team-scoped SLO.
 
