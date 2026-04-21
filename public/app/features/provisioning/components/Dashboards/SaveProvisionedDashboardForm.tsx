@@ -82,6 +82,13 @@ export function SaveProvisionedDashboardForm({
   const [workflow, ref] = watch(['workflow', 'ref']);
   const title = watch('title');
 
+  // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
+  useEffect(() => {
+    return () => {
+      dashboardWatcher.clearIgnoreSave();
+    };
+  }, []);
+
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
@@ -146,9 +153,8 @@ export function SaveProvisionedDashboardForm({
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
-
-    drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, request?.data?.resource]);
+    dashboardWatcher.clearIgnoreSave();
+  }, [dashboard, defaultValues.folder?.uid, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {
@@ -240,8 +246,9 @@ export function SaveProvisionedDashboardForm({
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // ignore incoming save events
-    dashboardWatcher.ignoreNextSave();
+    // Suppress live save events for the duration of the provisioned save.
+    // Git operations can exceed the default 5s ignoreNextSave window.
+    dashboardWatcher.ignoreSaveIndefinitely();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request
