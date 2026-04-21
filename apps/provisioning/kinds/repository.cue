@@ -138,6 +138,10 @@ repository: {
 					title: string
 					// Repository description
 					description?: string
+					// Template used to pre-populate the commit/comment field when saving a
+					// provisioned resource. Supports variables: {{action}}, {{resource}}, {{title}}.
+					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
+					commitMessageTemplate?: string
 					// UI driven Workflow that allow changes to the contends of the repository.
 					// The order is relevant for defining the precedence of the workflows.
 					// When empty, the repository does not support any edits (eg, readonly)

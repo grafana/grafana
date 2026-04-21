@@ -2043,6 +2043,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"commitMessageTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template used to pre-populate the commit/comment field when saving a provisioned resource. Supports variables: {{action}}, {{resource}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"workflows": {
 						SchemaProps: spec.SchemaProps{
 							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
@@ -2368,6 +2375,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 									},
 								},
 							},
+						},
+					},
+					"commitMessageTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template used to pre-populate the commit/comment field when saving a provisioned resource. Mirrors the same-named field on the repository spec.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

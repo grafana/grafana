@@ -184,14 +184,15 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		path := val.Path()
 
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:      val.Name,
-			Title:     val.Spec.Title,
-			Type:      val.Spec.Type,
-			Target:    val.Spec.Sync.Target,
-			Branch:    branch,
-			URL:       url,
-			Path:      path,
-			Workflows: val.Spec.Workflows,
+			Name:                  val.Name,
+			Title:                 val.Spec.Title,
+			Type:                  val.Spec.Type,
+			Target:                val.Spec.Sync.Target,
+			Branch:                branch,
+			URL:                   url,
+			Path:                  path,
+			Workflows:             val.Spec.Workflows,
+			CommitMessageTemplate: val.Spec.CommitMessageTemplate,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -15,6 +15,10 @@ type RepositorySpecApplyConfiguration struct {
 	Title *string `json:"title,omitempty"`
 	// Repository description
 	Description *string `json:"description,omitempty"`
+	// Template used to pre-populate the commit/comment field when saving a
+	// provisioned resource. Supports variables: {{action}}, {{resource}}, {{title}}.
+	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
+	CommitMessageTemplate *string `json:"commitMessageTemplate,omitempty"`
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
@@ -66,6 +70,14 @@ func (b *RepositorySpecApplyConfiguration) WithTitle(value string) *RepositorySp
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *RepositorySpecApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithCommitMessageTemplate sets the CommitMessageTemplate field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CommitMessageTemplate field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithCommitMessageTemplate(value string) *RepositorySpecApplyConfiguration {
+	b.CommitMessageTemplate = &value
 	return b
 }
 

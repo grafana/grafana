@@ -5473,6 +5473,10 @@
               }
             ]
           },
+          "commitMessageTemplate": {
+            "description": "Template used to pre-populate the commit/comment field when saving a provisioned resource. Supports variables: {{action}}, {{resource}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+            "type": "string"
+          },
           "connection": {
             "description": "The connection the repository references. This means the Repository is interacting with git via a Connection.",
             "allOf": [
@@ -5708,6 +5712,10 @@
         "properties": {
           "branch": {
             "description": "For git, this is the target branch",
+            "type": "string"
+          },
+          "commitMessageTemplate": {
+            "description": "Template used to pre-populate the commit/comment field when saving a provisioned resource. Mirrors the same-named field on the repository spec.",
             "type": "string"
           },
           "name": {
