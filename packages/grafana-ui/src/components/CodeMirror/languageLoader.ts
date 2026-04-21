@@ -7,12 +7,12 @@ const loadJson: LanguageLoader = async () =>
 const loadSql: LanguageLoader = async () =>
   (await import(/* webpackChunkName: "codemirror-sql" */ '@codemirror/lang-sql')).sql();
 
-const languageLoaders = {
+export type CodeEditorLanguage = 'json' | 'sql';
+
+const languageLoaders: Record<CodeEditorLanguage, LanguageLoader> = {
   json: loadJson,
   sql: loadSql,
-} satisfies Record<string, LanguageLoader>;
-
-export type CodeEditorLanguage = keyof typeof languageLoaders;
+};
 
 const languagePromises = new Map<CodeEditorLanguage, Promise<Extension>>();
 
