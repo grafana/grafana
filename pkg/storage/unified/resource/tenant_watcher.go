@@ -208,10 +208,9 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 	// Only watch tenants currently labeled pending-delete. At prod scale the full
 	// tenant set is too large to cache as unstructured objects; filtering server-side
 	// keeps the informer working set bounded to the pending-delete cohort.
-	tweakFn := func(opts *metav1.ListOptions) {
+	tw.factory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, resync, metav1.NamespaceAll, func(opts *metav1.ListOptions) {
 		opts.LabelSelector = labelPendingDelete + "=true"
-	}
-	tw.factory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, resync, metav1.NamespaceAll, tweakFn)
+	})
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
 	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -221,17 +220,20 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		UpdateFunc: func(_, newObj interface{}) {
 			tw.handleTenant(newObj.(*unstructured.Unstructured))
 		},
-		// With a label selector, a tenant losing the pending-delete label appears as
-		// a delete event — that's when we want to clear our pending-delete state.
+		// With a label selector, both a real tenant delete and a label removal
+		// arrive here as "delete" events. We only want to clear on label removal
+		// (a restore); real deletes must leave the KV record so the deleter's
+		// GCOM backstop can finish cleanup. Tombstones carry stale object state,
+		// so we skip them — startup reconciliation will catch anything missed.
 		DeleteFunc: func(obj interface{}) {
-			var tenant *unstructured.Unstructured
-			switch x := obj.(type) {
-			case *unstructured.Unstructured:
-				tenant = x
-			case cache.DeletedFinalStateUnknown:
-				tenant, _ = x.Obj.(*unstructured.Unstructured)
+			tenant, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				return
 			}
-			if tenant == nil {
+			// deletionTimestamp set → tenant is being graceful-deleted (finalizer flow).
+			// Label still present → server emitted DELETE because object was deleted,
+			// not because it stopped matching the selector.
+			if tenant.GetDeletionTimestamp() != nil || tenant.GetLabels()[labelPendingDelete] == "true" {
 				return
 			}
 			tw.clearTenantPendingDelete(tenant.GetName())
