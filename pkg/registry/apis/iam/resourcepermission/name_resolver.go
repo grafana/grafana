@@ -3,6 +3,7 @@ package resourcepermission
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -38,18 +39,41 @@ type NameResolver interface {
 // Using K8s API calls (rather than a direct DB lookup) is mode-agnostic: requests
 // route through whatever storage backend (dualwrite, unified, legacy) the SA resource
 // is currently configured for.
+//
+// The SA client is created lazily on first use via sync.Once so that the resolver
+// can be safely constructed during Wire init (before the apiserver rest config is ready).
 type serviceAccountNameResolver struct {
-	client *iamv0alpha1.ServiceAccountClient
-	tracer trace.Tracer
-	logger log.Logger
+	generator  resource.ClientGenerator
+	tracer     trace.Tracer
+	logger     log.Logger
+	clientOnce sync.Once
+	client     *iamv0alpha1.ServiceAccountClient
+	clientErr  error
 }
 
-func newServiceAccountNameResolver(client *iamv0alpha1.ServiceAccountClient, tracer trace.Tracer) NameResolver {
+// NewServiceAccountNameResolver creates a NameResolver for service accounts that
+// translates between K8s UIDs and DB numeric IDs via the K8s API.
+// The generator must be lazy (i.e. it may block until the apiserver is ready).
+func NewServiceAccountNameResolver(generator resource.ClientGenerator, tracer trace.Tracer) NameResolver {
 	return &serviceAccountNameResolver{
-		client: client,
-		tracer: tracer,
-		logger: log.New("resourceperm.sa-name-resolver"),
+		generator: generator,
+		tracer:    tracer,
+		logger:    log.New("resourceperm.sa-name-resolver"),
 	}
+}
+
+// getClient initialises the SA K8s client on the first call.
+// Subsequent calls return the cached result. Safe for concurrent use.
+func (r *serviceAccountNameResolver) getClient() (*iamv0alpha1.ServiceAccountClient, error) {
+	r.clientOnce.Do(func() {
+		c, err := r.generator.ClientFor(iamv0alpha1.ServiceAccountKind())
+		if err != nil {
+			r.clientErr = fmt.Errorf("creating service account K8s client: %w", err)
+			return
+		}
+		r.client = iamv0alpha1.NewServiceAccountClient(c)
+	})
+	return r.client, r.clientErr
 }
 
 // UIDToID fetches the service account by UID and reads its deprecatedInternalID label
@@ -63,7 +87,12 @@ func (r *serviceAccountNameResolver) UIDToID(ctx context.Context, namespace, uid
 	)
 	defer span.End()
 
-	sa, err := r.client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+	client, err := r.getClient()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
+	}
+	sa, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		r.logger.FromContext(ctx).Warn("failed to get service account by uid", "namespace", namespace, "uid", uid, "error", err)
@@ -97,7 +126,12 @@ func (r *serviceAccountNameResolver) IDToUID(ctx context.Context, namespace, id 
 	)
 	defer span.End()
 
-	list, err := r.client.List(ctx, namespace, resource.ListOptions{
+	client, err := r.getClient()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
+	}
+	list, err := client.List(ctx, namespace, resource.ListOptions{
 		LabelFilters: []string{utils.LabelKeyDeprecatedInternalID + "=" + id},
 	})
 	if err != nil {
@@ -132,7 +166,12 @@ func (r *serviceAccountNameResolver) IDToUIDMap(ctx context.Context, namespace s
 	)
 	defer span.End()
 
-	list, err := r.client.ListAll(ctx, namespace, resource.ListOptions{})
+	client, err := r.getClient()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	list, err := client.ListAll(ctx, namespace, resource.ListOptions{})
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		r.logger.FromContext(ctx).Warn("failed to list all service accounts", "namespace", namespace, "error", err)

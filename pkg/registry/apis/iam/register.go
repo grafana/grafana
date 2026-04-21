@@ -109,6 +109,14 @@ func RegisterAPIService(
 
 	rpStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
 
+	// Register the SA UID↔ID resolver so that service account scopes are translated
+	// via the K8s API (mode-agnostic) rather than a direct DB lookup.
+	saResolver := resourcepermission.NewServiceAccountNameResolver(
+		apiserver.ProvideClientGenerator(restConfig),
+		tracing,
+	)
+	mappers.RegisterResolver(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}, saResolver)
+
 	// When resourcepermissions are in Mode5 (unistore only), search must error; pass nil backend so the handler returns that error.
 	resourcePermsSearchBackend := resource.StorageBackend(rpStorage)
 	if cfg != nil {
