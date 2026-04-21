@@ -81,6 +81,9 @@ export const versionedComponents = {
     newPanelButton: {
       '12.4.0': 'data-testid sidebar add new panel',
     },
+    configurePanelButton: {
+      '13.1.0': 'data-testid edit pane configure panel button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -660,7 +663,7 @@ export const versionedComponents = {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
       },
       fieldLabel: {
-        '13.0.0': (type: string) => `data-testid ${type} field property editor`,
+        '13.1.0': (type: string) => `data-testid ${type} field property editor`,
         [MIN_GRAFANA_VERSION]: (type: string) => `${type} field property editor`,
       },
       fieldInput: {
@@ -693,23 +696,23 @@ export const versionedComponents = {
 
     // [Geomap] Map controls
     showZoomField: {
-      '13.0.0': 'data-testid Map controls Show zoom control field property editor',
+      '13.1.0': 'data-testid Map controls Show zoom control field property editor',
       '10.2.0': 'Map controls Show zoom control field property editor',
     },
     showAttributionField: {
-      '13.0.0': 'data-testid Map controls Show attribution field property editor',
+      '13.1.0': 'data-testid Map controls Show attribution field property editor',
       '10.2.0': 'Map controls Show attribution field property editor',
     },
     showScaleField: {
-      '13.0.0': 'data-testid Map controls Show scale field property editor',
+      '13.1.0': 'data-testid Map controls Show scale field property editor',
       '10.2.0': 'Map controls Show scale field property editor',
     },
     showMeasureField: {
-      '13.0.0': 'data-testid Map controls Show measure tools field property editor',
+      '13.1.0': 'data-testid Map controls Show measure tools field property editor',
       '10.2.0': 'Map controls Show measure tools field property editor',
     },
     showDebugField: {
-      '13.0.0': 'data-testid Map controls Show debug field property editor',
+      '13.1.0': 'data-testid Map controls Show debug field property editor',
       '10.2.0': 'Map controls Show debug field property editor',
     },
 
@@ -792,13 +795,13 @@ export const versionedComponents = {
   PanelInspector: {
     Data: {
       content: {
-        '13.0.0': 'data-testid Panel inspector Data content',
+        '13.1.0': 'data-testid Panel inspector Data content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Data content',
       },
     },
     Stats: {
       content: {
-        '13.0.0': 'data-testid Panel inspector Stats content',
+        '13.1.0': 'data-testid Panel inspector Stats content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Stats content',
       },
     },
@@ -810,11 +813,11 @@ export const versionedComponents = {
     },
     Query: {
       content: {
-        '13.0.0': 'data-testid Panel inspector Query content',
+        '13.1.0': 'data-testid Panel inspector Query content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query content',
       },
       refreshButton: {
-        '13.0.0': 'data-testid Panel inspector Query refresh button',
+        '13.1.0': 'data-testid Panel inspector Query refresh button',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query refresh button',
       },
       jsonObjectKeys: {
@@ -838,11 +841,11 @@ export const versionedComponents = {
   },
   QueryTab: {
     content: {
-      '13.0.0': 'data-testid Query editor tab content',
+      '13.1.0': 'data-testid Query editor tab content',
       [MIN_GRAFANA_VERSION]: 'Query editor tab content',
     },
     queryInspectorButton: {
-      '13.0.0': 'data-testid Query inspector button',
+      '13.1.0': 'data-testid Query inspector button',
       [MIN_GRAFANA_VERSION]: 'Query inspector button',
     },
     queryHistoryButton: {
@@ -870,7 +873,7 @@ export const versionedComponents = {
   },
   QueryEditorRows: {
     rows: {
-      '13.0.0': 'data-testid Query editor row',
+      '13.1.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
     },
   },
@@ -879,7 +882,7 @@ export const versionedComponents = {
       '10.4.0': (title: string) => `data-testid ${title}`,
     },
     title: {
-      '13.0.0': (refId: string) => `data-testid Query editor row title ${refId}`,
+      '13.1.0': (refId: string) => `data-testid Query editor row title ${refId}`,
       [MIN_GRAFANA_VERSION]: (refId: string) => `Query editor row title ${refId}`,
     },
     container: {
@@ -975,11 +978,11 @@ export const versionedComponents = {
     },
     SpatialOperations: {
       actionLabel: {
-        '13.0.0': 'data-testid root Action field property editor',
+        '13.1.0': 'data-testid root Action field property editor',
         '9.1.2': 'root Action field property editor',
       },
       locationLabel: {
-        '13.0.0': 'data-testid root Location Mode field property editor',
+        '13.1.0': 'data-testid root Location Mode field property editor',
         '10.2.0': 'root Location Mode field property editor',
       },
       location: {
@@ -991,11 +994,11 @@ export const versionedComponents = {
             '9.1.2': 'Coords location option',
           },
           latitudeFieldLabel: {
-            '13.0.0': 'data-testid root Latitude field field property editor',
+            '13.1.0': 'data-testid root Latitude field field property editor',
             '9.1.2': 'root Latitude field field property editor',
           },
           longitudeFieldLabel: {
-            '13.0.0': 'data-testid root Longitude field field property editor',
+            '13.1.0': 'data-testid root Longitude field field property editor',
             '9.1.2': 'root Longitude field field property editor',
           },
         },
@@ -1004,7 +1007,7 @@ export const versionedComponents = {
             '9.1.2': 'Geohash location option',
           },
           geohashFieldLabel: {
-            '13.0.0': 'data-testid root Geohash field field property editor',
+            '13.1.0': 'data-testid root Geohash field field property editor',
             '9.1.2': 'root Geohash field field property editor',
           },
         },
@@ -1013,11 +1016,11 @@ export const versionedComponents = {
             '9.1.2': 'Lookup location option',
           },
           lookupFieldLabel: {
-            '13.0.0': 'data-testid root Lookup field field property editor',
+            '13.1.0': 'data-testid root Lookup field field property editor',
             '9.1.2': 'root Lookup field field property editor',
           },
           gazetteerFieldLabel: {
-            '13.0.0': 'data-testid root Gazetteer field property editor',
+            '13.1.0': 'data-testid root Gazetteer field property editor',
             '9.1.2': 'root Gazetteer field property editor',
           },
         },

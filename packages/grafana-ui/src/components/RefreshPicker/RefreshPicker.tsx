@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formatDuration } from 'date-fns';
+import { formatDuration } from 'date-fns/formatDuration';
 import { memo } from 'react';
 
 import { type SelectableValue, parseDuration } from '@grafana/data';

@@ -2635,14 +2635,14 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/azure-sdk": "npm:0.1.0"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/i18n": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
@@ -2670,7 +2670,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2682,13 +2682,13 @@ __metadata:
   resolution: "@grafana-plugins/grafana-postgresql-datasource@workspace:public/app/plugins/datasource/grafana-postgresql-datasource"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/sql": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/sql": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2702,7 +2702,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2714,12 +2714,12 @@ __metadata:
   resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2743,7 +2743,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
@@ -2756,12 +2756,12 @@ __metadata:
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2784,7 +2784,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2797,13 +2797,13 @@ __metadata:
   resolution: "@grafana-plugins/graphite@workspace:public/app/plugins/datasource/graphite"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@reduxjs/toolkit": "npm:2.10.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
@@ -2827,7 +2827,7 @@ __metadata:
     semver: "npm:7.7.3"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2870,7 +2870,7 @@ __metadata:
     stream-browserify: "npm:3.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2884,15 +2884,15 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/assistant": "npm:0.1.24"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/lezer-logql": "npm:0.2.9"
     "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2915,7 +2915,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2928,14 +2928,14 @@ __metadata:
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/i18n": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/sql": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/sql": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2949,7 +2949,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2961,13 +2961,13 @@ __metadata:
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/sql": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/sql": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2981,7 +2981,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3020,7 +3020,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -3033,12 +3033,12 @@ __metadata:
   resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3055,7 +3055,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3067,14 +3067,14 @@ __metadata:
   resolution: "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/google-sdk": "npm:0.3.5"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -3102,7 +3102,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3120,13 +3120,13 @@ __metadata:
     "@grafana/lezer-traceql": "npm:0.0.25"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@lezer/common": "npm:1.3.0"
-    "@lezer/lr": "npm:1.4.3"
+    "@lezer/common": "npm:1.5.2"
+    "@lezer/lr": "npm:1.4.8"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.38.0"
@@ -3162,7 +3162,7 @@ __metadata:
     string_decoder: "npm:1.3.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -3199,7 +3199,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3212,8 +3212,8 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@faker-js/faker": "npm:^9.8.0"
-    "@grafana/api-clients": "npm:13.0.0-pre"
-    "@grafana/i18n": "npm:13.0.0-pre"
+    "@grafana/api-clients": "npm:13.1.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@reduxjs/toolkit": "npm:2.10.1"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -3231,12 +3231,12 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-redux: "npm:^9.2.0"
     rimraf: "npm:^6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
@@ -3247,15 +3247,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/api-clients@npm:13.0.0-pre, @grafana/api-clients@workspace:*, @grafana/api-clients@workspace:packages/grafana-api-clients":
+"@grafana/api-clients@npm:13.1.0-pre, @grafana/api-clients@workspace:*, @grafana/api-clients@workspace:packages/grafana-api-clients":
   version: 0.0.0-use.local
   resolution: "@grafana/api-clients@workspace:packages/grafana-api-clients"
   dependencies:
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     openapi-types: "npm:^12.1.3"
     plop: "npm:^4.0.1"
-    rollup: "npm:^4.22.4"
-    typescript: "npm:5.9.2"
+    rollup: "npm:^4.60.1"
+    typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.10.0
@@ -3307,14 +3307,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@npm:13.0.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@npm:13.1.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": "npm:7.0.1"
-    "@grafana/i18n": "npm:13.0.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
     "@grafana/scenes": "npm:7.3.8"
-    "@grafana/schema": "npm:13.0.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
@@ -3348,7 +3348,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
@@ -3357,7 +3357,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
     tsx: "npm:^4.21.0"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
@@ -3367,7 +3367,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:13.0.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@npm:13.1.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3376,12 +3376,12 @@ __metadata:
     "@types/semver": "npm:7.7.1"
     esbuild: "npm:0.25.8"
     rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -3479,8 +3479,8 @@ __metadata:
     "@babel/preset-env": "npm:7.28.0"
     "@babel/preset-react": "npm:7.27.1"
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.2"
@@ -3509,7 +3509,7 @@ __metadata:
     react: "npm:18.3.1"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:^10.2.10"
@@ -3517,7 +3517,7 @@ __metadata:
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0
@@ -3538,7 +3538,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/i18n@npm:13.0.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
+"@grafana/i18n@npm:13.1.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
   dependencies:
@@ -3551,9 +3551,9 @@ __metadata:
     i18next-pseudo: "npm:^2.2.1"
     micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^15.0.0"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   peerDependencies:
     react: ">=18"
   languageName: unknown
@@ -3609,12 +3609,12 @@ __metadata:
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -3630,12 +3630,12 @@ __metadata:
     react: "npm:18.3.1"
     react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
-    rollup: "npm:4.59.0"
+    rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -3651,7 +3651,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-configs@npm:13.0.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+"@grafana/plugin-configs@npm:13.1.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
@@ -3662,7 +3662,7 @@ __metadata:
     "@types/eslint": "npm:9.6.1"
     "@types/react": "npm:18.3.18"
     "@types/webpack-bundle-analyzer": "npm:^4.7.0"
-    copy-webpack-plugin: "npm:13.0.0"
+    copy-webpack-plugin: "npm:^14.0.0"
     eslint: "npm:9.32.0"
     eslint-webpack-plugin: "npm:5.0.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
@@ -3674,9 +3674,9 @@ __metadata:
     react: "npm:18.3.1"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
-    terser-webpack-plugin: "npm:5.3.14"
+    terser-webpack-plugin: "npm:^5.4.0"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
     webpack-virtual-modules: "npm:^0.6.2"
@@ -3733,49 +3733,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@workspace:*, @grafana/prometheus@workspace:packages/grafana-prometheus":
-  version: 0.0.0-use.local
-  resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
+"@grafana/prometheus@npm:13.1.2":
+  version: 13.1.2
+  resolution: "@grafana/prometheus@npm:13.1.2"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.19"
-    "@grafana/assistant": "npm:0.1.24"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/i18n": "npm:13.0.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.3.0"
+    "@lezer/common": "npm:1.5.2"
     "@lezer/highlight": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.3"
+    "@lezer/lr": "npm:1.4.8"
     "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
-    "@rollup/plugin-image": "npm:3.0.3"
-    "@rollup/plugin-json": "npm:6.1.0"
-    "@rollup/plugin-node-resolve": "npm:16.0.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
-    "@types/node": "npm:24.10.1"
-    "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:11.0.0"
+    "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
-    esbuild: "npm:0.25.8"
-    i18next-cli: "npm:^1.48.0"
-    jest: "npm:29.7.0"
-    jest-environment-jsdom: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
@@ -3783,42 +3761,44 @@ __metadata:
     monaco-promql: "npm:1.8.0"
     pluralize: "npm:8.0.0"
     prismjs: "npm:1.30.0"
-    react: "npm:18.3.1"
-    react-dom: "npm:18.3.1"
     react-highlight-words: "npm:0.21.0"
-    react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     react-window: "npm:1.8.11"
-    rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.1"
-    rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.4"
-    testing-library-selector: "npm:0.3.1"
-    typescript: "npm:5.9.2"
-    uuid: "npm:13.0.0"
+    semver: "npm:7.7.3"
+    uuid: "npm:11.1.0"
   peerDependencies:
+    "@grafana/assistant": ">=0.1.0"
+    "@grafana/data": ">=11.5.0"
+    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/i18n": ">=12.3.0"
+    "@grafana/runtime": ">=11.5.0"
+    "@grafana/schema": ">=11.5.0"
+    "@grafana/ui": ">=11.5.0"
     react: ^18.0.0
     react-dom: ^18.0.0
-  languageName: unknown
-  linkType: soft
+  peerDependenciesMeta:
+    "@grafana/assistant":
+      optional: true
+  checksum: 10/d96748add1b29ed9251dbf0f7d65ece846c3ce29760a6f74e21f8f4c7614a15ec79f657c8764d4a1fa117cb45ea531ab91d8bc99495919e78bcc6ae8ce82d7d2
+  languageName: node
+  linkType: hard
 
-"@grafana/runtime@npm:13.0.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@npm:13.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.2.4"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@openfeature/core": "npm:^1.9.2"
     "@openfeature/ofrep-web-provider": "npm:^0.3.6"
     "@openfeature/react-sdk": "npm:^1.2.1"
     "@openfeature/web-sdk": "npm:^1.7.3"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
-    "@rollup/plugin-terser": "npm:0.4.4"
+    "@rollup/plugin-terser": "npm:^1.0.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3836,13 +3816,14 @@ __metadata:
     react-loading-skeleton: "npm:3.5.0"
     react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
+    uuid: "npm:11.1.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -3935,7 +3916,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/schema@npm:13.0.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@npm:13.1.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -3943,26 +3924,26 @@ __metadata:
     esbuild: "npm:0.25.8"
     glob: "npm:^11.0.0"
     rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   languageName: unknown
   linkType: soft
 
-"@grafana/sql@npm:13.0.0-pre, @grafana/sql@workspace:*, @grafana/sql@workspace:packages/grafana-sql":
+"@grafana/sql@npm:13.1.0-pre, @grafana/sql@workspace:*, @grafana/sql@workspace:packages/grafana-sql":
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/assistant": "npm:^0.1.24"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/i18n": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:0.13.1"
-    "@grafana/ui": "npm:13.0.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
@@ -3986,13 +3967,13 @@ __metadata:
     react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
-    rollup: "npm:4.59.0"
+    rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
     sql-formatter-plus: "npm:1.3.6"
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uuid: "npm:11.1.0"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
@@ -4022,7 +4003,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     msw: "npm:2.10.4"
     rxjs: "npm:7.8.2"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -4033,7 +4014,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@npm:13.0.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@npm:13.1.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -4043,11 +4024,11 @@ __metadata:
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
     "@floating-ui/react": "npm:0.27.19"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.2.4"
-    "@grafana/i18n": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
+    "@grafana/i18n": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
@@ -4159,7 +4140,7 @@ __metadata:
     react-window: "npm:1.8.11"
     remark-gfm: "npm:^4.0.1"
     rimraf: "npm:6.0.1"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
@@ -4173,7 +4154,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
     uwrap: "npm:0.1.2"
@@ -5145,6 +5126,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/types@npm:30.3.0":
+  version: 30.3.0
+  resolution: "@jest/types@npm:30.3.0"
+  dependencies:
+    "@jest/pattern": "npm:30.0.1"
+    "@jest/schemas": "npm:30.0.5"
+    "@types/istanbul-lib-coverage": "npm:^2.0.6"
+    "@types/istanbul-reports": "npm:^3.0.4"
+    "@types/node": "npm:*"
+    "@types/yargs": "npm:^17.0.33"
+    chalk: "npm:^4.1.2"
+  checksum: 10/d6943cc270f07c7bc1ee6f3bb9ad1263ce7897d1a282221bf1d27499d77f2a68cfa6625ca73c193d3f81fe22a8e00635cd7acb5e73a546965c172219c81ec12c
+  languageName: node
+  linkType: hard
+
 "@jest/types@npm:^29.6.3":
   version: 29.6.3
   resolution: "@jest/types@npm:29.6.3"
@@ -5611,85 +5607,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lerna/create@npm:9.0.5":
-  version: 9.0.5
-  resolution: "@lerna/create@npm:9.0.5"
-  dependencies:
-    "@npmcli/arborist": "npm:9.1.6"
-    "@npmcli/package-json": "npm:7.0.2"
-    "@npmcli/run-script": "npm:10.0.3"
-    "@nx/devkit": "npm:>=21.5.2 < 23.0.0"
-    "@octokit/plugin-enterprise-rest": "npm:6.0.1"
-    "@octokit/rest": "npm:20.1.2"
-    aproba: "npm:2.0.0"
-    byte-size: "npm:8.1.1"
-    chalk: "npm:4.1.0"
-    cmd-shim: "npm:6.0.3"
-    color-support: "npm:1.1.3"
-    columnify: "npm:1.6.0"
-    console-control-strings: "npm:^1.1.0"
-    conventional-changelog-core: "npm:5.0.1"
-    conventional-recommended-bump: "npm:7.0.1"
-    cosmiconfig: "npm:9.0.0"
-    dedent: "npm:1.5.3"
-    execa: "npm:5.0.0"
-    fs-extra: "npm:^11.2.0"
-    get-stream: "npm:6.0.0"
-    git-url-parse: "npm:14.0.0"
-    glob-parent: "npm:6.0.2"
-    has-unicode: "npm:2.0.1"
-    ini: "npm:^1.3.8"
-    init-package-json: "npm:8.2.2"
-    inquirer: "npm:12.9.6"
-    is-ci: "npm:3.0.1"
-    is-stream: "npm:2.0.0"
-    js-yaml: "npm:4.1.1"
-    libnpmpublish: "npm:11.1.2"
-    load-json-file: "npm:6.2.0"
-    make-dir: "npm:4.0.0"
-    make-fetch-happen: "npm:15.0.2"
-    minimatch: "npm:3.1.4"
-    multimatch: "npm:5.0.0"
-    npm-package-arg: "npm:13.0.1"
-    npm-packlist: "npm:10.0.3"
-    npm-registry-fetch: "npm:19.1.0"
-    nx: "npm:>=21.5.3 < 23.0.0"
-    p-map: "npm:4.0.0"
-    p-map-series: "npm:2.1.0"
-    p-queue: "npm:6.6.2"
-    p-reduce: "npm:^2.1.0"
-    pacote: "npm:21.0.1"
-    pify: "npm:5.0.0"
-    read-cmd-shim: "npm:4.0.0"
-    resolve-from: "npm:5.0.0"
-    rimraf: "npm:^6.1.2"
-    semver: "npm:7.7.2"
-    set-blocking: "npm:^2.0.0"
-    signal-exit: "npm:3.0.7"
-    slash: "npm:^3.0.0"
-    ssri: "npm:12.0.0"
-    string-width: "npm:^4.2.3"
-    tar: "npm:7.5.8"
-    temp-dir: "npm:1.0.0"
-    through: "npm:2.3.8"
-    tinyglobby: "npm:0.2.12"
-    upath: "npm:2.0.1"
-    uuid: "npm:^11.1.0"
-    validate-npm-package-license: "npm:3.0.4"
-    validate-npm-package-name: "npm:6.0.2"
-    wide-align: "npm:1.1.5"
-    write-file-atomic: "npm:5.0.1"
-    write-pkg: "npm:4.0.0"
-    yargs: "npm:17.7.2"
-    yargs-parser: "npm:21.1.1"
-  checksum: 10/199ad62a77387385db3d0b15314b00e741779be08a487847743d32de45113e04d8ba0788aa4f5cc97f5ae3864a9d319cbf134d40d0835649093903450f3f43de
-  languageName: node
-  linkType: hard
-
-"@lezer/common@npm:1.3.0, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@lezer/common@npm:1.3.0"
-  checksum: 10/8e195a8e426bc18d4339b3f2a1a7ad39c3b2cfa740c7108657a241985f63bdee5255a5f5cf8d863b878881744288bcb679d16170f0e5bcebb141188b53cfd8c0
+"@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.3.0":
+  version: 1.5.2
+  resolution: "@lezer/common@npm:1.5.2"
+  checksum: 10/62c0a0ce431cb14bfa6cded04e24a05efa566e9260314bb3f3cf547d501efa1db5c83fc9a7871f8e0b6a4030212840f0e6567433168960c7c83bb3ffbeef8b99
   languageName: node
   linkType: hard
 
@@ -5702,12 +5623,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.4.3":
-  version: 1.4.3
-  resolution: "@lezer/lr@npm:1.4.3"
+"@lezer/lr@npm:1.4.8":
+  version: 1.4.8
+  resolution: "@lezer/lr@npm:1.4.8"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
-  checksum: 10/d6dfecedcd51027b38bac756026bcbdffa2e086d9a48a4ef0f84176ca28b300d9da0e508fc77d8d64181540b6027571a7fe1dc3705abdcc5d6db45386d6fb482
+  checksum: 10/01eb519c21077a63292804c41aa70e6eb24cee0a75dbd569a9885860aea937930bc92c980cff14c610a714560c19c8d6e8e15108c39f3c969bfe08afd841c2e7
   languageName: node
   linkType: hard
 
@@ -7797,11 +7718,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-terser@npm:0.4.4":
-  version: 0.4.4
-  resolution: "@rollup/plugin-terser@npm:0.4.4"
+"@rollup/plugin-terser@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@rollup/plugin-terser@npm:1.0.0"
   dependencies:
-    serialize-javascript: "npm:^6.0.1"
+    serialize-javascript: "npm:^7.0.3"
     smob: "npm:^1.0.0"
     terser: "npm:^5.17.4"
   peerDependencies:
@@ -7809,7 +7730,7 @@ __metadata:
   peerDependenciesMeta:
     rollup:
       optional: true
-  checksum: 10/a5e066ddea55fc8c32188bc8b484cca619713516f10e3a06801881ec98bf37459ca24e5fe8711f93a5fa7f26a6e9132a47bc1a61c01e0b513dfd79a96cdc6eb7
+  checksum: 10/eb4389d427d704f10a4d9a8c316fda5d2f8c92419bf24e7cf69497739a10236aa2f3004249b0bbf4290174588a5c274b1653b22e63068cea06f844c8b09aa5cf
   languageName: node
   linkType: hard
 
@@ -7842,177 +7763,177 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm-eabi@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-android-arm-eabi@npm:4.59.0"
+"@rollup/rollup-android-arm-eabi@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-android-arm-eabi@npm:4.60.1"
   conditions: os=android & cpu=arm
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-android-arm64@npm:4.59.0"
+"@rollup/rollup-android-arm64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-android-arm64@npm:4.60.1"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-arm64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-darwin-arm64@npm:4.59.0"
+"@rollup/rollup-darwin-arm64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-darwin-arm64@npm:4.60.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-x64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-darwin-x64@npm:4.59.0"
+"@rollup/rollup-darwin-x64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-darwin-x64@npm:4.60.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-freebsd-arm64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-freebsd-arm64@npm:4.59.0"
+"@rollup/rollup-freebsd-arm64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-freebsd-arm64@npm:4.60.1"
   conditions: os=freebsd & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-freebsd-x64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-freebsd-x64@npm:4.59.0"
+"@rollup/rollup-freebsd-x64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-freebsd-x64@npm:4.60.1"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm-gnueabihf@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.59.0"
+"@rollup/rollup-linux-arm-gnueabihf@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.60.1"
   conditions: os=linux & cpu=arm & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm-musleabihf@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-arm-musleabihf@npm:4.59.0"
+"@rollup/rollup-linux-arm-musleabihf@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-arm-musleabihf@npm:4.60.1"
   conditions: os=linux & cpu=arm & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.59.0"
+"@rollup/rollup-linux-arm64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.60.1"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-musl@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.59.0"
+"@rollup/rollup-linux-arm64-musl@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.60.1"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-loong64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-loong64-gnu@npm:4.59.0"
+"@rollup/rollup-linux-loong64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-loong64-gnu@npm:4.60.1"
   conditions: os=linux & cpu=loong64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-loong64-musl@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-loong64-musl@npm:4.59.0"
+"@rollup/rollup-linux-loong64-musl@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-loong64-musl@npm:4.60.1"
   conditions: os=linux & cpu=loong64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-ppc64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-ppc64-gnu@npm:4.59.0"
+"@rollup/rollup-linux-ppc64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-ppc64-gnu@npm:4.60.1"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-ppc64-musl@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-ppc64-musl@npm:4.59.0"
+"@rollup/rollup-linux-ppc64-musl@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-ppc64-musl@npm:4.60.1"
   conditions: os=linux & cpu=ppc64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-riscv64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-riscv64-gnu@npm:4.59.0"
+"@rollup/rollup-linux-riscv64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-riscv64-gnu@npm:4.60.1"
   conditions: os=linux & cpu=riscv64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-riscv64-musl@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-riscv64-musl@npm:4.59.0"
+"@rollup/rollup-linux-riscv64-musl@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-riscv64-musl@npm:4.60.1"
   conditions: os=linux & cpu=riscv64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-s390x-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-s390x-gnu@npm:4.59.0"
+"@rollup/rollup-linux-s390x-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-s390x-gnu@npm:4.60.1"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.59.0"
+"@rollup/rollup-linux-x64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.60.1"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-musl@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-linux-x64-musl@npm:4.59.0"
+"@rollup/rollup-linux-x64-musl@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-linux-x64-musl@npm:4.60.1"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-openbsd-x64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-openbsd-x64@npm:4.59.0"
+"@rollup/rollup-openbsd-x64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-openbsd-x64@npm:4.60.1"
   conditions: os=openbsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-openharmony-arm64@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-openharmony-arm64@npm:4.59.0"
+"@rollup/rollup-openharmony-arm64@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-openharmony-arm64@npm:4.60.1"
   conditions: os=openharmony & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-arm64-msvc@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.59.0"
+"@rollup/rollup-win32-arm64-msvc@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.60.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-ia32-msvc@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.59.0"
+"@rollup/rollup-win32-ia32-msvc@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.60.1"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-x64-gnu@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-win32-x64-gnu@npm:4.59.0"
+"@rollup/rollup-win32-x64-gnu@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-win32-x64-gnu@npm:4.60.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-x64-msvc@npm:4.59.0":
-  version: 4.59.0
-  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.59.0"
+"@rollup/rollup-win32-x64-msvc@npm:4.60.1":
+  version: 4.60.1
+  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.60.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -10152,7 +10073,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
-    typescript: "npm:5.5.4"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-merge: "npm:5.10.0"
   peerDependencies:
@@ -10186,7 +10107,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
-    typescript: "npm:5.5.4"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-merge: "npm:5.10.0"
   peerDependencies:
@@ -10220,7 +10141,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
-    typescript: "npm:5.5.4"
+    typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-merge: "npm:5.10.0"
   peerDependencies:
@@ -11779,15 +11700,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:11.0.0":
-  version: 11.0.0
-  resolution: "@types/uuid@npm:11.0.0"
-  dependencies:
-    uuid: "npm:*"
-  checksum: 10/9f94bd34e5d220c53cc58ea9f48a0061d3bc343e29bc33a17edc705f5e21fedda21553318151f2bc227c2b2b03727bbb536da2b82a61f84d2e1ca38abc5e5c3f
-  languageName: node
-  linkType: hard
-
 "@types/uuid@npm:9.0.8, @types/uuid@npm:^9.0.1":
   version: 9.0.8
   resolution: "@types/uuid@npm:9.0.8"
@@ -12136,6 +12048,13 @@ __metadata:
     "@typescript-eslint/types": "npm:8.58.0"
     eslint-visitor-keys: "npm:^5.0.0"
   checksum: 10/50b0779e19079dedf3723323a4dfa398c639b3da48f2fcf071c22ca69342e03592f1726d68ea59b9b5a51f14ab112eabc5c93fd2579c84b02a3320042ae20066
+  languageName: node
+  linkType: hard
+
+"@ungap/structured-clone@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@ungap/structured-clone@npm:1.3.0"
+  checksum: 10/80d6910946f2b1552a2406650051c91bbd1f24a6bf854354203d84fe2714b3e8ce4618f49cc3410494173a1c1e8e9777372fe68dce74bd45faf0a7a1a6ccf448
   languageName: node
   linkType: hard
 
@@ -14602,6 +14521,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ci-info@npm:4.3.1":
+  version: 4.3.1
+  resolution: "ci-info@npm:4.3.1"
+  checksum: 10/9dc952bef67e665ccde2e7a552d42d5d095529d21829ece060a00925ede2dfa136160c70ef2471ea6ed6c9b133218b47c007f56955c0f1734a2e57f240aa7445
+  languageName: node
+  linkType: hard
+
 "ci-info@npm:^3.2.0":
   version: 3.9.0
   resolution: "ci-info@npm:3.9.0"
@@ -14613,6 +14539,13 @@ __metadata:
   version: 4.2.0
   resolution: "ci-info@npm:4.2.0"
   checksum: 10/928d8457f3476ffc4a66dec93b9cdf1944d5e60dba69fbd6a0fc95b652386f6ef64857f6e32372533210ef6d8954634af2c7693d7c07778ee015f3629a5e0dd9
+  languageName: node
+  linkType: hard
+
+"ci-info@npm:^4.2.0":
+  version: 4.4.0
+  resolution: "ci-info@npm:4.4.0"
+  checksum: 10/dfded0c630267d89660c8abb988ac8395a382bdfefedcc03e3e2858523312c5207db777c239c34774e3fcff11f015477c19d2ac8a58ea58aa476614a2e64f434
   languageName: node
   linkType: hard
 
@@ -15340,18 +15273,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-webpack-plugin@npm:13.0.0":
-  version: 13.0.0
-  resolution: "copy-webpack-plugin@npm:13.0.0"
+"copy-webpack-plugin@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "copy-webpack-plugin@npm:14.0.0"
   dependencies:
     glob-parent: "npm:^6.0.1"
     normalize-path: "npm:^3.0.0"
     schema-utils: "npm:^4.2.0"
-    serialize-javascript: "npm:^6.0.2"
+    serialize-javascript: "npm:^7.0.3"
     tinyglobby: "npm:^0.2.12"
   peerDependencies:
     webpack: ^5.1.0
-  checksum: 10/209051dd3c0bc7ab97170309cdb1826e642044d2d53e0adc35bb227123c89ae1296a504409325e9b955d7b2d1a505b063f0023e924151d382dbcc92cb9325e6a
+  checksum: 10/734524b9569b873686bdd3addef77ac9604ecaf6eaadaf2fc37f1a91eb4a50c38e8d034899e65a189af37d29b1778b34b818493e5922dc1d089625ecd0f33211
   languageName: node
   linkType: hard
 
@@ -15646,16 +15579,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-minimizer-webpack-plugin@npm:7.0.2":
-  version: 7.0.2
-  resolution: "css-minimizer-webpack-plugin@npm:7.0.2"
+"css-minimizer-webpack-plugin@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "css-minimizer-webpack-plugin@npm:8.0.0"
   dependencies:
     "@jridgewell/trace-mapping": "npm:^0.3.25"
     cssnano: "npm:^7.0.4"
-    jest-worker: "npm:^29.7.0"
+    jest-worker: "npm:^30.0.5"
     postcss: "npm:^8.4.40"
     schema-utils: "npm:^4.2.0"
-    serialize-javascript: "npm:^6.0.2"
+    serialize-javascript: "npm:^7.0.3"
   peerDependencies:
     webpack: ^5.0.0
   peerDependenciesMeta:
@@ -15671,7 +15604,7 @@ __metadata:
       optional: true
     lightningcss:
       optional: true
-  checksum: 10/80ada5f059900a3b474e33ff0f10c0e5f5a37b7525fa7ef30812b6049bcbc28fbda1d703d8f76724a97449114306de5cd7a7af15003a16784e6c9cc374dfedc8
+  checksum: 10/ad130892e0f84af492d638b2659a855e4466a3558760ff03288b251ce20f4bbb4d7a12795f5702441dc466837c1793882a238a43f5d35950d836bd41fd52d0e3
   languageName: node
   linkType: hard
 
@@ -20232,7 +20165,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.12"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "workspace:*"
+    "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:7.3.13--canary.1424.24186601947.0"
     "@grafana/scenes-react": "npm:7.3.13--canary.1424.24186601947.0"
@@ -20243,9 +20176,9 @@ __metadata:
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.3.0"
+    "@lezer/common": "npm:1.5.2"
     "@lezer/highlight": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.3"
+    "@lezer/lr": "npm:1.4.8"
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
     "@locker/near-membrane-shared-dom": "npm:0.14.0"
@@ -20360,12 +20293,12 @@ __metadata:
     comlink: "npm:4.4.2"
     common-tags: "npm:1.8.2"
     confusing-browser-globals: "npm:^1.0.11"
-    copy-webpack-plugin: "npm:13.0.0"
+    copy-webpack-plugin: "npm:^14.0.0"
     core-js: "npm:3.44.0"
     crashme: "npm:0.0.15"
     croner: "npm:^9.0.0"
     css-loader: "npm:7.1.2"
-    css-minimizer-webpack-plugin: "npm:7.0.2"
+    css-minimizer-webpack-plugin: "npm:^8.0.0"
     cypress: "npm:14.3.2"
     cypress-file-upload: "npm:5.0.8"
     cypress-recurse: "npm:^1.35.3"
@@ -20437,7 +20370,7 @@ __metadata:
     jsurl: "npm:^0.1.5"
     kbar: "npm:0.1.0-beta.48"
     known-css-properties: "npm:^0.37.0"
-    lerna: "npm:9.0.5"
+    lerna: "npm:9.0.6"
     leven: "npm:^4.0.0"
     lodash: "npm:^4.17.23"
     logfmt: "npm:^1.3.2"
@@ -20538,7 +20471,7 @@ __metadata:
     tslib: "npm:2.8.1"
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
-    typescript: "npm:5.9.2"
+    typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
     vis-data: "npm:^8.0.0"
@@ -23109,6 +23042,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-util@npm:30.3.0":
+  version: 30.3.0
+  resolution: "jest-util@npm:30.3.0"
+  dependencies:
+    "@jest/types": "npm:30.3.0"
+    "@types/node": "npm:*"
+    chalk: "npm:^4.1.2"
+    ci-info: "npm:^4.2.0"
+    graceful-fs: "npm:^4.2.11"
+    picomatch: "npm:^4.0.3"
+  checksum: 10/4b016004637f6a53d6f54c993dc8904a4d6abe93acb8dd70622dc2ca80290a03692e834af1068969b486426e87d411144705edd4d772bb715a826d7e15b5a4b3
+  languageName: node
+  linkType: hard
+
 "jest-util@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-util@npm:29.7.0"
@@ -23190,6 +23137,19 @@ __metadata:
     merge-stream: "npm:^2.0.0"
     supports-color: "npm:^8.0.0"
   checksum: 10/364cbaef00d8a2729fc760227ad34b5e60829e0869bd84976bdfbd8c0d0f9c2f22677b3e6dd8afa76ed174765351cd12bae3d4530c62eefb3791055127ca9745
+  languageName: node
+  linkType: hard
+
+"jest-worker@npm:^30.0.5":
+  version: 30.3.0
+  resolution: "jest-worker@npm:30.3.0"
+  dependencies:
+    "@types/node": "npm:*"
+    "@ungap/structured-clone": "npm:^1.3.0"
+    jest-util: "npm:30.3.0"
+    merge-stream: "npm:^2.0.0"
+    supports-color: "npm:^8.1.1"
+  checksum: 10/6198e7462617e8f544b1ba593970fb7656e990aa87a2259f693edde106b5aecf63bae692e8d6adc4313efcaba283b15fc25f6834cacca12cf241da0ece722060
   languageName: node
   linkType: hard
 
@@ -23793,11 +23753,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lerna@npm:9.0.5":
-  version: 9.0.5
-  resolution: "lerna@npm:9.0.5"
+"lerna@npm:9.0.6":
+  version: 9.0.6
+  resolution: "lerna@npm:9.0.6"
   dependencies:
-    "@lerna/create": "npm:9.0.5"
     "@npmcli/arborist": "npm:9.1.6"
     "@npmcli/package-json": "npm:7.0.2"
     "@npmcli/run-script": "npm:10.0.3"
@@ -23807,6 +23766,7 @@ __metadata:
     aproba: "npm:2.0.0"
     byte-size: "npm:8.1.1"
     chalk: "npm:4.1.0"
+    ci-info: "npm:4.3.1"
     cmd-shim: "npm:6.0.3"
     color-support: "npm:1.1.3"
     columnify: "npm:1.6.0"
@@ -23860,7 +23820,7 @@ __metadata:
     slash: "npm:3.0.0"
     ssri: "npm:12.0.0"
     string-width: "npm:^4.2.3"
-    tar: "npm:7.5.8"
+    tar: "npm:7.5.11"
     temp-dir: "npm:1.0.0"
     through: "npm:2.3.8"
     tinyglobby: "npm:0.2.12"
@@ -23876,7 +23836,7 @@ __metadata:
     yargs-parser: "npm:21.1.1"
   bin:
     lerna: dist/cli.js
-  checksum: 10/c25b213edcee7267322acbad458c2a8eceb2c560fc37a5c5c8085483d945ae77ba9817223e7ab4bcef9ee57f9491de5ed891a4033eaa938e49cd9bb0e299aebb
+  checksum: 10/35f52621901b62df17993ad2c81dd3e813cae28c4744b16bcaf59edc661969d9dbd436c9686245414f8c24fc33100322d539d878b9aadea0769173bdc8f07ccd
   languageName: node
   linkType: hard
 
@@ -27269,7 +27229,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-reduce@npm:2.1.0, p-reduce@npm:^2.0.0, p-reduce@npm:^2.1.0":
+"p-reduce@npm:2.1.0, p-reduce@npm:^2.0.0":
   version: 2.1.0
   resolution: "p-reduce@npm:2.1.0"
   checksum: 10/99b26d36066a921982f25c575e78355824da0787c486e3dd9fc867460e8bf17d5fb3ce98d006b41bdc81ffc0aa99edf5faee53d11fe282a20291fb721b0cb1c7
@@ -28755,9 +28715,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:8.0.0":
-  version: 8.0.0
-  resolution: "protobufjs@npm:8.0.0"
+"protobufjs@npm:8.0.1":
+  version: 8.0.1
+  resolution: "protobufjs@npm:8.0.1"
   dependencies:
     "@protobufjs/aspromise": "npm:^1.1.2"
     "@protobufjs/base64": "npm:^1.1.2"
@@ -28771,7 +28731,7 @@ __metadata:
     "@protobufjs/utf8": "npm:^1.1.0"
     "@types/node": "npm:>=13.7.0"
     long: "npm:^5.0.0"
-  checksum: 10/f9f2bc0acd37ca85ad4afb030fb3973cb93129e54623d7d36255a0406f852505afae4a94a88b305bca3a6384675bb34c7602dfa64cab6b67f95597234a94681d
+  checksum: 10/71431cbb8013206052f404a01b0e10b2f1a07595937eebaba7f30e168b50d26ad1a1d5d6f6d23fa3497c0ee4ad2983ad598aec7e68f0f3ee17ed49a4842a86da
   languageName: node
   linkType: hard
 
@@ -30850,35 +30810,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:4.59.0, rollup@npm:^4.22.4":
-  version: 4.59.0
-  resolution: "rollup@npm:4.59.0"
+"rollup@npm:^4.60.1":
+  version: 4.60.1
+  resolution: "rollup@npm:4.60.1"
   dependencies:
-    "@rollup/rollup-android-arm-eabi": "npm:4.59.0"
-    "@rollup/rollup-android-arm64": "npm:4.59.0"
-    "@rollup/rollup-darwin-arm64": "npm:4.59.0"
-    "@rollup/rollup-darwin-x64": "npm:4.59.0"
-    "@rollup/rollup-freebsd-arm64": "npm:4.59.0"
-    "@rollup/rollup-freebsd-x64": "npm:4.59.0"
-    "@rollup/rollup-linux-arm-gnueabihf": "npm:4.59.0"
-    "@rollup/rollup-linux-arm-musleabihf": "npm:4.59.0"
-    "@rollup/rollup-linux-arm64-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-arm64-musl": "npm:4.59.0"
-    "@rollup/rollup-linux-loong64-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-loong64-musl": "npm:4.59.0"
-    "@rollup/rollup-linux-ppc64-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-ppc64-musl": "npm:4.59.0"
-    "@rollup/rollup-linux-riscv64-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-riscv64-musl": "npm:4.59.0"
-    "@rollup/rollup-linux-s390x-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-x64-gnu": "npm:4.59.0"
-    "@rollup/rollup-linux-x64-musl": "npm:4.59.0"
-    "@rollup/rollup-openbsd-x64": "npm:4.59.0"
-    "@rollup/rollup-openharmony-arm64": "npm:4.59.0"
-    "@rollup/rollup-win32-arm64-msvc": "npm:4.59.0"
-    "@rollup/rollup-win32-ia32-msvc": "npm:4.59.0"
-    "@rollup/rollup-win32-x64-gnu": "npm:4.59.0"
-    "@rollup/rollup-win32-x64-msvc": "npm:4.59.0"
+    "@rollup/rollup-android-arm-eabi": "npm:4.60.1"
+    "@rollup/rollup-android-arm64": "npm:4.60.1"
+    "@rollup/rollup-darwin-arm64": "npm:4.60.1"
+    "@rollup/rollup-darwin-x64": "npm:4.60.1"
+    "@rollup/rollup-freebsd-arm64": "npm:4.60.1"
+    "@rollup/rollup-freebsd-x64": "npm:4.60.1"
+    "@rollup/rollup-linux-arm-gnueabihf": "npm:4.60.1"
+    "@rollup/rollup-linux-arm-musleabihf": "npm:4.60.1"
+    "@rollup/rollup-linux-arm64-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-arm64-musl": "npm:4.60.1"
+    "@rollup/rollup-linux-loong64-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-loong64-musl": "npm:4.60.1"
+    "@rollup/rollup-linux-ppc64-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-ppc64-musl": "npm:4.60.1"
+    "@rollup/rollup-linux-riscv64-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-riscv64-musl": "npm:4.60.1"
+    "@rollup/rollup-linux-s390x-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-x64-gnu": "npm:4.60.1"
+    "@rollup/rollup-linux-x64-musl": "npm:4.60.1"
+    "@rollup/rollup-openbsd-x64": "npm:4.60.1"
+    "@rollup/rollup-openharmony-arm64": "npm:4.60.1"
+    "@rollup/rollup-win32-arm64-msvc": "npm:4.60.1"
+    "@rollup/rollup-win32-ia32-msvc": "npm:4.60.1"
+    "@rollup/rollup-win32-x64-gnu": "npm:4.60.1"
+    "@rollup/rollup-win32-x64-msvc": "npm:4.60.1"
     "@types/estree": "npm:1.0.8"
     fsevents: "npm:~2.3.2"
   dependenciesMeta:
@@ -30936,7 +30896,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: 10/728237932aad7022c0640cd126b9fe5285f2578099f22a0542229a17785320a6553b74582fa5977877541c1faf27de65ed2750bc89dbb55b525405244a46d9f1
+  checksum: 10/6866a35efc999990e191fc954a859ba802d13be63ca13b04746459455982f6b8784d92e5eea8db3ef8acf8baba8c43e8e6cb741f3233ba4c46adf148d3708a9c
   languageName: node
   linkType: hard
 
@@ -31314,21 +31274,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.7.4, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3":
-  version: 7.7.4
-  resolution: "semver@npm:7.7.4"
-  bin:
-    semver: bin/semver.js
-  checksum: 10/26bdc6d58b29528f4142d29afb8526bc335f4fc04c4a10f2b98b217f277a031c66736bf82d3d3bb354a2f6a3ae50f18fd62b053c4ac3f294a3d10a61f5075b75
-  languageName: node
-  linkType: hard
-
 "semver@npm:^6.0.0, semver@npm:^6.3.0, semver@npm:^6.3.1":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3":
+  version: 7.7.4
+  resolution: "semver@npm:7.7.4"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/26bdc6d58b29528f4142d29afb8526bc335f4fc04c4a10f2b98b217f277a031c66736bf82d3d3bb354a2f6a3ae50f18fd62b053c4ac3f294a3d10a61f5075b75
   languageName: node
   linkType: hard
 
@@ -31371,12 +31331,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"serialize-javascript@npm:^6.0.1, serialize-javascript@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "serialize-javascript@npm:6.0.2"
-  dependencies:
-    randombytes: "npm:^2.1.0"
-  checksum: 10/445a420a6fa2eaee4b70cbd884d538e259ab278200a2ededd73253ada17d5d48e91fb1f4cd224a236ab62ea7ba0a70c6af29fc93b4f3d3078bf7da1c031fde58
+"serialize-javascript@npm:^7.0.3":
+  version: 7.0.5
+  resolution: "serialize-javascript@npm:7.0.5"
+  checksum: 10/6237c76ef6df3d1ad61dd4a393b71ca758c7654f4d1cf77529e513134c0f0660302e03b7ec88a8f3a3daa79e1f93d6de8218ecbc45e073d7cc6b66284a1d3e83
   languageName: node
   linkType: hard
 
@@ -33093,16 +33051,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tar@npm:7.5.8":
-  version: 7.5.8
-  resolution: "tar@npm:7.5.8"
+"tar@npm:7.5.11":
+  version: 7.5.11
+  resolution: "tar@npm:7.5.11"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10/5fddc22e0fd03e73d5e9e922e71d8681f85443dee4f21403059a757e186ae4004abc9a709cdc7f4143d7d75758a2935f7306b3cc193123d46b6f786dd2b99c2a
+  checksum: 10/fb2e77ee858a73936c68e066f4a602d428d6f812e6da0cc1e14a41f99498e4f7fd3535e355fa15157240a5538aa416026cfa6306bb0d1d1c1abf314b1f878e9a
   languageName: node
   linkType: hard
 
@@ -33135,14 +33093,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser-webpack-plugin@npm:5.3.14":
-  version: 5.3.14
-  resolution: "terser-webpack-plugin@npm:5.3.14"
+"terser-webpack-plugin@npm:^5.3.1, terser-webpack-plugin@npm:^5.3.14, terser-webpack-plugin@npm:^5.3.16, terser-webpack-plugin@npm:^5.4.0":
+  version: 5.4.0
+  resolution: "terser-webpack-plugin@npm:5.4.0"
   dependencies:
     "@jridgewell/trace-mapping": "npm:^0.3.25"
     jest-worker: "npm:^27.4.5"
     schema-utils: "npm:^4.3.0"
-    serialize-javascript: "npm:^6.0.2"
     terser: "npm:^5.31.1"
   peerDependencies:
     webpack: ^5.1.0
@@ -33153,29 +33110,7 @@ __metadata:
       optional: true
     uglify-js:
       optional: true
-  checksum: 10/5b7290f7edb179b83cefb8827c12371ddddc088cf251cf58a1c738d82628331ae6604273b61fe991d77411d4bb6b7178c3826aa47edf01b4ee21f973d6c8b8fb
-  languageName: node
-  linkType: hard
-
-"terser-webpack-plugin@npm:^5.3.1, terser-webpack-plugin@npm:^5.3.14, terser-webpack-plugin@npm:^5.3.16":
-  version: 5.3.16
-  resolution: "terser-webpack-plugin@npm:5.3.16"
-  dependencies:
-    "@jridgewell/trace-mapping": "npm:^0.3.25"
-    jest-worker: "npm:^27.4.5"
-    schema-utils: "npm:^4.3.0"
-    serialize-javascript: "npm:^6.0.2"
-    terser: "npm:^5.31.1"
-  peerDependencies:
-    webpack: ^5.1.0
-  peerDependenciesMeta:
-    "@swc/core":
-      optional: true
-    esbuild:
-      optional: true
-    uglify-js:
-      optional: true
-  checksum: 10/09dfbff602acfa114cdd174254b69a04adbc47856021ab351e37982202fd1ec85e0b62ffd5864c98beb8e96aef2f43da490b3448b4541db539c2cff6607394a6
+  checksum: 10/f4618b18cec5dd41fca4a53f621ea06df04ff7bb2b09d3766559284e171a91df2884083e5c143aaacee2000870b046eb7157e39d1d2d8024577395165a070094
   languageName: node
   linkType: hard
 
@@ -34056,16 +33991,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.5.4":
-  version: 5.5.4
-  resolution: "typescript@npm:5.5.4"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/1689ccafef894825481fc3d856b4834ba3cc185a9c2878f3c76a9a1ef81af04194849840f3c69e7961e2312771471bb3b460ca92561e1d87599b26c37d0ffb6f
-  languageName: node
-  linkType: hard
-
 "typescript@npm:5.6.1-rc":
   version: 5.6.1-rc
   resolution: "typescript@npm:5.6.1-rc"
@@ -34076,13 +34001,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.9.2":
-  version: 5.9.2
-  resolution: "typescript@npm:5.9.2"
+"typescript@npm:6.0.2":
+  version: 6.0.2
+  resolution: "typescript@npm:6.0.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/cc2fe6c822819de5d453fa25aa9f32096bf70dde215d481faa1ad84a283dfb264e33988ed8f6d36bc803dd0b16dbe943efa311a798ef76d5b3892a05dfbfd628
+  checksum: 10/b9fc2fcee7ee8e5ca6f5138181964550531e18e2d20ecb71b802d4d495881e3444e0ef94cbb6e84eb2ba41e913f6feae3ca33cc722b32e6e6dfadb32d23b80e6
   languageName: node
   linkType: hard
 
@@ -34096,16 +34021,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>":
-  version: 5.5.4
-  resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/746fdd0865c5ce4f15e494c57ede03a9e12ede59cfdb40da3a281807853fe63b00ef1c912d7222143499aa82f18b8b472baa1830df8804746d09b55f6cf5b1cc
-  languageName: node
-  linkType: hard
-
 "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>":
   version: 5.6.1-rc
   resolution: "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>::version=5.6.1-rc&hash=8c6c40"
@@ -34116,13 +34031,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.9.2#optional!builtin<compat/typescript>":
-  version: 5.9.2
-  resolution: "typescript@patch:typescript@npm%3A5.9.2#optional!builtin<compat/typescript>::version=5.9.2&hash=5786d5"
+"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>":
+  version: 6.0.2
+  resolution: "typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/bd810ab13e8e557225a8b5122370385440b933e4e077d5c7641a8afd207fdc8be9c346e3c678adba934b64e0e70b0acf5eef9493ea05170a48ce22bef845fdc7
+  checksum: 10/e5501dfcf8c5b6b9a61f6fa53decc40187cebe3a2b7b2bd51c615007ad4cf6d58298461fef63294f6be9d5f2f33019b2a2e2bf02d9cb7d7f6ec94372bf24ffa2
   languageName: node
   linkType: hard
 
@@ -34539,21 +34454,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:*, uuid@npm:13.0.0, uuid@npm:^13.0.0":
-  version: 13.0.0
-  resolution: "uuid@npm:13.0.0"
-  bin:
-    uuid: dist-node/bin/uuid
-  checksum: 10/2742b24d1e00257e60612572e4d28679423469998cafbaf1fe9f1482e3edf9c40754b31bfdb3d08d71b29239f227a304588f75210b3b48f2609f0673f1feccef
-  languageName: node
-  linkType: hard
-
 "uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.5, uuid@npm:^11.1.0":
   version: 11.1.0
   resolution: "uuid@npm:11.1.0"
   bin:
     uuid: dist/esm/bin/uuid
   checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "uuid@npm:13.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/2742b24d1e00257e60612572e4d28679423469998cafbaf1fe9f1482e3edf9c40754b31bfdb3d08d71b29239f227a304588f75210b3b48f2609f0673f1feccef
   languageName: node
   linkType: hard
 

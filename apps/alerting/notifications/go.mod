@@ -3,8 +3,8 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.25.9
 
 require (
-	github.com/grafana/grafana-app-sdk v0.52.1
-	github.com/grafana/grafana-app-sdk/logging v0.51.4
+	github.com/grafana/grafana-app-sdk v0.53.1
+	github.com/grafana/grafana-app-sdk/logging v0.53.0
 	k8s.io/apimachinery v0.35.3
 	k8s.io/apiserver v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
@@ -44,6 +44,7 @@ require (
 	github.com/go-openapi/testify/v2 v2.4.1 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect

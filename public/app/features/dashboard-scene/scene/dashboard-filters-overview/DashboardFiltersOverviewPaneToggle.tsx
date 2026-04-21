@@ -13,7 +13,7 @@ interface Props {
 
 export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-  const tooltip = t('dashboards.filters-overview.open', 'Open filters overview pane');
+  const tooltip = t('dashboards.filters-overview.open', 'Filters overview');
 
   const onClick = () => {
     reportInteraction('grafana_unified_drilldown_filters_overview_opened');

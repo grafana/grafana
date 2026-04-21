@@ -17,6 +17,7 @@ import (
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -42,7 +43,7 @@ type Reconciler struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	metrics       *reconcilerMetrics
-	leaderElector LeaderElector
+	leaderElector leaderelection.Elector
 
 	workQueue chan string
 
@@ -61,9 +62,10 @@ type Reconciler struct {
 type Config struct {
 	Workers             int
 	Interval            time.Duration
-	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
-	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
+	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
 func (c Config) queueSize() int {
@@ -80,11 +82,9 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
-var reconcileGVRs = []schema.GroupVersionResource{
+// defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
+var DefaultCRDs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
-	iamv0.RoleInfo.GroupVersionResource(),
-	iamv0.RoleBindingInfo.GroupVersionResource(),
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
@@ -99,7 +99,7 @@ func NewReconciler(
 	logger log.Logger,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	leaderElector LeaderElector,
+	leaderElector leaderelection.Elector,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -132,7 +132,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 }
 
 // runLoop contains the main reconciliation loop, started when this instance
-// acquires leadership (or immediately for NoopLeaderElector).
+// acquires leadership (or immediately for NoopElector).
 func (r *Reconciler) runLoop(ctx context.Context) {
 	r.metrics.isLeader.Set(1)
 	defer r.metrics.isLeader.Set(0)

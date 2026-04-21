@@ -127,6 +127,7 @@ export const VersionList = ({ plugin }: Props) => {
                       shouldDisableVersionInstallation({
                         version,
                         latestMajorVersions,
+                        latestCompatibleVersion: latestCompatibleVersion?.version,
                         installedVersion,
                         updateStrategy: plugin.managed.strategy,
                       })
@@ -204,6 +205,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface ShouldDisableVersionInstallationArgs {
   version: Version;
   latestMajorVersions: Set<string>;
+  latestCompatibleVersion: string | undefined;
   installedVersion: string | undefined;
   updateStrategy?: PluginUpdateStrategy;
 }
@@ -211,6 +213,7 @@ interface ShouldDisableVersionInstallationArgs {
 function shouldDisableVersionInstallation({
   version,
   latestMajorVersions,
+  latestCompatibleVersion,
   installedVersion,
   updateStrategy,
 }: ShouldDisableVersionInstallationArgs) {
@@ -219,7 +222,12 @@ function shouldDisableVersionInstallation({
   }
 
   if (updateStrategy === PluginUpdateStrategy.MajorAligned) {
-    const lessThanInstalledVersion = installedVersion && lte(version.version, installedVersion);
+    if (!installedVersion) {
+      // When no version is installed, only the latest compatible version can be installed
+      return version.version !== latestCompatibleVersion;
+    }
+
+    const lessThanInstalledVersion = lte(version.version, installedVersion);
     const isLatestMajorVersion = latestMajorVersions.has(version.version);
 
     // should disable the install when the version is lower than the current installed

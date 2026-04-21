@@ -3,9 +3,8 @@ package identity
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -14,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,6 +23,7 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
+	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check — see https://github.com/grafana/grafana/pull/121625")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode5 when it's supported
@@ -34,7 +35,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 					AppModeProduction:      false,
 					DisableAnonymous:       true,
 					RBACSingleOrganization: true,
-					EnableLog:              true,
 					APIServerStorageType:   "unified",
 					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 						"teambindings.iam.grafana.app": {
@@ -47,7 +47,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 						featuremgmt.FlagKubernetesUsersApi,
 					},
 				},
-				CustomHTTPClient: &http.Client{Timeout: 60 * time.Second},
 			})
 
 			ctx := context.Background()
@@ -125,6 +124,13 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionAdmin, actual.Spec.Permission)
 		require.False(t, actual.Spec.External)
 		require.Equal(t, createdUID, actual.Name)
+
+		// Verify deprecatedInternalID label matches the team's internal ID
+		teamDeprecatedID := team.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, teamDeprecatedID, "team should have a deprecatedInternalID label")
+		bindingDeprecatedID := response.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, bindingDeprecatedID, "team binding should have a deprecatedInternalID label")
+		require.Equal(t, teamDeprecatedID, bindingDeprecatedID, "team binding deprecatedInternalID should match the team's internal ID")
 
 		// Update the team binding
 		toUpdate := toCreate.DeepCopy()
@@ -224,6 +230,42 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "teamRef is required")
+	})
+
+	t.Run("should not be able to create team binding with non-existent team", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toCreate := createTeamBindingObject(helper, user.GetName(), "non-existent-team")
+
+		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "team does not exist")
+	})
+
+	t.Run("should not be able to create team binding with non-existent user", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toCreate := createTeamBindingObject(helper, "non-existent-user", team.GetName())
+
+		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "user does not exist")
 	})
 
 	t.Run("should not be able to create team binding with invalid permission", func(t *testing.T) {
@@ -526,6 +568,11 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		require.Equal(t, userRsp.Result.UID, actual.Spec.Subject.Name)
 		require.Equal(t, teamRsp.Result.UID, actual.Spec.TeamRef.Name)
 		require.Equal(t, teamBindingName, actual.Name)
+
+		// Verify deprecatedInternalID label matches the legacy team ID
+		bindingDeprecatedID := response.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.Equal(t, strconv.FormatInt(teamRsp.Result.ID, 10), bindingDeprecatedID,
+			"team binding deprecatedInternalID should match the legacy team ID")
 	})
 }
 

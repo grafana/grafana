@@ -462,10 +462,6 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: [expect.any(Function)],
-      defaultKeys: undefined,
-      drilldownRecommendationsEnabled: undefined,
       enableGroupBy: false,
       layout: 'combobox',
     });
@@ -554,9 +550,6 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: [expect.any(Function)],
-      drilldownRecommendationsEnabled: undefined,
       enableGroupBy: false,
       layout: 'combobox',
     });

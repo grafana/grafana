@@ -45,7 +45,7 @@ func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfga
 	return nil
 }
 func (s *stubServer) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return &mockOpenFGAServer{}
+	return nil
 }
 func (s *stubServer) GetOrCreateStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
 	s.getOrCreateCalls.Add(1)
@@ -75,6 +75,7 @@ func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconcil
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
+		cfg:           Config{CRDs: DefaultCRDs},
 		logger:        log.NewNopLogger(),
 		tracer:        tracing.NewNoopTracerService(),
 		metrics:       newReconcilerMetrics(prometheus.NewRegistry()),
