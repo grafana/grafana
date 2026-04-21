@@ -3,33 +3,29 @@ import { type ReactElement, useState } from 'react';
 import { ButtonGroup, Dropdown, ToolbarButton } from '@grafana/ui';
 
 import { type ToolbarActionProps } from '../types';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 interface Props extends ToolbarActionProps {
   menu: ReactElement | (() => ReactElement);
   onMenuVisibilityChange?: (isOpen: boolean) => void;
   groupTestId: string;
-  buttonLabel: string;
   buttonTooltip: string;
   buttonTestId: string;
   onButtonClick?: () => void;
   arrowLabel: string;
   arrowTestId: string;
-  variant?: 'primary' | 'canvas';
   loading?: boolean;
 }
 
 export const ShareExportDashboardButton = ({
-  dashboard,
   menu,
   onMenuVisibilityChange,
   groupTestId,
-  buttonLabel,
   buttonTooltip,
   buttonTestId,
   onButtonClick,
   arrowLabel,
   arrowTestId,
-  variant = 'canvas',
   loading,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,12 +35,10 @@ export const ShareExportDashboardButton = ({
       <ToolbarButton
         data-testid={buttonTestId}
         tooltip={buttonTooltip}
-        variant={variant}
+        variant="canvas"
         onClick={loading ? undefined : onButtonClick}
         icon={loading ? 'spinner' : 'share-alt'}
-      >
-        {buttonLabel}
-      </ToolbarButton>
+      />
       <Dropdown
         overlay={menu}
         placement="bottom-end"
@@ -58,7 +52,7 @@ export const ShareExportDashboardButton = ({
           aria-label={arrowLabel}
           data-testid={arrowTestId}
           icon={isOpen ? 'angle-up' : 'angle-down'}
-          variant={variant}
+          variant="canvas"
         />
       </Dropdown>
     </ButtonGroup>

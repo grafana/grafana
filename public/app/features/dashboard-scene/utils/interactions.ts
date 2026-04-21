@@ -210,14 +210,17 @@ export const DashboardInteractions = {
   toolbarShareClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
   },
-  toolbarShareDropdownClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
-  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },
-
   // Sharing interactions:
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
+  // clicking on a specific share option in the toolbar share button dropdown
+  toolbarShareDropdownOptionClick: (option: string) => {
+    reportDashboardInteraction('toolbar_share_option_clicked', { item: 'share_dropdown_option', option });
+  },
   sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_category_clicked', properties);
   },
