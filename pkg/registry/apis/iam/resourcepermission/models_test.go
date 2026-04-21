@@ -2,14 +2,18 @@ package resourcepermission
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/stretchr/testify/require"
 )
 
 // setupBackendNoDB sets up a ResourcePermSqlBackend with a no-op dbProvider for tests that do not require DB access.
@@ -152,4 +156,70 @@ func TestParseScope(t *testing.T) {
 			require.Equal(t, tt.expected.Name, result.Name)
 		})
 	}
+}
+
+// --- toV0ResourcePermissions with SA resolver ---
+
+func setupBackendWithResolver(t *testing.T, resolver NameResolver) *ResourcePermSqlBackend {
+	noProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return nil, nil
+	}
+	mappers := NewMappersRegistry()
+	backend := ProvideStorageBackend(noProvider, mappers)
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+	mappers.RegisterResolver(saGR, resolver)
+	return backend
+}
+
+func TestToV0ResourcePermissions_SAResolver(t *testing.T) {
+	ctx := context.Background()
+	ns := types.NamespaceInfo{Value: "org-1"}
+	now := time.Now()
+
+	saAssignment := rbacAssignment{
+		ID:          1,
+		Action:      "serviceaccounts:edit",
+		Scope:       "serviceaccounts:id:42",
+		Created:     now,
+		Updated:     now,
+		SubjectUID:  "user-1",
+		SubjectType: "user",
+	}
+
+	t.Run("IDToUIDMap pre-loads cache, SA name resolves to UID", func(t *testing.T) {
+		resolver := &mockNameResolver{idToUID: map[string]string{"42": "sa-uid-abc"}}
+		backend := setupBackendWithResolver(t, resolver)
+
+		result, err := backend.toV0ResourcePermissions(ctx, ns, []rbacAssignment{saAssignment})
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "sa-uid-abc", result[0].Spec.Resource.Name)
+		assert.Equal(t, "serviceaccounts", result[0].Spec.Resource.Resource)
+		assert.Equal(t, "iam.grafana.app", result[0].Spec.Resource.ApiGroup)
+	})
+
+	t.Run("IDToUIDMap failure falls back to per-scope IDToUID", func(t *testing.T) {
+		// Pre-load fails but per-scope lookup succeeds
+		resolver := &mockNameResolver{
+			idToUID:       map[string]string{"42": "sa-uid-abc"},
+			idToUIDMapErr: errors.New("k8s timeout"),
+		}
+		backend := setupBackendWithResolver(t, resolver)
+
+		result, err := backend.toV0ResourcePermissions(ctx, ns, []rbacAssignment{saAssignment})
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "sa-uid-abc", result[0].Spec.Resource.Name)
+	})
+
+	t.Run("both IDToUIDMap and IDToUID fail: error returned", func(t *testing.T) {
+		resolver := &mockNameResolver{
+			idToUIDMapErr: errors.New("k8s unavailable"),
+			idToUIDErr:    errors.New("k8s unavailable"),
+		}
+		backend := setupBackendWithResolver(t, resolver)
+
+		_, err := backend.toV0ResourcePermissions(ctx, ns, []rbacAssignment{saAssignment})
+		require.Error(t, err)
+	})
 }

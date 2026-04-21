@@ -940,3 +940,45 @@ func TestIntegration_Datasource_WriteAndReadBackConcreteGroup(t *testing.T) {
 	assert.Equal(t, "datasources", got.Spec.Resource.Resource)
 	assert.Equal(t, "loki-ds", got.Spec.Resource.Name)
 }
+
+// --- resolveScope ---
+
+func TestResolveScope(t *testing.T) {
+	ctx := context.Background()
+	ns := types.NamespaceInfo{Value: "org-1"}
+
+	t.Run("with resolver: calls UIDToID and returns id-scoped scope", func(t *testing.T) {
+		mapper := NewIDScopedMapper("serviceaccounts", defaultLevels)
+		resolver := &mockNameResolver{uidToID: map[string]string{"sa-uid": "42"}}
+
+		scope, err := resolveScope(ctx, ns, nil, resolver, mapper, "sa-uid")
+		require.NoError(t, err)
+		assert.Equal(t, "serviceaccounts:id:42", scope)
+	})
+
+	t.Run("resolver UIDToID error propagates", func(t *testing.T) {
+		mapper := NewIDScopedMapper("serviceaccounts", defaultLevels)
+		resolver := &mockNameResolver{uidToIDErr: errors.New("sa not found")}
+
+		_, err := resolveScope(ctx, ns, nil, resolver, mapper, "sa-uid")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "sa not found")
+	})
+
+	t.Run("nil resolver with uid-scoped mapper: returns scope unchanged", func(t *testing.T) {
+		mapper := NewMapper("folders", defaultLevels)
+
+		scope, err := resolveScope(ctx, ns, nil, nil, mapper, "fold1")
+		require.NoError(t, err)
+		assert.Equal(t, "folders:uid:fold1", scope)
+	})
+
+	t.Run("nil resolver with id-scoped mapper and nil store: returns scope unchanged", func(t *testing.T) {
+		mapper := NewIDScopedMapper("teams", defaultLevels)
+
+		// No resolver, no store — the id-scoped path is skipped when store is nil
+		scope, err := resolveScope(ctx, ns, nil, nil, mapper, "team-1")
+		require.NoError(t, err)
+		assert.Equal(t, "teams:id:team-1", scope)
+	})
+}

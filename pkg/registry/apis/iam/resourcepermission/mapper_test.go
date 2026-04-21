@@ -1,11 +1,15 @@
 package resourcepermission
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/types"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -416,4 +420,92 @@ func TestMapper_AllowsKind_RestrictedList(t *testing.T) {
 	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount))
 	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindTeam))
 	assert.False(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindBasicRole))
+}
+
+// --- RegisterResolver / GetResolver ---
+
+func TestMappersRegistry_RegisterResolver(t *testing.T) {
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+
+	t.Run("registered resolver is returned by GetResolver", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(saGR, NewIDScopedMapper("serviceaccounts", defaultLevels), nil)
+
+		r := &mockNameResolver{}
+		m.RegisterResolver(saGR, r)
+
+		got, ok := m.GetResolver(saGR)
+		require.True(t, ok)
+		assert.Equal(t, r, got)
+	})
+
+	t.Run("GetResolver returns false for unregistered resource", func(t *testing.T) {
+		m := NewMappersRegistry()
+		_, ok := m.GetResolver(schema.GroupResource{Group: "unknown.app", Resource: "things"})
+		assert.False(t, ok)
+	})
+
+	t.Run("GetResolver uses wildcard group resolution", func(t *testing.T) {
+		m := NewMappersRegistry()
+		wildcardGR := schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"}
+		m.RegisterMapper(wildcardGR, NewMapper("datasources", defaultLevels), nil)
+
+		r := &mockNameResolver{}
+		m.RegisterResolver(wildcardGR, r)
+
+		// A concrete group that matches the wildcard should find the resolver
+		concreteGR := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
+		got, ok := m.GetResolver(concreteGR)
+		require.True(t, ok)
+		assert.Equal(t, r, got)
+	})
+}
+
+// --- ParseScopeCtx with resolver ---
+
+func TestMappersRegistry_ParseScopeCtx_WithResolver(t *testing.T) {
+	ctx := context.Background()
+	ns := types.NamespaceInfo{Value: "org-1"}
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+
+	t.Run("resolver translates id to uid", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(saGR, NewIDScopedMapper("serviceaccounts", defaultLevels), nil)
+		m.RegisterResolver(saGR, &mockNameResolver{idToUID: map[string]string{"42": "sa-uid-abc"}})
+
+		grn, err := m.ParseScopeCtx(ctx, ns, nil, "serviceaccounts:id:42", "")
+		require.NoError(t, err)
+		assert.Equal(t, "sa-uid-abc", grn.Name)
+		assert.Equal(t, "serviceaccounts", grn.Resource)
+		assert.Equal(t, "iam.grafana.app", grn.Group)
+	})
+
+	t.Run("resolver error is propagated", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(saGR, NewIDScopedMapper("serviceaccounts", defaultLevels), nil)
+		m.RegisterResolver(saGR, &mockNameResolver{idToUIDErr: errors.New("k8s unavailable")})
+
+		_, err := m.ParseScopeCtx(ctx, ns, nil, "serviceaccounts:id:42", "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "k8s unavailable")
+	})
+
+	t.Run("uid-scoped resource passes name through unchanged", func(t *testing.T) {
+		m := NewMappersRegistry()
+
+		grn, err := m.ParseScopeCtx(ctx, ns, nil, "folders:uid:fold1", "")
+		require.NoError(t, err)
+		assert.Equal(t, "fold1", grn.Name)
+		assert.Equal(t, "folder.grafana.app", grn.Group)
+	})
+
+	t.Run("id-scoped resource without resolver and nil store passes name through", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(saGR, NewIDScopedMapper("serviceaccounts", defaultLevels), nil)
+
+		// No resolver registered, nil store — name is returned as-is (numeric ID)
+		grn, err := m.ParseScopeCtx(ctx, ns, nil, "serviceaccounts:id:42", "")
+		require.NoError(t, err)
+		assert.Equal(t, "42", grn.Name)
+	})
 }
