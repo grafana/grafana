@@ -64,6 +64,8 @@
   ],
   "dependencies": {
     "@codemirror/autocomplete": "6.20.1",
+    "@codemirror/lang-json": "6.0.2",
+    "@codemirror/lang-sql": "6.10.0",
     "@codemirror/state": "6.6.0",
     "@codemirror/view": "6.41.0",
     "@emotion/css": "11.13.5",
@@ -91,7 +93,6 @@
     "@types/jquery": "3.5.33",
     "@types/lodash": "4.17.20",
     "@types/react-table": "7.7.20",
-    "@uiw/codemirror-extensions-langs": "4.25.9",
     "@uiw/codemirror-theme-vscode": "4.25.9",
     "@uiw/react-codemirror": "4.25.9",
     "calculate-size": "1.1.1",

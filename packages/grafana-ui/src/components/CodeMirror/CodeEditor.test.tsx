@@ -1,9 +1,10 @@
 import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 
 import { CodeEditor } from './CodeEditor';
+import { loadLanguageExtension } from './languageLoader';
 
 let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
 
@@ -29,7 +30,13 @@ jest.mock('@codemirror/autocomplete', () => {
   };
 });
 
+jest.mock('./languageLoader', () => ({
+  __esModule: true,
+  loadLanguageExtension: jest.fn(),
+}));
+
 const autocompletionMock = autocompletion as jest.MockedFunction<typeof autocompletion>;
+const loadLanguageExtensionMock = loadLanguageExtension as jest.MockedFunction<typeof loadLanguageExtension>;
 
 const getExtensions = () => capturedProps?.extensions ?? [];
 
@@ -47,6 +54,8 @@ describe('CodeMirror CodeEditor', () => {
   beforeEach(() => {
     capturedProps = undefined;
     autocompletionMock.mockClear();
+    loadLanguageExtensionMock.mockClear();
+    loadLanguageExtensionMock.mockResolvedValue(null);
   });
 
   it('merge mode contributes completionSources through language data and keeps existing sources', () => {
@@ -109,5 +118,15 @@ describe('CodeMirror CodeEditor', () => {
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
     );
+  });
+
+  it('loads language extensions lazily when language is provided', async () => {
+    const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
+    loadLanguageExtensionMock.mockResolvedValue(languageExtension);
+
+    render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
+
+    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql'));
+    await waitFor(() => expect(getExtensions()).toContain(languageExtension));
   });
 });

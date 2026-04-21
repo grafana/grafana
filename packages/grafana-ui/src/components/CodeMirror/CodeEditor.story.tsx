@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CodeEditor, type CodeEditorProps } from './CodeEditor';
 
-const languageOptions: Array<NonNullable<CodeEditorProps['language']>> = ['sql', 'json', 'js', 'markdown', 'xml'];
+const languageOptions: Array<NonNullable<CodeEditorProps['language']>> = ['sql', 'json'];
 
 const keywordCompletionSource: CompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);

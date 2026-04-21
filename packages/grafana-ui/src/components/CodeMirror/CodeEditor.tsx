@@ -1,13 +1,12 @@
 import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
-import { loadLanguage, type LanguageName } from '@uiw/codemirror-extensions-langs';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-type CodeEditorLanguage = LanguageName;
+import { loadLanguageExtension, type CodeEditorLanguage } from './languageLoader';
 
 export type CodeEditorCompletionMode = 'override' | 'merge';
 
@@ -34,15 +33,6 @@ export interface CodeEditorProps {
    */
   extensions?: Extension[];
 }
-
-const getLanguageExtensions = (language?: CodeEditorLanguage): Extension[] => {
-  if (!language) {
-    return [];
-  }
-
-  const extension = loadLanguage(language);
-  return extension ? [extension] : [];
-};
 
 const getCompletionExtensions = (
   sources: readonly CompletionSource[] | undefined,
@@ -74,6 +64,13 @@ const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledb
   ];
 };
 
+type LoadedLanguageState = {
+  language?: CodeEditorLanguage;
+  extension: Extension | null;
+};
+
+const emptyLanguageState: LoadedLanguageState = { extension: null };
+
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
@@ -86,14 +83,45 @@ export const CodeEditor = memo(function CodeEditor({
   extensions: additionalExtensions,
 }: CodeEditorProps) {
   const theme = useTheme2();
+  const [loadedLanguageState, setLoadedLanguageState] = useState<LoadedLanguageState>(emptyLanguageState);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!language) {
+      setLoadedLanguageState(emptyLanguageState);
+      return;
+    }
+
+    setLoadedLanguageState(emptyLanguageState);
+
+    void loadLanguageExtension(language)
+      .then((extension) => {
+        if (!cancelled) {
+          setLoadedLanguageState({ language, extension });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadedLanguageState(emptyLanguageState);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
+
+  const languageExtension = loadedLanguageState.language === language ? loadedLanguageState.extension : null;
+
   const extensions = useMemo(
     () => [
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
-      ...getLanguageExtensions(language),
+      ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, language, completionSources, completionMode, additionalExtensions]
+    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
   );
   return (
     <CodeMirror
