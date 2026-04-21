@@ -7,36 +7,30 @@
  *
  * For the Prometheus API path (rule list v2), see promRuleAbilities.ts.
  * For unscoped (global / list-level) checks, see ruleAbilities.ts.
+ *
+ * TODO: Remove useRuleAdministrationAbility, useRuleSilenceAbility, and useRuleExportAbility
+ * when the v1 rule list is removed. The v2 equivalents are in promRuleAbilities.ts.
  */
 
 import { useMemo } from 'react';
 
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
-import { type AccessControlAction } from 'app/types/accessControl';
 import { type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { getRulesPermissions } from '../../../utils/access-control';
 import { getGroupOriginName } from '../../../utils/groupIdentifier';
-import { isAdmin } from '../../../utils/misc';
 import { isProvisionedRule, rulerRuleType } from '../../../utils/rules';
 import { useIsRuleEditable } from '../../useIsRuleEditable';
-import {
-  type Ability,
-  Granted,
-  InsufficientPermissions,
-  IsPluginManaged,
-  Loading,
-  NotSupported,
-  Provisioned,
-  RuleAction,
-} from '../types';
+import { type Ability, NotSupported, RuleAction } from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
   type RuleEditAbilityResult,
-  buildAbility,
   buildSilenceAbility,
+  computeRuleDeletePermanentlyAbility,
+  computeRuleDuplicateAbility,
+  computeRuleEditAbility,
   useCanSilenceInFolder,
   useGrafanaRulesSilenceSupport,
   useRulePluginImmutability,
@@ -73,59 +67,33 @@ export function useRuleAdministrationAbility(
     const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
-    function computeEdit(hasPermission: boolean, permission: AccessControlAction): Ability {
-      if (loading) {
-        return Loading;
-      }
-      if (!isRulerAvailable) {
-        return NotSupported;
-      }
-      if (isProvisioned || isFederated) {
-        return Provisioned;
-      }
-      if (isPluginManaged) {
-        return IsPluginManaged;
-      }
-      if (!hasPermission) {
-        return InsufficientPermissions([permission]);
-      }
-      return Granted;
-    }
-
-    const update = computeEdit(isEditable ?? false, rulesPermissions.update);
-    const del = computeEdit(isRemovable ?? false, rulesPermissions.delete);
+    const update = computeRuleEditAbility(
+      loading,
+      isRulerAvailable,
+      isProvisioned,
+      isFederated,
+      isPluginManaged,
+      isEditable ?? false,
+      rulesPermissions.update
+    );
+    const del = computeRuleEditAbility(
+      loading,
+      isRulerAvailable,
+      isProvisioned,
+      isFederated,
+      isPluginManaged,
+      isRemovable ?? false,
+      rulesPermissions.delete
+    );
     const grafanaOnlyUpdate = isGrafanaManagedRule ? update : NotSupported;
-
-    function computeDuplicate(): Ability {
-      if (loading) {
-        return Loading;
-      }
-      if (isPluginManaged) {
-        return IsPluginManaged;
-      }
-      return buildAbility(true, false, [rulesPermissions.create]);
-    }
-
-    function computeDeletePermanently(): Ability {
-      if (!isGrafanaManagedRule) {
-        return NotSupported;
-      }
-      if (!del.granted) {
-        return del;
-      }
-      if (!isAdmin()) {
-        return InsufficientPermissions([]);
-      }
-      return Granted;
-    }
 
     return {
       update,
       delete: del,
       restore: grafanaOnlyUpdate,
       pause: grafanaOnlyUpdate,
-      duplicate: computeDuplicate(),
-      deletePermanently: computeDeletePermanently(),
+      duplicate: computeRuleDuplicateAbility(loading, isPluginManaged, rulesPermissions.create),
+      deletePermanently: computeRuleDeletePermanentlyAbility(Boolean(isGrafanaManagedRule), del),
       loading,
     };
   }, [

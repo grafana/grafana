@@ -9,8 +9,17 @@ import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-al
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { useGetPluginSettingsQuery } from '../../../api/pluginsApi';
 import { getRulesPermissions } from '../../../utils/access-control';
+import { isAdmin } from '../../../utils/misc';
 import { getRulePluginOrigin } from '../../../utils/rules';
-import { type Ability, Granted, InsufficientPermissions, Loading, NotSupported } from '../types';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  IsPluginManaged,
+  Loading,
+  NotSupported,
+  Provisioned,
+} from '../types';
 
 // ── Sentinel token ────────────────────────────────────────────────────────────
 
@@ -91,6 +100,80 @@ export function buildAbility(supported: boolean, loading: boolean, anyOfPermissi
   const hasAny = anyOfPermissions.some((p) => p && ctx.hasPermission(p));
   if (!hasAny) {
     return InsufficientPermissions(anyOfPermissions);
+  }
+  return Granted;
+}
+
+/**
+ * Computes the edit (update or delete) ability for a rule.
+ * Shared between the Ruler and Prom paths — the only difference is whether
+ * `supported` reflects ruler availability (Ruler path) or is always `true` (Prom path).
+ *
+ * Priority: LOADING > NOT_SUPPORTED > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
+ */
+export function computeRuleEditAbility(
+  loading: boolean,
+  supported: boolean,
+  isProvisioned: boolean,
+  isFederated: boolean,
+  isPluginManaged: boolean,
+  hasPermission: boolean,
+  permission: AccessControlAction
+): Ability {
+  if (loading) {
+    return Loading;
+  }
+  if (!supported) {
+    return NotSupported;
+  }
+  if (isProvisioned || isFederated) {
+    return Provisioned;
+  }
+  if (isPluginManaged) {
+    return IsPluginManaged;
+  }
+  if (!hasPermission) {
+    return InsufficientPermissions([permission]);
+  }
+  return Granted;
+}
+
+/**
+ * Computes the duplicate ability for a rule.
+ * Shared between the Ruler and Prom paths — duplicate is intentionally not blocked
+ * by provisioning (a provisioned rule can be copied to create a new editable one).
+ */
+export function computeRuleDuplicateAbility(
+  loading: boolean,
+  isPluginManaged: boolean,
+  createPermission: AccessControlAction
+): Ability {
+  if (loading) {
+    return Loading;
+  }
+  if (isPluginManaged) {
+    return IsPluginManaged;
+  }
+  return buildAbility(true, false, [createPermission]);
+}
+
+/**
+ * Computes the permanent-delete ability for a rule.
+ * Shared between the Ruler and Prom paths.
+ *
+ * `isApplicable` should be `false` for non-Grafana-managed or recording rules
+ * (caller decides based on rule type). When the underlying `deleteAbility` is
+ * denied, its cause is propagated directly so the UI shows the right tooltip.
+ */
+export function computeRuleDeletePermanentlyAbility(isApplicable: boolean, deleteAbility: Ability): Ability {
+  if (!isApplicable) {
+    return NotSupported;
+  }
+  if (!deleteAbility.granted) {
+    return deleteAbility;
+  }
+  if (!isAdmin()) {
+    return InsufficientPermissions([]);
   }
   return Granted;
 }

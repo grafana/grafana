@@ -13,29 +13,20 @@
 
 import { useMemo } from 'react';
 
-import { type AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { getRulesPermissions } from '../../../utils/access-control';
-import { isAdmin } from '../../../utils/misc';
 import { isProvisionedPromRule, prometheusRuleType } from '../../../utils/rules';
-import {
-  type Ability,
-  Granted,
-  InsufficientPermissions,
-  IsPluginManaged,
-  Loading,
-  NotSupported,
-  Provisioned,
-  RuleAction,
-} from '../types';
+import { type Ability, NotSupported, RuleAction } from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
   type RuleEditAbilityResult,
   type SkipToken,
-  buildAbility,
   buildSilenceAbility,
+  computeRuleDeletePermanentlyAbility,
+  computeRuleDuplicateAbility,
+  computeRuleEditAbility,
   skipToken,
   useCanSilenceInFolder,
   useGrafanaRulesSilenceSupport,
@@ -79,56 +70,34 @@ export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | Skip
     const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions('grafana');
 
-    function computeEdit(hasPermission: boolean, permission: AccessControlAction): Ability {
-      if (loading) {
-        return Loading;
-      }
-      if (isProvisioned || isFederated) {
-        return Provisioned;
-      }
-      if (isPluginManaged) {
-        return IsPluginManaged;
-      }
-      if (!hasPermission) {
-        return InsufficientPermissions([permission]);
-      }
-      return Granted;
-    }
-
-    const update = computeEdit(isEditable ?? false, rulesPermissions.update);
-    const del = computeEdit(isRemovable ?? false, rulesPermissions.delete);
+    // The prom path has no ruler availability concept — `supported` is always true here.
+    const update = computeRuleEditAbility(
+      loading,
+      true,
+      isProvisioned,
+      isFederated,
+      isPluginManaged,
+      isEditable ?? false,
+      rulesPermissions.update
+    );
+    const del = computeRuleEditAbility(
+      loading,
+      true,
+      isProvisioned,
+      isFederated,
+      isPluginManaged,
+      isRemovable ?? false,
+      rulesPermissions.delete
+    );
     const alertingOnly = (base: Ability): Ability => (isAlertingRule ? base : NotSupported);
-
-    function computeDuplicate(): Ability {
-      if (loading) {
-        return Loading;
-      }
-      if (isPluginManaged) {
-        return IsPluginManaged;
-      }
-      return buildAbility(true, false, [rulesPermissions.create]);
-    }
-
-    function computeDeletePermanently(): Ability {
-      if (!isAlertingRule) {
-        return NotSupported;
-      }
-      if (!del.granted) {
-        return del;
-      }
-      if (!isAdmin()) {
-        return InsufficientPermissions([]);
-      }
-      return Granted;
-    }
 
     return {
       update,
       delete: del,
       pause: alertingOnly(update),
       restore: alertingOnly(update),
-      duplicate: computeDuplicate(),
-      deletePermanently: computeDeletePermanently(),
+      duplicate: computeRuleDuplicateAbility(loading, isPluginManaged, rulesPermissions.create),
+      deletePermanently: computeRuleDeletePermanentlyAbility(isAlertingRule, del),
       loading,
     };
   }, [rule, editableLoading, pluginLoading, isEditable, isRemovable, isPluginManaged]);
