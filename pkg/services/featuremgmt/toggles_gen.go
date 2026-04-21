@@ -507,10 +507,6 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
-	// FlagUnifiedStorageSearchUI
-	// Enable unified storage search UI
-	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
-
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
