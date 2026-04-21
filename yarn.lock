@@ -12727,15 +12727,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/codemirror-theme-basic@npm:^4.25.9":
-  version: 4.25.9
-  resolution: "@uiw/codemirror-theme-basic@npm:4.25.9"
-  dependencies:
-    "@uiw/codemirror-themes": "npm:4.25.9"
-  checksum: 10/76e736e80b1fd14c262e4481ad30d4fb8ddb768d73e1f138636fe0e734dd4f9c11e0cb5076a6f811425a14e30a8641d09b4e33da39020e94c9d847e2185cb44a
-  languageName: node
-  linkType: hard
-
 "@uiw/codemirror-theme-vscode@npm:^4.25.9":
   version: 4.25.9
   resolution: "@uiw/codemirror-theme-vscode@npm:4.25.9"
@@ -21034,7 +21025,6 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
-    "@uiw/codemirror-theme-basic": "npm:^4.25.9"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"
