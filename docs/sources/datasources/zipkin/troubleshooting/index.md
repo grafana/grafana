@@ -25,7 +25,7 @@ This document provides solutions to common issues you may encounter when configu
 
 These errors occur when Grafana can't connect to the Zipkin instance.
 
-### "error reading settings: url is empty"
+### `error reading settings: url is empty`
 
 **Symptoms:**
 
@@ -48,12 +48,12 @@ These errors occur when Grafana can't connect to the Zipkin instance.
 
 | Cause | Solution |
 | ----- | -------- |
-| Incorrect URL or port | Verify the URL and port. Zipkin's default port is `9411`. Ensure you haven't accidentally used Jaeger's port (`16686`). |
+| Incorrect URL or port | Verify the URL and port. The default Zipkin port is `9411`. Ensure you haven't accidentally used the Jaeger port (`16686`). |
 | Missing `/api/v2` path | The Zipkin data source calls `/api/v2/services`, `/api/v2/traces`, etc. Verify these endpoints are accessible at the configured URL. |
 | Reverse proxy misconfiguration | If using a reverse proxy, ensure it correctly forwards requests to the Zipkin API. |
 | Authentication failure | If the Zipkin instance requires authentication, verify your credentials are correct. |
 
-### "error creating http client" or TLS errors
+### `error creating http client` or TLS errors
 
 **Symptoms:**
 
@@ -64,7 +64,7 @@ These errors occur when Grafana can't connect to the Zipkin instance.
 
 1. If using HTTPS, verify the TLS certificate is valid and trusted by the Grafana server.
 1. Configure TLS settings in **Additional settings** > **Advanced HTTP settings**.
-1. For self-signed certificates, add the CA certificate to Grafana's trusted certificates or toggle **Skip TLS Verify** (not recommended for production).
+1. For self-signed certificates, add the CA certificate to the Grafana server trust store or toggle **Skip TLS Verify** (not recommended for production).
 
 ### Save & test times out
 
@@ -124,7 +124,7 @@ This is a generic error returned by the Zipkin plugin backend when an internal e
 
 - Query runs without error but returns no data
 - Trace view shows "No data"
-- The cascader shows "No traces found" or "[No traces in time range]"
+- The cascading selector shows "No traces found" or "[No traces in time range]"
 
 **Possible causes and solutions:**
 
@@ -134,7 +134,7 @@ This is a generic error returned by the Zipkin plugin backend when an internal e
 | Empty trace ID | Ensure the **Trace ID** field isn't empty. The backend rejects queries with `invalid/empty traceId`. |
 | Time range doesn't contain data | Expand the dashboard or Explore time range. Traces must fall within the selected time range for the cascading selector to find them. |
 | Trace has expired | Zipkin may have purged old trace data based on its retention settings. Check your Zipkin storage configuration. |
-| No services registered | If the cascader shows "No traces found" at the top level, your Zipkin instance may have no data. Verify data is being collected. |
+| No services registered | If the cascading selector shows "No traces found" at the top level, your Zipkin instance may have no data. Verify data is being collected. |
 
 ## Upload errors
 

@@ -160,7 +160,7 @@ The **Additional settings** section is collapsible and contains optional setting
 
 The **Enable node graph** toggle enables the [Node graph visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/), which is disabled by default.
 
-Once enabled, Grafana displays the node graph above the trace view.
+After you enable it, Grafana displays the node graph above the trace view.
 
 ### Span bar
 
@@ -182,7 +182,7 @@ If you encounter errors, refer to [Troubleshoot Zipkin data source issues](https
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### Provisioning example
