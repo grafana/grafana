@@ -194,6 +194,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 				return false, err
 			}
 		}
+		state.ReleaseEvictedStaleTransitionValueMaps(states)
 		return idx <= evaluations, nil
 	}
 
