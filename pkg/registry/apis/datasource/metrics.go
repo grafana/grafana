@@ -60,7 +60,7 @@ func newConnectMetric(endpoint, pluginID string) *connectMetric {
 func (m *connectMetric) SetError()    { m.status = "error" }
 func (m *connectMetric) SetNotFound() { m.status = "not_found" }
 
-// Record emits the counter and duration histogram once.
+// Record emits the counter and duration histogram once per request.
 func (m *connectMetric) Record() {
 	dsSubresourceRequests.WithLabelValues(m.endpoint, m.pluginID, m.status).Inc()
 	dsSubresourceRequestDuration.WithLabelValues(m.endpoint, m.pluginID).Observe(time.Since(m.start).Seconds())
