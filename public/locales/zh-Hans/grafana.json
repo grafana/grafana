@@ -4373,12 +4373,13 @@
       "button-label": "选择文件夹",
       "clear-selection": "清除选择",
       "empty-message": "未找到文件夹",
-      "error-title": "加载文件夹时出错",
+      "error-title": "",
       "non-folder-item": "非文件夹 {{itemKind}} {{itemUID}}",
       "root-title": "数据面板",
       "search-placeholder": "搜索文件夹",
       "shared-with-me": "与我共享",
       "team-folders": "团队文件夹",
+      "team-folders-error-title": "",
       "unknown-error": "未知错误"
     },
     "manage-folder-nav": {
@@ -5592,6 +5593,8 @@
         "annotation-set": "注释和警报",
         "dashboard": "仪表板",
         "element": "元素",
+        "filter": "",
+        "filters-set": "",
         "link-set": "关联",
         "local-variable": "局部变量",
         "multiple-elements": "多个元素",
@@ -5620,8 +5623,10 @@
           "title": "行标题"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "添加变量",
         "title": "变量"
       },
       "variable": {
@@ -6172,6 +6177,9 @@
           "hide-header": "隐藏行标题",
           "title": "标题"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "变量"
         },
@@ -6330,6 +6338,9 @@
             "description": "对于所选变量中的每个值，重复此选项卡。",
             "title": "按变量重复"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "变量"
@@ -7039,6 +7050,13 @@
       "sql-name": "使用 SQL 转换",
       "sql-transformation-description": "使用类 MySQL 语法操作您的数据"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7483,6 +7501,7 @@
       "affected-dashboards_other": "此更新将影响 <1>{{count}} 个数据面板。</1> 使用该面板的以下数据面板将受到影响："
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "取消",
       "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
@@ -7490,6 +7509,11 @@
       "file-path": "<strong>文件路径：</strong>{{filePath}}",
       "form-loading-error": "加载表单时出错",
       "form-loading-error-unknown": "加载表单时发生意外错误。",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "描述",
       "label-target-folder": "目标文件夹",
       "label-title": "标题",
@@ -7507,6 +7531,9 @@
       "disabled-tooltip": "在创建警报规则之前保存数据面板",
       "new-alert-rule": "新建警报规则",
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "允许同时选择多个值",
@@ -7603,6 +7630,13 @@
       "page-nav": {
         "text": {
           "settings": "设置"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },

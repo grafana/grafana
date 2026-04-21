@@ -4400,12 +4400,13 @@
       "button-label": "Välj mapp",
       "clear-selection": "Rensa val",
       "empty-message": "Inga mappar hittades",
-      "error-title": "Fel vid laddning av mappar",
+      "error-title": "",
       "non-folder-item": "Icke-mapp {{itemKind}} {{itemUID}}",
       "root-title": "Kontrollpaneler",
       "search-placeholder": "Sök mappar",
       "shared-with-me": "Delad med mig",
       "team-folders": "Teammappar",
+      "team-folders-error-title": "",
       "unknown-error": "Okänt fel"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Kommentarer och varningar",
         "dashboard": "Instrumentpanel",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Länkar",
         "local-variable": "Lokal variabel",
         "multiple-elements": "Flera element",
@@ -5650,8 +5653,10 @@
           "title": "Radrubrik"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Lägg till variabel",
         "title": "Variabler"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Dölj radrubrik",
           "title": "Titel"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabler"
         },
@@ -6361,6 +6369,9 @@
             "description": "Upprepa den här fliken för varje värde i den valda variabeln.",
             "title": "Upprepa per variabel"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variabler"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformera med SQL",
       "sql-transformation-description": "Manipulera dina data med MySQL-liknande syntax"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1> Följande instrumentpaneler som använder panelen kommer att påverkas:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Avbryt",
       "cannot-be-saved": "Denna instrumentpanel kan inte sparas från Grafanas användargränssnitt eftersom det har provisionerats från en annan källa. Kopiera JSON eller spara den till en fil nedan, så du kan uppdatera instrumentpanelen i provisioneringskällan.",
       "copy-json-to-clipboard": "Kopiera JSON till urklippet",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Filsökväg:</strong> {{filePath}}",
       "form-loading-error": "Fel vid inläsning av formulär",
       "form-loading-error-unknown": "Ett oväntat fel inträffade vid inläsning av formuläret.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Beskrivning",
       "label-target-folder": "Målmapp",
       "label-title": "Titel",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Spara instrumentpanelen innan du skapar varningsregler",
       "new-alert-rule": "Ny varningsregel",
       "title-no-alerting-capable-query-found": "Ingen larmkapabel fråga hittades"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Gör det möjligt att välja flera värden samtidigt",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Inställningar"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
