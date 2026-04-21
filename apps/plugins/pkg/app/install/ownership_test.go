@@ -1,9 +1,11 @@
 package install
 
 import (
+	"context"
 	"errors"
 	"hash/fnv"
 	"testing"
+	"time"
 
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
@@ -82,6 +84,24 @@ func TestHashChildReconcilerShardKey_UsesNamespaceAndName(t *testing.T) {
 	plugin.Namespace = "plugins"
 
 	require.Equal(t, expectedShardHash(plugin.Namespace, plugin.Name), hashChildReconcilerShardKey(plugin))
+}
+
+func TestHashRingOwnershipFilter_WaitUntilReady(t *testing.T) {
+	t.Run("returns once ready", func(t *testing.T) {
+		filter := &HashRingOwnershipFilter{ready: make(chan struct{})}
+		close(filter.ready)
+
+		require.NoError(t, filter.WaitUntilReady(t.Context()))
+	})
+
+	t.Run("returns context error while waiting", func(t *testing.T) {
+		filter := &HashRingOwnershipFilter{ready: make(chan struct{})}
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Millisecond)
+		defer cancel()
+
+		err := filter.WaitUntilReady(ctx)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
 }
 
 type fakeOwnershipReadRing struct {

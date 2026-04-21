@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -16,7 +17,7 @@ import (
 
 func TestChildReconcilerInformerSupplier(t *testing.T) {
 	t.Run("uses optimized informer by default", func(t *testing.T) {
-		inf, err := childReconcilerInformerSupplier(nil)(
+		inf, err := childReconcilerInformerSupplier(nil, nil)(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
@@ -29,7 +30,7 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 		selector, err := simple.NewMemcachedHostList([]string{"127.0.0.1:11211"})
 		require.NoError(t, err)
 
-		inf, err := childReconcilerInformerSupplier(selector)(
+		inf, err := childReconcilerInformerSupplier(selector, nil)(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
@@ -37,6 +38,68 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "*operator.MemcachedStore", nestedInformerStoreType(t, inf))
 	})
+
+	t.Run("gates plugin informer when ownership filter exposes readiness", func(t *testing.T) {
+		gate := mockReadinessGate{ready: make(chan struct{})}
+
+		inf, err := childReconcilerInformerSupplier(nil, gate)(
+			pluginsv0alpha1.PluginKind(),
+			fakeClientGenerator{client: fakeResourceClient{}},
+			operator.InformerOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "*app.gatedInformer", reflect.TypeOf(inf).String())
+	})
+
+	t.Run("does not gate non-plugin informers", func(t *testing.T) {
+		gate := mockReadinessGate{ready: make(chan struct{})}
+
+		inf, err := childReconcilerInformerSupplier(nil, gate)(
+			pluginsv0alpha1.MetaKind(),
+			fakeClientGenerator{client: fakeResourceClient{}},
+			operator.InformerOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "*operator.ConcurrentInformer", reflect.TypeOf(inf).String())
+	})
+}
+
+func TestGatedInformer_RunWaitsForReady(t *testing.T) {
+	ready := make(chan struct{})
+	ran := make(chan struct{})
+	inf := &gatedInformer{
+		Informer: testInformer{runFunc: func(ctx context.Context) error {
+			close(ran)
+			<-ctx.Done()
+			return nil
+		}},
+		gate: mockReadinessGate{ready: ready},
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- inf.Run(ctx)
+	}()
+
+	select {
+	case <-ran:
+		t.Fatal("underlying informer ran before readiness gate opened")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	close(ready)
+
+	select {
+	case <-ran:
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("underlying informer did not run after readiness gate opened")
+	}
+
+	cancel()
+	require.NoError(t, <-done)
 }
 
 func nestedInformerStoreType(t *testing.T, inf operator.Informer) string {
@@ -59,6 +122,42 @@ func nestedInformerStoreType(t *testing.T, inf operator.Informer) string {
 	require.False(t, store.IsNil())
 
 	return store.Elem().Type().String()
+}
+
+type mockReadinessGate struct {
+	ready chan struct{}
+}
+
+func (m mockReadinessGate) WaitUntilReady(ctx context.Context) error {
+	select {
+	case <-m.ready:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (mockReadinessGate) OwnsPlugin(context.Context, *pluginsv0alpha1.Plugin) (bool, error) {
+	return true, nil
+}
+
+type testInformer struct {
+	runFunc func(context.Context) error
+}
+
+func (t testInformer) Run(ctx context.Context) error {
+	if t.runFunc != nil {
+		return t.runFunc(ctx)
+	}
+	return nil
+}
+
+func (testInformer) WaitForSync(context.Context) error {
+	return nil
+}
+
+func (testInformer) AddEventHandler(operator.ResourceWatcher) error {
+	return nil
 }
 
 type fakeClientGenerator struct {

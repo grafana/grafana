@@ -148,6 +148,12 @@ func pluginInstallGroupResource() schema.GroupResource {
 	return schema.GroupResource{Group: pluginsv0alpha1.APIGroup, Resource: "plugininstalls"}
 }
 
+func shouldPreventModification(changeSource Source, existingSource string) bool {
+	return changeSource == SourcePluginStore &&
+		existingSource != "" &&
+		existingSource != SourcePluginStore
+}
+
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
 	client          *pluginsv0alpha1.PluginClient
@@ -229,7 +235,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 		return nil
 	}
-	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != install.Source {
+	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && shouldPreventModification(install.Source, existingSource) {
 		if install.MatchesSpec(existing) {
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 			return nil
@@ -270,7 +276,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 		return nil
 	}
-	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != install.Source {
+	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && shouldPreventModification(install.Source, existingSource) {
 		if install.MatchesSpec(existing) {
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 			return nil

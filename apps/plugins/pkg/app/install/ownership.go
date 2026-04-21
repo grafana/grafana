@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"os"
+	"sync"
 	"time"
 
 	kitlog "github.com/go-kit/log"
@@ -73,9 +74,11 @@ type ownershipInstance interface {
 }
 
 type HashRingOwnershipFilter struct {
-	readRing ownershipReadRing
-	instance ownershipInstance
-	manager  *services.Manager
+	readRing  ownershipReadRing
+	instance  ownershipInstance
+	manager   *services.Manager
+	ready     chan struct{}
+	readyOnce sync.Once
 }
 
 func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog.Logger, reg prometheus.Registerer) (*HashRingOwnershipFilter, error) {
@@ -172,6 +175,7 @@ func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog
 		readRing: readRing,
 		instance: lifecycler,
 		manager:  manager,
+		ready:    make(chan struct{}),
 	}, nil
 }
 
@@ -179,6 +183,9 @@ func (f *HashRingOwnershipFilter) Run(ctx context.Context) error {
 	if err := services.StartManagerAndAwaitHealthy(ctx, f.manager); err != nil {
 		return err
 	}
+	f.readyOnce.Do(func() {
+		close(f.ready)
+	})
 
 	<-ctx.Done()
 
@@ -186,6 +193,22 @@ func (f *HashRingOwnershipFilter) Run(ctx context.Context) error {
 	defer cancel()
 
 	return services.StopManagerAndAwaitStopped(stopCtx, f.manager)
+}
+
+func (f *HashRingOwnershipFilter) WaitUntilReady(ctx context.Context) error {
+	if f == nil {
+		return fmt.Errorf("ownership filter is required")
+	}
+	if f.ready == nil {
+		return nil
+	}
+
+	select {
+	case <-f.ready:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (f *HashRingOwnershipFilter) OwnsPlugin(_ context.Context, plugin *pluginsv0alpha1.Plugin) (bool, error) {

@@ -165,6 +165,79 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			createErr:   errorsK8s.NewInternalError(errors.New("boom")),
 			expectError: true,
 		},
+		{
+			name: "plugin store refuses to patch object owned by another non-empty source",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourceChildPluginReconciler,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectError:     true,
+		},
+		{
+			name: "plugin store may patch object with empty existing source",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "org-1",
+					Name:        "plugin-1",
+					Annotations: map[string]string{},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectedPatches: 1,
+		},
+		{
+			name: "non-plugin-store source may patch plugin-store-owned object",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourceChildPluginReconciler,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectedPatches: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -736,11 +809,11 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "skips conflicting ownership when spec already matches",
+			name: "plugin store skips conflicting ownership when spec already matches",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Source:  SourceChildPluginReconciler,
+				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
 				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
@@ -755,7 +828,7 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 							Namespace: "org-1",
 							Name:      "plugin-1",
 							Annotations: map[string]string{
-								PluginInstallSourceAnnotation: SourcePluginStore,
+								PluginInstallSourceAnnotation: SourceChildPluginReconciler,
 							},
 						},
 						Spec: pluginsv0alpha1.PluginSpec{

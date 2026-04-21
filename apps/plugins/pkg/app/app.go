@@ -51,14 +51,20 @@ func New(cfg app.Config) (app.App, error) {
 			registrar,
 			specificConfig.ChildReconciler.OwnershipFilter,
 		)
+		pluginKind.ReconcileOptions = simple.BasicReconcileOptions{
+			UsePlain: true,
+		}
 	}
 
 	simpleConfig := simple.AppConfig{
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			InformerSupplier: childReconcilerInformerSupplier(specificConfig.ChildReconciler.MemcachedSelector),
-			RetryPolicy:      operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
+			InformerSupplier: childReconcilerInformerSupplier(
+				specificConfig.ChildReconciler.MemcachedSelector,
+				specificConfig.ChildReconciler.OwnershipFilter,
+			),
+			RetryPolicy: operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
 					logger.Error("Child plugin informer failed", "error", err)
@@ -144,12 +150,54 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 	return appInstaller, nil
 }
 
-func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector) simple.InformerSupplier {
-	if selector == nil {
-		return simple.OptimizedInformerSupplier
+type readinessGate interface {
+	WaitUntilReady(context.Context) error
+}
+
+type gatedInformer struct {
+	operator.Informer
+	gate readinessGate
+}
+
+func (g *gatedInformer) Run(ctx context.Context) error {
+	if g.gate != nil {
+		if err := g.gate.WaitUntilReady(ctx); err != nil {
+			return err
+		}
+	}
+	return g.Informer.Run(ctx)
+}
+
+func (g *gatedInformer) WaitForSync(ctx context.Context) error {
+	if g.gate != nil {
+		if err := g.gate.WaitUntilReady(ctx); err != nil {
+			return err
+		}
+	}
+	return g.Informer.WaitForSync(ctx)
+}
+
+func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, ownershipFilter install.OwnershipFilter) simple.InformerSupplier {
+	var gate readinessGate
+	if readyFilter, ok := ownershipFilter.(readinessGate); ok {
+		gate = readyFilter
 	}
 
-	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
+	baseSupplier := simple.OptimizedInformerSupplier
+	if selector == nil {
+		return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
+			inf, err := baseSupplier(kind, clients, options)
+			if err != nil {
+				return nil, err
+			}
+			if gate != nil && kind.GroupVersionKind() == pluginsv0alpha1.PluginKind().GroupVersionKind() {
+				return &gatedInformer{Informer: inf, gate: gate}, nil
+			}
+			return inf, nil
+		}
+	}
+
+	baseSupplier = func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
 		client, err := clients.ClientFor(kind)
 		if err != nil {
 			return nil, err
@@ -166,6 +214,17 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector) 
 		}
 
 		return operator.NewConcurrentInformerFromOptions(inf, options)
+	}
+
+	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
+		inf, err := baseSupplier(kind, clients, options)
+		if err != nil {
+			return nil, err
+		}
+		if gate != nil && kind.GroupVersionKind() == pluginsv0alpha1.PluginKind().GroupVersionKind() {
+			return &gatedInformer{Informer: inf, gate: gate}, nil
+		}
+		return inf, nil
 	}
 }
 
