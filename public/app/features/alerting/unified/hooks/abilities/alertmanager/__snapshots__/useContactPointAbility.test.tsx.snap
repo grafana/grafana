@@ -1,35 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`useContactPointAbility should report Create / Update / Delete aren't supported for vanilla prometheus alertmanager 1`] = `
-{
-  "create": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:create",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "delete": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "update": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-}
-`;
-
-exports[`useContactPointAbility should report contact point actions as not supported for Mimir alertmanager 1`] = `
+exports[`useContactPointAbility external (Mimir) alertmanager should deny View / Create / Export and list the expected required permissions 1`] = `
 {
   "create": {
     "anyOfPermissions": [
@@ -51,6 +22,35 @@ exports[`useContactPointAbility should report contact point actions as not suppo
     "anyOfPermissions": [
       "alert.notifications:read",
       "alert.notifications.receivers:read",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+}
+`;
+
+exports[`useContactPointAbility vanilla Prometheus alertmanager should deny Create / Update / Delete and list the expected required permissions 1`] = `
+{
+  "create": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.receivers:create",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "delete": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.receivers:write",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "update": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.receivers:write",
     ],
     "cause": "INSUFFICIENT_PERMISSIONS",
     "granted": false,
