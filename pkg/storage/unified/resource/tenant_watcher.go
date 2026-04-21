@@ -221,10 +221,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 			tw.handleTenant(newObj.(*unstructured.Unstructured))
 		},
 		// With a label selector, both a real tenant delete and a label removal
-		// arrive here as "delete" events. We only want to clear on label removal
-		// (a restore); real deletes must leave the KV record so the deleter's
-		// GCOM backstop can finish cleanup. Tombstones carry stale object state,
-		// so we skip them — startup reconciliation will catch anything missed.
+		// arrive here as "delete" events.
 		DeleteFunc: func(obj interface{}) {
 			tenant, ok := obj.(*unstructured.Unstructured)
 			if !ok {
@@ -273,6 +270,14 @@ func (tw *TenantWatcher) reconcileStaleRecordsOnStartup(informer cache.SharedInd
 			continue
 		}
 		liveNames[u.GetName()] = struct{}{}
+	}
+	tw.log.Info("tenant watcher informer synced", "pending_delete_tenants", len(liveNames))
+
+	// An empty list should never happen. If it does something is very wrong, and we don't want to nuke all the
+	// pending delete records as a consequence.
+	if len(liveNames) == 0 {
+		tw.log.Warn("startup reconciliation skipped: informer returned zero tenants")
+		return
 	}
 
 	tw.reconcileStaleRecords(liveNames)
