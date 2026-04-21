@@ -119,7 +119,7 @@ describe('SearchStateManager', () => {
             await delay(50);
             return HttpResponse.json({
               totalHits: 10,
-              hits: [{ resource: 'dashboard', name: 'dash-debugging', title: 'Dash Debugging', field: {} }],
+              hits: [{ resource: 'dashboards', name: 'dash-debugging', title: 'Dash Debugging', field: {} }],
             });
           }
 
