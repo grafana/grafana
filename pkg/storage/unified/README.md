@@ -75,12 +75,6 @@ storage_type = unified
 With this configuration, you can run everything in-process. Run the Grafana backend with:
 
 ```sh
-bra run
-```
-
-or
-
-```sh
 make run
 ```
 
@@ -228,8 +222,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboards = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
 unifiedStorageSearchPermissionFiltering = false
@@ -279,9 +271,6 @@ Quotas will make unified storage impose resource limits on a namespace. By defau
 
 Then add the following to your grafana ini:
 ```ini
-[feature_toggles]
-kubernetesUnifiedStorageQuotas = true
-
 [unified_storage]
 overrides_path = overrides.yaml
 overrides_reload_period = 5s

@@ -1,16 +1,16 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponseData,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   createDataFrame,
-  AdHocVariableFilter,
-  ScopedVars,
+  type AdHocVariableFilter,
+  type ScopedVars,
   getDefaultTimeRange,
 } from '@grafana/data';
 
@@ -18,7 +18,7 @@ import { config } from '../config';
 
 import {
   DataSourceWithBackend,
-  HealthCheckResult,
+  type HealthCheckResult,
   HealthStatus,
   isExpressionReference,
   standardStreamOptionsProvider,
@@ -502,7 +502,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the new URL when feature toggle is enabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -513,7 +513,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the legacy URL when feature toggle is disabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -522,7 +521,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses legacy API OK response (status, message, details)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.OK,
         message: 'Data source is working',
@@ -540,7 +538,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses legacy API ERROR response', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Connection refused',
@@ -557,7 +554,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response via toHealthCheckResult (OK)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -579,7 +576,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -597,7 +594,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when legacy API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const errorData: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Network error',
@@ -614,7 +610,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when new API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const errorData = {
         status: HealthStatus.Error,
         message: 'Service unavailable',
@@ -720,6 +716,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -735,6 +732,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });

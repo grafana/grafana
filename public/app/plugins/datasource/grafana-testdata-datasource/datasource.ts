@@ -1,29 +1,35 @@
-import { from, merge, Observable, of, throwError } from 'rxjs';
+import { from, merge, type Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
+  type AnnotationEvent,
   ArrayDataFrame,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   DataTopic,
   LiveChannelScope,
   LoadingState,
-  TimeRange,
-  ScopedVars,
+  type TimeRange,
+  type ScopedVars,
   toDataFrame,
   MutableDataFrame,
-  AnnotationQuery,
+  type AnnotationQuery,
   getSearchFilterScopedVar,
   FieldType,
-  DataSourceWithLogsLabelTypesSupport,
+  type DataSourceWithLogsLabelTypesSupport,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  type TemplateSrv,
+} from '@grafana/runtime';
 
 import { DATAPLANE_LABEL_TYPES_NAME } from './constants';
-import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
+import { type Scenario, type TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';

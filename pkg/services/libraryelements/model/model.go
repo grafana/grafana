@@ -6,12 +6,6 @@ import (
 	"time"
 )
 
-type LibraryConnectionKind int
-
-const (
-	Dashboard LibraryConnectionKind = iota + 1
-)
-
 // LibraryElement is the model for library element definitions.
 type LibraryElement struct {
 	ID    int64 `xorm:"pk autoincr 'id'"`
@@ -99,29 +93,6 @@ type LibraryElementDTOMeta struct {
 
 	CreatedBy LibraryElementDTOMetaUser `json:"createdBy"`
 	UpdatedBy LibraryElementDTOMetaUser `json:"updatedBy"`
-}
-
-// libraryElementConnection is the model for library element connections.
-type LibraryElementConnection struct {
-	ID           int64 `xorm:"pk autoincr 'id'"`
-	ElementID    int64 `xorm:"element_id"`
-	Kind         int64 `xorm:"kind"`
-	ConnectionID int64 `xorm:"connection_id"`
-	Created      time.Time
-	CreatedBy    int64
-}
-
-// libraryElementConnectionWithMeta is the model for library element connections with meta.
-type LibraryElementConnectionWithMeta struct {
-	ID             int64  `xorm:"pk autoincr 'id'"`
-	ElementID      int64  `xorm:"element_id"`
-	Kind           int64  `xorm:"kind"`
-	ConnectionID   int64  `xorm:"connection_id"`
-	ConnectionUID  string `xorm:"connection_uid"`
-	Created        time.Time
-	CreatedBy      int64
-	CreatedByName  string
-	CreatedByEmail string
 }
 
 type LibraryElementDTOMetaUser struct {
@@ -234,6 +205,10 @@ type SearchLibraryElementsQuery struct {
 	// Deprecated: use FolderFilterUIDs instead
 	FolderFilter     string
 	FolderFilterUIDs string
+	// SkipFolderTreeForAdmin skips fetching the folder tree when the caller is admin.
+	// Admin can see all folders, so we avoid listing them.
+	// When set, Meta.FolderName will be empty in the results.
+	SkipFolderTreeForAdmin bool
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.

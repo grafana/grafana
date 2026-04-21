@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isEmpty, isUndefined } from 'lodash';
 import { Fragment } from 'react/jsx-runtime';
 
-import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
-import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type CombinedRule } from 'app/types/unified-alerting';
+import { type GrafanaAlertingRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';

@@ -1,10 +1,10 @@
 import { AbstractLabelOperator, CoreApp, makeTimeRange } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
 import { defaultSettings, mockFetchPyroscopeDatasourceSettings } from './mocks';
-import { Query } from './types';
+import { type Query } from './types';
 
 function setupDatasource() {
   mockFetchPyroscopeDatasourceSettings();
@@ -44,6 +44,8 @@ describe('Pyroscope data source', () => {
           profileTypeId: '',
           groupBy: [''],
           includeExemplars: false,
+          includeHeatmap: false,
+          heatmapType: 'individual',
         },
       ]);
       expect(queries).toMatchObject([
@@ -120,6 +122,8 @@ describe('normalizeQuery', () => {
       profileTypeId: 'cpu',
       refId: '',
       includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     });
     expect(normalized).toMatchObject({
       labelSelector: '{app="myapp"}',
@@ -148,6 +152,8 @@ const defaultQuery = (query: Partial<Query>): Query => {
     profileTypeId: '',
     queryType: defaultPyroscopeQueryType,
     includeExemplars: false,
+    includeHeatmap: false,
+    heatmapType: 'individual',
     ...query,
   };
 };

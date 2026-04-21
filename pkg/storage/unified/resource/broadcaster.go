@@ -5,6 +5,9 @@ import (
 	"io"
 	"log/slog"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type Broadcaster[T any] interface {
@@ -12,16 +15,52 @@ type Broadcaster[T any] interface {
 	Unsubscribe(<-chan T)
 }
 
+type BroadcasterMetrics struct {
+	Subscribers          prometheus.Gauge
+	SubscriptionsTotal   *prometheus.CounterVec
+	UnsubscriptionsTotal *prometheus.CounterVec
+	EventsReceivedTotal  prometheus.Counter
+	OverflowEventsTotal  prometheus.Counter
+}
+
+func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
+	return &BroadcasterMetrics{
+		Subscribers: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "storage_server_broadcaster_subscribers",
+			Help: "Current number of active broadcaster subscribers.",
+		}),
+		SubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_subscriptions_total",
+			Help: "Total number of broadcaster subscription attempts by result.",
+		}, []string{"result"}),
+		UnsubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_unsubscriptions_total",
+			Help: "Total number of broadcaster unsubscriptions by reason.",
+		}, []string{"reason"}),
+		EventsReceivedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_events_received_total",
+			Help: "Total number of events received by the broadcaster.",
+		}),
+		OverflowEventsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_overflow_events_total",
+			Help: "Total number of events appended to subscriber overflow buffers.",
+		}),
+	}
+}
+
 // NewBroadcaster creates a broadcaster that fans out items received on input to
 // all active subscribers. The caller owns the input channel and is responsible
 // for closing it when no more data will be sent. The broadcaster terminates
 // when either ctx is cancelled or input is closed.
-func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap)
+func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics) Broadcaster[T] {
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics)
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics) *broadcaster[T] {
+	if metrics == nil {
+		metrics = newBroadcasterMetrics(nil)
+	}
 	b := &broadcaster[T]{
 		shouldTerminate: ctx.Done(),
 		cache:           newRingBuffer[T](defaultCacheSize),
@@ -29,6 +68,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		unsubscribe:     make(chan (<-chan T), internalChanSize),
 		subs:            make(map[<-chan T]*subscription[T]),
 		terminated:      make(chan struct{}),
+		metrics:         metrics,
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
@@ -56,6 +96,7 @@ type broadcaster[T any] struct {
 	subscribe   chan *subscription[T]
 	unsubscribe chan (<-chan T)
 	subs        map[<-chan T]*subscription[T]
+	metrics     *BroadcasterMetrics
 
 	// configuration
 
@@ -64,6 +105,17 @@ type broadcaster[T any] struct {
 	lastOverflowLog time.Time
 	overflowCount   int64 // overflow events since last log
 }
+
+const (
+	subscriptionResultOK           = "ok"
+	subscriptionResultCtxCanceled  = "ctx_canceled"
+	subscriptionResultTerminated   = "terminated"
+	subscriptionResultReplayFailed = "replay_failed"
+
+	unsubscriptionReasonClient      = "client"
+	unsubscriptionReasonOverflowCap = "overflow_cap"
+	unsubscriptionReasonShutdown    = "shutdown"
+)
 
 const (
 	// internalChanSize is the buffer for internal subscribe/unsubscribe coordination channels.
@@ -94,8 +146,10 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context, name string) (<-chan T, 
 
 	select {
 	case <-ctx.Done(): // client canceled
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultCtxCanceled).Inc()
 		return nil, ctx.Err()
 	case <-b.terminated: // no more data
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultTerminated).Inc()
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
 		return sub.ch, nil
@@ -148,28 +202,21 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		// prevent new subscriptions and make sure to discard unsubscriptions
 		close(b.terminated)
 		// terminate all subscriptions
-		for recv, sub := range b.subs {
-			sub.overflow = nil
-			close(sub.ch)
-			delete(b.subs, recv)
+		for recv := range b.subs {
+			b.removeSubscriber(recv, unsubscriptionReasonShutdown)
 		}
 	}()
-
-	unsubscribe := func(recv <-chan T) {
-		if sub, ok := b.subs[recv]; ok {
-			sub.overflow = nil
-			close(sub.ch)
-			delete(b.subs, recv)
-		}
-	}
 
 	addSubscriber := func(sub *subscription[T]) {
 		// send initial batch of cached items
 		if !b.cache.readInto(sub.ch) {
+			b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultReplayFailed).Inc()
 			close(sub.ch)
 			return
 		}
 		b.subs[sub.ch] = sub
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultOK).Inc()
+		b.metrics.Subscribers.Inc()
 	}
 
 	for {
@@ -191,13 +238,14 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 					drained = true
 				}
 			}
-			unsubscribe(recv)
+			b.removeSubscriber(recv, unsubscriptionReasonClient)
 
 		case item, ok := <-input: // data arrived, send to subscribers
 			// input closed, drain subscribers and exit
 			if !ok {
 				return
 			}
+			b.metrics.EventsReceivedTotal.Inc()
 			b.cache.add(item)
 
 			var slow []<-chan T
@@ -207,6 +255,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 				if len(sub.overflow) > 0 {
 					// Still overflowing — append to overflow
 					sub.overflow = append(sub.overflow, item)
+					b.metrics.OverflowEventsTotal.Inc()
 					b.overflowCount++
 					if len(sub.overflow) > b.overflowCap {
 						slog.Warn("disconnecting subscriber: overflow cap exceeded",
@@ -220,6 +269,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 					case sub.ch <- item:
 					default:
 						sub.overflow = append(sub.overflow, item)
+						b.metrics.OverflowEventsTotal.Inc()
 						b.overflowCount++
 						now := time.Now()
 						if now.Sub(b.lastOverflowLog) > overflowLogInterval {
@@ -237,7 +287,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			// Sending to b.unsubscribe could lead to deadlock, if there are too many elements in the
 			// channel buffer already.
 			for _, recv := range slow {
-				unsubscribe(recv)
+				b.removeSubscriber(recv, unsubscriptionReasonOverflowCap)
 			}
 
 		case <-drainTicker.C: // periodically drain overflow for idle periods
@@ -246,6 +296,18 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			}
 		}
 	}
+}
+
+func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
+	sub, ok := b.subs[recv]
+	if !ok {
+		return
+	}
+	sub.overflow = nil
+	delete(b.subs, recv)
+	b.metrics.Subscribers.Dec()
+	b.metrics.UnsubscriptionsTotal.WithLabelValues(reason).Inc()
+	close(sub.ch)
 }
 
 // ringBuffer is a fixed-size circular buffer. It is not safe for concurrent

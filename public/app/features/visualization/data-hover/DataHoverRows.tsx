@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import { FeatureLike } from 'ol/Feature';
+import { type FeatureLike } from 'ol/Feature';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, FieldType, getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
+import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 import { DataHoverRow } from './DataHoverRow';
+import { renderValue } from './renderValue';
 
 type Props = {
   layers: GeomapLayerHover[];

@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
+import { type HTMLAttributes, useCallback, useEffect, useId, useRef } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 
-import { RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';
+import { type RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';
 export interface RadioButtonGroupProps<T> extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'onClick'> {
   value?: T;
   id?: string;
@@ -66,7 +65,8 @@ export function RadioButtonGroup<T>({
     [onClick]
   );
 
-  const internalId = id ?? uniqueId('radiogroup-');
+  const generatedId = useId();
+  const internalId = id ?? generatedId;
   const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 
@@ -81,6 +81,7 @@ export function RadioButtonGroup<T>({
     <div
       {...rest}
       role="radiogroup"
+      aria-invalid={!!invalid}
       aria-label={ariaLabel}
       className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >

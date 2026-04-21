@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { memo, useState } from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';

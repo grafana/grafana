@@ -5,10 +5,10 @@ import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.
 
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
 import {
-  ContactPoint,
-  ContactPointMetadataAnnotations,
-  EnhancedListReceiverApiResponse,
-  Integration,
+  type ContactPoint,
+  type ContactPointMetadataAnnotations,
+  type EnhancedListReceiverApiResponse,
+  type Integration,
 } from '../../types';
 
 import { AlertingEntityMetadataAnnotationsFactory } from './common';

@@ -562,6 +562,11 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"memberCount": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
 								"name": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},

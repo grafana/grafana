@@ -5,10 +5,10 @@ import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -19,7 +19,8 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
   const { hasCopiedPanel } = useClipboardState();
 
-  const pasteTarget = element instanceof RowItem || element instanceof TabItem ? element : undefined;
+  // TODO this type check here is hacky and should be replaced with a more generic solid solution
+  const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -36,7 +37,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
   return (
     <Sidebar.PaneHeader title={elementInfo.typeName}>
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={1} grow={1} justifyContent={'flex-end'}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (
           <Dropdown
@@ -52,11 +53,11 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                     onClick={onDuplicate}
                   />
                 ) : null}
-                {pasteTarget && hasCopiedPanel ? (
+                {canPaste && hasCopiedPanel ? (
                   <Menu.Item
                     icon="clipboard-alt"
                     label={t('dashboard.layout.common.paste', 'Paste')}
-                    onClick={() => editPane.pastePanel(pasteTarget, 'editPaneHeader')}
+                    onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
                     data-testid={selectors.components.EditPaneHeader.paste}
                   />
                 ) : null}

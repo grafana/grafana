@@ -1,9 +1,9 @@
-import { CoreApp } from '@grafana/data';
+import { type CoreApp } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 
-import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery } from '../../dataquery.gen';
+import type AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+import { type AzureMonitorQuery } from '../../dataquery.gen';
 
 import AzureCheatSheet from './AzureCheatSheet';
 

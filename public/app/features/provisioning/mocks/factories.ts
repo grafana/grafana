@@ -1,4 +1,4 @@
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 const DEFAULT_REPOSITORY_NAME = 'test-repo-abc123';
 const DEFAULT_REPOSITORY_LABEL = { 'provisioning.grafana.app/repository': DEFAULT_REPOSITORY_NAME };

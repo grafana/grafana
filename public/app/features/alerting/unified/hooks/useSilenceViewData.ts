@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Silence } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertSilencesApi } from '../api/alertSilencesApi';
 import { alertmanagerApi } from '../api/alertmanagerApi';

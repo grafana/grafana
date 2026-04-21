@@ -1,6 +1,6 @@
 import { initRegionalFormatForTests } from '@grafana/i18n';
 
-import { RawTimeRange, TimeOption, TimeRange } from '../types/time';
+import { type RawTimeRange, type TimeOption, type TimeRange } from '../types/time';
 import * as featureToggles from '../utils/featureToggles';
 
 import { dateTime } from './moment_wrapper';
@@ -340,6 +340,10 @@ describe('Range Utils', () => {
       ['now/fy', 'now/fy', 'This fiscal year'],
       ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
       ['now-1y/fy', 'now-1y/fy', 'Previous fiscal year'],
+      ['now-1fQ/fQ', 'now', 'Last 1 fiscal quarter'],
+      ['now-2fQ', 'now', 'Last 2 fiscal quarters'],
+      ['now-1fy', 'now', 'Last 1 fiscal year'],
+      ['now-2Q', 'now', 'Last 2 quarters'],
       ['now-6h', 'now-3h', 'now-6h to now-3h'],
       ['now-6h', 'now+1h', 'now-6h to now+1h'],
       ['now/d+6h', 'now-3h', 'now/d+6h to now-3h'],

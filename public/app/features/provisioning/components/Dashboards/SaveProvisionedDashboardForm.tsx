@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
-import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -17,21 +17,22 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
-  ProvisionedOperationInfo,
+  type ProvisionedOperationInfo,
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
+import { joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
-import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
+import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
@@ -65,17 +66,36 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
     register,
+    setValue,
+    getValues,
     formState: { dirtyFields },
   } = methods;
   // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
+  const title = watch('title');
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // Sync filename from title for new dashboards.
+  // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
+  // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
+  // This lets us stop auto-syncing once the user has intentionally customised the filename.
+  useEffect(() => {
+    if (!isNew || dirtyFields.path) {
+      return;
+    }
+    const slugified = slugifyForFilename(title);
+    if (slugified) {
+      const currentPath = getValues('path');
+      const { directory } = splitPath(currentPath);
+      setValue('path', joinPath(directory, `${slugified}.json`));
+    }
+  }, [title, isNew, dirtyFields.path, setValue, getValues]);
 
   const showError = (error: unknown) => {
     setError(

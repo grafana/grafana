@@ -18,9 +18,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -61,9 +61,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-new"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -94,9 +94,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-move-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -138,9 +138,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-move-new"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -169,9 +169,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-folder-move"
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -210,7 +210,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 func invalidFolderMetadataMissingNameJSON(title string) []byte {
 	return []byte(`{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind": "Folder",
 		"metadata": {
 			"name": ""

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { AriaRole, ReactNode } from 'react';
+import { type AriaRole, type ReactNode } from 'react';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Box } from '../Layout/Box/Box';
@@ -84,6 +84,7 @@ function getDefaultImageForVariant(variant: Props['variant']) {
       return <GrotNotFound width={300} />;
     }
     case 'completed': {
+      // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
       return <SVG src={GrotCompleted} width={300} />;
     }
     default: {

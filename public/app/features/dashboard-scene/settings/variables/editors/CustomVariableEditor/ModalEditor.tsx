@@ -1,7 +1,7 @@
-import { FormEvent, useRef, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CustomVariableModel } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -94,7 +94,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 }
 
 export function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>();
+  const draftVariableRef = useRef<CustomVariable>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }

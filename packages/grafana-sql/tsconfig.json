@@ -9,6 +9,7 @@
     "isolatedModules": true,
     "strict": true,
     "rootDirs": ["."],
+    "rootDir": "./src",
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],

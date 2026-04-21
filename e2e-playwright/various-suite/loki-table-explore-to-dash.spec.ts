@@ -100,12 +100,6 @@ const lokiQueryResult = {
   },
 };
 
-test.use({
-  featureToggles: {
-    logsExploreTableVisualisation: true,
-  },
-});
-
 test.describe(
   'Loki Query Editor',
   {

@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -20,7 +20,7 @@ func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, 
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -39,7 +39,7 @@ func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTe
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -76,9 +76,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -110,9 +111,10 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -152,9 +154,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -204,9 +207,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -241,9 +245,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -287,9 +292,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

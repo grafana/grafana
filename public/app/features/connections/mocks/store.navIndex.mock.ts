@@ -1,4 +1,4 @@
-import { NavIndex } from '@grafana/data';
+import { type NavIndex } from '@grafana/data';
 
 export const navIndex: NavIndex = {
   home: {
@@ -248,6 +248,12 @@ export const navIndex: NavIndex = {
         url: '/connections/add-new-connection',
       },
       {
+        id: 'standalone-plugin-page-/a/grafana-collector-app',
+        text: 'Collector',
+        url: '/a/grafana-collector-app',
+        pluginId: 'grafana-collector-app',
+      },
+      {
         id: 'connections-datasources',
         text: 'Data sources',
         subTitle: 'Manage your existing datasource connections',
@@ -255,9 +261,15 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'standalone-plugin-page-/connections/infrastructure',
-        text: 'Infrastructure',
+        text: 'Integrations',
         url: '/connections/infrastructure',
         pluginId: 'grafana-easystart-app',
+      },
+      {
+        id: 'standalone-plugin-page-/connections/private-data-source-connections',
+        text: 'Private data source connect',
+        url: '/connections/private-data-source-connections',
+        pluginId: 'grafana-pdc-app',
       },
     ],
     parentItem: {
@@ -276,7 +288,7 @@ export const navIndex: NavIndex = {
   },
   'standalone-plugin-page-/connections/infrastructure': {
     id: 'standalone-plugin-page-/connections/infrastructure',
-    text: 'Infrastructure',
+    text: 'Integrations',
     url: '/connections/infrastructure',
     pluginId: 'grafana-easystart-app',
   },

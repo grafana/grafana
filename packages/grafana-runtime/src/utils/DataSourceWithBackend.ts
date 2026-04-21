@@ -1,40 +1,40 @@
-import { lastValueFrom, merge, Observable, of } from 'rxjs';
+import { lastValueFrom, merge, type Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameToJSON,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   getDataSourceRef,
   makeClassES5Compatible,
   parseLiveChannelAddress,
-  ScopedVars,
-  AdHocVariableFilter,
+  type ScopedVars,
+  type AdHocVariableFilter,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 import { getFeatureFlagClient } from '../internal/openFeature';
 import {
-  BackendSrvRequest,
-  FetchResponse,
+  type BackendSrvRequest,
+  type FetchResponse,
   getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
   StreamingFrameAction,
-  StreamingFrameOptions,
+  type StreamingFrameOptions,
 } from '../services';
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { isQueryServiceCompatible } from './qscheck';
-import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
 /**
@@ -401,7 +401,7 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend;
+    const useNewApi = getFeatureFlagClient().getBooleanValue('datasourcesApiServerEnableHealthEndpointFrontend', false);
     const healthCheckURL = useNewApi
       ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

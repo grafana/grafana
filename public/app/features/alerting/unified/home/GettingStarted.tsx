@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
@@ -48,6 +48,7 @@ export default function GettingStarted() {
           </ul>
           <div className={styles.svgContainer}>
             <Stack justifyContent={'center'}>
+              {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
               <SVG src={atAGlanceImage} width={undefined} height={undefined} />
             </Stack>
           </div>
