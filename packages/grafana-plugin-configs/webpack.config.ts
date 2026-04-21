@@ -120,7 +120,6 @@ const config = async (env: Env): Promise<Configuration> => {
       'rxjs',
       'rxjs/operators',
       'react-router',
-      'd3',
       /^@grafana\/ui/i,
       /^@grafana\/runtime/i,
       /^@grafana\/data/i,

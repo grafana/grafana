@@ -4,7 +4,7 @@ export const nodeModulesToTransform = (moduleNames) => `.*\/node_modules\/(?!.*(
 export const grafanaESModules = [
   '@wojtekmaj/date-utils',
   'ol',
-  'd3',
+  'd3-scale',
   'd3-color',
   'd3-interpolate',
   'd3-scale-chromatic',
