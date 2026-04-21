@@ -1,8 +1,9 @@
 import { type PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/types/store';
 
@@ -366,15 +367,8 @@ export async function interpolateDashboardForCompatibilityCheck(
     );
   }
 
-  // 5. Prepare inputs array for interpolation API
+  // 5. Interpolate in the frontend — no backend round-trip needed
   const inputs: InputMapping[] = mappingResult.mappings;
 
-  // 6. Call interpolation endpoint to replace template variables
-  const interpolatedDashboard = await getBackendSrv().post<DashboardJson>('/api/dashboards/interpolate', {
-    dashboard: dashboardJson,
-    overwrite: true,
-    inputs: inputs,
-  });
-
-  return interpolatedDashboard;
+  return interpolateV1Dashboard(dashboardJson, inputs);
 }
