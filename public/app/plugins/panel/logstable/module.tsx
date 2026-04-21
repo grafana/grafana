@@ -6,12 +6,10 @@ import { type FieldConfig as TableFieldConfig, type Options as TableOptions } fr
 
 import { LogsTable } from './LogsTable';
 import { logsTablePanelFieldConfig } from './logsTableFieldConfig';
-import { logsTableMigrationHandler } from './migrations';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { logstableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)
-  .setMigrationHandler(logsTableMigrationHandler)
   .useFieldConfig(logsTablePanelFieldConfig)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
