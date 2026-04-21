@@ -13,6 +13,8 @@ export interface EditReceiverViewProps {
   onSaveSuccess?: () => void;
   /** Hides in-form manage-permissions (e.g. embedded instance drawer). */
   hidePermissionsAction?: boolean;
+  /** Hides the form Cancel control (e.g. instance drawer; user uses Back). */
+  hideCancelButton?: boolean;
 }
 
 export const EditReceiverView = ({
@@ -20,6 +22,7 @@ export const EditReceiverView = ({
   alertmanagerName,
   onSaveSuccess,
   hidePermissionsAction,
+  hideCancelButton,
 }: EditReceiverViewProps) => {
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
 
@@ -33,6 +36,7 @@ export const EditReceiverView = ({
         editMode
         onSaveSuccess={onSaveSuccess}
         hidePermissionsAction={hidePermissionsAction}
+        hideCancelButton={hideCancelButton}
       />
     );
   }
@@ -43,6 +47,7 @@ export const EditReceiverView = ({
       readOnly={readOnly}
       editMode
       onSaveSuccess={onSaveSuccess}
+      hideCancelButton={hideCancelButton}
     />
   );
 };

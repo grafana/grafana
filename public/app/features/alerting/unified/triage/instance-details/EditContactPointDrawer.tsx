@@ -80,6 +80,7 @@ function EditContactPointDrawerBody({ contactPointName, onSaveSuccess }: EditCon
       contactPoint={contactPoint}
       onSaveSuccess={onSaveSuccess}
       hidePermissionsAction
+      hideCancelButton
     />
   );
 }

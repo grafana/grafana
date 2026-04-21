@@ -214,6 +214,9 @@ const useGetAlertmanagerContactPoint = (
  *
  * We resolve by listing with `metadata.name` = `name` first (when `name` is already the UID), then with
  * `metadata.name` = `base64UrlEncode(name)` (when `name` is a stored title).
+ *
+ * Future: if the notifications API exposes a single "resolve receiver by title or UID" call, switch to that
+ * to shrink client-side branching.
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
