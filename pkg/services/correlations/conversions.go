@@ -154,13 +154,17 @@ func ToCreateCorrelationCommand(obj *correlationsV0.Correlation) (*CreateCorrela
 	}, nil
 }
 
-func convertUnstructuredToCorrelation(item *unstructured.Unstructured) (*correlationsV0.Correlation, error) {
+func convertUnstructuredToCorrelation(item unstructured.Unstructured) (*Correlation, error) {
 	obj := &correlationsV0.Correlation{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, obj)
 	if err != nil {
-		return obj, err
+		return nil, err
 	}
-	return obj, nil
+	correlation, err := ToCorrelation(obj)
+	if err != nil {
+		return nil, err
+	}
+	return correlation, nil
 }
 
 func convertCorrelationToUnstructured(item Correlation) (*unstructured.Unstructured, error) {

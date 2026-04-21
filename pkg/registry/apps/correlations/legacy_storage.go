@@ -224,6 +224,8 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 
+	//TODO - this will need to be tweaked as well when we get the service to work for write mode 5
+
 	// there will only ever be one label selector / datasource at a time for this
 	labelSelectors, _ := listOptions.LabelSelector.Requirements()
 	datasourceUIDs := labelSelectors[0].Values().List()

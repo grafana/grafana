@@ -165,15 +165,7 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 	if err != nil {
 		return Correlation{}, err
 	}
-	strucCorr, err := convertUnstructuredToCorrelation(appPlatformCorr)
-	if err != nil {
-		return Correlation{}, err
-	}
-	legacyCorr, err := ToCorrelation(strucCorr)
-	if err != nil {
-		return Correlation{}, err
-	}
-
+	legacyCorr, err := convertUnstructuredToCorrelation(*appPlatformCorr)
 	return *legacyCorr, nil
 }
 
@@ -206,12 +198,7 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 		return Correlation{}, err
 	}
 
-	returnedCorr, err := convertUnstructuredToCorrelation(returnedUnstructCorr)
-	if err != nil {
-		return Correlation{}, err
-	}
-
-	legacyCorr, err := ToCorrelation(returnedCorr)
+	legacyCorr, err := convertUnstructuredToCorrelation(*returnedUnstructCorr)
 	if err != nil {
 		return Correlation{}, err
 	}
@@ -224,21 +211,15 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 	if err != nil {
 		return Correlation{}, err
 	}
-	appPlatformCorr, err := convertUnstructuredToCorrelation(unstructCorr)
+	legacyCorr, err := convertUnstructuredToCorrelation(*unstructCorr)
 	if err != nil {
 		return Correlation{}, err
 	}
-
-	legacyCorr, err := ToCorrelation(appPlatformCorr)
-	if err != nil {
-		return Correlation{}, err
-	}
-
 	return *legacyCorr, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	// todo: we will need the datasource type here
+	// todo: datasource type was needed a a label selector for actually using app platform - test with write mode 5
 	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
 	if err != nil {
 		return []Correlation{}, err
@@ -247,11 +228,7 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
 	for i, val := range appPlatformCorrs.Items {
-		appPlatformCorr, err := convertUnstructuredToCorrelation(&val)
-		if err != nil {
-			return []Correlation{}, err
-		}
-		legacyCorr, err := ToCorrelation(appPlatformCorr)
+		legacyCorr, err := convertUnstructuredToCorrelation(val)
 		if err != nil {
 			return []Correlation{}, err
 		}
@@ -271,13 +248,16 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
 	for i, val := range appPlatformCorrs.Items {
-		strucCorr, _ := convertUnstructuredToCorrelation(&val) // todo error handling
-		legacyCorr, _ := ToCorrelation(strucCorr)              //TODO error handling here?
+		legacyCorr, _ := convertUnstructuredToCorrelation(val)
+		if err != nil {
+			return GetCorrelationsResponseBody{
+				Correlations: []Correlation{},
+			}, err
+		}
 		correlations[i] = *legacyCorr
 	}
 
 	// TODO pagination
-
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
 		TotalCount:   int64(len(correlations)),
