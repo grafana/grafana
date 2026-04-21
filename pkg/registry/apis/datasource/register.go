@@ -141,6 +141,8 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
+	registerSubresourceMetrics(prometheus.DefaultRegisterer)
+
 	builder := &DataSourceAPIBuilder{
 		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:             plugin,
