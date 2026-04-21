@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -117,8 +118,7 @@ func (s *preferenceStorage) doListWithName(ctx context.Context, user identity.Re
 			return &preferences.PreferencesList{}, nil
 		}
 	case utils.TeamResourceOwner:
-		ok, err := s.sql.InTeam(ctx, user, info.Identifier, false)
-		if err != nil || !ok {
+		if !slices.Contains(user.GetGroups(), info.Identifier) {
 			return &preferences.PreferencesList{}, nil
 		}
 	default:
