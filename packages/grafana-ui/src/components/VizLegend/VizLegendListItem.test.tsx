@@ -21,7 +21,7 @@ describe('VizLegendListItem', () => {
 
   it('applies disabled styling when item.disabled is true', () => {
     const { container } = renderItem({ item: makeItem({ disabled: true }), allItemsSelected: false });
-    expect((container.firstChild as HTMLElement).className).toContain('LegendLabelDisabled');
+    expect(container.firstChild).toHaveAttribute('class', expect.stringContaining('LegendLabelDisabled'));
   });
 
   it('shows "All series selected" aria-label when allItemsSelected is true', () => {
