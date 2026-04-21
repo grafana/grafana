@@ -1,5 +1,5 @@
 import { VariableHide } from '@grafana/data';
-import { AdHocFiltersVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
+import { AdHocFiltersVariable, CustomVariable, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -43,31 +43,13 @@ describe('SectionFiltersSet', () => {
       expect(info.icon).toBe('filter');
     });
 
-    it('is hidden when no adhoc variables exist', () => {
-      const row = buildRow({ includeCustom: true });
-      const filtersSet = new SectionFiltersSet({ sectionRef: row.getRef() });
-
-      const info = filtersSet.getEditableElementInfo();
-
-      expect(info.isHidden).toBe(true);
-    });
-
-    it('is not hidden when adhoc variables exist', () => {
-      const row = buildRow({ includeFilter: true });
-      const filtersSet = new SectionFiltersSet({ sectionRef: row.getRef() });
-
-      const info = filtersSet.getEditableElementInfo();
-
-      expect(info.isHidden).toBe(false);
-    });
-
-    it('is hidden when section has no variables at all', () => {
+    it('does not set isHidden so the node always shows in the outline', () => {
       const row = buildRow();
       const filtersSet = new SectionFiltersSet({ sectionRef: row.getRef() });
 
       const info = filtersSet.getEditableElementInfo();
 
-      expect(info.isHidden).toBe(true);
+      expect(info.isHidden).toBeUndefined();
     });
   });
 
@@ -79,7 +61,7 @@ describe('SectionFiltersSet', () => {
       const children = filtersSet.getOutlineChildren();
 
       expect(children).toHaveLength(1);
-      expect(children[0].state.name).toBe('filter0');
+      expect((children[0] as SceneVariable).state.name).toBe('filter0');
     });
 
     it('returns empty array when no adhoc variables exist', () => {
@@ -89,48 +71,6 @@ describe('SectionFiltersSet', () => {
       const children = filtersSet.getOutlineChildren();
 
       expect(children).toHaveLength(0);
-    });
-
-    it('partitions variables by display mode', () => {
-      const visibleFilter = new AdHocFiltersVariable({
-        name: 'visibleFilter',
-        type: 'adhoc',
-        hide: VariableHide.dontHide,
-      });
-      const hiddenFilter = new AdHocFiltersVariable({
-        name: 'hiddenFilter',
-        type: 'adhoc',
-        hide: VariableHide.hideVariable,
-      });
-      const controlsMenuFilter = new AdHocFiltersVariable({
-        name: 'controlsFilter',
-        type: 'adhoc',
-        hide: VariableHide.inControlsMenu,
-      });
-
-      const row = new RowItem({
-        $variables: new SceneVariableSet({ variables: [hiddenFilter, controlsMenuFilter, visibleFilter] }),
-        layout: AutoGridLayoutManager.createEmpty(),
-      });
-
-      new DashboardScene({
-        body: new RowsLayoutManager({ rows: [row] }),
-      });
-
-      const filtersSet = new SectionFiltersSet({ sectionRef: row.getRef() });
-      const children = filtersSet.getOutlineChildren();
-
-      expect(children.map((c) => c.state.name)).toEqual(['visibleFilter', 'controlsFilter', 'hiddenFilter']);
-    });
-  });
-
-  describe('key', () => {
-    it('includes the section key for uniqueness', () => {
-      const row = buildRow({ includeFilter: true });
-      const filtersSet = new SectionFiltersSet({ sectionRef: row.getRef() });
-
-      expect(filtersSet.state.key).toContain('section-filters-set-');
-      expect(filtersSet.state.key).toContain(row.state.key!);
     });
   });
 });

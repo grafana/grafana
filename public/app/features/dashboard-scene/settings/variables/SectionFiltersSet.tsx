@@ -61,12 +61,10 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    const filters = this.getAdhocVariables();
     return {
       typeName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
       icon: 'filter',
       instanceName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
-      isHidden: filters.length === 0,
     };
   }
 
