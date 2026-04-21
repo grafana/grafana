@@ -289,7 +289,12 @@ func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
 	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
 	v.Set("client_assertion", strings.TrimSpace(string(federatedToken)))
 
-	return s.fetchToken(v)
+	token, err := fetchAzureADToken(s.ctx, s.log, s.conf.Endpoint.TokenURL, v)
+	if err != nil {
+		return nil, err
+	}
+	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
+	return token, nil
 }
 
 func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
@@ -325,68 +330,22 @@ func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
 	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
 	v.Set("client_assertion", tk.Token)
 
-	return s.fetchToken(v)
-}
-
-func (s *azureADManagedIdentityTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
-	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
+	token, err := fetchAzureADToken(s.ctx, s.log, s.conf.Endpoint.TokenURL, v)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	httpClient, ok := s.ctx.Value(oauth2.HTTPClient).(*http.Client)
-	if !ok {
-		httpClient = http.DefaultClient
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			s.log.Error("Failed to close response body", "error", err)
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		s.log.Debug("oauth2: cannot fetch token", "status", resp.Status, "body", body)
-		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
-	}
-
-	var rawResponse interface{}
-	if err := json.Unmarshal(body, &rawResponse); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
-	}
-
-	var token *oauth2.Token
-	if err := json.Unmarshal(body, &token); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
-	}
-
-	if token.ExpiresIn > 0 {
-		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
-	}
-
 	s.log.Debug("AzureADManagedIdentityToken fetchToken completed", "expiry", token.Expiry)
-	return token.WithExtra(rawResponse), nil
+	return token, nil
 }
 
-func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
-	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
+func fetchAzureADToken(ctx context.Context, log log.Logger, tokenURL string, params url.Values) (*oauth2.Token, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Correct way to get HTTP client from context
-	httpClient, ok := s.ctx.Value(oauth2.HTTPClient).(*http.Client)
+	httpClient, ok := ctx.Value(oauth2.HTTPClient).(*http.Client)
 	if !ok {
 		httpClient = http.DefaultClient
 	}
@@ -397,7 +356,7 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.log.Error("Failed to close response body", "error", err)
+			log.Error("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -407,7 +366,7 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		s.log.Debug("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		log.Error("oauth2: cannot fetch token", "status", resp.Status, "body", body)
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
 	}
 
@@ -425,7 +384,6 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
 	}
 
-	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
 	return token.WithExtra(rawResponse), nil
 }
 
