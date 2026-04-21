@@ -51,6 +51,8 @@ export interface GrafanaReceiverFormProps {
   onSaveSuccess?: () => void;
   /** Hides the in-form "Manage contact point permissions" control (e.g. instance drawer embed). */
   hidePermissionsAction?: boolean;
+  /** Hides Cancel; use when navigation is via drawer Back (e.g. instance flow). */
+  hideCancelButton?: boolean;
 }
 
 export const GrafanaReceiverForm = ({
@@ -59,6 +61,7 @@ export const GrafanaReceiverForm = ({
   editMode,
   onSaveSuccess,
   hidePermissionsAction,
+  hideCancelButton,
 }: GrafanaReceiverFormProps) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -220,6 +223,7 @@ export const GrafanaReceiverForm = ({
           showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
         canEditProtectedFields={canEditProtectedFields}
+        hideCancelButton={hideCancelButton}
       />
       {testChannelData && (
         <TestContactPointModal

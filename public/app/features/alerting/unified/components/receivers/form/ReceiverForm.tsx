@@ -46,6 +46,8 @@ interface Props<R extends ChannelValues> {
   contactPointId?: string;
   canManagePermissions?: boolean;
   canEditProtectedFields: boolean;
+  /** When true, omits the Cancel link (e.g. stacked instance drawer where Back closes the view). */
+  hideCancelButton?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -63,6 +65,7 @@ export function ReceiverForm<R extends ChannelValues>({
   contactPointId,
   canManagePermissions,
   canEditProtectedFields,
+  hideCancelButton,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -239,14 +242,16 @@ export function ReceiverForm<R extends ChannelValues>({
               )}
             </>
           )}
-          <LinkButton
-            disabled={isSubmitting}
-            variant="secondary"
-            data-testid="cancel-button"
-            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
-          >
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
+          {!hideCancelButton && (
+            <LinkButton
+              disabled={isSubmitting}
+              variant="secondary"
+              data-testid="cancel-button"
+              href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+            >
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </LinkButton>
+          )}
         </div>
       </form>
     </FormProvider>
