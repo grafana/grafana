@@ -55,7 +55,7 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	}
 
 	if req.Limit > common.MaxListLimit {
-		req.Limit = common.MaxListLimit
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
 	if req.Limit < 1 {
 		req.Limit = common.DefaultListLimit
