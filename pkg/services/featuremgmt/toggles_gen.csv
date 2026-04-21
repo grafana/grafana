@@ -248,11 +248,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-17,alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
-2025-08-01,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
-2025-08-01,favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
-2025-08-01,newLogContext,experimental,@grafana/observability-logs,false,false,true
-2025-08-01,newClickhouseConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
-2025-08-01,teamFolders,experimental,@grafana/grafana-frontend-navigation,false,false,false
+2025-07-31,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
+2025-07-31,favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-07-31,newLogContext,experimental,@grafana/observability-logs,false,false,true
+2025-07-31,newClickhouseConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
+2025-07-31,teamFolders,preview,@grafana/grafana-frontend-navigation,false,false,false
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-08-01,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingAlertsActivityBanner,experimental,@grafana/alerting-squad,false,false,true
