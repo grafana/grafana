@@ -298,6 +298,9 @@ type FrontendSettingsDTO struct {
 	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
 	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
+	DangerousMeticulousAIEnabled   bool   `json:"dangerousMeticulousAIEnabled"`
+	DangerousMeticulousAIScriptUrl string `json:"dangerousMeticulousAIScriptUrl"`
+
 	LoginError string `json:"loginError,omitempty"`
 
 	// The K8s namespace to use for this user
