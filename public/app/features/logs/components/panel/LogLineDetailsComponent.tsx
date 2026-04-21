@@ -37,7 +37,8 @@ interface LogLineDetailsComponentProps {
 
 export const LogLineDetailsComponent = memo(
   ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
-    const { noInteractions, logOptionsStorageKey, syntaxHighlighting } = useLogListContext();
+    const { noInteractions, logOptionsStorageKey, syntaxHighlighting } =
+      useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const styles = useStyles2(getStyles);
