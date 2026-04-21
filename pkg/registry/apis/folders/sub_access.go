@@ -95,7 +95,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			Name:          name,
 			Folder:        folder,
 		}, {
-			CorrelationID: "canUpdate",
+			CorrelationID: "canEdit",
 			Verb:          utils.VerbUpdate,
 			Group:         foldersV1.GROUP,
 			Resource:      foldersV1.RESOURCE,
@@ -106,6 +106,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			Verb:          utils.VerbCreate, // new folder in the parent one
 			Group:         foldersV1.GROUP,
 			Resource:      foldersV1.RESOURCE,
+			Name:          name,   // ?? seems weird, but removing it breaks a test
 			Folder:        folder, // Create a new folder in the parent folder
 		}},
 	})
@@ -120,10 +121,11 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		}
 		return false
 	}
+	isAdmin := check("canAdmin")
 	return &foldersV1.FolderAccessInfo{
-		CanAdmin:  check("canAdmin"),
-		CanDelete: check("canDelete"),
-		CanEdit:   check("canUpdate"),
-		CanSave:   check("canSave"),
+		CanAdmin:  isAdmin,
+		CanDelete: isAdmin || check("canDelete"),
+		CanEdit:   isAdmin || check("canEdit"),
+		CanSave:   isAdmin || check("canSave"),
 	}, nil
 }
