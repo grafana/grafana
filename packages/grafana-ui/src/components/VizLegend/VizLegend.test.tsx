@@ -196,9 +196,9 @@ describe('VizLegend', () => {
   describe('table mode sorting', () => {
     const tableItem = makeItem('A', { getDisplayValues: () => [{ numeric: 1, text: '1', title: 'min' }] });
 
-    it('uses onToggleSort prop, falling back to onToggleLegendSort from context', async () => {
+    it('calls onToggleSort prop when provided', async () => {
       const onToggleSort = jest.fn();
-      const { unmount } = renderWithContext(
+      renderWithContext(
         <VizLegend
           displayMode={LegendDisplayMode.Table}
           items={[tableItem]}
@@ -209,8 +209,9 @@ describe('VizLegend', () => {
       );
       await userEvent.click(screen.getByText('min'));
       expect(onToggleSort).toHaveBeenCalledWith('min');
-      unmount();
+    });
 
+    it('calls onToggleLegendSort from context when onToggleSort prop is not provided', async () => {
       const onToggleLegendSort = jest.fn();
       renderWithContext(
         <VizLegend displayMode={LegendDisplayMode.Table} items={[tableItem]} placement="bottom" isSortable />,
