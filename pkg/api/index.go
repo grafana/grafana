@@ -217,6 +217,23 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
+	userEmail := c.GetEmail()
+	isGrafanaEmployee := strings.HasSuffix(userEmail, "@grafana.com")
+	meticulousEnabled := hs.Cfg.DangerousMeticulousAIEnabled &&
+		settings.FeatureToggles["dangerousMeticulousAIRecording"] &&
+		(hs.Cfg.Env == setting.Dev) &&
+		isGrafanaEmployee
+
+	data.DangerousMeticulousAIEnabled = meticulousEnabled
+	if meticulousEnabled {
+		data.DangerousMeticulousAIProjectToken = hs.Cfg.DangerousMeticulousAIProjectToken
+		data.DangerousMeticulousAIScriptUrl = hs.Cfg.DangerousMeticulousAIScriptURL
+		hs.log.Warn("⚠️⚠️⚠️ METICULOUS AI RECORDING ACTIVE ⚠️⚠️⚠️",
+			"environment", "development",
+			"user", userEmail,
+			"warning", "ALL SESSION DATA SENT TO METICULOUS.AI - Do NOT use real credentials or customer data")
+	}
+
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	data.NavTree.RemoveEmptyAdminSections()
