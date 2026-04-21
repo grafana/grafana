@@ -4454,12 +4454,13 @@
       "button-label": "Выбрать папку",
       "clear-selection": "Очистить выбор",
       "empty-message": "Папки не найдены",
-      "error-title": "Ошибка загрузки папок",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
       "root-title": "Дашборды",
       "search-placeholder": "Поиск папок",
       "shared-with-me": "Доступные мне",
       "team-folders": "Папки команды",
+      "team-folders-error-title": "",
       "unknown-error": "Неизвестная ошибка"
     },
     "manage-folder-nav": {
@@ -5682,6 +5683,8 @@
         "annotation-set": "Аннотации и оповещения",
         "dashboard": "Дашборд",
         "element": "Элемент",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Ссылки",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
@@ -5710,8 +5713,10 @@
           "title": "Заголовок строки"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Добавить переменную",
         "title": "Переменные"
       },
       "variable": {
@@ -6265,6 +6270,9 @@
           "hide-header": "Скрытие заголовка строки",
           "title": "Заголовок"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Переменные"
         },
@@ -6423,6 +6431,9 @@
             "description": "Повторите эту вкладку для каждого значения в выбранной переменной.",
             "title": "Повторение по переменной"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Переменные"
@@ -7144,6 +7155,22 @@
       "sql-name": "Преобразование с помощью SQL",
       "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_few": "",
+      "title-hidden_many": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7600,6 +7627,7 @@
       "affected-dashboards_other": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Отмена",
       "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
       "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
@@ -7607,6 +7635,11 @@
       "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
       "form-loading-error": "Ошибка при загрузке формы",
       "form-loading-error-unknown": "Непредвиденная ошибка при загрузке формы.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Описание",
       "label-target-folder": "Целевая папка",
       "label-title": "Название",
@@ -7624,6 +7657,9 @@
       "disabled-tooltip": "Сохраните дашборд, прежде чем создавать правила оповещений",
       "new-alert-rule": "Новое правило оповещения",
       "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Позволяет выбирать несколько значений одновременно.",
@@ -7720,6 +7756,13 @@
       "page-nav": {
         "text": {
           "settings": "Параметры"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },

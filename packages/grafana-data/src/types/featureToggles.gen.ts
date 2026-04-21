@@ -900,11 +900,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enable unified storage search UI
-  * @default false
-  */
-  unifiedStorageSearchUI?: boolean;
-  /**
   * Enables cross cluster search in the Elasticsearch data source
   * @default false
   */
