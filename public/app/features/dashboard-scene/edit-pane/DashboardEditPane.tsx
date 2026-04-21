@@ -195,8 +195,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       this.selectObject(action.movedObject, { force: true });
     }
 
+    // If action removed an object and not added a new one we need to update selection
     if (action.removedObject && !action.addedObject) {
-      this.fixSelectionOfRemovedObject();
+      // But only if removed object is currently selected
+      if (action.removedObject === this.getSelectedObject()) {
+        this.fixSelectionOfRemovedObject();
+      }
     }
   }
 
