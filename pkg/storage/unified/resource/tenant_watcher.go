@@ -195,6 +195,11 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		return nil, fmt.Errorf("creating dynamic client: %w", err)
 	}
 
+	// TEMPORARY DIAGNOSTIC — paginated count of tenants with the pending-delete
+	// label via direct LIST. Compare against how many the informer actually
+	// delivers to handleTenant.
+	diagnoseTenantListSize(ctx, client, logger)
+
 	tw := &TenantWatcher{
 		log:                logger,
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),
@@ -542,4 +547,52 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 		return
 	}
 	tw.log.Info("cleared tenant pending delete", "tenant", name)
+}
+
+// TEMPORARY DIAGNOSTIC — remove after investigation.
+// Paginates through tenants with the pending-delete label via direct LIST so
+// we can compare the server-side filtered count against what the informer
+// actually delivers to handleTenant.
+func diagnoseTenantListSize(ctx context.Context, dyn dynamic.Interface, logger log.Logger) {
+	const pageSize = 500
+	start := time.Now()
+	var totalCount, totalBytes, pageCount int
+	var continueToken string
+	for {
+		page, err := dyn.Resource(tenantGVR).List(ctx, metav1.ListOptions{
+			Limit:         pageSize,
+			Continue:      continueToken,
+			LabelSelector: labelPendingDelete + "=true",
+		})
+		if err != nil {
+			logger.Error("diag: pending list",
+				"err", err,
+				"pages_so_far", pageCount,
+				"count_so_far", totalCount,
+				"bytes_so_far", totalBytes,
+			)
+			return
+		}
+		pageCount++
+		for _, item := range page.Items {
+			b, _ := item.MarshalJSON()
+			totalBytes += len(b)
+		}
+		totalCount += len(page.Items)
+		continueToken = page.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	avg := 0
+	if totalCount > 0 {
+		avg = totalBytes / totalCount
+	}
+	logger.Info("diag: pending count",
+		"count", totalCount,
+		"total_bytes", totalBytes,
+		"avg_bytes", avg,
+		"pages", pageCount,
+		"elapsed", time.Since(start),
+	)
 }
