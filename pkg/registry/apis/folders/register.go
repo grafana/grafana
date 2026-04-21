@@ -52,9 +52,8 @@ type FolderAPIBuilder struct {
 	searcher             resourcepb.ResourceIndexClient
 	maxNestedFolderDepth int
 
-	// From feature toggles
-	useZanzana          bool
-	permissionsOnCreate bool
+	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
 
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface

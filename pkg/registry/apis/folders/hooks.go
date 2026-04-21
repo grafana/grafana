@@ -82,7 +82,6 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		return
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.useZanzana {
 		log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
 		err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
