@@ -74,6 +74,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
 		folderPermissionsSvc: folderPermissionsSvc,
+		acService:            acService,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
