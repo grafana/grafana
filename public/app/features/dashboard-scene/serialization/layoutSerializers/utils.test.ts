@@ -1,13 +1,15 @@
 import {
   defaultDataQueryKind,
   defaultPanelSpec,
-  PanelKind,
-  PanelQueryKind,
+  type PanelKind,
+  type PanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+
+import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
 
 describe('getRuntimePanelDataSource', () => {
   it('should return uid and type when explicit datasource UID is provided', () => {
@@ -371,5 +373,33 @@ describe('ensureUniqueRefIds', () => {
     const result = ensureUniqueRefIds(queries);
 
     expect(result[0].spec.refId).toBe('A');
+  });
+});
+
+describe('buildVizPanel', () => {
+  it('maps queryOptions.timeCompare to PanelTimeRange compareWith', () => {
+    const base = defaultPanelSpec();
+    const panel: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        ...base,
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            ...base.data.spec,
+            queryOptions: {
+              ...base.data.spec.queryOptions,
+              timeCompare: '1d',
+            },
+          },
+        },
+      },
+    };
+    const viz = buildVizPanel(panel);
+    if (!(viz.state.$timeRange instanceof PanelTimeRange)) {
+      throw new Error('$timeRange must be PanelTimeRange');
+    }
+    expect(viz.state.$timeRange).toBeDefined();
+    expect(viz.state.$timeRange?.state.compareWith).toBe('1d');
   });
 });

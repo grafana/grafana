@@ -9,6 +9,10 @@ module.exports = (env = {}) => ({
   entry: {
     app: './public/app/index.ts',
     swagger: './public/swagger/index.tsx',
+    boot: {
+      import: './public/boot/index.ts',
+      runtime: false,
+    },
   },
   experiments: {
     // Required to load WASM modules.
@@ -17,8 +21,13 @@ module.exports = (env = {}) => ({
   output: {
     clean: env.react19 ? false : true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
-    // Keep publicPath relative for host.com/grafana/ deployments
+    filename: (pathData) => {
+      if (pathData.chunk.name === 'boot') {
+        return '[name].js';
+      }
+      return env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js';
+    },
+    chunkFilename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
     publicPath: 'public/build/',
   },
   resolve: {

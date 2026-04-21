@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { ThresholdsMode } from '@grafana/schema';
 
@@ -27,9 +27,69 @@ describe('RadialGauge', () => {
     }
   );
 
+  describe('text mode', () => {
+    describe('auto mode', () => {
+      it('should render `value_and_name` if the vizCount is greater than 1', () => {
+        render(<RadialGaugeExample textMode="auto" vizCount={3} value={55} />);
+        expect(screen.getByRole('img')).toBeInTheDocument();
+        expect(screen.getByText('TestData')).toBeInTheDocument();
+        expect(screen.getByText('55')).toBeInTheDocument();
+      });
+
+      it('should render `value_and_name` if the vizCount is 1 and the first value has a display name', () => {
+        render(<RadialGaugeExample textMode="auto" seriesName="My series" vizCount={3} value={55} />);
+        expect(screen.getByRole('img')).toBeInTheDocument();
+        expect(screen.getByText('My series')).toBeInTheDocument();
+        expect(screen.getByText('55')).toBeInTheDocument();
+      });
+
+      it('should render `value` if the vizCount is 1 and the first value has no display name', () => {
+        render(<RadialGaugeExample textMode="auto" vizCount={1} value={55} />);
+        expect(screen.getByRole('img')).toBeInTheDocument();
+        expect(screen.queryByText('TestData')).not.toBeInTheDocument();
+        expect(screen.getByText('55')).toBeInTheDocument();
+      });
+    });
+
+    it('should render `value_and_name` if the textMode is set to `value_and_name`', () => {
+      render(<RadialGaugeExample textMode="value_and_name" seriesName="My series" value={55} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByText('My series')).toBeInTheDocument();
+      expect(screen.getByText('55')).toBeInTheDocument();
+    });
+
+    it('should render `value` if the textMode is set to `value`', () => {
+      render(<RadialGaugeExample textMode="value" seriesName="My series" value={55} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.queryByText('My series')).not.toBeInTheDocument();
+      expect(screen.getByText('55')).toBeInTheDocument();
+    });
+
+    it('should render `name` if the textMode is set to `name`', () => {
+      render(<RadialGaugeExample textMode="name" seriesName="My series" value={55} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByText('My series')).toBeInTheDocument();
+      expect(screen.queryByText('55')).not.toBeInTheDocument();
+    });
+
+    it('should render `none` if the textMode is set to `none`', () => {
+      render(<RadialGaugeExample textMode="none" seriesName="My series" value={55} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.queryByText('My series')).not.toBeInTheDocument();
+      expect(screen.queryByText('55')).not.toBeInTheDocument();
+    });
+  });
+
   describe('labels', () => {
     it('should render labels', () => {
       render(<RadialGaugeExample showScaleLabels />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    });
+
+    it('should render labels for a circle gauge', () => {
+      render(<RadialGaugeExample showScaleLabels shape="circle" />);
 
       expect(screen.getByRole('img')).toBeInTheDocument();
       expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();

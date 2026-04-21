@@ -1,23 +1,29 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { SqlExpressionsBanner } from 'app/features/dashboard/components/TransformationsEditor/SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
+import { hasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
-import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { trackTransformationFilterChanged, trackTransformationSearch } from '../../tracking';
+import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { SqlExpressionsCTA } from './SqlExpressionsCTA';
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';
 
 export function TransformationTypePicker() {
   const styles = useStyles2(getStyles);
 
-  const { finalizePendingTransformation } = useQueryEditorUIContext();
-  const { data } = useQueryRunnerContext();
+  const { finalizePendingTransformation, setPendingTransformation, finalizePendingExpression } =
+    useQueryEditorUIContext();
+  const { data, queries } = useQueryRunnerContext();
+  const { dsSettings } = useDatasourceContext();
 
   const [showIllustrations, setShowIllustrations] = useState(true);
 
@@ -31,6 +37,19 @@ export function TransformationTypePicker() {
     onSearchKeyDown,
     allTransformationsCount,
   } = useTransformationSearchAndFilter(finalizePendingTransformation);
+
+  const showSqlCTA =
+    config.featureToggles.sqlExpressions && hasBackendDatasource({ datasourceUid: dsSettings?.uid, queries });
+
+  const handleAddSqlExpression = useCallback(() => {
+    reportInteraction('dashboards_expression_interaction', {
+      action: 'add_expression',
+      expression_type: 'sql',
+      context: 'transformation_picker_cta',
+    });
+    setPendingTransformation(null);
+    finalizePendingExpression(ExpressionQueryType.sql);
+  }, [setPendingTransformation, finalizePendingExpression]);
 
   const searchBoxSuffix = useMemo(() => {
     if (filteredTransformations.length === allTransformationsCount) {
@@ -50,8 +69,6 @@ export function TransformationTypePicker() {
 
   return (
     <Stack direction="column" gap={2}>
-      {config?.featureToggles?.sqlExpressions && <SqlExpressionsBanner />}
-
       <div className={styles.searchWrapper}>
         <Input
           autoFocus
@@ -62,7 +79,10 @@ export function TransformationTypePicker() {
             'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
             'Search for transformation'
           )}
-          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => setSearch(value)}
+          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+            setSearch(value);
+            trackTransformationSearch(value);
+          }}
           onKeyDown={onSearchKeyDown}
           suffix={searchBoxSuffix}
         />
@@ -74,18 +94,27 @@ export function TransformationTypePicker() {
         </Stack>
       </div>
 
+      {showSqlCTA && <SqlExpressionsCTA onAddSqlExpression={handleAddSqlExpression} />}
+
       <Stack direction="row" wrap="wrap" rowGap={1} columnGap={0.5}>
         <FilterPill
           label={t('dashboard.transformation-picker-ng.view-all', 'View all')}
           selected={selectedFilter === null}
-          onClick={() => setSelectedFilter(null)}
+          onClick={() => {
+            setSelectedFilter(null);
+            trackTransformationFilterChanged(null);
+          }}
         />
         {categories.map(({ slug, label }) => (
           <FilterPill
             key={slug}
             label={label}
             selected={selectedFilter === slug}
-            onClick={() => setSelectedFilter(selectedFilter === slug ? null : slug)}
+            onClick={() => {
+              const next = selectedFilter === slug ? null : slug;
+              setSelectedFilter(next);
+              trackTransformationFilterChanged(next);
+            }}
           />
         ))}
       </Stack>

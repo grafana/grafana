@@ -3,22 +3,22 @@ import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
   Button,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   ConfirmModal,
   InteractiveTable,
   Stack,
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { computeVersionDiff } from '../../utils/diff';
@@ -282,7 +282,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <DiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
+        <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />

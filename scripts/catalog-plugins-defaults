@@ -1,0 +1,4 @@
+# Catalog plugin IDs to bundle under data/plugins-bundled (one per line).
+# Optional pin: id:version. Keep in sync with DefaultCatalogPlugins in
+# pkg/build/daggerbuild/arguments/catalog_plugins.go.
+elasticsearch

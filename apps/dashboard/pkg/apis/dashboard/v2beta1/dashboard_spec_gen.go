@@ -59,9 +59,10 @@ func (DashboardAnnotationQuerySpec) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardDataQueryKind struct {
-	Kind    string `json:"kind"`
-	Group   string `json:"group"`
-	Version string `json:"version"`
+	Kind    string            `json:"kind"`
+	Group   string            `json:"group"`
+	Version string            `json:"version"`
+	Labels  map[string]string `json:"labels,omitempty"`
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	Datasource *DashboardV2beta1DataQueryKindDatasource `json:"datasource,omitempty"`
@@ -351,6 +352,8 @@ func (DashboardDataTransformerConfig) OpenAPIModelName() string {
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *DashboardMatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options interface{} `json:"options,omitempty"`
 }
@@ -365,6 +368,21 @@ func NewDashboardMatcherConfig() *DashboardMatcherConfig {
 // OpenAPIModelName returns the OpenAPI model name for DashboardMatcherConfig.
 func (DashboardMatcherConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherConfig"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMatcherScope string
+
+const (
+	DashboardMatcherScopeSeries     DashboardMatcherScope = "series"
+	DashboardMatcherScopeNested     DashboardMatcherScope = "nested"
+	DashboardMatcherScopeAnnotation DashboardMatcherScope = "annotation"
+	DashboardMatcherScopeExemplar   DashboardMatcherScope = "exemplar"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMatcherScope.
+func (DashboardMatcherScope) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherScope"
 }
 
 // A topic is attached to DataFrame metadata in query results.
@@ -2139,6 +2157,7 @@ func (DashboardCustomVariableSpec) OpenAPIModelName() string {
 type DashboardGroupByVariableKind struct {
 	Kind       string                                         `json:"kind"`
 	Group      string                                         `json:"group"`
+	Labels     map[string]string                              `json:"labels,omitempty"`
 	Datasource *DashboardV2beta1GroupByVariableKindDatasource `json:"datasource,omitempty"`
 	Spec       DashboardGroupByVariableSpec                   `json:"spec"`
 }
@@ -2200,6 +2219,7 @@ func (DashboardGroupByVariableSpec) OpenAPIModelName() string {
 type DashboardAdhocVariableKind struct {
 	Kind       string                                       `json:"kind"`
 	Group      string                                       `json:"group"`
+	Labels     map[string]string                            `json:"labels,omitempty"`
 	Datasource *DashboardV2beta1AdhocVariableKindDatasource `json:"datasource,omitempty"`
 	Spec       DashboardAdhocVariableSpec                   `json:"spec"`
 }
@@ -2229,7 +2249,9 @@ type DashboardAdhocVariableSpec struct {
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
-	Origin           *DashboardControlSourceRef       `json:"origin,omitempty"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool                      `json:"enableGroupBy,omitempty"`
+	Origin        *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
@@ -2242,6 +2264,7 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 	}
 }
 

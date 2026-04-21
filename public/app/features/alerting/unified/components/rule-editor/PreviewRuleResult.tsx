@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { FieldConfigSource, FieldMatcherID, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type FieldConfigSource, FieldMatcherID, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
-import { PreviewRuleResponse } from '../../types/preview';
+import { type PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType } from '../../types/rule-form';
 import { messageFromError } from '../../utils/redux';
 
@@ -67,7 +67,7 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
       )}
       <div className={styles.table}>
         <AutoSizer>
-          {({ width, height }) => (
+          {({ width, height }: Size) => (
             <div style={{ width: `${width}px`, height: `${height}px` }}>
               <PanelRenderer
                 title=""

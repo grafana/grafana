@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -56,6 +56,8 @@ interface NotificationsSceneProps {
     to: string;
   };
   hideFilters?: boolean;
+  hideGraph?: boolean;
+  ruleUID?: string;
 }
 
 /**
@@ -69,6 +71,8 @@ export const NotificationsScene = ({
     to: 'now',
   },
   hideFilters,
+  hideGraph,
+  ruleUID,
 }: NotificationsSceneProps = {}) => {
   const [isReady, setIsReady] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<Array<{ text: string; value: string }>>(() => {
@@ -91,7 +95,7 @@ export const NotificationsScene = ({
         const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const to = new Date().toISOString();
 
-        const notifications = await getNotifications(from, to, undefined, undefined, undefined, []);
+        const notifications = await getNotifications(from, to, undefined, undefined, undefined, [], ruleUID);
 
         const keysSet = new Set<string>();
         const receiversSet = new Set<string>();
@@ -124,7 +128,7 @@ export const NotificationsScene = ({
     };
 
     initialize();
-  }, []);
+  }, [ruleUID]);
 
   const scene = useMemo(() => {
     if (!isReady) {
@@ -139,12 +143,15 @@ export const NotificationsScene = ({
     // Users will need to manually type label keys (allowCustomValue handles this).
     const labelsFilterVariable = new AdHocFiltersVariable({
       name: LABELS_FILTER,
-      label: t('alerting.notifications-scene.labels-filter-variable.label.labels', 'Labels'),
+      label: t('alerting.notifications-scene.labels-filter-variable.label.group-labels', 'Group Labels'),
       allowCustomValue: true,
-      layout: 'combobox',
       applyMode: 'manual',
       supportsMultiValueOperators: true,
       expressionBuilder: prometheusExpressionBuilder,
+      inputPlaceholder: t(
+        'alerting.notifications-scene.labels-filter-variable.placeholder',
+        'Filter by group label values'
+      ),
       filters: [],
       defaultKeys: availableKeys,
       // Note: AdHocFiltersVariable doesn't support providing default values without a datasource
@@ -202,14 +209,14 @@ export const NotificationsScene = ({
       body: new SceneFlexLayout({
         direction: 'column',
         children: [
-          getNotificationsGraphSceneFlexItem(),
+          ...(hideGraph ? [] : [getNotificationsGraphSceneFlexItem(ruleUID)]),
           new SceneFlexItem({
-            body: new NotificationsListObject({}),
+            body: new NotificationsListObject({ ruleUID }),
           }),
         ],
       }),
     });
-  }, [defaultTimeRange, hideFilters, isReady, availableKeys, availableReceivers]);
+  }, [defaultTimeRange, hideFilters, hideGraph, isReady, availableKeys, availableReceivers, ruleUID]);
 
   const isUrlSyncInitialized = useUrlSync(scene);
 
@@ -224,7 +231,7 @@ export const NotificationsScene = ({
  * Creates a SceneQueryRunner with the datasource information for the runtime datasource.
  * @returns the SceneQueryRunner
  */
-function getQueryRunnerForNotificationsDataSource() {
+function getQueryRunnerForNotificationsDataSource(ruleUID?: string) {
   const query = new SceneQueryRunner({
     datasource: notificationsDatasource,
     queries: [
@@ -234,6 +241,7 @@ function getQueryRunnerForNotificationsDataSource() {
         outcomeFilter: '${OUTCOME_FILTER}',
         receiverFilter: '${RECEIVER_FILTER}',
         labelFilter: '${LABELS_FILTER}',
+        ruleUID: ruleUID,
       },
     ],
   });
@@ -244,7 +252,7 @@ function getQueryRunnerForNotificationsDataSource() {
  * This function creates a SceneFlexItem with a timeseries panel that shows the notification events.
  * The query uses a runtime datasource that fetches the events from the notifications api.
  */
-export function getNotificationsGraphSceneFlexItem() {
+export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
   return new SceneFlexItem({
     minHeight: 300,
     ySizing: 'content',
@@ -253,7 +261,7 @@ export function getNotificationsGraphSceneFlexItem() {
       .setDescription(
         'Each notification event represents when an alert notification was sent to a contact point. The history of the data is displayed over a period of time.'
       )
-      .setData(getQueryRunnerForNotificationsDataSource())
+      .setData(getQueryRunnerForNotificationsDataSource(ruleUID))
       .setColor({ mode: 'continuous-BlPu' })
       .setCustomFieldConfig('fillOpacity', 100)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)

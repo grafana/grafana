@@ -11,7 +11,7 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inattività massima automatica",
-        "content-auto-max-idle": "Se abilitato, imposta automaticamente il numero di <i>Connessioni inattive massime</i> sullo stesso valore di <i>Connessioni aperte massime</i>. Se il numero massimo di connessioni aperte non è impostato, verrà impostato sul valore predefinito ({{defaultMaxIdle}}).",
+        "content-auto-max-idle": "Se abilitata, imposta automaticamente il numero di <i>Connessioni inattive massime</i> allo stesso valore di<i> Connessioni aperte massime</i>. Se il numero massimo di connessioni aperte non è configurato, verrà impostato sul valore predefinito ({{defaultMaxIdle}}).",
         "content-max-idle": "Il numero massimo di connessioni nel pool di connessioni inattive. Se <i>Connessioni aperte massime</i> è maggiore di 0 ma inferiore a <i>Connessioni inattive massime</i>, le <i>Connessioni inattive massime</i> verranno ridotte per corrispondere al limite di <i>Connessioni aperte massime</i>. Se impostato su 0, non viene mantenuta alcuna connessione inattiva.",
         "content-max-lifetime": "La quantità massima di tempo in secondi in cui una connessione può essere riutilizzata. Se impostato su 0, le connessioni vengono riutilizzate per sempre.",
         "content-max-open": "Il numero massimo di connessioni aperte al database. Se <i>Connessioni inattive massime</i> è maggiore di 0 e <i>Connessioni aperte massime</i> è inferiore a <i>Connessioni inattive massime</i>, le <i>Connessioni inattive massime</i> verranno ridotte per corrispondere al limite di <i>Connessioni aperte massime</i>. Se impostato su 0, non vi è alcun limite al numero di connessioni aperte.",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Query non valida. Controlla qui sotto i dettagli. <br />Tuttavia, puoi comunque eseguire questa query.",
+        "content-invalid-query": "La tua query non è valida. Controlla qui sotto per i dettagli. <br/>Tuttavia, puoi comunque eseguire questa query.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Codice"

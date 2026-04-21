@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Card, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { type ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
 import { EXPRESSION_IMAGE_MAP } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
@@ -26,7 +27,18 @@ export function ExpressionTypePicker() {
         const label = item.label ?? '';
 
         return (
-          <Card key={item.value} onClick={() => finalizePendingExpression(item.value)} noMargin>
+          <Card
+            key={item.value}
+            onClick={() => {
+              reportInteraction('dashboards_expression_interaction', {
+                action: 'add_expression',
+                expression_type: item.value,
+                context: 'query_editor_next',
+              });
+              finalizePendingExpression(item.value);
+            }}
+            noMargin
+          >
             <Card.Heading>{label}</Card.Heading>
             <Card.Description>
               <Text variant="bodySmall">{item.description ?? ''}</Text>

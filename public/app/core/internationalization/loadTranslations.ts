@@ -1,4 +1,4 @@
-import { BackendModule } from 'i18next';
+import { type BackendModule } from 'i18next';
 
 import { LANGUAGES } from './constants';
 

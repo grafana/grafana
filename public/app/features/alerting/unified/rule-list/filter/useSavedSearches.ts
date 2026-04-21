@@ -1,5 +1,5 @@
 import {
-  UseGenericSavedSearchesResult,
+  type UseGenericSavedSearchesResult,
   createAppliedTracker,
   createAutoApplyTracker,
   createDefaultLoader,

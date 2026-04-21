@@ -3,6 +3,7 @@ package tempo
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math"
 	"os"
 	"testing"
 
@@ -115,7 +116,7 @@ func TestTraceToFrame(t *testing.T) {
 
 		traceID64Bit := bFrame.GetRow(1)
 		require.NotNil(t, traceID64Bit)
-		require.Equal(t, "0001020304050607", traceID64Bit["traceID"])
+		require.Equal(t, "00000000000000000001020304050607", traceID64Bit["traceID"])
 	})
 }
 
@@ -173,8 +174,8 @@ func TestScopeAttributesAddedToTags(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check that both span and scope attributes are in tags
-	// Tags are at index 16 in the row (based on frame field ordering)
-	tagsJson := row[16].(json.RawMessage)
+	// Tags are at index 17 in the row (based on frame field ordering: traceID, spanID, parentSpanID, operationName, serviceName, serviceNamespace, kind, statusCode, statusMessage, instrumentationLibraryName, instrumentationLibraryVersion, traceState, serviceTags, startTime, duration, logs, references, tags)
+	tagsJson := row[17].(json.RawMessage)
 
 	var tags []*KeyValue
 	err = json.Unmarshal(tagsJson, &tags)
@@ -194,6 +195,66 @@ func TestScopeAttributesAddedToTags(t *testing.T) {
 
 	assert.True(t, foundSpanAttr, "Span attribute should be present in tags")
 	assert.True(t, foundScopeAttr, "Scope attribute should be present in tags")
+}
+
+func makeSpanWithDoubleAttr(key string, val float64) (*v1.Span, *resourcev1.Resource) {
+	span := &v1.Span{
+		TraceId:           []byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7},
+		SpanId:            []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		ParentSpanId:      []byte{0, 0, 0, 0, 0, 0, 0, 0},
+		Name:              "test-span",
+		StartTimeUnixNano: 1616072924070497000,
+		EndTimeUnixNano:   1616072924078918000,
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key:   key,
+				Value: &commonv11.AnyValue{Value: &commonv11.AnyValue_DoubleValue{DoubleValue: val}},
+			},
+		},
+		Status: &v1.Status{},
+	}
+	resource := &resourcev1.Resource{
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key:   "service.name",
+				Value: &commonv11.AnyValue{Value: &commonv11.AnyValue_StringValue{StringValue: "test-service"}},
+			},
+		},
+	}
+	return span, resource
+}
+
+func TestTraceToFrame_SpecialFloatDoubleValue(t *testing.T) {
+	// OTel spec explicitly allows NaN, Infinity, -Infinity as floating point values.
+	// https://opentelemetry.io/docs/specs/otel/common/#floating-point-numbers
+	// json.Marshal rejects these — must be serialized as strings.
+	tests := []struct {
+		name     string
+		val      float64
+		expected string
+	}{
+		{"NaN", math.NaN(), "NaN"},
+		{"Inf", math.Inf(1), "Inf"},
+		{"-Inf", math.Inf(-1), "-Inf"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			span, resource := makeSpanWithDoubleAttr("span.app.payment.amount", tc.val)
+
+			row, err := spanToSpanRow(span, &commonv11.InstrumentationScope{}, resource)
+			require.NoError(t, err)
+
+			tagsJson, ok := row[17].(json.RawMessage)
+			require.True(t, ok)
+
+			var tags []*KeyValue
+			require.NoError(t, json.Unmarshal(tagsJson, &tags))
+
+			require.Len(t, tags, 1)
+			assert.Equal(t, tc.expected, tags[0].Value)
+		})
+	}
 }
 
 type Row map[string]any
@@ -241,6 +302,54 @@ func fieldNames(frame *data.Frame) []string {
 	return names
 }
 
+func TestSpanToSpanRowTraceIDNotLeftTrimmed(t *testing.T) {
+	// A trace ID whose first 8 bytes are all zeros should be returned as a full
+	// 32-character hex string, not left-trimmed to 16 characters.
+	span := &v1.Span{
+		TraceId:           []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7},
+		SpanId:            []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		ParentSpanId:      []byte{0, 0, 0, 0, 0, 0, 0, 0},
+		Name:              "test-span",
+		StartTimeUnixNano: 1616072924070497000,
+		EndTimeUnixNano:   1616072924078918000,
+		Status:            &v1.Status{},
+	}
+	resource := &resourcev1.Resource{
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key: "service.name",
+				Value: &commonv11.AnyValue{
+					Value: &commonv11.AnyValue_StringValue{StringValue: "test-service"},
+				},
+			},
+		},
+	}
+
+	scope := &commonv11.InstrumentationScope{Name: "test", Version: "1.0"}
+	row, err := spanToSpanRow(span, scope, resource)
+	require.NoError(t, err)
+
+	// traceID is the first field in the row
+	require.Equal(t, "00000000000000000001020304050607", row[0],
+		"trace ID with leading zero bytes must not be left-trimmed")
+}
+
+func TestSpanLinksToReferencesTraceIDNotLeftTrimmed(t *testing.T) {
+	// A trace ID with leading zero bytes in a span link should be returned as a
+	// full 32-character hex string, not left-trimmed.
+	links := []*v1.Span_Link{
+		{
+			TraceId: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7},
+			SpanId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		},
+	}
+
+	refs := spanLinksToReferences(links)
+	require.Len(t, refs, 1)
+	require.Equal(t, "00000000000000000001020304050607", refs[0].TraceID,
+		"trace ID with leading zero bytes in span links must not be left-trimmed")
+}
+
 func findSpan(trace tempopb.Trace, spanId string) *v1.Span {
 	for i := 0; i < len(trace.GetResourceSpans()); i++ {
 		scope := trace.GetResourceSpans()[i].GetScopeSpans()
@@ -262,6 +371,7 @@ var fields = []string{
 	"parentSpanID",
 	"operationName",
 	"serviceName",
+	"serviceNamespace",
 	"kind",
 	"statusCode",
 	"statusMessage",

@@ -1134,10 +1134,10 @@
       },
       "CreateNotificationqueryNotificationCount": {
         "type": "object",
-        "required": ["count"],
+        "required": ["count", "values"],
         "properties": {
           "count": {
-            "description": "Count is the number of notification attempts in the time period.",
+            "description": "Count is the number of notification attempts in the time period. Set for counts queries.",
             "type": "integer"
           },
           "error": {
@@ -1155,8 +1155,18 @@
           "receiver": {
             "type": "string"
           },
+          "ruleUID": {
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/CreateNotificationqueryNotificationStatus"
+          },
+          "values": {
+            "description": "Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateNotificationqueryNotificationRangeValue"
+            }
           }
         }
       },
@@ -1302,6 +1312,21 @@
         "type": "string",
         "enum": ["success", "error"]
       },
+      "CreateNotificationqueryNotificationRangeValue": {
+        "description": "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
+        "type": "object",
+        "required": ["timestamp", "count"],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts at this point in time.",
+            "type": "integer"
+          },
+          "timestamp": {
+            "description": "Timestamp is the Unix epoch in seconds for this data point.",
+            "type": "integer"
+          }
+        }
+      },
       "CreateNotificationqueryNotificationStatus": {
         "type": "string",
         "enum": ["firing", "resolved"]
@@ -1317,7 +1342,7 @@
           "groupBy": {
             "description": "GroupBy specifies how to aggregate counts queries.",
             "type": "object",
-            "required": ["receiver", "integration", "integrationIndex", "status", "outcome", "error"],
+            "required": ["receiver", "integration", "integrationIndex", "status", "outcome", "error", "ruleUID"],
             "properties": {
               "error": {
                 "type": "boolean"
@@ -1332,6 +1357,9 @@
                 "type": "boolean"
               },
               "receiver": {
+                "type": "boolean"
+              },
+              "ruleUID": {
                 "type": "boolean"
               },
               "status": {
@@ -1383,6 +1411,10 @@
               }
             ]
           },
+          "step": {
+            "description": "Step is the step interval in seconds for range_counts queries.",
+            "type": "integer"
+          },
           "to": {
             "description": "To is the starting timestamp for the query.",
             "type": "string",
@@ -1391,7 +1423,7 @@
           "type": {
             "description": "Type of query to perform (default: entries)",
             "type": "string",
-            "enum": ["entries", "counts"]
+            "enum": ["entries", "counts", "range_counts"]
           }
         }
       },

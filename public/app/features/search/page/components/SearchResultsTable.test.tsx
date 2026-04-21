@@ -4,16 +4,15 @@ import { Subject } from 'rxjs';
 import {
   applyFieldOverrides,
   createTheme,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
   FieldType,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
-import { getGrafanaSearcher } from '../../service/searcher';
-import { DashboardQueryResult, QueryResponse } from '../../service/types';
+import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
 import { SearchResultsTable } from './SearchResultsTable';
@@ -72,10 +71,6 @@ describe('SearchResultsTable', () => {
       totalRows: searchData.length,
       view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
-    });
 
     it('shows the table with the correct accessible label', async () => {
       render(
@@ -199,10 +194,6 @@ describe('SearchResultsTable', () => {
       totalRows: emptySearchData.length,
       view: new DataFrameView<DashboardQueryResult>(emptySearchData),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
-    });
 
     it('shows a "No data" message', async () => {
       render(

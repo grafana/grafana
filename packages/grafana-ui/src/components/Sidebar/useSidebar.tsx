@@ -1,9 +1,10 @@
-import { clamp } from 'lodash';
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
+import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { clamp } from '../../utils/clamp';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -23,11 +24,14 @@ export interface SidebarContextValue {
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  onToggleIsHidden: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
   SidebarContextValue | undefined
 >(undefined);
+
+export const useSidebarContext = () => useContext(SidebarContext);
 
 export interface UseSideBarOptions {
   hasOpenPane?: boolean;
@@ -50,8 +54,8 @@ export interface UseSideBarOptions {
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
    */
   persistanceKey?: string;
-  /** Whether the sidebar is hidden */
-  isHidden?: boolean;
+  /** Whether the sidebar is hidden by default */
+  defaultIsHidden?: boolean;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -68,22 +72,25 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
-  isHidden = false,
+  defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
-
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
+  const [isHidden, setIsHidden] = useSidebarSavedState(persistanceKey, 'hidden', defaultIsHidden);
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  /** Undocked/floating sidebar is not used on small viewports; keep layout and behavior docked. */
+  const effectiveIsDocked = Boolean(isMobile) || isDocked;
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
   const onToggleDock = useCallback(() => {
-    setIsDocked((prev) => {
-      return !prev;
-    });
-  }, [setIsDocked]);
+    if (!isMobile) {
+      setIsDocked((prev) => !prev);
+    }
+  }, [isMobile, setIsDocked]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -95,7 +102,7 @@ export function useSidebar({
     ? {}
     : {
         style: {
-          [prop]: isDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+          [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
         },
       };
 
@@ -120,14 +127,17 @@ export function useSidebar({
           return prevWidth;
         }
 
-        return clamp(prevWidth + diff, 100, 500);
+        const maxWidth = Math.max(window.innerWidth * 0.5, 500);
+        return clamp(prevWidth + diff, 100, maxWidth);
       });
     },
     [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
+  const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
+
   return {
-    isDocked,
+    isDocked: effectiveIsDocked,
     onToggleDock,
     onResize,
     outerWrapperProps,
@@ -141,36 +151,42 @@ export function useSidebar({
     contentMargin,
     isHidden,
     onClosePane,
+    onToggleIsHidden,
   };
 }
 
-function useSidebarSavedState<T = number | boolean>(
+function readFromStore<T>(persistanceKey: string | undefined, subKey: string, defaultValue: T): T {
+  if (!persistanceKey) {
+    return defaultValue;
+  }
+
+  if (typeof defaultValue === 'boolean') {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
+  }
+
+  if (typeof defaultValue === 'number') {
+    const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return Number.isNaN(value) ? defaultValue : (value as T);
+  }
+
+  return defaultValue;
+}
+
+export function useSidebarSavedState<T = number | boolean>(
   persistanceKey: string | undefined,
   subKey: string,
   defaultValue: T
 ) {
-  const [state, setState] = React.useState<T>(() => {
-    if (!persistanceKey) {
-      return defaultValue;
-    }
+  const [state, setState] = React.useState<T>(() => readFromStore(persistanceKey, subKey, defaultValue));
 
-    if (typeof defaultValue === 'boolean') {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
-    }
-
-    if (typeof defaultValue === 'number') {
-      const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
-      if (Number.isNaN(value)) {
-        return defaultValue;
-      }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return value as T;
-    }
-
-    return defaultValue;
-  });
+  useEffect(() => {
+    setState(readFromStore(persistanceKey, subKey, defaultValue));
+    // Re-read from storage when the persistence key changes, but not when defaultValue changes
+    // to avoid overriding a user-persisted value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistanceKey, subKey]);
 
   const setPersisted = useCallback(
     (cb: (prevState: T) => T) => {

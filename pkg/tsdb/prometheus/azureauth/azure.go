@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 
-	"github.com/grafana/grafana/pkg/promlib/utils"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/utils"
 )
 
 func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientOpts *sdkhttpclient.Options, audienceOverride bool, log log.Logger) error {

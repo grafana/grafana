@@ -1,26 +1,28 @@
+import { throttle } from 'lodash';
+
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataTransformerConfig,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
+  type VizPanel,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
@@ -28,6 +30,15 @@ import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { filterDataTransformerConfigs } from './QueryEditor/utils';
+import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
+
+const reportTransformationEditInteraction = throttle((context: string, type: string) => {
+  reportInteraction('grafana_panel_transformations_clicked', {
+    context,
+    type,
+    action: 'edit',
+  });
+}, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
 
 /**
  * Resolve the datasource ref to assign to a new query.
@@ -54,6 +65,25 @@ function resolveNewQueryDatasource(
   }
 
   return getDataSourceRef(panelDsSettings);
+}
+
+/**
+ * When in Mixed mode, checks if all non-expression queries share the same datasource.
+ * Returns that common datasource ref if they do, or undefined if queries are heterogeneous.
+ */
+function getUniformDatasource(queries: DataQuery[]): DataSourceRef | undefined {
+  const regularQueries = queries.filter((q) => !isExpressionReference(q.datasource));
+  if (regularQueries.length === 0) {
+    return undefined;
+  }
+
+  const firstDs = regularQueries[0].datasource;
+  if (!firstDs?.uid) {
+    return undefined;
+  }
+
+  const allSame = regularQueries.every((q) => q.datasource?.uid === firstDs.uid);
+  return allSame ? { ...firstDs } : undefined;
 }
 
 export interface PanelDataPaneNextState extends SceneObjectState {
@@ -199,6 +229,23 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   }
 
   /**
+   * When in Mixed mode, checks if all non-expression queries now use the same datasource.
+   * If so, switches back from Mixed to that single datasource so that
+   * datasource-specific query options (cache timeout, cache TTL, etc.) are surfaced.
+   */
+  private resolveUniformDatasource() {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner || queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+      return;
+    }
+
+    const commonDs = getUniformDatasource(queryRunner.state.queries);
+    if (commonDs) {
+      queryRunner.setState({ datasource: commonDs });
+    }
+  }
+
+  /**
    * Helper for operations that find and mutate a single query by refId.
    * Handles cloning, finding index, and updating state.
    */
@@ -223,6 +270,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
       queryRunner.setState({ queries });
+      this.resolveUniformDatasource();
     }
   };
 
@@ -281,6 +329,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index, 1);
       return queries;
     });
+    this.resolveUniformDatasource();
     this.runQueries();
   };
 
@@ -343,6 +392,12 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
+    reportInteraction('grafana_panel_transformations_clicked', {
+      context: 'query_editor_next',
+      type: transformationId,
+      action: 'add',
+    });
+
     const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
     const newConfig: DataTransformerConfig = { id: transformationId, options: {} };
     const insertAt = afterIndex !== undefined ? afterIndex + 1 : transformations.length;
@@ -364,6 +419,16 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const { transformations, transformer } = this.getTransformations(index);
     if (!transformations || !transformer) {
       return;
+    }
+
+    const removed = transformations[index];
+    if (removed?.id) {
+      reportInteraction('grafana_panel_transformations_clicked', {
+        context: 'query_editor_next',
+        type: removed.id,
+        action: 'delete',
+        total_transformations: transformations.length - 1,
+      });
     }
 
     transformations.splice(index, 1);
@@ -475,6 +540,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queryRunner.setState({ queries });
     }
 
+    this.resolveUniformDatasource();
     queryRunner.runQueries();
   };
 
@@ -539,6 +605,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (index === -1) {
       return;
     }
+
+    reportTransformationEditInteraction('query_editor_next', newConfig.id);
 
     transformations[index] = newConfig;
     dataTransformer.setState({ transformations });

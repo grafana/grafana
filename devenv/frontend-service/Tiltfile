@@ -1,3 +1,18 @@
+# --- Workspace configuration
+# WORKSPACE_NAME identifies this workspace instance (used for Docker project
+# name and cookie scoping). PORT provides a unique base port. Together they
+# allow multiple instances to run in parallel without conflicts.
+workspace_name = os.environ.get('WORKSPACE_NAME', 'dev')
+base_port = int(os.environ.get('PORT', '3000'))
+port_proxy    = base_port       # +0  main gateway
+port_cdn      = base_port + 1   # +1  CDN server
+port_api      = base_port + 2   # +2  grafana-api direct
+port_fs       = base_port + 3   # +3  frontend-service direct
+port_alloy    = base_port + 4   # +4  alloy UI
+port_faro     = base_port + 5   # +5  faro receiver
+port_goff     = base_port + 6   # +6  go feature flag
+# port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
+
 # --- Frontend processes
 local_resource(
   'yarn install',
@@ -44,14 +59,52 @@ local_resource(
 )
 
 # --- Docker Compose
-# define service overrides needed for running with enterprise
-# this mounts the dev license into the grafana-api service
 base_config = read_yaml('./docker-compose.yaml')
+
+# Ports and port-dependent environment variables are set here rather than in
+# docker-compose.yaml so they can be derived from PORT.
+compose_overrides = {'services': {
+  'proxy': {
+    'ports': [
+      '%d:80' % port_proxy,
+      '%d:81' % port_cdn,
+    ],
+  },
+  'grafana-api': {
+    'ports': ['%d:3000' % port_api],
+    'environment': {
+      'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
+      'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
+    },
+  },
+  'frontend-service': {
+    'ports': ['%d:3000' % port_fs],
+    'environment': {
+      'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
+      'GF_LOG_FRONTEND_CUSTOM_ENDPOINT': 'http://localhost:%d/collect' % port_faro,
+    },
+  },
+  'alloy': {
+    'ports': [
+      '%d:12345' % port_alloy,
+      '%d:12347' % port_faro,
+    ],
+  },
+  'goff': {
+    'ports': ['%d:1031/tcp' % port_goff],
+  },
+}}
+
+# Enterprise overrides: mount dev license into grafana-api
 base_volumes = base_config['services']['grafana-api']['volumes']
 enterprise_overrides = {'services':{'grafana-api': {'volumes': base_volumes + ['../../data/license.jwt:/grafana/data/license.jwt'] }}}
 
-# check if license exists and apply enterprise overrides if so
-docker_compose(["./docker-compose.yaml", encode_yaml(enterprise_overrides)]) if os.path.exists("../../data/license.jwt") else docker_compose("./docker-compose.yaml")
+compose_files = ["./docker-compose.yaml", encode_yaml(compose_overrides)]
+if os.path.exists("../../data/license.jwt"):
+  compose_files.append(encode_yaml(enterprise_overrides))
+
+# Use a unique project name per workspace so multiple instances don't conflict
+docker_compose(compose_files, project_name='grafana-fs-%s' % workspace_name)
 dc_resource("proxy",
   resource_deps=["grafana-api", "frontend-service"],
   labels=["services"]
@@ -72,6 +125,7 @@ dc_resource("tempo", labels=["observability"])
 dc_resource("postgres", labels=["misc"])
 dc_resource("tempo-init", labels=["misc"])
 dc_resource("goff", labels=["misc"])
+dc_resource("maildev", labels=["misc"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing with the path, it is relative to the Tiltfile
@@ -93,6 +147,7 @@ docker_build('grafana-fs-dev',
     'public/dashboards',
     'public/app/plugins',
     'public/build/assets-manifest.json',
+    'public/build/boot.js',
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -108,6 +163,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild

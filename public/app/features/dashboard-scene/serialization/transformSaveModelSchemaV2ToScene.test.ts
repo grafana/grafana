@@ -12,38 +12,38 @@ import {
   sceneGraph,
   GroupByVariable,
   AdHocFiltersVariable,
-  SceneDataTransformer,
-  SceneGridItem,
+  type SceneDataTransformer,
+  type SceneGridItem,
   SwitchVariable,
 } from '@grafana/scenes';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type DatasourceVariableKind,
   defaultDataQueryKind,
-  GridLayoutItemSpec,
-  GridLayoutSpec,
-  GroupByVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  SwitchVariableKind,
-  TextVariableKind,
+  type GridLayoutItemSpec,
+  type GridLayoutSpec,
+  type GroupByVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type SwitchVariableKind,
+  type TextVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { type AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
@@ -270,9 +270,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
-    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
-    );
+    const expectedTransformation = getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0];
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
   });
 
   it('should set panel ds if it is mixed DS', () => {
@@ -392,6 +395,67 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
       expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
     });
+
+    it('should set enableGroupBy to true when feature flag is on and enableGroupBy is true', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = true;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(true);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should set enableGroupBy to false when feature flag is on and enableGroupBy is false', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = false;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should default enableGroupBy to false when feature flag is on and enableGroupBy is not set', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should not set enableGroupBy when dashboardUnifiedDrilldownControls is disabled', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.enableGroupBy = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+      expect(adhocVariable.state.enableGroupBy).toBe(false);
+    });
   });
 
   describe('When creating a snapshot dashboard scene', () => {
@@ -490,11 +554,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             canAdmin: false,
             annotationsPermissions: {
               dashboard: {
-                canAdd: false,
-                canEdit: false,
-                canDelete: false,
-              },
-              organization: {
                 canAdd: false,
                 canEdit: false,
                 canDelete: false,
@@ -812,11 +871,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           canShare: true,
           annotationsPermissions: {
             dashboard: {
-              canAdd: true,
-              canEdit: true,
-              canDelete: true,
-            },
-            organization: {
               canAdd: true,
               canEdit: true,
               canDelete: true,

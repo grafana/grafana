@@ -87,17 +87,17 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Create Public Dashboard
 	api.routeRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
 	api.routeRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
 	api.routeRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(publicdashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
@@ -288,7 +288,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), uid, dashboardUid)
+	err := api.PublicDashboardService.Delete(c.Req.Context(), c.GetOrgID(), uid, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}

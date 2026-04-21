@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 type KerberosLookup struct {
@@ -58,7 +58,7 @@ func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosA
 	return kerberosAuth, err
 }
 
-func Krb5ParseAuthCredentials(host string, port string, db string, user string, pass string, kerberosAuth KerberosAuth) string {
+func Krb5ParseAuthCredentials(host string, port string, db string, user string, pass string, kerberosAuth KerberosAuth, logger log.Logger) string {
 	//params for driver conn str
 	//More details: https://github.com/microsoft/go-mssqldb#kerberos-active-directory-authentication-outside-windows
 
@@ -68,7 +68,7 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 	// if there is a lookup file specified, use it to find the correct credential cache file and overwrite var
 	// getCredentialCacheFromLookup implementation taken from mysql kerberos solution - https://github.com/grafana/mysql/commit/b5e73c8d536150c054d310123643683d3b18f0da
 	if krb5CCLookupFile != "" {
-		krb5CacheCredsFile = getCredentialCacheFromLookup(krb5CCLookupFile, host, port, db, user)
+		krb5CacheCredsFile = getCredentialCacheFromLookup(krb5CCLookupFile, host, port, db, user, logger)
 		if krb5CacheCredsFile == "" {
 			logger.Error("No valid credential cache file found in lookup.")
 			return ""
@@ -103,7 +103,7 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 	return krb5DriverParams
 }
 
-func getCredentialCacheFromLookup(lookupFile string, host string, port string, dbName string, user string) string {
+func getCredentialCacheFromLookup(lookupFile string, host string, port string, dbName string, user string, logger log.Logger) string {
 	logger.Info(fmt.Sprintf("reading credential cache lookup: %s", lookupFile))
 	content, err := os.ReadFile(filepath.Clean(lookupFile))
 	if err != nil {

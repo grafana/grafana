@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,8 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type subHealthREST struct {
@@ -46,21 +46,18 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-// FIXME: this endpoint has not been tested yet, so it is not enabled by default.
-var healthEnabled = false
-
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if !healthEnabled {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status: metav1.StatusFailure,
-				Code:   http.StatusNotImplemented,
-			},
-		}
-	}
+	m := newConnectMetric("health", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
@@ -70,10 +67,14 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		PluginContext: pluginCtx,
 	})
 	if err != nil {
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
@@ -82,6 +83,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if len(healthResponse.JSONDetails) > 0 {
 			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
+				m.SetError()
 				responder.Error(err)
 				return
 			}
@@ -89,6 +91,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
+			m.SetError()
 			statusCode = http.StatusBadRequest
 		}
 		responder.Object(statusCode, rsp)

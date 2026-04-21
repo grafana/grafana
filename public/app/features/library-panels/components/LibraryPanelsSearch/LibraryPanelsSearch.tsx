@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useCallback, useState, type JSX } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelPluginMeta, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, Stack, FilterInput } from '@grafana/ui';
 
@@ -10,7 +10,7 @@ import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFil
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { SortPicker } from '../../../../core/components/Select/SortPicker';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 
 export enum LibraryPanelsSearchVariant {
@@ -171,7 +171,26 @@ const SearchControls = memo(
           [styles.containerTight]: variant === LibraryPanelsSearchVariant.Tight,
         })}
       >
-        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
+        {showSort && (
+          <SortPicker
+            value={sortDirection}
+            onChange={onSortChange}
+            getSortOptions={async () => {
+              // This needs to match whatever is defined in
+              // pkg/services/libraryelements/database.go#getAllLibraryElements
+              return [
+                {
+                  value: 'alpha-asc',
+                  label: t('library-panels.search-controls.label.alphabetically-az', 'Alphabetically (A–Z)'),
+                },
+                {
+                  value: 'alpha-desc',
+                  label: t('library-panels.search-controls.label.alphabetically-za', 'Alphabetically (Z–A)'),
+                },
+              ];
+            }}
+          />
+        )}
         {(showFolderFilter || showPanelFilter) && (
           <div
             className={cx(styles.filterContainer, {

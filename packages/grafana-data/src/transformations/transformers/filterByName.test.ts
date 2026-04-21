@@ -1,20 +1,20 @@
 import {
   SceneDataNode,
   SceneDataTransformer,
-  SceneDeactivationHandler,
+  type SceneDeactivationHandler,
   SceneFlexItem,
   SceneFlexLayout,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   TestVariable,
 } from '@grafana/scenes';
-import { DataTransformerConfig, LoadingState } from '@grafana/schema';
+import { type DataTransformerConfig, LoadingState } from '@grafana/schema';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { getDefaultTimeRange } from '../../types/time';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';

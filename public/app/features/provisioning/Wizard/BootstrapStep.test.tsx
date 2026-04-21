@@ -1,18 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { isFreeTierLicense } from '../utils/isFreeTierLicense';
-
-import { BootstrapStep, Props } from './BootstrapStep';
+import { BootstrapStep, type Props } from './BootstrapStep';
 import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
@@ -31,10 +29,6 @@ jest.mock('./hooks/useRepositoryStatus', () => ({
   useRepositoryStatus: jest.fn(),
 }));
 
-jest.mock('../utils/isFreeTierLicense', () => ({
-  isFreeTierLicense: jest.fn(),
-}));
-
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
 >;
@@ -42,7 +36,6 @@ const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunc
 const mockUseRepositoryStatus = useRepositoryStatus as jest.MockedFunction<typeof useRepositoryStatus>;
 const mockUseResourceStats = useResourceStats as jest.MockedFunction<typeof useResourceStats>;
 const mockUseModeOptions = useModeOptions as jest.MockedFunction<typeof useModeOptions>;
-const mockIsFreeTierLicense = isFreeTierLicense as jest.MockedFunction<typeof isFreeTierLicense>;
 
 type WizardFormDefaults = Omit<Partial<WizardFormData>, 'repository'> & {
   repository?: Partial<WizardFormData['repository']>;
@@ -149,6 +142,8 @@ describe('BootstrapStep', () => {
       healthMessage: undefined,
       healthStatusNotReady: false,
       fieldErrors: undefined,
+      quota: undefined,
+      conditions: undefined,
       refetch: jest.fn(),
     });
 
@@ -176,9 +171,6 @@ describe('BootstrapStep', () => {
       ],
       disabledOptions: [],
     });
-
-    // Default to non-free tier (quota not enforced)
-    mockIsFreeTierLicense.mockReturnValue(false);
   });
 
   describe('rendering', () => {
@@ -390,15 +382,29 @@ describe('BootstrapStep', () => {
   });
 
   describe('quota exceeded', () => {
-    it('should not render content when resource count exceeds free-tier limit on folder sync', () => {
-      mockIsFreeTierLicense.mockReturnValue(true);
+    it('should use file count (not resource count) for quota check when file count exceeds limit', () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
 
       mockUseResourceStats.mockReturnValue({
-        managedCount: 25,
+        managedCount: 10,
         unmanagedCount: 0,
         fileCount: 25,
-        resourceCount: 25, // Exceeds free-tier limit of 20
-        resourceCountString: '25 resources',
+        resourceCount: 10,
+        resourceCountString: '10 resources',
         fileCountString: '25 files',
         isLoading: false,
         requiresMigration: false,
@@ -407,19 +413,66 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      // Content should not be rendered when quota is exceeded on free tier
       expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
     });
 
-    it('should render content when resource count exceeds free-tier limit but not on free tier', async () => {
-      mockIsFreeTierLicense.mockReturnValue(false);
+    it('should not block when resource count exceeds quota but file count is within limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 10,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '10 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should not render content when resource count exceeds quota limit', () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
 
       mockUseResourceStats.mockReturnValue({
         managedCount: 25,
         unmanagedCount: 0,
         fileCount: 25,
-        resourceCount: 25, // Exceeds limit but not on free tier
+        resourceCount: 25,
         resourceCountString: '25 resources',
         fileCountString: '25 files',
         isLoading: false,
@@ -429,18 +482,66 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      // Quota is not enforced when not on free tier
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
+
+    it('should render content when no quota is configured even with high resource count', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when resource count is within quota on free tier', async () => {
-      mockIsFreeTierLicense.mockReturnValue(true);
+    it('should render content when resource count is within quota', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
 
       mockUseResourceStats.mockReturnValue({
         managedCount: 15,
         unmanagedCount: 0,
         fileCount: 15,
-        resourceCount: 15, // Within free-tier limit of 20
+        resourceCount: 15,
         resourceCountString: '15 resources',
         fileCountString: '15 files',
         isLoading: false,
@@ -453,14 +554,28 @@ describe('BootstrapStep', () => {
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when resource count equals quota limit on free tier', async () => {
-      mockIsFreeTierLicense.mockReturnValue(true);
+    it('should render content when resource count equals quota limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
 
       mockUseResourceStats.mockReturnValue({
         managedCount: 20,
         unmanagedCount: 0,
         fileCount: 20,
-        resourceCount: 20, // Exactly at free-tier limit of 20
+        resourceCount: 20,
         resourceCountString: '20 resources',
         fileCountString: '20 files',
         isLoading: false,
@@ -470,51 +585,41 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      // Exactly at limit is allowed (only > limit triggers exceeded)
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
 
-    it('should render content when resource count exceeds limit on free tier for instance sync', async () => {
-      mockIsFreeTierLicense.mockReturnValue(true);
-
-      mockUseModeOptions.mockReturnValue({
-        enabledOptions: [
-          {
-            target: 'instance',
-            label: 'Sync all resources with external storage',
-            description: 'Resources will be synced with external storage',
-            subtitle: 'Use this option if you want to sync your entire instance',
-            disabled: false,
-          },
-        ],
-        disabledOptions: [],
+    it('should render content when quota is unlimited (maxResourcesPerRepository = 0)', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 0 },
+        conditions: undefined,
+        refetch: jest.fn(),
       });
 
       mockUseResourceStats.mockReturnValue({
-        managedCount: 25,
+        managedCount: 100,
         unmanagedCount: 0,
-        fileCount: 25,
-        resourceCount: 25, // Exceeds limit but instance sync is not restricted
-        resourceCountString: '25 resources',
-        fileCountString: '25 files',
+        fileCount: 100,
+        resourceCount: 100,
+        resourceCountString: '100 resources',
+        fileCountString: '100 files',
         isLoading: false,
         requiresMigration: false,
         shouldSkipSync: false,
       });
 
-      setup(
-        {},
-        {
-          repository: {
-            sync: {
-              target: 'instance',
-              enabled: true,
-            },
-          },
-        }
-      );
+      setup();
 
-      expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
   });
 
@@ -532,6 +637,8 @@ describe('BootstrapStep', () => {
         healthMessage: ['Some temporary error'],
         healthStatusNotReady: true,
         fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
         refetch: jest.fn(),
       });
 
@@ -567,6 +674,8 @@ describe('BootstrapStep', () => {
         healthMessage: ['Connection failed'],
         healthStatusNotReady: false,
         fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
         refetch: jest.fn(),
       });
 
@@ -601,6 +710,8 @@ describe('BootstrapStep', () => {
         healthMessage: undefined,
         healthStatusNotReady: false,
         fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
         refetch: jest.fn(),
       });
 

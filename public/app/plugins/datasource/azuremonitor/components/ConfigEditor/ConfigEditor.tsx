@@ -1,18 +1,22 @@
 import { PureComponent } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import {
+  type DataSourcePluginOptionsEditorProps,
+  type SelectableValue,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, isFetchError, type TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
-  AzureAPIResponse,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData,
-  AzureMonitorDataSourceSettings,
-  Subscription,
+  type AzureAPIResponse,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceSecureJsonData,
+  type AzureMonitorDataSourceSettings,
+  type Subscription,
 } from '../../types/types';
 import { routeNames } from '../../utils/common';
 

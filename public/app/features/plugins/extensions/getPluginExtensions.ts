@@ -1,15 +1,15 @@
-import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
+import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
 
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
+import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type RegistryType } from './registry/Registry';
 import { getPluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
-import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
+import { type GetExtensions, type GetExtensionsOptions, type GetPluginExtensions } from './types';
 import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,

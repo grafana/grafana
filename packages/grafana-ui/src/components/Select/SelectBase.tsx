@@ -1,17 +1,16 @@
-import { isArray, negate } from 'lodash';
-import { ComponentProps, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react';
+import { type ComponentProps, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react';
 import * as React from 'react';
 import {
   default as ReactSelect,
-  IndicatorsContainerProps,
-  Props as ReactSelectProps,
-  ClearIndicatorProps,
+  type IndicatorsContainerProps,
+  type Props as ReactSelectProps,
+  type ClearIndicatorProps,
 } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -27,11 +26,11 @@ import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SelectOptionGroupHeader } from './SelectOptionGroupHeader';
-import { Props, SingleValue } from './SingleValue';
+import { type Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, InputActionMeta, SelectBaseProps, ToggleAllState } from './types';
+import { type ActionMeta, type InputActionMeta, type SelectBaseProps, ToggleAllState } from './types';
 import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 const CustomControl = (props: any) => {
@@ -162,8 +161,32 @@ export function SelectBase<T, Rest = {}>({
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
+  // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
+  const [open, setOpen] = useState(!!isOpen);
 
   useImperativeHandle(selectRef, () => reactSelectRef.current!, []);
+
+  const handleMenuOpen = useCallback(() => {
+    setOpen(true);
+    onOpenMenu?.();
+  }, [onOpenMenu]);
+
+  const handleMenuClose = useCallback(() => {
+    setOpen(false);
+    onCloseMenu?.();
+  }, [onCloseMenu]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+      // so that only the dropdown menu closes, not the parent.
+      if (event.key === 'Escape' && open) {
+        event.stopPropagation();
+      }
+      onKeyDown?.(event);
+    },
+    [onKeyDown, open]
+  );
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -271,9 +294,9 @@ export function SelectBase<T, Rest = {}>({
 
       return newValue;
     },
-    onKeyDown,
-    onMenuClose: onCloseMenu,
-    onMenuOpen: onOpenMenu,
+    onKeyDown: handleKeyDown,
+    onMenuClose: handleMenuClose,
+    onMenuOpen: handleMenuOpen,
     onMenuScrollToBottom: onMenuScrollToBottom,
     onMenuScrollToTop: onMenuScrollToTop,
     onFocus,
@@ -311,7 +334,7 @@ export function SelectBase<T, Rest = {}>({
   const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
 
   let toggleAllState = ToggleAllState.noneSelected;
-  if (toggleAllOptions?.enabled && isArray(selectedValue)) {
+  if (toggleAllOptions?.enabled && Array.isArray(selectedValue)) {
     if (toggleAllOptions?.determineToggleAllState) {
       toggleAllState = toggleAllOptions.determineToggleAllState(selectedValue, options);
     } else {
@@ -325,7 +348,7 @@ export function SelectBase<T, Rest = {}>({
       toSelect =
         toggleAllState === ToggleAllState.noneSelected
           ? options.filter(toggleAllOptions.optionsFilter)
-          : options.filter(negate(toggleAllOptions.optionsFilter));
+          : options.filter((opt) => !toggleAllOptions.optionsFilter!(opt));
     }
 
     onChange(toSelect, {
@@ -402,7 +425,7 @@ export function SelectBase<T, Rest = {}>({
           toggleAllOptions?.enabled && {
             state: toggleAllState,
             selectAllClicked: toggleAll,
-            selectedCount: isArray(selectedValue) ? selectedValue.length : undefined,
+            selectedCount: Array.isArray(selectedValue) ? selectedValue.length : undefined,
           }
         }
         styles={selectStyles}

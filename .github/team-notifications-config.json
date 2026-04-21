@@ -1,0 +1,35 @@
+{
+  "_docs": "Team notifications configuration.",
+  "teams": [
+    {
+      "name": "dataviz",
+      "kickoff_date": "2026-03-10",
+      "adoption_date": "2025-01-01",
+      "codeowners_teams": [
+        "@grafana/dataviz-squad"
+      ],
+      "area_labels": ["area/dataviz"],
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
+    },
+    {
+      "name": "dashboards",
+      "kickoff_date": "2026-04-16",
+      "adoption_date": "2025-04-16",
+      "codeowners_teams": [
+        "@grafana/dashboards-squad"
+      ],
+      "area_labels": ["area/dashboard"],
+      "enabled": {
+        "pr_notify": false,
+        "pr_weekly": true,
+        "fr_notify": false,
+        "fr_weekly": true
+      }
+    }
+  ]
+}
