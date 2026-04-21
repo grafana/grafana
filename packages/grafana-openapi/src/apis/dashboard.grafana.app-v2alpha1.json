@@ -1132,7 +1132,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "int64",
+              "format": "int32",
               "default": 0
             }
           }
@@ -2474,8 +2474,8 @@
         "properties": {
           "id": {
             "description": "Panel ID for the library panel in the dashboard",
-            "type": "number",
-            "format": "double",
+            "type": "integer",
+            "format": "int32",
             "default": 0
           },
           "libraryPanel": {
@@ -2679,8 +2679,8 @@
             "default": ""
           },
           "id": {
-            "type": "number",
-            "format": "double",
+            "type": "integer",
+            "format": "int32",
             "default": 0
           },
           "links": {

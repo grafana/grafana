@@ -426,7 +426,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
-	makeElement := func(name string, id float64) dashv2alpha1.DashboardElement {
+	makeElement := func(name string, id uint16) dashv2alpha1.DashboardElement {
 		return dashv2alpha1.DashboardElement{
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",

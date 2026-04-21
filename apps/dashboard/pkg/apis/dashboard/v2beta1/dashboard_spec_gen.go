@@ -88,14 +88,14 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint32 `json:"ids"`
+	Ids []uint16 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
-		Ids:     []uint32{},
+		Ids:     []uint16{},
 	}
 }
 
@@ -180,7 +180,7 @@ func (DashboardPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
-	Id          float64                 `json:"id"`
+	Id          uint16                  `json:"id"`
 	Title       string                  `json:"title"`
 	Description string                  `json:"description"`
 	Links       []DashboardDataLink     `json:"links"`
@@ -1032,7 +1032,7 @@ func (DashboardLibraryPanelKind) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardLibraryPanelKindSpec struct {
 	// Panel ID for the library panel in the dashboard
-	Id float64 `json:"id"`
+	Id uint16 `json:"id"`
 	// Title for the library panel in the dashboard
 	Title        string                   `json:"title"`
 	LibraryPanel DashboardLibraryPanelRef `json:"libraryPanel"`
