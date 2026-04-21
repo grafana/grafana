@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -35,8 +37,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	defaultCacheDuration = 5 * time.Minute
+	subjectKindUser      = "User"
 )
 
 var teamGVR = schema.GroupVersionResource{
@@ -63,6 +71,7 @@ type TeamK8sService struct {
 	tracer          tracing.Tracer
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
+	cache           *localcache.CacheService
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
@@ -74,6 +83,7 @@ func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apise
 		tracer:          tracer,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
+		cache:           localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
 	}
 }
 
@@ -114,7 +124,7 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	}
 
 	if len(result.Items) == 0 {
-		return "", fmt.Errorf("user with ID %d not found", userID)
+		return "", user.ErrUserNotFound
 	}
 	if len(result.Items) > 1 {
 		return "", fmt.Errorf("multiple users found with ID %d", userID)
@@ -665,22 +675,19 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.getTeamsByUser", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-	orgID := requester.GetOrgID()
-	span.SetAttributes(attribute.Int64("orgID", orgID))
+	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return []*team.TeamDTO{}, nil
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -718,22 +725,19 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	ctx, span := s.tracer.Start(ctx, "team.getTeamIDsByUser", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-	orgID := requester.GetOrgID()
-	span.SetAttributes(attribute.Int64("orgID", orgID))
+	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return []int64{}, nil
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -790,6 +794,9 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 	}
 	resolved, err := resolveTeamByLegacyID(ctx, client, teamId)
 	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return false, nil
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -798,6 +805,9 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userId)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return false, nil
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -817,58 +827,9 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 	return len(bindings) > 0, nil
 }
 
+// RemoveUsersMemberships is instance-wide cleanup; the k8s service is namespace-scoped so teamimpl always routes this to legacy.
 func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	ctx, span := s.tracer.Start(ctx, "team.removeUsersMemberships", trace.WithAttributes(
-		attribute.Int64("userID", userID),
-	))
-	defer span.End()
-
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-	orgID := requester.GetOrgID()
-	span.SetAttributes(attribute.Int64("orgID", orgID))
-	namespace := s.namespaceMapper(orgID)
-
-	userUID, err := s.resolveUserUID(ctx, namespace, userID)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	bindingClient, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	var errs []error
-	for _, b := range bindings {
-		if err := bindingClient.Delete(ctx, b.Name, metav1.DeleteOptions{}); err != nil {
-			if !apierrors.IsNotFound(err) {
-				errs = append(errs, fmt.Errorf("failed to delete binding %s: %w", b.Name, err))
-			}
-		}
-	}
-
-	if joinedErr := errors.Join(errs...); joinedErr != nil {
-		span.RecordError(joinedErr)
-		span.SetStatus(codes.Error, joinedErr.Error())
-		return joinedErr
-	}
-	return nil
+	return errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
@@ -878,10 +839,24 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	))
 	defer span.End()
 
+	cacheKey := userTeamMembershipsCacheKey(orgID, userID, external)
+	if !bypassCache {
+		if cached, found := s.cache.Get(cacheKey); found {
+			if teams, ok := cached.([]*team.TeamMemberDTO); ok {
+				return teams, nil
+			}
+			s.cache.Delete(cacheKey)
+		}
+	}
+
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userID)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			s.cache.Set(cacheKey, []*team.TeamMemberDTO{}, defaultCacheDuration)
+			return []*team.TeamMemberDTO{}, nil
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -947,24 +922,26 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		members = append(members, dto)
 	}
 
+	if !bypassCache {
+		s.cache.Set(cacheKey, members, defaultCacheDuration)
+	}
+
 	return members, nil
+}
+
+func userTeamMembershipsCacheKey(orgID, userID int64, external bool) string {
+	return fmt.Sprintf("teams:%d:%d:%t", orgID, userID, external)
 }
 
 func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.getTeamMembers", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("teamID", query.TeamID),
 		attribute.String("teamUID", query.TeamUID),
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-	orgID := requester.GetOrgID()
-	span.SetAttributes(attribute.Int64("orgID", orgID))
+	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
 
 	teamUID := query.TeamUID
@@ -1013,8 +990,15 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		return nil, err
 	}
 
+	// Legacy joins on user.is_service_account = false; drop non-user subjects
+	// (service accounts, teams) so they never appear in the member list.
+	userBindings := make([]iamv0alpha1.TeamBinding, 0, len(bindings))
 	userUIDs := make([]string, 0, len(bindings))
 	for _, b := range bindings {
+		if b.Spec.Subject.Kind != subjectKindUser {
+			continue
+		}
+		userBindings = append(userBindings, b)
 		userUIDs = append(userUIDs, b.Spec.Subject.Name)
 	}
 
@@ -1023,8 +1007,8 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		s.logger.Warn("Failed to batch-fetch user details for team members", "error", err)
 	}
 
-	members := make([]*team.TeamMemberDTO, 0, len(bindings))
-	for _, b := range bindings {
+	members := make([]*team.TeamMemberDTO, 0, len(userBindings))
+	for _, b := range userBindings {
 		userUID := b.Spec.Subject.Name
 
 		dto := &team.TeamMemberDTO{

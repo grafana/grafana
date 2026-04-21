@@ -1206,6 +1206,13 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			expectTeams:    0,
 		},
 		{
+			name:           "returns empty list when user not found (matches legacy)",
+			requesterOrgID: 1,
+			query:          &team.GetTeamsByUserQuery{OrgID: 1, UserID: 999},
+			serverResponse: userNotFoundHandler(t),
+			expectTeams:    0,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			query:       &team.GetTeamsByUserQuery{OrgID: 1, UserID: 42},
 			nilProvider: true,
@@ -1288,6 +1295,13 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			expectIDs:      []int64{},
 		},
 		{
+			name:           "returns empty list when user not found (matches legacy)",
+			requesterOrgID: 1,
+			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 999},
+			serverResponse: userNotFoundHandler(t),
+			expectIDs:      []int64{},
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			query:       &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
 			nilProvider: true,
@@ -1362,6 +1376,86 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			expectMember:   false,
 		},
 		{
+			name:   "returns false when team not found (matches legacy)",
+			orgID:  1,
+			teamID: 999,
+			userID: 42,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/teams") && r.URL.Query().Get("labelSelector") != "" {
+					_ = json.NewEncoder(w).Encode(emptyTeamListResponse())
+					return
+				}
+				w.WriteHeader(http.StatusNotFound)
+			},
+			expectMember: false,
+		},
+		{
+			name:   "returns false when user not found (matches legacy)",
+			orgID:  1,
+			teamID: 10,
+			userID: 999,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams") && r.URL.Query().Get("labelSelector") != "":
+					_ = json.NewEncoder(w).Encode(teamListResponse("team-uid-10", "org-1", "Team Ten", ""))
+				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "UserList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{},
+					})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectMember: false,
+		},
+		{
+			name:   "asserts field selector contains both team and subject names",
+			orgID:  1,
+			teamID: 10,
+			userID: 42,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams") && r.URL.Query().Get("labelSelector") != "":
+					_ = json.NewEncoder(w).Encode(teamListResponse("team-uid-1", "org-1", "Team One", ""))
+				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
+					userObj := iamv0alpha1.User{
+						TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:   "user-uid-42",
+							Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"},
+						},
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "UserList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &userObj)},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
+					sel := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, sel, "spec.teamRef.name=team-uid-1")
+					assert.Contains(t, sel, "spec.subject.name=user-uid-42")
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{},
+					})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectMember: false,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			orgID:       1,
 			teamID:      10,
@@ -1393,116 +1487,6 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectMember, result)
-		})
-	}
-}
-
-func TestTeamK8sService_RemoveUsersMemberships(t *testing.T) {
-	tests := []struct {
-		name           string
-		userID         int64
-		requesterOrgID int64
-		serverResponse func(deletedBindings *[]string) func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		noReqContext   bool
-		expectErr      bool
-		expectDeleted  []string
-	}{
-		{
-			name:           "deletes all bindings for user",
-			userID:         42,
-			requesterOrgID: 1,
-			serverResponse: func(deletedBindings *[]string) func(w http.ResponseWriter, r *http.Request) {
-				return func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Content-Type", "application/json")
-					path := r.URL.Path
-					switch {
-					case r.Method == http.MethodGet && strings.Contains(path, "/users"):
-						userObj := iamv0alpha1.User{
-							TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
-							ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
-						}
-						_ = json.NewEncoder(w).Encode(map[string]any{
-							"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-							"kind":       "UserList",
-							"metadata":   map[string]any{"resourceVersion": "1"},
-							"items":      []any{mustToUnstructured(t, &userObj)},
-						})
-					case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
-						bindingObj := iamv0alpha1.TeamBinding{
-							TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
-							ObjectMeta: metav1.ObjectMeta{Name: "binding-1", Namespace: "org-1"},
-							Spec: iamv0alpha1.TeamBindingSpec{
-								Subject: iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
-								TeamRef: iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
-							},
-						}
-						_ = json.NewEncoder(w).Encode(map[string]any{
-							"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-							"kind":       "TeamBindingList",
-							"metadata":   map[string]any{"resourceVersion": "1"},
-							"items":      []any{mustToUnstructured(t, &bindingObj)},
-						})
-					case r.Method == http.MethodDelete && strings.Contains(path, "/teambindings/"):
-						parts := strings.Split(path, "/")
-						*deletedBindings = append(*deletedBindings, parts[len(parts)-1])
-						_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusSuccess})
-					default:
-						w.WriteHeader(http.StatusNotFound)
-					}
-				}
-			},
-			expectDeleted: []string{"binding-1"},
-		},
-		{
-			name:        "returns error when config provider not initialized",
-			userID:      42,
-			nilProvider: true,
-			expectErr:   true,
-		},
-		{
-			name:         "returns error when no request context",
-			userID:       42,
-			noReqContext: true,
-			expectErr:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var svc *TeamK8sService
-			var deletedBindings []string
-
-			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
-			} else if tt.serverResponse != nil {
-				handler := tt.serverResponse(&deletedBindings)
-				ts := httptest.NewServer(http.HandlerFunc(handler))
-				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
-			} else {
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: "http://localhost:0"}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
-			}
-
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-			if tt.requesterOrgID != 0 {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			}
-
-			err := svc.RemoveUsersMemberships(ctx, tt.userID)
-			if tt.expectErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectDeleted, deletedBindings)
 		})
 	}
 }
@@ -1570,6 +1554,49 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			},
 		},
 		{
+			name:           "returns empty list when user not found (matches legacy)",
+			orgID:          1,
+			userID:         999,
+			serverResponse: userNotFoundHandler(t),
+			expectMembers:  0,
+		},
+		{
+			name:     "external=true filter is sent as field selector",
+			orgID:    1,
+			userID:   42,
+			external: true,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
+					userObj := iamv0alpha1.User{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+						ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "UserList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &userObj)},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
+					sel := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, sel, "spec.subject.name=user-uid-42")
+					assert.Contains(t, sel, "spec.external=true")
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{},
+					})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectMembers: 0,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			orgID:       1,
 			userID:      42,
@@ -1605,6 +1632,75 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTeamK8sService_GetUserTeamMemberships_Cache(t *testing.T) {
+	newHandler := func(calls *int) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			*calls++
+			w.Header().Set("Content-Type", "application/json")
+			handler := membershipServerHandler(t)
+			handler(w, r)
+		}
+	}
+
+	newSvc := func(t *testing.T, h http.HandlerFunc) (*TeamK8sService, func()) {
+		t.Helper()
+		ts := httptest.NewServer(h)
+		provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+		svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+		return svc, ts.Close
+	}
+
+	ctx := contextWithReqContext()
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+
+	t.Run("second call with bypassCache=false hits cache", func(t *testing.T) {
+		var calls int
+		svc, closeServer := newSvc(t, newHandler(&calls))
+		defer closeServer()
+
+		first, err := svc.GetUserTeamMemberships(ctx, 1, 42, false, false)
+		require.NoError(t, err)
+		require.Len(t, first, 1)
+		firstCalls := calls
+
+		second, err := svc.GetUserTeamMemberships(ctx, 1, 42, false, false)
+		require.NoError(t, err)
+		require.Len(t, second, 1)
+
+		assert.Equal(t, firstCalls, calls, "cache hit should not make additional server calls")
+	})
+
+	t.Run("bypassCache=true refetches", func(t *testing.T) {
+		var calls int
+		svc, closeServer := newSvc(t, newHandler(&calls))
+		defer closeServer()
+
+		_, err := svc.GetUserTeamMemberships(ctx, 1, 42, false, false)
+		require.NoError(t, err)
+		firstCalls := calls
+
+		_, err = svc.GetUserTeamMemberships(ctx, 1, 42, false, true)
+		require.NoError(t, err)
+
+		assert.Greater(t, calls, firstCalls, "bypassCache=true should make additional server calls")
+	})
+
+	t.Run("cache key differs by external flag", func(t *testing.T) {
+		var calls int
+		svc, closeServer := newSvc(t, newHandler(&calls))
+		defer closeServer()
+
+		_, err := svc.GetUserTeamMemberships(ctx, 1, 42, false, false)
+		require.NoError(t, err)
+		firstCalls := calls
+
+		_, err = svc.GetUserTeamMemberships(ctx, 1, 42, true, false)
+		require.NoError(t, err)
+
+		assert.Greater(t, calls, firstCalls, "different external flag should miss cache")
+	})
 }
 
 func TestTeamK8sService_GetTeamMembers(t *testing.T) {
@@ -1682,6 +1778,96 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
 				assert.Equal(t, team.PermissionTypeMember, result[0].Permission)
 			},
+		},
+		{
+			name:           "filters out service-account subjects (matches legacy is_service_account=false join)",
+			requesterOrgID: 1,
+			query:          &team.GetTeamMembersQuery{OrgID: 1, TeamUID: "team-uid-1", TeamID: 10},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				userObj := iamv0alpha1.User{
+					TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+					ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
+					Spec:       iamv0alpha1.UserSpec{Login: "testuser", Email: "test@example.com", Title: "Test User"},
+				}
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
+					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &userObj))
+				case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
+					userBinding := iamv0alpha1.TeamBinding{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+						ObjectMeta: metav1.ObjectMeta{Name: "binding-user", Namespace: "org-1"},
+						Spec: iamv0alpha1.TeamBindingSpec{
+							Subject: iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
+							TeamRef: iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+						},
+					}
+					saBinding := iamv0alpha1.TeamBinding{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+						ObjectMeta: metav1.ObjectMeta{Name: "binding-sa", Namespace: "org-1"},
+						Spec: iamv0alpha1.TeamBindingSpec{
+							Subject: iamv0alpha1.TeamBindingspecSubject{Kind: "ServiceAccount", Name: "sa-uid-1"},
+							TeamRef: iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+						},
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &userBinding), mustToUnstructured(t, &saBinding)},
+					})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectMembers: 1,
+			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
+				assert.Equal(t, "user-uid-42", result[0].UserUID)
+			},
+		},
+		{
+			name:           "external=true filter is sent as field selector",
+			requesterOrgID: 1,
+			query:          &team.GetTeamMembersQuery{OrgID: 1, TeamUID: "team-uid-1", TeamID: 10, External: true},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				if r.Method == http.MethodGet && strings.Contains(path, "/teambindings") {
+					sel := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, sel, "spec.teamRef.name=team-uid-1")
+					assert.Contains(t, sel, "spec.external=true")
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{},
+					})
+					return
+				}
+				w.WriteHeader(http.StatusNotFound)
+			},
+			expectMembers: 0,
+		},
+		{
+			name:           "uses orgId from query",
+			requesterOrgID: 5,
+			query:          &team.GetTeamMembersQuery{OrgID: 99, TeamUID: "team-uid-1", TeamID: 10},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				assert.Contains(t, r.URL.Path, "org-99", "should use query.OrgID (99), not requester.OrgID (5)")
+				if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/teambindings") {
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{},
+					})
+					return
+				}
+				w.WriteHeader(http.StatusNotFound)
+			},
+			expectMembers: 0,
 		},
 		{
 			name:        "returns error when config provider not initialized",
@@ -2052,6 +2238,26 @@ func emptyTeamListResponse() map[string]any {
 		"kind":       "TeamList",
 		"metadata":   map[string]any{},
 		"items":      []any{},
+	}
+}
+
+// userNotFoundHandler returns an empty UserList for any label-selector lookup
+// so resolveUserUID yields user.ErrUserNotFound.
+func userNotFoundHandler(t *testing.T) func(w http.ResponseWriter, r *http.Request) {
+	t.Helper()
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		path := r.URL.Path
+		if r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/") {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "UserList",
+				"metadata":   map[string]any{"resourceVersion": "1"},
+				"items":      []any{},
+			})
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
 	}
 }
 

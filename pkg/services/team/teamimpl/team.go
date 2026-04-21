@@ -113,11 +113,8 @@ func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, u
 	return s.legacyService.IsTeamMember(ctx, orgId, teamId, userId)
 }
 
+// RemoveUsersMemberships is instance-wide cleanup; the k8s service is namespace-scoped so this always routes to legacy.
 func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.RemoveUsersMemberships(ctx, userID)
-	}
-
 	return s.legacyService.RemoveUsersMemberships(ctx, userID)
 }
 
