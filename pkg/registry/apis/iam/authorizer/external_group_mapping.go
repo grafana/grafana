@@ -35,7 +35,6 @@ func (r *ExternalGroupMappingAuthorizer) AfterGet(ctx context.Context, obj runti
 		return storewrapper.ErrUnauthenticated
 	}
 
-	// FIXME: Remove this when the namegenerator can be configured for the API
 	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
@@ -66,6 +65,7 @@ func (r *ExternalGroupMappingAuthorizer) AfterGet(ctx context.Context, obj runti
 
 // BeforeCreate implements ResourceStorageAuthorizer.
 func (r *ExternalGroupMappingAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	// FIXME: Remove this when the namegenerator can be configured for the API
 	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
 	if !ok {
 		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
