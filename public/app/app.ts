@@ -373,19 +373,25 @@ function handleRedirectTo(): void {
 
   if (URL.canParse(decodedRedirectTo, window.location.origin)) {
     const redirectUrl = new URL(decodedRedirectTo, window.location.origin);
-    const redirectOrgId = redirectUrl.searchParams.get('orgId');
 
-    if (redirectOrgId !== null && redirectOrgId !== '') {
-      const targetOrgId = Number(redirectOrgId);
+    // Only allow same-origin redirects to avoid an open redirect via the redirectTo query param.
+    // Note that `window.location.origin` is only used in `new URL()` if the first param isn't 
+    // and absolute URL. 
+    if (redirectUrl.origin === window.location.origin) {
+      const redirectOrgId = redirectUrl.searchParams.get('orgId');
 
-      if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
-        const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
-        window.location.replace(urlToRedirectTo);
-        return;
+      if (redirectOrgId !== null && redirectOrgId !== '') {
+        const targetOrgId = Number(redirectOrgId);
+
+        if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
+          const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
+          window.location.replace(urlToRedirectTo);
+          return;
+        }
       }
     }
   }
-  
+
   // Ensure that the appsuburl is stripped from the redirect to in case of a frontend redirect
   const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
   locationService.replace(stripped);
