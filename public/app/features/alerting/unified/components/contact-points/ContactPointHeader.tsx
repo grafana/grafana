@@ -4,7 +4,7 @@ import { Fragment, type JSX, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
@@ -30,9 +30,11 @@ import { type ContactPointWithMetadata, showManageContactPointPermissions } from
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
+  /** When set (e.g. instance drawer), Edit uses this callback instead of navigating to the full-page editor. */
+  onEditClick?: () => void;
 }
 
-export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeaderProps) => {
+export const ContactPointHeader = ({ contactPoint, onDelete, onEditClick }: ContactPointHeaderProps) => {
   const { name, id, provenance, policies = [], grafana_managed_receiver_configs: integrations } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
@@ -237,27 +239,49 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
             {t('alerting.contact-point-header.button-history', 'History')}
           </LinkButton>
         )}
-        <LinkButton
-          tooltipPlacement="top"
-          tooltip={
-            isProvisioned
-              ? t(
-                  'alerting.contact-point-header.tooltip-provisioned-contact-points',
-                  'Provisioned contact points cannot be edited in the UI'
-                )
-              : undefined
-          }
-          variant="secondary"
-          size="sm"
-          icon={canEdit ? 'pen' : 'eye'}
-          type="button"
-          data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
-        >
-          {canEdit
-            ? t('alerting.contact-point-header.button-edit', 'Edit')
-            : t('alerting.contact-point-header.button-view', 'View')}
-        </LinkButton>
+        {canEdit && onEditClick ? (
+          <Button
+            tooltipPlacement="top"
+            tooltip={
+              isProvisioned
+                ? t(
+                    'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                    'Provisioned contact points cannot be edited in the UI'
+                  )
+                : undefined
+            }
+            variant="secondary"
+            size="sm"
+            icon="pen"
+            type="button"
+            data-testid="edit-action"
+            onClick={onEditClick}
+          >
+            {t('alerting.contact-point-header.button-edit', 'Edit')}
+          </Button>
+        ) : (
+          <LinkButton
+            tooltipPlacement="top"
+            tooltip={
+              isProvisioned
+                ? t(
+                    'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                    'Provisioned contact points cannot be edited in the UI'
+                  )
+                : undefined
+            }
+            variant="secondary"
+            size="sm"
+            icon={canEdit ? 'pen' : 'eye'}
+            type="button"
+            data-testid={`${canEdit ? 'edit' : 'view'}-action`}
+            href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
+          >
+            {canEdit
+              ? t('alerting.contact-point-header.button-edit', 'Edit')
+              : t('alerting.contact-point-header.button-view', 'View')}
+          </LinkButton>
+        )}
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
             <MoreButton

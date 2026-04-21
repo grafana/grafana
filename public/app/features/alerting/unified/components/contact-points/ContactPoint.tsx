@@ -23,9 +23,14 @@ import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getRece
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
+  /**
+   * When set, Edit opens this handler instead of navigating to the full-page editor.
+   * Passes the receiver API identifier (K8s resource name when using the notifications API) and optional display title.
+   */
+  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
-export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint, onEditContactPoint }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
@@ -45,6 +50,11 @@ export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
               name: contactPointToDelete.id || contactPointToDelete.name,
               resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
+          }
+          onEditClick={
+            onEditContactPoint
+              ? () => onEditContactPoint(contactPoint.id || contactPoint.name, contactPoint.name)
+              : undefined
           }
         />
 
