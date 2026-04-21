@@ -1597,6 +1597,52 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			expectMembers: 0,
 		},
 		{
+			name:   "returns error when listTeamsByUIDs fails",
+			orgID:  1,
+			userID: 42,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				userObj := iamv0alpha1.User{
+					TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+					ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
+					Spec:       iamv0alpha1.UserSpec{Login: "testuser", Email: "test@example.com", Title: "Test User"},
+				}
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "UserList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &userObj)},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
+					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &userObj))
+				case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
+					binding := iamv0alpha1.TeamBinding{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+						ObjectMeta: metav1.ObjectMeta{Name: "binding-1", Namespace: "org-1"},
+						Spec: iamv0alpha1.TeamBindingSpec{
+							Subject: iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
+							TeamRef: iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+						},
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &binding)},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-uid-1"):
+					w.WriteHeader(http.StatusInternalServerError)
+					_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 500})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectErr: true,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			orgID:       1,
 			userID:      42,
@@ -1868,6 +1914,38 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 				w.WriteHeader(http.StatusNotFound)
 			},
 			expectMembers: 0,
+		},
+		{
+			name:           "returns error when listUsersByUIDs fails",
+			requesterOrgID: 1,
+			query:          &team.GetTeamMembersQuery{OrgID: 1, TeamUID: "team-uid-1", TeamID: 10},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/teambindings"):
+					binding := iamv0alpha1.TeamBinding{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+						ObjectMeta: metav1.ObjectMeta{Name: "binding-1", Namespace: "org-1"},
+						Spec: iamv0alpha1.TeamBindingSpec{
+							Subject: iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
+							TeamRef: iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+						},
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{
+						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+						"kind":       "TeamBindingList",
+						"metadata":   map[string]any{"resourceVersion": "1"},
+						"items":      []any{mustToUnstructured(t, &binding)},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
+					w.WriteHeader(http.StatusInternalServerError)
+					_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 500})
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			},
+			expectErr: true,
 		},
 		{
 			name:        "returns error when config provider not initialized",

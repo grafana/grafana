@@ -894,7 +894,9 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 
 	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, teamUIDs)
 	if err != nil {
-		s.logger.Warn("Failed to batch-fetch teams for team ID lookup", "error", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
 	}
 
 	members := make([]*team.TeamMemberDTO, 0, len(bindings))
@@ -1004,7 +1006,9 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	usersMap, err := s.listUsersByUIDs(ctx, namespace, userUIDs)
 	if err != nil {
-		s.logger.Warn("Failed to batch-fetch user details for team members", "error", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
 	}
 
 	members := make([]*team.TeamMemberDTO, 0, len(userBindings))
