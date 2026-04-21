@@ -760,6 +760,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
 		require.NoError(t, err)
 	}
+	// Default is 100, so only write if it's not the default.
+	if opts.ProvisioningMaxIncrementalDiffSize != 100 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_incremental_diff_size", fmt.Sprintf("%d", opts.ProvisioningMaxIncrementalDiffSize))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -884,6 +891,7 @@ type GrafanaOpts struct {
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningFolderAPIVersion          string
+	ProvisioningMaxIncrementalDiffSize    int
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
