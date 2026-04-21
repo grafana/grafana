@@ -79,7 +79,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               <Droppable droppableId={key!} direction="horizontal">
                 {(dropProvided) => (
                   <div
-                    className={styles.tabsContainer}
+                    className={cx(styles.tabsContainer, {
+                      [styles.tabsContainerFadeLeft]: canScrollLeft && !canScrollRight,
+                      [styles.tabsContainerFadeRight]: !canScrollLeft && canScrollRight,
+                      [styles.tabsContainerFadeBoth]: canScrollLeft && canScrollRight,
+                    })}
                     ref={mergeRefs(dropProvided.innerRef, scrollContainerRef)}
                     {...dropProvided.droppableProps}
                   >
@@ -90,7 +94,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 )}
               </Droppable>
               {canScrollLeft && (
-                <div className={cx(styles.scrollFade, styles.scrollFadeLeft)}>
+                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperLeft)}>
                   <IconButton
                     className={styles.scrollButton}
                     name="angle-left"
@@ -103,7 +107,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 </div>
               )}
               {canScrollRight && (
-                <div className={cx(styles.scrollFade, styles.scrollFadeRight)}>
+                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperRight)}>
                   <IconButton
                     className={styles.scrollButton}
                     name="angle-right"
@@ -204,7 +208,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
   }),
-  scrollFade: css({
+  // Fade the tabs themselves to transparent near the overflow edges using a mask.
+  // This avoids painting any color over whatever sits behind the tab bar (canvas,
+  // custom backgrounds, etc.) so the chevron buttons appear to float above the tabs.
+  // The region behind the chevron (spacing(4) ≈ 32px) is fully transparent; the
+  // remaining spacing(2) ≈ 16px is a soft fade into the visible tabs.
+  tabsContainerFadeLeft: css({
+    maskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)})`,
+    WebkitMaskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)})`,
+  }),
+  tabsContainerFadeRight: css({
+    maskImage: `linear-gradient(to left, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)})`,
+    WebkitMaskImage: `linear-gradient(to left, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)})`,
+  }),
+  tabsContainerFadeBoth: css({
+    maskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)}, black calc(100% - ${theme.spacing(6)}), transparent calc(100% - ${theme.spacing(4)}), transparent 100%)`,
+    WebkitMaskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${theme.spacing(6)}, black calc(100% - ${theme.spacing(6)}), transparent calc(100% - ${theme.spacing(4)}), transparent 100%)`,
+  }),
+  scrollButtonWrapper: css({
     position: 'absolute',
     top: 0,
     bottom: 0,
@@ -212,19 +233,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     zIndex: 1,
     pointerEvents: 'none',
-    width: theme.spacing(6),
   }),
-  scrollFadeLeft: css({
+  scrollButtonWrapperLeft: css({
     left: 0,
-    justifyContent: 'flex-start',
-    paddingLeft: theme.spacing(0.5),
-    background: `linear-gradient(to right, ${theme.colors.background.primary} 40%, transparent)`,
   }),
-  scrollFadeRight: css({
+  scrollButtonWrapperRight: css({
     right: 0,
-    justifyContent: 'flex-end',
-    paddingRight: theme.spacing(0.5),
-    background: `linear-gradient(to left, ${theme.colors.background.primary} 40%, transparent)`,
   }),
   scrollButton: css({
     pointerEvents: 'auto',
