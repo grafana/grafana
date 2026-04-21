@@ -73,6 +73,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to read metadata from object: %w", err)
 	}
 
+	// UID format is only validated on create. On update the Kubernetes API server enforces
+	// that the object name (which maps to the UID) is immutable, so re-validating here
+	// would be redundant.
 	if !util.IsValidShortUID(id) {
 		return dashboards.ErrDashboardInvalidUid
 	}

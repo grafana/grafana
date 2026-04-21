@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
-import { getGrafanaSearcher } from '../../service/searcher';
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
@@ -72,10 +71,6 @@ describe('SearchResultsTable', () => {
       totalRows: searchData.length,
       view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
-    });
 
     it('shows the table with the correct accessible label', async () => {
       render(
@@ -199,10 +194,6 @@ describe('SearchResultsTable', () => {
       totalRows: emptySearchData.length,
       view: new DataFrameView<DashboardQueryResult>(emptySearchData),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
-    });
 
     it('shows a "No data" message', async () => {
       render(

@@ -1,4 +1,4 @@
-import { CustomVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneGridLayout, SceneVariableSet, ScopesVariable, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -60,6 +60,17 @@ describe('collectAncestorSceneVariables', () => {
     expect(names).toContain('dup');
     const dupInstance = merged.find((v) => v.state.name === 'dup');
     expect(dupInstance).toBe(sectionDup);
+  });
+
+  it('excludes system variables (keepOnlyUserDefinedVariables)', () => {
+    const userVar = new CustomVariable({ name: 'userVar', query: 'x', value: 'x', text: 'x' });
+    const scopesVar = new ScopesVariable({ enable: true });
+    const dashboard = new DashboardScene({
+      $variables: new SceneVariableSet({ variables: [userVar, scopesVar] }),
+    });
+
+    const merged = collectAncestorSceneVariables(dashboard);
+    expect(merged.map((v) => v.state.name)).toEqual(['userVar']);
   });
 
   it('excludes the starting row section variables (walk starts at parent when present)', () => {

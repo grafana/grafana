@@ -385,7 +385,6 @@ module.exports = [
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-data/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
-      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
@@ -462,6 +461,7 @@ module.exports = [
       'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',

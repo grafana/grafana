@@ -444,6 +444,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
+      await screen.findByText('Sort');
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
   });
