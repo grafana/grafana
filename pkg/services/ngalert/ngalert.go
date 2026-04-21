@@ -451,6 +451,8 @@ func (ng *AlertNG) init() error {
 		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
+	emailValidator := notifier.NewEmailValidator(ng.userService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
+
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
@@ -467,6 +469,7 @@ func (ng *AlertNG) init() error {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
@@ -474,6 +477,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		receiverAccess,
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	provisioningReceiverAuthz := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true)
@@ -491,6 +495,7 @@ func (ng *AlertNG) init() error {
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		false, // imported resources are not exposed via provisioning APIs
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	// Create limits provider based on alertmanager mode.
