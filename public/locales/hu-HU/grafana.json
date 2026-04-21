@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Nem található adatforrás"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Jelenlegi érték: {{currentValue}} ",
       "label-state-name": "Állapot neve"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15418,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Szaggatott",
         "label-dots": "Pontozott",
         "label-solid": "Folytonos"

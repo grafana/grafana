@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "データソースが見つかりません"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8145,6 +8154,9 @@
       "current-value": "現在の値: {{currentValue}} ",
       "label-state-name": "状態名"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15330,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "破線",
         "label-dots": "点線",
         "label-solid": "実線"

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -134,6 +135,17 @@ func FullSync(
 		// emits orphan deletions from the source-vs-target join.
 		affected: nil,
 	}
+
+	folderRenames := 0
+	for _, change := range changes {
+		if safepath.IsDir(change.Path) && change.FolderRenamed {
+			folderRenames++
+		}
+	}
+	if folderRenames > 0 {
+		quotaTracker.AllowOverLimit(folderRenames)
+	}
+
 	return applyChanges(ctx, changes, deps, maxSyncWorkers, fullSyncPhaseRecorder(metrics))
 }
 

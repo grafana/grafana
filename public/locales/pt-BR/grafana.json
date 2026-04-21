@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "Nenhuma fonte de dados encontrada"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Valor atual: {{currentValue}} ",
       "label-state-name": "Nome do estado"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15418,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Tracejado",
         "label-dots": "Pontilhado",
         "label-solid": "Sólido"

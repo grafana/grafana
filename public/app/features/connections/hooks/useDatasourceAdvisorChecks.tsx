@@ -29,6 +29,13 @@ type RetryCheckFn = () => {
   retryCheck: (checkName: string, itemID: string) => void;
 };
 
+type CreateChecksFn = () => {
+  createChecks: () => void;
+  createCheckState?: {
+    isLoading?: boolean;
+  };
+};
+
 export function isAdvisorEnabled(): boolean {
   return Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
 }
@@ -37,6 +44,8 @@ interface AdvisorCheckContextValue {
   check?: Check;
   isLoading: boolean;
   retryCheck?: (checkName: string, itemID: string) => void;
+  createChecks?: () => void;
+  isCreatingChecks?: boolean;
 }
 
 const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading: false });
@@ -56,11 +65,20 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
   const { functions: retryCheckFns, isLoading: isLoadingRetryChecks } = usePluginFunctions<RetryCheckFn>({
     extensionPointId: PluginExtensionPoints.AdvisorRetryCheck,
   });
+  const { functions: createChecksFns, isLoading: isLoadingCreateChecks } = usePluginFunctions<CreateChecksFn>({
+    extensionPointId: PluginExtensionPoints.AdvisorCreateChecks,
+  });
 
   const completedChecksFn = completedChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const retryCheckFn = retryCheckFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
+  const createChecksFn = createChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const isPluginReady =
-    enabled && !isLoadingCompletedChecks && !isLoadingRetryChecks && !!completedChecksFn && !!retryCheckFn;
+    enabled &&
+    !isLoadingCompletedChecks &&
+    !isLoadingRetryChecks &&
+    !isLoadingCreateChecks &&
+    !!completedChecksFn &&
+    !!retryCheckFn;
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
     if (!enabled) {
@@ -78,6 +96,7 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
         <AdvisorCheckBridge
           completedChecksFn={completedChecksFn}
           retryCheckFn={retryCheckFn}
+          createChecksFn={createChecksFn}
           onChange={setAdvisorData}
         />
       )}
@@ -94,22 +113,27 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
 function AdvisorCheckBridge({
   completedChecksFn,
   retryCheckFn,
+  createChecksFn,
   onChange,
 }: {
   completedChecksFn: CompletedChecksFn;
   retryCheckFn: RetryCheckFn;
+  createChecksFn?: CreateChecksFn;
   onChange: (value: AdvisorCheckContextValue) => void;
 }) {
   const completedChecks = completedChecksFn({ checkType: 'datasource' });
   const retryCheckResult = retryCheckFn();
+  const createChecksResult = createChecksFn?.();
 
   const check = completedChecks?.data?.items?.[0]; // Given a type, the list of items will contain only the last one for that type
   const isLoading = completedChecks == null || completedChecks.isLoading || !completedChecks.isCompleted;
   const retryCheck = retryCheckResult?.retryCheck;
+  const createChecks = createChecksResult?.createChecks;
+  const isCreatingChecks = Boolean(createChecksResult?.createCheckState?.isLoading || !completedChecks?.isCompleted);
 
   useLayoutEffect(() => {
-    onChange({ check, isLoading, retryCheck });
-  }, [check, isLoading, retryCheck, onChange]);
+    onChange({ check, isLoading, retryCheck, createChecks, isCreatingChecks });
+  }, [check, isLoading, retryCheck, createChecks, isCreatingChecks, onChange]);
 
   return null;
 }
@@ -196,4 +220,31 @@ export function useRetryDatasourceAdvisorCheck(): (datasourceUID: string) => Pro
     },
     [check?.metadata.name, retryCheck]
   );
+}
+
+/**
+ * Returns a callback that starts advisor checks across datasource check types.
+ * No-ops when advisor is disabled or the plugin function is unavailable.
+ */
+export function useCreateDatasourceAdvisorChecks(): {
+  createChecks: () => void;
+  isCreatingChecks: boolean;
+  isAvailable: boolean;
+} {
+  const { createChecks, isCreatingChecks } = useContext(AdvisorCheckContext);
+  const isAvailable = isAdvisorEnabled() && Boolean(createChecks);
+
+  const runCreateChecks = useCallback(() => {
+    if (!isAvailable || !createChecks) {
+      return;
+    }
+
+    createChecks();
+  }, [createChecks, isAvailable]);
+
+  return {
+    createChecks: runCreateChecks,
+    isCreatingChecks: Boolean(isCreatingChecks),
+    isAvailable,
+  };
 }

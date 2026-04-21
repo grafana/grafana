@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "데이터 소스를 찾을 수 없습니다."
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8145,6 +8154,9 @@
       "current-value": "현재 값: {{currentValue}} ",
       "label-state-name": "주 이름"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15330,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "대시",
         "label-dots": "점",
         "label-solid": "단색"

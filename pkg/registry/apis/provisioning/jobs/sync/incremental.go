@@ -90,6 +90,12 @@ func IncrementalSync(
 		)
 	}
 
+	// Temporarily raise the quota limit for net-zero folder replacements so
+	// TryAcquire succeeds when creating the new folder before the old one is
+	// deleted in the cleanup phase.
+	if len(converted.ReplacedFolders) > 0 {
+		quotaTracker.AllowOverLimit(len(converted.ReplacedFolders))
+	}
 	progress.SetMessage(ctx, "replicating versioned changes")
 
 	affected := newAffectedFolderCollector()

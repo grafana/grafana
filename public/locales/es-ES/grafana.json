@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "No se ha encontrado ninguna fuente de datos"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Valor actual: {{currentValue}} ",
       "label-state-name": "Nombre del estado"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15418,6 +15430,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Raya",
         "label-dots": "Puntos",
         "label-solid": "Sólido"

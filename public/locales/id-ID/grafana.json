@@ -7926,6 +7926,15 @@
     },
     "empty-state": {
       "message": "Tidak ada sumber data yang ditemukan"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8145,6 +8154,9 @@
       "current-value": "Nilai saat ini: {{currentValue}} ",
       "label-state-name": "Nama status"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -15330,6 +15342,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Tanda pisah",
         "label-dots": "Titik",
         "label-solid": "Solid"
