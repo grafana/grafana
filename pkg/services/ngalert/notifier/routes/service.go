@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,8 +36,6 @@ type alertmanagerConfigStore interface {
 	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
-type provenanceValidator func(from, to models.Provenance) error
-
 type routeAccessControl interface {
 	FilterRead(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error)
 	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
@@ -49,15 +48,15 @@ type routeAccessControl interface {
 }
 
 type Service struct {
-	configStore     alertmanagerConfigStore
-	provenanceStore routeProvenanceStore
-	xact            transactionManager
-	log             log.Logger
-	settings        setting.UnifiedAlertingSettings
-	validator       provenanceValidator
-	FeatureToggles  featuremgmt.FeatureToggles
-	tracer          tracing.Tracer
-	routeAccess     routeAccessControl
+	configStore                         alertmanagerConfigStore
+	provenanceStore                     routeProvenanceStore
+	xact                                transactionManager
+	log                                 log.Logger
+	settings                            setting.UnifiedAlertingSettings
+	provenanceStatusTransitionValidator validation.ProvenanceStatusTransitionValidator
+	FeatureToggles                      featuremgmt.FeatureToggles
+	tracer                              tracing.Tracer
+	routeAccess                         routeAccessControl
 }
 
 func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
@@ -85,20 +84,20 @@ func NewService(
 	settings setting.UnifiedAlertingSettings,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
-	validator provenanceValidator,
+	validator validation.ProvenanceStatusTransitionValidator,
 	tracer tracing.Tracer,
 	routeAccess routeAccessControl,
 ) *Service {
 	return &Service{
-		configStore:     am,
-		provenanceStore: prov,
-		xact:            xact,
-		log:             log,
-		settings:        settings,
-		FeatureToggles:  features,
-		validator:       validator,
-		tracer:          tracer,
-		routeAccess:     routeAccess,
+		configStore:                         am,
+		provenanceStore:                     prov,
+		xact:                                xact,
+		log:                                 log,
+		settings:                            settings,
+		FeatureToggles:                      features,
+		provenanceStatusTransitionValidator: validator,
+		tracer:                              tracer,
+		routeAccess:                         routeAccess,
 	}
 }
 
@@ -265,7 +264,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return nil, err
 	}
 
@@ -273,7 +272,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	updated.Provenance = storedProvenance
+	updated.Provenance = p
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
@@ -349,7 +348,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return err
 	}
 
@@ -409,6 +408,10 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	}
 
 	if err := nps.routeAccess.AuthorizeCreate(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if err := nps.provenanceStatusTransitionValidator(ctx, models.ProvenanceNone, p); err != nil {
 		return nil, err
 	}
 

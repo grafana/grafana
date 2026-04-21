@@ -16,12 +16,14 @@ import (
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -65,25 +67,25 @@ type Server struct {
 	metrics *metrics
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -170,27 +172,22 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		reconcilerLogger := log.New("zanzana.mt-reconciler")
 
-		var leaderElector reconciler.LeaderElector
-		if cfg.ZanzanaReconciler.LeaderElectionEnabled {
+		var le leaderelection.Elector
+		if cfg.ZanzanaReconciler.LeaderElection.Enabled {
 			restCfg, err := clientrest.InClusterConfig()
 			if err != nil {
 				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
 			}
-			leaderElector, err = reconciler.NewKubernetesLeaderElector(
+			le, err = leaderelection.NewKubernetesElector(
 				restCfg,
-				cfg.ZanzanaReconciler.LeaderElectionLeaseName,
-				cfg.ZanzanaReconciler.LeaderElectionNamespace,
-				cfg.ZanzanaReconciler.LeaderElectionIdentity,
-				cfg.ZanzanaReconciler.LeaseDuration,
-				cfg.ZanzanaReconciler.RenewDeadline,
-				cfg.ZanzanaReconciler.RetryPeriod,
+				cfg.ZanzanaReconciler.LeaderElection,
 				reconcilerLogger,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create leader elector: %w", err)
 			}
 		} else {
-			leaderElector = reconciler.NewNoopLeaderElector()
+			le = leaderelection.NewNoopElector()
 		}
 
 		mtReconciler = reconciler.NewReconciler(
@@ -202,11 +199,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
 				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
 				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
+				CRDs:                reconcileCRDs,
 			},
 			reconcilerLogger,
 			tracer,
 			reg,
-			leaderElector,
+			le,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()

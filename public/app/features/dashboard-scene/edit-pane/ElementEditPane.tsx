@@ -1,22 +1,34 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-
-import { type DashboardEditPane } from './DashboardEditPane';
+import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
+import { getEditableElementForSelection } from './shared';
 
-export interface Props {
-  element: EditableDashboardElement;
-  editPane: DashboardEditPane;
-  isNewElement: boolean;
+export class ElementEditPane extends SceneObjectBase {
+  public static Component = ElementEditPaneRenderer;
+
+  public getId() {
+    return 'element' as const;
+  }
 }
 
-export function ElementEditPane({ element, editPane, isNewElement }: Props) {
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
+export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const styles = useStyles2(getStyles);
+  const element = useMemo(() => {
+    return getEditableElementForSelection(editPane, editPane.state.selectionContext.selected);
+  }, [editPane]);
+
+  if (!element) {
+    return null;
+  }
+
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
 
   return (
     <div className={styles.wrapper}>

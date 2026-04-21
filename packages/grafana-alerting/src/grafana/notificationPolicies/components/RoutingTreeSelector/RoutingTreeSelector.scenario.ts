@@ -3,8 +3,8 @@ import { HttpResponse } from 'msw';
 import {
   ListRoutingTreeApiResponseFactory,
   RoutingTreeFactory,
-} from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
-import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
+} from '../../../api/notifications/v0alpha1/mocks/fakes/Routes';
+import { listRoutingTreeHandler } from '../../../api/notifications/v0alpha1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { USER_DEFINED_TREE_NAME } from '../../consts';
 
 // A simple list with the default tree and two custom trees

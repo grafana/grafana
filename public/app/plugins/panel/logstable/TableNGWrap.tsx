@@ -12,7 +12,6 @@ import {
 import { getAppEvents } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -30,6 +29,7 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
+  onWrapTextClick: () => void;
 }
 
 export function TableNGWrap({
@@ -51,6 +51,7 @@ export function TableNGWrap({
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
+  onWrapTextClick,
 }: Props) {
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
@@ -104,12 +105,14 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
-            logOptionsStorageKey={SETTING_KEY_ROOT}
+            logOptionsStorageKey={logOptionsStorageKey}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
+            onWrapTextClick={onWrapTextClick}
+            wrapText={Boolean(options.wrapText)}
           />
         </div>
       )}
@@ -123,7 +126,7 @@ export function TableNGWrap({
         height={height}
         id={id}
         timeZone={timeZone}
-        options={{ ...options }}
+        options={options}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}

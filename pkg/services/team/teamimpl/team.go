@@ -5,10 +5,12 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
@@ -33,7 +35,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 		return nil, err
 	}
 
-	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider, legacyService)
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
 
 	return &Service{
 		legacyService:     legacyService,
@@ -59,16 +61,15 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	// TODO enable Kubernetes team service for DeleteTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.DeleteTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.DeleteTeam(ctx, cmd)
+	}
 
 	return s.legacyService.DeleteTeam(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.SearchTeams(ctx, query)
 	}
 
@@ -76,7 +77,7 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -153,4 +154,14 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.
+// The main use case is for internal calls coming from the externalgroupmapping legacy search, those
+// calls have a service identity and no contexthandler, so we use that as a heuristic to determine
+// if we should fallback to the legacy service. This allows us to incrementally migrate the
+// externalgroupmapping search to the new k8s team service without breaking existing functionality.
+// We can remove this fallback once the migration is complete and all internal calls are using the new k8s team service.
+func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }

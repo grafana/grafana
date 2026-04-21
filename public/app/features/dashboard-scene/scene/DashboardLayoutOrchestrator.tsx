@@ -302,9 +302,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
 
     const draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
-    if (this._sourceDropTarget instanceof TabsLayoutManager) {
-      this._sourceDropTarget.forceSelectTab(draggedTabId);
-    }
 
     // Calculate dimensions of the dragged tab header and cache for cross-manager placeholder sizing
     const draggedHeaderEl = draggedTab?.containerRef?.current ?? undefined;

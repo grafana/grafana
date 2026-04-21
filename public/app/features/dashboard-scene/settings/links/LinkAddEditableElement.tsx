@@ -50,7 +50,7 @@ export function linkSelectionId(linkIndex: number) {
 
 export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
   const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.editPane.selectObject(element, linkSelectionId(linkIndex), { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 export interface LinkEditState extends SceneObjectState {
@@ -247,11 +247,11 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const currentLinks = dashboard.state.links ?? [];
 
     if (linkIndex < 0 || linkIndex >= currentLinks.length) {
-      editPane.selectObject(dashboard, dashboard.state.key!);
+      editPane.selectObject(dashboard);
       return;
     }
 
     linkEditActions.removeLink({ dashboard, linkIndex });
-    editPane.selectObject(dashboard, dashboard.state.key!);
+    editPane.selectObject(dashboard);
   }
 }

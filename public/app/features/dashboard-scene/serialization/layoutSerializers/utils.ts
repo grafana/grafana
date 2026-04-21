@@ -110,11 +110,12 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
-  if (queryOptions.timeFrom || queryOptions.timeShift) {
+  if (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
       hideTimeOverride: queryOptions.hideTimeOverride,
+      compareWith: queryOptions.timeCompare,
     });
   }
 

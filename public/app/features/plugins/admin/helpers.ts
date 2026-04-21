@@ -157,6 +157,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    distributionType: plugin.versionDistributionType,
   };
 }
 
@@ -286,10 +287,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    distributionType: remote?.versionDistributionType,
   };
 }
 
 export const getExternalManageLink = (pluginId: string) => `${config.pluginCatalogURL}${pluginId}`;
+
+export function isMarketplacePlugin(plugin: CatalogPlugin): boolean {
+  return plugin.distributionType === 'marketplace';
+}
 
 export enum Sorters {
   nameAsc = 'nameAsc',

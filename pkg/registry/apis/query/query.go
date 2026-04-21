@@ -178,9 +178,15 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 			statusCode := 0
 			var k8sErr *errorsK8s.StatusError
-			if errors.As(err, &k8sErr) {
+			switch {
+			case errors.As(err, &k8sErr):
 				statusCode = int(k8sErr.Status().Code)
-			} else {
+			case errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded):
+				statusCode = http.StatusGatewayTimeout
+			case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+				// 499 follows the widely used "client closed request" convention.
+				statusCode = 499
+			default:
 				// we do not know what kind of error it is,
 				// we do not know what status code will get assigned to it,
 				// so we use the zero to indicate the unknown.

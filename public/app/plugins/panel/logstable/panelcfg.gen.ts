@@ -21,6 +21,7 @@ export interface Options {
   showCopyLogLink?: boolean;
   showInspectLogLine?: boolean;
   sortOrder?: common.LogsSortOrder;
+  wrapText?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {

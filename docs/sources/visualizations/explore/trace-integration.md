@@ -32,7 +32,6 @@ Here are some references to learn more about traces and how you can use them:
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
 - [Traces and telemetry](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/telemetry/)
 - [Using traces to find solutions to problems](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/)
-- [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)
 
 ## Query editors
 
@@ -154,13 +153,13 @@ You can navigate from a span in a trace view directly to metrics relevant for th
 This feature is available for the Tempo, Jaeger, and Zipkin data sources.
 
 Refer to each individual data source's documentation for configuration instructions.
-For Tempo, refer to [Trace to metrics configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics).
+For Tempo, refer to [Trace to metrics configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/).
 
 ### Trace to profiles
 
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 
-For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
+For Tempo, refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/) for configuration instructions.
 
 {{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
@@ -168,7 +167,7 @@ For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 You can use [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to define custom links that appear in the trace view based on trace and span information.
 
-For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
+For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/trace-correlations/) for configuration instructions.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 

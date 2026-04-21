@@ -92,6 +92,18 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../clients/rtkq/preferences/org/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/org/baseAPI.ts',
+      filterEndpoints: ['getOrgPreferences', 'updateOrgPreferences', 'patchOrgPreferences'],
+    },
+    '../clients/rtkq/preferences/team/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
+      filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
+    },
     '../clients/rtkq/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: defaultHooksOptions,

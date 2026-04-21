@@ -2,13 +2,13 @@ package legacy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -78,7 +78,7 @@ func (s *legacySQLStore) GetServiceAccountInternalID(
 	}
 
 	if !rows.Next() {
-		return nil, errors.New("service account not found")
+		return nil, serviceaccounts.ErrServiceAccountNotFound.Errorf("service account by uid %q", query.UID)
 	}
 
 	var id int64

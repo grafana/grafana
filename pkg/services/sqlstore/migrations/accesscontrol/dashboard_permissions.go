@@ -11,6 +11,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -35,20 +36,20 @@ var dashboardPermissionTranslation = map[dashboardaccess.PermissionType][]string
 
 var folderPermissionTranslation = map[dashboardaccess.PermissionType][]string{
 	dashboardaccess.PERMISSION_VIEW: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_VIEW], []string{
-		dashboards.ActionFoldersRead,
+		folder.ActionFoldersRead,
 	}...),
 	dashboardaccess.PERMISSION_EDIT: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_EDIT], []string{
 		dashboards.ActionDashboardsCreate,
-		dashboards.ActionFoldersRead,
-		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersDelete,
+		folder.ActionFoldersRead,
+		folder.ActionFoldersWrite,
+		folder.ActionFoldersDelete,
 	}...),
 	dashboardaccess.PERMISSION_ADMIN: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_ADMIN], []string{
-		dashboards.ActionFoldersRead,
-		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersDelete,
-		dashboards.ActionFoldersPermissionsRead,
-		dashboards.ActionFoldersPermissionsWrite,
+		folder.ActionFoldersRead,
+		folder.ActionFoldersWrite,
+		folder.ActionFoldersDelete,
+		folder.ActionFoldersPermissionsRead,
+		folder.ActionFoldersPermissionsWrite,
 	}...),
 }
 
@@ -196,7 +197,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 func (m dashboardPermissionsMigrator) mapPermission(id int64, p dashboardaccess.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
-		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
+		scope := folder.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
 		permissions := make([]*ac.Permission, 0, len(actions))
 		for _, action := range actions {
 			permissions = append(permissions, &ac.Permission{Action: action, Scope: scope})

@@ -625,7 +625,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			return expectedErr
 		}
 		timing := definitions.MuteTimeInterval{
@@ -645,7 +645,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		}
 		timing := definitions.MuteTimeInterval{
@@ -1123,7 +1123,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 	t.Run("fails if provenance check fails", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			return expectedErr
 		}
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
@@ -1403,7 +1403,7 @@ func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerC
 		provenanceStore: prov,
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
-		validator: func(from, to models.Provenance) error {
+		validator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
 		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},

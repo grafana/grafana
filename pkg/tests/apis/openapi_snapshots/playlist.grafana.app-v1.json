@@ -1084,11 +1084,6 @@
           {
             "group": "playlist.grafana.app",
             "kind": "Playlist",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "playlist.grafana.app",
-            "kind": "Playlist",
             "version": "v1"
           }
         ]
@@ -1132,11 +1127,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "playlist.grafana.app",
-            "kind": "PlaylistList",
-            "version": "v0alpha1"
-          },
           {
             "group": "playlist.grafana.app",
             "kind": "PlaylistList",

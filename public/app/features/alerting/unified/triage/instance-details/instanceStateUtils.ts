@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { type DataFrame, type Labels } from '@grafana/data';
 import { useQueryRunner } from '@grafana/scenes-react';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { DATASOURCE_UID, METRIC_NAME } from '../constants';
 
@@ -26,11 +27,21 @@ export function buildInstanceStateQueryExpr(ruleUID: string, instanceLabels: Lab
 
 const GRAFANA_ALERTSTATE_LABEL = 'grafana_alertstate';
 
+// Maps the lowercase grafana_alertstate label values to GrafanaAlertState title-case enum values.
+const ALERTSTATE_LABEL_TO_GRAFANA_STATE: Record<string, GrafanaAlertState> = {
+  alerting: GrafanaAlertState.Alerting,
+  pending: GrafanaAlertState.Pending,
+  normal: GrafanaAlertState.Normal,
+  recovering: GrafanaAlertState.Recovering,
+  nodata: GrafanaAlertState.NoData,
+  error: GrafanaAlertState.Error,
+};
+
 /**
- * Reads grafana_alertstate from the first series in the query result.
- * The backend writes it lowercase (nodata, error, alerting, pending, recovering).
+ * Reads grafana_alertstate from the first series in the query result and maps it to GrafanaAlertState.
+ * The backend writes it lowercase (alerting, pending, normal, recovering, nodata, error).
  */
-export function getInstanceStateFromMetricSeries(series: DataFrame[] | undefined): 'nodata' | 'error' | null {
+export function getInstanceStateFromMetricSeries(series: DataFrame[] | undefined): GrafanaAlertState | null {
   if (!series?.length) {
     return null;
   }
@@ -40,17 +51,15 @@ export function getInstanceStateFromMetricSeries(series: DataFrame[] | undefined
   if (typeof stateLabel !== 'string') {
     return null;
   }
-  const normalized = stateLabel.toLowerCase();
-  return normalized === 'nodata' || normalized === 'error' ? normalized : null;
+  return ALERTSTATE_LABEL_TO_GRAFANA_STATE[stateLabel.toLowerCase()] ?? null;
 }
-
-export type InstanceAlertState = 'nodata' | 'error' | null;
 
 /**
  * Queries GRAFANA_ALERTS for the current instance state when state history Prometheus is configured.
- * Returns nodata/error when the instance is in that state, otherwise null.
+ * Returns the full GrafanaAlertState (Alerting, Pending, Normal, NoData, Error, Recovering), or null
+ * if the datasource is not configured or the state cannot be determined.
  */
-export function useInstanceAlertState(ruleUID: string, instanceLabels: Labels): InstanceAlertState {
+export function useInstanceAlertState(ruleUID: string, instanceLabels: Labels): GrafanaAlertState | null {
   const query = useMemo(() => {
     if (!DATASOURCE_UID) {
       return null;

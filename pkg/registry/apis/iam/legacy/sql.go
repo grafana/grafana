@@ -20,10 +20,13 @@ type LegacyIdentityStore interface {
 	ListDisplay(ctx context.Context, ns claims.NamespaceInfo, query ListDisplayQuery) (*ListUserResult, error)
 
 	GetUserInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetUserInternalIDQuery) (*GetUserInternalIDResult, error)
+	GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error)
+	GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error)
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 	ListUserTeams(ctx context.Context, ns claims.NamespaceInfo, query ListUserTeamsQuery) (*ListUserTeamsResult, error)
 	CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error)
 	UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserCommand) (*UpdateUserResult, error)
+	UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error
 	DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error
 
 	GetServiceAccountInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountInternalIDQuery) (*GetServiceAccountInternalIDResult, error)
@@ -34,6 +37,7 @@ type LegacyIdentityStore interface {
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)
+	GetTeamUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamUIDByIDQuery) (*GetTeamUIDByIDResult, error)
 	CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error)
 	UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error)
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)

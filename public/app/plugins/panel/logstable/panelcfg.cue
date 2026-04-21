@@ -33,6 +33,7 @@ composableKinds: PanelCfg: {
 					fieldSelectorWidth?: number | *220
 					displayedFields?: [...string]
 					buildLinkToLogLine?: _
+					wrapText?:           bool
 				} @cuetsy(kind="interface")
 			}
 		}]

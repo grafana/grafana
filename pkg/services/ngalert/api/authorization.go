@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -25,19 +25,19 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
 		http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
-			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
-			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(ac.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(ac.ActionAlertingRuleRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
 		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
-			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(ac.ActionAlertingRuleRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
-			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(ac.ActionAlertingRuleRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
+			ac.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
@@ -46,21 +46,21 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(folder.ActionFoldersRead),
 		)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
+		scope := folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			ac.EvalPermission(folder.ActionFoldersRead, scope),
 		)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}",
 		http.MethodPatch + "/api/ruler/grafana/api/v1/rules/{Namespace}":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
+		scope := folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			ac.EvalPermission(folder.ActionFoldersRead, scope),
 			ac.EvalAny(
 				ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
 				ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
@@ -125,14 +125,14 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/convert/api/prom/rules/{NamespaceTitle}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(folder.ActionFoldersRead),
 		)
 
 	case http.MethodGet + "/api/convert/prometheus/config/v1/rules",
 		http.MethodGet + "/api/convert/api/prom/rules":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(folder.ActionFoldersRead),
 		)
 
 	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
@@ -150,7 +150,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodDelete + "/api/convert/api/prom/rules/{NamespaceTitle}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+			ac.EvalPermission(folder.ActionFoldersRead),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete),
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
@@ -327,7 +327,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll( // scopes are enforced in the handler
 				ac.EvalPermission(ac.ActionAlertingRuleRead),
-				ac.EvalPermission(dashboards.ActionFoldersRead),
+				ac.EvalPermission(folder.ActionFoldersRead),
 			),
 		)
 	case http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
@@ -338,20 +338,20 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead),
-				ac.EvalPermission(dashboards.ActionFoldersRead),
+				ac.EvalPermission(folder.ActionFoldersRead),
 			),
 		)
 
 	case http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		scope := folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(folder.ActionFoldersRead, scope),
 			),
 		)
 
@@ -422,25 +422,25 @@ func (api *API) authorize(method, path string) web.Handler {
 			),
 		)
 	case http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		scope := folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(folder.ActionFoldersRead, scope),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 			),
 		)
 	case http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
+		scope := folder.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
-				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+				ac.EvalPermission(folder.ActionFoldersRead, scope),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 				ac.EvalAny( // the exact permissions will be checked after the operations are determined
 					ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLAttributes } from 'react';
+import { useId, type HTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -11,9 +11,11 @@ import { FieldValidationMessage } from './FieldValidationMessage';
 import { Label, getLabelStyles } from './Label';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
+type ChildProps = Record<string, unknown>;
+
 export interface FieldProps extends HTMLAttributes<HTMLElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement<Record<string, unknown>>;
+  children: React.ReactElement<ChildProps>;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
@@ -74,6 +76,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const useFieldset = children.type === RadioButtonGroup;
     const label = typeof labelProp === 'string' ? `${labelProp}${required ? ' *' : ''}` : labelProp;
     const inputId = htmlFor ?? getChildId(children);
+    const errorId = useId();
 
     let labelElement = label;
 
@@ -94,7 +97,11 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       }
     }
 
-    const childProps = deleteUndefinedProps({ invalid, disabled, loading });
+    const childProps: ChildProps = deleteUndefinedProps({ invalid, disabled, loading });
+    if (invalid && error) {
+      // this should probably use aria-errormessage, but seems like voiceover still doesn't support that...
+      childProps['aria-describedby'] = errorId;
+    }
     const Wrapper = useFieldset ? 'fieldset' : 'div';
     return (
       <Wrapper className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
@@ -107,7 +114,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
                 [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
               })}
             >
-              <FieldValidationMessage>{error}</FieldValidationMessage>
+              <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
             </div>
           )}
         </div>
@@ -118,7 +125,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
               [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
             })}
           >
-            <FieldValidationMessage>{error}</FieldValidationMessage>
+            <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
           </div>
         )}
       </Wrapper>

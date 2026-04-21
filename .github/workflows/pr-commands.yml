@@ -5,9 +5,12 @@ on:
       - labeled
       - opened
       - synchronize
-permissions: {}
+
 concurrency:
   group: pr-commands-${{ github.event.number }}
+
+permissions: {}
+
 jobs:
   main:
     permissions:
@@ -16,17 +19,8 @@ jobs:
       issues: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v5
+      - name: Run PR Commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run Commands
-        uses: ./actions/commands
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-commands

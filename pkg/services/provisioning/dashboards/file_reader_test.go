@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -128,15 +126,14 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		}
 	}
 
-	sql, cfgT := db.InitTestDBWithCfg(t)
-	fStore := folderimpl.ProvideStore(sql, cfgT)
+	_, cfgT := db.InitTestDBWithCfg(t)
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{}, nil, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {
@@ -440,7 +437,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		ctx := context.Background()
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
-		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+		require.ErrorIs(t, err, folder.ErrInvalidUID)
 	})
 
 	t.Run("Walking the folder with dashboards", func(t *testing.T) {

@@ -8,7 +8,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
@@ -48,7 +47,7 @@ var (
 		Description: "Sort results in an alphabetically ascending order",
 		Index:       0,
 		Filter: []model.SortOptionFilter{
-			searchstore.TitleSorter{},
+			model.TitleSorter{},
 		},
 	}
 	SortAlphaDesc = model.SortOption{
@@ -57,7 +56,7 @@ var (
 		Description: "Sort results in an alphabetically descending order",
 		Index:       0,
 		Filter: []model.SortOptionFilter{
-			searchstore.TitleSorter{Descending: true},
+			model.TitleSorter{Descending: true},
 		},
 	}
 )

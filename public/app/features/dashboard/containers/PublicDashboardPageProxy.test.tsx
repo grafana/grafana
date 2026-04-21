@@ -1,9 +1,11 @@
 import { screen, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
+import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
+import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { locationService, setRunRequest } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
@@ -25,6 +27,16 @@ jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: () => ({ accessToken: 'an-access-token' }),
 }));
+
+const runRequestMock = jest.fn().mockReturnValue(
+  of<PanelData>({
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+    annotations: [],
+  })
+);
+setRunRequest(runRequestMock);
 
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   return render(

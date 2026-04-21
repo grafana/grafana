@@ -912,53 +912,165 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("ReceiversWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversDelete,
+		),
+	})
+	writerClient, err := v1beta1.NewReceiverClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("ReceiversProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversDelete,
+			accesscontrol.ActionAlertingProvisioningSetStatus,
+		),
+	})
+	provisionerClient, err := v1beta1.NewReceiverClientFromGenerator(provisioner.GetClientRegistry())
 	require.NoError(t, err)
 
-	created, err := adminClient.Create(ctx, &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v1beta1.ReceiverSpec{
-			Title: "test-receiver-1",
-			Integrations: []v1beta1.ReceiverIntegration{
-				createIntegration(t, "email"),
+	newReceiver := func(title string) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
 			},
-		},
-	}, resource.CreateOptions{})
-	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
+			Spec: v1beta1.ReceiverSpec{
+				Title: title,
+				Integrations: []v1beta1.ReceiverIntegration{
+					createIntegration(t, "email"),
+				},
+			},
+		}
+	}
 
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
-			UID: *created.Spec.Integrations[0].Uid,
-		}, admin.Identity.GetOrgID(), "API"))
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newReceiver("writer-create-no-prov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			recv := newReceiver("writer-create-with-prov")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			recv := newReceiver("provisioner-create-with-prov")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
 	})
 
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newReceiver("update-unprov"), resource.CreateOptions{})
 		require.NoError(t, err)
-		updated := got.Copy().(*v1beta1.Receiver)
-		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
 
-		_, err = adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		provRecv := newReceiver("update-prov")
+		provRecv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provRecv, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newReceiver("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			recv := newReceiver("delete-prov-forbidden")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			recv := newReceiver("delete-prov-ok")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -1568,6 +1680,56 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 	}
 
 	test_common.UpdateDefaultRoute(t, user, amConfig.AlertmanagerConfig.Route)
+}
+
+func TestIntegrationAllowedIntegrations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingAllowedIntegrations: []string{"slack"},
+	})
+	client, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	newReceiver := func(title string, integrationType schema.IntegrationType) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        title,
+				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, integrationType)},
+			},
+		}
+	}
+
+	t.Run("create with disallowed integration type is rejected", func(t *testing.T) {
+		_, err := client.Create(ctx, newReceiver("disallowed-email", schema.EmailType), resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
+
+	t.Run("create with allowed integration type succeeds", func(t *testing.T) {
+		created, err := client.Create(ctx, newReceiver("allowed-slack", schema.SlackType), resource.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmpty(t, created.Name)
+		require.NoError(t, client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
+	t.Run("create with mixed integrations is rejected and names the disallowed one", func(t *testing.T) {
+		mixed := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title: "mixed-slack-and-email",
+				Integrations: []v1beta1.ReceiverIntegration{
+					createIntegration(t, schema.SlackType),
+					createIntegration(t, schema.EmailType),
+				},
+			},
+		}
+		_, err := client.Create(ctx, mixed, resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
 }
 
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {

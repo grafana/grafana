@@ -94,7 +94,9 @@ func RunAdminApiReencryptTest(
 ) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
-		EnableLog:            true,
+		EnableLog:            false,
+		QueryRetries:         30, // arbitrary 3x from the default
+		TransactionRetries:   30, // arbitrary 3x from the default
 	})
 
 	grafanaListenAddr, env := testinfra.StartGrafanaEnv(t, dir, path)

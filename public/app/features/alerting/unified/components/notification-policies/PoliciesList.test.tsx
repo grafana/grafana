@@ -12,12 +12,7 @@ import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import {
-  getRoutingTree,
-  getRoutingTreeList,
-  resetRoutingTreeMap,
-  setAllRoutingTreePermissions,
-} from '../../mocks/server/entities/k8s/routingtrees';
+import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
@@ -220,7 +215,6 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions if user has no edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
-        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -262,7 +256,6 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions if user has no export or edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
-        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -289,7 +282,6 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions on default policy if user has no permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
-        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();

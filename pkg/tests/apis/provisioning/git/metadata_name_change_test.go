@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		"dashboard1.json": common.DashboardJSON("name-change-incr-001", "Dashboard One", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
 
@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {

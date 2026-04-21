@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +18,8 @@ import (
 func TestMode3_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
-		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
-		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		setupLegacyFn  func(s *fakeStorage, input runtime.Object)
+		setupStorageFn func(s *fakeStorage, input runtime.Object)
 		name           string
 		wantErr        bool
 	}
@@ -29,50 +28,46 @@ func TestMode3_Create(t *testing.T) {
 			{
 				name:  "should succeed when creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.onCreate(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
+					s.onCreate(exampleObj, nil)
 				},
 			},
 			{
 				name:  "should return an error when creating an object in the legacy store fails",
 				input: failingObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.onCreate(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
 				name:  "should not error when creating in unified store fails (best effort)",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.onCreate(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
+					s.onCreate(nil, errors.New("error"))
 				},
 			},
 		}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, tt.input)
+				tt.setupLegacyFn(ls, tt.input)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, tt.input)
+				tt.setupStorageFn(us, tt.input)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
@@ -89,8 +84,8 @@ func TestMode3_Create(t *testing.T) {
 
 func TestMode3_Get(t *testing.T) {
 	type testCase struct {
-		setupLegacyFn  func(m *mock.Mock, name string)
-		setupStorageFn func(m *mock.Mock, name string)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -98,29 +93,29 @@ func TestMode3_Get(t *testing.T) {
 		[]testCase{
 			{
 				name: "should succeed when getting an object from LegacyStorage",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onGet(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onGet(exampleObj, nil)
 				},
 			},
 			{
 				name: "should not error when getting an object from unified store fails (best effort)",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onGet(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(s *fakeStorage) {
+					s.onGet(nil, errors.New("error"))
 				},
 			},
 			{
 				name: "should error when getting an object from LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onGet(nil, errors.New("error"))
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onGet(exampleObj, nil)
 				},
 				wantErr: true,
 			},
@@ -130,20 +125,17 @@ func TestMode3_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, name)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, name)
+				tt.setupStorageFn(us)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
@@ -161,8 +153,8 @@ func TestMode3_Get(t *testing.T) {
 
 func TestMode3_List(t *testing.T) {
 	type testCase struct {
-		setupLegacyFn  func(m *mock.Mock)
-		setupStorageFn func(m *mock.Mock)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -170,47 +162,44 @@ func TestMode3_List(t *testing.T) {
 		[]testCase{
 			{
 				name: "should return a list from LegacyStorage with best-effort unified list",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onList(exampleList, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onList(anotherList, nil)
 				},
 			},
 			{
 				name: "should error when listing from LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onList(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when listing from unified fails (best effort)",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onList(exampleList, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(s *fakeStorage) {
+					s.onList(nil, errors.New("error"))
 				},
 			},
 		}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock)
+				tt.setupStorageFn(us)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			res, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
@@ -227,8 +216,8 @@ func TestMode3_List(t *testing.T) {
 
 func TestMode3_Delete(t *testing.T) {
 	type testCase struct {
-		setupLegacyFn  func(m *mock.Mock, input string)
-		setupStorageFn func(m *mock.Mock, input string)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -236,30 +225,30 @@ func TestMode3_Delete(t *testing.T) {
 		[]testCase{
 			{
 				name: "should succeed when deleting an object in both stores",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDelete(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onDelete(exampleObj, nil)
 				},
 			},
 			{
 				name: "should return an error when deleting from LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDelete(nil, errors.New("error"))
 				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onDelete(exampleObj, nil)
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when deleting from unified fails (best effort)",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDelete(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				setupStorageFn: func(s *fakeStorage) {
+					s.onDelete(nil, errors.New("error"))
 				},
 			},
 		}
@@ -268,20 +257,17 @@ func TestMode3_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, name)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, name)
+				tt.setupStorageFn(us)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), name, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
@@ -299,8 +285,8 @@ func TestMode3_Delete(t *testing.T) {
 
 func TestMode3_DeleteCollection(t *testing.T) {
 	type testCase struct {
-		setupLegacyFn  func(m *mock.Mock)
-		setupStorageFn func(m *mock.Mock)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -308,26 +294,26 @@ func TestMode3_DeleteCollection(t *testing.T) {
 		[]testCase{
 			{
 				name: "should succeed when deleting a collection in both stores",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDeleteCollection(exampleList, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.onDeleteCollection(exampleList, nil)
 				},
 			},
 			{
 				name: "should not error when deleting a collection from Storage fails (best effort)",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDeleteCollection(exampleList, nil)
 				},
-				setupStorageFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(s *fakeStorage) {
+					s.onDeleteCollection(nil, errors.New("error"))
 				},
 			},
 			{
 				name: "should return an error when deleting a collection from the LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onDeleteCollection(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
@@ -337,20 +323,17 @@ func TestMode3_DeleteCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock)
+				tt.setupStorageFn(us)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: name}}, &metainternalversion.ListOptions{})
@@ -367,8 +350,8 @@ func TestMode3_DeleteCollection(t *testing.T) {
 func TestMode3_Update(t *testing.T) {
 	type testCase struct {
 		expectedObj    runtime.Object
-		setupLegacyFn  func(m *mock.Mock, input string)
-		setupStorageFn func(m *mock.Mock, input string)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -376,28 +359,28 @@ func TestMode3_Update(t *testing.T) {
 		[]testCase{
 			{
 				name: "should succeed when updating an object in both stores",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onUpdate(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+				setupStorageFn: func(s *fakeStorage) {
+					s.onUpdate(exampleObj, nil)
 				},
 				expectedObj: exampleObj,
 			},
 			{
 				name: "should return an error when updating an object in the LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error")).Once()
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onUpdate(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when updating unified fails (best effort)",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+				setupLegacyFn: func(s *fakeStorage) {
+					s.onUpdate(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error")).Once()
+				setupStorageFn: func(s *fakeStorage) {
+					s.onUpdate(nil, errors.New("error"))
 				},
 				expectedObj: exampleObj,
 			},
@@ -407,20 +390,17 @@ func TestMode3_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, name)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, name)
+				tt.setupStorageFn(us)
 			}
 
-			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})

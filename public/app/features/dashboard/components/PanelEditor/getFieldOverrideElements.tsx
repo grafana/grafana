@@ -98,7 +98,17 @@ export function getFieldOverrideCategories(
     });
     const overrideId = `panel-options-override-${idx}`;
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
-    const configPropertiesOptions = getOverrideProperties(registry);
+    const configPropertiesOptions = registry.selectOptions(
+      undefined,
+      (item) => !item.hideFromOverrides,
+      (item) => {
+        let label = item.name;
+        if (item.category) {
+          label = [...item.category, item.name].join(' > ');
+        }
+        return label;
+      }
+    ).options;
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
     const forceOpen = override.properties.length === 0;
@@ -278,6 +288,7 @@ export function getFieldOverrideCategories(
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
       customRender: function renderAddButton() {
+        const options = fieldMatchersUI.selectOptions().options;
         return (
           <AddOverrideButtonContainer key="Add override">
             <ValuePicker
@@ -287,10 +298,7 @@ export function getFieldOverrideCategories(
               menuPlacement="auto"
               isFullWidth={true}
               size="md"
-              options={fieldMatchersUI
-                .list()
-                .filter((o) => !o.excludeFromPicker)
-                .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
+              options={options}
               onChange={(value) => onOverrideAdd(value)}
             />
           </AddOverrideButtonContainer>
@@ -300,19 +308,6 @@ export function getFieldOverrideCategories(
   );
 
   return categories;
-}
-
-function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
-  return registry
-    .list()
-    .filter((o) => !o.hideFromOverrides)
-    .map((item) => {
-      let label = item.name;
-      if (item.category) {
-        label = [...item.category, item.name].join(' > ');
-      }
-      return { label, value: item.id, description: item.description };
-    });
 }
 
 function AddOverrideButtonContainer({ children }: { children: React.ReactNode }) {

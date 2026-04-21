@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +54,6 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.GRPCServer.Network = "tcp"
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
 	cfg.EnableSQLKVBackend = false
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
@@ -71,7 +69,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	if maxOpenConn > 0 {
 		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -100,12 +98,20 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, nil)
@@ -125,12 +131,20 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, newKvBackend, opts)
@@ -209,11 +223,10 @@ func TestClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		grpcService.StopAsync()
@@ -320,14 +333,13 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
 	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, grpcService,

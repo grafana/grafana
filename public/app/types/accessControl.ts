@@ -90,6 +90,9 @@ export enum AccessControlAction {
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:write',
 
+  PlaylistsRead = 'playlists:read',
+  PlaylistsWrite = 'playlists:write',
+
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',

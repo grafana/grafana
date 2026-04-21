@@ -42,7 +42,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -84,6 +84,7 @@ jobs:
           "$GRAFANA_HOME/bin/grafana" server \
             --homepath="$GRAFANA_HOME" \
             cfg:server.http_port=3001 \
+            cfg:feature_toggles.splashScreen=false \
             > /tmp/release-verify-deb.log 2>&1 &
           echo "$!" > /tmp/release-verify-deb.pid
 
@@ -149,7 +150,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -184,6 +185,7 @@ jobs:
           "$GRAFANA_HOME/bin/grafana" server \
             --homepath="$GRAFANA_HOME" \
             cfg:server.http_port=3001 \
+            cfg:feature_toggles.splashScreen=false \
             > /tmp/release-verify-rpm.log 2>&1 &
           echo "$!" > /tmp/release-verify-rpm.pid
 
@@ -249,7 +251,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -271,7 +273,7 @@ jobs:
           echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Run Docker image under test
-        run: docker run -d --name grafana-verify -p 3000:3000 "${IMAGE_UNDER_TEST}"
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps
@@ -336,7 +338,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.docker-ubuntu-artifact-name || inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -358,7 +360,7 @@ jobs:
           echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Run Docker Ubuntu image under test
-        run: docker run -d --name grafana-verify -p 3000:3000 "${IMAGE_UNDER_TEST}"
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps

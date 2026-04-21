@@ -14,7 +14,6 @@ type FakeService struct {
 	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
-	LastQuery                folder.GetFoldersQuery
 	foldersByUID             map[string]*folder.Folder
 }
 

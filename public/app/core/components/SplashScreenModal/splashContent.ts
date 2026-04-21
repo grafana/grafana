@@ -8,6 +8,14 @@ import libraryOfThingsImage from './images/library-of-things.png';
 
 export type AccentColorKey = 'dark-purple' | 'primary' | 'success' | 'dark-orange';
 
+export interface SplashFeatureCta {
+  text: string;
+  url: string;
+  fallbackUrl?: string;
+  permission?: string;
+  requiresAdmin?: boolean;
+}
+
 export interface SplashFeature {
   id: string;
   icon: IconName;
@@ -17,8 +25,7 @@ export interface SplashFeature {
   title: string;
   subtitle: string;
   bullets: string[];
-  ctaText?: string;
-  ctaUrl?: string;
+  cta?: SplashFeatureCta;
   heroImageUrl: string;
 }
 
@@ -26,6 +33,8 @@ export interface SplashScreenConfig {
   version: string;
   features: SplashFeature[];
 }
+
+const UTM = 'src=grafana-oss&cnt=whats-new-modal';
 
 export function getSplashScreenConfig(): SplashScreenConfig {
   return {
@@ -43,8 +52,10 @@ export function getSplashScreenConfig(): SplashScreenConfig {
           t('splash-screen.assistant.bullet-2', 'Create comprehensive dashboards in minutes'),
           t('splash-screen.assistant.bullet-3', 'Onboard new team members in days, not weeks'),
         ],
-        ctaText: t('splash-screen.assistant.cta', 'Show me'),
-        ctaUrl: 'https://grafana.com/grafana/plugins/grafana-assistant-app/',
+        cta: {
+          text: t('splash-screen.assistant.cta', 'Show me'),
+          url: `${window.location.origin}/plugins/grafana-assistant-app/?${UTM}`,
+        },
         heroImageUrl: assistantHeroImage,
       },
       {
@@ -65,6 +76,12 @@ export function getSplashScreenConfig(): SplashScreenConfig {
           ),
           t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels into a grid for an efficient layout'),
         ],
+        cta: {
+          text: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
+          url: '/dashboard/new',
+          fallbackUrl: `https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard?${UTM}`,
+          permission: 'dashboards:create',
+        },
         heroImageUrl: dynamicDashboardsImage,
       },
       {
@@ -85,6 +102,12 @@ export function getSplashScreenConfig(): SplashScreenConfig {
             'Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams'
           ),
         ],
+        cta: {
+          text: t('splash-screen.git-sync.cta', 'Show me'),
+          url: '/admin/provisioning',
+          fallbackUrl: `https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync?${UTM}`,
+          requiresAdmin: true,
+        },
         heroImageUrl: gitSyncImage,
       },
       {
@@ -105,6 +128,12 @@ export function getSplashScreenConfig(): SplashScreenConfig {
             'Explore and use community dashboards tailored to your data source'
           ),
         ],
+        cta: {
+          text: t('splash-screen.library-of-things.cta', 'Show me'),
+          url: '/dashboards?templateDashboards=true&source=whats-new-modal',
+          fallbackUrl: `https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-template-dashboards?${UTM}`,
+          permission: 'dashboards:create',
+        },
         heroImageUrl: libraryOfThingsImage,
       },
     ],

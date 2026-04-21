@@ -12,6 +12,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -43,7 +45,7 @@ func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfga
 	return nil
 }
 func (s *stubServer) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return &mockOpenFGAServer{}
+	return nil
 }
 func (s *stubServer) GetOrCreateStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
 	s.getOrCreateCalls.Add(1)
@@ -73,8 +75,10 @@ func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconcil
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
+		cfg:           Config{CRDs: DefaultCRDs},
 		logger:        log.NewNopLogger(),
 		tracer:        tracing.NewNoopTracerService(),
+		metrics:       newReconcilerMetrics(prometheus.NewRegistry()),
 	}
 }
 
@@ -134,7 +138,8 @@ func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {
 	r := newReconcilerForTest(srv, notFoundClientFactory{})
 	r.ensuredNamespaces.Store("evict-ns", struct{}{})
 
-	require.NoError(t, r.reconcileNamespace(context.Background(), "evict-ns"))
+	_, err := r.reconcileNamespace(context.Background(), "evict-ns")
+	require.NoError(t, err)
 
 	_, cached := r.ensuredNamespaces.Load("evict-ns")
 	assert.False(t, cached)

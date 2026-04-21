@@ -18,6 +18,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -476,7 +479,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return an ErrOptimisticLockingFailed the second time
+		// Update should return a conflict error the second time
 
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
@@ -484,12 +487,13 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
-		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
 	})
 }
 
@@ -614,7 +618,6 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
-		ctx:                            ctx,
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
@@ -1047,5 +1050,250 @@ func TestGracefulShutdown(t *testing.T) {
 		case <-time.After(5 * time.Second):
 			t.Fatal("Stop did not respect context deadline")
 		}
+	})
+}
+
+// mockWatchServer implements resourcepb.ResourceStore_WatchServer for testing.
+type mockWatchServer struct {
+	grpc.ServerStream
+	ctx    context.Context
+	events chan *resourcepb.WatchEvent
+}
+
+func newMockWatchServer(ctx context.Context) *mockWatchServer {
+	return &mockWatchServer{
+		ctx:    ctx,
+		events: make(chan *resourcepb.WatchEvent, 100),
+	}
+}
+
+func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	select {
+	case <-m.ctx.Done():
+		return m.ctx.Err()
+	case m.events <- evt:
+		return nil
+	}
+}
+
+func (m *mockWatchServer) Context() context.Context     { return m.ctx }
+func (m *mockWatchServer) SetHeader(metadata.MD) error  { return nil }
+func (m *mockWatchServer) SendHeader(metadata.MD) error { return nil }
+func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
+func (m *mockWatchServer) SendMsg(any) error            { return nil }
+func (m *mockWatchServer) RecvMsg(any) error            { return nil }
+
+func TestPeriodicBookmarks(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	group := "playlist.grafana.app"
+	resource := "playlists"
+	namespace := "default"
+
+	var counter int
+	createPlaylist := func(testCtx context.Context, srv *server) error {
+		counter += 1
+		name := fmt.Sprintf("bookmark-test-%d", counter)
+
+		value := []byte(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "` + name + `",
+			"namespace": "` + namespace + `",
+			"uid": "` + fmt.Sprintf("bm-test-uid-%d", counter) + `",
+			"annotations": {
+				"grafana.app/repoName": "test",
+				"grafana.app/repoPath": "path/to/item",
+				"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
+			}
+		},
+		"spec": {
+			"title": "` + fmt.Sprintf("playlist %d", counter) + `",
+			"interval": "5m",
+			"items": [{"type": "dashboard_by_uid", "value": "abc"}]
+		}
+	}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     group,
+			Resource:  resource,
+			Namespace: namespace,
+			Name:      name,
+		}
+
+		ctx := authlib.WithAuthInfo(testCtx, testUser)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		if err != nil {
+			return err
+		}
+		if created.Error != nil {
+			return fmt.Errorf("creating playlist: %v", created.Error)
+		}
+
+		return nil
+	}
+
+	setup := func(t *testing.T) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{
+			KvStore:      kv,
+			WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:           store,
+			BookmarkFrequency: 50 * time.Millisecond,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+
+		// Create a resource so initial events backfill produces a non-zero RV.
+		require.NoError(t, createPlaylist(t.Context(), srv))
+		return srv
+	}
+
+	waitForBookmarks := func(t *testing.T, mock *mockWatchServer, expected int) (bool, []*resourcepb.WatchEvent) {
+		var bookmarks []*resourcepb.WatchEvent
+		for {
+			select {
+			case evt := <-mock.events:
+				if evt.Type == resourcepb.WatchEvent_BOOKMARK {
+					bookmarks = append(bookmarks, evt)
+					if expected > 0 && len(bookmarks) >= expected {
+						return false, bookmarks
+					}
+				}
+			case <-time.After(time.Second):
+				return true, bookmarks
+			}
+		}
+	}
+
+	t.Run("bookmarks sent periodically when AllowWatchBookmarks is true and there are new RVs to report", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		mock := newMockWatchServer(ctx)
+
+		var eg errgroup.Group
+		eg.Go(func() error {
+			return srv.Watch(&resourcepb.WatchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:    group,
+						Resource: resource,
+					},
+				},
+				SendInitialEvents:   true,
+				AllowWatchBookmarks: true,
+			}, mock)
+		})
+
+		// keep creating resources, so that new bookmarks are sent
+		eg.Go(func() error {
+			ticker := time.NewTicker(20 * time.Millisecond)
+			for {
+				select {
+				case <-ticker.C:
+					if err := createPlaylist(t.Context(), srv); err != nil {
+						return err
+					}
+
+				case <-ctx.Done():
+					return nil
+				}
+			}
+		})
+
+		// Collect events until we see at least 2 bookmarks (initial + periodic) or timeout.
+		timedOut, bookmarks := waitForBookmarks(t, mock, 2)
+		require.False(t, timedOut, "timed out waiting for bookmarks", "expected: 2, got: %d", len(bookmarks))
+
+		cancel() // stop the watch
+		require.NoError(t, eg.Wait())
+
+		// Bookmarks should have increasing RVs.
+		require.Greater(t, bookmarks[0].Resource.Version, int64(0))
+		require.Greater(t, bookmarks[1].Resource.Version, bookmarks[0].Resource.Version)
+	})
+
+	t.Run("bookmarks are not repeated when AllowWatchBookmarks is true and no resources were created", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		mock := newMockWatchServer(ctx)
+
+		var eg errgroup.Group
+		eg.Go(func() error {
+			return srv.Watch(&resourcepb.WatchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:    group,
+						Resource: resource,
+					},
+				},
+				SendInitialEvents:   true,
+				AllowWatchBookmarks: true,
+			}, mock)
+		})
+
+		// Collect all bookmarks for the next 1s.
+		_, bookmarks := waitForBookmarks(t, mock, 0)
+		cancel() // stop the watch
+		require.NoError(t, eg.Wait())
+
+		// Bookmarks should have increasing RVs.
+		require.Len(t, bookmarks, 1)
+		require.Greater(t, bookmarks[0].Resource.Version, int64(0))
+	})
+
+	t.Run("no bookmarks when AllowWatchBookmarks is false", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		mock := newMockWatchServer(ctx)
+		var eg errgroup.Group
+		eg.Go(func() error {
+			return srv.Watch(&resourcepb.WatchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:    group,
+						Resource: resource,
+					},
+				},
+				SendInitialEvents:   true,
+				AllowWatchBookmarks: false,
+			}, mock)
+		})
+
+		// Collect all bookmarks for the next 1s.
+		_, bookmarks := waitForBookmarks(t, mock, 0)
+		cancel()
+		require.NoError(t, eg.Wait())
+
+		require.Empty(t, bookmarks)
 	})
 }
