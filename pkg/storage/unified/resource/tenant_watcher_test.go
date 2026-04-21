@@ -573,7 +573,6 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 }
 
-
 func TestRunPollCycle(t *testing.T) {
 	t.Run("reconciles pending-delete tenants and creates records", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
