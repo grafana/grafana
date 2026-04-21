@@ -13,7 +13,7 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.23.3 AS alpine-base
+FROM alpine:3.23.4 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.25.9-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
@@ -36,7 +36,6 @@ COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
-COPY e2e e2e
 
 #
 # Set the node env according to defaults or argument passed

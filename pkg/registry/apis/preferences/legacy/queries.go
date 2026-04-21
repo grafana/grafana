@@ -39,6 +39,7 @@ type preferencesQuery struct {
 	UserTeams []string // also requires user UID
 	TeamUID   string
 	All       bool // explicitly request all preferences
+	Namespace bool // get the org preferences
 
 	UserTable        string
 	TeamTable        string
@@ -61,7 +62,7 @@ func (r preferencesQuery) Validate() error {
 		return fmt.Errorf("user required when filtering by a set of teams")
 	}
 	if r.UserUID == "" && r.TeamUID == "" {
-		if r.All {
+		if r.All || r.Namespace {
 			return nil // OK
 		}
 		return fmt.Errorf("to list all preferences, explicitly set the .All flag")

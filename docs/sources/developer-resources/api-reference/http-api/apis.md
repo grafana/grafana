@@ -27,7 +27,13 @@ Available in Grafana 12 and later.
 
 Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning.
 
-**Legacy APIs are not being disabled or removed for the moment**, and any breaking changes will be announced well in advance to avoid disruptions. However, legacy `/api` routes will no longer be updated.
+## Migrate from legacy `api` endpoints
+
+**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
+
+Note that while Grafana is working on migrating existing APIs to the new `/apis` model, currently there may not be an exact match to the legacy API you're using.
+
+For more information refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration) documentation.
 
 ## API structure
 
