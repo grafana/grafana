@@ -6,12 +6,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	schemas "github.com/grafana/schemads"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 type Service struct {
-	im instancemgmt.InstanceManager
+	im              instancemgmt.InstanceManager
+	resourceHandler backend.CallResourceHandler
 }
 
 func ProvideService() *Service {
@@ -19,6 +21,17 @@ func ProvideService() *Service {
 	s := &Service{
 		im: datasource.NewInstanceManager(NewInstanceSettings(logger)),
 	}
+
+	schemaHandler := newPostgresSchema(s, logger)
+	s.resourceHandler = schemas.NewSchemaDatasource(
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		nil,
+	)
+
 	return s
 }
 
@@ -31,13 +44,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return dsHandler.CheckHealth(ctx, req)
 }
 
-// NOTE: do not put any business logic into this method. it's whole job is to forward the call "inside"
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	req = preprocessGrafanaSQLQueries(req)
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 	return dsInfo.QueryData(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
