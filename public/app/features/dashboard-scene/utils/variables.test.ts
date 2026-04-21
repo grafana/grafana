@@ -442,6 +442,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
+      $behaviors: [expect.any(Function)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -463,6 +464,7 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 
@@ -522,6 +524,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
+      $behaviors: [expect.any(Function)],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -550,6 +553,7 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 
