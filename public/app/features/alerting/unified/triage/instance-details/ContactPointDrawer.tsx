@@ -15,13 +15,15 @@ const DEFAULT_PAGE_SIZE = 10;
 
 export interface ContactPointDrawerProps {
   receiverName: string;
+  /** When set, Edit on a contact point opens the stacked edit drawer instead of the full page. */
+  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
 /**
  * Contact point list filtered by receiver name, for use inside the instance details drawer.
  * Mirrors the data and list behavior of the contact points tab on the notifications page.
  */
-export function ContactPointDrawer({ receiverName }: ContactPointDrawerProps) {
+export function ContactPointDrawer({ receiverName, onEditContactPoint }: ContactPointDrawerProps) {
   const canViewContactPoints = useCanViewContactPoints();
 
   if (!canViewContactPoints) {
@@ -40,12 +42,12 @@ export function ContactPointDrawer({ receiverName }: ContactPointDrawerProps) {
 
   return (
     <AlertmanagerProvider accessType="instance">
-      <ContactPointDrawerBody receiverName={receiverName} />
+      <ContactPointDrawerBody receiverName={receiverName} onEditContactPoint={onEditContactPoint} />
     </AlertmanagerProvider>
   );
 }
 
-function ContactPointDrawerBody({ receiverName }: ContactPointDrawerProps) {
+function ContactPointDrawerBody({ receiverName, onEditContactPoint }: ContactPointDrawerProps) {
   const { selectedAlertmanager } = useAlertmanager();
 
   const fetchPolicies = useMemo(
@@ -100,7 +102,12 @@ function ContactPointDrawerBody({ receiverName }: ContactPointDrawerProps) {
           {stringifyErrorLike(error)}
         </Alert>
       ) : (
-        <ContactPointsList contactPoints={contactPoints} search={receiverName} pageSize={DEFAULT_PAGE_SIZE} />
+        <ContactPointsList
+          contactPoints={contactPoints}
+          search={receiverName}
+          pageSize={DEFAULT_PAGE_SIZE}
+          onEditContactPoint={onEditContactPoint}
+        />
       )}
     </Stack>
   );

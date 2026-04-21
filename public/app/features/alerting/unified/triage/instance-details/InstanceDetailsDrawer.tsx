@@ -37,6 +37,7 @@ import { groups, rulesNav } from '../../utils/navigation';
 
 import { ContactPointDrawer } from './ContactPointDrawer';
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
+import { EditContactPointDrawer } from './EditContactPointDrawer';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
@@ -72,6 +73,7 @@ interface InstanceDetailsDrawerProps {
 type DrawerView =
   | { type: 'instance-details' }
   | { type: 'contact-point-list'; receiverName: string }
+  | { type: 'edit-contact-point'; receiverResourceName: string; displayTitle?: string }
   | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
   | { type: 'silence' }
   | { type: 'declare-incident' };
@@ -213,6 +215,10 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     setViewStack((current) => [...current, { type: 'contact-point-list', receiverName }]);
   }, []);
 
+  const handleOpenEditContactPoint = useCallback((receiverResourceName: string, displayTitle?: string) => {
+    setViewStack((current) => [...current, { type: 'edit-contact-point', receiverResourceName, displayTitle }]);
+  }, []);
+
   const sharedTitleProps = useMemo(
     () => ({
       instanceLabels,
@@ -339,6 +345,55 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   }
 
+  if (activeView.type === 'edit-contact-point') {
+    const parentEntry = viewStack.length >= 2 ? viewStack[viewStack.length - 2] : undefined;
+    const receiverNameForList =
+      parentEntry?.type === 'contact-point-list'
+        ? parentEntry.receiverName
+        : (activeView.displayTitle ?? activeView.receiverResourceName);
+
+    return (
+      <>
+        <Drawer
+          title={
+            <InstanceDetailsDrawerTitle
+              {...sharedTitleProps}
+              rule={rule.grafana_alert}
+              titleText={t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
+                name: receiverNameForList,
+              })}
+              hideActions
+              showAlertState={false}
+              titleSection={<DrawerBackButton onClick={handleBack} />}
+            />
+          }
+          onClose={handleDrawerClose}
+          size="md"
+        >
+          <ContactPointDrawer receiverName={receiverNameForList} onEditContactPoint={handleOpenEditContactPoint} />
+        </Drawer>
+        <Drawer
+          title={
+            <InstanceDetailsDrawerTitle
+              {...sharedTitleProps}
+              rule={rule.grafana_alert}
+              titleText={t('alerting.triage.instance-details-drawer.edit-contact-point-title', 'Edit {{name}}', {
+                name: activeView.displayTitle ?? activeView.receiverResourceName,
+              })}
+              hideActions
+              showAlertState={false}
+              titleSection={<DrawerBackButton onClick={handleBack} />}
+            />
+          }
+          onClose={handleDrawerClose}
+          size="md"
+        >
+          <EditContactPointDrawer contactPointName={activeView.receiverResourceName} onSaveSuccess={popTopView} />
+        </Drawer>
+      </>
+    );
+  }
+
   if (activeView.type === 'contact-point-list') {
     return (
       <Drawer
@@ -357,7 +412,10 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
         onClose={handleDrawerClose}
         size="md"
       >
-        <ContactPointDrawer receiverName={activeView.receiverName} />
+        <ContactPointDrawer
+          receiverName={activeView.receiverName}
+          onEditContactPoint={canViewContactPoints ? handleOpenEditContactPoint : undefined}
+        />
       </Drawer>
     );
   }

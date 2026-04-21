@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -28,6 +29,7 @@ import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '.
 import { KnownProvenance } from '../../types/knownProvenance';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { K8sAnnotations } from '../../utils/k8s/constants';
+import { stringifyFieldSelector } from '../../utils/k8s/utils';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -47,13 +49,8 @@ const {
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
-const {
-  useListReceiverQuery,
-  useGetReceiverQuery,
-  useDeleteReceiverMutation,
-  useCreateReceiverMutation,
-  useReplaceReceiverMutation,
-} = generatedAPI;
+const { useListReceiverQuery, useDeleteReceiverMutation, useCreateReceiverMutation, useReplaceReceiverMutation } =
+  generatedAPI;
 
 const defaultOptions = {
   refetchOnFocus: true,
@@ -209,37 +206,73 @@ const useGetAlertmanagerContactPoint = (
 };
 
 /**
- * Fetch single contact point via the k8s API, or the alertmanager config
+ * Fetch a single Grafana-managed contact point from the notifications K8s API.
+ *
+ * `GET /receivers/{name}` expects **metadata.name** (the receiver UID). Alert rules and much of the UI
+ * use **spec.title** (human-readable name). The UID is often `base64UrlEncode(title)` (see ContactPointLink
+ * and simplified routing). A direct GET with a title therefore 404s even when the receiver exists.
+ *
+ * We resolve by listing with `metadata.name` = `name` first (when `name` is already the UID), then with
+ * `metadata.name` = `base64UrlEncode(name)` (when `name` is a stored title).
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
-  queryOptions?: Parameters<typeof useGetReceiverQuery>[1]
+  queryOptions?: Parameters<typeof useListReceiverQuery>[1]
 ) => {
-  return useGetReceiverQuery(
-    { name },
+  const skip = queryOptions?.skip;
+
+  const directList = useListReceiverQuery(
+    { fieldSelector: stringifyFieldSelector([['metadata.name', name]]) },
+    { ...queryOptions, skip: skip || !name }
+  );
+
+  const directHasItem = (directList.data?.items?.length ?? 0) > 0;
+  const directPending = directList.isLoading || directList.isFetching;
+
+  const encodedList = useListReceiverQuery(
+    { fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(name)]]) },
     {
       ...queryOptions,
-      selectFromResult: (result) => {
-        const data = result.data ? parseK8sReceiver(result.data) : undefined;
-        return {
-          ...result,
-          data,
-          currentData: data,
-        };
-      },
-      skip: queryOptions?.skip,
+      skip: skip || !name || directPending || directHasItem,
     }
   );
+
+  return useMemo(() => {
+    const raw = directList.data?.items?.[0] ?? encodedList.data?.items?.[0];
+    const data = raw ? parseK8sReceiver(raw) : undefined;
+
+    const encodedPending = encodedList.isLoading || encodedList.isFetching;
+    const isLoading = directPending || (!directHasItem && encodedPending);
+
+    const lastError = data ? undefined : (directList.error ?? encodedList.error);
+
+    return {
+      data,
+      currentData: data,
+      isLoading,
+      isFetching: directList.isFetching || encodedList.isFetching,
+      isSuccess: !isLoading && !lastError,
+      isError: Boolean(lastError),
+      error: lastError,
+      refetch: () => Promise.all([directList.refetch(), encodedList.refetch()]).then(() => undefined),
+    };
+  }, [directList, encodedList, directHasItem, directPending]);
 };
 
-export const useGetContactPoint = ({ alertmanager, name }: { alertmanager: string; name: string }) => {
+export interface UseGetContactPointArgs {
+  alertmanager: string;
+  name: string;
+  skip?: boolean;
+}
+
+export function useGetContactPoint({ alertmanager, name, skip: skipQuery }: UseGetContactPointArgs) {
   const isGrafana = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const grafanaResponse = useGetGrafanaContactPoint({ name }, { skip: !isGrafana });
-  const alertmanagerResponse = useGetAlertmanagerContactPoint({ alertmanager, name }, { skip: isGrafana });
+  const grafanaResponse = useGetGrafanaContactPoint({ name }, { skip: skipQuery || !isGrafana });
+  const alertmanagerResponse = useGetAlertmanagerContactPoint({ alertmanager, name }, { skip: skipQuery || isGrafana });
 
   return isGrafana ? grafanaResponse : alertmanagerResponse;
-};
+}
 
 export function useContactPointsWithStatus({
   alertmanager,

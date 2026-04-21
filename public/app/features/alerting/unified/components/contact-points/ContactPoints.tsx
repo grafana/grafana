@@ -272,9 +272,15 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   pageSize?: number;
+  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
-export const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
+export const ContactPointsList = ({
+  contactPoints,
+  search,
+  pageSize = DEFAULT_PAGE_SIZE,
+  onEditContactPoint,
+}: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
@@ -287,7 +293,7 @@ export const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PA
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} onEditContactPoint={onEditContactPoint} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
