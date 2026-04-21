@@ -37,10 +37,6 @@ interface ComboboxStaticProps<T extends string | number>
    * Defaults to "Use custom value".
    */
   customValueDescription?: string;
-  /**
-   * Custom container for rendering the dropdown menu via Portal
-   */
-  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -153,7 +149,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
-    portalContainer,
     invalid,
     prefixIcon,
     noOptionsMessage,
@@ -415,9 +410,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
           'data-testid': dataTestId,
+          onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+            // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+            // so that only the dropdown menu closes, not the parent.
+            if (event.key === 'Escape' && isOpen) {
+              event.stopPropagation();
+            }
+          },
         })}
       />
-      <Portal root={portalContainer}>
+      <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{

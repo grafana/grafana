@@ -39,7 +39,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 	// datasourcesRerouteLegacyCRUDAPIs requires these flags to be enabled
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
-		!hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		!hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusInternalServerError,
 				"datasourcesRerouteLegacyCRUDAPIs requires queryService and queryServiceWithConnections feature flags",
@@ -192,6 +192,45 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		}
 
 		c.Req.URL.Path = k8sPath
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
+	}
+}
+
+func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		flagEnabled, _ := openfeature.NewDefaultClient().BooleanValue(c.Req.Context(), featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, false, openfeature.TransactionContext(c.Req.Context()))
+
+		if !flagEnabled {
+			hs.dsEndpointRedirects.WithLabelValues("health", "", "legacy").Inc()
+			hs.CheckDatasourceHealthWithUID(c).WriteTo(c)
+			return
+		}
+
+		dsUID := web.Params(c.Req)[":uid"]
+		if !util.IsValidShortUID(dsUID) {
+			response.Error(http.StatusBadRequest, "UID is invalid", nil).WriteTo(c)
+			return
+		}
+
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c.Req.Context(), c.OrgID, dsUID) //nolint:staticcheck
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				response.Error(http.StatusNotFound, "Data source not found", nil).WriteTo(c)
+				return
+			}
+			response.Error(http.StatusInternalServerError, "Failed to lookup datasource connection", err).WriteTo(c)
+			return
+		}
+
+		if len(conns.Items) > 1 {
+			response.Error(http.StatusConflict, "duplicate datasource connections found with this name", nil).WriteTo(c)
+			return
+		}
+
+		conn := conns.Items[0]
+		namespace := hs.namespacer(c.GetOrgID())
+		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+		hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "remote").Inc()
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
 }

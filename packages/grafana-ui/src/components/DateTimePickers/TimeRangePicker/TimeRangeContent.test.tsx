@@ -74,13 +74,13 @@ describe('TimeRangeForm', () => {
     });
   });
 
-  it('should render form correctly', () => {
-    const { getByLabelText, getByText, getAllByRole } = setup();
+  it('should render form correctly', async () => {
+    const { findByLabelText, findByText, findAllByRole } = setup();
 
-    expect(getByText('Apply time range')).toBeInTheDocument();
-    expect(getAllByRole('button', { name: 'Open calendar' })).toHaveLength(2);
-    expect(getByLabelText('From')).toBeInTheDocument();
-    expect(getByLabelText('To')).toBeInTheDocument();
+    expect(await findByText('Apply time range')).toBeInTheDocument();
+    expect(await findAllByRole('button', { name: 'Open calendar' })).toHaveLength(2);
+    expect(await findByLabelText('From')).toBeInTheDocument();
+    expect(await findByLabelText('To')).toBeInTheDocument();
   });
 
   it('should display calendar when clicking the calendar icon', async () => {
@@ -92,18 +92,18 @@ describe('TimeRangeForm', () => {
     expect(screen.getByLabelText(TimePicker.calendar.label)).toBeInTheDocument();
   });
 
-  it('should have passed time range entered in form', () => {
-    const { getByLabelText } = setup();
+  it('should have passed time range entered in form', async () => {
+    const { findByLabelText } = setup();
 
     const fromValue = defaultTimeRange.raw.from as string;
     const toValue = defaultTimeRange.raw.to as string;
 
-    expect(getByLabelText('From')).toHaveValue(fromValue);
-    expect(getByLabelText('To')).toHaveValue(toValue);
+    expect(await findByLabelText('From')).toHaveValue(fromValue);
+    expect(await findByLabelText('To')).toHaveValue(toValue);
   });
 
-  it('should parse UTC iso strings and render in current timezone', () => {
-    const { getByLabelText } = setup(
+  it('should parse UTC iso strings and render in current timezone', async () => {
+    const { findByLabelText } = setup(
       {
         from: defaultTimeRange.from,
         to: defaultTimeRange.to,
@@ -115,8 +115,8 @@ describe('TimeRangeForm', () => {
       'America/New_York'
     );
 
-    expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-    expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+    expect(await findByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+    expect(await findByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
   it('copy in UTC then paste into different timezone should convert times', async () => {
@@ -183,8 +183,8 @@ describe('TimeRangeForm', () => {
       systemDateFormats.fullDate = originalFullDate;
     });
 
-    it('should parse UTC iso strings and render them in the common format and current timezone', () => {
-      const { getByLabelText } = setup(
+    it('should parse UTC iso strings and render them in the common format and current timezone', async () => {
+      const { findByLabelText } = setup(
         {
           from: defaultTimeRange.from,
           to: defaultTimeRange.to,
@@ -196,8 +196,8 @@ describe('TimeRangeForm', () => {
         'America/New_York'
       );
 
-      expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-      expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+      expect(await findByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
     });
 
     describe('when common format dates are entered', () => {
@@ -228,8 +228,8 @@ describe('TimeRangeForm', () => {
         mockSetCommonFormat(false);
       });
 
-      it('should parse UTC ISO strings and render them in the system format', () => {
-        const { getByLabelText } = setup(
+      it('should parse UTC ISO strings and render them in the system format', async () => {
+        const { findByLabelText } = setup(
           {
             from: defaultTimeRange.from,
             to: defaultTimeRange.to,
@@ -241,8 +241,8 @@ describe('TimeRangeForm', () => {
           'America/New_York'
         );
 
-        expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
-        expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+        expect(await findByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
+        expect(await findByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
       });
 
       describe('when common format dates are entered', () => {
@@ -262,7 +262,7 @@ describe('TimeRangeForm', () => {
 
           expect(error).toHaveLength(2);
           expect(error[0]).toBeVisible();
-          expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+          expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (now, now-1h)');
         });
       });
 
@@ -301,10 +301,11 @@ describe('TimeRangeForm', () => {
     expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
   });
 
-  it('should not display calendar without clicking the calendar icon', () => {
-    const { queryByLabelText } = setup();
+  it('should not display calendar without clicking the calendar icon', async () => {
+    const { queryByLabelText, findAllByLabelText } = setup();
     const { TimePicker } = selectors.components;
 
+    expect(await findAllByLabelText('Open calendar')).toHaveLength(2);
     expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
   });
 
@@ -332,6 +333,27 @@ describe('TimeRangeForm', () => {
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
 
+  it('should update the selected range when clicking the same date twice in the calendar', async () => {
+    const { getAllByRole, getCalendarDayByLabelText, findByLabelText } = setup();
+    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
+
+    await user.click(openCalendarButton[0]);
+
+    const targetDay = getCalendarDayByLabelText('June 15, 2021');
+    await user.click(targetDay);
+    await user.click(targetDay);
+
+    const updatedTarget = getCalendarDayByLabelText('June 15, 2021');
+    expect(updatedTarget).toHaveClass('react-calendar__tile--rangeStart');
+    expect(updatedTarget).toHaveClass('react-calendar__tile--rangeEnd');
+
+    const previousRangeStart = getCalendarDayByLabelText('June 17, 2021');
+    expect(previousRangeStart).not.toHaveClass('react-calendar__tile--rangeStart');
+
+    expect(await findByLabelText('From')).toHaveValue('2021-06-15 00:00:00');
+    expect(await findByLabelText('To')).toHaveValue('2021-06-15 23:59:59');
+  });
+
   it('should copy time range to clipboard', async () => {
     setup();
 
@@ -353,7 +375,7 @@ describe('TimeRangeForm', () => {
   });
 
   describe('dates error handling', () => {
-    it('should show error on invalid dates', () => {
+    it('should show error on invalid dates', async () => {
       const invalidTimeRange: TimeRange = {
         from: dateTimeParse('foo', { timeZone: 'utc' }),
         to: dateTimeParse('2021-06-19 23:59:00', { timeZone: 'utc' }),
@@ -363,14 +385,15 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      await userEvent.click(screen.getByRole('button', { name: 'Apply time range' }));
       const error = getAllByRole('alert');
 
       expect(error).toHaveLength(1);
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (now, now-1h)');
     });
 
-    it('should show error on invalid range', () => {
+    it('should show error on invalid range', async () => {
       const invalidTimeRange: TimeRange = {
         from: dateTimeParse('2021-06-19 00:00:00', { timeZone: 'utc' }),
         to: dateTimeParse('2021-06-17 23:59:00', { timeZone: 'utc' }),
@@ -380,13 +403,14 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      await userEvent.click(screen.getByRole('button', { name: 'Apply time range' }));
       const error = getAllByRole('alert');
 
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('"From" can\'t be after "To"');
+      expect(error[0]).toHaveTextContent('"From" date must be before "To" date');
     });
 
-    it('should not show range error when "to" is invalid', () => {
+    it('should not show range error when "to" is invalid', async () => {
       const invalidTimeRange: TimeRange = {
         from: dateTimeParse('2021-06-19 00:00:00', { timeZone: 'utc' }),
         to: dateTimeParse('foo', { timeZone: 'utc' }),
@@ -396,11 +420,12 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      await userEvent.click(screen.getByRole('button', { name: 'Apply time range' }));
       const error = getAllByRole('alert');
 
       expect(error).toHaveLength(1);
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (now, now-1h)');
     });
   });
 });

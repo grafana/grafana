@@ -114,9 +114,9 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 
 	// Create a repository to ensure stats endpoint has data
 	const repo = "stats-auth-test"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

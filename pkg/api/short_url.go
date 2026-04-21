@@ -261,6 +261,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 //-----------------------------------------------------------------------------------------
 
 func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientGenerator to get a typed client!
 	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -68,7 +69,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 	permission := dashboardaccess.PERMISSION_VIEW
-	if c.Query("permission") == "Edit" {
+	if strings.EqualFold(c.Query("permission"), "edit") {
 		permission = dashboardaccess.PERMISSION_EDIT
 	}
 

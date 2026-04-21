@@ -5,7 +5,7 @@ src_dir := $(tools_dir)/src
 # Due to a race condition, after initial call to `go tool` golang may report a wrong binary location pointing to the invalid `/tmp/go-buildXXX` directory
 define compile_tool
 $(shell \
-  (cd "$(src_dir)/$(1)" \
+  (cd $(src_dir)/$(1) \
   && GOWORK=off go tool -n $(2) > /dev/null \
   && GOWORK=off go tool -n $(2)) | sed 's/^[[:space:]]*//g'; \
 )

@@ -164,7 +164,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/connections/datasources", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/new", authorize(datasources.NewPageAccess), hs.Index)
 	r.Get("/connections/datasources/edit/*", authorize(datasources.EditPageAccess), hs.Index)
-	r.Get("/connections", authorize(datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections", reqSignedIn, hs.Index)
 	r.Get("/connections/add-new-connection", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	// Plugin details pages
 	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
@@ -418,7 +418,7 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), hs.getK8sDataSourceByUIDHandler())
 
-			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
+			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceHealthHandler())
 			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
 			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
 			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
