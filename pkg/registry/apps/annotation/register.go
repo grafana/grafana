@@ -117,7 +117,7 @@ func NewAppInstaller(
 
 	evalCtx := openfeature.NewEvaluationContext(
 		"annotation.grafana.app",
-		map[string]any{"service": "annotation", "namespace": "stacks-13"},
+		map[string]any{"service": "annotation"},
 	)
 	details, evalErr := openfeature.NewDefaultClient().StringValueDetails(context.Background(), "annotationOpenFeatureTest", "off", evalCtx)
 	if evalErr != nil {
