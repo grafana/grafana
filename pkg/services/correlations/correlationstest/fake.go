@@ -13,7 +13,9 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func New(ctx context.Context, db db.DB, cfg *setting.Cfg, bus bus.Bus) *correlations.CorrelationsService {
@@ -25,6 +27,6 @@ func New(ctx context.Context, db db.DB, cfg *setting.Cfg, bus bus.Bus) *correlat
 
 	clientGenerator := apiserver.ProvideClientGenerator(apiserver.ProvideEventualRestConfigProvider())
 
-	correlationsSvc, _ := correlations.ProvideService(ctx, db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), bus, quotatest.New(false, nil), cfg, clientGenerator)
+	correlationsSvc, _ := correlations.ProvideService(ctx, db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), bus, quotatest.New(false, nil), cfg, clientGenerator, apiserver.ProvideEventualRestConfigProvider(), usertest.NewUserServiceFake(), &resource.MockResourceClient{})
 	return correlationsSvc.(*correlations.CorrelationsService)
 }

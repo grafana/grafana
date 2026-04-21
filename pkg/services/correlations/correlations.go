@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -135,7 +134,7 @@ type CorrelationsK8sService struct {
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
-	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
+	/*quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
 	if err != nil {
 		logger.Warn("Error getting correlation quota.", "error", err)
 		return Correlation{}, ErrCorrelationsQuotaFailed
@@ -172,7 +171,8 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		return Correlation{}, err
 	}
 
-	return *legacyCorr, nil
+	return *legacyCorr, nil*/
+	return Correlation{}, nil
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
@@ -283,20 +283,23 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
+	//return nil
 }
 
 // todo - best option for deleting multiple resources at once?
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/targetDS-ref=" + cmd.TargetUID})
+	// return nil
 }
 
 // this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
-	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID})
-	if err != nil {
-		return err
-	}
-	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID})
+	/*	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID})
+		if err != nil {
+			return err
+		}
+		return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID}) */
+	return nil
 }
 
 // what's the best way to return just a count of records
@@ -304,16 +307,3 @@ func (s *CorrelationsK8sService) Usage(ctx context.Context, scopeParams *quota.S
 	// TODO
 	return &quota.Map{}, nil
 }
-
-/*
-NewCorrelationClientFromGenerator is blocking, so we can't run this in startup
-and lazy load it on the first call instead
-*/
-
-/*func (s *CorrelationsK8sService) getK8sClient() (*v0alpha1.CorrelationClient, error) {
-	s.k8sClientInitOnce.Do(func() {
-		s.k8sClient, s.k8sClientInitErr = v0alpha1.NewCorrelationClientFromGenerator(s.clientGen)
-	})
-	return s.k8sClient, s.k8sClientInitErr
-}
-*/

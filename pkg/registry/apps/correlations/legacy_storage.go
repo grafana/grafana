@@ -219,7 +219,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for correlation not implemented")
+	// there will only ever be one label selector
+	wat, wat2 := listOptions.LabelSelector.Requirements()
+	return nil, fmt.Errorf("DeleteCollection for correlation not implemented", wat, wat2)
 }
 
 type continueToken struct {
