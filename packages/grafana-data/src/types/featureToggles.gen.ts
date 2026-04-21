@@ -1736,4 +1736,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enable Meticulous AI session recording (DANGEROUS - captures all data)
+  * @default false
+  */
+  dangerousMeticulousAIRecording?: boolean;
 }

@@ -953,4 +953,8 @@ const (
 	// FlagReportingAnyPageReporting
 	// Enables reporting for any page in Grafana
 	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagDangerousMeticulousAIRecording
+	// Enable Meticulous AI session recording (DANGEROUS - captures all data)
+	FlagDangerousMeticulousAIRecording = "dangerousMeticulousAIRecording"
 )

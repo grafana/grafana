@@ -1435,6 +1435,20 @@
     },
     {
       "metadata": {
+        "name": "dangerousMeticulousAIRecording",
+        "resourceVersion": "1776802020435",
+        "creationTimestamp": "2026-04-21T20:07:00Z"
+      },
+      "spec": {
+        "description": "Enable Meticulous AI session recording (DANGEROUS - captures all data)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"
