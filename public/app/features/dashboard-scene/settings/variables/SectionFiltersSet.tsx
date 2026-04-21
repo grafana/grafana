@@ -54,8 +54,10 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
   public readonly isEditableDashboardElement = true;
 
   public constructor(state: SectionFiltersSetState) {
-    const sectionKey = state.sectionRef.resolve().state.key ?? 'unknown';
-    super({ ...state, key: `section-filters-set-${sectionKey}` });
+    super({
+      ...state,
+      key: `section-filters-set-${state.sectionRef.resolve().state.key}`,
+    });
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
