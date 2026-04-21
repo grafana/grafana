@@ -9,11 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
-	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -376,7 +377,8 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.Teams = nil
+		usr.TeamIDs = nil
+		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
@@ -752,7 +754,8 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.Teams = usr.Teams
+	id.TeamIDs = usr.TeamIDs
+	id.Groups = usr.TeamUIDs
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin
