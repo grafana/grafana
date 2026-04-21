@@ -9,6 +9,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -20,9 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// resolveScope returns the legacy db scope for the given resource name.
-// For id-scoped resources (teams, users, service accounts), translates uid→id via the identity store.
-func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, mapper Mapper, name string) (string, error) {
+// resolveScope returns the legacy DB scope for the given resource name.
+// For resources with a registered NameResolver (e.g. service accounts), calls UIDToID via the
+// K8s API — mode-agnostic and fails fast on lookup failure. For other id-scoped resources
+// (teams, users) falls back to the identity store.
+func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, resolver NameResolver, mapper Mapper, name string) (string, error) {
+	if resolver != nil {
+		id, err := resolver.UIDToID(ctx, ns.Value, name)
+		if err != nil {
+			return "", err
+		}
+		return mapper.Scope(id), nil
+	}
 	scope := mapper.Scope(name)
 	if isIDScoped(mapper) && store != nil {
 		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, scope)
@@ -219,7 +229,8 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewInternalError(err)
 	}
 
-	scope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	resolver, _ := s.mappers.GetResolver(schema.GroupResource{Group: grn.Group, Resource: grn.Resource})
+	scope, err := resolveScope(ctx, ns, s.identityStore, resolver, mapper, grn.Name)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("resolving scope for %q: %v", grn.Name, err))
 	}
@@ -437,7 +448,8 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 func (s *ResourcePermSqlBackend) createResourcePermission(
 	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
 ) (int64, error) {
-	rbacScope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	resolver, _ := s.mappers.GetResolver(schema.GroupResource{Group: grn.Group, Resource: grn.Resource})
+	rbacScope, err := resolveScope(ctx, ns, s.identityStore, resolver, mapper, grn.Name)
 	if err != nil {
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("resolving scope for %q: %v", grn.Name, err))
 	}
@@ -482,7 +494,8 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
-		rbacScope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+		resolver, _ := s.mappers.GetResolver(schema.GroupResource{Group: grn.Group, Resource: grn.Resource})
+		rbacScope, err := resolveScope(ctx, ns, s.identityStore, resolver, mapper, grn.Name)
 		if err != nil {
 			return fmt.Errorf("resolving scope for %q: %w", grn.Name, err)
 		}
@@ -579,7 +592,8 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 		return err
 	}
 
-	scope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	resolver, _ := s.mappers.GetResolver(schema.GroupResource{Group: grn.Group, Resource: grn.Resource})
+	scope, err := resolveScope(ctx, ns, s.identityStore, resolver, mapper, grn.Name)
 	if err != nil {
 		return fmt.Errorf("resolving scope for %q: %w", grn.Name, err)
 	}

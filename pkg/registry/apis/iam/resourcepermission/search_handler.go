@@ -209,8 +209,14 @@ func filterPermissionsByGet(
 	if !ok {
 		return nil
 	}
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil
+	}
 	filtered, err := iamauthorizer.CanViewTargets(authorizer, ctx, authInfo, perms, func(i int) (string, string, string, string, bool) {
-		grn, err := backend.ParseScope(perms[i].Scope, "")
+		// ParseScopeCtx translates id-scoped names (e.g. serviceaccounts:id:123) to UIDs so
+		// that CanViewTargets receives a K8s-compatible name rather than a numeric DB id.
+		grn, err := backend.ParseScopeCtx(ctx, ns, perms[i].Scope, "")
 		if err != nil {
 			return "", "", "", "", false
 		}

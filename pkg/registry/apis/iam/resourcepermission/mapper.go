@@ -118,18 +118,20 @@ type mapperEntry struct {
 }
 
 // MappersRegistry is a registry of resource permission mappers.
-// RegisterMapper must only be called during Wire init (before the server starts serving requests).
+// RegisterMapper and RegisterResolver must only be called during Wire init (before the server starts serving requests).
 // No mutex is needed because all registrations happen sequentially during startup.
 type MappersRegistry struct {
-	entries map[schema.GroupResource]mapperEntry
-	reverse map[string]schema.GroupResource // scope prefix -> GroupResource
+	entries   map[schema.GroupResource]mapperEntry
+	reverse   map[string]schema.GroupResource // scope prefix -> GroupResource
+	resolvers map[schema.GroupResource]NameResolver
 }
 
 // NewMappersRegistry initialises the registry with folders and dashboards (always enabled).
 func NewMappersRegistry() *MappersRegistry {
 	m := &MappersRegistry{
-		entries: make(map[schema.GroupResource]mapperEntry),
-		reverse: make(map[string]schema.GroupResource),
+		entries:   make(map[schema.GroupResource]mapperEntry),
+		reverse:   make(map[string]schema.GroupResource),
+		resolvers: make(map[schema.GroupResource]NameResolver),
 	}
 	m.RegisterMapper(
 		schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"},
@@ -145,6 +147,22 @@ func NewMappersRegistry() *MappersRegistry {
 // ProvideMappersRegistry is a Wire provider that returns a new MappersRegistry.
 func ProvideMappersRegistry() *MappersRegistry {
 	return NewMappersRegistry()
+}
+
+// RegisterResolver registers a NameResolver for the given GroupResource.
+// Must be called during Wire init; no mutex is used.
+func (m *MappersRegistry) RegisterResolver(gr schema.GroupResource, r NameResolver) {
+	m.resolvers[gr] = r
+}
+
+// GetResolver returns the NameResolver for the given GroupResource, or false if none is registered.
+func (m *MappersRegistry) GetResolver(gr schema.GroupResource) (NameResolver, bool) {
+	key, ok := m.findGroupKey(gr)
+	if !ok {
+		return nil, false
+	}
+	r, ok := m.resolvers[key]
+	return r, ok
 }
 
 // RegisterMapper registers a mapper for the given GroupResource.
@@ -289,7 +307,14 @@ func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceI
 	group := resolveGroup(gr.Group, datasourceType)
 
 	name := parts[2]
-	if isIDScoped(entry.mapper) && store != nil {
+	if resolver, ok := m.resolvers[gr]; ok {
+		// K8s API-based ID→UID for resources with a registered resolver (e.g. service accounts).
+		uid, err := resolver.IDToUID(ctx, ns.Value, name)
+		if err != nil {
+			return nil, err
+		}
+		name = uid
+	} else if isIDScoped(entry.mapper) && store != nil {
 		uid, err := legacy.ResolveIDScopeToUIDName(ctx, store, ns, scope)
 		if err != nil {
 			return nil, err

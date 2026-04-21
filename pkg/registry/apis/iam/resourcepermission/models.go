@@ -148,6 +148,33 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(ctx context.Context, ns
 
 	logger := s.logger.FromContext(ctx)
 
+	// Pre-load the ID→UID map for any resource type that has a NameResolver and whose
+	// scopes appear in this result set. This avoids one K8s API call per scope in the loop.
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+	if resolver, ok := s.mappers.GetResolver(saGR); ok {
+		hasSAScope := false
+		for _, a := range assignments {
+			if strings.HasPrefix(a.Scope, "serviceaccounts:id:") {
+				hasSAScope = true
+				break
+			}
+		}
+		if hasSAScope {
+			if idToUID, err := resolver.IDToUIDMap(ctx, ns.Value); err != nil {
+				logger.Warn("Failed to pre-load SA id→uid map, falling back to per-scope lookups", "error", err)
+			} else {
+				for id, uid := range idToUID {
+					cacheKey := "serviceaccounts:id:" + id + ":"
+					scopeCache[cacheKey] = &groupResourceName{
+						Group:    saGR.Group,
+						Resource: saGR.Resource,
+						Name:     uid,
+					}
+				}
+			}
+		}
+	}
+
 	// parseScopeCtxCached resolves and caches scope→GRN lookups.
 	// Returns (nil, nil) for orphaned id-scoped rows so callers can skip them.
 	parseScopeCtxCached := func(scope, datasourceType string) (*groupResourceName, error) {
@@ -276,6 +303,13 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 // If the scope is a datasource scope, the datasourceType is used to resolve the concrete group.
 func (s *ResourcePermSqlBackend) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	return s.mappers.ParseScope(scope, datasourceType)
+}
+
+// ParseScopeCtx is like ParseScope but also resolves id-scoped resources to UIDs using the
+// registered NameResolver (K8s API) or identity store (DB fallback for teams/users).
+// Use this instead of ParseScope whenever the caller needs a K8s-compatible name.
+func (s *ResourcePermSqlBackend) ParseScopeCtx(ctx context.Context, ns types.NamespaceInfo, scope, datasourceType string) (*groupResourceName, error) {
+	return s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, scope, datasourceType)
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name>
