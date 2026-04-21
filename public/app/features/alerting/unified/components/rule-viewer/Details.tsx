@@ -89,6 +89,8 @@ export const Details = ({ rule }: DetailsProps) => {
       ? String(rule.rulerRule.grafana_alert.missing_series_evals_to_resolve)
       : undefined;
 
+  const interval = rule.group.interval;
+
   const pausedIcon = (
     <Stack>
       <Text color="warning">
@@ -101,49 +103,15 @@ export const Details = ({ rule }: DetailsProps) => {
   );
   return (
     <div className={styles.metadata}>
-      <DetailGroup>
-        <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
-        {rulerRuleType.grafana.rule(rule.rulerRule) && (
-          <>
-            <DetailText
-              id="rule-type"
-              label={t('alerting.alert.rule-identifier', 'Rule identifier')}
-              value={rule.rulerRule.grafana_alert.uid}
-              monospace
-              showCopyButton
-              copyValue={rule.rulerRule.grafana_alert.uid}
-            />
-            <DetailText
-              id="last-updated-by"
-              label={t('alerting.alert.last-updated-by', 'Last updated by')}
-              value={<UpdatedByUser user={rule.rulerRule.grafana_alert.updated_by} />}
-            />
-            {updated && (
-              <DetailText
-                id="date-of-last-update"
-                label={t('alerting.alert.last-updated-at', 'Last updated at')}
-                value={dateTimeFormat(updated) + ` (${dateTimeFormatTimeAgo(updated)})`}
-              />
-            )}
-          </>
-        )}
-        {showTargetDatasource && (
+      {/* 1. Evaluation — operationally most important */}
+      <DetailGroup title={t('alerting.alert.evaluation', 'Evaluation')}>
+        {interval && (
           <DetailText
-            id="target-datasource-uid"
-            label={t('alerting.alert.target-datasource-uid', 'Target data source')}
-            value={
-              <Link href={`/connections/datasources/edit/${datasource?.uid}`}>
-                <Stack direction="row" gap={1}>
-                  <img style={{ width: '16px' }} src={datasource?.meta.info.logos.small} alt="datasource logo" />
-                  {datasource?.name}
-                </Stack>
-              </Link>
-            }
+            id="evaluation-interval"
+            label={t('alerting.alert.evaluation-interval', 'Evaluation interval')}
+            value={interval}
           />
         )}
-      </DetailGroup>
-
-      <DetailGroup title={t('alerting.alert.evaluation', 'Evaluation')}>
         {isPaused ? (
           pausedIcon
         ) : (
@@ -198,13 +166,13 @@ export const Details = ({ rule }: DetailsProps) => {
         )}
       </DetailGroup>
 
-      {/* show simplified routing information for Grafana managed alert rules */}
+      {/* 2. Notification configuration */}
       {rulerRuleType.grafana.alertingRule(rule.rulerRule) &&
         (!isEmpty(rule.rulerRule.grafana_alert.notification_settings) ||
           config.featureToggles.alertingPolicyRoutingSettings) && <NotificationSettings rulerRule={rule.rulerRule} />}
 
+      {/* 3. Alert state */}
       {rulerRuleType.grafana.rule(rule.rulerRule) &&
-        // grafana recording rules don't have these fields
         rule.rulerRule.grafana_alert.no_data_state &&
         rule.rulerRule.grafana_alert.exec_err_state && (
           <DetailGroup title={t('alerting.alert.alert-state', 'Alert state')}>
@@ -225,6 +193,7 @@ export const Details = ({ rule }: DetailsProps) => {
           </DetailGroup>
         )}
 
+      {/* 4. Annotations */}
       {annotations && (
         <DetailGroup title={t('alerting.alert.annotations', 'Annotations')}>
           {Object.keys(annotations).length === 0 ? (
@@ -241,6 +210,49 @@ export const Details = ({ rule }: DetailsProps) => {
           )}
         </DetailGroup>
       )}
+
+      {/* 5. Rule metadata — demoted to last */}
+      <DetailGroup title={t('alerting.alert.rule-metadata', 'Rule metadata')}>
+        <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
+        {rulerRuleType.grafana.rule(rule.rulerRule) && (
+          <>
+            <DetailText
+              id="rule-type"
+              label={t('alerting.alert.rule-identifier', 'Rule identifier')}
+              value={rule.rulerRule.grafana_alert.uid}
+              monospace
+              showCopyButton
+              copyValue={rule.rulerRule.grafana_alert.uid}
+            />
+            <DetailText
+              id="last-updated-by"
+              label={t('alerting.alert.last-updated-by', 'Last updated by')}
+              value={<UpdatedByUser user={rule.rulerRule.grafana_alert.updated_by} />}
+            />
+            {updated && (
+              <DetailText
+                id="date-of-last-update"
+                label={t('alerting.alert.last-updated-at', 'Last updated at')}
+                value={dateTimeFormat(updated) + ` (${dateTimeFormatTimeAgo(updated)})`}
+              />
+            )}
+          </>
+        )}
+        {showTargetDatasource && (
+          <DetailText
+            id="target-datasource-uid"
+            label={t('alerting.alert.target-datasource-uid', 'Target data source')}
+            value={
+              <Link href={`/connections/datasources/edit/${datasource?.uid}`}>
+                <Stack direction="row" gap={1}>
+                  <img style={{ width: '16px' }} src={datasource?.meta.info.logos.small} alt="datasource logo" />
+                  {datasource?.name}
+                </Stack>
+              </Link>
+            }
+          />
+        )}
+      </DetailGroup>
     </div>
   );
 };

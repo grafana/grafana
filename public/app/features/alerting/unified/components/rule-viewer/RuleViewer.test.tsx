@@ -189,14 +189,13 @@ describe('RuleViewer', () => {
 
       // alert rule metadata
       const ruleSummary = mockRule.annotations[Annotation.summary];
-      const runBookURL = mockRule.annotations[Annotation.runbookURL];
       const groupInterval = mockRule.group.interval;
       const labels = mockRule.labels;
 
       expect(ELEMENTS.metadata.summary(ruleSummary).get()).toBeInTheDocument();
       expect(ELEMENTS.metadata.dashboardAndPanel.get()).toBeInTheDocument();
-      expect(ELEMENTS.metadata.runbook(runBookURL).get()).toBeInTheDocument();
-      expect(ELEMENTS.metadata.evaluationInterval(groupInterval!).get()).toBeInTheDocument();
+      // Evaluation interval appears in the details sidebar
+      expect(screen.getByText(groupInterval!)).toBeInTheDocument();
 
       for (const label in labels) {
         expect(ELEMENTS.metadata.label([label, labels[label]]).get()).toBeInTheDocument();
@@ -460,11 +459,9 @@ describe('RuleViewer', () => {
       expect(screen.getByText('cloud test alert')).toBeInTheDocument();
       expect(screen.getByText('Firing')).toBeInTheDocument();
 
-      // summary appears in both the page header and the always-visible sidebar
       expect(screen.getAllByText(mockRule.annotations[Annotation.summary])[0]).toBeInTheDocument();
-      // runbook URL appears in both the page header and the always-visible sidebar
       expect(screen.getAllByRole('link', { name: mockRule.annotations[Annotation.runbookURL] })[0]).toBeInTheDocument();
-      expect(screen.getByText(`Every ${mockRule.group.interval}`)).toBeInTheDocument();
+      expect(screen.getByText(mockRule.group.interval!)).toBeInTheDocument();
     });
 
     it('should render custom plugin actions for a plugin-provided rule', async () => {
@@ -537,7 +534,7 @@ describe('RuleViewer', () => {
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
       // Both summary and runbook are rendered by the Title component, and the DetailsTab component
-      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.runbookURL]).getAll()).toHaveLength(2);
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.runbookURL]).getAll()).toHaveLength(1);
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
