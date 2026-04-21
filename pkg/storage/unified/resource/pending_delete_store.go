@@ -6,16 +6,11 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"sync"
-	"time"
 
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-const (
-	pendingDeleteSection  = kvpkg.PendingDeleteSection
-	pendingDeleteCacheTTL = 5 * time.Minute
-)
+const pendingDeleteSection = kvpkg.PendingDeleteSection
 
 // PendingDeleteRecord is the JSON blob stored in the KV store for a tenant
 // that has been marked as pending deletion. The record is created before
@@ -34,57 +29,16 @@ type PendingDeleteRecord struct {
 	DeletedAt string `json:"deletedAt,omitempty"`
 }
 
-// PendingDeleteStore manages pending-delete records in the KV store and keeps
-// an in-memory cache of which tenants have records so that the common-path
-// "tenant is not pending delete" check is a map lookup with no I/O.
+// PendingDeleteStore manages pending-delete records in the KV store.
 type PendingDeleteStore struct {
 	kv KV
-	mu sync.Mutex
-	// cachedSet and cacheExpiry are guarded by mu.
-	cachedSet   map[string]struct{}
-	cacheExpiry time.Time
 }
 
 func newPendingDeleteStore(kv KV) *PendingDeleteStore {
 	return &PendingDeleteStore{kv: kv}
 }
 
-// RefreshCache reloads the set of pending-delete tenant names from the KV
-// store if the cache has expired.
-func (s *PendingDeleteStore) RefreshCache(ctx context.Context) {
-	s.mu.Lock()
-	if time.Now().Before(s.cacheExpiry) {
-		s.mu.Unlock()
-		return
-	}
-	s.mu.Unlock()
-
-	set := make(map[string]struct{})
-	for key, err := range s.kv.Keys(ctx, pendingDeleteSection, ListOptions{}) {
-		if err != nil {
-			return
-		}
-		set[key] = struct{}{}
-	}
-
-	s.mu.Lock()
-	s.cachedSet = set
-	s.cacheExpiry = time.Now().Add(pendingDeleteCacheTTL)
-	s.mu.Unlock()
-}
-
-// Has returns whether a tenant has a pending-delete record according to the
-// in-memory cache.
-func (s *PendingDeleteStore) Has(name string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	_, ok := s.cachedSet[name]
-	return ok
-}
-
-// Names streams tenant names that currently have pending-delete records,
-// reading directly from the KV store (bypassing the in-memory cache). Used by
-// startup reconciliation to get a fresh view without depending on cache state.
+// Names streams tenant names that currently have pending-delete records.
 func (s *PendingDeleteStore) Names(ctx context.Context) iter.Seq2[string, error] {
 	return s.kv.Keys(ctx, pendingDeleteSection, ListOptions{})
 }
@@ -109,8 +63,7 @@ func (s *PendingDeleteStore) Get(ctx context.Context, name string) (PendingDelet
 	return record, nil
 }
 
-// Upsert creates or replaces the PendingDeleteRecord for a tenant and adds it
-// to the cache.
+// Upsert creates or replaces the PendingDeleteRecord for a tenant.
 func (s *PendingDeleteStore) Upsert(ctx context.Context, name string, record PendingDeleteRecord) error {
 	writer, err := s.kv.Save(ctx, pendingDeleteSection, name)
 	if err != nil {
@@ -123,27 +76,10 @@ func (s *PendingDeleteStore) Upsert(ctx context.Context, name string, record Pen
 	if err := writer.Close(); err != nil {
 		return fmt.Errorf("closing writer: %w", err)
 	}
-
-	s.mu.Lock()
-	if s.cachedSet == nil {
-		s.cachedSet = make(map[string]struct{})
-	}
-	s.cachedSet[name] = struct{}{}
-	s.mu.Unlock()
-
 	return nil
 }
 
-// Delete removes the PendingDeleteRecord for a tenant and removes it from the
-// cache.
+// Delete removes the PendingDeleteRecord for a tenant.
 func (s *PendingDeleteStore) Delete(ctx context.Context, name string) error {
-	if err := s.kv.Delete(ctx, pendingDeleteSection, name); err != nil {
-		return err
-	}
-
-	s.mu.Lock()
-	delete(s.cachedSet, name)
-	s.mu.Unlock()
-
-	return nil
+	return s.kv.Delete(ctx, pendingDeleteSection, name)
 }

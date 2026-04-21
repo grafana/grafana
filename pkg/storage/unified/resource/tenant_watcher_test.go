@@ -145,7 +145,6 @@ func TestTenantClearPendingDelete(t *testing.T) {
 			LabelingComplete: true,
 			Orphaned:         true,
 		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
 
 		// Reconcile path: tenant CRD says pending-delete.
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
@@ -224,7 +223,6 @@ func TestTenantResourceLabelling(t *testing.T) {
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
 		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
 
 		// Now "restore" the tenant (no pending-delete label).
 		restored := &unstructured.Unstructured{}
@@ -284,7 +282,6 @@ func TestTenantResourceLabelling(t *testing.T) {
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
 		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
 
 		// "Restore" the tenant — unlabelling will fail.
 		restored := &unstructured.Unstructured{}
@@ -483,9 +480,6 @@ func TestTenantResourceLabelling(t *testing.T) {
 		unlabelCollector := &writeEventCollector{}
 		tw.writeEvent = unlabelCollector.append
 
-		// Refresh cache so Has() picks up the record.
-		tw.pendingDeleteStore.RefreshCache(t.Context())
-
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
 		tw.handleTenant(restored)
@@ -551,7 +545,6 @@ func TestTenantResourceLabelling(t *testing.T) {
 			LabelingComplete: true,
 			Orphaned:         true,
 		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
 
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
@@ -629,7 +622,6 @@ func TestReconcileStaleRecords(t *testing.T) {
 			LabelingComplete: true,
 			Orphaned:         true,
 		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
 
 		tw.reconcileStaleRecords(map[string]struct{}{})
 

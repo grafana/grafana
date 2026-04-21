@@ -242,9 +242,6 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 	return tw, nil
 }
 
-// startInformer wires up the Kubernetes informer path. Used for clusters where
-// the pending-delete cohort is small enough to cache in memory and the tenant
-// API server correctly implements the WatchList streaming protocol.
 func (tw *TenantWatcher) startInformer(client dynamic.Interface, resync time.Duration) error {
 	// Only watch tenants currently labeled pending-delete. At prod scale the full
 	// tenant set is too large to cache as unstructured objects; filtering server-side
@@ -292,11 +289,6 @@ func (tw *TenantWatcher) startInformer(client dynamic.Interface, resync time.Dur
 	return nil
 }
 
-// startPolling drives the polling strategy: one immediate cycle, then a
-// serialized loop that sleeps pollInterval between cycles. Serializing via
-// sleep-after-completion prevents overlap if a cycle takes longer than the
-// interval (each full sweep is ~4 min at 500/page × 313 pages on the biggest
-// clusters).
 func (tw *TenantWatcher) startPolling(ctx context.Context) {
 	tw.runPollCycle(ctx)
 	for {
@@ -353,10 +345,8 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 
 	listDuration := time.Since(start)
 
-	// Defensive: a zero-live-tenants result against a non-empty KV store would
-	// otherwise mark every record stale. Legitimate zero sweeps are rare; skip
-	// the clear phase rather than risk wiping everything on a silent API error
-	// that didn't raise.
+	// An empty list should never happen. If it does something is very wrong, and we don't want to nuke all the
+	// pending delete records as a consequence.
 	if len(liveNames) == 0 {
 		tw.log.Warn("tenant watcher poll cycle: zero live tenants, skipping clear phase",
 			"pages", pageCount, "list_duration", listDuration)
@@ -472,8 +462,6 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 	annotations := tenant.GetAnnotations()
 
 	tw.log.Debug("tenant watcher got tenant event", "tenant", name, "labels", labels, "annotations", annotations)
-
-	tw.pendingDeleteStore.RefreshCache(tw.ctx)
 
 	if labels[labelPendingDelete] == "true" {
 		deleteAfter, ok := annotations[annotationPendingDeleteAfter]
@@ -650,15 +638,13 @@ func (tw *TenantWatcher) doEditResourceLabel(dataKey DataKey, addLabel bool) err
 	return nil
 }
 
-// clearTenantPendingDelete removes the pending-delete record for a tenant from the
-// KV store, but only if the tenant is in the local cache (i.e. actually has a
-// record). For the vast majority of tenants this is a no-op map lookup.
+// clearTenantPendingDelete removes the pending-delete record for a tenant from
+// the KV store. No-op if the tenant has no record.
 func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
-	if !tw.pendingDeleteStore.Has(name) {
+	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	if errors.Is(err, kvpkg.ErrNotFound) {
 		return
 	}
-
-	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
 	if err != nil {
 		tw.log.Warn("failed to get pending delete record for clearing", "tenant", name, "error", err)
 		return
