@@ -56,13 +56,13 @@ type TenantWatcher struct {
 	pendingDeleteStore *PendingDeleteStore
 	dataStore          *dataStore
 	writeEvent         EventAppender
+	client             dynamic.Interface
 	ctx                context.Context
 	stopCh             chan struct{}
 	retryMaxDelay      time.Duration
 	// Informer-path state. Nil when UsePolling is true.
 	factory dynamicinformer.DynamicSharedInformerFactory
-	// Polling-path state. Nil when UsePolling is false.
-	client       dynamic.Interface
+	// Polling-path state. Zero when UsePolling is false.
 	pollInterval time.Duration
 }
 
@@ -217,6 +217,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),
 		dataStore:          ds,
 		writeEvent:         writeEvent,
+		client:             client,
 		ctx:                ctx,
 		stopCh:             make(chan struct{}),
 		retryMaxDelay:      retryMaxDelay,
@@ -227,14 +228,13 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		if interval <= 0 {
 			interval = defaultPollInterval
 		}
-		tw.client = client
 		tw.pollInterval = interval
 		go tw.startPolling(ctx)
 		logger.Info("tenant watcher started", "strategy", "polling", "poll_interval", interval)
 		return tw, nil
 	}
 
-	if err := tw.startInformer(client, resync); err != nil {
+	if err := tw.startInformer(resync); err != nil {
 		return nil, err
 	}
 	logger.Info("tenant watcher started", "strategy", "informer")
@@ -242,13 +242,8 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 	return tw, nil
 }
 
-func (tw *TenantWatcher) startInformer(client dynamic.Interface, resync time.Duration) error {
-	// Only watch tenants currently labeled pending-delete. At prod scale the full
-	// tenant set is too large to cache as unstructured objects; filtering server-side
-	// keeps the informer working set bounded to the pending-delete cohort.
-	tw.factory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, resync, metav1.NamespaceAll, func(opts *metav1.ListOptions) {
-		opts.LabelSelector = labelPendingDelete + "=true"
-	})
+func (tw *TenantWatcher) startInformer(resync time.Duration) error {
+	tw.factory = dynamicinformer.NewDynamicSharedInformerFactory(tw.client, resync)
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -258,34 +253,12 @@ func (tw *TenantWatcher) startInformer(client dynamic.Interface, resync time.Dur
 		UpdateFunc: func(_, newObj interface{}) {
 			tw.handleTenant(newObj.(*unstructured.Unstructured))
 		},
-		// With a label selector, both a real tenant delete and a label removal
-		// arrive here as "delete" events.
-		DeleteFunc: func(obj interface{}) {
-			tenant, ok := obj.(*unstructured.Unstructured)
-			if !ok {
-				return
-			}
-			// deletionTimestamp set → tenant is being graceful-deleted (finalizer flow).
-			// Label still present → server emitted DELETE because object was deleted,
-			// not because it stopped matching the selector.
-			if tenant.GetDeletionTimestamp() != nil || tenant.GetLabels()[labelPendingDelete] == "true" {
-				return
-			}
-			tw.clearTenantPendingDelete(tenant.GetName())
-		},
 	})
 	if err != nil {
 		return err
 	}
 
 	tw.factory.Start(tw.stopCh)
-
-	// Catch tenants whose pending-delete label was cleared while the pod was
-	// down: the label-selected LIST won't include them, so they never generate
-	// a delete event. After the informer syncs, diff its cache against the KV
-	// store and clear anything that's no longer live.
-	go tw.reconcileStaleRecordsOnStartup(informer)
-
 	return nil
 }
 
@@ -392,63 +365,6 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		"clear_duration", time.Since(clearStart),
 		"total_duration", time.Since(start),
 	)
-}
-
-// reconcileStaleRecordsOnStartup clears pending-delete records whose tenants
-// are not in the informer's synced cache. This closes the gap introduced by
-// the label-selected informer, which cannot observe label-removal transitions
-// that happened while the pod was offline.
-func (tw *TenantWatcher) reconcileStaleRecordsOnStartup(informer cache.SharedIndexInformer) {
-	if !cache.WaitForCacheSync(tw.stopCh, informer.HasSynced) {
-		tw.log.Warn("informer cache did not sync before stop; skipping startup reconciliation")
-		return
-	}
-
-	liveNames := make(map[string]struct{})
-	for _, obj := range informer.GetIndexer().List() {
-		u, ok := obj.(*unstructured.Unstructured)
-		if !ok {
-			continue
-		}
-		liveNames[u.GetName()] = struct{}{}
-	}
-	tw.log.Info("tenant watcher informer synced", "pending_delete_tenants", len(liveNames))
-
-	// An empty list should never happen. If it does something is very wrong, and we don't want to nuke all the
-	// pending delete records as a consequence.
-	if len(liveNames) == 0 {
-		tw.log.Warn("startup reconciliation skipped: informer returned zero tenants")
-		return
-	}
-
-	tw.reconcileStaleRecords(liveNames)
-}
-
-// reconcileStaleRecords iterates the pending-delete KV store and calls
-// clearTenantPendingDelete for any record whose tenant is not in liveNames.
-// Split out from reconcileStaleRecordsOnStartup for testing without a real
-// informer.
-func (tw *TenantWatcher) reconcileStaleRecords(liveNames map[string]struct{}) {
-	var stale []string
-	for name, err := range tw.pendingDeleteStore.Names(tw.ctx) {
-		if err != nil {
-			tw.log.Error("startup reconciliation: failed to list pending-delete records", "error", err)
-			return
-		}
-		if _, live := liveNames[name]; !live {
-			stale = append(stale, name)
-		}
-	}
-
-	if len(stale) == 0 {
-		tw.log.Info("startup reconciliation complete", "stale_records", 0, "live_tenants", len(liveNames))
-		return
-	}
-
-	tw.log.Info("startup reconciliation clearing stale records", "stale_records", len(stale), "live_tenants", len(liveNames))
-	for _, name := range stale {
-		tw.clearTenantPendingDelete(name)
-	}
 }
 
 // Stop stops the tenant watcher and waits for the informer goroutines to exit.
