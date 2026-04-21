@@ -367,7 +367,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
-		OpenFeatureContext: hs.Cfg.OpenFeature.ContextAttrs,
+		OpenFeatureContext:             hs.Cfg.OpenFeature.ContextAttrs,
+		DangerousMeticulousAIEnabled:   hs.Cfg.DangerousMeticulousAIEnabled && featureToggles["dangerousMeticulousAIRecording"] && hs.Cfg.Env == setting.Dev && strings.HasSuffix(c.GetEmail(), "@grafana.com"),
+		DangerousMeticulousAIScriptUrl: hs.Cfg.DangerousMeticulousAIScriptURL,
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
