@@ -1,5 +1,6 @@
 import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
-import { config, type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { config, setDataSourceSrv } from '@grafana/runtime';
+import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type CloudWatchQuery } from '../types';
 
@@ -61,7 +62,7 @@ describe('addDataLinksToLogsResponse', () => {
           name: 'Xray',
         };
       },
-    } as DataSourceSrv);
+    } as DatasourceSrv);
 
     await addDataLinksToLogsResponse(
       mockResponse,
