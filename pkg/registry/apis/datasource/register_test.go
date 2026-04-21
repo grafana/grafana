@@ -59,7 +59,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 		b := &DataSourceAPIBuilder{}
 		storageOpts := &options.StorageOptions{
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				setting.DataSourceResources: {DualWriterMode: rest.Mode1},
+				setting.DataSourceResources:                   {DualWriterMode: rest.Mode1},
 				"datasources.testdata.datasource.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
