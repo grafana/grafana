@@ -429,7 +429,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		assert.True(t, got, "diff one under threshold must stay incremental")
 	})
 
-	t.Run("should not use incremental sync when diff is at the max size", func(t *testing.T) {
+	t.Run("should use incremental sync when diff is at the max size", func(t *testing.T) {
 		const max = 100
 		changes := make([]repository.VersionedFileChange, max)
 		for i := range changes {
@@ -438,7 +438,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, max)
 		assert.NoError(t, err)
-		assert.False(t, got, "diff at threshold must force a full sync (inclusive >=)")
+		assert.True(t, got, "diff at threshold must stay incremental (strict >)")
 	})
 
 	t.Run("should not use incremental sync when diff exceeds max size", func(t *testing.T) {

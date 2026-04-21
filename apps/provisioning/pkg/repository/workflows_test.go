@@ -493,10 +493,10 @@ func TestCanUseIncrementalSyncInController(t *testing.T) {
 			want:                  true,
 		},
 		{
-			name:                  "diff at threshold forces full sync (inclusive greater-or-equal)",
+			name:                  "diff at threshold stays incremental (strict greater-than)",
 			changes:               createdChanges(100),
 			maxIncrementalChanges: 100,
-			want:                  false,
+			want:                  true,
 		},
 		{
 			name:                  "diff above threshold forces full sync",
