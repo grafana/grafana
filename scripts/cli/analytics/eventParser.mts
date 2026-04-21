@@ -9,9 +9,14 @@ import {
   type VariableStatement,
 } from 'ts-morph';
 
-import type { EventData, EventNamespace, EventPropertySchema } from '../types';
+import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
 import { getMetadataFromJSDocs, resolveType } from './typeResolution.mts';
+
+//TODO
+//1. get function calls : within the obj they are also function calls
+//2. just description => owner using code owner of the file
+//3. find default property description
 
 /**
  * Finds all events declared in a file. Supports two patterns:
