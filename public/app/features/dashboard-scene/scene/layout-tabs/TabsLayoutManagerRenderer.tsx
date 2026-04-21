@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
-import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, TabsBar, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
@@ -23,6 +23,7 @@ import { type TabsLayoutManager } from './TabsLayoutManager';
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
   const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
+  const theme = useTheme2();
 
   const { tabs, key, placeholder, isDropTarget } = model.useState();
   const currentTab = model.getCurrentTab();
@@ -41,6 +42,51 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       model.setState({ currentTabSlug: currentTab.getSlug() });
     }
   }, [currentTab, model]);
+
+  // Keep the active tab visible within the horizontal tab strip when it changes
+  // (initial mount, URL/history navigation, programmatic switch, newly added tab).
+  // Reserved margin matches the mask-image "fully opaque" stop so the active tab
+  // never lands in the faded region behind a chevron button.
+  //
+  // The add-tab path is subtle: `addNewTab` sets both `tabs` and `currentTabSlug`
+  // in one setState, but the ensuing commit goes through several intermediate
+  // renders (edit pane selection, isNewElement, DnD re-layout). We:
+  //   - run once synchronously after commit in case the ref is already attached
+  //     and layout is stable (covers the simple switch-tab case);
+  //   - then wait through two animation frames as a fallback. A single rAF can
+  //     still fire before DnD has finished positioning a freshly added
+  //     Draggable; a second rAF gives it another layout/paint cycle.
+  const fadePx = theme.spacing.gridSize * TAB_FADE_SPACING;
+  useEffect(() => {
+    let raf1 = 0;
+    let raf2 = 0;
+
+    const tryScroll = () => {
+      const container = scrollContainerRef.current;
+      const tabEl = currentTab?.containerRef.current ?? null;
+      if (!container || !tabEl) {
+        return false;
+      }
+      scrollTabIntoView(container, tabEl, fadePx);
+      return true;
+    };
+
+    // Try immediately — this is enough when the tab was already in the DOM.
+    tryScroll();
+
+    // Retry after layout has settled. Two frames handle DnD libraries that
+    // re-measure after their own rAF callback.
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        tryScroll();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [currentTab, fadePx]);
 
   if (soloPanelContext) {
     return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
@@ -269,6 +315,44 @@ function mergeRefs<T>(
 }
 
 const SCROLL_TOLERANCE_PX = 1;
+
+// Grid-unit multiplier that mirrors the fully-opaque stop of the tabs mask-image
+// fade (see tabsContainerFade*). Kept as a multiple of the theme grid size so the
+// reserved area stays visually consistent with the fade if the theme changes.
+const TAB_FADE_SPACING = 6;
+
+/**
+ * Horizontally scrolls `container` so `tab` is fully visible without landing
+ * under the fade region. Leaves scroll untouched if the tab is already inside
+ * the non-faded window.
+ *
+ * We intentionally use getBoundingClientRect rather than offsetLeft: the tab is
+ * wrapped in a Draggable div that can become the tab's offsetParent, which
+ * makes offsetLeft unreliable as a position in the scroll container's
+ * scroll-coordinate space.
+ */
+function scrollTabIntoView(container: HTMLElement, tab: HTMLElement, fadePx: number) {
+  const containerRect = container.getBoundingClientRect();
+  const tabRect = tab.getBoundingClientRect();
+
+  const tabLeftInScroll = tabRect.left - containerRect.left + container.scrollLeft;
+  const tabRightInScroll = tabLeftInScroll + tabRect.width;
+
+  const viewLeft = container.scrollLeft + fadePx;
+  const viewRight = container.scrollLeft + container.clientWidth - fadePx;
+
+  let target = container.scrollLeft;
+  if (tabLeftInScroll < viewLeft) {
+    target = tabLeftInScroll - fadePx;
+  } else if (tabRightInScroll > viewRight) {
+    target = tabRightInScroll - container.clientWidth + fadePx;
+  } else {
+    return;
+  }
+
+  const max = container.scrollWidth - container.clientWidth;
+  container.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: 'smooth' });
+}
 
 function useScrollOverflow(elementRef: React.RefObject<HTMLElement | null>, depValue: number) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
