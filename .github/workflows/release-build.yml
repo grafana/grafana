@@ -282,7 +282,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -379,7 +379,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -478,7 +478,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -577,7 +577,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.ubuntu.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
