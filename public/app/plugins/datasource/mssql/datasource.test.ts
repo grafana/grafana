@@ -1,19 +1,19 @@
 import { of } from 'rxjs';
 
 import {
+  createDataFrame,
+  type CustomVariableModel,
   dataFrameToJSON,
-  getDefaultTimeRange,
   type DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  getDefaultTimeRange,
   LoadingState,
   type MetricFindValue,
-  createDataFrame,
-  TimeRange,
-  CustomVariableModel,
+  type TimeRange,
 } from '@grafana/data';
-import { BackendSrv, FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { SQLQuery } from '@grafana/sql';
+import { type BackendSrv, type FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { type SQLQuery } from '@grafana/sql';
 
 import { MssqlDatasource } from './datasource';
 import { type MssqlOptions } from './types';
