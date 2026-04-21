@@ -1127,6 +1127,7 @@
       "tooltip-expand-row": "Expand row"
     },
     "edit-contact-point": {
+      "receiver-not-found-body": "Sorry, this contact point does not seem to exist.",
       "text-loading": "Loading...",
       "title-failed-to-fetch-contact-point": "Failed to fetch contact point",
       "title-receiver-not-found": "Receiver not found"
@@ -3574,6 +3575,12 @@
       "compact-firing": "firing",
       "compact-pending": "pending",
       "compact-rules": "rules",
+      "contact-point-drawer": {
+        "no-alertmanager-description": "No alert manager is available for this session.",
+        "no-alertmanager-title": "No alert manager",
+        "no-permission-description": "You do not have permission to view contact points.",
+        "no-permission-title": "No permission to view contact points"
+      },
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
@@ -3586,8 +3593,10 @@
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
         "back": "Back",
+        "contact-point-title": "Contact point: {{name}}",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
+        "edit-contact-point-title": "Edit {{name}}",
         "instance-details": "Instance details",
         "section-silence": "Silence",
         "silence-button": "Silence",
