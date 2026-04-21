@@ -1,6 +1,6 @@
 import { type Observable } from 'rxjs';
 
-import { type ToMatchSnapshotRest } from './toMatchCanvasSnapshot';
+import { type ToMatchSnapshotRest } from './toMatchUPlotSnapshot';
 
 export const OBSERVABLE_TEST_TIMEOUT_IN_MS = 1000;
 

@@ -94,7 +94,7 @@ describe('drawMarkers', () => {
           if (testName === 'clipping region') {
             expect(setup(u)).toEqual([]);
           } else {
-            expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(dataOverrides ?? defaultData, seriesOverrides);
+            expect(scrubOutput(setup(u))).toMatchUPlotSnapshot(dataOverrides ?? defaultData, seriesOverrides);
           }
         });
       }
@@ -141,7 +141,7 @@ describe('drawMarkers', () => {
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(volumeAlignedData, volumeSeries);
+        expect(scrubOutput(setup(u))).toMatchUPlotSnapshot(volumeAlignedData, volumeSeries);
       }
     });
   });
@@ -185,7 +185,7 @@ describe('drawMarkers', () => {
       if (testName === 'clipping region') {
         expect(setup(u)).toEqual([]);
       } else {
-        expect(scrubOutput(setup(u))).toMatchCanvasSnapshot(volumeAlignedData, volumeSeries);
+        expect(scrubOutput(setup(u))).toMatchUPlotSnapshot(volumeAlignedData, volumeSeries);
       }
     });
   });

@@ -7,11 +7,12 @@ type SnapshotMismatch = jest.CustomMatcherResult & {
   expected?: string;
 };
 
-export function toMatchCanvasSnapshot(
+export function toMatchUPlotSnapshot(
   this: Context,
   received: CanvasRenderingContext2DEvent[],
   data: uPlot.AlignedData,
   series?: uPlot.Series[],
+  debug = false,
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
   const result = toMatchSnapshot.call(this, received, ...rest) as SnapshotMismatch; // @todo how to properly get actual from jest?

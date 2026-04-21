@@ -4207,6 +4207,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     chance: "npm:^1.1.13"
     jest: "npm:29.7.0"
+    jest-canvas-mock: "npm:^2.5.2"
     jest-matcher-utils: "npm:29.7.0"
     jest-snapshot: "npm:^30.3.0"
     lodash: "npm:^4.17.23"
@@ -22928,7 +22929,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-canvas-mock@npm:2.5.2":
+"jest-canvas-mock@npm:2.5.2, jest-canvas-mock@npm:^2.5.2":
   version: 2.5.2
   resolution: "jest-canvas-mock@npm:2.5.2"
   dependencies:
