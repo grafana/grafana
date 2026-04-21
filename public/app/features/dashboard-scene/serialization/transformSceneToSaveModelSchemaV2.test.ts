@@ -1578,10 +1578,8 @@ describe('vizPanelToSchemaV2 time range fields', () => {
 
   function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
     const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
-    if (result.kind !== 'Panel') {
-      throw new Error(`Expected PanelKind, got ${result.kind}`);
-    }
-    return result.spec.data.spec.queryOptions;
+    expect(result.kind).toEqual('Panel')
+    return (result.spec as PanelSpec).data.spec.queryOptions;
   }
 
   function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>) {
