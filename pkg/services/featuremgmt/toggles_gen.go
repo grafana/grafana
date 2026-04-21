@@ -399,9 +399,9 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
-	// FlagZanzanaSearchUsersPermissions
-	// Search users permissions using Zanzana.
-	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+	// FlagZanzanaMergeUserPermissions
+	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
+	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -861,6 +861,10 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagFrontendServiceSettingsSourceFilter
+	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
+	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
 
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
