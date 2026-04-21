@@ -224,10 +224,7 @@ describe('contact points', () => {
 
       // Check edit buttons by their href to verify which contact points they belong to
       expect(editButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/lotsa-emails/edit');
-      expect(editButtons[1]).toHaveAttribute(
-        'href',
-        '/alerting/notifications/receivers/OnCall%20Conctact%20point/edit'
-      );
+      expect(editButtons[1]).toHaveAttribute('href', '/alerting/notifications/receivers/OnCall%20Contact%20point/edit');
       expect(editButtons[2]).toHaveAttribute(
         'href',
         '/alerting/notifications/receivers/Slack%20with%20multiple%20channels/edit'
