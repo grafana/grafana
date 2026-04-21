@@ -76,37 +76,51 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	if err != nil {
 		return nil, err
 	}
-	var tmp authlib.CheckResponse
-	check := func(verb string) bool {
-		if err != nil {
-			return false
+
+	folder := obj.GetFolder()
+	results, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: ns.Value,
+		Checks: []authlib.BatchCheckItem{{
+			CorrelationID: "canAdmin",
+			Verb:          utils.VerbSetPermissions,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canDelete",
+			Verb:          utils.VerbDelete,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canUpdate",
+			Verb:          utils.VerbUpdate,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canSave",
+			Verb:          utils.VerbCreate, // new folder in the parent one
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Folder:        folder, // Create a new folder in the parent folder
+		}},
+	})
+	check := func(key string) bool {
+		v, ok := results.Results[key]
+		if ok {
+			return v.Allowed
 		}
-		tmp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      verb,
-			Group:     foldersV1.GROUP,
-			Resource:  foldersV1.RESOURCE,
-			Namespace: ns.Value,
-			Name:      name,
-		}, obj.GetFolder())
-		return tmp.Allowed
+		return false
 	}
 
-	rsp := &foldersV1.FolderAccessInfo{}
-	rsp.CanAdmin = check(utils.VerbSetPermissions)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanDelete = rsp.CanAdmin || check(utils.VerbDelete)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanEdit = rsp.CanAdmin || check(utils.VerbUpdate)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanSave = rsp.CanAdmin || check(utils.VerbCreate) // or the same as update?
-	if err != nil {
-		return nil, err
-	}
-	return rsp, nil
+	return &foldersV1.FolderAccessInfo{
+		CanAdmin:  check("canAdmin"),
+		CanDelete: check("canDelete"),
+		CanEdit:   check("canUpdate"),
+		CanSave:   check("canSave"),
+	}, nil
 }
