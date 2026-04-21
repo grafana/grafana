@@ -100,7 +100,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
   return (
     <div className={styles.wrapper}>
       <Resizable
-        onResize={handleResize}
+        onResizeStop={handleResize}
         handleClasses={{ left: dragStyles.dragHandleVertical }}
         defaultSize={{ width: detailsWidth, height: '100%' }}
         size={{ width: detailsWidth, height: '100%' }}

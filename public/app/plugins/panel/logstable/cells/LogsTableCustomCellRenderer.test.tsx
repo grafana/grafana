@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
-import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 
