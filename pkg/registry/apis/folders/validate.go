@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -72,6 +73,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to read metadata from object: %w", err)
 	}
 
+	// UID format is only validated on create. On update the Kubernetes API server enforces
+	// that the object name (which maps to the UID) is immutable, so re-validating here
+	// would be redundant.
 	if !util.IsValidShortUID(id) {
 		return dashboards.ErrDashboardInvalidUid
 	}
@@ -80,8 +84,14 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return dashboards.ErrDashboardUidTooLong
 	}
 
+	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
+
 	if f.Spec.Title == "" {
 		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	parentName := meta.GetFolder()
@@ -125,8 +135,14 @@ func validateOnUpdate(ctx context.Context,
 		return err
 	}
 
+	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
+
 	if obj.Spec.Title == "" {
 		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {

@@ -67,14 +67,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grpcServer",
-			Description: "Run the GRPC server",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,
@@ -413,15 +405,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesUnifiedStorageQuotas",
-			Description:     "Adds support for Kubernetes unified storage quotas",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaSearchAndStorageSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
@@ -705,9 +688,9 @@ var (
 		{
 			Name:        "sceneCsvExport",
 			Description: "Enables CSV export using scenes dashboard architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -1235,8 +1218,8 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "zanzanaSearchUsersPermissions",
-			Description:  "Search users permissions using Zanzana.",
+			Name:         "zanzanaMergeUserPermissions",
+			Description:  "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1557,15 +1540,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
-		},
-		{
-			Name:         "unifiedStorageSearchUI",
-			Description:  "Enable unified storage search UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
@@ -2195,7 +2169,7 @@ var (
 		{
 			Name:        "teamFolders",
 			Description: "Enables team folders functionality",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
@@ -2766,6 +2740,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "frontendService.settingsSourceFilter",
+			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,
@@ -2938,14 +2921,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryServiceQueryCaching",
-			Description: "Enables the query service to do query caching",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "tracesDrilldownTimeSeeker",
 			Description: "Enables the time seeker in traces drilldown",
 			Stage:       FeatureStageExperimental,
@@ -3004,6 +2979,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "querycaching.useInQueryService",
+			Description: "Enables the query service to do query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:         "compiledBootScript",
 			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
 			Stage:        FeatureStageExperimental,
@@ -3037,6 +3020,22 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "datasource.useNewCRUDAPIs",
+			Description: "Use the new datasource API groups for datasource CRUD requests, backend flag",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "reporting.anyPageReporting",
+			Description: "Enables reporting for any page in Grafana",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

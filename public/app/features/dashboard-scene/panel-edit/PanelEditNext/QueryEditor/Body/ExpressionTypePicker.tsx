@@ -33,7 +33,7 @@ export function ExpressionTypePicker() {
               reportInteraction('dashboards_expression_interaction', {
                 action: 'add_expression',
                 expression_type: item.value,
-                context: 'panel_query_section',
+                context: 'query_editor_next',
               });
               finalizePendingExpression(item.value);
             }}

@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var updateGoldenFiles = false
@@ -30,7 +29,7 @@ var updateGoldenFiles = false
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 func TestIntegrationPostgresSnapshots(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	skipIntegrationTestInShortMode(t)
 
 	// the logic in this function is copied from postgres_tests.go
 	shouldRunTest := func() bool {

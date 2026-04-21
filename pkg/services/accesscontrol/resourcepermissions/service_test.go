@@ -664,7 +664,7 @@ func TestMapPermission_ServiceAccount(t *testing.T) {
 
 	t.Run("flag off: emits action set token AND granular actions", func(t *testing.T) {
 		svc := &Service{options: saOpts}
-		actions, err := svc.mapPermission(context.Background(), "Edit")
+		actions, err := svc.mapPermission("Edit")
 		require.NoError(t, err)
 		assert.Contains(t, actions, saOpts.GetActionSetName("Edit"), "should include action set token")
 		assert.Contains(t, actions, serviceaccounts.ActionRead, "should include granular read action")
@@ -685,7 +685,7 @@ func TestMapPermission_ServiceAccount(t *testing.T) {
 		require.NoError(t, openfeature.SetProviderAndWait(provider))
 
 		svc := &Service{options: saOpts}
-		actions, err := svc.mapPermission(context.Background(), "Edit")
+		actions, err := svc.mapPermission("Edit")
 		require.NoError(t, err)
 		require.Len(t, actions, 1)
 		assert.Equal(t, saOpts.GetActionSetName("Edit"), actions[0])
