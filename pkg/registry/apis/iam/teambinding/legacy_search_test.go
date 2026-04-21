@@ -185,10 +185,10 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should cap limit at 100", func(t *testing.T) {
+	t.Run("should cap limit at common.MaxListLimit", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(100), query.Pagination.Limit)
+				require.Equal(t, common.MaxListLimit, query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
@@ -222,10 +222,10 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should default limit to 50 when limit is 0", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is 0", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
@@ -259,10 +259,10 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should default limit to 50 when limit is negative", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is negative", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}

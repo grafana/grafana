@@ -14,6 +14,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -41,7 +42,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		httpHandler.ServeHTTP(w, req)
 
 		require.NotNil(t, mockClient.LastSearchRequest)
-		require.Equal(t, int64(50), mockClient.LastSearchRequest.Limit)
+		require.Equal(t, int64(common.DefaultListLimit), mockClient.LastSearchRequest.Limit)
 		require.Equal(t, int64(0), mockClient.LastSearchRequest.Offset)
 		require.Equal(t, int64(1), mockClient.LastSearchRequest.Page)
 		require.False(t, mockClient.LastSearchRequest.Explain)
