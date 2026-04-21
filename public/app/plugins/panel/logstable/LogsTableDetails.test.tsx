@@ -9,11 +9,7 @@ import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 
-import {
-  emptyContextData,
-  LogDetailsContext,
-  type LogDetailsContextData,
-} from './LogDetailsContext';
+import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
 import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
@@ -198,12 +194,7 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails
-            options={baseOptions}
-            onOptionsChange={jest.fn()}
-            timeRange={timeRange}
-            timeZone="UTC"
-          />
+          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
@@ -253,12 +244,7 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails
-            options={baseOptions}
-            onOptionsChange={jest.fn()}
-            timeRange={timeRange}
-            timeZone="UTC"
-          />
+          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
@@ -275,7 +261,7 @@ describe('LogsTableDetails', () => {
 
   test('closes details on Escape when at least one log is open', async () => {
     const closeDetails = jest.fn();
-   setup({ closeDetails });
+    setup({ closeDetails });
 
     await waitFor(() => {
       expect(screen.getByText('Log line')).toBeInTheDocument();
