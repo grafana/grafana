@@ -38,12 +38,6 @@ export async function loadNamespacedResources(namespace: string, language: strin
 
   const resolvedLanguage = language === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : language;
 
-  // Don't load resources for the default language as they are already embedded in the source code.
-  // Pseudo-locale still needs the default-language resources loaded for post-processing.
-  if (language === DEFAULT_LANGUAGE) {
-    return;
-  }
-
   return Promise.all(
     loaders.map(async (loader) => {
       try {

@@ -109,7 +109,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.3.0 // @grafana/data-sources-plugins
-	github.com/grafana/schemads v0.0.8 // @grafana/data-sources
+	github.com/grafana/schemads v0.0.9 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
@@ -175,7 +175,6 @@ require (
 	github.com/tjhop/slog-gokit v0.1.6 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
-	github.com/urfave/cli/v3 v3.6.2 // @grafana/grafana-backend-group
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // @grafana/grafana-operator-experience-squad
@@ -428,7 +427,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/facette/natsort v0.0.0-20181210072756-2cd4dd1e2dcb // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // @grafana/identity-access-team
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
@@ -697,7 +696,7 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
+	sigs.k8s.io/yaml v1.6.0 // @grafana/identity-access-team
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
 
@@ -709,9 +708,10 @@ replace (
 	// which requires github.com/docker/docker/api/types/build package
 	github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
 
-	// Use our fork of dolthub/go-mysql-server which makes non-cgo the default
-	// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
-	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana
+	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
+	// and makes non-cgo the default for developer builds.
+	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-1
+	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-1
 
 	// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap (used by cog)
 	github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
