@@ -16,6 +16,21 @@ const usedByRules = ['grafana-default-email'];
 const cannotBeEdited = ['grafana-default-email'];
 const cannotBeDeleted = ['grafana-default-email'];
 
+/** Parse `metadata.name=<value>` from a Kubernetes-style fieldSelector (single selector; value may be escaped). */
+function parseMetadataNameFromFieldSelector(fieldSelector: string | null): string | undefined {
+  if (!fieldSelector) {
+    return undefined;
+  }
+  for (const part of fieldSelector.split(',')) {
+    const trimmed = part.trim();
+    const m = /^metadata\.name=(.+)$/.exec(trimmed);
+    if (m) {
+      return m[1].replace(/\\,/g, ',').replace(/\\=/g, '=').replace(/\\\\/g, '\\');
+    }
+  }
+  return undefined;
+}
+
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
@@ -32,6 +47,8 @@ const getReceiversList = () => {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Receiver',
         metadata: {
+          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
+          name: contactPoint.name,
           // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
           uid: contactPoint.name,
           annotations: {
@@ -55,8 +72,15 @@ const getReceiversList = () => {
 };
 
 const listNamespacedReceiverHandler = () =>
-  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () => {
-    return HttpResponse.json(getReceiversList());
+  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, ({ request }) => {
+    const list = getReceiversList();
+    const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
+    const wantedName = parseMetadataNameFromFieldSelector(fieldSelector);
+    if (wantedName !== undefined) {
+      const filtered = list.items.filter((receiver) => receiver.metadata?.name === wantedName);
+      return HttpResponse.json({ ...list, items: filtered });
+    }
+    return HttpResponse.json(list);
   });
 
 const getNamespacedReceiverHandler = () =>
