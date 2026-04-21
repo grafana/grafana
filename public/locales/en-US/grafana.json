@@ -14060,7 +14060,6 @@
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
-      "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
       "remove-transformation-filter": "Remove filter",
@@ -14119,6 +14118,7 @@
       "placeholder": {
         "no-limit": "No limit"
       },
+      "query-inspector": "Query inspector",
       "query-options": "Query Options"
     },
     "header": {
