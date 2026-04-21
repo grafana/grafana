@@ -9,6 +9,7 @@ import server from '@grafana/test-utils/server';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { receiverConfigToK8sIntegration, stringifyFieldSelector } from 'app/features/alerting/unified/utils/k8s/utils';
+import { type GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -43,8 +44,9 @@ describe('useGetContactPoint (Grafana managed / K8s)', () => {
     });
 
     expect(result.current.error).toBeUndefined();
-    expect(result.current.data?.name).toBe('lotsa-emails');
-    expect(result.current.data?.id).toBe('lotsa-emails');
+    const cp = result.current.data as GrafanaManagedContactPoint | undefined;
+    expect(cp?.name).toBe('lotsa-emails');
+    expect(cp?.id).toBe('lotsa-emails');
   });
 
   it('resolves by listing with metadata.name = base64UrlEncode(title) when a direct metadata.name match returns no items', async () => {
@@ -102,7 +104,8 @@ describe('useGetContactPoint (Grafana managed / K8s)', () => {
     });
 
     expect(result.current.error).toBeUndefined();
-    expect(result.current.data?.name).toBe(title);
-    expect(result.current.data?.id).toBe(base64UrlEncode(title));
+    const cp = result.current.data as GrafanaManagedContactPoint | undefined;
+    expect(cp?.name).toBe(title);
+    expect(cp?.id).toBe(base64UrlEncode(title));
   });
 });
