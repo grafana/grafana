@@ -67,7 +67,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return nil, err
 	}
 
-	// Can view is managed here (and in the Authorizer)
+	// Can view is managed by both the authorizer and the storage layer
 	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -109,6 +109,10 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			Folder:        folder, // Create a new folder in the parent folder
 		}},
 	})
+	if err != nil {
+		return nil, err
+	}
+
 	check := func(key string) bool {
 		v, ok := results.Results[key]
 		if ok {
@@ -116,7 +120,6 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		}
 		return false
 	}
-
 	return &foldersV1.FolderAccessInfo{
 		CanAdmin:  check("canAdmin"),
 		CanDelete: check("canDelete"),
