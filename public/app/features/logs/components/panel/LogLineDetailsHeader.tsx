@@ -326,8 +326,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
-    borderTopLeftRadius: theme.shape.radius.default,
-    borderTopRightRadius: theme.shape.radius.default,
+    borderTopLeftRadius: mode === 'inline' ? theme.shape.radius.default : undefined,
+    borderTopRightRadius: mode === 'inline' ? theme.shape.radius.default : undefined,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
