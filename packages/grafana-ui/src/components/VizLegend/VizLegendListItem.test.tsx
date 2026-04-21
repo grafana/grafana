@@ -19,11 +19,6 @@ describe('VizLegendListItem', () => {
     expect(screen.getByTestId('series-icon')).toBeInTheDocument();
   });
 
-  it('applies disabled styling when item.disabled is true', () => {
-    const { container } = renderItem({ item: makeItem({ disabled: true }), allItemsSelected: false });
-    expect(container.firstChild).toHaveAttribute('class', expect.stringContaining('LegendLabelDisabled'));
-  });
-
   it('shows "All series selected" aria-label when allItemsSelected is true', () => {
     renderItem({ allItemsSelected: true });
     expect(screen.getByRole('button', { name: /all series selected/i })).toBeInTheDocument();

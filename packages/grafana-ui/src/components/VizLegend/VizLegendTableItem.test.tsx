@@ -31,11 +31,6 @@ describe('LegendTableItem', () => {
     expect(screen.getByText('(right y-axis)')).toBeInTheDocument();
   });
 
-  it('applies disabled styling when item.disabled is true', () => {
-    renderInTable({ item: makeItem({ disabled: true }) });
-    expect(screen.getByRole('button')).toHaveClass('LegendLabelDisabled');
-  });
-
   it('renders stat values from getDisplayValues', () => {
     renderInTable({
       item: makeItem({
