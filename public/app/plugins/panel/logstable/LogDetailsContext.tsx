@@ -91,7 +91,6 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
           setCurrentLog(newShowDetails[newShowDetails.length - 1]);
         }
       } else {
-        // Supporting one displayed details for now
         setShowDetails([...showDetails, log]);
         setCurrentLog(log);
       }
