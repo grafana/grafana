@@ -1,16 +1,12 @@
 name: Run commands when issues are labeled or comments added
-
 on:
   issues:
     types: [labeled, unlabeled]
   issue_comment:
     types: [created]
-
 concurrency:
   group: issue-commands-${{ github.event.issue.number }}
-
 permissions: {}
-
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -24,7 +20,6 @@ jobs:
           if [ "${{ github.repository }}" == "grafana/grafana" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
-
   main:
     needs: config
     if: needs.config.outputs.has-secrets
@@ -35,21 +30,19 @@ jobs:
     steps:
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@10c9e32a5db1e4795e06f0590accf5ca27e2b915 # main
         with:
           repo_secrets: |
             GITHUB_APP_ID=grafana_pr_automation_app:app_id
             GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
       - name: Generate token
         id: generate_token
         uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
         with:
           app-id: ${{ env.GITHUB_APP_ID }}
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
-
       - name: Run commands
-        uses: grafana/grafana-github-actions/commands@main
+        uses: grafana/grafana-github-actions/commands@6606a86307be7d0f4249bc38a19a5f5818d2cd55 # main
         with:
           metricsWriteAPIKey: ""
           token: ${{ steps.generate_token.outputs.token }}
