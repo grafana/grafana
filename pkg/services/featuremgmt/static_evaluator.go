@@ -38,8 +38,8 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 }
 
 // staticEvaluator implements StaticFlagEvaluator for static providers.
-// It holds the flags map for metadata (listing, type detection) and uses the
-// global OpenFeature client for evaluation.
+// It holds the flags map for type detection and listing, and uses the global
+// OpenFeature client for evaluation.
 type staticEvaluator struct {
 	flags  map[string]memprovider.InMemoryFlag
 	client openfeature.IClient
@@ -54,7 +54,6 @@ func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmod
 
 	evalCtx := openfeature.TransactionContext(ctx)
 
-	// Constructs responde from resolution details
 	buildResponse := func(value any, variant string, metadata map[string]any) goffmodel.OFREPEvaluateSuccessResponse {
 		return goffmodel.OFREPEvaluateSuccessResponse{
 			Key:      flagKey,
@@ -66,8 +65,6 @@ func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmod
 	}
 
 	typedFlag := TypedFlag(flag)
-
-	// Evaluate based on type
 	switch typedFlag.GetFlagType() {
 	case FlagTypeBoolean:
 		result, err := s.client.BooleanValueDetails(ctx, flagKey, false, evalCtx)

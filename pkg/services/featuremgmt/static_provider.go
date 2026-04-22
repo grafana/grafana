@@ -10,35 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// inMemoryBulkProvider is a wrapper around memprovider.InMemoryProvider that
-// also allows for bulk evaluation of flags, necessary to proxy OFREP requests.
-type inMemoryBulkProvider struct {
-	memprovider.InMemoryProvider
-	flags map[string]memprovider.InMemoryFlag
-}
-
-func newInMemoryBulkProvider(flags map[string]memprovider.InMemoryFlag) *inMemoryBulkProvider {
-	return &inMemoryBulkProvider{
-		InMemoryProvider: memprovider.NewInMemoryProvider(flags),
-		flags:            flags,
-	}
-}
-
-// ListFlags returns a list of all flags registered with the provider.
-func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
-	keys := make([]string, 0, len(p.flags))
-	for key := range p.flags {
-		keys = append(keys, key)
-	}
-	return keys, nil
-}
-
 func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
 	flags, err := buildStaticFlagsMap(confFlags, standardFlags)
 	if err != nil {
 		return nil, err
 	}
-	return newInMemoryBulkProvider(flags), nil
+	return memprovider.NewInMemoryProvider(flags), nil
 }
 
 func buildStaticFlagsMap(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (map[string]memprovider.InMemoryFlag, error) {
@@ -67,5 +44,5 @@ func newStaticProviderFromCfg(cfg *setting.Cfg) (openfeature.FeatureProvider, er
 	if err != nil {
 		return nil, err
 	}
-	return newInMemoryBulkProvider(flags), nil
+	return memprovider.NewInMemoryProvider(flags), nil
 }
