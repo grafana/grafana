@@ -1,23 +1,27 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { StandardEditorProps } from '@grafana/data';
+import type { SelectFieldConfigSettings, StandardEditorProps } from '@grafana/data';
 
 import { MultiSelectValueEditor } from './multiSelect';
 
+const multiSelectSettings: SelectFieldConfigSettings<string> = {
+  options: [
+    { label: 'A', value: 'a' },
+    { label: 'B', value: 'b' },
+  ],
+};
+
+type MultiSelectEditorProps = StandardEditorProps<string[], SelectFieldConfigSettings<string>>;
+
 describe('MultiSelectValueEditor', () => {
-  const buildProps = (
-    overrides: Partial<StandardEditorProps<string[], { options?: Array<{ label: string; value: string }> }>>
-  ): StandardEditorProps<string[], { options?: Array<{ label: string; value: string }> }> => ({
+  const buildProps = (overrides: Partial<MultiSelectEditorProps>): MultiSelectEditorProps => ({
     value: ['a'],
     onChange: jest.fn(),
     item: {
-      settings: {
-        options: [
-          { label: 'A', value: 'a' },
-          { label: 'B', value: 'b' },
-        ],
-      },
+      id: 'multi-select-item',
+      name: 'Multi select',
+      settings: multiSelectSettings,
     },
     context: { data: [] },
     id: 'multi-select-test',

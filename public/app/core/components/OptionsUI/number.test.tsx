@@ -14,6 +14,7 @@ describe('NumberValueEditor', () => {
         value={2}
         onChange={onChange}
         item={{ settings: { integer: true } } as typeof baseItem}
+        context={{ data: [] }}
         id="n1"
       />
     );
@@ -31,6 +32,7 @@ describe('NumberValueEditor', () => {
         value={1}
         onChange={onChange}
         item={baseItem}
+        context={{ data: [] }}
         id="n2"
       />
     );

@@ -26,6 +26,7 @@ describe('StatsPickerEditor', () => {
         value={['mean']}
         onChange={onChange}
         item={{ settings: { allowMultiple: true, defaultStat: 'sum' } } as Parameters<typeof StatsPickerEditor>[0]['item']}
+        context={{ data: [] }}
       />
     );
 

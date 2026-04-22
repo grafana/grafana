@@ -18,6 +18,7 @@ describe('UnitValueEditor', () => {
         value="bytes"
         onChange={jest.fn()}
         item={{ settings: {} } as Parameters<typeof UnitValueEditor>[0]['item']}
+        context={{ data: [] }}
         id="u1"
       />
     );
@@ -35,6 +36,7 @@ describe('UnitValueEditor', () => {
         value="short"
         onChange={onChange}
         item={{ settings: { isClearable: true } } as Parameters<typeof UnitValueEditor>[0]['item']}
+        context={{ data: [] }}
         id="u2"
       />
     );

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactElement, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { ColorValueEditor } from './color';
 
@@ -8,8 +8,7 @@ jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
   return {
     ...actual,
-    ColorPicker: jest.fn(
-      ({ children }: { children: (args: { showColorPicker: () => void }) => ReactNode }): ReactElement | null =>
+    ColorPicker: jest.fn(({ children }: { children: (args: { showColorPicker: () => void }) => ReactNode }) =>
       children({
         showColorPicker: jest.fn(),
       })

@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { VariableSuggestionsScope } from '@grafana/data';
+import {
+  ActionType,
+  HttpRequestMethod,
+  VariableOrigin,
+  VariableSuggestionsScope,
+  type Action,
+} from '@grafana/data';
 
 jest.mock('app/features/actions/ActionsInlineEditor', () => ({
   ActionsInlineEditor: jest.fn(() => <div data-testid="actions-inline" />),
@@ -10,21 +16,33 @@ import { ActionsValueEditor } from './actions';
 
 const { ActionsInlineEditor } = jest.requireMock('app/features/actions/ActionsInlineEditor');
 
+const minimalAction: Action = {
+  type: ActionType.Fetch,
+  title: 'act',
+  [ActionType.Fetch]: {
+    method: HttpRequestMethod.GET,
+    url: 'http://example.com',
+  },
+};
+
+const editorItem = { id: 'actions-editor', name: 'Actions', settings: {} };
+
 describe('ActionsValueEditor', () => {
   beforeEach(() => {
     jest.mocked(ActionsInlineEditor).mockClear();
   });
 
   it('passes actions, data, and suggestion scope to ActionsInlineEditor', () => {
-    const getSuggestions = jest.fn(() => [{ label: 'a', value: 'b' }]);
+    const getSuggestions = jest.fn(() => [{ label: 'a', value: 'b', origin: VariableOrigin.Value }]);
     const onChange = jest.fn();
-    const actions = [{ title: 'act', icon: 'bell' }];
+    const actions = [minimalAction];
 
     render(
       <ActionsValueEditor
-        value={actions as Parameters<typeof ActionsValueEditor>[0]['value']}
+        value={actions}
         onChange={onChange}
         context={{ data: [], getSuggestions }}
+        item={editorItem}
       />
     );
 
@@ -39,14 +57,12 @@ describe('ActionsValueEditor', () => {
     );
 
     const getSuggestionsProp = ActionsInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(getSuggestionsProp()).toEqual([{ label: 'a', value: 'b' }]);
+    expect(getSuggestionsProp()).toEqual([{ label: 'a', value: 'b', origin: VariableOrigin.Value }]);
     expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
   });
 
   it('uses empty suggestions when context.getSuggestions is missing', () => {
-    render(
-      <ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} />
-    );
+    render(<ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
 
     const getSuggestionsProp = ActionsInlineEditor.mock.calls[0][0].getSuggestions;
     expect(getSuggestionsProp()).toEqual([]);

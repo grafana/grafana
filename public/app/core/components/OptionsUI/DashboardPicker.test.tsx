@@ -34,9 +34,10 @@ describe('DashboardPicker', () => {
 
     render(
       <DashboardPicker
-        value={undefined}
+        value=""
         onChange={onChange}
         item={{ settings: { placeholder: 'Choose', isClearable: true } } as Parameters<typeof DashboardPicker>[0]['item']}
+        context={{ data: [] }}
       />
     );
 

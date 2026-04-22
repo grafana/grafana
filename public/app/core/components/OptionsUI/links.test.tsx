@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { VariableSuggestionsScope } from '@grafana/data';
+import { VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
 
 import { DataLinksValueEditor } from './links';
 
@@ -20,7 +20,7 @@ describe('DataLinksValueEditor', () => {
   });
 
   it('passes links, data, showOneClick, and suggestion scope to DataLinksInlineEditor', () => {
-    const getSuggestions = jest.fn(() => [{ label: 's', value: 'v' }]);
+    const getSuggestions = jest.fn(() => [{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
     const onChange = jest.fn();
     const links = [{ title: 't', url: 'u' }];
 
@@ -46,7 +46,7 @@ describe('DataLinksValueEditor', () => {
 
     const getSuggestionsProp = DataLinksInlineEditor.mock.calls[0][0].getSuggestions;
     expect(typeof getSuggestionsProp).toBe('function');
-    expect(getSuggestionsProp()).toEqual([{ label: 's', value: 'v' }]);
+    expect(getSuggestionsProp()).toEqual([{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
     expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
   });
 

@@ -11,6 +11,7 @@ describe('SliderValueEditor', () => {
         value={10}
         onChange={onChange}
         item={{ settings: { min: 0, max: 20 } } as Parameters<typeof SliderValueEditor>[0]['item']}
+        context={{ data: [] }}
         id="slider-1"
       />
     );
@@ -30,6 +31,7 @@ describe('SliderValueEditor', () => {
         value={5}
         onChange={onChange}
         item={{ settings: { min: 0, max: 100 } } as Parameters<typeof SliderValueEditor>[0]['item']}
+        context={{ data: [] }}
         id="slider-2"
       />
     );
