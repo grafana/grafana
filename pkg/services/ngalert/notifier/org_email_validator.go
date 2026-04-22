@@ -101,7 +101,7 @@ func (v *OrgUserEmailValidator) addressExistsInOrg(ctx context.Context, requeste
 	}
 	for _, u := range result.OrgUsers {
 		if strings.EqualFold(u.Email, address) {
-			return !u.IsDisabled, nil
+			return true, nil
 		}
 	}
 	return false, nil

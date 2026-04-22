@@ -34,7 +34,7 @@ func emailConfig(addresses string) alertingModels.IntegrationConfig {
 	}
 }
 
-// orgHavingMember returns a FakeOrgService whose SearchOrgUsers returns the given email as an active member.
+// orgHavingMember returns a FakeOrgService whose SearchOrgUsers returns the given email as an org member.
 func orgHavingMember(email string) *orgtest.FakeOrgService {
 	svc := orgtest.NewOrgServiceFake()
 	svc.SearchOrgUsersFn = func(_ context.Context, q *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
@@ -98,10 +98,9 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			wantErr: "is not an allowed recipient for this organization",
 		},
 		{
-			name:    "email belongs to disabled user is rejected",
-			config:  emailConfig("alice@org.com"),
-			orgSvc:  disabledMember(),
-			wantErr: "is not an allowed recipient for this organization",
+			name:   "email belongs to disabled user is allowed",
+			config: emailConfig("alice@org.com"),
+			orgSvc: disabledMember(),
 		},
 		{
 			name:    "template in address returns error",
