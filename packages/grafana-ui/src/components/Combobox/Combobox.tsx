@@ -167,6 +167,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     noOptionsMessage,
     isOpen: isOpenProp,
     onIsOpenChange: onIsOpenChangeProp,
+    loading: loadingProp,
   } = props;
   const fieldContext = useFieldContext();
   const id = idProp ?? fieldContext.id;
@@ -185,7 +186,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     asyncLoading,
     asyncError,
     resetSearch,
-  } = useOptions(props.options, createCustomValue, customValueDescription);
+  } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {
@@ -386,7 +387,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
-  const loading = props.loading || asyncLoading;
+  const loading = loadingProp || fieldContext.loading || asyncLoading;
 
   const inputSuffix = (
     <>
