@@ -11,22 +11,30 @@ import "@openfeature/core";
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
+    | "faroSessionReplay"
     | "provisioningFolderMetadata"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
     | "recentlyViewedDashboards"
+    | "experimentRecentlyViewedDashboards"
     | "createdByMeSearchFilter"
     | "otelLogsFormatting"
     | "newLogContext"
+    | "useMTPlugins"
     | "dashboardSectionVariables"
     | "queryEditorNext"
+    | "managedPluginsV2"
     | "analyticsFramework"
+    | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
     | "splashScreen"
     | "grafana.newPreferencesPage"
-    | "reporting.anyPageReporting";
+    | "datasources.config.ui.useNewDatasourceCRUDAPIs"
+    | "datasources.apiserver.useNewAPIsForDatasourceResources"
+    | "reporting.anyPageReporting"
+    | "assistant.frontend.tools.dashboardTemplates";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

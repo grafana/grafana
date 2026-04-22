@@ -15,12 +15,24 @@ import {
 export const FlagKeys = {
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Enables the template dashboard assistant */
+  AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the created by me search filter on the browse dashboards page */
   CreatedByMeSearchFilter: "createdByMeSearchFilter",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
+  /** Use the new datasource API groups for datasource resource requests, frontend flag */
+  DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
+  /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
+  DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
+  DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
+  /** A/A test for recently viewed dashboards feature */
+  ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
+  /** Enable Faro session replay for Grafana */
+  FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
@@ -29,6 +41,8 @@ export const FlagKeys = {
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
+  /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
+  ManagedPluginsV2: "managedPluginsV2",
   /** New Log Context component */
   NewLogContext: "newLogContext",
   /** Enables the new logs panel */
@@ -47,6 +61,8 @@ export const FlagKeys = {
   SplashScreen: "splashScreen",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables plugins decoupling from bootdata */
+  UseMTPlugins: "useMTPlugins",
 } as const;
 
 /**
@@ -58,6 +74,17 @@ export const FlagKeys = {
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Enables the template dashboard assistant
+ *
+ * **Details:**
+ * - flag key: `assistant.frontend.tools.dashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
 };
 
 /**
@@ -91,6 +118,61 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
+};
+
+/**
+ * Use the new datasource API groups for datasource resource requests, frontend flag
+ *
+ * **Details:**
+ * - flag key: `datasources.apiserver.useNewAPIsForDatasourceResources`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.apiserver.useNewAPIsForDatasourceResources", false, options).value;
+};
+
+/**
+ * Use the new datasource API groups for datasource CRUD requests, frontend flag
+ *
+ * **Details:**
+ * - flag key: `datasources.config.ui.useNewDatasourceCRUDAPIs`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+ *
+ * **Details:**
+ * - flag key: `datasourcesApiServerEnableHealthEndpointFrontend`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasourcesApiServerEnableHealthEndpointFrontend", false, options).value;
+};
+
+/**
+ * A/A test for recently viewed dashboards feature
+ *
+ * **Details:**
+ * - flag key: `experimentRecentlyViewedDashboards`
+ * - default value: `false`
+ */
+export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("experimentRecentlyViewedDashboards", false, options).value;
+};
+
+/**
+ * Enable Faro session replay for Grafana
+ *
+ * **Details:**
+ * - flag key: `faroSessionReplay`
+ * - default value: `false`
+ */
+export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("faroSessionReplay", false, options).value;
 };
 
 /**
@@ -135,6 +217,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
  */
 export const useFlagLokiShardSplitting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("lokiShardSplitting", false, options).value;
+};
+
+/**
+ * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+ *
+ * **Details:**
+ * - flag key: `managedPluginsV2`
+ * - default value: `false`
+ */
+export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("managedPluginsV2", false, options).value;
 };
 
 /**
@@ -234,5 +327,16 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables plugins decoupling from bootdata
+ *
+ * **Details:**
+ * - flag key: `useMTPlugins`
+ * - default value: `false`
+ */
+export const useFlagUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useMTPlugins", false, options).value;
 };
 
