@@ -141,7 +141,9 @@ export function QueryEditorFooter() {
           onClick={onOpenInspector}
           aria-label={t('query-editor-next.footer.query-inspector', 'Query inspector')}
           tooltip={t('query-editor-next.footer.query-inspector', 'Query inspector')}
-        />
+        >
+          <Trans i18nKey="query-editor-next.footer.inspect-queries">Inspect queries</Trans>
+        </Button>
       </div>
     </div>
   );

@@ -14108,6 +14108,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max data points",
