@@ -2,11 +2,12 @@ import { autocompletion, type CompletionSource } from '@codemirror/autocomplete'
 import { EditorState } from '@codemirror/state';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { loadLanguageExtension, type CodeEditorLanguage } from './languageLoader';
+import { type CodeEditorLanguage } from './languageLoader';
+import { useLanguageExtension } from './useLanguageExtension';
 
 export type CodeEditorCompletionMode = 'override' | 'merge';
 
@@ -64,13 +65,6 @@ const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledb
   ];
 };
 
-type LoadedLanguageState = {
-  language?: CodeEditorLanguage;
-  extension: Extension | null;
-};
-
-const emptyLanguageState: LoadedLanguageState = { extension: null };
-
 const CodeEditor = memo(function CodeEditor({
   value,
   language,
@@ -83,36 +77,7 @@ const CodeEditor = memo(function CodeEditor({
   extensions: additionalExtensions,
 }: CodeEditorProps) {
   const theme = useTheme2();
-  const [loadedLanguageState, setLoadedLanguageState] = useState<LoadedLanguageState>(emptyLanguageState);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!language) {
-      setLoadedLanguageState(emptyLanguageState);
-      return;
-    }
-
-    setLoadedLanguageState(emptyLanguageState);
-
-    void loadLanguageExtension(language)
-      .then((extension) => {
-        if (!cancelled) {
-          setLoadedLanguageState({ language, extension });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoadedLanguageState(emptyLanguageState);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [language]);
-
-  const languageExtension = loadedLanguageState.language === language ? loadedLanguageState.extension : null;
+  const languageExtension = useLanguageExtension(language);
 
   const extensions = useMemo(
     () => [
