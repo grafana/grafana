@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		})
 
 		// Full sync: root folder + subfolder (original-uid) + dashboard = 3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		require.NoError(t, err)
 
 		// A full sync should replace the folder (delete old, create new) — net zero.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 
 		// The new folder should exist and the old one should be gone.
 		common.RequireFolderState(t, helper.Folders, "new-uid", "My Folder", "subfolder", repo)
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		})
 
 		// Full sync without quota: root + subfolder + dashboard = 3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 2)
 
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 
 		// Sync once so the "quota exceeded" condition is recorded.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Change the UID in _folder.json while over quota.
@@ -125,7 +125,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		})
 
 		// Full sync: root + subfolder (valid-uid) + dashboard = 3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -176,7 +176,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		})
 
 		// Full sync first to establish baseline.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWaitWithSuccess(t, helper, repo)
 		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		common.RequireRepoFolderCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -193,7 +193,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		require.NoError(t, err)
 
 		// Incremental sync should handle the replacement.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Incremental, common.Succeeded())
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
 
 		// The new folder should exist and the old one should be gone.
 		common.RequireFolderState(t, helper.Folders, "incr-new-uid", "My Folder", "subfolder", repo)
