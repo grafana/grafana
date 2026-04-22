@@ -73,7 +73,7 @@ func TestResponseAdapter(t *testing.T) {
 		// holds the read bytes between iterations
 		cache := []byte{}
 
-		for i := 0; i < 10; {
+		for i := range 10 {
 			n, err := resp.Body.Read(buf)
 			require.NoError(t, err)
 			if n == 0 {
@@ -146,7 +146,7 @@ func TestResponseAdapter(t *testing.T) {
 
 		const maxAttempts = 1000
 		var wg sync.WaitGroup
-		for i := 0; i < maxAttempts; i++ {
+		for range maxAttempts {
 			ra := grafanaresponsewriter.NewAdapter(req)
 			wg.Add(2)
 			go func() {
@@ -223,7 +223,7 @@ func asyncErrHandler(w http.ResponseWriter, _ *http.Request) {
 var randomStrings = []string{}
 
 func generateRandomStrings(n int) {
-	for i := 0; i < n; i++ {
+	for i := range n {
 		randomString := generateRandomString(1000 * (i + 1))
 		randomStrings = append(randomStrings, randomString)
 	}

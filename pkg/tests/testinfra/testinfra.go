@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -254,7 +253,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// Search upwards in directory tree for project root
 	var rootDir string
 	found := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		rootDir = filepath.Join(rootDir, "..")
 
 		dir, err := filepath.Abs(rootDir)

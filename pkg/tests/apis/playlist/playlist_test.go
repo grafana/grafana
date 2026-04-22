@@ -478,7 +478,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		uids := []string{first.GetName()}
 
 		// Create (with name generation) two playlists
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			out, err := client.Resource.Create(context.Background(),
 				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
 				metav1.CreateOptions{},

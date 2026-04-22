@@ -759,7 +759,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			var largePanelArray []map[string]interface{}
 
 			// Create 500000 simple panels with unique IDs (to exceed max allowed request size)
-			for i := 0; i < 500000; i++ {
+			for i := range 500000 {
 				// Create a simple panel with minimal properties
 				panel := map[string]interface{}{
 					"id":          i,

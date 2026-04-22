@@ -9,12 +9,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLogTableToFrame(t *testing.T) {
@@ -166,7 +167,7 @@ func TestLargeLogsResponse(t *testing.T) {
 			},
 		}
 		rows := [][]any{}
-		for i := 0; i < 40000; i++ {
+		for i := range 40000 {
 			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
 		}
 		res.Tables[0].Rows = rows
