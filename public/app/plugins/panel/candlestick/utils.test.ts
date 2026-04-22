@@ -16,6 +16,10 @@ const defaultData: AlignedData = [
   [0.19983, 0.19987, 0.19981, 0.19982, 0.19982, 0.19978, 0.19973, 0.19971, 0.19968, 0.19952], // low
   [0.20004, 0.19987, 0.19982, 0.19989, 0.19983, 0.19979, 0.19974, 0.19971, 0.19968, 0.19959], // close
   [286630.4, 159971.9, 275794.6, 69022.6, 99248, 0, 172760.1, 279206.1, 26255.9, 125773.9, 110251.6], // volume
+  // Only used in the time series panel, not touched in canvas draw in utils.ts
+  // [0.1999668, 0.1999771, 0.1999793, 0.1999803, 0.1999779, 0.1999729, 0.1999568, 0.1999368, 0.1999116, 0.1998719], // sma (simple moving average)
+  // [0.2002845, 0.2002826, 0.2002794, 0.2002763, 0.2002784, 0.2002815, 0.2002748, 0.2002544, 0.2002202, 0.2001495], // bolup (Upper Bollinger band)
+  // [0.1996492, 0.1996717, 0.1996792, 0.1996842, 0.1996775, 0.1996642, 0.1996389, 0.1996192, 0.1996029, 0.1995943], // boldn Lower Bollinger band
 ];
 
 const defaultSeries: uPlot.Series[] = [
@@ -38,8 +42,8 @@ const volumeSeries: uPlot.Series[] = [
 describe('drawMarkers', () => {
   const height = 400;
   const width = 800;
-  const upColor = '#00ff00';
-  const downColor = '#ff0000';
+  const upColor = '#73BF69';
+  const downColor = '#F2495C';
   const flatColor = '#888888';
 
   const getDraw = (overrides?: Partial<Parameters<typeof drawMarkers>[0]>) =>
@@ -128,28 +132,6 @@ describe('drawMarkers', () => {
       flatAsUp: true,
     };
 
-    it.each([['events', (u) => u.ctx.__getEvents()]] satisfies Array<[string, (u: uPlot) => unknown]>)(
-      '%s',
-      async (_, setup) => {
-        const { testEvents, uPlotEvents } = await getPlot(defaultData, volumeSeries);
-        expect(() => getDraw(volumeOpts)(testEvents)).not.toThrow();
-        expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(defaultData, volumeSeries, uPlotEvents);
-      }
-    );
-  });
-
-  describe('candle with volume & regions', () => {
-    const volumeOpts: Parameters<typeof drawMarkers>[0] = {
-      mode: VizDisplayMode.CandlesVolume,
-      candleStyle: CandleStyle.Candles,
-      colorStrategy: ColorStrategy.OpenClose,
-      fields: { open: 1, high: 2, low: 3, close: 4, volume: 5 },
-      upColor,
-      downColor,
-      flatColor,
-      volumeAlpha: 0.5,
-      flatAsUp: true,
-    };
     it.each([['events', (u) => u.ctx.__getEvents()]] satisfies Array<[string, (u: uPlot) => unknown]>)(
       '%s',
       async (_, setup) => {

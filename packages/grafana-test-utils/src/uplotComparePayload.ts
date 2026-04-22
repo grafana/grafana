@@ -41,7 +41,7 @@ export function slugifyJestTestNameForFilename(testName: string): string {
   return s;
 }
 
-/** Readable slug from the test name plus a short id so parallel runs never clobber the same file. */
+/** Readable slug from the test name */
 export function createUplotComparePayloadBasename(testName: string): string {
   const slug = slugifyJestTestNameForFilename(testName);
   return `${UPLOT_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
