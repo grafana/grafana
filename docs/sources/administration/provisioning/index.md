@@ -461,7 +461,6 @@ Grafana offers options to export the JSON definition of a dashboard.
 To export the dashboard JSON definition, follow these steps:
 
 1. Upon save, click **Advanced options** to expand the section, and then make the following selections:
-
    - **Model**: Choose from **Classic** or **V2 Resource**. Choose **Classic** if you plan to use the dashboard in Grafana v12.4 or older.
    - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
 
