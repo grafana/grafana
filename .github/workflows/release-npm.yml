@@ -38,13 +38,13 @@ on:
 permissions: {}
 
 jobs:
-  # If called with version_type 'canary' or 'stable', build + publish to NPM
-  # If called with version_type 'nightly', do nothing (we're not yet tagging them with the nightly tag)
+  # If called with version_type 'nightly' or 'stable', build + publish to NPM
+  # If called with version_type 'canary', do nothing (temporarily stopping canary releases)
 
   publish:
     name: Publish NPM packages
     runs-on: github-hosted-ubuntu-x64-small
-    if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+    if: inputs.version_type == 'nightly' || inputs.version_type == 'stable'
     # Required for this workflow to have permission to publish NPM packages
     environment: npm-publish
     permissions:
