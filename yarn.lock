@@ -10927,6 +10927,7 @@ __metadata:
   dependencies:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/data": "workspace:*"
+    "@grafana/scenes": "npm:7.4.0"
     "@testing-library/jest-dom": "npm:6.6.4"
     react-table: "npm:7.8.0"
   languageName: unknown
