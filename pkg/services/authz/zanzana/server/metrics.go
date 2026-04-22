@@ -13,6 +13,8 @@ const (
 type metrics struct {
 	// requestDurationSeconds is a summary for zanzana server request duration
 	requestDurationSeconds *prometheus.HistogramVec
+	// batchCheckPhaseDurationSeconds measures the duration of each batch check phase
+	batchCheckPhaseDurationSeconds *prometheus.HistogramVec
 }
 
 func newZanzanaServerMetrics(reg prometheus.Registerer) *metrics {
@@ -26,6 +28,16 @@ func newZanzanaServerMetrics(reg prometheus.Registerer) *metrics {
 				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 			},
 			[]string{"method"},
+		),
+		batchCheckPhaseDurationSeconds: promauto.With(reg).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:      "batch_check_phase_duration_seconds",
+				Help:      "Histogram for batch check phase duration",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
+			},
+			[]string{"phase"},
 		),
 	}
 }

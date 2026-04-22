@@ -2,7 +2,7 @@ import { map } from 'rxjs';
 
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { FieldType } from '../types/dataFrame';
-import { CustomTransformOperator } from '../types/transformations';
+import { type CustomTransformOperator } from '../types/transformations';
 import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
 
 import { ReducerID } from './fieldReducer';

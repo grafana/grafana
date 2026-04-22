@@ -24,7 +24,11 @@ type AdminConfiguration struct {
 	OrgID int64 `xorm:"org_id"`
 
 	// SendAlertsTo indicates which set of alertmanagers will handle the alert.
-	SendAlertsTo AlertmanagersChoice `xorm:"send_alerts_to"`
+	SendAlertsTo *AlertmanagersChoice `xorm:"send_alerts_to"`
+
+	// ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource whose
+	// configuration should be synced into Grafana for this org. Empty means no sync.
+	ExternalAlertmanagerUID *string `xorm:"external_alertmanager_uid"`
 
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`

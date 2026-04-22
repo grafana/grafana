@@ -1,9 +1,9 @@
 import { wellFormedPanelModel } from 'test/fixtures/panelModel.fixture';
 
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 import { mockFolderDTO } from 'app/features/browse-dashboards/fixtures/folder.fixture';
 
-import { dashlistMigrationHandler, AngularModel } from './migrations';
+import { dashlistMigrationHandler, type AngularModel } from './migrations';
 
 const getMock = jest.fn();
 

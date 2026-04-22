@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
@@ -9,10 +9,10 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
+import { type RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
-import RulesFilter from './RulesFilter';
+import RulesFilter from './RulesFilter.v2';
 
 // Mock config for UserStorage (namespace and user must be set before UserStorage module loads)
 jest.mock('@grafana/runtime', () => ({
@@ -140,37 +140,16 @@ beforeEach(() => {
   }));
 });
 
-describe('RulesFilter Feature Flag', () => {
-  describe('with alertingFilterV2 enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingFilterV2'] });
+describe('RulesFilter', () => {
+  it('Should render RulesFilterV2', async () => {
+    render(<RulesFilter />);
 
-    it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
-      render(<RulesFilter />);
-
-      // Wait for suspense to resolve and check that the search input is present
-      await waitFor(() => {
-        expect(ui.searchInput.get()).toBeInTheDocument();
-      });
-      // V2 no longer has a popup filter button — filters live in the sidebar
-      expect(screen.queryByRole('button', { name: 'Filter' })).not.toBeInTheDocument();
-    });
-  });
-
-  describe('with alertingFilterV2 disabled', () => {
-    testWithFeatureToggles({ disable: ['alertingFilterV2'] });
-
-    it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
-      render(<RulesFilter />);
-
-      // Wait for suspense to resolve and check V1 structure
-      await screen.findByText('Search');
-
-      // V1 has search input but no V2-style filter button
+    // Wait for suspense to resolve and check that the search input is present
+    await waitFor(() => {
       expect(ui.searchInput.get()).toBeInTheDocument();
-
-      // V1 has a help icon next to the search input
-      expect(screen.getByText('Search')).toBeInTheDocument();
     });
+    // V2 no longer has a popup filter button — filters live in the sidebar
+    expect(screen.queryByRole('button', { name: 'Filter' })).not.toBeInTheDocument();
   });
 });
 

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const (
@@ -23,11 +25,45 @@ const (
 
 var _ KV = &SqlKV{}
 
+var sqlKVLog = logging.DefaultLogger.With("logger", "resource-sqlkv")
+
+// DataImportRow represents a single append-only resource_history row written during bulk import.
+type DataImportRow struct {
+	GUID    string
+	KeyPath string
+	Value   []byte
+
+	// Legacy stores temporary sql/backend compatibility fields for resource_history.
+	// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+	Legacy *DataImportLegacyFields
+}
+
+// DataImportLegacyFields stores the temporary legacy resource_history columns
+// needed to keep sqlkv compatible with the old SQL backend during bulk import.
+// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+type DataImportLegacyFields struct {
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	Action          int64
+	Folder          string
+	ResourceVersion int64
+	PreviousRV      int64
+	Generation      int64
+}
+
 type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
 	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
+
+const (
+	// Match the existing SQL backend sqlite cap so both bulk import paths chunk the same way.
+	dataImportBatchSQLiteMaxRows  = 8
+	dataImportBatchDefaultMaxRows = 1000
+)
 
 func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	if db == nil {
@@ -88,6 +124,129 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
+func dataImportBatchRowLimit(dialectName string) int {
+	if dialectName == "sqlite" {
+		return dataImportBatchSQLiteMaxRows
+	}
+
+	return dataImportBatchDefaultMaxRows
+}
+
+func dataImportBatchStatementCount(rowCount, maxRows int) int {
+	if rowCount == 0 || maxRows <= 0 {
+		return 0
+	}
+
+	return (rowCount + maxRows - 1) / maxRows
+}
+
+func dataImportBatchPayloadBytes(rows []DataImportRow) int {
+	payloadBytes := 0
+	for _, row := range rows {
+		payloadBytes += len(row.Value)
+	}
+
+	return payloadBytes
+}
+
+// conn returns the dbtx from the context (set during bulk import on SQLite)
+// or falls back to the default *sql.DB connection pool.
+func (k *SqlKV) conn(ctx context.Context) dbtx {
+	if db, ok := dbtxFromCtx(ctx); ok {
+		return db
+	}
+	return k.db
+}
+
+// InsertDataImportBatch writes a batch of append-only resource_history rows for the bulk import path.
+func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow) (err error) {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return err
+	}
+
+	insertStart := time.Now()
+	conn := k.conn(ctx)
+	var tx *sql.Tx
+	usingContextTx := false
+	if _, ok := dbtxFromCtx(ctx); !ok {
+		tx, err = k.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin data import transaction: %w", err)
+		}
+		conn = tx
+		defer func() {
+			if err != nil {
+				err = errors.Join(err, tx.Rollback())
+			}
+		}()
+	} else {
+		usingContextTx = true
+	}
+
+	maxRows := dataImportBatchRowLimit(k.dialect.Name())
+	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
+	payloadBytes := dataImportBatchPayloadBytes(rows)
+	for start := 0; start < len(rows); start += maxRows {
+		end := start + maxRows
+		if end > len(rows) {
+			end = len(rows)
+		}
+
+		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if err != nil {
+			return fmt.Errorf("failed to build data import batch query: %w", err)
+		}
+		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
+			sqlKVLog.Error("sqlkv bulk import insert failed",
+				"error", err,
+				"dialect", k.dialect.Name(),
+				"rows", len(rows),
+				"statements", statementCount,
+				"max_rows", maxRows,
+				"payload_bytes", payloadBytes,
+				"using_context_tx", usingContextTx,
+			)
+			return fmt.Errorf("failed to insert data import batch: %w", err)
+		}
+	}
+
+	if tx != nil {
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit data import batch: %w", err)
+		}
+	}
+
+	insertDuration := time.Since(insertStart)
+	if insertDuration > 500*time.Millisecond {
+		sqlKVLog.Warn("slow sqlkv bulk import insert",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
+	} else {
+		sqlKVLog.Debug("sqlkv bulk import insert timing",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
+	}
+
+	return nil
+}
+
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		if section == LastImportTimeSection {
@@ -112,7 +271,7 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 		sortAsc := opt.Sort != SortOrderDesc
 
 		query, args := qb.buildKeysQuery(startKey, endKey, sortAsc, opt.Limit)
-		rows, err := k.db.QueryContext(ctx, query, args...)
+		rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 		if err != nil {
 			yield("", err)
 			return
@@ -150,7 +309,7 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 
 	keyPath := getKeyPath(section, key)
 	query, args := qb.buildGetQuery(keyPath)
-	row := k.db.QueryRowContext(ctx, query, args...)
+	row := k.conn(ctx).QueryRowContext(ctx, query, args...)
 
 	var value []byte
 	if err := row.Scan(&value); err != nil {
@@ -177,7 +336,7 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 
 		keyPaths := getKeyPaths(section, keys)
 		query, args := qb.buildBatchGetQuery(keyPaths)
-		rows, err := k.db.QueryContext(ctx, query, args...)
+		rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 		if err != nil {
 			yield(KeyValue{}, err)
 			return
@@ -272,7 +431,7 @@ func (w *sqlWriteCloser) Close() error {
 	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
 	if w.section == EventsSection || w.section == PendingDeleteSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
-		_, err := w.kv.db.ExecContext(w.ctx, query, args...)
+		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("failed to save: %w", err)
 		}
@@ -287,7 +446,7 @@ func (w *sqlWriteCloser) Close() error {
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
 			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-			_, err := w.kv.db.ExecContext(w.ctx, query, args...)
+			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)
 			}
@@ -299,7 +458,7 @@ func (w *sqlWriteCloser) Close() error {
 		}
 
 		query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
-		_, err = w.kv.db.ExecContext(w.ctx, query, args...)
+		_, err = w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("failed to update to datastore: %w", err)
 		}
@@ -319,14 +478,9 @@ func (w *sqlWriteCloser) Close() error {
 		return fmt.Errorf("failed to parse key for GUID: %w", err)
 	}
 
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := LegacyActionValue(dataKey.Action)
+	if err != nil {
+		return err
 	}
 
 	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)
@@ -354,7 +508,7 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 
 	keyPath := getKeyPath(section, key)
 	query, args := qb.buildDeleteQuery(keyPath)
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete key: %w", err)
 	}
@@ -374,7 +528,7 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 
 	keyPaths := getKeyPaths(section, keys)
 	query, args := qb.buildBatchDeleteQuery(keyPaths)
-	if _, err := k.db.ExecContext(ctx, query, args...); err != nil {
+	if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("failed to batch delete keys: %w", err)
 	}
 

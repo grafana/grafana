@@ -810,17 +810,9 @@
       },
       "AnnotationPermission": {
         "type": "object",
-        "required": ["dashboard", "organization"],
+        "required": ["dashboard"],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {

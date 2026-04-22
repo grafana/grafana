@@ -1,4 +1,4 @@
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
 import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
@@ -30,39 +30,6 @@ export enum SidebarSize {
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
-export const QUERY_EDITOR_BANNER_FEEDBACK_URL = 'https://forms.gle/54uCfRjxzjcXVysp8';
-
-export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
-  return {
-    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
-    border: theme.isDark ? '#314158' : theme.colors.border.medium,
-    accent: theme.isDark ? '#FF9830' : '#C47B20',
-  };
-}
-
-export const QUERY_EDITOR_COLORS = {
-  query: '#FF8904',
-  expression: '#C27AFF',
-  transformation: '#00D492',
-  error: '#E7000B',
-};
-
-// TODO: Remove this once all the new colors are finalized
-const USE_THEME_COLORS = true;
-
-export function getQueryEditorColors(theme: GrafanaTheme2) {
-  return {
-    contentHeaderBackground: theme.colors.background.secondary,
-    footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
-    sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
-    sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
-    card: {
-      activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
-      hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
-      bg: theme.colors.background.primary,
-    },
-  };
-}
 
 export interface QueryEditorTypeConfig {
   icon: IconName;
@@ -95,34 +62,38 @@ export function getAlertStateColor(theme: GrafanaTheme2, state: AlertState | nul
   }
 }
 
-export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
-  [QueryEditorType.Query]: {
-    icon: 'database',
-    color: QUERY_EDITOR_COLORS.query,
-    getLabel: () => t('query-editor-next.labels.query', 'Query'),
-    deleteConfirmation: false,
-  },
-  [QueryEditorType.Expression]: {
-    icon: 'calculator-alt',
-    color: QUERY_EDITOR_COLORS.expression,
-    getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
-    deleteConfirmation: false,
-  },
-  [QueryEditorType.Transformation]: {
-    icon: 'process',
-    color: QUERY_EDITOR_COLORS.transformation,
-    getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
-    deleteConfirmation: true,
-  },
-  [QueryEditorType.Alert]: {
-    icon: 'bell',
-    // Note: For alerts, use getAlertStateColor() instead of this static color
-    // This placeholder is only used when alert state is unknown
-    color: '#6E6E6E',
-    getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
-    deleteConfirmation: false,
-  },
-} as const;
+/**
+ * Returns configuration for each query editor type including theme-derived colors.
+ * Use this function to get icon, color, label, and other config for a given type.
+ */
+export function getQueryEditorTypeConfig(theme: GrafanaTheme2): Record<QueryEditorType, QueryEditorTypeConfig> {
+  return {
+    [QueryEditorType.Query]: {
+      icon: 'database',
+      color: theme.colors.warning.main,
+      getLabel: () => t('query-editor-next.labels.query', 'Query'),
+      deleteConfirmation: false,
+    },
+    [QueryEditorType.Expression]: {
+      icon: 'calculator-alt',
+      color: theme.colors.tertiary.main,
+      getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
+      deleteConfirmation: false,
+    },
+    [QueryEditorType.Transformation]: {
+      icon: 'process',
+      color: theme.colors.success.main,
+      getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+      deleteConfirmation: true,
+    },
+    [QueryEditorType.Alert]: {
+      icon: 'bell',
+      color: theme.colors.text.secondary, // Alerts use dynamic state-based colors via getAlertStateColor()
+      getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
+      deleteConfirmation: false,
+    },
+  };
+}
 
 /**
  * Default placeholder for time-related inputs (relative time, time shift).

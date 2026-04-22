@@ -24,6 +24,8 @@ import (
 //
 // Gets all existing permissions for the folder with the given `uid`.
 //
+// Deprecated: true
+//
 // Responses:
 // 200: getFolderPermissionListResponse
 // 401: unauthorisedError

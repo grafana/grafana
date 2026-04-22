@@ -242,50 +242,6 @@ receivers:
 	})
 }
 
-func TestExtractExtraConfigs(t *testing.T) {
-	t.Run("extracts extra configs from JSON", func(t *testing.T) {
-		jsonConfig := `{
-			"extra_config": [
-				{
-					"identifier": "test-config",
-					"merge_matchers": [],
-					"template_files": {"test.tmpl": "test"},
-					"alertmanager_config": "route:\n  receiver: test"
-				}
-			]
-		}`
-
-		extraConfigs, err := extractExtraConfigs(jsonConfig)
-		require.NoError(t, err)
-		require.Len(t, extraConfigs, 1)
-		require.Equal(t, "test-config", extraConfigs[0].Identifier)
-	})
-
-	t.Run("handles missing extra_config field", func(t *testing.T) {
-		jsonConfig := `{"alertmanager_config": {"route": {"receiver": "test"}}}`
-
-		extraConfigs, err := extractExtraConfigs(jsonConfig)
-		require.NoError(t, err)
-		require.Len(t, extraConfigs, 0)
-	})
-
-	t.Run("handles empty extra_config array", func(t *testing.T) {
-		jsonConfig := `{"extra_config": []}`
-
-		extraConfigs, err := extractExtraConfigs(jsonConfig)
-		require.NoError(t, err)
-		require.Len(t, extraConfigs, 0)
-	})
-
-	t.Run("handles null extra_config", func(t *testing.T) {
-		jsonConfig := `{"extra_config": null}`
-
-		extraConfigs, err := extractExtraConfigs(jsonConfig)
-		require.NoError(t, err)
-		require.Len(t, extraConfigs, 0)
-	})
-}
-
 func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
 	orgID := int64(1)
 

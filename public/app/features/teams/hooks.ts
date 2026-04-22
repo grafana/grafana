@@ -2,34 +2,30 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import {
   API_GROUP,
   API_VERSION,
-  GetTeamApiArg,
-  Team,
+  type GetTeamApiArg,
+  type Team,
   useLazyGetSearchTeamsQuery as useLazyGetSearchTeamsQueryIam,
   useLazyGetTeamQuery as useLazyGetTeamQueryIam,
   useGetTeamQuery as useGetTeamQueryIam,
 } from 'app/api/clients/iam/v0alpha1';
 import {
-  CreateTeamCommand,
-  TeamDto,
-  UpdateTeamCommand,
-  useCreateTeamMutation,
+  type TeamDto,
+  type UpdateTeamCommand,
   useDeleteTeamByIdMutation,
   useGetTeamByIdQuery,
   useLazyGetTeamByIdQuery as useLazyGetTeamByIdQueryLegacy,
   useLazySearchTeamsQuery as useLazySearchTeamsQueryLegacy,
   useSearchTeamsQuery as useLegacySearchTeamsQuery,
   useListTeamsRolesQuery,
-  useSetTeamRolesMutation,
   useUpdateTeamMutation,
 } from 'app/api/clients/legacy';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { addFilteredDisplayName } from 'app/core/utils/roles';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
 
 import { buildNavModel } from './state/navModel';
@@ -37,7 +33,7 @@ import { buildNavModel } from './state/navModel';
 const rolesEnabled =
   contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
 
-const canUpdateRoles = () =>
+export const canUpdateRoles = () =>
   contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
   contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
@@ -133,47 +129,6 @@ export const useDeleteTeam = () => {
   const [deleteTeam, response] = useDeleteTeamByIdMutation();
 
   return [({ uid }: { uid: string }) => deleteTeam({ teamId: uid }), response] as const;
-};
-
-/**
- * Create a new team, and link any pending roles
- */
-export const useCreateTeam = () => {
-  const [createTeam, response] = useCreateTeamMutation();
-  const [setTeamRoles] = useSetTeamRolesMutation();
-  const [createFolder] = useCreateFolder();
-
-  const trigger = async (team: CreateTeamCommand, pendingRoles?: Role[], createTeamFolder?: boolean) => {
-    const mutationResult = await createTeam({
-      createTeamCommand: team,
-    });
-
-    const { data } = mutationResult;
-
-    // Add any pending roles to the team
-    if (data && data.teamId && pendingRoles && pendingRoles.length) {
-      await contextSrv.fetchUserPermissions();
-      if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
-        await setTeamRoles({
-          teamId: data.teamId,
-          setTeamRolesCommand: {
-            roleUids: pendingRoles.map((role) => role.uid),
-          },
-        });
-      }
-    }
-
-    if (data && data.uid && createTeamFolder) {
-      await createFolder({
-        title: team.name,
-        teamOwnerReferences: [{ uid: data.uid, name: team.name }],
-      });
-    }
-
-    return mutationResult;
-  };
-
-  return [trigger, response] as const;
 };
 
 /**

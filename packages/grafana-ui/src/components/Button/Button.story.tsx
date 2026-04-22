@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn } from '@storybook/react';
+import { type StoryFn } from '@storybook/react';
 
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
+import { allButtonVariants, allButtonFills, Button, type ButtonProps } from './Button';
 import mdx from './Button.mdx';
 import { ButtonGroup } from './ButtonGroup';
 

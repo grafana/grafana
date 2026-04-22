@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
-import { SuggestedNavigationsFolder, SuggestedNavigationsFoldersMap } from './types';
+import { type SuggestedNavigationsFolder, type SuggestedNavigationsFoldersMap } from './types';
 
 // Mock useQueryParams hook used by ScopesDashboardsTree
 jest.mock('app/core/hooks/useQueryParams', () => ({

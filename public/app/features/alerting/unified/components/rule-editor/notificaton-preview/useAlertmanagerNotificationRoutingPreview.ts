@@ -6,7 +6,7 @@ import {
   useNotificationPolicyRoute,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 
-import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';

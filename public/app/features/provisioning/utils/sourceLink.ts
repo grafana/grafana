@@ -1,13 +1,13 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
-import { provisioningAPIv0alpha1, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type DashboardLink } from '@grafana/schema';
+import { provisioningAPIv0alpha1, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
-  ObjectMeta,
+  type ObjectMeta,
 } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { PluginExtensionTypes, IconName } from '@grafana/data';
+import { PluginExtensionTypes, type IconName } from '@grafana/data';
 import { setPluginLinksHook, config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -34,6 +34,13 @@ jest.mock('./picker/DataSourcePicker', () => ({
   INTERACTION_ITEM: {
     TOGGLE_FAVORITE: 'toggle_favorite',
   },
+}));
+
+// Mock BuildDashboardButton to avoid needing a Redux Provider
+jest.mock('./BuildDashboardButton', () => ({
+  BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
+    <a href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
+  ),
 }));
 
 // Set default plugin links hook

@@ -57,10 +57,10 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.S
 }
 
 func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
-	s.storesMU.Lock()
-	defer s.storesMU.Unlock()
-
+	s.storesMU.RLock()
 	info, ok := s.stores[namespace]
+	s.storesMU.RUnlock()
+
 	if ok {
 		return &zanzana.StoreInfo{
 			ID:      info.ID,
@@ -69,28 +69,42 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 		}, nil
 	}
 
-	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
-	}
-
-	for _, store := range res.GetStores() {
-		if store.GetName() == namespace {
-			info = zanzana.StoreInfo{
-				ID:   store.GetId(),
-				Name: store.GetName(),
-			}
-
-			s.stores[namespace] = info
-
-			return &zanzana.StoreInfo{
-				ID:   info.ID,
-				Name: info.Name,
-			}, nil
+	v, err, _ := s.storeSF.Do(namespace, func() (any, error) {
+		// Re-check cache: another goroutine may have populated it while we waited.
+		s.storesMU.RLock()
+		info, ok := s.stores[namespace]
+		s.storesMU.RUnlock()
+		if ok {
+			return &info, nil
 		}
+
+		res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+		if err != nil {
+			return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
+		}
+
+		for _, store := range res.GetStores() {
+			if store.GetName() == namespace {
+				newInfo := zanzana.StoreInfo{
+					ID:   store.GetId(),
+					Name: store.GetName(),
+				}
+
+				s.storesMU.Lock()
+				s.stores[namespace] = newInfo
+				s.storesMU.Unlock()
+
+				return &newInfo, nil
+			}
+		}
+
+		return nil, zanzana.ErrStoreNotFound
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, zanzana.ErrStoreNotFound
+	return v.(*zanzana.StoreInfo), nil
 }
 
 // DeleteStore removes a store from the local cache and deletes it from OpenFGA.
@@ -98,7 +112,16 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 func (s *Server) DeleteStore(ctx context.Context, namespace string) error {
 	info, ok := s.removeStore(namespace)
 	if !ok {
-		return nil
+		// Fallback: look up directly from OpenFGA in case the cache is stale.
+		store, err := s.GetStore(ctx, namespace)
+		if err != nil {
+			if errors.Is(err, zanzana.ErrStoreNotFound) {
+				return nil
+			}
+			return err
+		}
+		info = *store
+		s.removeStore(namespace)
 	}
 
 	_, err := s.openFGAClient.DeleteStore(ctx, &openfgav1.DeleteStoreRequest{StoreId: info.ID})
@@ -163,7 +186,7 @@ func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error)
 	var continuationToken string
 
 	for {
-		res, err := s.GetOpenFGAServer().ListStores(ctx, &openfgav1.ListStoresRequest{
+		res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{
 			ContinuationToken: continuationToken,
 		})
 		if err != nil {
@@ -183,5 +206,19 @@ func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error)
 		continuationToken = res.GetContinuationToken()
 	}
 
+	// Populate the cache so DeleteStore can resolve names without a separate lookup.
+	s.populateStoreCache(stores)
+
 	return stores, nil
+}
+
+func (s *Server) populateStoreCache(stores []zanzana.StoreInfo) {
+	s.storesMU.Lock()
+	defer s.storesMU.Unlock()
+
+	for _, info := range stores {
+		if _, ok := s.stores[info.Name]; !ok {
+			s.stores[info.Name] = info
+		}
+	}
 }

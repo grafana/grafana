@@ -4,16 +4,16 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import {
-  DeleteRepositoryFilesWithPathApiResponse,
-  GetRepositoryFilesWithPathApiResponse,
-  RepositoryView,
+  type DeleteRepositoryFilesWithPathApiResponse,
+  type GetRepositoryFilesWithPathApiResponse,
+  type RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
 import { PushSuccessMessage } from './PushSuccessMessage';

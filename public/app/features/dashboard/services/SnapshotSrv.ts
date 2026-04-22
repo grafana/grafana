@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { getAPINamespace } from '../../../api/utils';
 

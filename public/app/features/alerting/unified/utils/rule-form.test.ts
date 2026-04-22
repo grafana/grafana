@@ -1,21 +1,21 @@
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
+  type AlertDataQuery,
+  type AlertQuery,
   GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
+  type GrafanaRuleDefinition,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
 import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
-import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
+import { type AlertManagerManualRouting, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {

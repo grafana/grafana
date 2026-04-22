@@ -25,13 +25,14 @@ func newSearchHandler(store Store, accessClient authtypes.AccessClient) func(ctx
 			return err
 		}
 
+		allowed, err := canAccessAnnotations(ctx, accessClient, namespace, result.Items, utils.VerbList)
+		if err != nil {
+			return err
+		}
+
 		filtered := make([]annotationV0.Annotation, 0, len(result.Items))
-		for _, anno := range result.Items {
-			allowed, err := canAccessAnnotation(ctx, accessClient, namespace, &anno, utils.VerbList)
-			if err != nil {
-				return err
-			}
-			if allowed {
+		for i, anno := range result.Items {
+			if allowed[i] {
 				filtered = append(filtered, anno)
 			}
 		}

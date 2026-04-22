@@ -21,6 +21,6 @@ ConversionStatus: {
 	// Fetching this version should always succeed.
 	storedVersion?: string
 
-  // The original value map[string]any
+	// The original value map[string]any
 	source?: _
 }

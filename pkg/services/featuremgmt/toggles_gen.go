@@ -27,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagGrpcServer
-	// Run the GRPC server
-	FlagGrpcServer = "grpcServer"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -46,10 +42,6 @@ const (
 	// FlagLiveAPIServer
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
-
-	// FlagKubernetesStars
-	// Routes stars requests from /api to the /apis endpoint
-	FlagKubernetesStars = "kubernetesStars"
 
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
@@ -92,7 +84,7 @@ const (
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagProvisioning
-	// Next generation provisioning... and git
+	// Enables Git Sync and as-code provisioning for Grafana resources
 	FlagProvisioning = "provisioning"
 
 	// FlagProvisioningFolderMetadata
@@ -111,10 +103,6 @@ const (
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
-	// FlagQueryCacheRequestDeduplication
-	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
@@ -126,6 +114,10 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagSseExpressionErrorIsolation
+	// Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+	FlagSseExpressionErrorIsolation = "sseExpressionErrorIsolation"
 
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
@@ -143,25 +135,13 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesDashboards
-	// Use the kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboards = "kubernetesDashboards"
-
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
-	// FlagKubernetesAlertingRules
-	// Adds support for Kubernetes alerting and recording rules
-	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
-
-	// FlagKubernetesUnifiedStorageQuotas
-	// Adds support for Kubernetes unified storage quotas
-	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
 
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
@@ -183,13 +163,17 @@ const (
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
 
-	// FlagScanRowInvalidDashboardParseFallbackEnabled
-	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
+	// FlagDatasourcesQueryTypes
+	// Load Query types from spec.{version}.query.{yaml|json}
+	FlagDatasourcesQueryTypes = "datasources.queryTypes"
 
-	// FlagDatasourceQueryTypes
-	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+	// FlagDatasourcesLoadOpenAPI
+	// Load the openapi spec from spec.{version}.openapi.{yaml|json}
+	FlagDatasourcesLoadOpenAPI = "datasources.loadOpenAPI"
+
+	// FlagDatasourcesChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagDatasourcesChunkedQueryStreaming = "datasources.chunkedQueryStreaming"
 
 	// FlagDatasourceLegacyIdApi
 	// Register legacy datasource apis that use the numeric id
@@ -215,9 +199,13 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
-	// FlagDatasourcesApiServerEnableResourceEndpointFrontend
-	// Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
-	FlagDatasourcesApiServerEnableResourceEndpointFrontend = "datasourcesApiServerEnableResourceEndpointFrontend"
+	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
+	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
+
+	// FlagDatasourcesQuerierRawOutput
+	// use raw output mode for the data source querier
+	FlagDatasourcesQuerierRawOutput = "datasourcesQuerierRawOutput"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -262,6 +250,10 @@ const (
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagReportingPdfTablesFrontend
+	// Enables frontend-rendered table appendix pages in PDF reports
+	FlagReportingPdfTablesFrontend = "reporting.pdfTablesFrontend"
 
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
@@ -308,11 +300,11 @@ const (
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagKubernetesAggregator
-	// Enable grafana&#39;s embedded kube-aggregator
+	// Enable grafana's embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
 	// FlagKubernetesAggregatorCapTokenAuth
-	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
 	// FlagGroupByVariable
@@ -334,10 +326,6 @@ const (
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
-
-	// FlagDashboardAdHocAndGroupByWrapper
-	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
 
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
@@ -415,6 +403,10 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
+	// FlagZanzanaMergeUserPermissions
+	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
+	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
@@ -431,21 +423,21 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagAlertingFilterV2
-	// Enable the new alerting search experience
-	FlagAlertingFilterV2 = "alertingFilterV2"
-
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
 	// FlagAppPlatformGrpcClientAuth
-	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagGroupToNestedTableV2
+	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
 
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
@@ -458,10 +450,6 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
-
-	// FlagManagedDualWriter
-	// Pick the dual write mode from database configs
-	FlagManagedDualWriter = "managedDualWriter"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
@@ -482,10 +470,6 @@ const (
 	// FlagPlaylistsReconciler
 	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"
-
-	// FlagPasswordlessMagicLinkAuthentication
-	// Enable passwordless login via magic link authentication
-	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
@@ -527,10 +511,6 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
-	// FlagUnifiedStorageSearchUI
-	// Enable unified storage search UI
-	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
-
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
@@ -538,10 +518,6 @@ const (
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
-
-	// FlagK8SFolderCounts
-	// Enable folder&#39;s api server counts
-	FlagK8SFolderCounts = "k8SFolderCounts"
 
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
@@ -558,6 +534,10 @@ const (
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamLBACApiWriteFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -690,10 +670,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingImportAlertmanagerUI
-	// Enables the UI to see imported Alertmanager configuration
-	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
-
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
 	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
@@ -709,10 +685,6 @@ const (
 	// FlagAlertingNotificationHistory
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
-
-	// FlagUnifiedStorageSearchDualReaderEnabled
-	// Enable dual reader for unified storage search
-	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
@@ -759,7 +731,7 @@ const (
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
 	// FlagJaegerEnableGrpcEndpoint
-	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
 
 	// FlagPluginStoreServiceLoading
@@ -769,6 +741,10 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagOnlyStoreServiceAccountActionSets
+	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
+	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
@@ -863,7 +839,7 @@ const (
 	FlagAppPluginAPIServer = "appPluginAPIServer"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
-	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 
 	// FlagAlertingNotificationHistoryRuleViewer
@@ -890,6 +866,10 @@ const (
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
 
+	// FlagFrontendServiceSettingsSourceFilter
+	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
+	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
+
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -906,27 +886,75 @@ const (
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
 
-	// FlagAnalyticsFramework
-	// Enables new analytics framework
-	FlagAnalyticsFramework = "analyticsFramework"
+	// FlagDatasourcesApiServerEnableHealthEndpointRedirect
+	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
 
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
-	// FlagInlineLogDetailsNoScrolls
-	// Enables an inline version of Log Details that creates no new scrolls
-	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
-
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
-	// FlagRbacIAMClient
-	// Enables the IAM client integration for fetching remote IAM global roles
-	FlagRbacIAMClient = "rbacIAMClient"
-
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
+
+	// FlagFrontendServiceSSOAutoLogin
+	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
+
+	// FlagStreamingForwardTeamHeadersTempo
+	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
+	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
+	// FlagQueryFetchConfigFromSettingsService
+	// Enables the query service to fetch the configuration from the settings service
+	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
+
+	// FlagProfilesHeatmap
+	// Enables heatmap visualization support for Pyroscope profiles
+	FlagProfilesHeatmap = "profilesHeatmap"
+
+	// FlagCacheConfigUnifiedStorageMigration
+	// Enables cache configs data migration to unified storage
+	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
+
+	// FlagQuerycachingRedirectToK8SApi
+	// Redirect caching service cache config reads from legacy storage to K8s API
+	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
+
+	// FlagQuerycachingEnableConnectionsClient
+	// Use connections client instead of storage to resolve datasource plugin ID in query caching
+	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
+
+	// FlagQuerycachingUseInQueryService
+	// Enables the query service to do query caching
+	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
+
+	// FlagCompiledBootScript
+	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+	FlagCompiledBootScript = "compiledBootScript"
+
+	// FlagInfluxDBConfigValidation
+	// Enables validation on the InfluxDB data source configuration page
+	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagDatasourceUseNewCRUDAPIs
+	// Use the new datasource API groups for datasource CRUD requests, backend flag
+	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
+
+	// FlagReportingAnyPageReporting
+	// Enables reporting for any page in Grafana
+	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
 )

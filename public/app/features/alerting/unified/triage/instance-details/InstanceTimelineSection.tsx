@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { Labels, TimeRange } from '@grafana/data';
+import { type Labels, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 
 import { InstanceTimeline, type TimelineFilter } from './InstanceTimeline';
 import { labelsToMatchers } from './timelineUtils';

@@ -27,21 +27,23 @@ import (
 	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -54,13 +56,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -77,6 +78,7 @@ var (
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupAuditor          = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -101,52 +103,47 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	accessControl                accesscontrol.AccessControl
-	accessClient                 authlib.AccessClient
-	legacy                       *DashboardStorage
-	unified                      resource.ResourceClient
-	dashboardProvisioningService dashboards.DashboardProvisioningService
-	dashboardPermissions         dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
-	resourcePermissionsSvc       *dynamic.NamespaceableResourceInterface
-	scheme                       *runtime.Scheme
-	search                       *SearchHandler
-	dashStore                    dashboards.Store
-	QuotaService                 quota.Service
-	ProvisioningService          provisioning.ProvisioningService
-	minRefreshInterval           string
-	dualWriter                   dualwrite.Service
-	folderClientProvider         client.K8sHandlerProvider
-	libraryPanels                libraryelements.Service // for legacy library panels
-	publicDashboardService       publicdashboards.Service
-	snapshotService              dashboardsnapshots.Service
-	snapshotOptions              dashv0.SnapshotSharingOptions
-	snapshotStorage              rest.Storage // for dual-write support in routes
-	namespacer                   request.NamespaceMapper
-	dashboardActivityChannel     live.DashboardActivityChannel
-	isStandalone                 bool // skips any handling including anything to do with legacy storage
+	accessControl            accesscontrol.AccessControl
+	accessClient             authlib.AccessClient
+	legacy                   legacy.DashboardAccessor
+	unified                  resource.ResourceClient
+	dashboardPermissions     dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
+	scheme                   *runtime.Scheme
+	search                   *SearchHandler
+	QuotaService             quota.Service
+	ProvisioningService      provisioning.ProvisioningService
+	minRefreshInterval       string
+	dualWriter               dualwrite.Service
+	folderClientProvider     client.K8sHandlerProvider
+	libraryPanels            libraryelements.Service // for legacy library panels
+	publicDashboardService   publicdashboards.Service
+	snapshotService          dashboardsnapshots.Service
+	snapshotOptions          dashv0.SnapshotSharingOptions
+	snapshotStorage          rest.Storage // for dual-write support in routes
+	namespacer               request.NamespaceMapper
+	dashboardActivityChannel live.DashboardActivityChannel
+	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
+	isStandalone             bool              // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
-	provisioningDashboardService dashboards.DashboardProvisioningService,
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
-	dashStore dashboards.Store,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 	dual dualwrite.Service,
-	sorter sort.Service,
 	quotaService quota.Service,
-	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 	libraryPanels libraryelements.Service,
@@ -163,8 +160,8 @@ func RegisterAPIService(
 
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
-	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
+	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -174,31 +171,27 @@ func RegisterAPIService(
 	}
 
 	builder := &DashboardsAPIBuilder{
-		dashboardService:             dashboardService,
-		dashboardPermissions:         dashboardPermissions,
-		dashboardPermissionsSvc:      dashboardPermissionsSvc,
-		features:                     features,
-		accessControl:                accessControl,
-		accessClient:                 accessClient,
-		unified:                      unified,
-		dashboardProvisioningService: provisioningDashboardService,
-		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
-		dashStore:                    dashStore,
-		QuotaService:                 quotaService,
-		ProvisioningService:          provisioning,
-		minRefreshInterval:           cfg.MinRefreshInterval,
-		dualWriter:                   dual,
-		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
-		libraryPanels:                libraryPanels,
-		publicDashboardService:       publicDashboardService,
-		snapshotService:              snapshotService,
-		snapshotOptions:              snapshotOptions,
-		namespacer:                   namespacer,
-		dashboardActivityChannel:     dashboardActivityChannel,
-		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
-			DashboardService: dashboardService,
-		},
+		dashboardService:         dashboardService,
+		dashboardPermissions:     dashboardPermissions,
+		dashboardPermissionsSvc:  dashboardPermissionsSvc,
+		features:                 features,
+		accessControl:            accessControl,
+		accessClient:             accessClient,
+		unified:                  unified,
+		search:                   NewSearchHandler(tracing, unified, features),
+		QuotaService:             quotaService,
+		ProvisioningService:      provisioning,
+		minRefreshInterval:       cfg.MinRefreshInterval,
+		dualWriter:               dual,
+		dashboardK8sClient:       dashboardClient,
+		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
+		libraryPanels:            libraryPanels,
+		publicDashboardService:   publicDashboardService,
+		snapshotService:          snapshotService,
+		snapshotOptions:          snapshotOptions,
+		namespacer:               namespacer,
+		dashboardActivityChannel: dashboardActivityChannel,
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -244,18 +237,21 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
-		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
+			dashv2.DashboardResourceInfo.GroupVersion(),
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
 			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			dashv0.DashboardResourceInfo.GroupVersion(),
 			dashv1.DashboardResourceInfo.GroupVersion(),
+			dashv1beta1.DashboardResourceInfo.GroupVersion(),
 		}
 	}
 
 	return []schema.GroupVersion{
 		dashv1.DashboardResourceInfo.GroupVersion(),
+		dashv1beta1.DashboardResourceInfo.GroupVersion(),
 		dashv0.DashboardResourceInfo.GroupVersion(),
+		dashv2.DashboardResourceInfo.GroupVersion(),
 		dashv2beta1.DashboardResourceInfo.GroupVersion(),
 		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
@@ -266,6 +262,9 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashv0.AddToScheme(scheme); err != nil {
 		return err
 	}
+	if err := dashv1beta1.AddToScheme(scheme); err != nil {
+		return err
+	}
 	if err := dashv1.AddToScheme(scheme); err != nil {
 		return err
 	}
@@ -274,6 +273,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	if err := dashv2beta1.AddToScheme(scheme); err != nil {
+		return err
+	}
+
+	if err := dashv2.AddToScheme(scheme); err != nil {
 		return err
 	}
 
@@ -332,32 +335,39 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	if deleteOptions.GracePeriodSeconds != nil && *deleteOptions.GracePeriodSeconds == 0 {
 		return nil
 	}
+	// Skip validation for DeleteCollection requests (DELETE .../dashboards)
+	if a.GetName() == "" {
+		return nil
+	}
+
+	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
+	if b.isStandalone {
+		return nil
+	}
 
 	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
 	}
 
-	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
-		return nil
-	}
-
-	// The name of the resource is the dashboard UID
+	// Try to get the dashboard via the K8s API
+	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 	dashboardUID := a.GetName()
-
-	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
+	dashObj, err := b.dashboardK8sClient.Get(svcCtx, dashboardUID, nsInfo.OrgID, metav1.GetOptions{})
 	if err != nil {
-		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-			errors.Is(err, dashboards.ErrDashboardNotFound) ||
-			apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
-
-		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
 	}
 
-	if provisioningData != nil {
+	accessor, err := utils.MetaAccessor(dashObj)
+	if err != nil {
+		return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
+	}
+
+	mgr, managed := accessor.GetManagerProperties()
+	if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 
@@ -404,8 +414,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
-	// Validate folder existence if specified
+	// Validate folder access permissions and existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+			return err
+		}
 		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
 		}
@@ -538,6 +551,9 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	case *dashv2beta1.Dashboard:
 		title = d.Spec.Title
 		refresh = d.Spec.TimeSettings.AutoRefresh
+	case *dashv2.Dashboard:
+		title = d.Spec.Title
+		refresh = d.Spec.TimeSettings.AutoRefresh
 	default:
 		return "", "", fmt.Errorf("unsupported dashboard version: %T", obj)
 	}
@@ -578,6 +594,8 @@ func validateDashboardTags(obj runtime.Object) error {
 		tags = d.Spec.Tags
 	case *dashv2beta1.Dashboard:
 		tags = d.Spec.Tags
+	case *dashv2.Dashboard:
+		tags = d.Spec.Tags
 	default:
 		return fmt.Errorf("unsupported dashboard version: %T", obj)
 	}
@@ -593,6 +611,7 @@ func validateDashboardTags(obj runtime.Object) error {
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		Scheme:                      opts.Scheme,
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}
@@ -631,7 +650,26 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// v1alpha1
+	// v1beta1
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+		dashv1beta1.DashboardResourceInfo,
+		nil, // do not register library panel
+		nil,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashv1beta1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv1beta1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
+		}); err != nil {
+		return err
+	}
+
+	// v1 (identical schema to v1beta1, thin wrapper)
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
@@ -687,6 +725,25 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	// v2
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+		dashv2.DashboardResourceInfo,
+		nil, // do not register library panel
+		nil,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashv2.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv2.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
+		}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -703,14 +760,14 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	if b.isStandalone {
-		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		unified.AfterDelete = b.afterDelete
-		storage[dashboards.StoragePath()] = unified
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	unified.AfterDelete = b.afterDelete
 
+	if b.isStandalone {
+		storage[dashboards.StoragePath()] = unified
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			largeObjects,
@@ -726,24 +783,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return nil
 	}
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, opts.MetricsRegister, b.dashboardPermissions, b.accessClient)
-	if err != nil {
-		return err
-	}
-
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-	unified.AfterDelete = b.afterDelete
-
-	gr := dashboards.GroupResource()
-	dw, err := opts.DualWriteBuilder(gr, legacyStore, unified)
-	if err != nil {
-		return err
-	}
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
-		Storage:                 dw,
+		Storage:                 unified,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 	}
@@ -765,7 +806,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		legacyLibraryStore := &LibraryPanelStore{
-			Access:       b.legacy.Access,
+			Access:       b.legacy,
 			ResourceInfo: *libraryPanels,
 			service:      b.libraryPanels,
 		}
@@ -918,6 +959,7 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2alpha1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2beta1.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, dashv2.GetOpenAPIDefinitions(ref))
 		md := manifestdata.LocalManifest().ManifestData
 		// Overwrite the OpenAPI generated from kubernetes (sourced from the go types) with the OpenAPI generated by grafana-app-sdk
 		// from the manifest CUE, as it correctly handles the CUE disjunctions in the dashboard spec.
@@ -942,7 +984,7 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 			}
 		}
 
-		// Fix legacyOptions schema for v2alpha1 and v2beta1 to allow any value type
+		// Fix legacyOptions schema for v2alpha1, v2beta1, and v2 to allow any value type
 		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
 		// This fix must be applied here so structured-merge-diff uses the correct schema
 		// For some reason this issue occurs with both the kubernetes-generated openAPI sourced from go, _and_ the OpenAPI from the AppManifest
@@ -950,6 +992,7 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 		for _, defKey := range []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec",
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec",
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2.DashboardAnnotationQuerySpec",
 		} {
 			if def, ok := defs[defKey]; ok {
 				if legacyOptions, ok := def.Schema.Properties["legacyOptions"]; ok {
@@ -1038,6 +1081,11 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	}
 }
 
+// GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
+func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
+	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
+}
+
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -1063,17 +1111,23 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 	for _, folderId := range folderIds {
 		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
 		if err != nil {
-			return dashboards.ErrFolderAccessDenied
+			if apierrors.IsNotFound(err) {
+				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
+			}
+			if apierrors.IsForbidden(err) {
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
+			}
+			return err
 		}
 		var accessInfo folders.FolderAccessInfo
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
-			return dashboards.ErrFolderAccessDenied
+			return err
 		}
 
 		if !accessInfo.CanEdit {
-			return dashboards.ErrFolderAccessDenied
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 		}
 	}
 

@@ -1,5 +1,5 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { useState, ChangeEvent } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react';
+import { useState, type ChangeEvent } from 'react';
 
 import { SecretTextArea } from './SecretTextArea';
 

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { FC, type JSX } from 'react';
+import { type FC, type JSX } from 'react';
 
-import { colorManipulator, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Tooltip, useStyles2, useTheme2 } from '@grafana/ui';

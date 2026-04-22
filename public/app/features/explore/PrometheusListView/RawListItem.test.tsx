@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import RawListItem, { RawListProps } from './RawListItem';
+import RawListItem, { type RawListProps } from './RawListItem';
 
 function getCopyElement(): HTMLElement {
   return screen.getByLabelText('Copy to clipboard');

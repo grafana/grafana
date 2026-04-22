@@ -1,16 +1,16 @@
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { HorizontalConstraint, Options, Placement, VerticalConstraint } from '../../panelcfg.gen';
+import { HorizontalConstraint, type Options, type Placement, VerticalConstraint } from '../../panelcfg.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
-import { CanvasEditorOptions } from './elementEditor';
+import { type CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
 

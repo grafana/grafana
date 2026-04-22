@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Alert, Spinner, Stack } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
@@ -13,20 +13,20 @@ import {
   AnnoKeyMessage,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
-  Resource,
+  type Resource,
 } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
-  DecoratedRevisionModel,
-  RevisionModel,
+  type DecoratedRevisionModel,
+  type RevisionModel,
   VERSIONS_FETCH_LIMIT,
 } from 'app/features/dashboard/types/revisionModels';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
 import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
 import { VersionHistoryHeader } from './version-history/VersionHistoryHeader';

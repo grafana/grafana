@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { multiLineFullQuery } from '../../../mocks/cloudwatch-ppl-test-data/multilineQueries';
 import {

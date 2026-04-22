@@ -377,6 +377,9 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 	for idx, panel := range dash.Panels {
 		if panel.Type == "row" {
 			dash.Panels[idx].Datasource = nil
+			for _, collapsed := range panel.Collapsed {
+				targets.addPanel(collapsed)
+			}
 			continue
 		}
 

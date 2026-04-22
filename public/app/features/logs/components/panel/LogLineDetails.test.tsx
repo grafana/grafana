@@ -4,19 +4,19 @@ import { of } from 'rxjs';
 
 import {
   createDataFrame,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
   dateTime,
-  Field,
+  type Field,
   FieldType,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsSortOrder,
   PluginExtensionPoints,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
@@ -25,9 +25,9 @@ import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
-import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
-import { LogLineDetails, Props } from './LogLineDetails';
-import { LogListContext, LogListContextData } from './LogListContext';
+import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
+import { LogLineDetails, type Props } from './LogLineDetails';
+import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
 jest.mock('@openfeature/react-sdk', () => ({

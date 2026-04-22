@@ -1,11 +1,15 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { DataQuery, SelectableValue, store } from '@grafana/data';
+import { type DataQuery, type SelectableValue, store } from '@grafana/data';
 import { createMonitoringLogger } from '@grafana/runtime';
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
+import {
+  type default as RichHistoryStorage,
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+} from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 import {
   createRetentionPeriodBoundary,

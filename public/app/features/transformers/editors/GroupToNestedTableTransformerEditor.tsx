@@ -3,20 +3,20 @@ import { useCallback, useId } from 'react';
 
 import {
   DataTransformerID,
-  ReducerID,
-  SelectableValue,
+  type ReducerID,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   PluginState,
 } from '@grafana/data';
 import {
-  GroupByFieldOptions,
+  type GroupByFieldOptions,
   GroupByOperationID,
-  GroupByTransformerOptions,
-  GroupToNestedTableTransformerOptions,
+  type GroupByTransformerOptions,
+  type GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -167,7 +167,6 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
-            className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
@@ -191,9 +190,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       height: '100%',
       width: theme.spacing(24),
-    }),
-    aggregations: css({
-      flexGrow: 1,
     }),
   };
 };

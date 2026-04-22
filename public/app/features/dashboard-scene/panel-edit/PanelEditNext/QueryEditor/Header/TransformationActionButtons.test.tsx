@@ -1,17 +1,17 @@
 import { screen } from '@testing-library/react';
 
 import {
-  DataFrame,
-  DataTransformerInfo,
+  type DataFrame,
+  type DataTransformerInfo,
   FrameMatcherID,
   getDefaultTimeRange,
   LoadingState,
-  TransformerRegistryItem,
+  type TransformerRegistryItem,
 } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 
 import { mockTransformToggles, renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 import { TransformationActionButtons } from './TransformationActionButtons';
 

@@ -1,5 +1,5 @@
-import { Field, RegistryItem } from '@grafana/data';
-import { MatcherScope } from '@grafana/schema';
+import { type Field, type RegistryItem } from '@grafana/data';
+import { type MatcherScope } from '@grafana/schema';
 
 export interface ValueMatcherUIRegistryItem<TOptions> extends RegistryItem {
   component: React.ComponentType<ValueMatcherUIProps<TOptions>>;

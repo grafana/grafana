@@ -106,7 +106,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		hookErr := errors.New("beforeCreate failed")
 
 		var intercepted []string
-		fm := NewFolderManager(repo, client, tree, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(repo, client, tree, FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			intercepted = append(intercepted, folder.Path)
 			return hookErr
 		}))
@@ -139,7 +139,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		}
 
 		var intercepted []string
-		fm := NewFolderManager(repo, client, tree, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(repo, client, tree, FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			intercepted = append(intercepted, folder.Path)
 			return nil
 		}))
@@ -174,7 +174,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		hookErr := errors.New("stop at a/b")
 		var intercepted []string
-		fm := NewFolderManager(repo, client, tree, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(repo, client, tree, FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			intercepted = append(intercepted, folder.Path)
 			if folder.Path == "a/b" {
 				return hookErr
@@ -222,7 +222,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		}
 
 		var intercepted []string
-		fm := NewFolderManager(repo, client, tree, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(repo, client, tree, FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			intercepted = append(intercepted, folder.Path)
 			return nil
 		}))
@@ -289,7 +289,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(repo, client, tree)
+		fm := NewFolderManager(repo, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-id",
 			Title: "Same Title",
@@ -316,7 +316,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(repo, client, tree)
+		fm := NewFolderManager(repo, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-id",
 			Title: "New Title",
@@ -344,7 +344,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(repo, client, tree)
+		fm := NewFolderManager(repo, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-id",
 			Title: "New Title",
@@ -377,7 +377,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(repo, client, tree)
+		fm := NewFolderManager(repo, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-id",
 			Title: "New Title",
@@ -399,7 +399,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(repo, client, tree)
+		fm := NewFolderManager(repo, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-id",
 			Title: "New Title",
@@ -496,7 +496,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{}, []string(nil)).
 			Return(nil, nil)
 
-		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind)
 		err := fm.CreateFolderWithUID(ctx, "myfolder/", stableUID, "test-ref")
 
 		require.NoError(t, err)
@@ -525,7 +525,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{}, []string(nil)).
 			Return(nil, nil)
 
-		fm := NewFolderManager(rw, mockClient, tree)
+		fm := NewFolderManager(rw, mockClient, tree, FolderKind)
 		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
@@ -555,7 +555,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
 			Return(nil, nil).Once()
 
-		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind)
 		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
@@ -585,7 +585,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
 			Return(nil, nil).Once()
 
-		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
@@ -616,7 +616,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
 			Return(nil, nil).Once()
 
-		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
@@ -644,7 +644,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
 		}), WithFolderMetadataEnabled(true))
@@ -673,7 +673,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
 		}), WithFolderMetadataEnabled(true))
@@ -701,7 +701,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
 		}), WithFolderMetadataEnabled(true))
@@ -733,7 +733,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolders = append(createdFolders, folder)
 			return nil
 		}), WithFolderMetadataEnabled(true))
@@ -796,7 +796,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -823,7 +823,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -844,7 +844,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, f.ID, parent)
@@ -883,7 +883,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "test-ref")
 		require.NoError(t, err)
 
@@ -913,7 +913,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -941,7 +941,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -977,7 +977,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -1013,7 +1013,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
@@ -1040,7 +1040,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update folder")
@@ -1070,7 +1070,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "test-ref")
 		require.Error(t, err)
 
@@ -1138,7 +1138,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:           "folder-uid",
 			Title:        "Same Title",
@@ -1177,7 +1177,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:           "folder-uid",
 			Title:        "Title",
@@ -1208,7 +1208,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:           "folder-uid",
 			Title:        "Same Title",
@@ -1238,7 +1238,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:           "folder-uid",
 			Title:        "Same Title",
@@ -1311,7 +1311,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:       "folder-uid",
 			Title:    "Same Title",
@@ -1340,7 +1340,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:       "folder-uid",
 			Title:    "Same Title",
@@ -1370,7 +1370,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-uid",
 			Title: "Same Title",
@@ -1400,7 +1400,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		err := fm.EnsureFolderExists(ctx, Folder{
 			ID:    "folder-uid",
 			Title: "Same Title",
@@ -1424,7 +1424,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 			Return(nil, errors.New("connection refused"))
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json", "test-ref")
 		require.Error(t, err)
@@ -1444,7 +1444,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 			Return(nil, errors.New("connection refused"))
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 		require.Error(t, err)
@@ -1463,7 +1463,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		tree.Add(parentFolder, "")
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "test-ref")
 		require.NoError(t, err)
@@ -1484,12 +1484,201 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		tree.Add(parentFolder, "")
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
+	})
+}
+
+// TestEnsureFolderPathExist_UIDConflict covers the UID conflict guard inside the
+// safepath.Walk callback. Three distinct branches are exercised
+func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
+	ctx := context.Background()
+
+	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":      name,
+					"namespace": "default",
+					"annotations": map[string]interface{}{
+						"grafana.app/managerId": managerIdentity,
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+	}
+
+	// folderJSON returns minimal _folder.json bytes for a given stable UID.
+	folderJSON := func(uid, title string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)
+	}
+
+	t.Run("returns error when UID from _folder.json is already used by a different path", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Both the pre-walk check and the walk step read the same _folder.json.
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("conflict-uid", "My Folder"),
+				Hash: "new-hash",
+			}, nil)
+
+		// Tree already has "conflict-uid" registered under a *different* path.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "conflict-uid",
+			Path:         "existing-folder",
+			Title:        "Existing",
+			MetadataHash: "existing-hash", // different hash, so the early-return guard doesn't fire
+		}, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/file.json", "test-ref")
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "conflict-uid")
+		require.ErrorContains(t, err, "my-folder")
+		require.ErrorContains(t, err, "existing-folder")
+		// The conflict error is surfaced directly – no PathCreationError wrapper.
+		var pathErr *PathCreationError
+		require.False(t, errors.As(err, &pathErr), "UID conflict error should not be wrapped in PathCreationError")
+		// No folder creation should have been attempted.
+		require.Empty(t, client.createCalls)
+	})
+
+	t.Run("skips folder creation in walk when UID and metadata hash match tree entry", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Pre-walk reads the leaf folder (parent/child) — not found, so we enter the walk.
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		// Walk step for "parent" — _folder.json with a stable UID and a known hash.
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("parent-uid", "Parent"),
+				Hash: "parent-hash",
+			}, nil)
+
+		// "parent-uid" is already in the tree with the *same* hash — skip creation.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "parent-uid",
+			Path:         "parent",
+			Title:        "Parent",
+			MetadataHash: "parent-hash",
+		}, "")
+
+		childFolder := ParseFolder("parent/child", config.Name)
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, childFolder.ID, parent)
+		// "parent-uid" must NOT have triggered a Get/Create — the walk skipped it.
+		require.NotContains(t, client.getCalls, "parent-uid", "parent folder should be skipped (hash match)")
+		require.NotContains(t, client.createCalls, "parent-uid", "parent folder should not be created (hash match)")
+		// "parent/child" must have been created because it was not in the tree.
+		require.Contains(t, client.createCalls, childFolder.ID, "child folder should be created")
+	})
+
+	t.Run("falls through to EnsureFolderExists when UID matches same path but hash differs", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Pre-walk reads the leaf folder — not found, so we enter the walk.
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
+			Return(nil, repository.ErrFileNotFound)
+		// Walk step for "parent" — same UID as in tree, but a newer hash.
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("parent-uid", "Parent Updated"),
+				Hash: "new-hash",
+			}, nil)
+
+		// "parent-uid" is in the tree at the same path but with a *stale* hash.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "parent-uid",
+			Path:         "parent",
+			Title:        "Parent",
+			MetadataHash: "old-hash",
+		}, "")
+
+		childFolder := ParseFolder("parent/child", config.Name)
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				if name == "parent-uid" {
+					return managedFolder("parent-uid", "Parent", config.Name), nil
+				}
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
+
+		require.NoError(t, err)
+		// EnsureFolderExists must have been called for "parent-uid" (reconcile stale hash).
+		require.Contains(t, client.getCalls, "parent-uid", "should call GET to reconcile stale hash")
+		require.Contains(t, client.updateCalls, "parent-uid", "should call UPDATE to store new hash")
+		// "parent/child" must also have been handled.
+		require.Contains(t, client.getCalls, childFolder.ID)
+	})
+
+	t.Run("UID conflict error contains expected message format", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "team-a/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("shared-uid", "Team A"),
+				Hash: "hash-a",
+			}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "shared-uid",
+			Path:         "team-b",
+			Title:        "Team B",
+			MetadataHash: "hash-b",
+		}, "")
+
+		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, FolderKind, WithFolderMetadataEnabled(true))
+		_, err := fm.EnsureFolderPathExist(ctx, "team-a/dashboard.json", "test-ref")
+
+		require.Error(t, err)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "UID conflict should be a ResourceValidationError")
+		require.ErrorContains(t, err, `folder UID "shared-uid" defined in "team-a" is already used by folder at path "team-b"`)
 	})
 }
 
@@ -1528,7 +1717,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(&repository.FileInfo{}, nil)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree())
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
 		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
@@ -1546,7 +1735,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
 		repo.On("Create", mock.Anything, "my-folder/", ref, mock.Anything, "Add folder my-folder/").Return(nil)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree())
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
 		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
@@ -1564,7 +1753,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(&repository.FileInfo{}, nil)
 		// Write must NOT be called; the mock will fail the test if it is.
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1583,7 +1772,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(&repository.FileInfo{}, nil)
 		// Create must NOT be called; the mock will fail the test if it is.
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1602,7 +1791,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
 		repo.On("Create", mock.Anything, "my-folder/_folder.json", ref, mock.Anything, "Add folder and folder metadata my-folder/").Return(nil)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1622,7 +1811,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
 		repo.On("Create", mock.Anything, "my-folder/_folder.json", ref, mock.Anything, "Add folder and folder metadata my-folder/").Return(createErr)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1643,7 +1832,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
 		repo.On("Create", mock.Anything, "my-folder/_folder.json", ref, mock.Anything, "Add folder and folder metadata my-folder/").Return(createErr)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1663,7 +1852,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		repo.On("Read", mock.Anything, "grafana/my-folder/", ref).Return(nil, repository.ErrFileNotFound)
 		repo.On("Create", mock.Anything, "grafana/my-folder/_folder.json", ref, mock.Anything, "Add folder and folder metadata grafana/my-folder/").Return(nil)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1689,7 +1878,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		// alpha already exists — Create must NOT be called for alpha/_folder.json
 		repo.On("Create", mock.Anything, "beta/_folder.json", ref, mock.Anything, "Add folder and folder metadata beta/").Return(nil)
 
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(),
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
@@ -1758,10 +1947,46 @@ func TestRenameFolderPath(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
+	})
+
+	t.Run("same stable UID preserves folder and descendants in tree", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "stable-uid", Title: "My Folder", Path: "old-team/"}, "")
+		tree.Add(Folder{ID: "child-folder", Title: "Child", Path: "old-team/sub/"}, "stable-uid")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "My Folder", config.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
+		require.NoError(t, err)
+		require.Empty(t, oldID)
+
+		_, parentExists := tree.Get("stable-uid")
+		require.True(t, parentExists, "renamed folder must remain in tree for same-UID move")
+
+		_, childExists := tree.Get("child-folder")
+		require.True(t, childExists, "descendant folder must remain in tree for same-UID move")
 	})
 
 	t.Run("different UIDs returns old folder ID for cleanup", func(t *testing.T) {
@@ -1787,7 +2012,7 @@ func TestRenameFolderPath(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 		require.Equal(t, "old-uid", oldID, "different UIDs means old folder needs cleanup")
@@ -1809,7 +2034,7 @@ func TestRenameFolderPath(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree)
+		fm := NewFolderManager(rw, client, tree, FolderKind)
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 
@@ -1824,7 +2049,7 @@ func TestRenameFolderPath(t *testing.T) {
 		rw.On("Read", mock.Anything, "bad-folder/_folder.json", "ref").
 			Return(nil, fmt.Errorf("disk error"))
 
-		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.RenameFolderPath(ctx, "bad-folder/", "ref", "new-folder/", "ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "parse old folder")
@@ -1846,9 +2071,151 @@ func TestRenameFolderPath(t *testing.T) {
 		}
 
 		tree := NewEmptyFolderTree()
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "ensure new folder path")
+	})
+
+	t.Run("ancestor relocation opts bypass UID conflict for parent folder", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
+		childMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"child-uid"},"spec":{"title":"Child"}}`)
+
+		rw.On("Read", mock.Anything, "old-parent/child/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: parentMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/child/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "parent-uid", Title: "Parent", Path: "old-parent/"}, "")
+		tree.Add(Folder{ID: "child-uid", Title: "Child", Path: "old-parent/child/"}, "parent-uid")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "title", config.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		// Without WithRelocatingUIDs("parent-uid"), this would fail because
+		// parent-uid is still registered at old-parent/ in the tree.
+		oldID, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new",
+			WithRelocatingUIDs("parent-uid"))
+		require.NoError(t, err)
+		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
+	})
+
+	t.Run("nested folder rename without ancestor relocation opts fails on UID conflict", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
+		childMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"child-uid"},"spec":{"title":"Child"}}`)
+
+		rw.On("Read", mock.Anything, "old-parent/child/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/child/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: parentMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "parent-uid", Title: "Parent", Path: "old-parent/"}, "")
+		tree.Add(Folder{ID: "child-uid", Title: "Child", Path: "old-parent/child/"}, "parent-uid")
+
+		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		// Without ancestor relocation opts, EnsureFolderPathExist rejects the
+		// parent UID appearing at a new path.
+		_, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "already used by folder")
+	})
+}
+
+// TestEnsureFolderPathExist_EarlyReturnCheckIDConflict covers the conflict check
+// at root folder check..
+func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
+	ctx := context.Background()
+
+	folderJSON := func(uid, title string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)
+	}
+
+	t.Run("returns error when hash matches but folder is registered under a different path", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Pre-walk reads "my-folder/_folder.json" — returns a stable UID and hash.
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("shared-uid", "My Folder"),
+				Hash: "same-hash",
+			}, nil)
+
+		// The tree already has "shared-uid" with the SAME hash but under a DIFFERENT path.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "shared-uid",
+			Path:         "other-folder",
+			Title:        "Other Folder",
+			MetadataHash: "same-hash", // identical hash triggers the early-return branch
+		}, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
+
+		require.Error(t, err)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "conflict from early-return branch must be a ResourceValidationError")
+		require.ErrorContains(t, err, "shared-uid")
+		require.ErrorContains(t, err, "my-folder")
+		require.ErrorContains(t, err, "other-folder")
+		// No folder creation should have been attempted.
+		require.Empty(t, client.getCalls)
+		require.Empty(t, client.createCalls)
+	})
+
+	t.Run("returns folder ID without API calls when hash and path both match", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
+			Return(&repository.FileInfo{
+				Data: folderJSON("stable-uid", "My Folder"),
+				Hash: "same-hash",
+			}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "stable-uid",
+			Path:         "my-folder",
+			Title:        "My Folder",
+			MetadataHash: "same-hash",
+		}, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parent)
+		// Early-return path must not call any Kubernetes API.
+		require.Empty(t, client.getCalls, "no GET should be made when hash and path already match")
+		require.Empty(t, client.createCalls)
 	})
 }

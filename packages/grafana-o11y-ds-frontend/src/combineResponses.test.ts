@@ -1,12 +1,12 @@
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataQueryResponse,
-  Field,
+  type DataQueryResponse,
+  type Field,
   FieldType,
   LoadingState,
-  PanelData,
-  QueryResultMetaStat,
+  type PanelData,
+  type QueryResultMetaStat,
   getDefaultTimeRange,
 } from '@grafana/data';
 

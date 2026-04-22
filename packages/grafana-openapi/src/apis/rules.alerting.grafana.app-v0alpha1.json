@@ -1997,7 +1997,12 @@
         ]
       },
       "AlertRuleDatasourceUID": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+$"
+      },
+      "AlertRuleExecErrState": {
+        "type": "string",
+        "enum": ["Error", "Ok", "Alerting", "KeepLast"]
       },
       "AlertRuleExpression": {
         "type": "object",
@@ -2081,6 +2086,38 @@
           }
         ]
       },
+      "AlertRuleNamedRoutingTree": {
+        "type": "object",
+        "required": ["type", "routingTree"],
+        "properties": {
+          "routingTree": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertRuleNoDataState": {
+        "type": "string",
+        "enum": ["NoData", "Ok", "Alerting", "KeepLast"]
+      },
+      "AlertRuleNotificationSettings": {
+        "description": "TODO(@moustafab): this should be imported from the notifications package",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AlertRuleSimplifiedRouting"
+          },
+          {
+            "$ref": "#/components/schemas/AlertRuleNamedRoutingTree"
+          }
+        ]
+      },
+      "AlertRuleNotificationSettingsType": {
+        "type": "string",
+        "enum": ["SimplifiedRouting", "NamedRoutingTree"]
+      },
       "AlertRuleOperatorState": {
         "type": "object",
         "required": ["lastEvaluation", "state"],
@@ -2106,11 +2143,32 @@
         },
         "additionalProperties": false
       },
+      "AlertRulePanelRef": {
+        "type": "object",
+        "required": ["dashboardUID", "panelID"],
+        "properties": {
+          "dashboardUID": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "panelID": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
       "AlertRulePromDuration": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$",
+        "not": {
+          "pattern": "hmuµn"
+        }
       },
       "AlertRulePromDurationWMillis": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
       "AlertRuleRelativeTimeRange": {
         "type": "object",
@@ -2121,6 +2179,46 @@
           },
           "to": {
             "$ref": "#/components/schemas/AlertRulePromDurationWMillis"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertRuleSimplifiedRouting": {
+        "type": "object",
+        "required": ["type", "receiver"],
+        "properties": {
+          "activeTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
+            }
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupInterval": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "groupWait": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "muteTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
+            }
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeatInterval": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
           }
         },
         "additionalProperties": false
@@ -2136,8 +2234,7 @@
             }
           },
           "execErrState": {
-            "type": "string",
-            "default": "Error"
+            "$ref": "#/components/schemas/AlertRuleExecErrState"
           },
           "expressions": {
             "$ref": "#/components/schemas/AlertRuleExpressionMap"
@@ -2159,60 +2256,13 @@
             "minimum": 0
           },
           "noDataState": {
-            "type": "string",
-            "default": "NoData"
+            "$ref": "#/components/schemas/AlertRuleNoDataState"
           },
           "notificationSettings": {
-            "type": "object",
-            "required": ["receiver"],
-            "properties": {
-              "activeTimeIntervals": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
-                }
-              },
-              "groupBy": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "groupInterval": {
-                "$ref": "#/components/schemas/AlertRulePromDuration"
-              },
-              "groupWait": {
-                "$ref": "#/components/schemas/AlertRulePromDuration"
-              },
-              "muteTimeIntervals": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
-                }
-              },
-              "receiver": {
-                "type": "string"
-              },
-              "repeatInterval": {
-                "$ref": "#/components/schemas/AlertRulePromDuration"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
           "panelRef": {
-            "type": "object",
-            "required": ["dashboardUID", "panelID"],
-            "properties": {
-              "dashboardUID": {
-                "type": "string",
-                "minLength": 1
-              },
-              "panelID": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/AlertRulePanelRef"
           },
           "paused": {
             "type": "boolean"
@@ -2287,7 +2337,8 @@
         ]
       },
       "RecordingRuleDatasourceUID": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+$"
       },
       "RecordingRuleExpression": {
         "type": "object",
@@ -2371,6 +2422,11 @@
           }
         ]
       },
+      "RecordingRuleMetricName": {
+        "description": "TODO(@moustafab): validate the metric name regex",
+        "type": "string",
+        "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$"
+      },
       "RecordingRuleOperatorState": {
         "type": "object",
         "required": ["lastEvaluation", "state"],
@@ -2397,10 +2453,15 @@
         "additionalProperties": false
       },
       "RecordingRulePromDuration": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$",
+        "not": {
+          "pattern": "hmuµn"
+        }
       },
       "RecordingRulePromDurationWMillis": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
       "RecordingRuleRelativeTimeRange": {
         "type": "object",
@@ -2429,13 +2490,13 @@
             }
           },
           "metric": {
-            "type": "string"
+            "$ref": "#/components/schemas/RecordingRuleMetricName"
           },
           "paused": {
             "type": "boolean"
           },
           "targetDatasourceUID": {
-            "type": "string"
+            "$ref": "#/components/schemas/RecordingRuleDatasourceUID"
           },
           "title": {
             "type": "string"

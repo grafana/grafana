@@ -8,14 +8,14 @@ import {
   useRef,
 } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
 
-import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerPopover, type ColorPickerProps } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 

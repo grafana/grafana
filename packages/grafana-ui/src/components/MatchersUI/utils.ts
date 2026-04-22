@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 
 import { getFieldTypeIcon } from '../../types/icon';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 
 /**
  * @internal

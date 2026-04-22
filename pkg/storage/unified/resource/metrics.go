@@ -12,6 +12,7 @@ type StorageMetrics struct {
 	WatchEventLatency      *prometheus.HistogramVec
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
+	Broadcaster            *BroadcasterMetrics
 }
 
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
@@ -38,5 +39,6 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			Name: "storage_server_field_selector_search_count",
 			Help: "number of times List was served by field selector search",
 		}, []string{"resource", "served_by"}),
+		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }

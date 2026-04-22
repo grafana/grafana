@@ -1,24 +1,24 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { of, type OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
   getFieldDisplayName,
-  KeyValue,
-  SelectableValue,
+  type KeyValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
   FieldMatcherID,
 } from '@grafana/data';
 import {
   CalculateFieldMode,
-  CalculateFieldTransformerOptions,
+  type CalculateFieldTransformerOptions,
   getNameFromOptions,
   defaultWindowOptions,
 } from '@grafana/data/internal';
@@ -26,7 +26,6 @@ import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
-import { getTransformationContent } from '../../docs/getTransformationContent';
 import darkImage from '../../images/dark/calculateField.svg';
 import lightImage from '../../images/light/calculateField.svg';
 
@@ -275,7 +274,6 @@ export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryIt
       'Use the row values to calculate a new field.'
     ),
     categories: new Set([TransformerCategory.CalculateNewFields]),
-    help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

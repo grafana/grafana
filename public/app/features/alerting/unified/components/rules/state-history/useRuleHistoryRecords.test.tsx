@@ -1,6 +1,6 @@
 import { FieldType, createTheme } from '@grafana/data';
 
-import { LogRecord } from './common';
+import { type LogRecord } from './common';
 import { logRecordsToDataFrame } from './useRuleHistoryRecords';
 
 describe('logRecordsToDataFrame', () => {

@@ -1012,7 +1012,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 };
 export type DashboardAccess = {
   annotationsPermissions: AnnotationPermission;
@@ -1207,7 +1206,7 @@ export type DashboardHit = {
   name: string;
   /** Owner references set on the resource metadata in the format {Group}/{Kind}/{Name} */
   ownerReferences?: string[];
-  /** Dashboard or folder */
+  /** Dashboards or folders */
   resource: string;
   /** When using "real" search, this is the score */
   score?: number;

@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, ScopedVars } from '@grafana/data';
+import { type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { ButtonLinkProps } from '@grafana/ui/internal';
+import { type ButtonLinkProps } from '@grafana/ui/internal';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 

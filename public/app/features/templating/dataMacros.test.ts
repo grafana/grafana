@@ -1,7 +1,7 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { DataContextScopedVar, FieldType, toDataFrame } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataContextScopedVar, FieldType, toDataFrame } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 describe('dataMacros', () => {
   let _templateSrv: TemplateSrv;

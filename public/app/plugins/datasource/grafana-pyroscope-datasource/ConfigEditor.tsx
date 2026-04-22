@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import {
   AdvancedHttpSettings,
   Auth,
@@ -13,7 +13,7 @@ import {
 import { config } from '@grafana/runtime';
 import { Divider, Field, Input, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
 
-import { PyroscopeDataSourceOptions } from './types';
+import { type PyroscopeDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<PyroscopeDataSourceOptions> {}
 

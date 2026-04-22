@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
@@ -17,27 +17,15 @@ export function QueryEditorRenderer() {
 
   const selectedRefId = selectedQuery?.refId;
 
-  // Ref updated during render (not in an effect) so handleChange can detect
-  // and discard stale onChange calls from downstream editors on query switch.
-  const selectedRefIdRef = useRef(selectedRefId);
-  selectedRefIdRef.current = selectedRefId;
-
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return selectedRefId && data ? filterPanelDataToQuery(data, selectedRefId) : undefined;
   }, [data, selectedRefId]);
 
+  // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
-      const currentRefId = selectedRefIdRef.current;
-      if (!currentRefId) {
-        return;
-      }
-      // Discard stale onChange calls targeting a previously selected query.
-      if (updatedQuery.refId !== currentRefId) {
-        return;
-      }
-      updateSelectedQuery(updatedQuery, currentRefId);
+      updateSelectedQuery(updatedQuery, updatedQuery.refId);
     },
     [updateSelectedQuery]
   );

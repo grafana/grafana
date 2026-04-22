@@ -1,13 +1,18 @@
 import { useCallback, useMemo } from 'react';
 
-import { DataFrame, store } from '@grafana/data';
+import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 
-import { FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats, getDefaultFieldSelectorWidth } from './FieldSelector';
+import {
+  FIELD_SELECTOR_MIN_WIDTH,
+  FieldSelector,
+  type FieldWithStats,
+  getDefaultFieldSelectorWidth,
+} from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';

@@ -37,7 +37,7 @@
   },
   "cheat-sheet": {
     "condtional-macros": "Nebo si vytvořte vlastní podmínky pomocí těchto maker, které pouze vrátí hodnoty:",
-    "example-time-group": "Příklad skupiny a seřazení pomocí {{timeGroupMacro}}:",
+    "example-time-group": "Příklad možnosti Seřadit podle a řazení pomocí {{timeGroupMacro}}:",
     "fillvalue": "Nastavením hodnoty „fillvalue“ Grafana vyplní chybějící hodnoty podle intervalu. Hodnota „fillvalue“ může být buď doslovná hodnota, {{null}} nebo {{previous}}. {{previous}} vyplní předchozí zobrazenou hodnotu nebo {{null}}, pokud dosud nebyla zobrazená žádná.",
     "macros": "Makra:",
     "optional": "Volitelné:",

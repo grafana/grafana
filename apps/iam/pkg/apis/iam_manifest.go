@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "iam",
+	AppDisplayName:   "iam",
 	Group:            "iam.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -559,6 +560,11 @@ var appManifestData = app.ManifestData{
 								"externalUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"memberCount": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
 									},
 								},
 								"name": {

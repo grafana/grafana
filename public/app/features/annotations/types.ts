@@ -1,7 +1,7 @@
-import { AnnotationEvent, PanelData, TimeRange } from '@grafana/data';
+import { type AnnotationEvent, type PanelData, type TimeRange } from '@grafana/data';
 
-import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { type DashboardModel } from '../dashboard/state/DashboardModel';
+import { type PanelModel } from '../dashboard/state/PanelModel';
 
 export interface AnnotationQueryOptions {
   dashboard: DashboardModel;

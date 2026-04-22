@@ -1,17 +1,17 @@
 import { cloneDeep } from 'lodash';
-import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
+import { type MonoTypeOperatorFunction, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { DataFrame } from '../types/dataFrame';
+import { type DataFrame } from '../types/dataFrame';
 import {
-  CustomTransformOperator,
-  DataTransformContext,
-  DataTransformerConfig,
-  FrameMatcher,
+  type CustomTransformOperator,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  type FrameMatcher,
 } from '../types/transformations';
 
 import { getFrameMatchers } from './matchers';
-import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
+import { standardTransformersRegistry, type TransformerRegistryItem } from './standardTransformersRegistry';
 
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>

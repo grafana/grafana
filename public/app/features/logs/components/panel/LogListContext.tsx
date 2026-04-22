@@ -1,8 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -10,32 +11,32 @@ import {
   useState,
 } from 'react';
 
-import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
-  DataFrame,
-  LogLevel,
-  LogRowModel,
+  type DataFrame,
+  type LogLevel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsSortOrder,
   shallowCompare,
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { PopoverContent } from '@grafana/ui';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
-import { LogLineTimestampResolution } from './LogLine';
-import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListOptions, LogListFontSize } from './LogList';
+import { type LogLineTimestampResolution } from './LogLine';
+import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 export interface LogListContextData
   extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
@@ -253,6 +254,7 @@ export const LogListContextProvider = ({
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -280,18 +282,18 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!otelLogsFormattingEnabled || !setDisplayedFields || showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, otelLogsFormattingEnabled, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+    if (otelLogsFormattingEnabled && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, otelDisplayedFields, otelLogsFormattingEnabled, showLogAttributes]);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {

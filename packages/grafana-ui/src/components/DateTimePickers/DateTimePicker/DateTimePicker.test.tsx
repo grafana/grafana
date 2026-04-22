@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
-import { DateTimePicker, Props } from './DateTimePicker';
+import { DateTimePicker, type Props } from './DateTimePicker';
 
 // An assortment of timezones that we will test the behavior of the DateTimePicker with different timezones
 const TEST_TIMEZONES = ['browser', 'Europe/Stockholm', 'America/Indiana/Marengo'];

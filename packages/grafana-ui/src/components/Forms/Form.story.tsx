@@ -1,6 +1,6 @@
-import { StoryFn } from '@storybook/react';
+import { type StoryFn } from '@storybook/react';
 import { useId } from 'react';
-import { ValidateResult } from 'react-hook-form';
+import { type ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Button } from '../Button/Button';
@@ -18,7 +18,7 @@ import { Legend } from './Legend';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export default {
-  title: 'Forms/Form',
+  title: 'Forms/Deprecated/Form',
   decorators: [withStoryContainer],
   parameters: {
     docs: {
@@ -57,10 +57,6 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const nameId = useId();
-  const emailId = useId();
-  const usernameId = useId();
-  const nestedPathId = useId();
   const textId = useId();
   const checkboxId = useId();
   const switchId = useId();
@@ -80,18 +76,18 @@ const renderForm = (defaultValues?: FormDTO) => {
             <Legend>Edit user</Legend>
 
             <Field label="Name" invalid={!!errors.name} error="Name is required">
-              <Input {...register('name', { required: true })} placeholder="Roger Waters" id={nameId} />
+              <Input {...register('name', { required: true })} placeholder="Roger Waters" />
             </Field>
 
             <Field label="Email" invalid={!!errors.email} error="E-mail is required">
-              <Input {...register('email', { required: true })} id={emailId} placeholder="roger.waters@grafana.com" />
+              <Input {...register('email', { required: true })} placeholder="roger.waters@grafana.com" />
             </Field>
 
             <Field label="Username">
-              <Input {...register('username')} placeholder="mr.waters" id={usernameId} />
+              <Input {...register('username')} placeholder="mr.waters" />
             </Field>
             <Field label="Nested object">
-              <Input {...register('nested.path')} placeholder="Nested path" id={nestedPathId} />
+              <Input {...register('nested.path')} placeholder="Nested path" />
             </Field>
 
             <Field label="Textarea" invalid={!!errors.text} error="Text is required">

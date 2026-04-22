@@ -204,9 +204,13 @@ func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceSe
 }
 
 func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	enforced := make(map[string]bool, len(opts.Cfg.EnforcedQuotaResources))
+	for _, r := range opts.Cfg.EnforcedQuotaResources {
+		enforced[r] = true
+	}
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
-		EnforceQuotas:  opts.Cfg.EnforceQuotas,
-		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
+		EnforcedResources: enforced,
+		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
 	return nil
 }

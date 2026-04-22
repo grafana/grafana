@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 

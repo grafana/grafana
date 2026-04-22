@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { ComponentProps, useId } from 'react';
+import { type ComponentProps, useId } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, Switch, Label, Tooltip, Grid, useStyles2 } from '@grafana/ui';
 
-import { GaugePanelEffects } from './panelcfg.gen';
+import { type GaugePanelEffects } from './panelcfg.gen';
 
 function EffectsEditorInput(props: ComponentProps<typeof Switch> & { tooltip?: string }) {
   const id = useId();

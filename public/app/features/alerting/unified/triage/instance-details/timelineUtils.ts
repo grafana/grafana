@@ -1,4 +1,4 @@
-import { Labels, dateTimeFormat } from '@grafana/data';
+import { type Labels, dateTimeFormat } from '@grafana/data';
 
 const TIMELINE_DATE_FORMAT = 'MMM DD, HH:mm:ss';
 

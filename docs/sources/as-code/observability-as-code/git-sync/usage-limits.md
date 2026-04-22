@@ -29,9 +29,9 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available **based on the different tiers** but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.**
 
-**Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -46,7 +46,7 @@ The following Git Sync per-tier limits apply:
 | Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
-| Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
+| Amount of synced resources per repository | 20               | 1,000             | 1,000           | 1,000                  |
 
 ## Compatible Git providers
 
@@ -59,7 +59,7 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 | GitLab       | Cloud, Enterprise      | Personal Access Token               |
 | Bitbucket    | Cloud, Enterprise      | API token with scopes               |
 
-Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x only. Refer to [Enable required feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-required-feature-toggles) to set them up.
+Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
 ### The Pure Git repository type
 
@@ -67,7 +67,9 @@ The Pure Git repository type uses the [Smart HTTP protocol v2](https://git-scm.c
 
 {{< admonition type="note" >}}
 
-Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported. Make sure your Git server supports protocol v2 over HTTPS.
+Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported.
+
+Make sure your Git server supports protocol v2 over HTTPS. Some providers, like Azure DevOps, only use v1 and are therefore not compatible with Git Sync.
 
 {{< /admonition >}}
 
@@ -106,23 +108,18 @@ A resource can be:
 
 ## Known limitations
 
-### Synced resources
+### Migration to Git Sync
 
-- You can only sync dashboards and folders. Refer to [Supported resources](#resource-support-and-compatibility) for more information.
-- If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
-- Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise.
-- When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
-- If you want to manage existing resources with Git Sync, you need to save them as JSON files and commit them to the synced repository. Use `grafanactl` or open a PR to import, copy, move, or save a dashboard. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
-- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
+**Full-instance sync is experimental.**
 
-### Permission management
+When migrating to resources to Git Sync, you can still create, edit or delete resources, but changes may not be exported. The duration of this process depends on the number of resources involved.
 
-You cannot modify the permissions of a provisioned folder after you've synced it.
+When migrating existing dashboards, the folder structure will be replicated in the repository. You may need to manually remove or manage original folders after the migration.
 
-The default permissions are:
+### Use existing resources
 
-- Admin = Admin
-- Editor = Editor
-- Viewer = Viewer.
+If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `gcx`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
 
-Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
+### Restore resources
+
+Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.

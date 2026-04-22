@@ -4,21 +4,21 @@ import { isArray, isBoolean, isNumber, isString } from 'lodash';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { getFieldDisplayName } from '../field/fieldState';
-import { Column, LoadingState, TableData, TimeSeries, TimeSeriesValue } from '../types/data';
+import { type Column, LoadingState, type TableData, type TimeSeries, type TimeSeriesValue } from '../types/data';
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  Field,
-  DataFrameWithValue,
-  DataFrameDTO,
-  FieldDTO,
-  FieldConfig,
+  type Field,
+  type DataFrameWithValue,
+  type DataFrameDTO,
+  type FieldDTO,
+  type FieldConfig,
 } from '../types/dataFrame';
-import { DataQueryResponseData } from '../types/datasource';
-import { GraphSeriesXY, GraphSeriesValue } from '../types/graph';
-import { PanelData } from '../types/panel';
+import { type DataQueryResponseData } from '../types/datasource';
+import { type GraphSeriesXY, type GraphSeriesValue } from '../types/graph';
+import { type PanelData } from '../types/panel';
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';

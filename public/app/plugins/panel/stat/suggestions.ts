@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType, type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(s, {
@@ -17,6 +17,7 @@ const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggest
       overrides: [],
     },
     cardOptions: {
+      maxSeries: 6,
       previewModifier: (s) => {
         if (s.options?.reduceOptions?.values) {
           s.options.reduceOptions.limit = 1;
@@ -53,6 +54,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
       },
     });
   } else if (ds.hasFieldType(FieldType.number) && ds.hasFieldType(FieldType.time)) {
+    if (ds.frameCount > MAX_STATS) {
+      return;
+    }
+
     // aggregated suggestions for number fields
     suggestions.push(
       {

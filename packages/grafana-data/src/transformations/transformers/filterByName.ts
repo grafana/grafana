@@ -1,6 +1,6 @@
-import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
+import { type DataTransformerInfo, type MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
-import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
+import { type RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
 
 import { filterFieldsTransformer } from './filter';
 import { DataTransformerID } from './ids';

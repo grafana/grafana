@@ -1,16 +1,16 @@
 import { createAction } from '@reduxjs/toolkit';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { QueryVariableModel, VariableType } from '@grafana/data';
+import { type QueryVariableModel, type VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { VariableAdapter, variableAdapters } from '../adapters';
-import { VariableEditorProps } from '../editor/types';
-import { VariablePickerProps } from '../pickers/types';
+import { type VariableAdapter, variableAdapters } from '../adapters';
+import { type VariableEditorProps } from '../editor/types';
+import { type VariablePickerProps } from '../pickers/types';
 import { toVariablePayload } from '../utils';
 
 import { createQueryVariable } from './__tests__/fixtures';
-import { VariablePayload, VariablesState } from './types';
+import { type VariablePayload, type VariablesState } from './types';
 import { cleanVariables, variablesReducer } from './variablesReducer';
 
 const variableAdapter: VariableAdapter<QueryVariableModel> = {

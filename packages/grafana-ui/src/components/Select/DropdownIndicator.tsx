@@ -1,4 +1,4 @@
-import { DropdownIndicatorProps } from 'react-select';
+import { type DropdownIndicatorProps } from 'react-select';
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';

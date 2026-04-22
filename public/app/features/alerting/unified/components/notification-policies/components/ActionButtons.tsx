@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
-import { ROUTES_META_SYMBOL, Route } from '../../../../../../plugins/datasource/alertmanager/types';
+import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';

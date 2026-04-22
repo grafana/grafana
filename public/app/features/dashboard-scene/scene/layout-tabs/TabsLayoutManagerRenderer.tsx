@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult, DragStart } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -18,7 +18,7 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,8 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
 var (
@@ -68,7 +67,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return nil, nil
 	}
 
@@ -106,8 +105,8 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},
@@ -142,6 +141,8 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
+	registerSubresourceMetrics(prometheus.DefaultRegisterer)
+
 	builder := &DataSourceAPIBuilder{
 		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:             plugin,
@@ -164,8 +165,8 @@ func getHardcodedQueryTypes(pluginId string) (*datasourceV0.QueryTypeDefinitionL
 	var err error
 	var raw json.RawMessage
 	switch pluginId {
-	case "grafana-testdata-datasource":
-		raw, err = kinds.QueryTypeDefinitionListJSON()
+	// case "grafana-testdata-datasource":
+	// 	raw, err = kinds.QueryTypeDefinitionListJSON()
 	case "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
 	}
@@ -249,20 +250,15 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
 	}
 
 	if b.cfg.EnableHealthEndpoint {
 		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
 
-	// FIXME: temporarily register both "datasources" and "connections" query paths
-	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
-	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}                            // hidden from openapi
-	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
-
 	if b.cfg.UseDualWriter {
+		b.applyDefaultStorageConfig(opts, ds)
 		legacyStore := &legacyStorage{
 			datasources:                     b.datasources,
 			resourceInfo:                    &ds,
@@ -305,6 +301,30 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	return err
 }
 
+// applyDefaultStorageConfig injects a unified storage config entry for this plugin's
+// datasource resource when no plugin-specific config exists, copying from the shared
+// "all datasources" key (setting.DataSourceResources). This allows operators to set a
+// single DualWriter mode for every datasource plugin via:
+//
+//	[unified_storage.datasources.datasource.grafana.app]
+//	dualWriterMode = 1
+func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOptions, ri utils.ResourceInfo) {
+	if opts.StorageOpts == nil {
+		return
+	}
+	key := ri.GroupResource().String()
+	if _, exists := opts.StorageOpts.UnifiedStorageConfig[key]; exists {
+		return
+	}
+	fallback, hasFallback := opts.StorageOpts.UnifiedStorageConfig[setting.DataSourceResources]
+	if !hasFallback {
+		return
+	}
+	opts.StorageOpts.UnifiedStorageConfig[key] = setting.UnifiedStorageConfig{
+		DualWriterMode: fallback.DualWriterMode,
+	}
+}
+
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
 	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
 	if err != nil {
@@ -315,9 +335,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := datasourceV0.GetOpenAPIDefinitions(ref) // required when running standalone
-		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
-		return defs
+		return datasourceV0.GetOpenAPIDefinitions(ref)
 	}
 }
 

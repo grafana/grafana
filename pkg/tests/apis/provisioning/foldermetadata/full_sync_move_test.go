@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,23 +13,21 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-metadata"
 
 	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A Display"))
 	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B Display"))
 	writeToProvisioningPath(t, helper, "teamC/teamD/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "teamA/dashboard.json",
 			"../testdata/text-options.json":  "teamB/dashboard.json",
@@ -108,9 +107,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested"
 
 	writeToProvisioningPath(t, helper, "root/_folder.json", folderMetadataJSON("root-uid", "Root"))
@@ -118,9 +115,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 	writeToProvisioningPath(t, helper, "root/child/grand/.keep", []byte{})
 	writeToProvisioningPath(t, helper, "other/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "root/dashboard.json",
 			"../testdata/text-options.json":  "root/child/dashboard.json",
@@ -163,17 +160,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-mixed-legacy"
 
 	writeToProvisioningPath(t, helper, "metaA/_folder.json", folderMetadataJSON("meta-a-uid", "Meta A"))
 	writeToProvisioningPath(t, helper, "plainB/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":   "metaA/dashboard.json",
 			"../testdata/text-options.json": "plainB/dashboard.json",
@@ -209,17 +204,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainParent(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-meta-to-plain"
 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -248,18 +241,16 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-nested"
 
 	// Root-level folder with metadata + a target nested parent.
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
@@ -293,18 +284,16 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-root"
 
 	// Nested folder with metadata.
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -338,18 +327,16 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-preserves-gen"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":   "myfolder/dashboard.json",
 			"../testdata/text-options.json": "plain/dashboard.json",
@@ -429,18 +416,16 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 // moving a metadata-backed folder from one nested location to another nested location preserves its
 // UID and increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-nested-gen"
 
 	writeToProvisioningPath(t, helper, "parentA/_folder.json", folderMetadataJSON("parent-a-uid", "Parent A"))
 	writeToProvisioningPath(t, helper, "parentA/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parentB/_folder.json", folderMetadataJSON("parent-b-uid", "Parent B"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parentA/myfolder/dashboard.json",
 		},
@@ -491,17 +476,15 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 // moving a metadata-backed folder from the root to a nested location preserves its UID and
 // increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-nested-gen"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
@@ -551,17 +534,15 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 // moving a metadata-backed folder from a nested location to the root preserves its UID and
 // increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-root-gen"
 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/myfolder/dashboard.json",
 		},
@@ -612,9 +593,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 // intermediate metadata-backed folder is moved to a different parent, all of its children have
 // their sourcePath and parent annotations updated correctly.
 func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-children-update"
 
 	// Three-level hierarchy: folderA → folderB → folderC, all metadata-backed.
@@ -628,9 +607,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 	writeToProvisioningPath(t, helper, "target/_folder.json", folderMetadataJSON("target-uid", "Target"))
 	writeToProvisioningPath(t, helper, "target/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -666,17 +645,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 // is changed simultaneously, the DELETE (old UID at old path) and the CREATE (new UID at new path)
 // have different UIDs, so augmentChangesForFolderMoves cannot merge them into a single UPDATE.
 func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPreservation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-uid-change"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("original-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "myfolder/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -703,9 +680,73 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 		"generation must be 1: folder was deleted and recreated, not updated in-place")
 }
 
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t *testing.T) {
+	helper := sharedHelper(t)
+	const repo = "folder-duplicate-uid"
+
+	// Set up two separate folders each with their own unique UIDs.
+	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("uid-a", "Folder A"))
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-b", "Folder B"))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":   "folderA/dashboard.json",
+			"../testdata/text-options.json": "folderB/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
+	})
+
+	// Update folderB's metadata to claim the same UID as folderA — a conflict.
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-a", "Folder B Renamed"))
+
+	// The sync must warn: folderB cannot take over uid-a which is already owned by folderA.
+	// UID conflicts are ResourceValidationErrors and are treated as warnings, not hard errors.
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(job.Object, "status", "state"),
+		"sync must warn when a folder metadata file claims a UID already owned by another folder")
+
+	jobWarnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
+	require.NotEmpty(t, jobWarnings, "sync job must report the UID conflict as a warning")
+	uidAMentioned := false
+	for _, w := range jobWarnings {
+		if strings.Contains(w, "uid-a") {
+			uidAMentioned = true
+			break
+		}
+	}
+	require.True(t, uidAMentioned, "at least one warning should mention the conflicting UID uid-a")
+
+	// Folder A must remain intact and unchanged.
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
+
+	// Folder B must remain exactly as it was before the conflicting sync — still on uid-b and not renamed.
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
+
+	// Both dashboards must remain parented under their original folders.
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
+	})
+}
+
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
 		"metadata": map[string]any{
 			"name": uid,
@@ -826,17 +867,15 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 // in place (preserving K8s UID and creationTimestamp) rather than deleting
 // and recreating it.
 func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "dashboard-move-uid"
 
 	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("folder-a-uid", "Folder A"))
 	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("folder-b-uid", "Folder B"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folderA/dashboard.json",
 		},

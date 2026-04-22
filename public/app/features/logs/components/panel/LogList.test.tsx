@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { reportInteraction } from '@grafana/runtime';
+import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
@@ -22,10 +22,19 @@ import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '.
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogList, Props } from './LogList';
+import { LogList, type Props } from './LogList';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
 
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -85,17 +94,10 @@ jest.mock('re-resizable', () => {
   };
 });
 
-const originalFlagValue = config.featureToggles.newLogsPanel;
-beforeAll(() => {
-  config.featureToggles.newLogsPanel = true;
-});
-afterAll(() => {
-  config.featureToggles.newLogsPanel = originalFlagValue;
-});
-
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: true });
     logs = [
       createLogRow({ uid: '1', labels: { name_of_the_label: 'value of the label' } }),
       createLogRow({ uid: '2' }),
@@ -212,10 +214,8 @@ describe('LogList', () => {
   });
 
   describe('OTel log lines', () => {
-    const originalState = config.featureToggles.otelLogsFormatting;
-
     test('Does not perform OTel-related actions when the flag is disabled', () => {
-      config.featureToggles.otelLogsFormatting = false;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: false });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -225,12 +225,10 @@ describe('LogList', () => {
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).not.toHaveBeenCalled();
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default displayed fields for non-OTel logs', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -242,12 +240,10 @@ describe('LogList', () => {
 
       // No fields to display, no call
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default OTel displayed fields', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -267,8 +263,6 @@ describe('LogList', () => {
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
       expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
   });
 
@@ -512,8 +506,7 @@ describe('LogList', () => {
     });
 
     test('Applies OTel default displayed fields and suggested fields', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
 
       const logs = [
         createLogRow({
@@ -537,8 +530,6 @@ describe('LogList', () => {
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Toggles show log level by clicking the Log Level checkbox in the field selector', async () => {
@@ -577,7 +568,7 @@ describe('LogList', () => {
       expect(screen.getByText('debug')).toBeInTheDocument();
 
       // Click the "Log Level" checkbox in the field selector to hide log level
-      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Show log level' });
       expect(logLevelCheckbox).toBeChecked();
       await userEvent.click(logLevelCheckbox);
 
@@ -589,13 +580,13 @@ describe('LogList', () => {
       expect(screen.getByText('backend')).toBeInTheDocument();
 
       // Click again to show log level (checkbox is now in Suggested section)
-      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Show log level' });
       await userEvent.click(logLevelCheckboxAfter);
 
       // Level is shown again (wait for list to re-render)
       expect(await screen.findByText('info')).toBeInTheDocument();
       expect(screen.getByText('debug')).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: 'Log level' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Show log level' })).toBeChecked();
     });
   });
 

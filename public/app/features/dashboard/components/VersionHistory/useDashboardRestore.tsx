@@ -8,7 +8,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useSelector } from 'app/types/store';
 
 import { dashboardWatcher } from '../../../live/dashboard/dashboardWatcher';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   // Skip the watcher logic for this save since it's handled by the hook

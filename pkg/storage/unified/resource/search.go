@@ -23,8 +23,8 @@ import (
 
 	"github.com/grafana/authlib/types"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -67,8 +67,9 @@ type BulkIndexRequest struct {
 }
 
 type IndexBuildInfo struct {
-	BuildTime    time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
-	BuildVersion *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
+	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	SelectableFields []string        // List of selectable fields used when index was built.
 }
 
 type ResourceIndex interface {
@@ -153,6 +154,7 @@ type searchServer struct {
 	dashboardIndexMaxAge time.Duration
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
+	selectableFields     map[string][]string
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -216,6 +218,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
+		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 	}
@@ -258,10 +261,22 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.lastImportTime = b.lastImportTime
 	}
 
+	ret.selectableFields = mergeSelectableFields(a.selectableFields, b.selectableFields)
+
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
 	return ret, true
+}
+
+func mergeSelectableFields(a, b []string) []string {
+	if len(a) == 0 && len(b) == 0 {
+		return nil
+	}
+
+	merged := append(slices.Clone(a), b...)
+	slices.Sort(merged)
+	return slices.Compact(merged)
 }
 
 func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -805,10 +820,13 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
+		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
+		sfields := s.selectableFields[sfKey]
+
+		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, sfields, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
-			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -876,7 +894,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -918,7 +936,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -947,20 +965,43 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Versio
 		}
 	}
 
+	// It's OK if extra fields were indexed before, but if new selectable fields should now be indexed, we need to reindex.
+	if newSelectableFieldsAdded(buildInfo.SelectableFields, selectableFields) {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("new selectable fields were added for the kind, rebuilding the index", "indexSelectableFields", buildInfo.BuildVersion, "selectableFields", minBuildVersion)
+		}
+		return true
+	}
+
+	return false
+}
+
+func newSelectableFieldsAdded(indexSelectableFields, selectableFields []string) bool {
+	// If index has no selectable fields yet, it's easy...
+	if len(indexSelectableFields) == 0 {
+		return len(selectableFields) > 0
+	}
+
+	for _, sf := range selectableFields {
+		if !slices.Contains(indexSelectableFields, sf) {
+			return true
+		}
+	}
 	return false
 }
 
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime    time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime  time.Time       // if not zero, rebuild index if it has been built before this timestamp.
-	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
+	minBuildTime     time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime   time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion  *semver.Version // if not nil, rebuild index with build version older than this.
+	selectableFields []string        // rebuild index which is missing some of these selectable fields.
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
@@ -970,6 +1011,7 @@ func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time
 		minBuildTime:       minBuildTime,
 		minBuildVersion:    minBuildVersion,
 		lastImportTime:     lastImportTime,
+		selectableFields:   selectableFields,
 		completeChannels:   completeChannels,
 	}
 }

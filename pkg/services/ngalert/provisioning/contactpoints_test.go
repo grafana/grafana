@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/alerting/receivers/slack"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -660,8 +661,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	}
 
 	configs := notifytest.AllKnownV1ConfigsForTesting
-	keys := maps.Keys(configs)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
@@ -894,7 +894,9 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
 	)
 
 	return NewContactPointService(
@@ -907,6 +909,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
+		nil,
 	)
 }
 
@@ -1816,5 +1819,65 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 				},
 			},
 		},
+	}
+}
+
+func TestValidateContactPointAllowedIntegrations(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newCP := func(integrationType string) *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-cp",
+			Type:     integrationType,
+			Settings: settings,
+		}
+	}
+
+	testCases := []struct {
+		name            string
+		allowed         map[schema.IntegrationType]struct{}
+		integrationType string
+		wantErr         string
+	}{
+		{
+			name:            "nil allowlist permits any valid type",
+			integrationType: "slack",
+		},
+		{
+			name:            "type in allowlist is permitted",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "slack",
+		},
+		{
+			name:            "type not in allowlist is rejected",
+			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "empty non-nil allowlist rejects all types",
+			allowed:         map[schema.IntegrationType]struct{}{},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "allowlist match is case-insensitive via canonical resolution",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "SLACK",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, err.Error(), tc.wantErr)
+			}
+		})
 	}
 }

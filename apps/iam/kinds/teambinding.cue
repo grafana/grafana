@@ -8,8 +8,8 @@ teambindingKind: {
 	kind:       "TeamBinding"
 	pluralName: "TeamBindings"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 

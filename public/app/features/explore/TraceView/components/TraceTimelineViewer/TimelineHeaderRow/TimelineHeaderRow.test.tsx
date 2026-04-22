@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import TimelineHeaderRow, { TimelineHeaderRowProps } from './TimelineHeaderRow';
+import TimelineHeaderRow, { type TimelineHeaderRowProps } from './TimelineHeaderRow';
 
 const nameColumnWidth = 0.25;
 const setup = () => {

@@ -6,10 +6,10 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
-import { ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
+import { type GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { type ContactPoint, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
-import { AlertRuleDrawerForm, AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
+import { AlertRuleDrawerForm, type AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
 
 setupMswServer();
 

@@ -1,8 +1,8 @@
-import { expect, Page, Response } from '@playwright/test';
+import { expect, type Page, type Response } from '@playwright/test';
 
-import { ScopeDashboardBindingSpec, ScopeDashboardBindingStatus } from '@grafana/data';
+import { type ScopeDashboardBindingSpec, type ScopeDashboardBindingStatus } from '@grafana/data';
 
-import { Resource } from '../../public/app/features/apiserver/types';
+import { type Resource } from '../../public/app/features/apiserver/types';
 
 import { testScopes } from './scopes';
 

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, useStyles2 } from '@grafana/ui';
@@ -26,7 +26,7 @@ export function LogLevelField({ active, toggle }: Props): React.JSX.Element | un
     <div className={styles.contentWrap}>
       <Checkbox
         className={styles.checkboxLabel}
-        label={t('logs.field-selector.log-level', 'Log level')}
+        label={t('logs.field-selector.log-level', 'Show log level')}
         onChange={handleChange}
         checked={active}
       />

@@ -1,13 +1,13 @@
 // Libraries
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { type DataSourceApi, type HistoryItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk } from 'app/types/store';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';

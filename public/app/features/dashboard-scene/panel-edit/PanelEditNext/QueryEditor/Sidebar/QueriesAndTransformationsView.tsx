@@ -9,9 +9,9 @@ import { AddCardButton } from './AddCardButton';
 import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
+import { CollapsableSection } from './CollapsableSection';
 import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
-import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
 export function QueriesAndTransformationsView() {
   const { queries } = useQueryRunnerContext();
@@ -27,7 +27,7 @@ export function QueriesAndTransformationsView() {
 
   return (
     <>
-      <SidebarCollapsableHeader
+      <CollapsableSection
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
@@ -46,8 +46,8 @@ export function QueriesAndTransformationsView() {
         {pendingSavedQuery && !pendingSavedQuery.insertAfter && (
           <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
         )}
-      </SidebarCollapsableHeader>
-      <SidebarCollapsableHeader
+      </CollapsableSection>
+      <CollapsableSection
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
@@ -65,7 +65,7 @@ export function QueriesAndTransformationsView() {
         {pendingTransformation && !pendingTransformation.insertAfter && (
           <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}
-      </SidebarCollapsableHeader>
+      </CollapsableSection>
     </>
   );
 }

@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import KeyValuesTable, { LinkValue, KeyValuesTableProps } from './KeyValuesTable';
+import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
 const data = [
   { key: 'span.kind', value: 'client' },

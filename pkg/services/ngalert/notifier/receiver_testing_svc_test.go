@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -74,16 +75,18 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}}
 
 	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
 
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
 	// endregion setup
 
 	testCases := []struct {
-		name        string
-		integration *models.Integration
-		user        identity.Requester
-		expectedErr error
+		name                string
+		integration         *models.Integration
+		user                identity.Requester
+		allowedIntegrations map[schema.IntegrationType]struct{}
+		expectedErr         error
 	}{
 		{
 			name:        "error if integration UID is not empty",
@@ -100,12 +103,27 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			name: "integration is tested successfully (receiverUID empty)",
 			user: userAuthorizedToCreate,
 		},
+		{
+			name:                "integration type in allowlist is permitted",
+			integration:         &slackIntegration,
+			user:                userAuthorizedToCreate,
+			allowedIntegrations: map[schema.IntegrationType]struct{}{schema.SlackType: {}},
+		},
+		{
+			name:                "integration type not in allowlist is rejected",
+			integration:         &slackIntegration,
+			user:                userAuthorizedToCreate,
+			allowedIntegrations: map[schema.IntegrationType]struct{}{schema.EmailType: {}},
+			expectedErr:         models.ErrReceiverTestingInvalidIntegrationBase,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.integration == nil {
 				tc.integration = &integration
 			}
+			svc.allowedIntegrations = tc.allowedIntegrations
+			t.Cleanup(func() { svc.allowedIntegrations = nil })
 			result, err := svc.TestNewReceiverIntegration(context.Background(), tc.user, alert, *tc.integration)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr)

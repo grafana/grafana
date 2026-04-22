@@ -4,10 +4,10 @@ import { useMemo } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { PluginExtensionPoints, dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
+import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';

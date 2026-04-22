@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 
 import {
-  DataSourceApi,
+  type DataSourceApi,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -24,7 +24,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
+import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -588,6 +588,7 @@ describe('sceneVariablesSetToVariables', () => {
       },
       "defaultKeys": undefined,
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",
@@ -639,6 +640,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [],
         "hide": 3,
         "label": "test-label",
@@ -689,12 +691,18 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
+            "keyLabel": "filterTest",
             "operator": "=",
             "origin": "dashboard",
             "value": "test",
+            "valueLabels": [
+              "test",
+            ],
+            "values": undefined,
           },
           {
             "key": "filterTest2",
@@ -784,6 +792,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",

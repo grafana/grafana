@@ -3,11 +3,11 @@ import { autoUpdate, safePolygon, useDismiss, useFloating, useHover, useInteract
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type DataFrame, type Field, formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TimeZone } from '@grafana/schema';
-import { floatingUtils, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
-import { VizTooltipItem } from '@grafana/ui/internal';
+import { type TimeZone } from '@grafana/schema';
+import { floatingUtils, Portal, type UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { type VizTooltipItem } from '@grafana/ui/internal';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 

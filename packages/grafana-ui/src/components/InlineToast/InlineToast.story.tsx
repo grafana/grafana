@@ -1,11 +1,11 @@
-import { Meta, StoryFn } from '@storybook/react';
-import { useId, useState } from 'react';
+import { type Meta, type StoryFn } from '@storybook/react';
+import { useState } from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { InlineToast as InlineToastImpl, InlineToastProps } from './InlineToast';
+import { InlineToast as InlineToastImpl, type InlineToastProps } from './InlineToast';
 import mdx from './InlineToast.mdx';
 
 const story: Meta = {
@@ -29,7 +29,6 @@ export default story;
 
 export const InlineToast: StoryFn<InlineToastProps> = (args) => {
   const [el, setEl] = useState<null | HTMLInputElement>(null);
-  const id = useId();
 
   return (
     <div style={{ maxWidth: 500, width: `calc(100% - 100px)` }}>
@@ -37,7 +36,7 @@ export const InlineToast: StoryFn<InlineToastProps> = (args) => {
         Saved
       </InlineToastImpl>
       <Field label="Input with InlineToast">
-        <Input ref={setEl} id={id} />
+        <Input ref={setEl} />
       </Field>
     </div>
   );

@@ -35,7 +35,7 @@ import {
   trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
   trackInfluxDBConfigV2AuthSettingsToggleClicked,
 } from './tracking';
-import { Props } from './types';
+import { type Props } from './types';
 
 type AuthOptionState = {
   noAuth: boolean;

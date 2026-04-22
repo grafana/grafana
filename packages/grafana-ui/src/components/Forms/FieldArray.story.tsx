@@ -1,5 +1,5 @@
-import { Meta, StoryFn } from '@storybook/react';
-import { FieldValues } from 'react-hook-form';
+import { type Meta, type StoryFn } from '@storybook/react';
+import { type FieldValues } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Button } from '../Button/Button';

@@ -1,8 +1,8 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataFrame, type Field } from '../../types/dataFrame';
+import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 import { getFieldTypeForReducer, reduceField, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';

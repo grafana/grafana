@@ -1,12 +1,12 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import {
-  AzureClientCertificateCredentials,
-  AzureClientSecretCredentials,
-  AzureCredentials,
+  type AzureClientCertificateCredentials,
+  type AzureClientSecretCredentials,
+  type AzureCredentials,
   CertificateFormat,
 } from '@grafana/azure-sdk';
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Select } from '@grafana/ui';
 

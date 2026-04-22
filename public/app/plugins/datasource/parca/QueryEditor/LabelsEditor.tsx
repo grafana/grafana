@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { CodeEditor, type Monaco, useStyles2, type monacoTypes } from '@grafana/ui';
 
-import { ParcaDataSource } from '../datasource';
+import { type ParcaDataSource } from '../datasource';
 import { languageDefinition } from '../lang';
 
 import { CompletionProvider } from './autocomplete';

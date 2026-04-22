@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -41,6 +41,10 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // errStopping is returned when a write operation is rejected because the server is shutting down.
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
+// defaultBookmarkFrequency is how often periodic bookmark events are sent
+// to Watch clients that have AllowWatchBookmarks enabled.
+const defaultBookmarkFrequency = 10 * time.Second
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
@@ -246,6 +250,30 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
+
+	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
+	// IndexSnapshotEnabled gates the entire snapshot feature.
+	IndexSnapshotEnabled bool
+	// IndexSnapshotBucketURL is the Go CDK bucket URL (s3://, gs://, azblob://, mem://, file:///).
+	IndexSnapshotBucketURL string
+	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
+	IndexSnapshotThreshold int
+	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
+	IndexSnapshotMaxAge time.Duration
+	// IndexSnapshotMinDocChanges is the minimum number of document changes since the last
+	// snapshot before a new upload is triggered.
+	IndexSnapshotMinDocChanges int
+	// IndexSnapshotUploadInterval is the minimum time between consecutive snapshot uploads.
+	IndexSnapshotUploadInterval time.Duration
+	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
+	IndexSnapshotLockTTL time.Duration
+	// IndexSnapshotMinKeep is the minimum number of snapshots to retain regardless of age.
+	IndexSnapshotMinKeep int
+	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
+	IndexSnapshotCleanupInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -302,6 +330,10 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+
+	// BookmarkFrequency controls how often periodic bookmark events are sent to
+	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
+	BookmarkFrequency time.Duration
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -397,6 +429,10 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.QOSConfig.MaxRetries = 3
 	}
 
+	if opts.BookmarkFrequency == 0 {
+		opts.BookmarkFrequency = defaultBookmarkFrequency
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -429,6 +465,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
+		bookmarkFrequency:              opts.BookmarkFrequency,
 	}
 
 	if opts.Search.Resources != nil {
@@ -525,6 +562,8 @@ type server struct {
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
+
+	bookmarkFrequency time.Duration
 }
 
 // Init implements ResourceServer.
@@ -574,6 +613,9 @@ func (s *server) Stop(ctx context.Context) error {
 	s.stopping = true
 	s.stopMu.Unlock()
 
+	// Stops streaming (broadcaster, watch events).
+	s.cancel()
+
 	// Wait for in-flight write operations to finish, respecting the context deadline.
 	// After the unlock above, no new Add(1) can happen, so Wait is safe.
 	done := make(chan struct{})
@@ -601,12 +643,12 @@ func (s *server) Stop(ctx context.Context) error {
 		}
 	}
 
-	if kvBackend, ok := s.backend.(KVBackend); ok {
-		kvBackend.Stop()
+	if stoppableBackend, ok := s.backend.(ResourceServerStopper); ok {
+		if err := stoppableBackend.Stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("backend stop failed: %w", err)
+		}
 	}
-
-	// Stops the streaming
-	s.cancel()
 
 	// mark the value as done
 	if stopFailed {
@@ -620,7 +662,7 @@ func (s *server) Stop(ctx context.Context) error {
 // Old value indicates an update -- otherwise a create
 //
 //nolint:gocyclo
-func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -631,26 +673,25 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
-	l := s.log.FromContext(ctx)
+	// TODO: return a NewBadRequestErorr in this case once the resource server is
+	// only interfacing with storage backends for K8s resources.
 	if obj.GetUID() == "" {
-		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
-		// return nil, NewBadRequestError("object is missing UID")
-		l.Error("object is missing UID", "key", key)
+		s.log.FromContext(ctx).Warn("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
-		l.Error("object must not include a resource version", "key", key)
+		return nil, NewBadRequestError("object must not include a resource version")
 	}
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
 		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
-			return nil, NewBadRequestError("can not save label: " + k)
+			return nil, NewBadRequestError("cannot save label: " + k)
 		}
 	}
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+		return nil, NewBadRequestError("cannot save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
 	event := &WriteEvent{
@@ -664,6 +705,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		event.Type = resourcepb.WatchEvent_ADDED
 	} else {
 		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = rv
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -749,6 +791,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			return nil, AsErrorResult(err)
 		}
 	}
+
 	return event, nil
 }
 
@@ -857,7 +900,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, res, err)
 
 	return res, err
 }
@@ -865,17 +908,22 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
 
-	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
-	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
+	// If the resource already exists, the create will return an already exists or a
+	// conflict error that is remapped appropriately by AsErrorResult.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
+		if apierrors.IsConflict(err) {
+			// Retryable concurrent-create conflict. Return as gRPC Aborted
+			// so client retry interceptors can handle it.
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
 		rsp.Error = AsErrorResult(err)
 	}
 	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
@@ -890,7 +938,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -917,7 +965,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resou
 		"namespace", key.Namespace,
 		"name", key.Name)
 
-	time.Sleep(s.artificialSuccessfulWriteDelay)
+	select {
+	case <-time.After(s.artificialSuccessfulWriteDelay):
+	case <-ctx.Done():
+	}
 	return true
 }
 
@@ -939,10 +990,6 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		}
 		return rsp, nil
 	}
-	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
-		return rsp, nil
-	}
 
 	var (
 		res *resourcepb.UpdateResponse
@@ -957,7 +1004,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, res, err)
 
 	return res, err
 }
@@ -968,6 +1015,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		Key: req.Key,
 	})
 	if latest.Error != nil {
+		rsp.Error = latest.Error
 		return rsp, nil
 	}
 	if latest.Value == nil {
@@ -975,22 +1023,11 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
-	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		return &resourcepb.UpdateResponse{
-			Error: &ErrOptimisticLockingFailed,
-		}, nil
-	}
-
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
-
-	event.Type = resourcepb.WatchEvent_MODIFIED
-	event.PreviousRV = latest.ResourceVersion
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
@@ -1010,9 +1047,6 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
-	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
-	}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &resourcepb.ErrorResult{
@@ -1036,7 +1070,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
 
 	return res, err
 }
@@ -1048,10 +1082,6 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	})
 	if latest.Error != nil {
 		rsp.Error = latest.Error
-		return rsp, nil
-	}
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
 
@@ -1077,7 +1107,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	event := WriteEvent{
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
-		PreviousRV: latest.ResourceVersion,
+		PreviousRV: req.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
 	marker := &unstructured.Unstructured{}
@@ -1439,6 +1469,10 @@ func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	return utils.MetaAccessor(partial)
 }
 
+// producerChanSize is the buffer for the channel that feeds events into the
+// broadcaster. Controls backpressure on the event-writing (producer) side.
+const producerChanSize = 100
+
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	events, err := s.backend.WatchWriteEvents(s.ctx)
@@ -1446,7 +1480,7 @@ func (s *server) initWatcher() error {
 		return err
 	}
 
-	out := make(chan *WrittenEvent, chanBufferLen)
+	out := make(chan *WrittenEvent, producerChanSize)
 	go func() {
 		defer close(out)
 		for v := range events {
@@ -1465,7 +1499,11 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out)
+	var broadcasterMetrics *BroadcasterMetrics
+	if s.storageMetrics != nil {
+		broadcasterMetrics = s.storageMetrics.Broadcaster
+	}
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
 	return nil
 }
 
@@ -1543,10 +1581,28 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		mostRecentRV = s.mostRecentRV.Load()
 	}
 
-	var initialEventsRV int64 // resource version coming from the initial events
+	lastBookmarkRV := int64(-1)
+	sendBookmark := func(rv int64) error {
+		// Don't send repeated bookmarks if no new events were received.
+		if rv <= 0 || rv == lastBookmarkRV {
+			return nil
+		}
+
+		if err := srv.Send(&resourcepb.WatchEvent{
+			Type:     resourcepb.WatchEvent_BOOKMARK,
+			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
+		}); err != nil {
+			return fmt.Errorf("sending bookmark: %w", err)
+		}
+
+		lastBookmarkRV = rv
+		return nil
+	}
+
+	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
-		initialEventsRV, err = s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
@@ -1566,31 +1622,42 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-	}
-	if req.SendInitialEvents && req.AllowWatchBookmarks {
-		if err := srv.Send(&resourcepb.WatchEvent{
-			Type: resourcepb.WatchEvent_BOOKMARK,
-			Resource: &resourcepb.WatchEvent_Resource{
-				Version: initialEventsRV,
-			},
-		}); err != nil {
-			return err
+
+		lastEmittedRV = initialEventsRV
+		if req.AllowWatchBookmarks {
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 		}
 	}
 
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = initialEventsRV
+		since = lastEmittedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	// Set up periodic bookmark ticker when the client opted in.
+	var bookmarkC <-chan time.Time
+	if req.AllowWatchBookmarks && s.bookmarkFrequency > 0 {
+		ticker := time.NewTicker(s.bookmarkFrequency)
+		defer ticker.Stop()
+		bookmarkC = ticker.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-bookmarkC:
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 
 		case event, ok := <-stream:
 			if !ok {
@@ -1636,10 +1703,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if err := srv.Send(resp); err != nil {
 					return err
 				}
+				lastEmittedRV = event.ResourceVersion
 
 				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
+					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -1898,7 +1967,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.quotasConfig.EnforceQuotas {
+		if s.quotasConfig.ShouldEnforce(nsr.Group, nsr.Resource) {
 			return QuotaExceededError{
 				Resource:       nsr.Resource,
 				Used:           stats[0].Count,
@@ -1915,9 +1984,9 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
-	micro := rv
-	if isSnowflake(rv) {
-		micro = rvmanager.RVFromSnowflake(rv)
+	if IsSnowflake(rv) {
+		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
+		return time.UnixMilli(msec)
 	}
-	return time.UnixMicro(micro)
+	return time.UnixMicro(rv)
 }

@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -29,17 +32,17 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo1Name,
-		Path:                   repo1Path,
-		Target:                 "folder",
+		LocalPath:              repo1Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2Name,
-		Path:                   repo2Path,
-		Target:                 "folder",
+		LocalPath:              repo2Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -79,7 +82,7 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *common.Provisionin
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -99,7 +102,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.True(collect, repo.Status.Health.Healthy, "repo %s should be healthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -155,7 +158,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		if !assert.NoError(c, err) {
 			return
 		}
-		connObj := common.UnstructuredToConnection(t, obj)
+		connObj := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.NotEqual(c, int64(0), connObj.Status.ObservedGeneration,
 			"connection should be reconciled at least once")
 		assert.False(c, connObj.Secure.Token.IsZero(),
@@ -205,7 +208,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 			if !assert.NoError(c, err) {
 				return
 			}
-			r := common.UnstructuredToRepository(t, obj)
+			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			assert.False(c, r.Secure.Token.IsZero(),
 				"repo %s should have a token after initial reconciliation", name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
@@ -221,38 +224,37 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 
 	// --- Step 4: manufacture a near-expiry token state on repo1 ---------------
 	// Simulate the scenario where the repo is still blocked but its token is
-	// about to expire
+	// about to expire.
 	//
 	// The controller reconciler runs concurrently and may update the repo's
-	// status between our Get and UpdateStatus, bumping resourceVersion and
-	// causing a conflict error. Retry with a fresh Get on each conflict.
+	// status between our Get and UpdateStatus, causing optimistic-locking
+	// conflicts. On fast backends (SQLite) the reconciler outpaces even
+	// tight retry loops. A merge patch on the status subresource avoids
+	// this entirely — it doesn't require a specific resourceVersion, so it
+	// can never conflict.
 	now := time.Now()
-	var staledHealthChecked, staledTokenLastUpdated int64
+	staledHealthChecked := now.Add(-2 * time.Minute).UnixMilli()
+	staledTokenLastUpdated := now.Add(-1 * time.Hour).UnixMilli()
 
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repoUnstr, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repo1 before status manipulation") {
-			return
-		}
-		repo1 := common.UnstructuredToRepository(t, repoUnstr)
-
-		// Token lastUpdated far in the past (not "recently created") and expiration
-		// soon (within the 2*resyncInterval+10s refresh buffer).
-		repo1.Status.Token = provisioning.TokenStatus{
-			LastUpdated: now.Add(-1 * time.Hour).UnixMilli(),
-			Expiration:  now.Add(30 * time.Second).UnixMilli(),
-		}
-		// Age the health.checked beyond recentUnhealthyDuration (1 min) so the
-		// health checker considers it stale. This also ensures health.checked will
-		// visibly advance after the next reconciliation.
-		repo1.Status.Health.Checked = now.Add(-2 * time.Minute).UnixMilli()
-		staledHealthChecked = repo1.Status.Health.Checked
-		staledTokenLastUpdated = repo1.Status.Token.LastUpdated
-
-		updatedUnstr := common.RepositoryToUnstructured(t, repo1)
-		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedUnstr, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update repo1 status with near-expiry token")
-	}, common.WaitTimeoutDefault, 200*time.Millisecond, "should update repo1 status with near-expiry token")
+	// Token lastUpdated far in the past (not "recently created") and expiration
+	// soon (within the 2*resyncInterval+10s refresh buffer).
+	// Age the health.checked beyond recentUnhealthyDuration (1 min) so the
+	// health checker considers it stale.
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"token": map[string]any{
+				"lastUpdated": staledTokenLastUpdated,
+				"expiration":  now.Add(30 * time.Second).UnixMilli(),
+			},
+			"health": map[string]any{
+				"checked": staledHealthChecked,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = helper.Repositories.Resource.Patch(ctx, repoName1,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch repo1 status with near-expiry token")
 
 	// --- Step 5: verify health check AND token refresh happened, repo still blocked
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -260,7 +262,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		if !assert.NoError(c, err) {
 			return
 		}
-		r := common.UnstructuredToRepository(t, obj)
+		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 
 		// Repository must still be blocked by the namespace quota.
 		cond := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)

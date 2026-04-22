@@ -126,7 +126,7 @@ describe('useDefaultValues', () => {
     expect(result.current.error).toBeDefined();
   });
 
-  it('returns Error with null values when no repository matches', async () => {
+  it('returns Orphaned with null values when no repository matches', async () => {
     server.use(
       http.get(`${BASE}/settings`, () =>
         HttpResponse.json({
@@ -153,9 +153,9 @@ describe('useDefaultValues', () => {
       wrapper: getWrapper({}),
     });
 
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
-    expect(result.current.error).toBeDefined();
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Orphaned));
     expect(result.current.values).toBeNull();
+    expect(result.current.error).toBeUndefined();
   });
 
   it('returns Ready with form values when repository is resolved', async () => {

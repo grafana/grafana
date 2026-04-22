@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/mwitkow/go-conntrack"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -49,7 +49,7 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
-		awsCfg := backend.NewGrafanaCfg(map[string]string{
+		awsCfg := config.NewGrafanaCfg(map[string]string{
 			awsds.AllowedAuthProvidersEnvVarKeyName:          strings.Join(cfg.AWSAllowedAuthProviders, ","),
 			awsds.AssumeRoleEnabledEnvVarKeyName:             strconv.FormatBool(cfg.AWSAssumeRoleEnabled),
 			awsds.GrafanaAssumeRoleExternalIdKeyName:         cfg.AWSExternalId,
@@ -65,7 +65,7 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 				// Normally the sigv4 middleware would read auth settings from ctx. But for frontend-only datasources using the data proxy,
 				// GrafanaConfig is never injected into the request context. In this case fall back to cfg values
 				if _, exists := awsds.ReadAuthSettingsFromContext(ctx); !exists {
-					ctx = backend.WithGrafanaConfig(ctx, awsCfg)
+					ctx = config.WithGrafanaConfig(ctx, awsCfg)
 				}
 				return sigv4.RoundTrip(req.WithContext(ctx))
 			})

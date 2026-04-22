@@ -5,11 +5,12 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { DataFrame, GrafanaTheme2, SelectableValue, TimeRange, dateTime } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type SelectableValue, type TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { PopupCard } from '../../HoverCard';
 import { StateFilterValues } from '../central-state-history/constants';
@@ -70,6 +71,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     }
   );
 
+  const isSlowQuery = useSlowQuery(isLoading);
+
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
     instancesFilter
@@ -95,9 +98,22 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   if (isLoading) {
     return (
-      <div>
-        <Trans i18nKey="alerting.loki-state-history.loading">Loading...</Trans>
-      </div>
+      <Stack direction="column" gap={1}>
+        {isSlowQuery && (
+          <Alert
+            severity="warning"
+            title={t('alerting.loki-state-history.slow-query.title', 'Query is taking longer than expected')}
+          >
+            {t(
+              'alerting.loki-state-history.slow-query.text',
+              'This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.'
+            )}
+          </Alert>
+        )}
+        <div>
+          <Trans i18nKey="alerting.loki-state-history.loading">Loading...</Trans>
+        </div>
+      </Stack>
     );
   }
   if (isError) {

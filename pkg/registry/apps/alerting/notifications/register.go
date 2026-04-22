@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -62,7 +63,7 @@ func RegisterAppInstaller(
 	}
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -86,6 +87,7 @@ func RegisterAppInstaller(
 
 func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
+	routesPermissions := a.ng.RouteResourcePermissions
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
@@ -98,7 +100,7 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			case receiver.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
-				return routingtree.Authorize(ctx, authz, a)
+				return routingtree.Authorize(ctx, ac.NewRouteAccess[*legacy_storage.ManagedRoute](authz, routesPermissions, false), a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
@@ -129,7 +131,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
-		return routingtree.NewStorage(api.RouteService, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }
@@ -141,9 +143,17 @@ func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 	if err := a.AppInstaller.AddToScheme(scheme); err != nil {
 		return err
 	}
-	// All list types have identical memory layouts between v0alpha1 and v1beta1
-	// (same fields: TypeMeta, ListMeta, Items), so we can reinterpret the pointer
-	// directly — the same approach used by conversion-gen for layout-identical types.
+	return registerListConversions(scheme)
+}
+
+// registerListConversions adds bidirectional v0alpha1 ↔ v1beta1 list conversion functions to
+// the scheme for all five notification resource types.
+func registerListConversions(scheme *runtime.Scheme) error {
+	// Individual item types have identical memory layouts between v0alpha1 and v1beta1,
+	// so we reinterpret each item pointer directly — the same approach used by conversion-gen
+	// for layout-identical types. We must allocate a fresh Items slice to avoid aliasing the
+	// backing array across both list objects, and set each item's TypeMeta to the target version.
+	// The list-level TypeMeta is set by the scheme's setTargetKind after this function returns.
 	type convPair struct {
 		src, dst  interface{}
 		convertFn conversion.ConversionFunc
@@ -152,70 +162,150 @@ func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 		{
 			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.ReceiverList) = *(*v1beta1.ReceiverList)(unsafe.Pointer(in.(*v0alpha1.ReceiverList))) // #nosec G103
+				inList := in.(*v0alpha1.ReceiverList)
+				outList := out.(*v1beta1.ReceiverList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.Receiver, len(inList.Items))
+				itemGVK := v1beta1.ReceiverKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.Receiver)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v1beta1.ReceiverList)(nil), (*v0alpha1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.ReceiverList) = *(*v0alpha1.ReceiverList)(unsafe.Pointer(in.(*v1beta1.ReceiverList))) // #nosec G103
+				inList := in.(*v1beta1.ReceiverList)
+				outList := out.(*v0alpha1.ReceiverList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.Receiver, len(inList.Items))
+				itemGVK := v0alpha1.ReceiverKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.Receiver)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.InhibitionRuleList)(nil), (*v1beta1.InhibitionRuleList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.InhibitionRuleList) = *(*v1beta1.InhibitionRuleList)(unsafe.Pointer(in.(*v0alpha1.InhibitionRuleList))) // #nosec G103
+				inList := in.(*v0alpha1.InhibitionRuleList)
+				outList := out.(*v1beta1.InhibitionRuleList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.InhibitionRule, len(inList.Items))
+				itemGVK := v1beta1.InhibitionRuleKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.InhibitionRule)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v1beta1.InhibitionRuleList)(nil), (*v0alpha1.InhibitionRuleList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.InhibitionRuleList) = *(*v0alpha1.InhibitionRuleList)(unsafe.Pointer(in.(*v1beta1.InhibitionRuleList))) // #nosec G103
+				inList := in.(*v1beta1.InhibitionRuleList)
+				outList := out.(*v0alpha1.InhibitionRuleList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.InhibitionRule, len(inList.Items))
+				itemGVK := v0alpha1.InhibitionRuleKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.InhibitionRule)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.RoutingTreeList)(nil), (*v1beta1.RoutingTreeList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.RoutingTreeList) = *(*v1beta1.RoutingTreeList)(unsafe.Pointer(in.(*v0alpha1.RoutingTreeList))) // #nosec G103
+				inList := in.(*v0alpha1.RoutingTreeList)
+				outList := out.(*v1beta1.RoutingTreeList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.RoutingTree, len(inList.Items))
+				itemGVK := v1beta1.RoutingTreeKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.RoutingTree)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v1beta1.RoutingTreeList)(nil), (*v0alpha1.RoutingTreeList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.RoutingTreeList) = *(*v0alpha1.RoutingTreeList)(unsafe.Pointer(in.(*v1beta1.RoutingTreeList))) // #nosec G103
+				inList := in.(*v1beta1.RoutingTreeList)
+				outList := out.(*v0alpha1.RoutingTreeList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.RoutingTree, len(inList.Items))
+				itemGVK := v0alpha1.RoutingTreeKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.RoutingTree)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.TemplateGroupList)(nil), (*v1beta1.TemplateGroupList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.TemplateGroupList) = *(*v1beta1.TemplateGroupList)(unsafe.Pointer(in.(*v0alpha1.TemplateGroupList))) // #nosec G103
+				inList := in.(*v0alpha1.TemplateGroupList)
+				outList := out.(*v1beta1.TemplateGroupList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.TemplateGroup, len(inList.Items))
+				itemGVK := v1beta1.TemplateGroupKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.TemplateGroup)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v1beta1.TemplateGroupList)(nil), (*v0alpha1.TemplateGroupList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.TemplateGroupList) = *(*v0alpha1.TemplateGroupList)(unsafe.Pointer(in.(*v1beta1.TemplateGroupList))) // #nosec G103
+				inList := in.(*v1beta1.TemplateGroupList)
+				outList := out.(*v0alpha1.TemplateGroupList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.TemplateGroup, len(inList.Items))
+				itemGVK := v0alpha1.TemplateGroupKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.TemplateGroup)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.TimeIntervalList)(nil), (*v1beta1.TimeIntervalList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.TimeIntervalList) = *(*v1beta1.TimeIntervalList)(unsafe.Pointer(in.(*v0alpha1.TimeIntervalList))) // #nosec G103
+				inList := in.(*v0alpha1.TimeIntervalList)
+				outList := out.(*v1beta1.TimeIntervalList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.TimeInterval, len(inList.Items))
+				itemGVK := v1beta1.TimeIntervalKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.TimeInterval)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},
 		{
 			(*v1beta1.TimeIntervalList)(nil), (*v0alpha1.TimeIntervalList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.TimeIntervalList) = *(*v0alpha1.TimeIntervalList)(unsafe.Pointer(in.(*v1beta1.TimeIntervalList))) // #nosec G103
+				inList := in.(*v1beta1.TimeIntervalList)
+				outList := out.(*v0alpha1.TimeIntervalList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.TimeInterval, len(inList.Items))
+				itemGVK := v0alpha1.TimeIntervalKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.TimeInterval)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
 				return nil
 			},
 		},

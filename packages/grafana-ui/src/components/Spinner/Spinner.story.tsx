@@ -1,6 +1,6 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
-import { Props, Spinner } from './Spinner';
+import { type Props, Spinner } from './Spinner';
 import mdx from './Spinner.mdx';
 
 const meta: Meta = {

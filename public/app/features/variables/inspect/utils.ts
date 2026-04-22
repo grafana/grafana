@@ -1,17 +1,23 @@
-import { BaseVariableModel, DataLinkBuiltInVars } from '@grafana/data';
+import { type BaseVariableModel, DataLinkBuiltInVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Graph } from 'app/core/utils/dag';
+import { type Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
+import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 import { PanelModel } from '../../dashboard/state/PanelModel';
 import { variableAdapters } from '../adapters';
 import { isAdHoc } from '../guard';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
-import { GraphEdge, GraphNode, UsagesToNetwork, VariableUsages, VariableUsageTree } from './types';
+import {
+  type GraphEdge,
+  type GraphNode,
+  type UsagesToNetwork,
+  type VariableUsages,
+  type VariableUsageTree,
+} from './types';
 
 export const createDependencyNodes = (variables: BaseVariableModel[]): GraphNode[] => {
   const nodes: GraphNode[] = [];

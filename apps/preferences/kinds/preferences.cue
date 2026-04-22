@@ -46,6 +46,6 @@ preferencesV1alpha1: {
 
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
-		} 
+		}
 	}
 }

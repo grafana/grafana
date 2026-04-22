@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -71,7 +71,7 @@ const RecentlyDeletedPage = memo(() => {
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) => (
+            {({ width, height }: Size) => (
               <SearchView
                 permissions={permissions}
                 width={width}

@@ -1,6 +1,6 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
@@ -25,7 +25,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerGrafanaRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../notification-policies/notificationPolicyAnalytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';

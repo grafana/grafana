@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { ONCALL_INTEGRATION_V2_FEATURE, OnCallIntegrationDTO } from 'app/features/alerting/unified/api/onCallApi';
+import { ONCALL_INTEGRATION_V2_FEATURE, type OnCallIntegrationDTO } from 'app/features/alerting/unified/api/onCallApi';
 
 const BASE_URL = `/api/plugins/grafana-oncall-app/resources`;
 

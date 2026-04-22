@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 import { setupMswServer } from '../mockApi';
 import { HISTORIAN_BASE, setHistorianAlerts, setHistorianNotifications } from '../mocks/server/handlers/historian';

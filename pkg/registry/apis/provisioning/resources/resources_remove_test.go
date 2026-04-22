@@ -432,7 +432,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		tree.Add(ParseFolder("team/", testRepoName), "")
-		folderMgr := NewFolderManager(repo, nil, tree)
+		folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "team/old-dash.json"}
 		repo.On("Read", mock.Anything, "team/old-dash.json", "old-ref").Return(oldFileInfo, nil)
@@ -495,7 +495,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		tree.Add(ParseFolder("b-team/", testRepoName), "")
-		folderMgr := NewFolderManager(repo, nil, tree)
+		folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "a-team/dash.json"}
 		repo.On("Read", mock.Anything, "a-team/dash.json", "old-ref").Return(oldFileInfo, nil)

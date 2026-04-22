@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
-import { LayoutAlgorithm, Options as NodeGraphOptions } from './panelcfg.gen';
+import { LayoutAlgorithm, type Options as NodeGraphOptions } from './panelcfg.gen';
 import { nodeGraphSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)

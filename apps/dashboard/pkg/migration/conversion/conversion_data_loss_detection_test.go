@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -403,7 +403,7 @@ func TestCountPanelsV2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			count := countPanelsV2(tt.elements)
+			count := countPanelsV2alpha1(tt.elements)
 			assert.Equal(t, tt.expected, count)
 		})
 	}

@@ -1,13 +1,13 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import { SelectBase } from './SelectBase';
-import { SelectContainer, SelectContainerProps } from './SelectContainer';
+import { SelectContainer, type SelectContainerProps } from './SelectContainer';
 import {
-  SelectCommonProps,
-  MultiSelectCommonProps,
-  SelectAsyncProps,
-  VirtualizedSelectProps,
-  VirtualizedSelectAsyncProps,
+  type SelectCommonProps,
+  type MultiSelectCommonProps,
+  type SelectAsyncProps,
+  type VirtualizedSelectProps,
+  type VirtualizedSelectAsyncProps,
 } from './types';
 
 /**

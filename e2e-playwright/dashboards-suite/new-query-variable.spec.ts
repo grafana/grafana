@@ -5,7 +5,6 @@ const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

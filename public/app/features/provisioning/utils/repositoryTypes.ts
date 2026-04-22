@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
-import { IconName } from '@grafana/ui';
+import { type IconName } from '@grafana/ui';
 
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import bitbucketSvg from '../img/bitbucket.svg';
 import gitSvg from '../img/git.svg';
 import gitlabSvg from '../img/gitlab.svg';

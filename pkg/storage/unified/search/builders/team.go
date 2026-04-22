@@ -16,6 +16,12 @@ const (
 	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
 )
 
+// TeamSortableExtraFields are the additional fields that can be used for sorting team search results.
+// Should not include standard fields like title.
+var TeamSortableExtraFields = []string{
+	TEAM_SEARCH_EMAIL,
+}
+
 var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
 	TEAM_SEARCH_EMAIL: {
 		Name:        TEAM_SEARCH_EMAIL,

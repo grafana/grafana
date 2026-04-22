@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';

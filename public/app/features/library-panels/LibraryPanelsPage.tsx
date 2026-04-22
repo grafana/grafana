@@ -4,7 +4,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { LibraryPanelsSearch } from './components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from './components/OpenLibraryPanelModal/OpenLibraryPanelModal';
-import { LibraryElementDTO } from './types';
+import { type LibraryElementDTO } from './types';
 
 export const LibraryPanelsPage = () => {
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);

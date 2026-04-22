@@ -1,13 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
 import { useWorkbenchContext } from '../WorkbenchContext';
+
+// Width of the md IconButton used as the expand/collapse chevron, in pixels.
+const CHEVRON_WIDTH_PX = 24;
 
 interface GenericRowProps {
   width: number;
@@ -121,7 +124,7 @@ const LeftCell = ({ title, metadata = null, actions = null, isOpen = true, onTog
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
-      {onToggle && (
+      {onToggle ? (
         <IconButton
           name={isOpen ? 'angle-down' : 'angle-right'}
           onClick={onToggle}
@@ -130,6 +133,8 @@ const LeftCell = ({ title, metadata = null, actions = null, isOpen = true, onTog
           size="md"
           aria-label={t('alerting.group-wrapper.toggle', 'Toggle group')}
         />
+      ) : (
+        <div className={styles.chevronPlaceholder} />
       )}
       <Stack direction="column" alignItems="flex-start" gap={0} flex={1}>
         <Stack direction="row" alignItems="center" gap={1} width="100%">
@@ -181,6 +186,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     indentBorder: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       paddingLeft: theme.spacing(1),
+    }),
+    chevronPlaceholder: css({
+      width: CHEVRON_WIDTH_PX,
+      flexShrink: 0,
     }),
   };
 };

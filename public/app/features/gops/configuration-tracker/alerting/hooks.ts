@@ -4,7 +4,7 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ReceiverTypes } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/onCall';
 import { useDataSourceFeatures } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export function useIsCreateAlertRuleDone() {
   const [fetchRulerRules, { data, isLoading }] = alertRuleApi.endpoints.rulerRules.useLazyQuery({

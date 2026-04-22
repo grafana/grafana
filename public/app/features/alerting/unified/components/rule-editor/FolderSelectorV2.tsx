@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
-import { Folder, RuleFormValues } from '../../types/rule-form';
+import { type Folder, type RuleFormValues } from '../../types/rule-form';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 
 export function FolderSelectorV2() {

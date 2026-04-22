@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, KeyboardEvent, RefObject } from 'react';
+import { createRef, type KeyboardEvent, type RefObject } from 'react';
 
 import { useListFocus } from './hooks';
 

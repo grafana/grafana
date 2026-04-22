@@ -3,15 +3,15 @@ import {
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  SetFieldConfigOptionsArgs,
+  type SetFieldConfigOptionsArgs,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
+import { type FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 
@@ -102,6 +102,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             min: 1,
             max: 100,
             step: 1,
+            ariaLabelForHandle: t('xychart.name-point-size', 'Point size'),
           },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
@@ -138,6 +139,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           settings: {
             min: 0,
             max: 10,
+            ariaLabelForHandle: t('xychart.name-point-stroke-width', 'Point stroke width'),
           },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
@@ -150,6 +152,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             min: 0,
             max: 100,
             step: 1,
+            ariaLabelForHandle: t('xychart.name-fill-opacity', 'Fill opacity'),
           },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })

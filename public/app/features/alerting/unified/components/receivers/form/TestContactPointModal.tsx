@@ -2,13 +2,16 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
-import { GrafanaChannelValues } from '../../../types/receiver-form';
+import { type GrafanaChannelValues } from '../../../types/receiver-form';
 import { defaultAnnotations } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';

@@ -151,6 +151,14 @@ func BuildArtifact(ctx context.Context, log *slog.Logger, parallel int64, a *pip
 		return nil
 	}
 
+	fromHost, err := TryStoreFromHostDist(ctx, log, a, opts)
+	if err != nil {
+		return err
+	}
+	if fromHost {
+		return nil
+	}
+
 	// populate the dependency list
 	dependencies, err := a.Handler.Dependencies(ctx)
 	if err != nil {

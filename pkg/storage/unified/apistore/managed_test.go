@@ -13,7 +13,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -184,6 +184,96 @@ func TestManagedAuthorizer(t *testing.T) {
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: legacy (User-Agent) → new (simple ID) allowed (migration)",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → new (different simple ID) blocked",
+			auth: user,
+			err:  "Cannot change Terraform manager ID; stable custom IDs are immutable",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: legacy (User-Agent) → legacy (different User-Agent) allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
+			auth: user,
+			err:  "Cannot change Terraform manager ID back to User-Agent format",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
 					},
 				},
 			},

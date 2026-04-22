@@ -19,20 +19,24 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	PlaylistResource    = "playlists.playlist.grafana.app"
-	FolderResource      = "folders.folder.grafana.app"
-	DashboardResource   = "dashboards.dashboard.grafana.app"
-	ShortURLResource    = "shorturls.shorturl.grafana.app"
-	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
+	PlaylistResource         = "playlists.playlist.grafana.app"
+	FolderResource           = "folders.folder.grafana.app"
+	DashboardResource        = "dashboards.dashboard.grafana.app"
+	ShortURLResource         = "shorturls.shorturl.grafana.app"
+	StarsResource            = "stars.collections.grafana.app"
+	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
+	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:    true,  // Only Mode5!
-	FolderResource:      true,  // enabled by default
-	DashboardResource:   true,  // enabled by default
-	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
-	DataSourceResources: false,
+	PlaylistResource:         true,  // Only Mode5!
+	FolderResource:           true,  // Only Mode5!
+	DashboardResource:        true,  // Only Mode5!
+	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	StarsResource:            false,
+	DataSourceResources:      false,
+	QueryCacheConfigResource: false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching
@@ -56,6 +60,10 @@ var MigratedUnifiedResources = map[string]bool{
 // underscore in the resource portion of the env var name maps unambiguously
 // back to a dot. The key names are matched from a known list
 // ([knownUnifiedStorageKeys]) to preserve their original camelCase.
+//
+// Env vars that do not match a known camelCase resource suffix are treated
+// as keys on the bare [unified_storage] section (lowercased snake_case),
+// e.g. GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB → migration_cache_size_kb.
 func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	envPrefix := EnvSectionPrefix("unified_storage")
 
@@ -77,6 +85,7 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 
 		// Try to match a known key suffix. The key is always the last component
 		// after the final underscore that matches a known key name.
+		matched := false
 		for envKeySuffix, iniKeyName := range knownUnifiedStorageKeys {
 			suffix := "_" + envKeySuffix
 			if !strings.HasSuffix(remainder, suffix) {
@@ -92,8 +101,21 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 			cfg.Raw.Section(sectionName).Key(iniKeyName).SetValue(envValue)
 			cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
 				fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			matched = true
 			break
 		}
+		if matched {
+			continue
+		}
+
+		// Fallback: bare [unified_storage] section key (lowercased snake_case).
+		keyName := strings.ToLower(remainder)
+		if keyName == "" {
+			continue
+		}
+		cfg.Raw.Section("unified_storage").Key(keyName).SetValue(envValue)
+		cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+			fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 	}
 }
 
@@ -118,6 +140,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// the resource name is the part after the first dot
 		resourceName := strings.SplitAfterN(sectionName, ".", 2)[1]
 
+		// The resource specific settings do not apply
+		if MigratedUnifiedResources[resourceName] {
+			cfg.Logger.Warn("Unified storage config has no effect for fully migrated resources", "resource", resourceName)
+		}
+
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
 
@@ -136,7 +163,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
-	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
@@ -182,7 +208,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// quotas/limits config
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
-	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
+	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -219,13 +245,27 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
+
+	// Index snapshot settings
+	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
+	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
+	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
+		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
+		cfg.IndexSnapshotThreshold = cfg.IndexFileThreshold
+	}
+	cfg.IndexSnapshotMaxAge = section.Key("index_snapshot_max_age").MustDuration(7 * 24 * time.Hour)
+	if cfg.IndexSnapshotMaxAge < cfg.MaxFileIndexAge {
+		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
+		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
+	}
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
 // or disables local search when a remote search server is configured.
 func (cfg *Cfg) applyMigrationEnforcements() {
 	if !cfg.ShouldRunMigrations() {
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "target", cfg.Target)
 		if cfg.shouldProxySearchRemotely() {
 			cfg.EnableSearch = false
 		}
@@ -276,9 +316,23 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.
 func (cfg *Cfg) ShouldRunMigrations() bool {
-	return !cfg.DisableDataMigrations &&
-		cfg.UnifiedStorageType() == "unified" &&
+	return cfg.UnifiedStorageType() == "unified" &&
 		isTargetEligibleForMigrations(cfg.Target)
+}
+
+func parseCommaSeparatedList(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // UnifiedStorageType returns the configured storage type without creating or mutating keys.

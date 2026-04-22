@@ -2395,7 +2395,7 @@
             }
           },
           "resource": {
-            "description": "Dashboard or folder",
+            "description": "Dashboards or folders",
             "type": "string",
             "default": ""
           },
@@ -2696,19 +2696,10 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
         "type": "object",
         "required": [
-          "dashboard",
-          "organization"
+          "dashboard"
         ],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {

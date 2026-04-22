@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip'
 import { useSelector } from 'app/types/store';
 
 import { canEditItemType } from '../permissions';
-import { DashboardsTreeCellProps, SelectionState } from '../types';
+import { type DashboardsTreeCellProps, SelectionState } from '../types';
 import { isSharedWithMe, isUnderTeamFolders, isVirtualTeamFolder } from '../utils/dashboards';
 
 export default function CheckboxCell({

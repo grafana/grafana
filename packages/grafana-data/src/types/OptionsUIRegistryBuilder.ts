@@ -1,14 +1,14 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
 import {
-  NumberFieldConfigSettings,
-  SelectFieldConfigSettings,
-  SliderFieldConfigSettings,
-  StringFieldConfigSettings,
+  type NumberFieldConfigSettings,
+  type SelectFieldConfigSettings,
+  type SliderFieldConfigSettings,
+  type StringFieldConfigSettings,
 } from '../field/overrides/processors';
-import { RegistryItem, Registry } from '../utils/Registry';
+import { type RegistryItem, Registry } from '../utils/Registry';
 
-import { OptionEditorConfig } from './options';
+import { type OptionEditorConfig } from './options';
 
 /**
  * Option editor registry item

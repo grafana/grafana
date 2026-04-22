@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import TNil from './types/TNil';
-import { TraceSpan, TraceSpanReference, Trace } from './types/trace';
+import type TNil from './types/TNil';
+import { type TraceSpan, type TraceSpanReference, type Trace } from './types/trace';
 
 /**
  * `Accessors` is necessary because `ScrollManager` needs to be created by

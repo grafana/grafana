@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';

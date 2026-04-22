@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ExpressionQuery } from 'app/features/expressions/types';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ExpressionQuery } from 'app/features/expressions/types';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from '../../../rule-editor/formProcessing';
-import { SimpleCondition } from '../../../types/rule-form';
+import { type SimpleCondition } from '../../../types/rule-form';
 
 import { getSimpleConditionFromExpressions } from './SimpleCondition';
 

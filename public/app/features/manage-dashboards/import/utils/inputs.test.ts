@@ -1,15 +1,21 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import {
-  AnnotationQueryKind,
-  PanelKind,
-  QueryVariableKind,
-  Spec as DashboardV2Spec,
+  type AnnotationQueryKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import {
+  type DashboardInputs,
+  type DashboardJson,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
+  InputType,
+} from '../../types';
 
 import {
   applyV1Inputs,
@@ -17,15 +23,18 @@ import {
   detectExportFormat,
   extractV1Inputs,
   extractV2Inputs,
+  interpolateLibraryPanelDatasources,
+  interpolateV1Dashboard,
   isVariableRef,
   replaceDatasourcesInDashboard,
-  DatasourceMappings,
+  type DatasourceMappings,
 } from './inputs';
 
 // Mock external dependencies
-const mockGetDataSourceSrv = {
+const mockGetDataSourceSrv: Record<string, jest.Mock> = {
   getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
   get: jest.fn().mockResolvedValue({ meta: { builtIn: false } }),
+  getInstanceSettings: jest.fn().mockReturnValue(undefined),
 };
 
 jest.mock('@grafana/runtime', () => ({
@@ -588,6 +597,83 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
+  it('handles legacy string datasource format', () => {
+    const dashboard = {
+      title: 'PostgreSQL Database',
+      uid: '000000039',
+      schemaVersion: 19,
+      panels: [
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [{ expr: 'pg_static{instance="$instance"}', refId: 'A' }],
+        },
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [
+            { expr: 'rate(process_cpu_seconds_total[5m])', refId: 'A' },
+            { datasource: '${DS_PROMETHEUS}', expr: 'pg_up', refId: 'B' },
+          ],
+        },
+      ],
+      templating: {
+        list: [
+          {
+            type: 'datasource',
+            name: 'DS_PROMETHEUS',
+            query: 'prometheus',
+            current: { value: '${DS_PROMETHEUS}', text: '${DS_PROMETHEUS}', selected: true },
+          },
+          {
+            type: 'query',
+            name: 'namespace',
+            datasource: '${DS_PROMETHEUS}',
+            query: 'query_result(pg_exporter_last_scrape_duration_seconds)',
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_PROMETHEUS',
+          label: 'DS_PROMETHEUS',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'PostgreSQL Database',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'prom-uid', type: 'prometheus', name: 'grafanacloud-prom' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('prom-uid');
+    expect(result.panels?.[1].datasource?.uid).toBe('prom-uid');
+
+    const panel2 = result.panels?.[1] as PanelWithTargets;
+    expect(panel2.targets?.[1].datasource?.uid).toBe('prom-uid');
+
+    const dsVariable = result.templating?.list?.[0] as DatasourceVariableModel;
+    expect(dsVariable.current?.value).toBe('prom-uid');
+
+    const queryVariable = result.templating?.list?.[1] as QueryVariableModel;
+    expect(queryVariable.datasource?.uid).toBe('prom-uid');
+  });
+
   it('replaces constant variable query, current, and options with user-provided values', () => {
     const dashboard = {
       title: 'old',
@@ -641,6 +727,49 @@ describe('applyV1Inputs', () => {
     expect(vars[1].query).toBe('http://my-app:7070');
     expect(vars[1].current?.text).toBe('http://my-app:7070');
     expect(vars[1].current?.value).toBe('http://my-app:7070');
+  });
+
+  it('replaces legacy string datasource placeholders in panels and annotations', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 39,
+      annotations: {
+        list: [
+          {
+            name: 'anno',
+            datasource: '${DS}',
+            enable: true,
+            iconColor: 'red',
+            target: { limit: 1, matchAny: true, tags: [], type: 'tags' },
+          },
+        ],
+      },
+      panels: [
+        {
+          datasource: '${DS}',
+          targets: [{ datasource: '${DS}' }],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    expect(result.annotations?.list?.[0].datasource?.uid).toBe('ds-uid');
+    expect(result.panels?.[0].datasource?.uid).toBe('ds-uid');
+
+    const panelWithTargets = result.panels?.[0] as PanelWithTargets;
+    expect(panelWithTargets.targets?.[0].datasource?.uid).toBe('ds-uid');
   });
 
   describe('row panels', () => {
@@ -729,6 +858,109 @@ describe('applyV1Inputs', () => {
 
       expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
     });
+  });
+});
+
+describe('interpolateLibraryPanelDatasources', () => {
+  it('replaces ${DS_...} placeholders in panel and target datasources', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: '${DS_INFLUX}' },
+      targets: [
+        { datasource: { type: 'influxdb', uid: '${DS_INFLUX}' }, refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[0].datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('replaces legacy string datasource placeholders in panel and targets', () => {
+    const model = {
+      datasource: '${DS_INFLUX}',
+      targets: [
+        { datasource: '${DS_INFLUX}', refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
+    expect(result.targets[0].datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('returns model unchanged when no placeholders exist', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: 'some-uid' },
+      targets: [{ datasource: { type: 'influxdb', uid: 'some-uid' }, refId: 'A' }],
+      type: 'timeseries',
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, sampleV1Inputs, {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'f' },
+    });
+
+    expect(result.datasource.uid).toBe('some-uid');
+    expect(result.targets[0].datasource.uid).toBe('some-uid');
   });
 });
 
@@ -1328,5 +1560,144 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(getPanelQueryDatasourceName(result, 'panel-variable')).toBe('${ds}');
       expect(getPanelQueryDatasourceName(result, 'panel-hardcoded')).toBe('new-loki-uid');
     });
+  });
+});
+
+describe('interpolateV1Dashboard', () => {
+  const promInput = {
+    name: 'DS_PROMETHEUS',
+    type: 'datasource' as const,
+    pluginId: 'prometheus',
+    label: 'Prometheus',
+    description: '',
+    value: '',
+  };
+  const exprInput = {
+    name: 'DS_EXPRESSION',
+    type: 'datasource' as const,
+    pluginId: '__expr__',
+    label: 'Expression',
+    description: '',
+    value: '',
+  };
+  const makeDashboard = (overrides: Partial<DashboardJson> = {}): DashboardJson =>
+    ({
+      __inputs: [promInput],
+      panels: [{ datasource: { type: 'prometheus', uid: '${DS_PROMETHEUS}' }, targets: [], type: 'timeseries' }],
+      title: 'Test',
+      ...overrides,
+    }) as unknown as DashboardJson;
+  const makeExprDashboard = () =>
+    makeDashboard({
+      __inputs: [promInput, exprInput],
+      panels: [
+        {
+          datasource: { type: 'prometheus', uid: '${DS_PROMETHEUS}' },
+          targets: [
+            {
+              datasource: { type: '__expr__', uid: '${DS_EXPRESSION}' },
+              expression: '$A * 2',
+              refId: 'B',
+              type: 'math',
+            },
+          ],
+          type: 'timeseries',
+        },
+      ] as unknown as DashboardJson['panels'],
+    });
+  const getPanel = (result: DashboardJson, idx = 0) => (result.panels as Panel[])[idx];
+
+  beforeEach(() => {
+    mockGetDataSourceSrv.getInstanceSettings = jest
+      .fn()
+      .mockImplementation((uid: string) =>
+        uid === 'prom-uid' ? { uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } : undefined
+      );
+  });
+
+  it('should replace datasource placeholders with wildcard mapping', () => {
+    const result = interpolateV1Dashboard(makeDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    expect(getPanel(result).datasource!.uid).toBe('prom-uid');
+  });
+
+  it('should replace named datasource mapping', () => {
+    const result = interpolateV1Dashboard(makeDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+    ]);
+    expect(getPanel(result).datasource!.uid).toBe('prom-uid');
+  });
+
+  it('should handle expression datasources', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+    ]);
+    const panel = getPanel(result);
+    expect(panel.datasource!.uid).toBe('prom-uid');
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+    expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
+  });
+
+  it('should force expression datasource to __expr__ even when mapped to a real UID', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+      { name: 'DS_EXPRESSION', type: 'datasource', pluginId: '__expr__', value: 'some-real-uid' },
+    ]);
+    const panel = getPanel(result);
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+    expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
+  });
+
+  it('should handle expression datasources with wildcard mapping', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    const panel = getPanel(result);
+    expect(panel.datasource!.uid).toBe('prom-uid');
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+  });
+
+  it('should handle constants', () => {
+    const dashboard = makeDashboard({
+      __inputs: [{ name: 'VAR_INTERVAL', type: 'constant', label: 'Interval', description: '', value: '1m' }],
+      panels: [] as DashboardJson['panels'],
+      templating: {
+        list: [
+          {
+            type: 'constant',
+            name: 'interval',
+            query: '${VAR_INTERVAL}',
+            current: { text: '', value: '' },
+            options: [{ text: '', value: '' }],
+          },
+        ],
+      } as DashboardJson['templating'],
+    });
+    const result = interpolateV1Dashboard(dashboard, [{ name: 'VAR_INTERVAL', type: 'constant', value: '5m' }]);
+    const variable = result.templating!.list![0] as VariableModel & { query: string; current: { value: string } };
+    expect(variable.query).toBe('5m');
+    expect(variable.current.value).toBe('5m');
+  });
+
+  it('should strip __inputs, __elements, __requires from result', () => {
+    const dashboard = makeDashboard({
+      __elements: { somePanel: {} } as unknown as DashboardJson['__elements'],
+      __requires: [{ type: 'panel', id: 'timeseries' }] as DashboardJson['__requires'],
+    });
+    const result = interpolateV1Dashboard(dashboard, [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    expect(result.__inputs).toBeUndefined();
+    expect(result.__elements).toBeUndefined();
+    expect(result.__requires).toBeUndefined();
+  });
+
+  it('should work with no __inputs', () => {
+    const dashboard = makeDashboard({ __inputs: undefined, panels: [] as DashboardJson['panels'] });
+    const result = interpolateV1Dashboard(dashboard, []);
+    expect(result.title).toBe('Test');
+  });
+
+  it('should throw when datasource UID cannot be resolved', () => {
+    expect(() =>
+      interpolateV1Dashboard(makeDashboard(), [
+        { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'nonexistent-uid' },
+      ])
+    ).toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
   });
 });

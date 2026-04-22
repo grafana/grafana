@@ -639,6 +639,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		fakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		options.featureToggles,

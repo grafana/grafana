@@ -4,8 +4,9 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v1beta1"
 )
+
 routingTreeKind: {
-	kind: "RoutingTree"
+	kind:       "RoutingTree"
 	pluralName: "RoutingTrees"
 }
 

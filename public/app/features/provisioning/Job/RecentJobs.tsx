@@ -1,10 +1,10 @@
 import { useMemo, useRef } from 'react';
 
-import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';

@@ -1425,6 +1425,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1433,6 +1435,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1441,6 +1445,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */

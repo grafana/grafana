@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 export const thirdArgAfterSearchQuery = {
   query: "SEARCH('stuff', 'Average', )",

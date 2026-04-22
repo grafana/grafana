@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useId, useState } from 'react';
 
 import { Combobox } from '../Combobox/Combobox';
@@ -27,10 +27,9 @@ const meta: Meta<typeof InlineField> = {
 };
 
 export const basic: StoryFn<typeof InlineField> = (args) => {
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Input placeholder="Inline input" id={id} />
+      <Input placeholder="Inline input" />
     </InlineField>
   );
 };
@@ -49,10 +48,9 @@ basic.args = {
 };
 
 export const withTooltip: StoryFn<typeof InlineField> = (args) => {
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Input placeholder="Inline input" id={id} />
+      <Input placeholder="Inline input" />
     </InlineField>
   );
 };
@@ -64,10 +62,9 @@ withTooltip.args = {
 };
 
 export const grow: StoryFn<typeof InlineField> = (args) => {
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Input placeholder="Inline input" id={id} />
+      <Input placeholder="Inline input" />
     </InlineField>
   );
 };
@@ -98,29 +95,25 @@ withCombobox.args = {
 };
 
 export const multiple: StoryFn<typeof InlineField> = () => {
-  const id1 = useId();
-  const id2 = useId();
-  const id3 = useId();
   return (
     <>
       <InlineField label="Field 1">
-        <Input placeholder="Inline input" id={id1} />
+        <Input placeholder="Inline input" />
       </InlineField>
       <InlineField label="Field 2">
-        <Input placeholder="Inline input" id={id2} />
+        <Input placeholder="Inline input" />
       </InlineField>
       <InlineField label="Field 3">
-        <Input placeholder="Inline input" id={id3} />
+        <Input placeholder="Inline input" />
       </InlineField>
     </>
   );
 };
 
 export const error: StoryFn<typeof InlineField> = (args) => {
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Input placeholder="Inline input" id={id} />
+      <Input placeholder="Inline input" />
     </InlineField>
   );
 };

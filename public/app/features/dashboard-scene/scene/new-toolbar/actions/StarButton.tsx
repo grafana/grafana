@@ -1,6 +1,6 @@
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const StarButton = ({ dashboard }: ToolbarActionProps) => {
   const { uid, title } = dashboard.useState();

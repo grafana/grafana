@@ -2,11 +2,11 @@ import { useCallback } from 'react';
 
 import { llm } from '@grafana/llm';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardChanges, Message, Role } from './utils';
+import { getDashboardChanges, type Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;

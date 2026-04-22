@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 
-import { ChangePasswordPage, Props } from './ChangePasswordPage';
+import { ChangePasswordPage, type Props } from './ChangePasswordPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({

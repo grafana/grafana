@@ -380,6 +380,12 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"memberCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"accessControl": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},

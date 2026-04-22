@@ -19,7 +19,7 @@ import {
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked,
 } from './tracking';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const AdvancedDbConnectionSettings = (props: Props) => {
   const { options } = props;

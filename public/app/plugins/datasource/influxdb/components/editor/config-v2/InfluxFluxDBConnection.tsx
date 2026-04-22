@@ -10,7 +10,7 @@ import {
   trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
   trackInfluxDBConfigV2FluxDBDetailsTokenInputField,
 } from './tracking';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const InfluxFluxDBConnection = (props: Props) => {
   const {

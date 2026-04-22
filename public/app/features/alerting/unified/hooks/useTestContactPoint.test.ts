@@ -2,11 +2,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
-import { CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { setupMswServer } from '../mockApi';
-import { GrafanaChannelValues } from '../types/receiver-form';
+import { type GrafanaChannelValues } from '../types/receiver-form';
 import { K8sAnnotations } from '../utils/k8s/constants';
 
 import { useTestContactPoint } from './useTestContactPoint';

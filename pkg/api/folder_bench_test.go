@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -35,10 +35,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -50,13 +50,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -193,7 +194,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 
 	signedInUser := user.SignedInUser{UserID: userIDs[0], OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+		orgID: {folder.ActionFoldersCreate: {}, folder.ActionFoldersWrite: {folder.ScopeFoldersAll}},
 	}}
 
 	now := time.Now()
@@ -270,21 +271,21 @@ func setupDB(b testing.TB) benchScenario {
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
 			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Action:  folder.ActionFoldersRead,
+			Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 			Updated: now,
 			Created: now,
 		},
 			accesscontrol.Permission{
 				RoleID:  roleID,
 				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 				Updated: now,
 				Created: now,
 			},
 		)
-		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
-		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][folder.ActionFoldersRead] = append(signedInUser.Permissions[orgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
@@ -409,16 +410,16 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
-	require.NoError(b, err)
-
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService()
-	fStore := folderimpl.ProvideStore(sc.db, cfg)
+	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
+	emptyStatsResponse := &resourcepb.ResourceStatsResponse{}
+	folderSearchMock := resource.NewMockResourceClient(b)
+	folderSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
+	folderSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
 	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		ac, sc.userSvc, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), folderSearchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
@@ -428,7 +429,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
-		dashStore,
+		sc.db,
 		features,
 		folderPermissions,
 		ac,
@@ -444,9 +445,8 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		dashclient.NewK8sClientWithFallback(
 			sc.cfg,
 			client.MockTestRestConfig{},
-			dashStore,
 			sc.userSvc,
-			nil,
+			folderSearchMock,
 			sort.ProvideService(),
 			dualwrite.ProvideTestService(),
 			nil,

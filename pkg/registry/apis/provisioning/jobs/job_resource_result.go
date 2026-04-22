@@ -57,6 +57,7 @@ func classifyWarning(err error) (string, bool) {
 	var quotaExceededErr *quotas.QuotaExceededError
 	var missingMetaErr *resources.MissingFolderMetadata
 	var metaConflictErr *resources.FolderMetadataConflict
+	var invalidMetaErr *resources.InvalidFolderMetadata
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
@@ -71,6 +72,8 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonMissingFolderMetadata, true
 	case errors.As(err, &metaConflictErr):
 		return provisioning.ReasonFolderMetadataConflict, true
+	case errors.As(err, &invalidMetaErr):
+		return provisioning.ReasonInvalidFolderMetadata, true
 	default:
 		return "", false
 	}
@@ -82,6 +85,17 @@ func isWarningError(err error) bool {
 	return ok
 }
 
+// isNonFailingWarning reports whether the warning represents an informational
+// issue where the underlying resource operation still succeeded (e.g. missing
+// or invalid folder metadata).
+func isNonFailingWarning(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
+		errors.Is(err, resources.ErrInvalidFolderMetadata)
+}
+
 // JobResourceResult represents the result of a resource operation in a job.
 type JobResourceResult struct {
 	name         string
@@ -90,6 +104,7 @@ type JobResourceResult struct {
 	path         string
 	previousPath string
 	action       repository.FileAction
+	reason       string // explicit reason, takes precedence over classifyWarning
 	err          error
 	warning      error
 }
@@ -186,6 +201,14 @@ func (b *jobResourceResultBuilder) WithAction(action repository.FileAction) *job
 	return b
 }
 
+// WithReason sets an explicit reason on the result. This takes precedence over
+// the reason derived from classifyWarning and can be used on success results
+// to explain why an operation happened (e.g., UID migration).
+func (b *jobResourceResultBuilder) WithReason(reason string) *jobResourceResultBuilder {
+	b.result.reason = reason
+	return b
+}
+
 // WithError sets the error associated with the resource operation.
 // If the error is classified as a warning error, it will be set as a warning instead of an error.
 // TODO: we should probably move the warning checks to the caller,
@@ -265,8 +288,17 @@ func (r JobResourceResult) Warning() error {
 	return r.warning
 }
 
-// WarningReason returns the warning reason for this result's warning, or "" if none.
+// Reason returns the explicit reason set via WithReason, or "" if none.
+func (r JobResourceResult) Reason() string {
+	return r.reason
+}
+
+// WarningReason returns the warning reason derived from classifyWarning,
+// or the explicit reason if set via WithReason.
 func (r JobResourceResult) WarningReason() string {
+	if r.reason != "" {
+		return r.reason
+	}
 	reason, _ := classifyWarning(r.warning)
 	return reason
 }

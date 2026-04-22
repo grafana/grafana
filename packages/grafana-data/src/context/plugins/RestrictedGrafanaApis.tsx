@@ -1,4 +1,4 @@
-import { createContext, ReactElement, PropsWithChildren, useMemo, useContext } from 'react';
+import { createContext, type ReactElement, type PropsWithChildren, useMemo, useContext } from 'react';
 
 // Generic schema type to avoid zod dependency in @grafana/data
 interface ZodSchema {

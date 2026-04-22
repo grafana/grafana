@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { createLogLine } from '../mocks/logRow';
 
@@ -7,7 +7,7 @@ import {
   useLogDetailsContextData,
   useLogDetailsContext,
   LogDetailsContext,
-  LogDetailsContextData,
+  type LogDetailsContextData,
 } from './LogDetailsContext';
 
 const log = createLogLine({ rowId: 'yep', uid: 'uid' });

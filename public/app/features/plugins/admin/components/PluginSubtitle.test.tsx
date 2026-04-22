@@ -4,7 +4,7 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import * as runtime from '../state/hooks';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginSubtitle, registerPluginSubtitleExtension } from './PluginSubtitle';
 

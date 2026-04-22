@@ -1,25 +1,25 @@
-import { ComponentClass } from 'react';
+import { type ComponentClass } from 'react';
 
 import {
   FieldConfigProperty,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   dateTime,
-  TimeRange,
-  PanelMigrationHandler,
-  PanelTypeChangedHandler,
+  type TimeRange,
+  type PanelMigrationHandler,
+  type PanelTypeChangedHandler,
 } from '@grafana/data';
 import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { TimeOverrideResult } from '../utils/panel';
+import { type TimeOverrideResult } from '../utils/panel';
 
 import { PanelModel } from './PanelModel';
 

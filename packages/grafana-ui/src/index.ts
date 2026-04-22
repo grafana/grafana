@@ -45,7 +45,7 @@ export {
 export { EmptySearchResult } from './components/EmptySearchResult/EmptySearchResult';
 export { EmptyState } from './components/EmptyState/EmptyState';
 export { UnitPicker } from './components/UnitPicker/UnitPicker';
-export { StatsPicker } from './components/StatsPicker/StatsPicker';
+export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
@@ -138,7 +138,6 @@ export {
 } from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
-export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
@@ -266,6 +265,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';
@@ -465,7 +465,13 @@ export { RunnerPlugin } from './slate-plugins/runner';
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { Sidebar, useSidebar, type SidebarPosition, type SidebarContextValue } from './components/Sidebar/Sidebar';
+export {
+  Sidebar,
+  useSidebar,
+  type SidebarPosition,
+  type SidebarContextValue,
+  useSidebarContext,
+} from './components/Sidebar/Sidebar';
 
 // @deprecated import from @grafana/schema
 export {

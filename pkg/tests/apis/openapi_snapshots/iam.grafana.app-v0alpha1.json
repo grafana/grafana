@@ -955,9 +955,41 @@
           {
             "name": "query",
             "in": "query",
-            "description": "team name query string",
+            "description": "team name query string (fuzzy/partial match). Mutually exclusive with title.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name. Mutually exclusive with query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "filter by team UIDs. Mutually exclusive with teamId.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "description": "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
             }
           },
           {
@@ -988,11 +1020,48 @@
             }
           },
           {
+            "name": "membercount",
+            "in": "query",
+            "description": "when true, includes member count for each team in the response",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "accesscontrol",
             "in": "query",
             "description": "when true, includes access control metadata in the response",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sortable field",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "default sorting"
+              },
+              "-email": {
+                "summary": "email descending",
+                "value": "-email"
+              },
+              "-title": {
+                "summary": "title descending",
+                "value": "-title"
+              },
+              "email": {
+                "summary": "email ascending",
+                "value": "email"
+              },
+              "title": {
+                "summary": "title ascending",
+                "value": "title"
+              }
             }
           }
         ],
@@ -4929,6 +4998,10 @@
           "externalUID": {
             "type": "string",
             "default": ""
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int64"
           },
           "name": {
             "type": "string",

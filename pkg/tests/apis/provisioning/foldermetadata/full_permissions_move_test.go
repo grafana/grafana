@@ -9,24 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions verifies that
 // custom permissions set on a provisioned folder are preserved after the folder is
 // moved to a different location in the repository tree and a full sync is performed.
 func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-perms"
 
 	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A"))
 	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -110,18 +107,16 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 // so permissions associated with the old UID are gone after the move. There is no surviving
 // object to carry them.
 func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsForLegacyFolder(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-legacy-perms"
 
 	// Parent has stable metadata; the folder being moved does not.
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -183,9 +178,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 // permissions on a deeply nested folder survive when its parent subtree is relocated.
 // All folders in the hierarchy carry _folder.json metadata, so UIDs are stable.
 func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-perms"
 
 	// Build root → child → grandchild; all have metadata so UIDs are stable.
@@ -194,9 +187,9 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 	writeToProvisioningPath(t, helper, "root/child/grandchild/_folder.json", folderMetadataJSON("grandchild-uid", "Grandchild"))
 	writeToProvisioningPath(t, helper, "destination/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -243,18 +236,16 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 // TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions verifies that
 // a top-level (root) folder that is moved to a deeply nested position retains its permissions.
 func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-leaf"
 
 	writeToProvisioningPath(t, helper, "top/_folder.json", folderMetadataJSON("top-uid", "Top"))
 	writeToProvisioningPath(t, helper, "container/_folder.json", folderMetadataJSON("container-uid", "Container"))
 	writeToProvisioningPath(t, helper, "container/inner/_folder.json", folderMetadataJSON("inner-uid", "Inner"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -299,18 +290,16 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 // TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions verifies that
 // a deeply nested folder promoted to the root level retains its permissions.
 func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-leaf-to-root"
 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/deep/_folder.json", folderMetadataJSON("deep-uid", "Deep"))
 	writeToProvisioningPath(t, helper, "parent/deep/leaf/_folder.json", folderMetadataJSON("leaf-uid", "Leaf"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -357,17 +346,15 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 // The legacy parent keeps the same hash-based UID because its own path does not change;
 // only the child is re-parented.
 func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreservesPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-meta-under-legacy"
 
 	writeToProvisioningPath(t, helper, "child-with-meta/_folder.json", folderMetadataJSON("child-meta-uid", "Child With Meta"))
 	writeToProvisioningPath(t, helper, "legacy-parent/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})

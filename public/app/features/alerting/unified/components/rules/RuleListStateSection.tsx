@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type CombinedRule } from 'app/types/unified-alerting';
+import { type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertStateToReadable } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';

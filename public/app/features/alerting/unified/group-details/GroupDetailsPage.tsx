@@ -5,12 +5,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
-import { RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { type RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';

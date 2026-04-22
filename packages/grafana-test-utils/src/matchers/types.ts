@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 export const OBSERVABLE_TEST_TIMEOUT_IN_MS = 1000;
 

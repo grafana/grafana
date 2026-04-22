@@ -10,9 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -32,26 +30,22 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAdvisor,
-			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
+			// featuremgmt.FlagDatasourcesQueryTypes,
+			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
-			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagKubernetesExternalGroupMappingsApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
-		},
-		// Explicitly configure with mode 5 the resources supported by provisioning.
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
 	})
 
@@ -101,8 +95,14 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "folder.grafana.app",
 		Version: "v1beta1",
 	}, {
+		Group:   "folder.grafana.app",
+		Version: "v1",
+	}, {
 		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "provisioning.grafana.app",
+		Version: "v1beta1",
 	}, {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",

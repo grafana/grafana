@@ -78,6 +78,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		UID:   query.UID,
 		Name:  query.Name, // nolint:staticcheck
 		ID:    query.ID,   // nolint:staticcheck
+		Type:  query.Type,
 	}
 	has, err := sess.Get(datasource)
 

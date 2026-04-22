@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
+import { type ColorDimensionConfig, type ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
+import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps } from '../../element';
 
 import { ServerDatabase } from './types/database';
 import { ServerSingle } from './types/single';

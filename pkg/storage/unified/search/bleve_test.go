@@ -42,6 +42,7 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"), // These don't stop when index is closed.
+		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),               // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
 	)
 }
 
@@ -1441,7 +1442,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				}
 
 				idx := be.GetIndex(ns)
-				_, err = idx.UpdateIndex(ctx)
+				_, err := idx.UpdateIndex(ctx)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue

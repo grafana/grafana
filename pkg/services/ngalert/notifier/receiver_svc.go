@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -36,6 +38,7 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
 }
 
 type routeService interface {
@@ -99,7 +102,9 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -110,11 +115,25 @@ func NewReceiverService(
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    provenanceValidator,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
@@ -306,7 +325,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
@@ -354,6 +373,13 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -416,6 +442,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
 	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
 	logger.Debug("Updating receiver")
@@ -464,7 +493,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
 
@@ -546,7 +575,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.

@@ -6492,6 +6492,10 @@
             "maxLength": 24576,
             "minLength": 1
           },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
+          },
           "name": {
             "description": "Name in the secret service (reference)",
             "type": "string",

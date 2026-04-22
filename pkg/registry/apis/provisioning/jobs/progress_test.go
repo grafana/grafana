@@ -591,8 +591,7 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 	assert.False(t, recorder.HasChildPathFailedUpdate("created/"), "creation failures are not tracked as update failures")
 
 	// Warning-level update failures ARE tracked (e.g. validation errors routed
-	// to warning via isWarningError). detectMissingFolderMetadata now runs after
-	// deleteFolders, so its benign warnings don't interfere with cleanup.
+	// to warning via isWarningError).
 	validationErr := resources.NewResourceValidationError(errors.New("invalid content"))
 	recorder.Record(ctx, NewResourceResult().
 		WithPath("warned/dash.json").
@@ -607,6 +606,22 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 		WithWarning(errors.New("ownership conflict")).
 		Build())
 	assert.True(t, recorder.HasChildPathFailedUpdate("explicit-warn/"), "explicit WithWarning updates must be tracked")
+
+	// Non-failing warnings (missing/invalid folder metadata) are NOT tracked
+	// because the underlying folder operation succeeded.
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("missing-meta/").
+		WithAction(repository.FileActionUpdated).
+		WithWarning(resources.NewMissingFolderMetadata("missing-meta/")).
+		Build())
+	assert.False(t, recorder.HasChildPathFailedUpdate("missing-meta/"), "missing folder metadata warnings must not be tracked as failed updates")
+
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("invalid-meta/").
+		WithAction(repository.FileActionUpdated).
+		WithWarning(resources.NewInvalidFolderMetadata("invalid-meta/", errors.New("bad json"))).
+		Build())
+	assert.False(t, recorder.HasChildPathFailedUpdate("invalid-meta/"), "invalid folder metadata warnings must not be tracked as failed updates")
 
 	// Failed renames are tracked as update failures — a rename moves a child,
 	// so if it fails the child stays under the old folder.

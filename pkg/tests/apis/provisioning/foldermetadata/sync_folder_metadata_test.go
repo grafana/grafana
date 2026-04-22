@@ -18,7 +18,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // sha1Hex computes the SHA-1 hash of data and returns the lowercase hex string.
@@ -32,14 +31,12 @@ func sha1Hex(data []byte) string {
 // provisioningFolderMetadata feature flag is enabled, a full sync on a repository that has folders
 // without _folder.json produces a warning job state and a MissingFolderMetadata condition reason.
 func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("single folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "missing-folder-meta-single"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Dashboard inside a folder that intentionally has no _folder.json
 				"../testdata/all-panels.json": "myfolder/dashboard.json",
@@ -75,11 +72,11 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	})
 
 	t.Run("multiple folders", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "missing-folder-meta-multi"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Two dashboards in separate folders, neither has a _folder.json
 				"../testdata/all-panels.json":    "folderA/dashboard1.json",
@@ -121,11 +118,11 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	})
 
 	t.Run("completed with warnings", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "folder-meta-with-warnings"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Dashboard in folder without _folder.json → MissingFolderMetadata
 				"../testdata/all-panels.json": "myfolder/dashboard.json",
@@ -167,45 +164,6 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	})
 }
 
-// TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled verifies that when the
-// provisioningFolderMetadata feature flag is disabled, a full sync on a repository with a folder
-// that has no _folder.json completes successfully without any _folder.json-related warnings.
-func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	const repo = "missing-folder-meta-disabled"
-	// No withProvisioningFolderMetadata option → flag is disabled
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
-		Copies: map[string]string{
-			"../testdata/all-panels.json": "myfolder/dashboard.json",
-		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
-	})
-
-	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-
-	jobObj := &provisioning.Job{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-	require.NoError(t, err)
-
-	require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State,
-		"job should succeed when flag is disabled (no _folder.json check)")
-
-	for _, w := range jobObj.Status.Warnings {
-		require.NotContains(t, w, "missing folder metadata",
-			"no warning about missing folder metadata should appear when flag is disabled")
-	}
-
-	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
-}
-
 // requireRepoFolderTitle lists all folders managed by repoName and asserts that
 // exactly one with the given sourcePath has the expected title.
 func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedSourcePath, expectedTitle string) {
@@ -237,18 +195,16 @@ func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper,
 // TestIntegrationProvisioning_FullSync_FolderMetadataTitle verifies that
 // full sync uses spec.title from _folder.json when creating/updating folders.
 func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("folder uses spec.title from _folder.json", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title"
 
 		// Write _folder.json with a custom title different from the directory name.
 		writeToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-1", "My Team Display Name"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-team/dashboard.json",
 			},
@@ -262,15 +218,15 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 
 	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-empty"
 
 		// Write _folder.json with an empty title — should fall back to directory name.
 		writeToProvisioningPath(t, helper, "reports/_folder.json", folderMetadataJSON("stable-uid-2", ""))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "reports/dashboard.json",
 			},
@@ -284,12 +240,12 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 
 	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-absent"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "analytics/dashboard.json",
 			},
@@ -303,15 +259,15 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 
 	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-nested"
 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent Display"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child Display"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -326,14 +282,14 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 
 	t.Run("directory rename preserves metadata title", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-rename"
 
 		writeToProvisioningPath(t, helper, "old-dir/_folder.json", folderMetadataJSON("stable-uid-rename", "My Team"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "old-dir/dashboard.json",
 			},
@@ -356,12 +312,12 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 
 	t.Run("directory rename without metadata updates title to new directory name", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-no-meta-rename"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Folder has no _folder.json — title defaults to directory name.
 				"../testdata/all-panels.json": "old-name/dashboard.json",
@@ -415,18 +371,16 @@ func requireRepoFolderChecksum(t *testing.T, helper *common.ProvisioningTestHelp
 // TestIntegrationProvisioning_FullSync_FolderMetadataChecksum verifies that
 // full sync persists the _folder.json hash as sourceChecksum on the Grafana folder.
 func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("folder has sourceChecksum after sync with _folder.json", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-checksum"
 
 		metadataContent := folderMetadataJSON("checksum-uid-1", "Checksum Folder")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -441,12 +395,12 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 	})
 
 	t.Run("folder without _folder.json has no sourceChecksum", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-no-meta-checksum"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "plain-folder/dashboard.json",
 			},
@@ -481,7 +435,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 	})
 
 	t.Run("nested folders both have sourceChecksum", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-checksum-nested"
 
 		parentContent := folderMetadataJSON("parent-ck-uid", "Parent")
@@ -489,9 +443,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		writeToProvisioningPath(t, helper, "parent/_folder.json", parentContent)
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", childContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -509,19 +463,17 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 // TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation verifies that
 // full sync detects _folder.json changes via hash comparison and reconciles folder metadata.
 func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("title update via _folder.json only", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-update"
 
 		// First sync: folder with original title.
 		originalContent := folderMetadataJSON("title-update-uid", "Old Title")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -544,15 +496,15 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 	})
 
 	t.Run("no update when _folder.json unchanged between syncs", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-no-change"
 
 		metadataContent := folderMetadataJSON("no-change-uid", "Stable Title")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -574,19 +526,17 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 // TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange verifies that
 // full sync handles UID changes in _folder.json by replacing the folder and re-parenting children.
 func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("UID change replaces folder and re-parents dashboard", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-uid-change"
 
 		// First sync: folder with original UID.
 		originalContent := folderMetadataJSON("original-uid", "My Folder")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -636,16 +586,16 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 	})
 
 	t.Run("UID change deletes old folder and re-parents child folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "uid-change-child-folder"
 
 		// First sync: parent with original UID, child folder + dashboard inside.
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-old-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -681,16 +631,16 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 	})
 
 	t.Run("nested UID changes — both parent and child UIDs change", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "uid-change-nested"
 
 		// First sync: parent + child each with original UIDs.
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-old", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-old", "Child"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -723,16 +673,16 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 	})
 
 	t.Run("UID change on root-level folder re-parents dashboard", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "uid-change-root-level"
 
 		// First sync: root-level folder with original UID.
 		// The folder's parent is the repository folder (Target: "folder").
 		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-old-uid", "Root Folder"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "root-folder/dashboard.json",
 			},
@@ -768,17 +718,15 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 // deleting a _folder.json between syncs causes the folder to revert to hash-based UID
 // and directory-name title, and that child resources are re-parented accordingly.
 func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("folder reverts to hash-based UID and directory-name title", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-deleted-revert"
 
 		// First sync: folder with _folder.json (stable UID + custom title).
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", folderMetadataJSON("stable-uid", "Custom Title"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -827,14 +775,14 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 	})
 
 	t.Run("nested: parent _folder.json deleted, child retains metadata", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-deleted-nested"
 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -888,14 +836,14 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 	})
 
 	t.Run("nested: parent _folder.json deleted while child UID changes", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "full-sync-meta-deleted-child-uid-change"
 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-old-uid", "Child"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},

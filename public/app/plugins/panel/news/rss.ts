@@ -1,5 +1,5 @@
 import { getProperty } from './feed';
-import { Feed } from './types';
+import { type Feed } from './types';
 
 export function parseRSSFeed(txt: string): Feed {
   const domParser = new DOMParser();

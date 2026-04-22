@@ -1,5 +1,5 @@
-import { unaryOperators, SelectableValue, UnaryOperationID } from '@grafana/data';
-import { UnaryOptions, CalculateFieldMode, CalculateFieldTransformerOptions } from '@grafana/data/internal';
+import { unaryOperators, type SelectableValue, type UnaryOperationID } from '@grafana/data';
+import { type UnaryOptions, CalculateFieldMode, type CalculateFieldTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineLabel, Select } from '@grafana/ui';
 

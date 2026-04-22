@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useId, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { isProvisionedRuleGroup } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 

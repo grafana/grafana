@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
 
-import { ActionItem } from '../../Actions';
+import { type ActionItem } from '../../Actions';
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 import { HeaderActions } from './HeaderActions';
 
