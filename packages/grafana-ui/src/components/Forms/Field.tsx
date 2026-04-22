@@ -107,17 +107,21 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     }
     const Wrapper = useFieldset ? 'fieldset' : 'div';
     return (
-      <FieldContext.Provider value={{
-        id: inputId,
-        invalid,
-        disabled,
-        loading,
-        'aria-describedby': invalid && error ? errorId : undefined,
-      }}>
+      <FieldContext.Provider
+        value={{
+          id: inputId,
+          invalid,
+          disabled,
+          loading,
+          'aria-describedby': invalid && error ? errorId : undefined,
+        }}
+      >
         <Wrapper className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
           {labelElement}
           <div>
-            <div ref={ref}>{React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}</div>
+            <div ref={ref}>
+              {React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}
+            </div>
             {invalid && error && !horizontal && (
               <div
                 className={cx(styles.fieldValidationWrapper, {

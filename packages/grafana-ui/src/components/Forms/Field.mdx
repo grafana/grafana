@@ -52,14 +52,14 @@ Use the `loading` prop to indicate that the input is loading. This will add a sp
 
 `Field` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component.
 
-| Property | Type | Description |
-|---|---|---|
-| `id` | `string` | Resolved input id (`htmlFor` → child id → generated id) |
-| `invalid` | `boolean \| undefined` | Mirrors the `invalid` prop |
-| `disabled` | `boolean \| undefined` | Mirrors the `disabled` prop |
-| `loading` | `boolean \| undefined` | Mirrors the `loading` prop |
-| `aria-describedby` | `string \| undefined` | Set when both `invalid` and `error` are truthy |
-| `aria-labelledby` | `string \| undefined` | Always `undefined` in `Field` |
+| Property           | Type                   | Description                                             |
+| ------------------ | ---------------------- | ------------------------------------------------------- |
+| `id`               | `string`               | Resolved input id (`htmlFor` → child id → generated id) |
+| `invalid`          | `boolean \| undefined` | Mirrors the `invalid` prop                              |
+| `disabled`         | `boolean \| undefined` | Mirrors the `disabled` prop                             |
+| `loading`          | `boolean \| undefined` | Mirrors the `loading` prop                              |
+| `aria-describedby` | `string \| undefined`  | Set when both `invalid` and `error` are truthy          |
+| `aria-labelledby`  | `string \| undefined`  | Always `undefined` in `Field`                           |
 
 **Example:**
 
@@ -74,5 +74,5 @@ function MyCustomInput() {
 // Usage:
 <Field label="Name" invalid error="Required">
   <MyCustomInput />
-</Field>
+</Field>;
 ```

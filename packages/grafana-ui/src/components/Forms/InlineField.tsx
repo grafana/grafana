@@ -91,22 +91,22 @@ export const InlineField = ({
 
   return (
     <FieldContext.Provider value={fieldContextValue}>
-    <Wrapper className={cx(styles.container, className)} {...htmlProps}>
-      {labelElement}
-      <div className={styles.childContainer}>
-        {/* @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead */}
-        {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
-        {invalid && error && (
-          <div
-            className={cx(styles.fieldValidationWrapper, {
-              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
-            })}
-          >
-            <FieldValidationMessage>{error}</FieldValidationMessage>
-          </div>
-        )}
-      </div>
-    </Wrapper>
+      <Wrapper className={cx(styles.container, className)} {...htmlProps}>
+        {labelElement}
+        <div className={styles.childContainer}>
+          {/* @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead */}
+          {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
+          {invalid && error && (
+            <div
+              className={cx(styles.fieldValidationWrapper, {
+                [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+              })}
+            >
+              <FieldValidationMessage>{error}</FieldValidationMessage>
+            </div>
+          )}
+        </div>
+      </Wrapper>
     </FieldContext.Provider>
   );
 };
