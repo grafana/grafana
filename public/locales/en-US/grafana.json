@@ -13379,6 +13379,7 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)",
       "url-required": "Repository URL is required"
     },
     "history-view": {
