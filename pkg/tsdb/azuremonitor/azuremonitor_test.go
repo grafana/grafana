@@ -12,17 +12,17 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var testRoutes = map[string]types.AzRoute{
@@ -80,7 +80,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				featureToggles := backend.NewGrafanaCfg(map[string]string{
 					featuretoggles.EnabledFeatures: "", // No enabled features
 				})
-				return backend.WithGrafanaConfig(ctx, featureToggles)
+				return config.WithGrafanaConfig(ctx, featureToggles)
 			},
 		},
 		{
