@@ -1578,7 +1578,7 @@ describe('vizPanelToSchemaV2 time range fields', () => {
 
   function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
     const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
-    expect(result.kind).toEqual('Panel')
+    expect(result.kind).toEqual('Panel');
     return (result.spec as PanelSpec).data.spec.queryOptions;
   }
 
@@ -1615,19 +1615,15 @@ describe('vizPanelToSchemaV2 time range fields', () => {
     });
   });
 
-  const isolationCases = [
-    { name: 'timeFrom only', state: { timeFrom: '2h' }, field: 'timeFrom', value: '2h' },
-    { name: 'timeShift only', state: { timeShift: '1h' }, field: 'timeShift', value: '1h' },
-    { name: 'hideTimeOverride only', state: { hideTimeOverride: true }, field: 'hideTimeOverride', value: true },
-    { name: 'compareWith only maps to timeCompare', state: { compareWith: '1d' }, field: 'timeCompare', value: '1d' },
-  ] as const;
+  it.each([
+    ['timeFrom only', { timeFrom: '2h' }, 'timeFrom', '2h'],
+    ['timeShift only', { timeShift: '1h' }, 'timeShift', '1h'],
+    ['hideTimeOverride only', { hideTimeOverride: true }, 'hideTimeOverride', true],
+    ['compareWith only maps to timeCompare', { compareWith: '1d' }, 'timeCompare', '1d'],
+  ] as const)('should serialize %s', (_, state, field, value) => {
+    const queryOptions = getQueryOptions(new PanelTimeRange(state));
 
-  isolationCases.forEach(({ name, state, field, value }) => {
-    it(`should serialize ${name}`, () => {
-      const queryOptions = getQueryOptions(new PanelTimeRange(state));
-
-      expect(queryOptions[field]).toBe(value);
-    });
+    expect(queryOptions[field]).toBe(value);
   });
 });
 
