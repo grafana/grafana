@@ -489,8 +489,7 @@ func cleanupRenamedFolders(
 
 			resultBuilder := jobs.NewFolderResult(old.Path).
 				WithAction(repository.FileActionDeleted).
-				WithName(old.UID).
-				WithReason(old.Reason)
+				WithName(old.UID)
 			if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
 				resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
 			}
