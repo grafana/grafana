@@ -203,6 +203,12 @@
   gap: 0.5rem;
 }
 
+.plot-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .plot-label {
   font-size: 12px;
   font-weight: 600;
@@ -249,6 +255,17 @@
 }
 
 .overlay-toggle-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #f8f9fc;
+  color: #334155;
+  cursor: pointer;
+}
+
+.plot-action-btn {
   font-size: 12px;
   line-height: 1.2;
   padding: 0.3rem 0.55rem;

@@ -314,24 +314,37 @@ function ComparePlots({
   const [showOverlay, setShowOverlay] = React.useState(false);
   const [expectedBlendMode, setExpectedBlendMode] = React.useState<OverlayBlendMode>('exclusion');
   const [actualBlendMode, setActualBlendMode] = React.useState<OverlayBlendMode>('exclusion');
+  const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = React.useState(true);
+  const [renderActualSetupEvents, setRenderActualSetupEvents] = React.useState(true);
+  const [renderDiffSetupEvents, setRenderDiffSetupEvents] = React.useState(true);
 
   React.useEffect(() => {
-    const context = actualUPlotInstance.current?.getContext('2d');
-    if (!context) {
+    const canvas = actualUPlotInstance.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) {
       return;
     }
-    eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (renderActualSetupEvents) {
+      eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    }
     eventsToCanvasScript(payload.actual, context);
-  }, [payload.actual, payload.uPlotCanvasEvents]);
+  }, [payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents]);
 
   React.useEffect(() => {
-    const context = expectedUPlotInstance.current?.getContext('2d');
-    if (!context) {
+    const canvas = expectedUPlotInstance.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) {
       return;
     }
-    eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (renderExpectedSetupEvents) {
+      eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    }
     eventsToCanvasScript(payload.expected, context);
-  }, [payload.expected, payload.uPlotCanvasEvents]);
+  }, [payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents]);
 
   React.useEffect(() => {
     for (const overlayCanvas of [expectedOverlayRef.current, actualOverlayRef.current]) {
@@ -359,7 +372,16 @@ function ComparePlots({
       <h3 className="compare-title">Test: {payload.testName}</h3>
       <div className="wrap">
         <div className="plot-panel expected">
-          <div className={'plot-label'}>Expected</div>
+          <div className="plot-header">
+            <div className={'plot-label'}>Expected</div>
+            <button
+              className="plot-action-btn"
+              type="button"
+              onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
+            >
+              {renderExpectedSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
+            </button>
+          </div>
           <div className="canvas-stack">
             <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
             <canvas
@@ -386,7 +408,16 @@ function ComparePlots({
         </div>
 
         <div className="plot-panel actual">
-          <div className={'plot-label'}>Actual</div>
+          <div className="plot-header">
+            <div className={'plot-label'}>Actual</div>
+            <button
+              className="plot-action-btn"
+              type="button"
+              onClick={() => setRenderActualSetupEvents((prev) => !prev)}
+            >
+              {renderActualSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
+            </button>
+          </div>
           <div className="canvas-stack">
             <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
             <canvas
@@ -415,13 +446,13 @@ function ComparePlots({
           <DiffCanvas
             width={width}
             height={height}
-            expectedCanvasRef={expectedUPlotInstance}
-            actualCanvasRef={actualUPlotInstance}
             expectedEvents={payload.expected}
             actualEvents={payload.actual}
             setupEvents={payload.uPlotCanvasEvents}
             showOverlay={showOverlay}
             onToggleOverlay={() => setShowOverlay((prev) => !prev)}
+            renderDiffSetupEvents={renderDiffSetupEvents}
+            onToggleDiffSetupEvents={() => setRenderDiffSetupEvents((prev) => !prev)}
             onDiffComputed={onDiffComputed}
           />
         </div>
@@ -433,24 +464,24 @@ function ComparePlots({
 function DiffCanvas({
   width,
   height,
-  expectedCanvasRef,
-  actualCanvasRef,
   expectedEvents,
   actualEvents,
   setupEvents,
   showOverlay,
   onToggleOverlay,
+  renderDiffSetupEvents,
+  onToggleDiffSetupEvents,
   onDiffComputed,
 }: {
   width: number;
   height: number;
-  expectedCanvasRef: React.RefObject<HTMLCanvasElement | null>;
-  actualCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   expectedEvents: CanvasEventArray;
   actualEvents: CanvasEventArray;
   setupEvents: CanvasRenderingContext2DEvent[];
   showOverlay: boolean;
   onToggleOverlay: () => void;
+  renderDiffSetupEvents: boolean;
+  onToggleDiffSetupEvents: () => void;
   onDiffComputed: (hasDiff: boolean, diffImageData: ImageData | null) => void;
 }) {
   const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
@@ -459,11 +490,25 @@ function DiffCanvas({
 
   React.useEffect(() => {
     const frameId = requestAnimationFrame(() => {
-      const expectedContext = expectedCanvasRef.current?.getContext('2d');
-      const actualContext = actualCanvasRef.current?.getContext('2d');
+      const expectedScratchCanvas = document.createElement('canvas');
+      expectedScratchCanvas.width = width;
+      expectedScratchCanvas.height = height;
+      const actualScratchCanvas = document.createElement('canvas');
+      actualScratchCanvas.width = width;
+      actualScratchCanvas.height = height;
+
+      const expectedContext = expectedScratchCanvas.getContext('2d');
+      const actualContext = actualScratchCanvas.getContext('2d');
       if (!expectedContext || !actualContext) {
         return;
       }
+
+      if (renderDiffSetupEvents) {
+        eventsToCanvasScript(setupEvents, expectedContext);
+        eventsToCanvasScript(setupEvents, actualContext);
+      }
+      eventsToCanvasScript(expectedEvents, expectedContext);
+      eventsToCanvasScript(actualEvents, actualContext);
 
       const expectedPixels = expectedContext.getImageData(0, 0, width, height);
       const actualPixels = actualContext.getImageData(0, 0, width, height);
@@ -495,7 +540,7 @@ function DiffCanvas({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [actualCanvasRef, actualEvents, expectedCanvasRef, expectedEvents, height, onDiffComputed, setupEvents, width]);
+  }, [actualEvents, expectedEvents, height, onDiffComputed, renderDiffSetupEvents, setupEvents, width]);
 
   React.useEffect(() => {
     if (!hasDiff || !diffImageData) {
@@ -514,9 +559,14 @@ function DiffCanvas({
       <div className="plot-panel diff diff-empty">
         <div className="plot-header">
           <div className={'plot-label'}>Diff</div>
-          <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay} disabled>
-            Overlay on charts
-          </button>
+          <div className="plot-actions">
+            <button className="plot-action-btn" type="button" onClick={onToggleDiffSetupEvents}>
+              {renderDiffSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
+            </button>
+            <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay} disabled>
+              Overlay on charts
+            </button>
+          </div>
         </div>
         <div className="compare-empty-diff">No visual differences</div>
       </div>
@@ -527,9 +577,14 @@ function DiffCanvas({
     <div className="plot-panel diff">
       <div className="plot-header">
         <div className={'plot-label'}>Diff</div>
-        <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay}>
-          {showOverlay ? 'Hide overlay' : 'Overlay on charts'}
-        </button>
+        <div className="plot-actions">
+          <button className="plot-action-btn" type="button" onClick={onToggleDiffSetupEvents}>
+            {renderDiffSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
+          </button>
+          <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay}>
+            {showOverlay ? 'Hide overlay' : 'Overlay on charts'}
+          </button>
+        </div>
       </div>
       <canvas ref={diffCanvasRef} className="canvas" id="diff" width={width} height={height}></canvas>
     </div>
