@@ -204,15 +204,17 @@ func setupDB(b testing.TB) benchScenario {
 	teamRoles := make([]accesscontrol.TeamRole, 0, TEAM_NUM)
 	for i := 1; i < TEAM_NUM+1; i++ {
 		teamID := int64(i)
+		teamUID := fmt.Sprintf("team%d", i)
 		teams = append(teams, team.Team{
-			UID:     fmt.Sprintf("team%d", i),
+			UID:     teamUID,
 			ID:      teamID,
 			Name:    fmt.Sprintf("team%d", i),
 			OrgID:   orgID,
 			Created: now,
 			Updated: now,
 		})
-		signedInUser.Teams = append(signedInUser.Teams, teamID)
+		signedInUser.TeamIDs = append(signedInUser.TeamIDs, teamID) // nolint:staticcheck
+		signedInUser.TeamUIDs = append(signedInUser.TeamUIDs, teamUID)
 
 		for _, userID := range userIDs {
 			teamMembers = append(teamMembers, team.TeamMember{

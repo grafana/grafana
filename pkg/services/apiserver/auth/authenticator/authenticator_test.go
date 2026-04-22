@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestAuthenticator(t *testing.T) {
@@ -33,7 +34,7 @@ func TestAuthenticator(t *testing.T) {
 			Name:    "admin",
 			UserID:  1,
 			UserUID: "xyz",
-			Teams:   []int64{1, 2},
+			TeamIDs: []int64{1, 2},
 		}
 
 		req = req.WithContext(identity.WithRequester(context.Background(), ident))
