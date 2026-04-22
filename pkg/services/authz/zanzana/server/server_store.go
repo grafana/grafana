@@ -186,7 +186,7 @@ func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error)
 	var continuationToken string
 
 	for {
-		res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{
+		res, err := s.GetOpenFGAServer().ListStores(ctx, &openfgav1.ListStoresRequest{
 			ContinuationToken: continuationToken,
 		})
 		if err != nil {

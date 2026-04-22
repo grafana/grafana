@@ -45,7 +45,7 @@ func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfga
 	return nil
 }
 func (s *stubServer) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return nil
+	return &mockOpenFGAServer{}
 }
 func (s *stubServer) GetOrCreateStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
 	s.getOrCreateCalls.Add(1)

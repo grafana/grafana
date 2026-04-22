@@ -16,14 +16,37 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
+
+// mockOpenFGAServer implements only the Read method; all others panic via the embedded Unimplemented.
+type mockOpenFGAServer struct {
+	openfgav1.UnimplementedOpenFGAServiceServer
+	// pages is a list of tuple pages to return on successive Read calls.
+	pages [][]*openfgav1.Tuple
+}
+
+func (m *mockOpenFGAServer) Read(_ context.Context, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	if len(m.pages) == 0 {
+		return &openfgav1.ReadResponse{}, nil
+	}
+	page := m.pages[0]
+	m.pages = m.pages[1:]
+
+	token := ""
+	if len(m.pages) > 0 {
+		token = "next"
+	}
+	return &openfgav1.ReadResponse{
+		Tuples:            page,
+		ContinuationToken: token,
+	}, nil
+}
 
 // mockServerInternal satisfies zanzana.ServerInternal for computeDiffStreaming tests.
 type mockServerInternal struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
-	pages [][]*openfgav1.Tuple
+	fga *mockOpenFGAServer
 }
 
 func (m *mockServerInternal) Close()                              {}
@@ -44,32 +67,7 @@ func (m *mockServerInternal) WriteTuples(context.Context, *zanzana.StoreInfo, []
 	return nil
 }
 func (m *mockServerInternal) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return nil
-}
-
-func (m *mockServerInternal) Read(_ context.Context, _ *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
-	if len(m.pages) == 0 {
-		return &authzextv1.ReadResponse{}, nil
-	}
-	page := m.pages[0]
-	m.pages = m.pages[1:]
-
-	token := ""
-	if len(m.pages) > 0 {
-		token = "next"
-	}
-
-	pageTuples := make([]*authzextv1.Tuple, 0)
-	for _, t := range page {
-		pageTuples = append(pageTuples, &authzextv1.Tuple{
-			Key:       common.ToAuthzExtTupleKey(t.GetKey()),
-			Timestamp: t.GetTimestamp(),
-		})
-	}
-	return &authzextv1.ReadResponse{
-		Tuples:            pageTuples,
-		ContinuationToken: token,
-	}, nil
+	return m.fga
 }
 
 func makeTuple(user, relation, object string) *openfgav1.TupleKey {
@@ -120,7 +118,7 @@ func toTuple(tk *openfgav1.TupleKey) *openfgav1.Tuple {
 
 func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 	return &Reconciler{
-		server:  &mockServerInternal{pages: pages},
+		server:  &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
 		cfg:     Config{CRDs: DefaultCRDs},
 		logger:  log.NewNopLogger(),
 		tracer:  tracing.NewNoopTracerService(),

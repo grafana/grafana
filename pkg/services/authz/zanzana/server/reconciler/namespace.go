@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 // tupleKey generates a unique string key for a tuple based on user, relation, and object.
@@ -266,25 +265,31 @@ func (r *Reconciler) computeDiffStreaming(
 	defer span.End()
 
 	pagesRead := 0
+
+	// Get store info for the namespace
+	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
+	if err != nil {
+		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
+	}
+
 	var continuationToken string
 
 	// Read current tuples page-by-page and diff against expected
 	for {
-		req := &authzextv1.ReadRequest{
-			Namespace:         namespace,
+		req := &openfgav1.ReadRequest{
+			StoreId:           storeInfo.ID,
 			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.Read(ctx, req)
+		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
 		if err != nil {
 			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}
 
 		pagesRead++
 
-		for _, authzTuple := range resp.GetTuples() {
-			tuple := common.ToOpenFGATuple(authzTuple)
+		for _, tuple := range resp.GetTuples() {
 			key := tupleKey(tuple.GetKey())
 			if expected, exists := expectedMap[key]; exists {
 				if proto.Equal(expected.GetCondition(), tuple.GetKey().GetCondition()) {
