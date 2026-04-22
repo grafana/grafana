@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -44,6 +44,7 @@ import { type SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
+import { isPluginProvidedGroup, isProvisionedRuleGroup } from '../utils/rules';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
@@ -152,7 +153,31 @@ function GroupEditPage() {
           </Alert>
         )}
       </>
-      {rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
+      {rulerGroup && isPluginProvidedGroup(rulerGroup) && (
+        <Alert
+          title={t('alerting.group-edit.group-plugin-provided', 'This rule group is managed by a plugin')}
+          severity="info"
+        >
+          <Trans i18nKey="alerting.group-edit.group-plugin-provided-description">
+            Rule groups provisioned by a plugin cannot be edited from Grafana. Manage them from the plugin that owns
+            them.
+          </Trans>
+        </Alert>
+      )}
+      {rulerGroup && !isPluginProvidedGroup(rulerGroup) && isProvisionedRuleGroup(rulerGroup) && (
+        <Alert
+          title={t('alerting.group-edit.group-provisioned', 'This rule group is provisioned')}
+          severity="info"
+        >
+          <Trans i18nKey="alerting.group-edit.group-provisioned-description">
+            Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration
+            instead.
+          </Trans>
+        </Alert>
+      )}
+      {rulerGroup && !isPluginProvidedGroup(rulerGroup) && !isProvisionedRuleGroup(rulerGroup) && (
+        <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />
+      )}
       {!rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
     </AlertingPageWrapper>
   );
@@ -233,11 +258,18 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 
       setMatchingGroupPageUrl(updatedGroupIdentifier);
     } catch (error) {
-      logError(error instanceof Error ? error : new Error('Failed to update rule group'));
-      appInfo.error(
-        t('alerting.group-edit.form.update-error', 'Failed to update rule group'),
-        stringifyErrorLike(error)
-      );
+      const message = stringifyErrorLike(error);
+      const loggedError = error instanceof Error ? error : new Error(message);
+      logError(loggedError, {
+        operation: 'updateRuleGroup',
+        message,
+        ...(isFetchError(error) && {
+          status: String(error.status),
+          statusText: error.statusText ?? '',
+          url: error.config?.url ?? '',
+        }),
+      });
+      appInfo.error(t('alerting.group-edit.form.update-error', 'Failed to update rule group'), message);
     }
   };
 

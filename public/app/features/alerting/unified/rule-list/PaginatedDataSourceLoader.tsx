@@ -13,6 +13,7 @@ import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';
+import { isPluginProvidedGroup, isProvisionedRuleGroup } from '../utils/rules';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, type DataSourceSectionProps } from './components/DataSourceSection';
@@ -190,6 +191,8 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
           dsUid={rulesSourceIdentifier.uid}
           namespaceName={namespaceName}
           groupName={group.name}
+          isPluginProvided={isPluginProvidedGroup(group)}
+          isProvisioned={isProvisionedRuleGroup(group)}
         />
       }
     >
@@ -202,12 +205,20 @@ interface DataSourceGroupActionsProps {
   dsUid: string;
   namespaceName: string;
   groupName: string;
+  isPluginProvided: boolean;
+  isProvisioned: boolean;
 }
 
-function DataSourceGroupActions({ dsUid, namespaceName, groupName }: DataSourceGroupActionsProps) {
+function DataSourceGroupActions({
+  dsUid,
+  namespaceName,
+  groupName,
+  isPluginProvided,
+  isProvisioned,
+}: DataSourceGroupActionsProps) {
   const { hasRuler } = useHasRulerV2(dsUid);
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateExternalAlertRule);
-  const canEdit = editRuleSupported && editRuleAllowed;
+  const canEdit = editRuleSupported && editRuleAllowed && !isPluginProvided && !isProvisioned;
 
   if (!hasRuler || !canEdit) {
     return null;

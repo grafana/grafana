@@ -34,6 +34,7 @@ import {
   type PostableRuleDTO,
   PromAlertingRuleState,
   type PromRuleDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
   type RulerAlertingRuleDTO,
   type RulerCloudRuleDTO,
@@ -185,8 +186,16 @@ export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
   return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
-export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
-  return group.rules.some((rule) => isProvisionedRule(rule));
+export function isProvisionedRuleGroup(group: RulerRuleGroupDTO | PromRuleGroupDTO): boolean {
+  return group.rules.some((rule) => {
+    if ('grafana_alert' in rule) {
+      return Boolean(rule.grafana_alert.provenance);
+    }
+    if ('provenance' in rule) {
+      return Boolean(rule.provenance);
+    }
+    return false;
+  });
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -281,6 +290,10 @@ export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): R
 
 export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
+}
+
+export function isPluginProvidedGroup(group: RulerRuleGroupDTO | PromRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isPluginProvidedRule(rule));
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
