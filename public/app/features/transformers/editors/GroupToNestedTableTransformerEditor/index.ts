@@ -6,8 +6,8 @@ import {
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
-import darkImage from '../images/dark/groupToNestedTable.svg';
-import lightImage from '../images/light/groupToNestedTable.svg';
+import darkImage from '../../images/dark/groupToNestedTable.svg';
+import lightImage from '../../images/light/groupToNestedTable.svg';
 
 import { GroupToNestedTableTransformerEditor } from './Editor';
 
