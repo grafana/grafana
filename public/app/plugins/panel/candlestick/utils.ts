@@ -48,12 +48,14 @@ export function drawMarkers(opts: RendererOpts) {
       flatPath = new Path2D();
       upPath = new Path2D();
       downPath = new Path2D();
+      downPath.arc(100, 100, 10, 0, 360);
     }
 
     if (drawVolume) {
       downPathVol = new Path2D();
       upPathVol = new Path2D();
       flatPathVol = new Path2D();
+      downPathVol.arc(100, 100, 10, 0, 360);
     }
 
     let hollowPath = new Path2D();

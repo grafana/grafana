@@ -45,6 +45,11 @@
       "types": "./src/matchers/index.ts",
       "import": "./src/matchers/index.ts",
       "require": "./src/matchers/index.ts"
+    },
+    "./uplot-compare-payload": {
+      "types": "./src/uplotComparePayload.ts",
+      "import": "./src/uplotComparePayload.ts",
+      "require": "./src/uplotComparePayload.ts"
     }
   },
   "scripts": {

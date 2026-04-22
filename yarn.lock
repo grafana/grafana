@@ -35238,6 +35238,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "uplot-compare@workspace:scripts/uplot-compare"
   dependencies:
+    "@grafana/test-utils": "workspace:*"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.2"
     "@vitejs/plugin-react": "npm:^4.4.1"

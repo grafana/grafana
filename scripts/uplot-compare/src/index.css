@@ -138,3 +138,34 @@
 .u-cursor-pt.u-off {
   display: none;
 }
+
+.compare-blocked {
+  max-width: 56rem;
+  padding: 1rem;
+}
+.compare-error {
+  color: #c62828;
+  font-weight: 600;
+}
+.compare-paste-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+.compare-paste {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.compare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+.compare-file-label input[type="file"] {
+  margin-left: 0.35rem;
+}

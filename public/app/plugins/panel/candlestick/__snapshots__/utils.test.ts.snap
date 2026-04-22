@@ -1,5 +1,219 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`drawMarkers candle with volume $testName 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 333,
+      "width": 725,
+      "x": 50,
+      "y": 17,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 333,
+            "width": 725,
+            "x": 50,
+            "y": 17,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(0, 255, 0, 0.5)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 298,
+            "width": 435,
+            "x": -167,
+            "y": 52,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 0, 0.5)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 360,
+            "radius": 10,
+            "startAngle": 0,
+            "x": 100,
+            "y": 100,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "height": 166,
+            "width": 435,
+            "x": 558,
+            "y": 184,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(136, 136, 136, 0.5)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#00ff00",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 0,
+            "width": 2,
+            "x": 49,
+            "y": 350,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 1,
+            "width": 435,
+            "x": -167,
+            "y": 350,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "anticlockwise": false,
+            "endAngle": 360,
+            "radius": 10,
+            "startAngle": 0,
+            "x": 100,
+            "y": 100,
+          },
+          "type": "arc",
+        },
+        {
+          "props": {
+            "height": 0,
+            "width": 2,
+            "x": 774,
+            "y": 350,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 1,
+            "width": 435,
+            "x": 558,
+            "y": 350,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#888888",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "destination-out",
+    },
+    "type": "globalCompositeOperation",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`drawMarkers candle with volume & regions draw 1`] = `
 [
   {

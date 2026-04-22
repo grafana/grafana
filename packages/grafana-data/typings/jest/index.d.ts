@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Observable } from 'rxjs';
 import type uPlot from 'uplot';
 
@@ -21,10 +22,15 @@ declare global {
        *
        * @param data
        * @param series
+       * @param uPlotEvents
        * @param hint
-       * @param debug
        */
-      toMatchUPlotSnapshot(data: uPlot.AlignedData, series: uPlot.Series[], hint?: string): CustomMatcherResult;
+      toMatchUPlotSnapshot(
+        data: uPlot.AlignedData,
+        series: uPlot.Series[],
+        uPlotEvents: CanvasRenderingContext2DEvent[],
+        hint?: string
+      ): CustomMatcherResult;
     }
   }
 }

@@ -1,3 +1,10 @@
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
+
+/**
+ * @todo Pass in the canvas and run the calls directly instead of using eval
+ * @param data
+ * @param canvasId
+ */
 export function eventsToCanvasScript(data: CanvasRenderingContext2DEvent[], canvasId: string) {
   const lines: string[] = [];
   for (const ev of data) {

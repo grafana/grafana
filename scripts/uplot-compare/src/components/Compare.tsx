@@ -1,122 +1,319 @@
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import * as React from 'react';
 import type uPlot from 'uplot';
 import type { AlignedData } from 'uplot';
 
-import { UPlotChart, UPlotConfigBuilder } from '@grafana/ui';
+import { isUPlotComparePayloadV1 } from '@grafana/test-utils/uplot-compare-payload';
 
 import { eventsToCanvasScript } from '../canvasUtils.ts';
 
-/** Minimal demo data when `uPlotData` query param is omitted (ms timestamps, two points). */
-const defaultAlignedData = (): AlignedData => {
-  const t1 = Date.now() - 60_000;
-  const t2 = Date.now();
-  return [
-    [t1, t2],
-    [1, 2],
-  ];
-};
+type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
 
 interface Props {
   height: number;
   width: number;
 }
 
+type ResolvedPayload = {
+  testName: string;
+  expected: CanvasEventArray;
+  actual: CanvasEventArray;
+  uPlotData?: AlignedData;
+  uPlotSeries?: uPlot.Series[];
+  uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
+};
+
+type ViewState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; payload: ResolvedPayload }
+  | { kind: 'blocked'; error?: string; hint?: string };
+
+function isSafePayloadBasename(name: string): boolean {
+  if (!name || name.includes('/') || name.includes('\\') || name.includes('..')) {
+    return false;
+  }
+  return /^[\w.-]+\.json$/.test(name);
+}
+
+function payloadFetchUrl(basename: string): string {
+  return `${import.meta.env.BASE_URL}${basename}`;
+}
+
+function parsePayloadJson(text: string): unknown {
+  return JSON.parse(text);
+}
+
 /**
  * Static site component, DO NOT EVER USE THIS IN GRAFANA
- * @param height
- * @param width
- * @constructor
  */
 export const Compare = ({ height, width }: Props) => {
-  function getUrlVars(varName: string) {
-    const search = new URLSearchParams(window.location.search);
-    return search.get(varName);
+  const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
+  const [pasteText, setPasteText] = React.useState('');
+
+  const applyPayload = React.useCallback((raw: unknown, sourceLabel: string) => {
+    if (!isUPlotComparePayloadV1(raw)) {
+      setView({
+        kind: 'blocked',
+        error: `${sourceLabel}: not a valid uplot compare payload (expected version 1 with testName, expected, actual).`,
+        hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
+      });
+      return;
+    }
+    setView({
+      kind: 'ready',
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      payload: {
+        testName: raw.testName,
+        expected: raw.expected,
+        actual: raw.actual,
+        uPlotData: raw.uPlotData,
+        uPlotSeries: raw.uPlotSeries,
+        uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+      } as ResolvedPayload,
+    });
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const expectedParam = params.get('expected');
+      const actualParam = params.get('actual');
+
+      if (expectedParam != null && actualParam != null) {
+        const testName = params.get('testName') ?? '';
+        const dataRaw = params.get('uPlotData');
+        const seriesRaw = params.get('uPlotSeries');
+        let uPlotData: unknown;
+        let uPlotSeries: unknown;
+        try {
+          uPlotData = dataRaw != null && dataRaw !== '' ? JSON.parse(dataRaw) : undefined;
+          uPlotSeries = seriesRaw != null && seriesRaw !== '' ? JSON.parse(seriesRaw) : undefined;
+        } catch {
+          if (!cancelled) {
+            setView({
+              kind: 'blocked',
+              error: 'Invalid uPlotData or uPlotSeries JSON in URL.',
+              hint: 'Use a payload file or paste JSON instead.',
+            });
+          }
+          return;
+        }
+        try {
+          const expected: unknown = JSON.parse(expectedParam);
+          const actual: unknown = JSON.parse(actualParam);
+          if (!cancelled) {
+            setView({
+              kind: 'ready',
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              payload: {
+                testName,
+                expected,
+                actual,
+                uPlotData,
+                uPlotSeries,
+                uPlotCanvasEvents: [],
+              } as ResolvedPayload,
+            });
+          }
+        } catch {
+          if (!cancelled) {
+            setView({
+              kind: 'blocked',
+              error: 'Invalid expected or actual JSON in URL.',
+              hint: 'Use a payload file or paste JSON instead.',
+            });
+          }
+        }
+        return;
+      }
+
+      const fileParam = params.get('file');
+      if (!fileParam || !isSafePayloadBasename(fileParam)) {
+        if (!cancelled) {
+          setView({
+            kind: 'blocked',
+            hint: 'Add a ?file=… query parameter from the test output (each failure writes uplot-compare-payload-<uuid>.json), or paste JSON / choose a file. Example: http://localhost:5173/?file=uplot-compare-payload-….json',
+          });
+        }
+        return;
+      }
+      const basename = fileParam;
+
+      try {
+        const res = await fetch(payloadFetchUrl(basename));
+        if (!res.ok) {
+          if (!cancelled) {
+            setView({
+              kind: 'blocked',
+              hint: `Could not load ${basename} (${res.status}). Re-run the test to refresh the file, or paste JSON / choose a file.`,
+            });
+          }
+          return;
+        }
+        const raw: unknown = await res.json();
+        if (cancelled) {
+          return;
+        }
+        if (!isUPlotComparePayloadV1(raw)) {
+          setView({
+            kind: 'blocked',
+            error: `${basename} is not a valid uplot compare payload.`,
+            hint: 'Paste JSON from the test output or pick another file.',
+          });
+          return;
+        }
+        setView({
+          kind: 'ready',
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          payload: {
+            testName: raw.testName,
+            expected: raw.expected,
+            actual: raw.actual,
+            uPlotData: raw.uPlotData,
+            uPlotSeries: raw.uPlotSeries,
+            uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+          } as ResolvedPayload,
+        });
+      } catch (e) {
+        if (!cancelled) {
+          setView({
+            kind: 'blocked',
+            hint: `Fetch failed (${e instanceof Error ? e.message : String(e)}). Paste JSON or choose a file.`,
+          });
+        }
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onLoadPaste = () => {
+    try {
+      const raw = parsePayloadJson(pasteText);
+      applyPayload(raw, 'Pasted JSON');
+    } catch {
+      setView({
+        kind: 'blocked',
+        error: 'Pasted text is not valid JSON.',
+        hint: 'Copy the full payload object from the test console output.',
+      });
+    }
+  };
+
+  const onPickFile: React.ChangeEventHandler<HTMLInputElement> = (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = typeof reader.result === 'string' ? reader.result : '';
+        const raw = parsePayloadJson(text);
+        applyPayload(raw, file.name);
+      } catch {
+        setView({
+          kind: 'blocked',
+          error: `Could not read ${file.name} as JSON.`,
+          hint: 'Choose a payload .json file written by toMatchUPlotSnapshot.',
+        });
+      }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+  };
+
+  if (view.kind === 'loading') {
+    return <p>Loading…</p>;
   }
 
-  const testNameEncoded = getUrlVars('testName');
-  const testName = testNameEncoded ? decodeURIComponent(testNameEncoded) : '';
-  const expectedCanvasJSON = getUrlVars('expected');
-  const actualCanvasJSON = getUrlVars('actual');
-  const dataUrl = getUrlVars('uPlotData');
-  const seriesUrl = getUrlVars('uPlotSeries');
-
-  if (!expectedCanvasJSON) {
-    throw new Error('`expected` url param is required!');
+  if (view.kind === 'blocked') {
+    return (
+      <div className="compare-blocked">
+        {view.error ? (
+          <p className="compare-error" role="alert">
+            {view.error}
+          </p>
+        ) : null}
+        {view.hint ? <p>{view.hint}</p> : null}
+        <label className="compare-paste-label">
+          Paste payload JSON
+          <textarea
+            className="compare-paste"
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            rows={12}
+            spellCheck={false}
+          />
+        </label>
+        <div className="compare-actions">
+          <button type="button" onClick={onLoadPaste}>
+            Load pasted JSON
+          </button>
+          <label className="compare-file-label">
+            Or choose file
+            <input type="file" accept="application/json,.json" onChange={onPickFile} />
+          </label>
+        </div>
+      </div>
+    );
   }
-  if (!actualCanvasJSON) {
-    throw new Error('`actual` url param is required!');
-  }
 
-  const expectedCanvasCalls = eventsToCanvasScript(JSON.parse(expectedCanvasJSON), 'expected');
-  const actualCanvasCalls = eventsToCanvasScript(JSON.parse(actualCanvasJSON), 'actual');
+  return <ComparePlots height={height} width={width} payload={view.payload} />;
+};
 
-  const actualUPlotInstance = React.useRef<uPlot | null>(null);
-  const expectedUPlotInstance = React.useRef<uPlot | null>(null);
+function ComparePlots({ height, width, payload }: Props & { payload: ResolvedPayload }) {
+  const expectedCanvasCalls = React.useMemo(
+    () => eventsToCanvasScript(payload.expected, 'expected'),
+    [payload.expected]
+  );
+  const actualCanvasCalls = React.useMemo(() => eventsToCanvasScript(payload.actual, 'actual'), [payload.actual]);
+  const actualUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
+  const expectedUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
 
   React.useEffect(() => {
     if (actualCanvasCalls) {
       // @ts-expect-error eval script expects variable named `actual`
-      const actual = actualUPlotInstance.current?.ctx;
+      const actual = actualUPlotInstance.current.getContext('2d');
+      // eslint-disable-next-line no-eval
+      eval(eventsToCanvasScript(payload.uPlotCanvasEvents, 'actual'));
       // eslint-disable-next-line no-eval
       eval(actualCanvasCalls);
     }
-  }, [actualCanvasCalls, actualCanvasJSON]);
+  }, [actualCanvasCalls, payload.uPlotCanvasEvents]);
 
   React.useEffect(() => {
     if (expectedCanvasCalls) {
       // @ts-expect-error eval script expects variable named `expected`
-      const expected = expectedUPlotInstance.current?.ctx;
+      const expected = expectedUPlotInstance.current.getContext('2d');
+      // eslint-disable-next-line no-eval
+      eval(eventsToCanvasScript(payload.uPlotCanvasEvents, 'expected'));
       // eslint-disable-next-line no-eval
       eval(expectedCanvasCalls);
     }
-  }, [expectedCanvasCalls, expectedCanvasJSON]);
+  }, [expectedCanvasCalls, payload.uPlotCanvasEvents]);
 
-  const plotData: AlignedData = React.useMemo(() => {
-    if (dataUrl) {
-      return JSON.parse(dataUrl);
-    }
-    return defaultAlignedData();
-  }, [dataUrl]);
-
-  const config = React.useMemo(() => {
-    const c = new UPlotConfigBuilder();
-    const series = seriesUrl ? JSON.parse(seriesUrl) : undefined;
-    if (series) {
-      c.addSeries(series);
-    }
-    return c;
-  }, [seriesUrl]);
+  console.log('payload', payload);
 
   return (
     <>
-      <h3>Test: {testName}</h3>
-      {/* @todo link to test file */}
+      <h3>Test: {payload.testName}</h3>
       <div className="wrap">
         <div className={'expected'}>
           <div className={'plot-label'}>Expected</div>
-          <UPlotChart
-            config={config}
-            data={plotData}
-            width={width}
-            height={height}
-            plotRef={(u) => {
-              expectedUPlotInstance.current = u;
-            }}
-          />
+          <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
         </div>
-        <div className="actual">
+
+        <div className={'actual'}>
           <div className={'plot-label'}>Actual</div>
-          <UPlotChart
-            config={config}
-            data={plotData}
-            width={width}
-            height={height}
-            plotRef={(u) => {
-              actualUPlotInstance.current = u;
-            }}
-          />
+          <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
         </div>
       </div>
     </>
   );
-};
+}
