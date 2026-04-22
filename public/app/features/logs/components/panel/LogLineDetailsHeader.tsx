@@ -126,7 +126,7 @@ export const LogLineDetailsHeader = ({
     setInlineNoScroll?.(newState);
 
     reportInteractionWrapper('logs_log_line_details_header_toggle_inline_no_scroll', {
-      scroll: newState,
+      scroll: !newState,
     });
   }, [inlineNoScroll, logOptionsStorageKey, reportInteractionWrapper, setInlineNoScroll]);
 
