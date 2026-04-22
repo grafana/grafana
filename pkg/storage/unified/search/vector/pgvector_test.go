@@ -12,19 +12,32 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestSanitizePartitionName(t *testing.T) {
+func TestSanitizePartitionNames(t *testing.T) {
 	tests := []struct {
-		input    string
-		expected string
+		name         string
+		namespace    string
+		model        string
+		expectedNs   string
+		expectedLeaf string
 	}{
-		{"stacks-123", "resource_embeddings_stacks_123"},
-		{"default", "resource_embeddings_default"},
-		{"org.with.dots", "resource_embeddings_org_with_dots"},
-		{"UPPER-case", "resource_embeddings_upper_case"},
+		{"simple", "stacks-123", "text-embedding-005",
+			"resource_embeddings_stacks_123",
+			"resource_embeddings_stacks_123__text_embedding_005"},
+		{"default namespace", "default", "test-model",
+			"resource_embeddings_default",
+			"resource_embeddings_default__test_model"},
+		{"dots in namespace", "org.with.dots", "m",
+			"resource_embeddings_org_with_dots",
+			"resource_embeddings_org_with_dots__m"},
+		{"uppercase input", "UPPER-case", "Model-X",
+			"resource_embeddings_upper_case",
+			"resource_embeddings_upper_case__model_x"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			assert.Equal(t, tt.expected, sanitizePartitionName(tt.input))
+		t.Run(tt.name, func(t *testing.T) {
+			nsName, modelName := sanitizePartitionNames(tt.namespace, tt.model)
+			assert.Equal(t, tt.expectedNs, nsName)
+			assert.Equal(t, tt.expectedLeaf, modelName)
 		})
 	}
 }
@@ -55,7 +68,7 @@ func TestPgvectorBackend_Delete(t *testing.T) {
 
 		rdb.SQLMock.ExpectExec("").WillReturnResult(sqlmock.NewResult(0, 1))
 
-		err := backend.Delete(ctx, "stacks-123", "dashboard.grafana.app", "dashboards", "abc-uid", 0)
+		err := backend.Delete(ctx, "stacks-123", "", "dashboard.grafana.app", "dashboards", "abc-uid", 0)
 		require.NoError(t, err)
 		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 	})
@@ -67,7 +80,7 @@ func TestPgvectorBackend_Delete(t *testing.T) {
 
 		rdb.SQLMock.ExpectExec("").WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := backend.Delete(ctx, "stacks-123", "dashboard.grafana.app", "dashboards", "abc-uid", 42)
+		err := backend.Delete(ctx, "stacks-123", "test-model", "dashboard.grafana.app", "dashboards", "abc-uid", 42)
 		require.NoError(t, err)
 		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 	})
@@ -82,7 +95,7 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 		rows := rdb.SQLMock.NewRows([]string{"resource_version"}).AddRow(int64(99))
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rows)
 
-		rv, err := backend.GetLatestRV(ctx, "stacks-123")
+		rv, err := backend.GetLatestRV(ctx, "stacks-123", "test-model")
 		require.NoError(t, err)
 		assert.Equal(t, int64(99), rv)
 		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -96,7 +109,7 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 		rows := rdb.SQLMock.NewRows([]string{"resource_version"})
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rows)
 
-		rv, err := backend.GetLatestRV(ctx, "stacks-123")
+		rv, err := backend.GetLatestRV(ctx, "stacks-123", "test-model")
 		// dbutil.QueryRow wraps sql.ErrNoRows when the result set is empty.
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		assert.Equal(t, int64(0), rv)

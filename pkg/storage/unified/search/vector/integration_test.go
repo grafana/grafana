@@ -101,7 +101,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	require.NoError(t, err)
 
 	// Search -- query close to first vector
-	results, err := backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.85, 0.15), 10)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(results), 3)
@@ -109,7 +109,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
 	// Search with name filter
-	results, err = backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "name", Values: []string{"dash-2"}})
 	require.NoError(t, err)
@@ -117,14 +117,14 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "dash-2", results[0].Name)
 
 	// Search with folder filter
-	results, err = backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "folder", Values: []string{"folder-a"}})
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
 	// Search with metadata filter
-	results, err = backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
 	require.NoError(t, err)
@@ -132,9 +132,9 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "dash-2", results[0].Name)
 
 	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "dash-1", 0)
+	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "dash-1", 0)
 	require.NoError(t, err)
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "dash-2", 0)
+	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "dash-2", 0)
 	require.NoError(t, err)
 }
 
@@ -142,7 +142,7 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, ctx := setupIntegrationTest(t)
 
 	// Empty namespace returns 0
-	rv, err := backend.GetLatestRV(ctx, "integration-test")
+	rv, err := backend.GetLatestRV(ctx, "integration-test", "test-model")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), rv)
 
@@ -163,12 +163,12 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	rv, err = backend.GetLatestRV(ctx, "integration-test")
+	rv, err = backend.GetLatestRV(ctx, "integration-test", "test-model")
 	require.NoError(t, err)
 	assert.Equal(t, int64(42), rv)
 
 	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "rv-test", 0)
+	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "rv-test", 0)
 	require.NoError(t, err)
 }
 
@@ -222,18 +222,18 @@ func TestIntegrationVectorDeleteStale(t *testing.T) {
 	require.NoError(t, err)
 
 	// Delete stale vectors (RV < 20) -- should remove panel/2
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "stale-test", 20)
+	err = backend.Delete(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards", "stale-test", 20)
 	require.NoError(t, err)
 
 	// Search should only find panel/1
-	results, err := backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.5, 0.5), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
 	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "stale-test", 0)
+	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "stale-test", 0)
 	require.NoError(t, err)
 }
 
@@ -275,19 +275,19 @@ func TestIntegrationVectorUpsertOverwrite(t *testing.T) {
 	require.NoError(t, err)
 
 	// Search should return updated content
-	results, err := backend.Search(ctx, "integration-test", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
 		makeEmbedding(0.9, 0.1), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "updated content", results[0].Content)
 
 	// RV should reflect the update
-	rv, err := backend.GetLatestRV(ctx, "integration-test")
+	rv, err := backend.GetLatestRV(ctx, "integration-test", "test-model")
 	require.NoError(t, err)
 	assert.Equal(t, int64(20), rv)
 
 	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "dashboard.grafana.app", "dashboards", "overwrite-test", 0)
+	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "overwrite-test", 0)
 	require.NoError(t, err)
 }
 

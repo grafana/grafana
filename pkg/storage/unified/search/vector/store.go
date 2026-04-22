@@ -7,22 +7,33 @@ import (
 
 // VectorBackend abstracts vector storage operations. The pgvector implementation
 // is the only backend for now, but the interface allows testing with mocks.
+//
+// Storage is partitioned by (namespace, model): each (tenant, embedding model)
+// pair gets its own HNSW index. Different models produce embeddings in
+// different vector spaces, so mixing them in one index would yield meaningless
+// nearest-neighbor results.
 type VectorBackend interface {
-	// Search performs vector similarity search with optional metadata filtering.
-	Search(ctx context.Context, namespace, group, resource string,
+	// Search performs vector similarity search within a single (namespace, model)
+	// partition. The query embedding must come from the same model as the
+	// stored vectors for results to be meaningful.
+	Search(ctx context.Context, namespace, model, group, resource string,
 		embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error)
 
-	// Upsert inserts or updates vectors. Vectors are grouped by namespace internally.
+	// Upsert inserts or updates vectors. Vectors are grouped by (namespace, model)
+	// internally so that each combination lands in its own partition.
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// Delete removes vectors for a resource. If olderThanRV > 0, only deletes
-	// vectors with resource_version < olderThanRV (stale panel cleanup after update).
-	// If olderThanRV == 0, deletes all vectors for the resource (full delete).
-	Delete(ctx context.Context, namespace, group, resource, name string, olderThanRV int64) error
+	// Delete removes vectors for a resource. If model is non-empty, only rows
+	// in that model's partition are deleted; an empty model deletes across all
+	// models (used when a resource is removed from storage entirely).
+	// If olderThanRV > 0, only vectors with resource_version < olderThanRV are
+	// removed (stale panel cleanup after update); olderThanRV == 0 deletes all.
+	Delete(ctx context.Context, namespace, model, group, resource, name string, olderThanRV int64) error
 
-	// GetLatestRV returns the maximum resource_version stored for a namespace.
-	// Returns 0 if no vectors exist. Used by the write pipeline to resume polling.
-	GetLatestRV(ctx context.Context, namespace string) (int64, error)
+	// GetLatestRV returns the maximum resource_version stored for a given
+	// (namespace, model). Returns 0 if no vectors exist. Used by the write
+	// pipeline to resume polling per model.
+	GetLatestRV(ctx context.Context, namespace, model string) (int64, error)
 }
 
 // Vector represents a single embeddable subresource (e.g. one dashboard panel).

@@ -41,7 +41,7 @@ func TestVectorQueries(t *testing.T) {
 			},
 			sqlEmbeddingsDelete: {
 				{
-					Name: "delete all",
+					Name: "delete all models",
 					Data: &sqlEmbeddingsDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "stacks-123",
@@ -52,10 +52,11 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 				{
-					Name: "delete stale",
+					Name: "delete stale for model",
 					Data: &sqlEmbeddingsDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
 						Group:       "dashboard.grafana.app",
 						Resource:    "dashboards",
 						Name:        "abc-uid",
@@ -69,6 +70,7 @@ func TestVectorQueries(t *testing.T) {
 					Data: &sqlEmbeddingsSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
 						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
 						Group:          "dashboard.grafana.app",
 						Resource:       "dashboards",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
@@ -81,6 +83,7 @@ func TestVectorQueries(t *testing.T) {
 					Data: &sqlEmbeddingsSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
 						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
 						Group:          "dashboard.grafana.app",
 						Resource:       "dashboards",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
@@ -92,19 +95,20 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "with all filters",
 					Data: &sqlEmbeddingsSearchRequest{
-						SQLTemplate:      mocks.NewTestingSQLTemplate(),
-						Namespace:        "stacks-123",
-						Group:            "dashboard.grafana.app",
-						Resource:         "dashboards",
-						QueryEmbedding:   []float32{0.1, 0.2, 0.3},
-						Limit:            5,
-						NameValues:       []string{"dash-1"},
-						FolderValues:     []string{"folder-a", "folder-b"},
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
+						Group:          "dashboard.grafana.app",
+						Resource:       "dashboards",
+						QueryEmbedding: []float32{0.1, 0.2, 0.3},
+						Limit:          5,
+						NameValues:     []string{"dash-1"},
+						FolderValues:   []string{"folder-a", "folder-b"},
 						MetadataFilters: []MetadataFilterEntry{
 							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
 							{JSON: `{"query_languages":["promql"]}`},
 						},
-						Response:         &sqlEmbeddingsSearchResponse{},
+						Response: &sqlEmbeddingsSearchResponse{},
 					},
 				},
 			},
@@ -114,6 +118,7 @@ func TestVectorQueries(t *testing.T) {
 					Data: &sqlEmbeddingsGetLatestRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
 						Response:    &sqlEmbeddingsGetLatestRVResponse{},
 					},
 				},
@@ -122,9 +127,11 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlEmbeddingsCreatePartitionRequest{
-						SQLTemplate:   mocks.NewTestingSQLTemplate(),
-						Namespace:     "stacks-123",
-						PartitionName: "resource_embeddings_stacks_123",
+						SQLTemplate:            mocks.NewTestingSQLTemplate(),
+						Namespace:              "stacks-123",
+						Model:                  "text-embedding-005",
+						NamespacePartitionName: "resource_embeddings_stacks_123",
+						ModelPartitionName:     "resource_embeddings_stacks_123__text_embedding_005",
 					},
 				},
 			},

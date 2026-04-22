@@ -7,6 +7,7 @@ SELECT
     {{ .Ident "metadata" | .Into .Response.Metadata }}
     FROM {{ .Ident "resource_embeddings" }}
     WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+    AND {{ .Ident "model" }}       = {{ .Arg .Model }}
     AND {{ .Ident "group" }}       = {{ .Arg .Group }}
     AND {{ .Ident "resource" }}    = {{ .Arg .Resource }}
     {{ if .NameFilter }}

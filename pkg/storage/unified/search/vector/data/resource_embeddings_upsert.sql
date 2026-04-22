@@ -24,12 +24,11 @@ VALUES (
     {{ .Arg .Embedding }},
     {{ .Arg .Vector.Model }}
 )
-ON CONFLICT ({{ .Ident "namespace" }}, {{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "name" }}, {{ .Ident "subresource" }})
+ON CONFLICT ({{ .Ident "namespace" }}, {{ .Ident "model" }}, {{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "name" }}, {{ .Ident "subresource" }})
 DO UPDATE SET
     {{ .Ident "resource_version" }} = {{ .Arg .Vector.ResourceVersion }},
     {{ .Ident "folder" }}           = {{ .Arg .Vector.Folder }},
     {{ .Ident "content" }}          = {{ .Arg .Vector.Content }},
     {{ .Ident "metadata" }}         = {{ .Arg .Vector.Metadata }},
-    {{ .Ident "embedding" }}        = {{ .Arg .Embedding }},
-    {{ .Ident "model" }}            = {{ .Arg .Vector.Model }}
+    {{ .Ident "embedding" }}        = {{ .Arg .Embedding }}
 ;

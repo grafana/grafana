@@ -26,8 +26,15 @@ var (
 type pgvectorBackend struct {
 	db         db.DB
 	dialect    sqltemplate.Dialect
-	partitions sync.Map // namespace -> struct{}
+	partitions sync.Map // partitionKey -> struct{}
 	log        log.Logger
+}
+
+// partitionKey identifies a single (namespace, model) partition in the
+// pgvectorBackend's partition-existence cache.
+type partitionKey struct {
+	namespace string
+	model     string
 }
 
 func NewPgvectorBackend(database db.DB) *pgvectorBackend {
@@ -43,16 +50,17 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 		return nil
 	}
 
-	// Group by namespace to ensure partitions exist.
-	byNamespace := make(map[string][]Vector)
+	// Group by (namespace, model) so each group lands in a single partition.
+	byPartition := make(map[partitionKey][]Vector)
 	for i := range vectors {
-		byNamespace[vectors[i].Namespace] = append(byNamespace[vectors[i].Namespace], vectors[i])
+		key := partitionKey{namespace: vectors[i].Namespace, model: vectors[i].Model}
+		byPartition[key] = append(byPartition[key], vectors[i])
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		for ns, vecs := range byNamespace {
-			if err := b.ensurePartition(ctx, tx, ns); err != nil {
-				return fmt.Errorf("ensure partition for %q: %w", ns, err)
+		for key, vecs := range byPartition {
+			if err := b.ensurePartition(ctx, tx, key); err != nil {
+				return fmt.Errorf("ensure partition for %q/%q: %w", key.namespace, key.model, err)
 			}
 			for i := range vecs {
 				req := &sqlEmbeddingsUpsertRequest{
@@ -69,10 +77,11 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 	})
 }
 
-func (b *pgvectorBackend) Delete(ctx context.Context, namespace, group, resource, name string, olderThanRV int64) error {
+func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, group, resource, name string, olderThanRV int64) error {
 	req := &sqlEmbeddingsDeleteRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Namespace:   namespace,
+		Model:       model,
 		Group:       group,
 		Resource:    resource,
 		Name:        name,
@@ -82,12 +91,13 @@ func (b *pgvectorBackend) Delete(ctx context.Context, namespace, group, resource
 	return err
 }
 
-func (b *pgvectorBackend) Search(ctx context.Context, namespace, group, resource string,
+func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, group, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error) {
 
 	req := &sqlEmbeddingsSearchRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Namespace:      namespace,
+		Model:          model,
 		Group:          group,
 		Resource:       resource,
 		QueryEmbedding: pgvector.NewHalfVector(embedding),
@@ -127,10 +137,11 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, group, resource
 	return results, nil
 }
 
-func (b *pgvectorBackend) GetLatestRV(ctx context.Context, namespace string) (int64, error) {
+func (b *pgvectorBackend) GetLatestRV(ctx context.Context, namespace, model string) (int64, error) {
 	req := &sqlEmbeddingsGetLatestRVRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Namespace:   namespace,
+		Model:       model,
 		Response:    &sqlEmbeddingsGetLatestRVResponse{},
 	}
 
@@ -141,8 +152,10 @@ func (b *pgvectorBackend) GetLatestRV(ctx context.Context, namespace string) (in
 	return row.ResourceVersion, nil
 }
 
-// ensurePartition creates a partition for the given namespace if it doesn't
-// already exist in the sync.Map cache. The DDL is idempotent.
+// ensurePartition creates the nested (namespace, model) partitions if the
+// leaf partition isn't already in the sync.Map cache. Both CREATE TABLE
+// statements use IF NOT EXISTS, so running the namespace-level DDL redundantly
+// across models is a cheap no-op at Postgres's level.
 //
 // The template is rendered directly and executed without going through
 // dbutil.Exec's FormatSQL pass, because FormatSQL inserts spaces around
@@ -150,16 +163,18 @@ func (b *pgvectorBackend) GetLatestRV(ctx context.Context, namespace string) (in
 // that names the partition value (e.g. 'stacks-123' would become
 // 'stacks - 123'). Partition values in CREATE TABLE ... FOR VALUES IN (...)
 // must be constant literals, so they can't be passed as bind parameters either.
-func (b *pgvectorBackend) ensurePartition(ctx context.Context, tx db.Tx, namespace string) error {
-	if _, ok := b.partitions.Load(namespace); ok {
+func (b *pgvectorBackend) ensurePartition(ctx context.Context, tx db.Tx, key partitionKey) error {
+	if _, ok := b.partitions.Load(key); ok {
 		return nil
 	}
 
-	partitionName := sanitizePartitionName(namespace)
+	nsName, modelName := sanitizePartitionNames(key.namespace, key.model)
 	req := &sqlEmbeddingsCreatePartitionRequest{
-		SQLTemplate:   sqltemplate.New(b.dialect),
-		Namespace:     namespace,
-		PartitionName: partitionName,
+		SQLTemplate:            sqltemplate.New(b.dialect),
+		Namespace:              key.namespace,
+		Model:                  key.model,
+		NamespacePartitionName: nsName,
+		ModelPartitionName:     modelName,
 	}
 	if err := req.Validate(); err != nil {
 		return err
@@ -172,11 +187,17 @@ func (b *pgvectorBackend) ensurePartition(ctx context.Context, tx db.Tx, namespa
 		return fmt.Errorf("create partition: %w", err)
 	}
 
-	b.partitions.Store(namespace, struct{}{})
+	b.partitions.Store(key, struct{}{})
 	return nil
 }
 
-func sanitizePartitionName(namespace string) string {
-	sanitized := strings.ToLower(sanitizeRe.ReplaceAllString(namespace, "_"))
-	return "resource_embeddings_" + sanitized
+// sanitizePartitionNames returns the (namespace-partition, model-partition)
+// table names for a given (namespace, model) pair. Non-alphanumeric characters
+// are replaced with underscores so the names are valid PostgreSQL identifiers.
+func sanitizePartitionNames(namespace, model string) (nsName, modelName string) {
+	ns := strings.ToLower(sanitizeRe.ReplaceAllString(namespace, "_"))
+	m := strings.ToLower(sanitizeRe.ReplaceAllString(model, "_"))
+	nsName = "resource_embeddings_" + ns
+	modelName = nsName + "__" + m
+	return nsName, modelName
 }

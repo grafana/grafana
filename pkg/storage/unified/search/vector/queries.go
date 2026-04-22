@@ -56,10 +56,15 @@ func (r *sqlEmbeddingsUpsertRequest) Validate() error {
 type sqlEmbeddingsDeleteRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace   string
+	Model       string // empty means all models
 	Group       string
 	Resource    string
 	Name        string
 	OlderThanRV int64
+}
+
+func (r *sqlEmbeddingsDeleteRequest) HasModel() bool {
+	return r.Model != ""
 }
 
 func (r *sqlEmbeddingsDeleteRequest) HasOlderThanRV() bool {
@@ -92,6 +97,7 @@ type MetadataFilterEntry struct {
 type sqlEmbeddingsSearchRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace      string
+	Model          string
 	Group          string
 	Resource       string
 	QueryEmbedding any // pgvector.HalfVector
@@ -105,7 +111,7 @@ type sqlEmbeddingsSearchRequest struct {
 }
 
 func (r *sqlEmbeddingsSearchRequest) Validate() error {
-	if r.Namespace == "" || r.Group == "" || r.Resource == "" {
+	if r.Namespace == "" || r.Model == "" || r.Group == "" || r.Resource == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	if r.Limit <= 0 {
@@ -147,12 +153,13 @@ type sqlEmbeddingsGetLatestRVResponse struct {
 type sqlEmbeddingsGetLatestRVRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Model     string
 	Response  *sqlEmbeddingsGetLatestRVResponse
 }
 
 func (r *sqlEmbeddingsGetLatestRVRequest) Validate() error {
-	if r.Namespace == "" {
-		return fmt.Errorf("missing namespace")
+	if r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
 	}
 	return nil
 }
@@ -163,14 +170,21 @@ func (r *sqlEmbeddingsGetLatestRVRequest) Results() (*sqlEmbeddingsGetLatestRVRe
 
 // -- CreatePartition request --
 
+// sqlEmbeddingsCreatePartitionRequest builds the nested partitions for one
+// (namespace, model) pair. PostgreSQL's LIST partitioning only accepts a single
+// column, so we partition by namespace at level 1 and sub-partition by model at
+// level 2.
 type sqlEmbeddingsCreatePartitionRequest struct {
 	sqltemplate.SQLTemplate
-	Namespace     string
-	PartitionName string // pre-sanitized table name, e.g. "resource_embeddings_stacks_123"
+	Namespace              string
+	Model                  string
+	NamespacePartitionName string // level-1 table, e.g. "resource_embeddings_stacks_123"
+	ModelPartitionName     string // level-2 leaf table, e.g. "resource_embeddings_stacks_123__text_embedding_005"
 }
 
 func (r *sqlEmbeddingsCreatePartitionRequest) Validate() error {
-	if r.Namespace == "" || r.PartitionName == "" {
+	if r.Namespace == "" || r.Model == "" ||
+		r.NamespacePartitionName == "" || r.ModelPartitionName == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
@@ -181,4 +195,10 @@ func (r *sqlEmbeddingsCreatePartitionRequest) Validate() error {
 // so the value must be inlined as a constant.
 func (r *sqlEmbeddingsCreatePartitionRequest) NamespaceLiteral() string {
 	return "'" + strings.ReplaceAll(r.Namespace, "'", "''") + "'"
+}
+
+// ModelLiteral returns the model as a PostgreSQL string literal. See
+// NamespaceLiteral for the constraint that forces literal inlining.
+func (r *sqlEmbeddingsCreatePartitionRequest) ModelLiteral() string {
+	return "'" + strings.ReplaceAll(r.Model, "'", "''") + "'"
 }

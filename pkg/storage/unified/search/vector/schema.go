@@ -44,8 +44,8 @@ func initVectorTables(mg *migrator.Migrator) {
 				metadata          JSONB,
 				embedding         halfvec(768) NOT NULL,
 				model             VARCHAR(256) NOT NULL,
-				PRIMARY KEY (namespace, id),
-				UNIQUE (namespace, "group", resource, name, subresource)
+				PRIMARY KEY (namespace, model, id),
+				UNIQUE (namespace, model, "group", resource, name, subresource)
 			) PARTITION BY LIST (namespace);
 		`))
 
