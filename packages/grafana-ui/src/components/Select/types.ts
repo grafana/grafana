@@ -184,7 +184,7 @@ export type SelectOptions<T = any> =
 
 export type FormatOptionLabelMeta<T> = { context: string; inputValue: string; selectValue: Array<SelectableValue<T>> };
 
-// This is the type of `selectProps` our custom components (like SelectContainer, etc) recieve
+// This is the type of `selectProps` our custom components (like SelectContainer, etc) receive
 // It's slightly different to the base react select props because we pass in additional props directly to
 // react select
 export type ReactSelectProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> = ReactSelectCommonProps<
