@@ -19,10 +19,7 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         path: 'enableLogDetails',
         name: t('logstable.enable-log-details.name', 'Enable log details'),
         category: logsTableCategory,
-        description: t(
-          'logstable.enable-log-details.description',
-          'When enabled, shows log details for each row. When disabled, shows the log line inspect button instead.'
-        ),
+        description: t('logstable.enable-log-details.description', 'When enabled, shows log details for each row.'),
         defaultValue: defaultOptions.enableLogDetails,
       })
       .addBooleanSwitch({
