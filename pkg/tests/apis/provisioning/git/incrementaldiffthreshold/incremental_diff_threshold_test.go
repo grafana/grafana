@@ -145,8 +145,8 @@ func createGitRepoWithSyncEnabled(
 		"Branch":              "main",
 		"TokenUser":           user.Username,
 		"Token":               user.Password,
-		"SyncEnabled":   	   true,
-		"SyncTarget":    	   "folder",
+		"SyncEnabled":         true,
+		"SyncTarget":          "folder",
 		"SyncIntervalSeconds": syncIntervalSeconds,
 		"WorkflowsJSON":       `[]`,
 	})
