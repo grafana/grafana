@@ -364,7 +364,7 @@ func TestIntegrationServerBatchCheck_FolderDeduplication(t *testing.T) {
 
 	t.Run("phase 2: mixed folders with many items each", func(t *testing.T) {
 		// user:4 has access to folders 1 and 3 but not folder 2.
-		var items []*authzv1.BatchCheckItem
+		items := make([]*authzv1.BatchCheckItem, 0, 15)
 		for i := range 5 {
 			items = append(items, newItem(fmt.Sprintf("f1-%d", i), utils.VerbGet, dashboardGroup, dashboardResource, "", "1", fmt.Sprintf("a%d", i)))
 			items = append(items, newItem(fmt.Sprintf("f2-%d", i), utils.VerbGet, dashboardGroup, dashboardResource, "", "2", fmt.Sprintf("b%d", i)))
@@ -401,10 +401,10 @@ func TestIntegrationServerBatchCheck_FolderDeduplication(t *testing.T) {
 
 	t.Run("phase 3: mixed verbs in same folder via set_edit", func(t *testing.T) {
 		// user:5 has set_edit on dashboards in folder 1, which grants get/update/create/delete.
-		var items []*authzv1.BatchCheckItem
+		items := make([]*authzv1.BatchCheckItem, 0, 3*5)
 		verbs := []string{utils.VerbGet, utils.VerbUpdate, utils.VerbCreate, utils.VerbDelete}
 		for i, verb := range verbs {
-			for j := 0; j < 3; j++ {
+			for j := range 3 {
 				items = append(items, newItem(
 					fmt.Sprintf("%s-%d", verb, j),
 					verb, dashboardGroup, dashboardResource, "", "1", fmt.Sprintf("dash-%d-%d", i, j),
@@ -424,7 +424,7 @@ func TestIntegrationServerBatchCheck_FolderDeduplication(t *testing.T) {
 	t.Run("phase 2: inherited folder access with many items", func(t *testing.T) {
 		// user:8 has set_edit on folder 5. folder-4 -> folder-5 -> folder-6.
 		// Dashboards in folder 5 and 6 should be allowed, folder 4 should not.
-		var items []*authzv1.BatchCheckItem
+		items := make([]*authzv1.BatchCheckItem, 0, 4*2)
 		for i := range 4 {
 			items = append(items, newItem(fmt.Sprintf("f5-%d", i), utils.VerbGet, dashboardGroup, dashboardResource, "", "5", fmt.Sprintf("x%d", i)))
 			items = append(items, newItem(fmt.Sprintf("f6-%d", i), utils.VerbGet, dashboardGroup, dashboardResource, "", "6", fmt.Sprintf("y%d", i)))

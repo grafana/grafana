@@ -221,7 +221,7 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("list snapshots", func(t *testing.T) {
 				// Create multiple snapshots
-				createdSnapshots := []string{}
+				createdSnapshots := make([]string, 0, 3)
 				for range 3 {
 					resp := createSnapshotViaSubresource(t, helper, ns)
 					require.NotEmpty(t, resp.Key)

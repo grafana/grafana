@@ -73,7 +73,7 @@ func TestResponseAdapter(t *testing.T) {
 		// holds the read bytes between iterations
 		cache := []byte{}
 
-		for i := range 10 {
+		for i := 0; i < 10; {
 			n, err := resp.Body.Read(buf)
 			require.NoError(t, err)
 			if n == 0 {

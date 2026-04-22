@@ -475,7 +475,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		)
 		require.NoError(t, err)
 		require.Equal(t, "test", first.GetName())
-		uids := []string{first.GetName()}
+		uids := []string{first.GetName()} //nolint:prealloc
 
 		// Create (with name generation) two playlists
 		for range 2 {

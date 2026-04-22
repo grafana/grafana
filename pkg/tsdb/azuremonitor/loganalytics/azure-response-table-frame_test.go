@@ -137,7 +137,7 @@ func TestLargeLogsResponse(t *testing.T) {
 					}},
 			},
 		}
-		rows := [][]any{}
+		rows := make([][]any, 0, 30000)
 		for i := 0; i <= 30000; i++ {
 			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
 		}
@@ -166,7 +166,7 @@ func TestLargeLogsResponse(t *testing.T) {
 					}},
 			},
 		}
-		rows := [][]any{}
+		rows := make([][]any, 0, 40000)
 		for i := range 40000 {
 			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
 		}

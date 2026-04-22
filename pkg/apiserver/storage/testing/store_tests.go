@@ -1829,8 +1829,8 @@ func RunTestListContinuation(ctx context.Context, t *testing.T, store storage.In
 
 func RunTestListPaginationRareObject(ctx context.Context, t *testing.T, store storage.Interface, validation CallsValidation) {
 	podCount := 1000
-	var pods []*example.Pod
-	for i := range podCount {
+	pods := make([]*example.Pod, 0, podCount)
+	for i := 0; i < podCount; i++ {
 		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("pod-%d", i)}}
 		key := computePodKey(obj)
 		storedObj := &example.Pod{}
