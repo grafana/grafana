@@ -3279,7 +3279,7 @@ __metadata:
     d3-interpolate: "npm:3.0.1"
     d3-scale-chromatic: "npm:3.1.0"
     date-fns: "npm:4.1.0"
-    dompurify: "npm:3.3.2"
+    dompurify: "npm:3.4.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
@@ -3776,13 +3776,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.4.0":
-  version: 7.4.0
-  resolution: "@grafana/scenes-react@npm:7.4.0"
+"@grafana/scenes-react@npm:7.4.1":
+  version: 7.4.1
+  resolution: "@grafana/scenes-react@npm:7.4.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.4.0"
+    "@grafana/scenes": "npm:7.4.1"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3796,7 +3796,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/b96131eb21960ab2efc85eeacd527933ef52d55af9ba8daaf07e8a86406ac0f869481847e61d6b2984c247a5b99930e6720dd34bb049ff5f384e1058b97e5206
+  checksum: 10/25f170f300eff78bb23b942f982294cfe63ff2a7d03c7eaf5abfa7a200dcfa9475edf9bddb21632c21e89b0022ff739ac410ac55c75cfeca1f468f208408ccc9
   languageName: node
   linkType: hard
 
@@ -3831,9 +3831,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.4.0":
-  version: 7.4.0
-  resolution: "@grafana/scenes@npm:7.4.0"
+"@grafana/scenes@npm:7.4.1":
+  version: 7.4.1
+  resolution: "@grafana/scenes@npm:7.4.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3858,7 +3858,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/26b142e757f5c219cf3edd2c290ecf99b79a63fc06ee2d02243a7919510314cd2dd9fb7bfe8d812e6cce66dcf9943e530682147197b82cd202cbc5d4c470d521
+  checksum: 10/decad6ee4ad4f81a96f89d708b9d61ce03b875cc4cfbe65befe3d1319d85461760f1a7d05f11f140e3c4b305b157b908b8f2bcd2de31106c899971aaf5cfcc10
   languageName: node
   linkType: hard
 
@@ -16763,15 +16763,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.3.2":
-  version: 3.3.2
-  resolution: "dompurify@npm:3.3.2"
+"dompurify@npm:3.4.0":
+  version: 3.4.0
+  resolution: "dompurify@npm:3.4.0"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/3ca02559677ce6d9583a500f21ffbb6b9e88f1af99f69fa0d0d9442cddbac98810588c869f8b435addb5115492d6e49870024bca322169b941bafedb99c7f281
+  checksum: 10/ead40b78ec51cd451f2c74fada4233ee0afeafdbab54af2f4a4bd5d4d138ac04d0d85140e79f533803ecfd1c3758edc1176087039c1e7217824f9794a9d34d2c
   languageName: node
   linkType: hard
 
@@ -19794,8 +19794,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.4.0"
-    "@grafana/scenes-react": "npm:7.4.0"
+    "@grafana/scenes": "npm:7.4.1"
+    "@grafana/scenes-react": "npm:7.4.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

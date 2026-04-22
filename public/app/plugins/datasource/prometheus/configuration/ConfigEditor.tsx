@@ -1,33 +1,17 @@
 import { css } from '@emotion/css';
-import type { JSX } from 'react';
 
-import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { hasCredentials } from '@grafana/azure-sdk';
 import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, type PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
+import { Alert, useTheme2 } from '@grafana/ui';
 
-import { AzureAuthSettings } from './AzureAuthSettings';
-import { type AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
-import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaulPackage';
-
-export const PROM_CONFIG_LABEL_WIDTH = 30;
+import { HttpSettings } from './HttpSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-
-  const azureAuthSettings = {
-    azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: AzurePromDataSourceSettings): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: AzurePromDataSourceSettings, enabled: boolean) =>
-      enabled ? setDefaultCredentials(config) : resetCredentials(config),
-    azureSettingsUI: AzureAuthSettings,
-  };
-
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
@@ -43,14 +27,9 @@ export const ConfigEditor = (props: Props) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
-      <DataSourcehttpSettingsOverhaul
+      <HttpSettings
         options={options}
         onOptionsChange={onOptionsChange}
-        azureAuthSettings={azureAuthSettings}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={
-          <SIGV4ConnectionConfig inExperimentalAuthComponent={true} {...props}></SIGV4ConnectionConfig>
-        }
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
       <hr />
@@ -69,33 +48,6 @@ export const ConfigEditor = (props: Props) => {
       </ConfigSection>
     </>
   );
-};
-/**
- * Use this to return a url in a tooltip in a field. Don't forget to make the field interactive to be able to click on the tooltip
- * @param url
- * @returns
- */
-export function docsTip(url?: string) {
-  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
-
-  return (
-    <TextLink href={url ? url : docsUrl} external>
-      Visit docs for more details here.
-    </TextLink>
-  );
-}
-
-export const validateInput = (
-  input: string,
-  pattern: string | RegExp,
-  errorMessage?: string
-): boolean | JSX.Element => {
-  const defaultErrorMessage = 'Value is not valid';
-  if (input && !input.match(pattern)) {
-    return <FieldValidationMessage>{errorMessage ? errorMessage : defaultErrorMessage}</FieldValidationMessage>;
-  } else {
-    return true;
-  }
 };
 
 export function overhaulStyles(theme: GrafanaTheme2) {
