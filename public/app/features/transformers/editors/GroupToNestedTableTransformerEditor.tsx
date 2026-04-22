@@ -100,8 +100,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onCo
             allowMultiple
             stats={fieldConfig.aggregations}
             onChange={(stats) => {
-              // eslint-disable-next-line
-              onConfigChange({ ...fieldConfig, aggregations: stats as ReducerID[] });
+              onConfigChange({ ...fieldConfig, aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID) });
             }}
           />
         )}
