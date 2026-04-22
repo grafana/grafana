@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -34,12 +35,16 @@ type stubServer struct {
 	getStoreIdx      atomic.Int32
 	deleteStoreCalls atomic.Int32
 	getOrCreateCalls atomic.Int32
+
+	// listAllStoresResults is returned by ListAllStores. Defaults to nil so
+	// existing tests that don't care about listing remain unaffected.
+	listAllStoresResults []zanzana.StoreInfo
 }
 
 func (s *stubServer) Close()                              {}
 func (s *stubServer) RunReconciler(context.Context) error { return nil }
 func (s *stubServer) ListAllStores(context.Context) ([]zanzana.StoreInfo, error) {
-	return nil, nil
+	return s.listAllStoresResults, nil
 }
 func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
@@ -144,4 +149,136 @@ func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {
 	_, cached := r.ensuredNamespaces.Load("evict-ns")
 	assert.False(t, cached)
 	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
+}
+
+// drainWorkQueue reads every pending namespace out of the channel and returns
+// them as a slice, blocking no longer than it takes to observe len(ch)==0.
+func drainWorkQueue(ch chan string) []string {
+	out := make([]string, 0, len(ch))
+	for len(ch) > 0 {
+		out = append(out, <-ch)
+	}
+	return out
+}
+
+func TestQueueAllNamespaces_SkipsAlreadyQueuedNamespaces(t *testing.T) {
+	// When a previous cycle's namespaces are still sitting in the queue (or
+	// being processed by a worker), a subsequent queueAllNamespaces call must
+	// skip them rather than enqueue duplicates.
+	srv := &stubServer{
+		listAllStoresResults: []zanzana.StoreInfo{
+			{Name: "ns-1"},
+			{Name: "ns-2"},
+			{Name: "ns-3"},
+		},
+	}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
+	r.workQueue = make(chan string, 10)
+
+	// Pretend ns-1 and ns-2 are still in-flight from a previous cycle.
+	r.queuedNamespaces.Store("ns-1", struct{}{})
+	r.queuedNamespaces.Store("ns-2", struct{}{})
+
+	r.queueAllNamespaces(context.Background())
+
+	// Only ns-3 should have been enqueued; ns-1 and ns-2 were deduped.
+	require.Equal(t, 1, len(r.workQueue))
+	assert.Equal(t, "ns-3", <-r.workQueue)
+
+	// All three namespaces are now "reserved" in queuedNamespaces: the two
+	// pre-existing reservations plus the one we just made for ns-3.
+	for _, ns := range []string{"ns-1", "ns-2", "ns-3"} {
+		_, loaded := r.queuedNamespaces.Load(ns)
+		assert.True(t, loaded, "expected %s to be reserved", ns)
+	}
+}
+
+func TestQueueAllNamespaces_ReleasesReservationOnContextCancel(t *testing.T) {
+	// If the producer blocks on a full workQueue and ctx is then cancelled,
+	// the reservation it made via LoadOrStore must be released so a future
+	// leadership term can enqueue the namespace again.
+	srv := &stubServer{
+		listAllStoresResults: []zanzana.StoreInfo{{Name: "ns-1"}},
+	}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
+
+	// Buffer size 1, pre-filled so the only send inside queueAllNamespaces
+	// blocks and must unblock via ctx.Done().
+	r.workQueue = make(chan string, 1)
+	r.workQueue <- "filler"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	r.queueAllNamespaces(ctx)
+
+	_, loaded := r.queuedNamespaces.Load("ns-1")
+	assert.False(t, loaded, "ns-1 reservation should be released after cancel")
+
+	// The filler is the only thing that should remain in the channel.
+	assert.Equal(t, []string{"filler"}, drainWorkQueue(r.workQueue))
+}
+
+func TestQueueAllNamespaces_ReenqueuesAfterDedupEntryCleared(t *testing.T) {
+	// Walks the full lifecycle across three ticks:
+	//   tick 1: both namespaces enqueued fresh
+	//   tick 2: workers haven't drained yet → nothing added (full dedup)
+	//   tick 3: ns-1's reservation has been cleared → ns-1 re-enqueued, ns-2 still skipped
+	srv := &stubServer{
+		listAllStoresResults: []zanzana.StoreInfo{{Name: "ns-1"}, {Name: "ns-2"}},
+	}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
+	r.workQueue = make(chan string, 10)
+
+	r.queueAllNamespaces(context.Background())
+	require.Equal(t, 2, len(r.workQueue))
+
+	r.queueAllNamespaces(context.Background())
+	require.Equal(t, 2, len(r.workQueue), "second tick must not add duplicates")
+
+	// Simulate a worker finishing ns-1: pop from the channel and release
+	// the dedup reservation.
+	require.Equal(t, "ns-1", <-r.workQueue)
+	r.queuedNamespaces.Delete("ns-1")
+
+	r.queueAllNamespaces(context.Background())
+
+	// Queue should now contain ns-2 (still from tick 1) and ns-1 (re-added on
+	// tick 3). ns-2's reservation is still held, so it was not re-added.
+	remaining := drainWorkQueue(r.workQueue)
+	assert.ElementsMatch(t, []string{"ns-1", "ns-2"}, remaining)
+}
+
+func TestRunWorker_ClearsDedupEntryAfterReconcile(t *testing.T) {
+	// The worker must remove the namespace from queuedNamespaces after
+	// reconciliation completes, otherwise it would be permanently locked out
+	// of future cycles.
+	srv := &stubServer{}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
+	r.workQueue = make(chan string, 10)
+
+	// Simulate queueAllNamespaces having reserved and enqueued ns-1.
+	r.queuedNamespaces.Store("ns-1", struct{}{})
+	r.workQueue <- "ns-1"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		r.runWorker(ctx, 0)
+	}()
+
+	require.Eventually(t, func() bool {
+		_, loaded := r.queuedNamespaces.Load("ns-1")
+		return !loaded
+	}, 2*time.Second, 10*time.Millisecond, "worker did not release ns-1 from queuedNamespaces")
+
+	// notFoundClientFactory drives reconcileNamespace into its "namespace
+	// deleted" branch, which calls DeleteStore exactly once.
+	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
+
+	cancel()
+	<-done
 }
