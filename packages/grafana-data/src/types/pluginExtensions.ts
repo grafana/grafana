@@ -237,6 +237,7 @@ export enum PluginExtensionPoints {
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+  InviteUserButton = 'grafana/topbar/invite-user/v1',
 }
 
 // Don't use directly in a plugin!
