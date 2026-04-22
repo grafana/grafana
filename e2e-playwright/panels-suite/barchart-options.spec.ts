@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { getUPlotCenterPosition } from './barchart-utils';
+
 const DASHBOARD_UID = 'panel-tests-barchart';
 
 test.use({
@@ -63,12 +65,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
     await expect(errorInfo, 'no errors after toggling stacking').toBeHidden();
 
     // tooltip works in 100% stacking mode — do this last so Escape doesn't exit editor
-    const uOver = barchartUplot.locator('.u-over');
-    const box = await uOver.boundingBox();
-    if (!box) {
-      throw new Error('u-over bounding box not found');
-    }
-    const center = { x: Math.round(box.width / 2), y: Math.round(box.height / 2) };
+    const center = await getUPlotCenterPosition(barchartUplot);
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
     await barchartUplot.hover({ position: center, force: true });
     await expect(tooltip, 'tooltip appears on hover with stacking 100%').toBeVisible();
@@ -92,15 +89,8 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
     await expect(fullHighlightSwitch, 'full highlight toggle is visible').toBeVisible();
     await expect(fullHighlightSwitch, 'full highlight is enabled').toBeChecked();
 
-    // tooltip appears when hovering
-    const uOver = barchartUplot.locator('.u-over');
-    const box = await uOver.boundingBox();
-    if (!box) {
-      throw new Error('u-over bounding box not found');
-    }
-    const center = { x: Math.round(box.width / 2), y: Math.round(box.height / 2) };
-
     // tooltip works with full highlight — do this last so Escape doesn't exit editor
+    const center = await getUPlotCenterPosition(barchartUplot);
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
     await barchartUplot.hover({ position: center, force: true });
     await expect(tooltip, 'tooltip appears on hover with full highlight enabled').toBeVisible();

@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { getUPlotCenterPosition } from './barchart-utils';
+
 const DASHBOARD_UID = 'panel-tests-barchart';
 
 test.use({
@@ -17,13 +19,7 @@ test.describe('Panels test: BarChart data links', { tag: ['@panels', '@barchart'
     const barchartUplot = page.locator('.uplot').first();
     await expect(barchartUplot, 'uplot is rendered').toBeVisible();
 
-    // compute position from the data overlay area
-    const uOver = barchartUplot.locator('.u-over');
-    const box = await uOver.boundingBox();
-    if (!box) {
-      throw new Error('u-over bounding box not found');
-    }
-    const center = { x: Math.round(box.width / 2), y: Math.round(box.height / 2) };
+    const center = await getUPlotCenterPosition(barchartUplot);
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
 
