@@ -9,7 +9,12 @@ import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 const METADATA_MIGRATION_COMPLETE = 'migrationComplete';
 const METADATA_MIGRATION_ATTEMPTS = 'migrationAttempts';
+const METADATA_LOCAL_STORAGE_CLEANUP_DONE = 'localStorageCleanupDone';
 const MAX_MIGRATION_ATTEMPTS = 3;
+
+// Support escape hatch: setting this localStorage key and reloading clears the
+// IndexedDB migration markers so migration re-runs on the next call.
+const RESET_MIGRATION_KEY = 'grafana.debug.resetQueryHistoryMigration';
 
 function isValidEntry(entry: unknown): entry is RichHistoryLocalStorageDTO {
   if (!entry || typeof entry !== 'object') {
@@ -58,6 +63,19 @@ const REMOTE_PAGE_LIMIT = 100;
  * Path C: No data anywhere — mark migration complete immediately.
  */
 export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
+  // Support escape hatch: if the debug reset key is set, wipe IndexedDB state
+  // so migration re-runs from scratch below. Semantic is "start over" — queries
+  // are re-sourced from localStorage and/or the remote API.
+  if (store.exists(RESET_MIGRATION_KEY)) {
+    store.delete(RESET_MIGRATION_KEY);
+    const db = await indexedDBStorage.getDB();
+    await db.clear('queries');
+    await indexedDBStorage.setMetadata(METADATA_MIGRATION_COMPLETE, false);
+    await indexedDBStorage.setMetadata(METADATA_MIGRATION_ATTEMPTS, 0);
+    await indexedDBStorage.setMetadata(METADATA_LOCAL_STORAGE_CLEANUP_DONE, false);
+    reportInteraction('grafana_query_history_migration_reset', {});
+  }
+
   // 1. Check if migration is already complete
   const migrationComplete = await indexedDBStorage.getMetadata(METADATA_MIGRATION_COMPLETE);
   if (migrationComplete === true) {
