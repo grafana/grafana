@@ -5427,13 +5427,16 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1776767556250",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-21 10:32:36.250731 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
@@ -5655,7 +5658,8 @@
       "metadata": {
         "name": "unifiedStorageSearchUI",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-19T18:21:48Z"
+        "creationTimestamp": "2024-12-19T18:21:48Z",
+        "deletionTimestamp": "2026-03-19T15:30:35Z"
       },
       "spec": {
         "description": "Enable unified storage search UI",

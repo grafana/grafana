@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "영향을 받는 대시보드 검색",
       "update-all": "모두 업데이트",
       "num-affected_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12924,9 +12930,7 @@
       "update-available": "업데이트를 사용할 수 있습니다!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "플러그인을 사용하려면 모든 대시보드에서 사용량을 확인하기 위한 새로운 검색 인덱스가 필요합니다. 기능 토글을 활성화하세요",
       "num-usages": "{{pluginName}} 플러그인을 <2>{{numUsages}}</2>번 사용하였습니다.",
-      "title-missing-feature-toggle-panel-title-search": "누락된 기능 토글: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} 플러그인은 아직 대시보드에서 사용하지 않고 있습니다"
     },
     "plugins-errors-info": {

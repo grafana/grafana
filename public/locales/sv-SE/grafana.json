@@ -11124,6 +11124,12 @@
       "update-all": "Uppdatera allt",
       "num-affected_one": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>",
       "num-affected_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Uppdatering tillgänglig!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Tilläggsanvändning kräver det nya sökindexet för att hitta användning mellan instrumentpaneler. Aktivera funktionsväxlaren",
       "num-usages": "{{pluginName}} används <2>{{numUsages}}</2> gånger.",
-      "title-missing-feature-toggle-panel-title-search": "Saknad funktionsväxlare: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} används inte i några instrumentpaneler ännu"
     },
     "plugins-errors-info": {

@@ -1542,15 +1542,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "unifiedStorageSearchUI",
-			Description:  "Enable unified storage search UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "elasticsearchCrossClusterSearch",
 			Description: "Enables cross cluster search in the Elasticsearch data source",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2178,7 +2169,7 @@ var (
 		{
 			Name:        "teamFolders",
 			Description: "Enables team folders functionality",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
