@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,43 +25,29 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 		return nil, fmt.Errorf("provider is not a static provider, type %s", setting.StaticProviderType)
 	}
 
-	staticFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	flags, err := buildStaticFlagsMapFromCfg(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read feature flags from config: %w", err)
+		return nil, err
 	}
-
-	staticProvider, err := newStaticProvider(staticFlags, standardFeatureFlags)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create static provider: %w", err)
-	}
-
-	p, ok := staticProvider.(*inMemoryBulkProvider)
-	if !ok {
-		return nil, fmt.Errorf("static provider is not of type inMemoryBulkProvider")
-	}
-
-	c := openfeature.NewDefaultClient()
 
 	return &staticEvaluator{
-		provider: p,
-		client:   c,
-		log:      log.New("static-evaluator"),
+		flags:  flags,
+		client: openfeature.NewDefaultClient(),
+		log:    log.New("static-evaluator"),
 	}, nil
 }
 
-// staticEvaluator implements StaticFlagEvaluator for static providers
-// TODO: Refactor to either use global provider:
-// staticEvaluator stores a local provider instance for flag metadata but uses the global OpenFeature client for evaluation.
-// This works because both the stored provider and the global provider are created from the same config.
+// staticEvaluator implements StaticFlagEvaluator for static providers.
+// It holds the flags map for metadata (listing, type detection) and uses the
+// global OpenFeature client for evaluation.
 type staticEvaluator struct {
-	provider *inMemoryBulkProvider
-	client   openfeature.IClient
-	log      log.Logger
+	flags  map[string]memprovider.InMemoryFlag
+	client openfeature.IClient
+	log    log.Logger
 }
 
 func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error) {
-	// Get the typed flag
-	flag, exists := s.provider.flags[flagKey]
+	flag, exists := s.flags[flagKey]
 	if !exists {
 		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("flag %s not found", flagKey)
 	}
@@ -123,24 +110,16 @@ func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmod
 }
 
 func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (goffmodel.OFREPBulkEvaluateSuccessResponse, error) {
-	flags, err := s.provider.ListFlags()
-	if err != nil {
-		return goffmodel.OFREPBulkEvaluateSuccessResponse{}, fmt.Errorf("static provider failed to list all flags: %w", err)
-	}
-
-	allFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(flags))
-	for _, flagKey := range flags {
-		// Use EvalFlag which handles type detection
+	allFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(s.flags))
+	for flagKey := range s.flags {
 		result, err := s.EvalFlag(ctx, flagKey)
 		if err != nil {
 			s.log.Error("failed to evaluate flag during bulk evaluation", "flagKey", flagKey, "error", err)
 			continue
 		}
-
 		allFlags = append(allFlags, goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
 			OFREPEvaluateSuccessResponse: result,
 		})
 	}
-
 	return goffmodel.OFREPBulkEvaluateSuccessResponse{Flags: allFlags}, nil
 }
