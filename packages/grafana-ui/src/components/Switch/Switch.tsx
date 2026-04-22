@@ -108,7 +108,15 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
             {label}
           </label>
         )}
-        <Switch {...props} id={id} label={label} ref={ref} value={value} />
+        <Switch
+          {...props}
+          disabled={disabled}
+          invalid={invalid}
+          id={id}
+          label={showLabel ? undefined : label}
+          ref={ref}
+          value={value}
+        />
       </div>
     );
   }
