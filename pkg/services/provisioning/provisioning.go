@@ -344,7 +344,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
-	emailValidator := notifier.NewEmailValidator(ps.userService, ps.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
+	emailValidator := notifier.NewEmailValidator(ps.userService, ps.orgService, ps.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
 		configStore,

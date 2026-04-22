@@ -1908,7 +1908,7 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed, &notifier.NoopOrgEmailValidator{})
+			err := ValidateContactPoint(context.Background(), 1, newCP(tc.integrationType), decryptFn, tc.allowed, &notifier.NoopOrgEmailValidator{})
 			if tc.wantErr == "" {
 				require.NoError(t, err)
 			} else {
@@ -1941,18 +1941,18 @@ func TestValidateContactPointEmailValidation(t *testing.T) {
 	}
 
 	t.Run("email type with passing validator succeeds", func(t *testing.T) {
-		err := ValidateContactPoint(context.Background(), newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, nil))
+		err := ValidateContactPoint(context.Background(), 1, newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, nil))
 		require.NoError(t, err)
 	})
 
 	t.Run("email type with failing validator returns error", func(t *testing.T) {
 		validationErr := fmt.Errorf("email not in org")
-		err := ValidateContactPoint(context.Background(), newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, validationErr))
+		err := ValidateContactPoint(context.Background(), 1, newEmailCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, validationErr))
 		require.ErrorIs(t, err, validationErr)
 	})
 
 	t.Run("non-email type with failing validator is not validated", func(t *testing.T) {
-		err := ValidateContactPoint(context.Background(), newSlackCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, fmt.Errorf("should not be called")))
+		err := ValidateContactPoint(context.Background(), 1, newSlackCP(), decryptFn, nil, notifier.NewFakeEmailValidator(t, fmt.Errorf("should not be called")))
 		require.NoError(t, err)
 	})
 }

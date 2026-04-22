@@ -701,32 +701,32 @@ type FakeReceiverService struct {
 }
 
 type FakeEmailValidator struct {
-	ValidateIntegrationFunc       func(ctx context.Context, integration models.Integration) error
-	ValidateIntegrationConfigFunc func(ctx context.Context, integration alertingModels.IntegrationConfig) error
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error
 }
 
 func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	t.Helper()
 	return &FakeEmailValidator{
-		ValidateIntegrationFunc: func(ctx context.Context, integration models.Integration) error {
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration) error {
 			return err
 		},
-		ValidateIntegrationConfigFunc: func(ctx context.Context, integration alertingModels.IntegrationConfig) error {
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error {
 			return err
 		},
 	}
 }
 
-func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, integration models.Integration) error {
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration) error {
 	if f.ValidateIntegrationFunc != nil {
-		return f.ValidateIntegrationFunc(ctx, integration)
+		return f.ValidateIntegrationFunc(ctx, orgID, integration)
 	}
 	return nil
 }
 
-func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error {
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error {
 	if f.ValidateIntegrationConfigFunc != nil {
-		return f.ValidateIntegrationConfigFunc(ctx, integration)
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration)
 	}
 	return nil
 }

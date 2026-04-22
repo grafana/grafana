@@ -12,9 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
+
+const testValidatorOrgID int64 = 7
 
 // emailConfig builds a minimal email V1 IntegrationConfig with the given address string.
 func emailConfig(addresses string) alertingModels.IntegrationConfig {
@@ -26,67 +30,103 @@ func emailConfig(addresses string) alertingModels.IntegrationConfig {
 	}
 }
 
+// memberOf returns a FakeOrgService that reports the user as belonging to the given org IDs.
+func memberOf(orgIDs ...int64) *orgtest.FakeOrgService {
+	list := make([]*org.UserOrgDTO, 0, len(orgIDs))
+	for _, id := range orgIDs {
+		list = append(list, &org.UserOrgDTO{OrgID: id})
+	}
+	return &orgtest.FakeOrgService{ExpectedUserOrgDTO: list}
+}
+
 func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
-	found := &usertest.FakeUserService{ExpectedUser: &user.User{Email: "alice@org.com"}}
-	notFound := usertest.NewUserServiceFake() // ExpectedUser nil → not in org
+	foundMember := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Email: "alice@org.com"}}
+	notFound := &usertest.FakeUserService{ExpectedError: user.ErrUserNotFound}
 	lookupFails := &usertest.FakeUserService{ExpectedError: errors.New("db unavailable")}
+	disabled := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Email: "alice@org.com", IsDisabled: true}}
+
+	inOrg := memberOf(testValidatorOrgID)
+	onlyInAnotherOrg := memberOf(999)
 
 	tests := []struct {
 		name    string
 		config  alertingModels.IntegrationConfig
-		svc     *usertest.FakeUserService
+		userSvc UserLookup
+		orgSvc  OrgMembershipLookup
 		wantErr string
 	}{
 		{
-			name:   "non-email type is skipped",
-			config: alertingModels.IntegrationConfig{Type: schema.SlackType, Version: schema.V1},
-			svc:    notFound,
+			name:    "non-email type is skipped",
+			config:  alertingModels.IntegrationConfig{Type: schema.SlackType, Version: schema.V1},
+			userSvc: notFound,
+			orgSvc:  inOrg,
 		},
 		{
-			name:   "non-V1 version is skipped",
-			config: alertingModels.IntegrationConfig{Type: schema.EmailType, Version: "v0"},
-			svc:    notFound,
+			name:    "non-V1 version is skipped",
+			config:  alertingModels.IntegrationConfig{Type: schema.EmailType, Version: "v0"},
+			userSvc: notFound,
+			orgSvc:  inOrg,
 		},
 		{
-			name:   "valid email matching org member succeeds",
-			config: emailConfig("alice@org.com"),
-			svc:    found,
+			name:    "valid email matching org member succeeds",
+			config:  emailConfig("alice@org.com"),
+			userSvc: foundMember,
+			orgSvc:  inOrg,
 		},
 		{
-			name:    "email not in org returns error",
+			name:    "email not found returns not-member error",
 			config:  emailConfig("outsider@org.com"),
-			svc:     notFound,
+			userSvc: notFound,
+			orgSvc:  inOrg,
 			wantErr: "not allowed because it is not part of the organization",
+		},
+		{
+			name:    "email belongs to user who is only a member of a different org is rejected",
+			config:  emailConfig("alice@org.com"),
+			userSvc: foundMember,
+			orgSvc:  onlyInAnotherOrg,
+			wantErr: "not allowed because it is not part of the organization",
+		},
+		{
+			name:    "email belongs to disabled user is rejected",
+			config:  emailConfig("alice@org.com"),
+			userSvc: disabled,
+			orgSvc:  inOrg,
+			wantErr: "is not allowed because the user is disabled",
 		},
 		{
 			name:    "template in address returns error",
 			config:  emailConfig("{{ .OrgName }}@org.com"),
-			svc:     notFound,
+			userSvc: notFound,
+			orgSvc:  inOrg,
 			wantErr: "templates in email addresses are not allowed",
 		},
 		{
 			name:    "malformed address returns error",
 			config:  emailConfig("not-an-email"),
-			svc:     notFound,
+			userSvc: notFound,
+			orgSvc:  inOrg,
 			wantErr: "failed to parse email address",
 		},
 		{
-			name:    "lookup error is returned",
+			name:    "user lookup error is returned",
 			config:  emailConfig("alice@org.com"),
-			svc:     lookupFails,
+			userSvc: lookupFails,
+			orgSvc:  inOrg,
 			wantErr: "failed to check if email address",
 		},
 		{
-			name:   "multiple valid addresses all pass",
-			config: emailConfig("alice@org.com;bob@org.com"),
-			svc:    found, // returns non-nil for any email
+			name:    "multiple valid addresses all pass",
+			config:  emailConfig("alice@org.com;bob@org.com"),
+			userSvc: foundMember,
+			orgSvc:  inOrg,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			v := &OrgUserEmailValidator{svc: tc.svc}
-			err := v.ValidateIntegrationConfig(context.Background(), tc.config)
+			v := &OrgUserEmailValidator{userSvc: tc.userSvc, orgSvc: tc.orgSvc}
+			err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, tc.config)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 			} else {
@@ -95,101 +135,113 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 		})
 	}
 
-	t.Run("duplicate addresses are checked only once", func(t *testing.T) {
-		var calls int
-		svc := usertest.NewUserServiceFake()
-		svc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
-			calls++
-			return &user.User{Email: q.Email}, nil
-		}
-		v := &OrgUserEmailValidator{svc: svc}
-		err := v.ValidateIntegrationConfig(context.Background(), emailConfig("alice@org.com;alice@org.com"))
+	t.Run("email belongs to user who is a member of both orgs succeeds", func(t *testing.T) {
+		userSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Email: "alice@org.com"}}
+		orgSvc := memberOf(1, 2, testValidatorOrgID, 9)
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: orgSvc}
+		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com"))
 		require.NoError(t, err)
-		require.Equal(t, 1, calls)
+	})
+
+	t.Run("duplicate addresses are checked only once", func(t *testing.T) {
+		var userCalls int
+		userSvc := usertest.NewUserServiceFake()
+		userSvc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
+			userCalls++
+			return &user.User{ID: 1, Email: q.Email}, nil
+		}
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
+		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com;alice@org.com"))
+		require.NoError(t, err)
+		require.Equal(t, 1, userCalls)
 	})
 
 	t.Run("lookup is case-insensitive", func(t *testing.T) {
-		svc := usertest.NewUserServiceFake()
-		svc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
+		userSvc := usertest.NewUserServiceFake()
+		userSvc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
 			if strings.EqualFold(q.Email, "alice@org.com") {
-				return &user.User{Email: "alice@org.com"}, nil
+				return &user.User{ID: 1, Email: "alice@org.com"}, nil
 			}
-			return nil, nil
+			return nil, user.ErrUserNotFound
 		}
-		v := &OrgUserEmailValidator{svc: svc}
-		err := v.ValidateIntegrationConfig(context.Background(), emailConfig("Alice@Org.Com"))
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
+		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("Alice@Org.Com"))
 		require.NoError(t, err)
 	})
 
 	t.Run("display-name format is parsed correctly", func(t *testing.T) {
-		svc := usertest.NewUserServiceFake()
-		svc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
+		userSvc := usertest.NewUserServiceFake()
+		userSvc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
 			if q.Email == "alice@org.com" {
-				return &user.User{Email: "alice@org.com"}, nil
+				return &user.User{ID: 1, Email: "alice@org.com"}, nil
 			}
-			return nil, nil
+			return nil, user.ErrUserNotFound
 		}
-		v := &OrgUserEmailValidator{svc: svc}
-		err := v.ValidateIntegrationConfig(context.Background(), emailConfig("Alice <alice@org.com>"))
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
+		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("Alice <alice@org.com>"))
 		require.NoError(t, err)
 	})
 
 	t.Run("first address valid second not in org returns error", func(t *testing.T) {
-		svc := usertest.NewUserServiceFake()
-		svc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
+		userSvc := usertest.NewUserServiceFake()
+		userSvc.GetByEmailFn = func(_ context.Context, q *user.GetUserByEmailQuery) (*user.User, error) {
 			if strings.EqualFold(q.Email, "alice@org.com") {
-				return &user.User{Email: "alice@org.com"}, nil
+				return &user.User{ID: 1, Email: "alice@org.com"}, nil
 			}
-			return nil, nil
+			return nil, user.ErrUserNotFound
 		}
-		v := &OrgUserEmailValidator{svc: svc}
-		err := v.ValidateIntegrationConfig(context.Background(), emailConfig("alice@org.com;outsider@evil.com"))
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
+		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com;outsider@evil.com"))
 		require.ErrorContains(t, err, "not allowed because it is not part of the organization")
 	})
 }
 
 func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 	t.Run("non-email integration type is skipped", func(t *testing.T) {
-		svc := usertest.NewUserServiceFake()
-		v := &OrgUserEmailValidator{svc: svc}
+		v := &OrgUserEmailValidator{userSvc: usertest.NewUserServiceFake(), orgSvc: memberOf(testValidatorOrgID)}
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(schema.SlackType))()
-		require.NoError(t, v.ValidateIntegration(context.Background(), integration))
+		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration))
 	})
 
 	t.Run("email V1 with org member succeeds", func(t *testing.T) {
-		svc := &usertest.FakeUserService{ExpectedUser: &user.User{Email: "alice@org.com"}}
-		v := &OrgUserEmailValidator{svc: svc}
+		userSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Email: "alice@org.com"}}
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
 		integration := models.IntegrationGen(
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
 		)()
-		require.NoError(t, v.ValidateIntegration(context.Background(), integration))
+		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration))
 	})
 
 	t.Run("email V1 with non-org address returns error", func(t *testing.T) {
-		svc := usertest.NewUserServiceFake()
-		v := &OrgUserEmailValidator{svc: svc}
+		userSvc := &usertest.FakeUserService{ExpectedError: user.ErrUserNotFound}
+		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
 		integration := models.IntegrationGen(
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
 		)()
-		require.ErrorContains(t, v.ValidateIntegration(context.Background(), integration), "not allowed because it is not part of the organization")
+		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration), "not allowed because it is not part of the organization")
 	})
 }
 
 func TestNewEmailValidator(t *testing.T) {
 	t.Run("enabled=false returns noop", func(t *testing.T) {
-		v := NewEmailValidator(usertest.NewUserServiceFake(), false)
+		v := NewEmailValidator(usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(), false)
 		require.IsType(t, &NoopOrgEmailValidator{}, v)
 	})
 
-	t.Run("nil svc with enabled=true returns noop", func(t *testing.T) {
-		v := NewEmailValidator(nil, true)
+	t.Run("nil userSvc with enabled=true returns noop", func(t *testing.T) {
+		v := NewEmailValidator(nil, orgtest.NewOrgServiceFake(), true)
 		require.IsType(t, &NoopOrgEmailValidator{}, v)
 	})
 
-	t.Run("enabled=true with svc returns real validator", func(t *testing.T) {
-		v := NewEmailValidator(usertest.NewUserServiceFake(), true)
+	t.Run("nil orgSvc with enabled=true returns noop", func(t *testing.T) {
+		v := NewEmailValidator(usertest.NewUserServiceFake(), nil, true)
+		require.IsType(t, &NoopOrgEmailValidator{}, v)
+	})
+
+	t.Run("enabled=true with both svcs returns real validator", func(t *testing.T) {
+		v := NewEmailValidator(usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(), true)
 		require.IsType(t, &OrgUserEmailValidator{}, v)
 	})
 }

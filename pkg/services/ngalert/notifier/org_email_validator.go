@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/mail"
 	"strings"
@@ -11,33 +12,43 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// UserLookup is the subset of org.Service needed to check email membership.
+// UserLookup resolves a user by email. Service accounts are excluded by the
+// underlying store, so their addresses are treated as non-members.
 type UserLookup interface {
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 }
 
+// OrgMembershipLookup returns the orgs a user belongs to via the org_user join
+// table, which is the source of truth for membership (distinct from
+// user.OrgID, which only tracks the user's default/current org).
+type OrgMembershipLookup interface {
+	GetUserOrgList(context.Context, *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error)
+}
+
 type EmailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error
-	ValidateIntegration(ctx context.Context, integration models.Integration) error
+	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error
+	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration) error
 }
 
 // OrgUserEmailValidator gates email address validation against org membership.
 type OrgUserEmailValidator struct {
-	svc UserLookup
+	userSvc UserLookup
+	orgSvc  OrgMembershipLookup
 }
 
 // NewEmailValidator returns a validator that checks email addresses against org members. Pass enabled=false for a no-op.
-func NewEmailValidator(svc UserLookup, enabled bool) EmailIntegrationValidator {
-	if enabled && svc != nil {
-		return &OrgUserEmailValidator{svc: svc}
+func NewEmailValidator(userSvc UserLookup, orgSvc OrgMembershipLookup, enabled bool) EmailIntegrationValidator {
+	if enabled && userSvc != nil && orgSvc != nil {
+		return &OrgUserEmailValidator{userSvc: userSvc, orgSvc: orgSvc}
 	}
 	return &NoopOrgEmailValidator{}
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, integration models.Integration) error {
+func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration) error {
 	if integration.Config.Type() != schema.EmailType || integration.Config.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
@@ -45,10 +56,10 @@ func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, integra
 	if err != nil {
 		return fmt.Errorf("failed to convert integration to integration config: %w", err)
 	}
-	return v.ValidateIntegrationConfig(ctx, cfg)
+	return v.ValidateIntegrationConfig(ctx, orgID, cfg)
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error {
+func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error {
 	if integration.Type != schema.EmailType || integration.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
@@ -73,11 +84,32 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, i
 			continue
 		}
 
-		usr, err := v.svc.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: lowerAddr})
+		usr, err := v.userSvc.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: lowerAddr})
 		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
+			}
 			return fmt.Errorf("failed to check if email address %q exists: %w", addr.Address, err)
 		}
 		if usr == nil {
+			return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
+		}
+		if usr.IsDisabled {
+			return fmt.Errorf("email address %q is not allowed because the user is disabled", addr.Address)
+		}
+
+		orgs, err := v.orgSvc.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: usr.ID})
+		if err != nil {
+			return fmt.Errorf("failed to check organization membership for email address %q: %w", addr.Address, err)
+		}
+		isMember := false
+		for _, o := range orgs {
+			if o.OrgID == orgID {
+				isMember = true
+				break
+			}
+		}
+		if !isMember {
 			return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
 		}
 		checked[lowerAddr] = struct{}{}
@@ -87,10 +119,10 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, i
 
 type NoopOrgEmailValidator struct{}
 
-func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ alertingModels.IntegrationConfig) error {
+func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ int64, _ alertingModels.IntegrationConfig) error {
 	return nil
 }
 
-func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ models.Integration) error {
+func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration) error {
 	return nil
 }

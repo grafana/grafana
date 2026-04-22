@@ -152,12 +152,13 @@ func (t *ReceiverTestingService) testIntegration(ctx context.Context, user ident
 	if err != nil {
 		return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 	}
+	orgID := user.GetOrgID()
 	if integration.Config.Type() == schema.EmailType {
-		if err := t.emailValidator.ValidateIntegration(ctx, integration); err != nil {
+		if err := t.emailValidator.ValidateIntegration(ctx, orgID, integration); err != nil {
 			return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 		}
 	}
-	am, err := t.amProvider.AlertmanagerFor(user.GetOrgID())
+	am, err := t.amProvider.AlertmanagerFor(orgID)
 	if err != nil {
 		return IntegrationTestResult{}, err
 	}

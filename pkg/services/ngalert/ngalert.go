@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -93,6 +94,7 @@ func ProvideService(
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
 	userService user.Service,
+	orgService org.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                      cfg,
@@ -124,6 +126,7 @@ func ProvideService(
 		ResourcePermissions:      resourcePermissions,
 		RouteResourcePermissions: routeResourcePermissions,
 		userService:              userService,
+		orgService:               orgService,
 	}
 
 	if ng.IsDisabled() {
@@ -177,6 +180,7 @@ type AlertNG struct {
 	annotationsRepo          annotations.Repository
 	store                    *store.DBstore
 	userService              user.Service
+	orgService               org.Service
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -451,7 +455,7 @@ func (ng *AlertNG) init() error {
 		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
-	emailValidator := notifier.NewEmailValidator(ng.userService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
+	emailValidator := notifier.NewEmailValidator(ng.userService, ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
 
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(

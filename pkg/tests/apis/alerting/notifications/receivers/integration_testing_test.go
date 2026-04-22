@@ -620,4 +620,16 @@ func TestIntegrationTestingEmailValidation(t *testing.T) {
 		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, req)
 		require.NoError(t, err)
 	})
+
+	t.Run("test fails when email address belongs to a user in a different org", func(t *testing.T) {
+		otherOrgUser := helper.CreateUser("otherorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		otherOrgEmail := otherOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
+
+		otherOrgReq := req
+		otherOrgReq.Body.Integration.Settings = map[string]interface{}{"addresses": otherOrgEmail}
+
+		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, otherOrgReq)
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
 }

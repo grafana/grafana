@@ -43,7 +43,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type emailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error
+	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error
 }
 
 type ContactPointService struct {
@@ -177,7 +177,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
+	if err := ValidateContactPoint(ctx, orgID, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -299,7 +299,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
+	if err := ValidateContactPoint(ctx, orgID, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -652,7 +652,7 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}, emailValidator emailIntegrationValidator) error {
+func ValidateContactPoint(ctx context.Context, orgID int64, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}, emailValidator emailIntegrationValidator) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
@@ -674,7 +674,7 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 		return err
 	}
 	if iType == schema.EmailType {
-		return emailValidator.ValidateIntegrationConfig(ctx, integration)
+		return emailValidator.ValidateIntegrationConfig(ctx, orgID, integration)
 	}
 	return nil
 }

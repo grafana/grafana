@@ -1783,6 +1783,41 @@ func TestIntegrationEmailValidation(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+
+	t.Run("create with email belonging to a user in a different org is rejected", func(t *testing.T) {
+		otherOrgUser := helper.CreateUser("otherorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		otherOrgEmail := otherOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
+
+		otherOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+otherOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-other-org",
+				Integrations: []v1beta1.ReceiverIntegration{otherOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	t.Run("create with email belonging to a user who is a member of both orgs succeeds", func(t *testing.T) {
+		multiOrgUser := helper.CreateUser("multiorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		helper.AddUserToOrg(multiOrgUser, apis.Org1, org.RoleViewer)
+		multiOrgEmail := multiOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, multiOrgEmail, "expected multi-org user to have a non-empty email")
+
+		multiOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+multiOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-both-orgs",
+				Integrations: []v1beta1.ReceiverIntegration{multiOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err, "expected Org1 admin to be able to use the email of a user who is a member of Org1 (even if Org2 is their default org)")
+	})
 }
 
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {
