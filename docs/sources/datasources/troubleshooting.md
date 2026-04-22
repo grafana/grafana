@@ -53,13 +53,13 @@ These errors occur when Grafana can't reach the data source backend.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|---|---|
-| Incorrect URL | Verify the data source URL is correct, including the protocol (`http://` or `https://`) and port number. |
-| Network or firewall rules | Ensure the Grafana server can reach the data source endpoint. Check that firewall rules allow outbound traffic on the required port. |
-| Data source is down | Verify the data source service is running and accepting connections. |
-| DNS resolution failure | Confirm the hostname resolves correctly from the Grafana server. |
-| Private network access | If the data source is on a private network and you're using Grafana Cloud, configure [Private data source connect](ref:private-data-source-connect). |
+| Cause                     | Solution                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Incorrect URL             | Verify the data source URL is correct, including the protocol (`http://` or `https://`) and port number.                                             |
+| Network or firewall rules | Ensure the Grafana server can reach the data source endpoint. Check that firewall rules allow outbound traffic on the required port.                 |
+| Data source is down       | Verify the data source service is running and accepting connections.                                                                                 |
+| DNS resolution failure    | Confirm the hostname resolves correctly from the Grafana server.                                                                                     |
+| Private network access    | If the data source is on a private network and you're using Grafana Cloud, configure [Private data source connect](ref:private-data-source-connect). |
 
 ### TLS/SSL errors
 
@@ -89,12 +89,12 @@ These errors occur when credentials are invalid, missing, or lack the required p
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|---|---|
-| Invalid credentials | Double-check the username, password, API key, or token. Regenerate credentials if necessary. |
-| Expired credentials | Create new credentials and update the data source configuration. |
-| Insufficient permissions | Ensure the account or API key has the permissions required by the data source. Refer to the specific data source's documentation for required permissions. |
-| Wrong authentication method | Verify you've selected the correct authentication type for your setup. |
+| Cause                       | Solution                                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid credentials         | Double-check the username, password, API key, or token. Regenerate credentials if necessary.                                                               |
+| Expired credentials         | Create new credentials and update the data source configuration.                                                                                           |
+| Insufficient permissions    | Ensure the account or API key has the permissions required by the data source. Refer to the specific data source's documentation for required permissions. |
+| Wrong authentication method | Verify you've selected the correct authentication type for your setup.                                                                                     |
 
 ## Query errors
 
@@ -110,12 +110,12 @@ These errors occur when executing queries against a properly connected data sour
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|---|---|
+| Cause                           | Solution                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
 | Time range doesn't contain data | Expand the dashboard time range or verify data exists in the data source for the selected period. |
-| Incorrect query | Review the query syntax. Use the data source's query editor to build or validate the query. |
-| Wrong data source selected | Verify you've selected the correct data source in the panel or Explore. |
-| Permissions issue | Ensure the credentials have read access to the specific resource or index being queried. |
+| Incorrect query                 | Review the query syntax. Use the data source's query editor to build or validate the query.       |
+| Wrong data source selected      | Verify you've selected the correct data source in the panel or Explore.                           |
+| Permissions issue               | Ensure the credentials have read access to the specific resource or index being queried.          |
 
 ### Query timeout
 
