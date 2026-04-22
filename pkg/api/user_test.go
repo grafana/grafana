@@ -14,6 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -28,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -90,8 +91,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		hs.userService = userSvc
@@ -166,8 +166,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
@@ -199,8 +198,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
@@ -495,8 +493,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-		nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -727,8 +724,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -175,8 +176,7 @@ func setupDB(b testing.TB) benchScenario {
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(),
-		nil,
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
 	)
 	require.NoError(b, err)
 

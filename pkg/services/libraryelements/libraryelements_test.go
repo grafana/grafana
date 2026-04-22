@@ -352,8 +352,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracer,
-		quotaService, supportbundlestest.NewFakeBundleService(),
-		nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 	_, err = usrSvc.Create(context.Background(), &cmd)

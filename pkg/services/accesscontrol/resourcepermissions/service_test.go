@@ -714,8 +714,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	userSvc, err := userimpl.ProvideService(
 		sql, orgSvc, cfg, teamSvc, nil, tracer,
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-		nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

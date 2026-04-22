@@ -55,8 +55,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -484,8 +483,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-					quotaService, supportbundlestest.NewFakeBundleService(),
-					nil,
+					quotaService, supportbundlestest.NewFakeBundleService(), nil,
 				)
 				require.NoError(t, err)
 				setup()
@@ -641,8 +639,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
-			nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 

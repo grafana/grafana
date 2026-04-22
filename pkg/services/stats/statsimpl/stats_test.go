@@ -153,8 +153,7 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(),
-		nil,
+		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), nil,
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
