@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// alphanum is the alphabet of the functions.
 const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 // GetRandomString generates a random alphanumeric string of the specified length,
