@@ -145,10 +145,10 @@ func createGitRepoWithSyncEnabled(
 		"Branch":              "main",
 		"TokenUser":           user.Username,
 		"Token":               user.Password,
-		"SyncTarget":          "instance",
-		"SyncEnabled":         true,
+		"SyncEnabled":   	   true,
+		"SyncTarget":    	   "folder",
 		"SyncIntervalSeconds": syncIntervalSeconds,
-		"WorkflowsJSON":       `["write"]`,
+		"WorkflowsJSON":       `[]`,
 	})
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
@@ -280,13 +280,7 @@ func waitForNewPullJob(
 		}
 
 		c.Errorf("no new pull job yet for repo %s (seen %d)", repoName, len(seen))
-		// The wait must exceed the informer factory's 60s periodic resync
-		// period (register.go:872) because the controller has no external
-		// trigger between the initial sync and the next resync tick — any
-		// MySQL-induced slowness easily blows past 60s. 3 minutes gives the
-		// controller + worker + job-queue plenty of headroom without making
-		// an actually-broken path take forever to fail.
-	}, 3*time.Minute, 500*time.Millisecond,
+	}, common.WaitTimeoutDefault, 500*time.Millisecond,
 		"controller should schedule an interval sync after the new commit")
 
 	require.NotNil(t, newJob, "new pull job must be populated")
