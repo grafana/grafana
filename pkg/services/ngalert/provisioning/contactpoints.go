@@ -43,7 +43,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type emailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, user identity.Requester, integration alertingModels.IntegrationConfig) error
+	ValidateIntegrationConfig(ctx context.Context, user identity.Requester, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
 
 type ContactPointService struct {
@@ -663,7 +663,7 @@ func (ecp *ContactPointService) validateContactPoint(ctx context.Context, user i
 	if err != nil {
 		return err
 	}
-	return ecp.emailValidator.ValidateIntegrationConfig(ctx, user, integration)
+	return ecp.emailValidator.ValidateIntegrationConfig(ctx, user, integration, ecp.log.FromContext(ctx))
 }
 
 func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {

@@ -383,6 +383,8 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
+	logger := rs.log.FromContext(ctx).New("receiver", result.Name, "integrations", result.GetIntegrationTypes())
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -396,7 +398,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.validateReceiver(ctx, user, createdReceiver); err != nil {
+	if err := rs.validateReceiver(ctx, user, createdReceiver, logger); err != nil {
 		span.RecordError(err)
 		return nil, models.ErrReceiverInvalid(err)
 	}
@@ -425,7 +427,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
 	))
-	rs.log.FromContext(ctx).Info("Created a new receiver", "receiver", result.Name, "uid", result.UID, "fingerprint", result.Version, "integrations", result.GetIntegrationTypes())
+	logger.Info("Created a new receiver", "uid", result.UID, "fingerprint", result.Version)
 	return result, nil
 }
 
@@ -525,7 +527,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
 	}
 
-	if err := rs.validateReceiver(ctx, user, updatedReceiver); err != nil {
+	if err := rs.validateReceiver(ctx, user, updatedReceiver, logger); err != nil {
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
@@ -865,7 +867,7 @@ func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.
 	return result
 }
 
-func (rs *ReceiverService) validateReceiver(ctx context.Context, user identity.Requester, receiver models.Receiver) error {
+func (rs *ReceiverService) validateReceiver(ctx context.Context, user identity.Requester, receiver models.Receiver, l log.Logger) error {
 	if err := receiver.Validate(rs.decryptor(ctx)); err != nil {
 		return err
 	}
@@ -873,7 +875,7 @@ func (rs *ReceiverService) validateReceiver(ctx context.Context, user identity.R
 		if integration == nil || integration.Config.Type() != schema.EmailType {
 			continue
 		}
-		if err := rs.emailValidator.ValidateIntegration(ctx, user, *integration); err != nil {
+		if err := rs.emailValidator.ValidateIntegration(ctx, user, *integration, l); err != nil {
 			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
 		}
 	}

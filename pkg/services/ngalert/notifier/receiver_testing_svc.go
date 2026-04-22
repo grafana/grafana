@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -154,7 +155,7 @@ func (t *ReceiverTestingService) testIntegration(ctx context.Context, user ident
 	}
 	orgID := user.GetOrgID()
 	if integration.Config.Type() == schema.EmailType {
-		if err := t.emailValidator.ValidateIntegration(ctx, user, integration); err != nil {
+		if err := t.emailValidator.ValidateIntegration(ctx, user, integration, log.New("ngalert", "component", "integration-testing").FromContext(ctx)); err != nil {
 			return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 		}
 	}
