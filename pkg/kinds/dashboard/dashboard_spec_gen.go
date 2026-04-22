@@ -315,17 +315,24 @@ const (
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 const DashboardLinkPlacement = "inControlsMenu"
 
-// Source for dashboard links and template variables registered outside the dashboard JSON.
-// - datasource: plugin type-id in `group`
-// - globalvariable: org-wide or folder scope label in `group` (e.g. org, folder UID)
-type ControlSourceRef struct {
-	Type  ControlSourceRefType `json:"type"`
-	Group string               `json:"group"`
-}
+type ControlSourceRef = DatasourceControlSourceRef
 
 // NewControlSourceRef creates a new ControlSourceRef object.
 func NewControlSourceRef() *ControlSourceRef {
-	return &ControlSourceRef{}
+	return NewDatasourceControlSourceRef()
+}
+
+type DatasourceControlSourceRef struct {
+	Type string `json:"type"`
+	// The plugin type-id
+	Group string `json:"group"`
+}
+
+// NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
+func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
+	return &DatasourceControlSourceRef{
+		Type: "datasource",
+	}
 }
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
@@ -1215,13 +1222,6 @@ type PanelRepeatDirection string
 const (
 	PanelRepeatDirectionH PanelRepeatDirection = "h"
 	PanelRepeatDirectionV PanelRepeatDirection = "v"
-)
-
-type ControlSourceRefType string
-
-const (
-	ControlSourceRefTypeDatasource     ControlSourceRefType = "datasource"
-	ControlSourceRefTypeGlobalvariable ControlSourceRefType = "globalvariable"
 )
 
 type DataTransformerConfigTopic string

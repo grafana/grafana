@@ -5,8 +5,11 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { type SceneVariable } from '@grafana/scenes';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { getGlobalSceneVariableScope, isGlobalSceneVariable } from '../utils/globalDashboardVariables';
 
 type Column = {
   i18nKey: string;
@@ -56,17 +59,30 @@ function ProvisionedControlsSectionLabel() {
   );
 }
 
-export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined }) {
+export function SourceIcon({
+  origin,
+  variable,
+}: {
+  origin: ControlSourceRef | undefined;
+  /**
+   * When provided, the icon consults the global-variables registry to render a
+   * brackets badge for runtime-only globals. Pass `undefined` for non-variable sources
+   * (e.g. provisioned dashboard links), which never have a global equivalent.
+   */
+  variable?: SceneVariable;
+}) {
   const styles = useStyles2(getStyles);
-  const pluginName = usePluginName(origin);
+  const pluginName = usePluginName(origin, variable);
+  const isGlobal = variable !== undefined && isGlobalSceneVariable(variable);
 
-  if (origin?.type === 'globalvariable') {
+  if (isGlobal) {
+    const scope = (variable && getGlobalSceneVariableScope(variable)) || 'org';
     return (
       <Tooltip
         content={t(
           'dashboard-scene.provisioned-controls-section.tooltip-global-variable',
           'Global or folder variable ({{scope}})',
-          { scope: origin.group || 'org' }
+          { scope }
         )}
       >
         <Icon name="brackets" className={styles.iconMuted} aria-hidden />
@@ -90,16 +106,17 @@ function getSourceTooltip(pluginName: string | undefined): string {
   return t('dashboard-scene.provisioned-controls-section.tooltip-unknown', 'Added by a data source plugin');
 }
 
-function usePluginName(origin: ControlSourceRef | undefined): string | undefined {
+function usePluginName(origin: ControlSourceRef | undefined, variable?: SceneVariable): string | undefined {
+  const isGlobal = variable !== undefined && isGlobalSceneVariable(variable);
   return useMemo(() => {
-    if (!origin?.group || origin.type === 'globalvariable') {
+    if (!origin?.group || isGlobal) {
       return undefined;
     }
 
     const list = getDataSourceSrv().getList({});
     const ds = list.find((d) => d.meta.id === origin.group);
     return ds?.meta.name ?? origin.group;
-  }, [origin?.group, origin?.type]);
+  }, [origin?.group, isGlobal]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

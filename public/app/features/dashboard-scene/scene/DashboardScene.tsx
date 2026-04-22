@@ -88,6 +88,7 @@ import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompa
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { isGlobalSceneVariable } from '../utils/globalDashboardVariables';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
@@ -215,12 +216,13 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultLinksLoading?: boolean;
 }
 
-function isPersistedOrGlobalDashboardVariable(origin: SceneVariable['state']['origin']): boolean {
-  if (origin === undefined) {
-    return true;
-  }
-  const t = Reflect.get(origin, 'type');
-  return t === 'globalvariable';
+/**
+ * Returns true for variables that should be preserved when datasource-default variables
+ * are reloaded: persisted dashboard variables (no origin) and runtime-only globals
+ * (marked via {@link markAsGlobalSceneVariable}).
+ */
+function isPersistedOrGlobalDashboardVariable(v: SceneVariable): boolean {
+  return v.state.origin === undefined || isGlobalSceneVariable(v);
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -345,9 +347,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
     // Keep persisted variables (no origin) and org/folder globals (not replaced by datasource defaults).
-    const userVars = variableSet.state.variables.filter((v) => {
-      return isPersistedOrGlobalDashboardVariable(v.state.origin);
-    });
+    const userVars = variableSet.state.variables.filter(isPersistedOrGlobalDashboardVariable);
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -369,9 +369,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => {
-      return isPersistedOrGlobalDashboardVariable(v.state.origin);
-    });
+    const nonDefaultVars = variableSet.state.variables.filter(isPersistedOrGlobalDashboardVariable);
     variableSet.setState({ variables: nonDefaultVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);

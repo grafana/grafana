@@ -51,7 +51,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardDashboardLink{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref),
 		DashboardDataLink{}.OpenAPIModelName():                                                                                              schema_pkg_apis_dashboard_v2_DashboardDataLink(ref),
 		DashboardDataQueryKind{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2_DashboardDataQueryKind(ref),
-		DashboardControlSourceRef{}.OpenAPIModelName():                                                                            schema_pkg_apis_dashboard_v2_DashboardControlSourceRef(ref),
+		DashboardDatasourceControlSourceRef{}.OpenAPIModelName():                                                                            schema_pkg_apis_dashboard_v2_DashboardDatasourceControlSourceRef(ref),
 		DashboardDatasourceVariableKind{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2_DashboardDatasourceVariableKind(ref),
 		DashboardDatasourceVariableSpec{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2_DashboardDatasourceVariableSpec(ref),
 		DashboardDynamicConfigValue{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2_DashboardDynamicConfigValue(ref),
@@ -662,7 +662,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableSpec(ref common.Referenc
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -670,7 +670,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableSpec(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			DashboardAdHocFilterWithLabels{}.OpenAPIModelName(), DashboardControlSourceRef{}.OpenAPIModelName(), DashboardMetricFindValue{}.OpenAPIModelName()},
+			DashboardAdHocFilterWithLabels{}.OpenAPIModelName(), DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardMetricFindValue{}.OpenAPIModelName()},
 	}
 }
 
@@ -1432,7 +1432,7 @@ func schema_pkg_apis_dashboard_v2_DashboardConstantVariableSpec(ref common.Refer
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1440,7 +1440,7 @@ func schema_pkg_apis_dashboard_v2_DashboardConstantVariableSpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -1617,7 +1617,7 @@ func schema_pkg_apis_dashboard_v2_DashboardCustomVariableSpec(ref common.Referen
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1625,7 +1625,7 @@ func schema_pkg_apis_dashboard_v2_DashboardCustomVariableSpec(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -1732,7 +1732,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref common.ReferenceCal
 					"origin": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The source that registered the link (if any)",
-							Ref:         ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref:         ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1740,7 +1740,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -1848,7 +1848,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDataQueryKind(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_dashboard_v2_DashboardControlSourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2_DashboardDatasourceControlSourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2015,7 +2015,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDatasourceVariableSpec(ref common.Ref
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2023,7 +2023,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDatasourceVariableSpec(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -2739,7 +2739,7 @@ func schema_pkg_apis_dashboard_v2_DashboardGroupByVariableSpec(ref common.Refere
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2747,7 +2747,7 @@ func schema_pkg_apis_dashboard_v2_DashboardGroupByVariableSpec(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -2959,7 +2959,7 @@ func schema_pkg_apis_dashboard_v2_DashboardIntervalVariableSpec(ref common.Refer
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2967,7 +2967,7 @@ func schema_pkg_apis_dashboard_v2_DashboardIntervalVariableSpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -3779,7 +3779,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryVariableSpec(ref common.Referenc
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -3787,7 +3787,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryVariableSpec(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			DashboardDataQueryKind{}.OpenAPIModelName(), DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDataQueryKind{}.OpenAPIModelName(), DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 
@@ -4413,7 +4413,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSwitchVariableSpec(ref common.Referen
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -4421,7 +4421,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSwitchVariableSpec(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -4668,7 +4668,7 @@ func schema_pkg_apis_dashboard_v2_DashboardTextVariableSpec(ref common.Reference
 					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardControlSourceRef{}.OpenAPIModelName()),
+							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -4676,7 +4676,7 @@ func schema_pkg_apis_dashboard_v2_DashboardTextVariableSpec(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			DashboardControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
 	}
 }
 

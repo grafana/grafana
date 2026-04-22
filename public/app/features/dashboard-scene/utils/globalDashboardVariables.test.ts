@@ -1,42 +1,54 @@
+import { CustomVariable } from '@grafana/scenes';
 import { defaultCustomVariableKind, defaultQueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import {
-  mergeDefaultVariableKinds,
-  sortGlobalAndDatasourceDefaultVariables,
+  getGlobalSceneVariableScope,
+  isGlobalSceneVariable,
+  markAsGlobalSceneVariable,
+  sortGlobalVariableDefaults,
   tagVariableKindAsGlobalDefault,
 } from './globalDashboardVariables';
 
-
 describe('globalDashboardVariables', () => {
-  it('tagVariableKindAsGlobalDefault sets globalvariable origin', () => {
+  it('tagVariableKindAsGlobalDefault stamps datasource-shaped origin for org scope', () => {
     const v = defaultCustomVariableKind();
     v.spec.name = 'region';
-    const tagged = tagVariableKindAsGlobalDefault(v, 'org');
-    expect(tagged.spec.origin).toEqual({ type: 'globalvariable', group: 'org' });
+    const { kind, scope } = tagVariableKindAsGlobalDefault(v, 'org');
+    // We reuse the narrow datasource origin shape so the serializer's
+    // `origin !== undefined` persistence skip keeps working, without widening the schema.
+    expect(kind.spec.origin).toEqual({ type: 'datasource', group: 'org' });
+    expect(scope).toBe('org');
   });
 
-  it('sortGlobalAndDatasourceDefaultVariables sorts datasource before globalvariable', () => {
-    const g = tagVariableKindAsGlobalDefault(defaultCustomVariableKind(), 'org');
-    g.spec.name = 'g';
-
-    const d = defaultQueryVariableKind();
-    d.spec.name = 'd';
-    d.spec.origin = { type: 'datasource', group: 'prometheus' };
-
-    const sorted = sortGlobalAndDatasourceDefaultVariables([g, d]);
-    expect(sorted[0].spec.name).toBe('d');
-    expect(sorted[1].spec.name).toBe('g');
+  it('tagVariableKindAsGlobalDefault uses folder uid as scope when provided', () => {
+    const v = defaultCustomVariableKind();
+    v.spec.name = 'env';
+    const { kind, scope } = tagVariableKindAsGlobalDefault(v, 'folder', 'folder-abc');
+    expect(kind.spec.origin).toEqual({ type: 'datasource', group: 'folder-abc' });
+    expect(scope).toBe('folder-abc');
   });
 
-  it('mergeDefaultVariableKinds appends and sorts', () => {
-    const existing = defaultQueryVariableKind();
-    existing.spec.name = 'ds';
-    existing.spec.origin = { type: 'datasource', group: 'loki' };
+  it('sortGlobalVariableDefaults sorts by scope then name', () => {
+    const a = tagVariableKindAsGlobalDefault(defaultCustomVariableKind(), 'folder', 'zeta');
+    a.kind.spec.name = 'a';
+    const b = tagVariableKindAsGlobalDefault(defaultQueryVariableKind(), 'org');
+    b.kind.spec.name = 'b';
+    const c = tagVariableKindAsGlobalDefault(defaultCustomVariableKind(), 'folder', 'alpha');
+    c.kind.spec.name = 'c';
 
-    const global = tagVariableKindAsGlobalDefault(defaultCustomVariableKind(), 'org');
-    global.spec.name = 'gv';
+    const sorted = sortGlobalVariableDefaults([a, b, c]);
+    expect(sorted.map((d) => d.kind.spec.name)).toEqual(['c', 'b', 'a']);
+  });
 
-    const merged = mergeDefaultVariableKinds([existing], [global]);
-    expect(merged.map((v) => v.spec.name)).toEqual(['ds', 'gv']);
+  it('markAsGlobalSceneVariable / isGlobalSceneVariable / getGlobalSceneVariableScope round-trip', () => {
+    const plain = new CustomVariable({ name: 'plain', query: '' });
+    const global = new CustomVariable({ name: 'global', query: '' });
+
+    markAsGlobalSceneVariable(global, 'org');
+
+    expect(isGlobalSceneVariable(plain)).toBe(false);
+    expect(getGlobalSceneVariableScope(plain)).toBeUndefined();
+    expect(isGlobalSceneVariable(global)).toBe(true);
+    expect(getGlobalSceneVariableScope(global)).toBe('org');
   });
 });

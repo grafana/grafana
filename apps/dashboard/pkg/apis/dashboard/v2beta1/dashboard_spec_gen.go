@@ -1818,23 +1818,32 @@ func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardVariableSort"
 }
 
-// Source information for controls (e.g. variables or links)
-// - datasource: plugin type-id in `group`
-// - globalvariable: org-wide or folder scope label in `group` (e.g. org, folder UID)
 // +k8s:openapi-gen=true
-type DashboardControlSourceRef struct {
-	Type  DashboardControlSourceRefType `json:"type"`
-	Group string                        `json:"group"`
-}
+type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
 
 // NewDashboardControlSourceRef creates a new DashboardControlSourceRef object.
 func NewDashboardControlSourceRef() *DashboardControlSourceRef {
-	return &DashboardControlSourceRef{}
+	return NewDashboardDatasourceControlSourceRef()
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardControlSourceRef.
-func (DashboardControlSourceRef) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardControlSourceRef"
+// Source information for controls (e.g. variables or links)
+// +k8s:openapi-gen=true
+type DashboardDatasourceControlSourceRef struct {
+	Type string `json:"type"`
+	// The plugin type-id
+	Group string `json:"group"`
+}
+
+// NewDashboardDatasourceControlSourceRef creates a new DashboardDatasourceControlSourceRef object.
+func NewDashboardDatasourceControlSourceRef() *DashboardDatasourceControlSourceRef {
+	return &DashboardDatasourceControlSourceRef{
+		Type: "datasource",
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDatasourceControlSourceRef.
+func (DashboardDatasourceControlSourceRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
 }
 
 // Text variable kind
@@ -2795,19 +2804,6 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardQueryVariableSpecStaticOptionsOrder.
 func (DashboardQueryVariableSpecStaticOptionsOrder) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableSpecStaticOptionsOrder"
-}
-
-// +k8s:openapi-gen=true
-type DashboardControlSourceRefType string
-
-const (
-	DashboardControlSourceRefTypeDatasource     DashboardControlSourceRefType = "datasource"
-	DashboardControlSourceRefTypeGlobalvariable DashboardControlSourceRefType = "globalvariable"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardControlSourceRefType.
-func (DashboardControlSourceRefType) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardControlSourceRefType"
 }
 
 // +k8s:openapi-gen=true

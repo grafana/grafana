@@ -1098,15 +1098,18 @@ export type VariableSort = "disabled" | "alphabeticalAsc" | "alphabeticalDesc" |
 
 export const defaultVariableSort = (): VariableSort => ("disabled");
 
+export type ControlSourceRef = DatasourceControlSourceRef;
+
+export const defaultControlSourceRef = (): ControlSourceRef => (defaultDatasourceControlSourceRef());
+
 // Source information for controls (e.g. variables or links)
-// - datasource: plugin type-id in `group`
-// - globalvariable: org-wide or folder scope label in `group` (e.g. org, folder UID)
-export interface ControlSourceRef {
-	type: "datasource" | "globalvariable";
+export interface DatasourceControlSourceRef {
+	type: "datasource";
+	// The plugin type-id
 	group: string;
 }
 
-export const defaultControlSourceRef = (): ControlSourceRef => ({
+export const defaultDatasourceControlSourceRef = (): DatasourceControlSourceRef => ({
 	type: "datasource",
 	group: "",
 });

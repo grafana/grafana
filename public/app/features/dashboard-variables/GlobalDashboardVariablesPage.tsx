@@ -61,7 +61,13 @@ function validateGlobalVariableName(name: string): string | undefined {
 }
 
 export default function GlobalDashboardVariablesPage() {
-  const client = useMemo(() => getDashboardVariablesK8sClient(), []);
+  // The k8s client bakes the resolved API version into its URL at construction time
+  // (ScopedResourceClient caches `this.url`). `dashboardAPIVersionResolver.getV2()`
+  // returns a beta fallback when the resolver hasn't run yet — which is exactly the
+  // state on a fresh reload of this page (no prior dashboard load to trigger resolve).
+  // Defer client construction until after resolution so the URL points at the version
+  // where the backend actually registers the Variables resource (v2).
+  const [client, setClient] = useState<ReturnType<typeof getDashboardVariablesK8sClient> | null>(null);
   const [items, setItems] = useState<Array<Resource<VariableKind>>>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string>();
@@ -75,7 +81,28 @@ export default function GlobalDashboardVariablesPage() {
     [variableScene]
   );
 
+  useEffect(() => {
+    if (!config.featureToggles.globalDashboardVariables) {
+      return;
+    }
+    let cancelled = false;
+    dashboardAPIVersionResolver
+      .resolve()
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setClient(getDashboardVariablesK8sClient());
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const reloadList = useCallback(async () => {
+    if (!client) {
+      return;
+    }
     setLoading(true);
     setLoadError(undefined);
     try {
@@ -89,11 +116,11 @@ export default function GlobalDashboardVariablesPage() {
   }, [client]);
 
   useEffect(() => {
-    if (!config.featureToggles.globalDashboardVariables) {
+    if (!client) {
       return;
     }
     reloadList();
-  }, [reloadList]);
+  }, [client, reloadList]);
 
   const openNew = () => {
     setFolderUid(undefined);
@@ -126,7 +153,7 @@ export default function GlobalDashboardVariablesPage() {
   };
 
   const onSave = async () => {
-    if (!variableScene) {
+    if (!client || !variableScene) {
       return;
     }
     const err = validateGlobalVariableName(variableScene.state.name);
@@ -154,7 +181,6 @@ export default function GlobalDashboardVariablesPage() {
 
     try {
       if (editing === 'new') {
-        await dashboardAPIVersionResolver.resolve();
         await client.create({
           apiVersion: `dashboard.grafana.app/${dashboardAPIVersionResolver.getV2()}`,
           kind: 'Variable',
@@ -184,7 +210,7 @@ export default function GlobalDashboardVariablesPage() {
   };
 
   const onDelete = async () => {
-    if (!deleteTarget?.metadata?.name) {
+    if (!client || !deleteTarget?.metadata?.name) {
       return;
     }
     try {

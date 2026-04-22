@@ -63,7 +63,10 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
-import { fetchGlobalDashboardVariablesForLoad, mergeDefaultVariableKinds } from '../utils/globalDashboardVariables';
+import {
+  fetchGlobalDashboardVariablesForLoad,
+  type GlobalVariableDefault,
+} from '../utils/globalDashboardVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -110,6 +113,12 @@ export interface LoadDashboardOptions {
   /** Folder UID for the loaded dashboard (e.g. on reload when annotations are not re-fetched). */
   folderUid?: string;
   defaultVariables?: VariableKind[];
+  /**
+   * Default variables sourced from the global dashboard variables service (org- and
+   * folder-scoped). Kept separate from {@link defaultVariables} so the scene construction
+   * step can mark them via {@link markAsGlobalSceneVariable} without widening any schema.
+   */
+  globalDefaultVariables?: GlobalVariableDefault[];
   defaultLinks?: DashboardLink[];
 }
 
@@ -1003,7 +1012,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const globals = await fetchGlobalDashboardVariablesForLoad(rsp, folderUid);
       return {
         ...options,
-        defaultVariables: mergeDefaultVariableKinds(options.defaultVariables, globals),
+        globalDefaultVariables: globals,
       };
     } catch (e) {
       console.warn('Failed to load global dashboard variables', e);
