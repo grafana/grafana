@@ -31,11 +31,11 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 
 func buildDataImportRows(count int) []DataImportRow {
 	rows := make([]DataImportRow, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		rows[i] = DataImportRow{
 			GUID:    fmt.Sprintf("guid-%d", i),
 			KeyPath: fmt.Sprintf("unified/data/group/resource/ns/name-%04d/1~created~", i),
-			Value:   []byte(fmt.Sprintf(`{"name":"item-%04d"}`, i)),
+			Value:   fmt.Appendf(nil, `{"name":"item-%04d"}`, i),
 		}
 	}
 

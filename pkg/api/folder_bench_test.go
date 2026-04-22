@@ -146,7 +146,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
 			b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
@@ -183,7 +183,7 @@ func setupDB(b testing.TB) benchScenario {
 	var orgID int64 = 1
 
 	userIDs := make([]int64, 0, TEAM_MEMBER_NUM)
-	for i := 0; i < TEAM_MEMBER_NUM; i++ {
+	for i := range TEAM_MEMBER_NUM {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			OrgID: orgID,
 			Login: fmt.Sprintf("user%d", i),
@@ -263,7 +263,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
-	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
+	for i := range LEVEL0_FOLDER_NUM {
 		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
