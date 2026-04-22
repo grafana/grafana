@@ -38,7 +38,7 @@ describe('Field', () => {
     expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
   });
 
-  it('associates the label with an Input when no id is set', () => {
+  it('associates the label with a Checkbox when no id is set', () => {
     render(
       <Field label="My label">
         <Checkbox />
