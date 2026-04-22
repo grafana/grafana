@@ -40,8 +40,8 @@ const volumeSeries: uPlot.Series[] = [
 ];
 
 describe('drawMarkers', () => {
-  const height = 400;
-  const width = 800;
+  const height = 800;
+  const width = 1600;
   const upColor = '#73BF69';
   const downColor = '#F2495C';
   const flatColor = '#888888';
@@ -60,6 +60,12 @@ describe('drawMarkers', () => {
       ...overrides,
     });
 
+  /** Y-axis tick labels: default uPlot would round to ~1 decimal, hiding OHLC resolution in the mock view. */
+  const yAxisValues4Decimals: uPlot.Axis.Values = (_u, splits) => splits.map((v) => v.toFixed(4));
+
+  /** Wider gutter so 4-decimal tick strings are not clipped (uPlot `Axis.size` = y axis width in CSS px). */
+  const yAxisGutterWidthPx = 100;
+
   const getPlot = async (
     data: uPlot.AlignedData,
     series: uPlot.Series[] = defaultSeries
@@ -69,6 +75,8 @@ describe('drawMarkers', () => {
         height,
         width,
         series: series ?? defaultSeries,
+        // [x, y] — use custom numeric formatting on the y scale (see uPlot `Axis.values`)
+        axes: [{}, { scale: 'y', size: yAxisGutterWidthPx, values: yAxisValues4Decimals }],
       },
       data
     );
@@ -111,7 +119,8 @@ describe('drawMarkers', () => {
             expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(
               dataOverrides ?? defaultData,
               seriesOverrides ?? defaultSeries,
-              uPlotEvents
+              uPlotEvents,
+              { width, height }
             );
           }
         );
@@ -137,7 +146,10 @@ describe('drawMarkers', () => {
       async (_, setup) => {
         const { testEvents, uPlotEvents } = await getPlot(defaultData, volumeSeries);
         expect(() => getDraw(volumeOpts)(testEvents)).not.toThrow();
-        expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(defaultData, volumeSeries, uPlotEvents);
+        expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(defaultData, volumeSeries, uPlotEvents, {
+          width,
+          height,
+        });
       }
     );
   });

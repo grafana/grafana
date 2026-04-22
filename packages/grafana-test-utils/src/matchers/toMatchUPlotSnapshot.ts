@@ -10,7 +10,12 @@ import {
   type UPlotComparePayloadV1,
 } from '../uplotComparePayload';
 
-export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
+type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
+
+type UPlotSnapshotSize = {
+  width?: number;
+  height?: number;
+};
 
 type SnapshotMismatch = jest.CustomMatcherResult & {
   expected?: string;
@@ -22,9 +27,18 @@ export function toMatchUPlotSnapshot(
   data: uPlot.AlignedData,
   series: uPlot.Series[],
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
+  size?: UPlotSnapshotSize,
+  snapshotHint?: string,
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
-  const result = toMatchSnapshot.call(this, received, ...rest) as SnapshotMismatch; // @todo how to properly get actual from jest?
+  const payloadWidth = size?.width;
+  const payloadHeight = size?.height;
+  const snapshotName = snapshotHint;
+  const result = (
+    snapshotName !== undefined
+      ? toMatchSnapshot.call(this, received, snapshotName, ...rest)
+      : toMatchSnapshot.call(this, received, ...rest)
+  ) as SnapshotMismatch; // @todo how to properly get actual from jest?
 
   if (!result.pass && result.expected != null) {
     const parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
@@ -38,6 +52,8 @@ export function toMatchUPlotSnapshot(
       uPlotData: data,
       uPlotSeries: series,
       uPlotCanvasEvents: uPlotCanvasEvents,
+      ...(payloadWidth !== undefined && { width: payloadWidth }),
+      ...(payloadHeight !== undefined && { height: payloadHeight }),
     };
 
     const { fullPath, publicBasename } = resolveUplotComparePayloadWriteTarget(testName);

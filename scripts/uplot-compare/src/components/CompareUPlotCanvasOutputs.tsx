@@ -3,15 +3,20 @@ import * as React from 'react';
 import type uPlot from 'uplot';
 import type { AlignedData } from 'uplot';
 
-import { isUPlotComparePayloadV1 } from '@grafana/test-utils/uplot-compare-payload';
+import { isUPlotComparePayloadV1, type UPlotComparePayloadV1 } from '@grafana/test-utils/uplot-compare-payload';
 
 import { eventsToCanvasScript } from '../canvasUtils.ts';
 
 type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
 
+/** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
+const FALLBACK_CANVAS_WIDTH = 400;
+const FALLBACK_CANVAS_HEIGHT = 200;
+
 interface Props {
-  height: number;
-  width: number;
+  /** Default canvas CSS px if payload does not include `width` / `height` */
+  defaultWidth?: number;
+  defaultHeight?: number;
 }
 
 type ResolvedPayload = {
@@ -21,7 +26,18 @@ type ResolvedPayload = {
   uPlotData?: AlignedData;
   uPlotSeries?: uPlot.Series[];
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
+  width?: number;
+  height?: number;
 };
+
+function readPayloadDimensions(raw: UPlotComparePayloadV1): Pick<ResolvedPayload, 'width' | 'height'> {
+  const w = raw.width;
+  const h = raw.height;
+  return {
+    ...(typeof w === 'number' && Number.isFinite(w) ? { width: w } : {}),
+    ...(typeof h === 'number' && Number.isFinite(h) ? { height: h } : {}),
+  };
+}
 
 type ViewState =
   | { kind: 'loading' }
@@ -46,7 +62,10 @@ function parsePayloadJson(text: string): unknown {
 /**
  * Static site component, DO NOT EVER USE THIS IN GRAFANA
  */
-export const Compare = ({ height, width }: Props) => {
+export const CompareUPlotCanvasOutputs = ({
+  defaultWidth = FALLBACK_CANVAS_WIDTH,
+  defaultHeight = FALLBACK_CANVAS_HEIGHT,
+}: Props = {}) => {
   const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
   const [pasteText, setPasteText] = React.useState('');
 
@@ -69,6 +88,7 @@ export const Compare = ({ height, width }: Props) => {
         uPlotData: raw.uPlotData,
         uPlotSeries: raw.uPlotSeries,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+        ...readPayloadDimensions(raw),
       } as ResolvedPayload,
     });
   }, []);
@@ -174,6 +194,7 @@ export const Compare = ({ height, width }: Props) => {
             uPlotData: raw.uPlotData,
             uPlotSeries: raw.uPlotSeries,
             uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+            ...readPayloadDimensions(raw),
           } as ResolvedPayload,
         });
       } catch (e) {
@@ -264,10 +285,20 @@ export const Compare = ({ height, width }: Props) => {
     );
   }
 
-  return <ComparePlots height={height} width={width} payload={view.payload} />;
+  return <ComparePlots defaultWidth={defaultWidth} defaultHeight={defaultHeight} payload={view.payload} />;
 };
 
-function ComparePlots({ height, width, payload }: Props & { payload: ResolvedPayload }) {
+function ComparePlots({
+  defaultWidth,
+  defaultHeight,
+  payload,
+}: {
+  defaultWidth: number;
+  defaultHeight: number;
+  payload: ResolvedPayload;
+}) {
+  const width = payload.width ?? defaultWidth;
+  const height = payload.height ?? defaultHeight;
   const expectedCanvasCalls = React.useMemo(
     () => eventsToCanvasScript(payload.expected, 'expected'),
     [payload.expected]
@@ -297,8 +328,6 @@ function ComparePlots({ height, width, payload }: Props & { payload: ResolvedPay
       eval(expectedCanvasCalls);
     }
   }, [expectedCanvasCalls, payload.uPlotCanvasEvents]);
-
-  console.log('payload', payload);
 
   return (
     <>
