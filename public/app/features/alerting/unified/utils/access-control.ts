@@ -21,7 +21,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
-import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import { isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
 
