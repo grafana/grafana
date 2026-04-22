@@ -1907,6 +1907,13 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "links": [
+            {
+              "targetBlank": false,
+              "title": "Go to dashboard",
+              "url": "/d/EJ8_d9jZk?q=${__value.text}"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [

@@ -13,7 +13,7 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Value Options All')),
       'stat panel is rendered'
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible();
 
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
@@ -150,5 +150,22 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     // panel 30: fixed CSV data 0 → 0 (0/0 = NaN percent change) — percent change widget is hidden
     await expect(page.getByTestId('icon-arrow-up'), 'no upward arrow for NaN percent change').toBeHidden();
     await expect(page.getByTestId('icon-arrow-down'), 'no downward arrow for NaN percent change').toBeHidden();
+  });
+
+  test('data link: single link wraps each stat cell as anchor', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '31' }),
+    });
+
+    // panel 31 "Value Options All" has 2 static values (Name1=10, Name2=20) and a single data link
+    // each BigValue cell is wrapped in an <a> pointing to the configured URL
+    const dataLinks = dashboardPage.getByGrafanaSelector(selectors.components.DataLinksContextMenu.singleLink);
+    await expect(dataLinks.first(), 'stat cell with data link is rendered as anchor').toBeVisible();
+    await expect(dataLinks, 'both stat cells have the data link').toHaveCount(2);
+    await expect(dataLinks.first(), 'data link href matches configured URL').toHaveAttribute(
+      'href',
+      '/d/EJ8_d9jZk?q=10'
+    );
   });
 });
