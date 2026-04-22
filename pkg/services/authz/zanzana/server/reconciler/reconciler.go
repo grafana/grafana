@@ -251,58 +251,58 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 			}
 
 			r.metrics.workQueueDepth.Dec()
-
-			// Wrap in IIFE to correctly release nemaspace in case of panic and make it easier to extend in future.
-			func() {
-				defer r.queuedNamespaces.Delete(namespace)
-
-				start := time.Now()
-				result, err := r.reconcileNamespace(ctx, namespace)
-				elapsed := time.Since(start)
-				status := "success"
-				if err != nil {
-					status = "error"
-					if ctx.Err() != nil {
-						r.logger.Warn("Reconciler shutdown during namespace reconciliation",
-							"namespace", namespace,
-							"workerID", workerID,
-						)
-					} else {
-						logFields := []any{
-							"namespace", namespace,
-							"workerID", workerID,
-							"error", err,
-							"duration", elapsed,
-						}
-						if result != nil {
-							logFields = append(logFields,
-								"expectedTuples", result.ExpectedTuples,
-								"tuplesToAdd", result.TuplesToAdd,
-								"tuplesToDelete", result.TuplesToDelete,
-							)
-						}
-						r.logger.Error("Failed to reconcile namespace", logFields...)
-					}
-				} else {
-					logFields := []any{
-						"namespace", namespace,
-						"workerID", workerID,
-						"duration", elapsed,
-					}
-					if result != nil {
-						logFields = append(logFields,
-							"expectedTuples", result.ExpectedTuples,
-							"tuplesToAdd", result.TuplesToAdd,
-							"tuplesToDelete", result.TuplesToDelete,
-							"inSync", result.InSync,
-						)
-					}
-					r.logger.Info("Reconciled namespace", logFields...)
-				}
-				r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
-			}()
+			r.runNamespaceReconciliation(ctx, namespace, workerID)
 		}
 	}
+}
+
+func (r *Reconciler) runNamespaceReconciliation(ctx context.Context, namespace string, workerID int) {
+	defer r.queuedNamespaces.Delete(namespace)
+
+	start := time.Now()
+	result, err := r.reconcileNamespace(ctx, namespace)
+	elapsed := time.Since(start)
+	status := "success"
+	if err != nil {
+		status = "error"
+		if ctx.Err() != nil {
+			r.logger.Warn("Reconciler shutdown during namespace reconciliation",
+				"namespace", namespace,
+				"workerID", workerID,
+			)
+		} else {
+			logFields := []any{
+				"namespace", namespace,
+				"workerID", workerID,
+				"error", err,
+				"duration", elapsed,
+			}
+			if result != nil {
+				logFields = append(logFields,
+					"expectedTuples", result.ExpectedTuples,
+					"tuplesToAdd", result.TuplesToAdd,
+					"tuplesToDelete", result.TuplesToDelete,
+				)
+			}
+			r.logger.Error("Failed to reconcile namespace", logFields...)
+		}
+	} else {
+		logFields := []any{
+			"namespace", namespace,
+			"workerID", workerID,
+			"duration", elapsed,
+		}
+		if result != nil {
+			logFields = append(logFields,
+				"expectedTuples", result.ExpectedTuples,
+				"tuplesToAdd", result.TuplesToAdd,
+				"tuplesToDelete", result.TuplesToDelete,
+				"inSync", result.InSync,
+			)
+		}
+		r.logger.Info("Reconciled namespace", logFields...)
+	}
+	r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 }
 
 // reconcileNamespace performs reconciliation for a single namespace.
