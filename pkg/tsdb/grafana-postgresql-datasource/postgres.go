@@ -56,8 +56,12 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{}
-	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
-	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+	if config.DSInfo.JsonData.ConnMaxLifetime > 0 {
+		pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
+	}
+	if config.DSInfo.JsonData.MaxOpenConns > 0 {
+		pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+	}
 
 	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
 	if err != nil {

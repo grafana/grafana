@@ -44,7 +44,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   // When the maximum number of connections is changed
   // see if we have the automatic idle option enabled
   const onMaxConnectionsChanged = (number?: number) => {
-    if (autoIdle && number) {
+    if (autoIdle && number !== undefined) {
       updateJsonData({
         maxOpenConns: number,
         maxIdleConns: number,

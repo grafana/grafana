@@ -12,11 +12,74 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
+
+func TestPgxPoolConfigWithZeroMaxConns(t *testing.T) {
+	connStr := "user='test' host='localhost' dbname='test' sslmode='disable'"
+	pgxConf, err := pgxpool.ParseConfig(connStr)
+	require.NoError(t, err)
+
+	defaultMaxConns := pgxConf.MaxConns
+
+	tests := []struct {
+		name            string
+		maxOpenConns    int
+		connMaxLifetime int
+		expectMaxConns  int32
+		expectLifetime  time.Duration
+	}{
+		{
+			name:            "zero maxOpenConns uses pgxpool default",
+			maxOpenConns:    0,
+			connMaxLifetime: 600,
+			expectMaxConns:  defaultMaxConns,
+			expectLifetime:  600 * time.Second,
+		},
+		{
+			name:            "negative maxOpenConns uses pgxpool default",
+			maxOpenConns:    -1,
+			connMaxLifetime: 600,
+			expectMaxConns:  defaultMaxConns,
+			expectLifetime:  600 * time.Second,
+		},
+		{
+			name:            "positive maxOpenConns is applied",
+			maxOpenConns:    10,
+			connMaxLifetime: 600,
+			expectMaxConns:  10,
+			expectLifetime:  600 * time.Second,
+		},
+		{
+			name:            "zero connMaxLifetime uses pgxpool default",
+			maxOpenConns:    10,
+			connMaxLifetime: 0,
+			expectMaxConns:  10,
+			expectLifetime:  pgxConf.MaxConnLifetime,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := pgxpool.ParseConfig(connStr)
+			require.NoError(t, err)
+
+			if tt.connMaxLifetime > 0 {
+				cfg.MaxConnLifetime = time.Duration(tt.connMaxLifetime) * time.Second
+			}
+			if tt.maxOpenConns > 0 {
+				cfg.MaxConns = int32(tt.maxOpenConns)
+			}
+
+			assert.Equal(t, tt.expectMaxConns, cfg.MaxConns)
+			assert.Equal(t, tt.expectLifetime, cfg.MaxConnLifetime)
+		})
+	}
+}
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionString(t *testing.T) {
