@@ -38,7 +38,7 @@ func NewEmailValidator(svc UserLookup, enabled bool) EmailIntegrationValidator {
 }
 
 func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, integration models.Integration) error {
-	if integration.Config.Type() != schema.EmailType || integration.Config.Version != schema.V1 { // TODO support v0
+	if integration.Config.Type() != schema.EmailType || integration.Config.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
 	cfg, err := IntegrationToIntegrationConfig(integration)
@@ -49,7 +49,7 @@ func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, integra
 }
 
 func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, integration alertingModels.IntegrationConfig) error {
-	if integration.Type != schema.EmailType || integration.Version != schema.V1 { // TODO support v0
+	if integration.Type != schema.EmailType || integration.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
 	cfg, err := emailv1.NewConfig(integration.Settings, nil)
