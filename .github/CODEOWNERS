@@ -316,6 +316,7 @@
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
+/devenv/docker/blocks/pgvector/ @grafana/grafana-search-and-storage
 /devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
 /devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus/ @grafana/data-sources-plugins
