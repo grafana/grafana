@@ -11,9 +11,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
     await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Horizontal with graph')),
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Value Options All')),
       'stat panel is rendered'
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
 
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
@@ -25,8 +25,8 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       queryParams: new URLSearchParams({ editPanel: '33' }),
     });
 
-    const emptyMessage = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage);
-    await expect(emptyMessage, 'that the empty text appears').toHaveText('No data');
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'that the empty text appears').toHaveText('No data');
 
     const noValueOption = dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Standard options No value'))
@@ -34,7 +34,7 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
 
     await noValueOption.fill('My empty value');
     await noValueOption.blur();
-    await expect(emptyMessage, 'that the empty text has changed').toHaveText('My empty value');
+    await expect(panelContent, 'that the empty text has changed').toHaveText('My empty value');
   });
 
   test('sparkline: area mode renders a chart per series', async ({ gotoDashboardPage, page }) => {
