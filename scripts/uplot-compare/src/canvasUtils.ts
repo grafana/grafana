@@ -104,6 +104,13 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'clip': {
       const p = props.path;
       const fillRule = props.fillRule ?? 'nonzero';
+      if (!Array.isArray(p) || p.length === 0) {
+        // Empty path: must not reuse the context's current path (jest-canvas-mock encodes
+        // `ctx.clip(emptyPath)` this way; clipping to an empty subpath is a no-op in practice).
+        lines.push(`${ctx}.beginPath();`);
+        lines.push(`${ctx}.clip("${fillRule}");`);
+        return;
+      }
       emitSubpath(p, ctx, lines);
       lines.push(`${ctx}.clip("${fillRule}");`);
       return;
@@ -111,12 +118,25 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'fill': {
       const p = props.path;
       const fillRule = props.fillRule ?? 'nonzero';
+      if (!Array.isArray(p) || p.length === 0) {
+        // `ctx.fill(emptyPath2D)` is a no-op. Replaying `fill()` without rebuilding the path
+        // would incorrectly re-fill the *previous* path (see uplot-compare with candlestick
+        // drawMarkers: flat + hollowPath empty segments).
+        lines.push(`${ctx}.beginPath();`);
+        lines.push(`${ctx}.fill("${fillRule}");`);
+        return;
+      }
       emitSubpath(p, ctx, lines);
       lines.push(`${ctx}.fill("${fillRule}");`);
       return;
     }
     case 'stroke': {
       const p = props.path;
+      if (!Array.isArray(p) || p.length === 0) {
+        lines.push(`${ctx}.beginPath();`);
+        lines.push(`${ctx}.stroke();`);
+        return;
+      }
       emitSubpath(p, ctx, lines);
       lines.push(`${ctx}.stroke();`);
       return;

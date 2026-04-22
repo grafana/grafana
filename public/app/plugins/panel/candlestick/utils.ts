@@ -177,7 +177,6 @@ export function drawMarkers(opts: RendererOpts) {
     ctx.save();
 
     ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
-    ctx.arc(100, 100, 20, 0, 360);
     ctx.clip();
 
     if (drawVolume && flatPathVol && upPathVol && downPathVol) {

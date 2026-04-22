@@ -7,6 +7,10 @@ exports[`drawMarkers candle with volume events 1`] = `
     "type": "save",
   },
   {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
     "props": {
       "height": 333,
       "width": 725,
@@ -415,6 +419,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
     "type": "save",
   },
   {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
     "props": {
       "height": 333,
       "width": 725,
@@ -782,6 +790,10 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
     "type": "save",
   },
   {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
     "props": {
       "height": 333,
       "width": 725,
@@ -1086,6 +1098,10 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
   {
     "props": {},
     "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
   },
   {
     "props": {
