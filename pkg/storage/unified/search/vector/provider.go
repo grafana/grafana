@@ -10,17 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// ProvideVectorBackendForServer is a wire-friendly wrapper used by the
-// monolithic Grafana server (targets `all`/`core`, or the bare
-// `grafana-server` binary). The single pod is both reader and writer, so
-// it always runs migrations. Split-mode callers (target=storage-server,
-// target=search-server) use ProvideVectorBackend directly from the module
-// server so the migration gate can follow the pod's role.
-func ProvideVectorBackendForServer(cfg *setting.Cfg) (VectorBackend, error) {
-	return ProvideVectorBackend(context.Background(), cfg, true)
+func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
+	return InitVectorBackend(context.Background(), cfg, true)
 }
 
-// ProvideVectorBackend creates a pgvectorBackend from the [database_vector]
+// InitVectorBackend creates a pgvectorBackend from the [database_vector]
 // config section. It opens a connection to the separate pgvector database
 // and returns a ready-to-use VectorBackend. When runMigrations is true, the
 // schema migrations are applied before the backend is returned.
@@ -28,7 +22,7 @@ func ProvideVectorBackendForServer(cfg *setting.Cfg) (VectorBackend, error) {
 // Returns (nil, nil) if vector search is disabled via the
 // [unified_storage] enable_vector_search flag. Returns an error if the flag
 // is enabled but VectorDBHost is unset, so silent misconfiguration fails loud.
-func ProvideVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
+func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
 	if !cfg.EnableVectorSearch {
 		return nil, nil
 	}

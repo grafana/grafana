@@ -246,7 +246,7 @@ func (s *ModuleServer) Run() error {
 		if s.vectorBackend == nil {
 			runMigrations := m.IsModuleEnabled(modules.StorageServer)
 			var err error
-			s.vectorBackend, err = vector.ProvideVectorBackend(context.Background(), s.cfg, runMigrations)
+			s.vectorBackend, err = vector.InitVectorBackend(context.Background(), s.cfg, runMigrations)
 			if err != nil {
 				return nil, err
 			}

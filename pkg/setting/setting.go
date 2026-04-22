@@ -681,26 +681,26 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	// Vector storage (separate pgvector database)
-	EnableVectorSearch bool
-	VectorDBHost       string
-	VectorDBPort       string
-	VectorDBName       string
-	VectorDBUser       string
-	VectorDBPassword   string
-	VectorDBSSLMode    string
-	OverridesFilePath                          string
-	OverridesReloadInterval                    time.Duration
-	EnforcedQuotaResources                     []string
-	QuotasErrorMessageSupportInfo              string
-	EnableSQLKVBackend                         bool
-	EnableSQLKVCompatibilityMode               bool
-	EnableGarbageCollection                    bool
-	GarbageCollectionDryRun                    bool
-	GarbageCollectionInterval                  time.Duration
-	GarbageCollectionBatchSize                 int
-	GarbageCollectionBatchWait                 time.Duration
-	GarbageCollectionMaxAge                    time.Duration
-	DashboardsGarbageCollectionMaxAge          time.Duration
+	EnableVectorSearch                bool
+	VectorDBHost                      string
+	VectorDBPort                      string
+	VectorDBName                      string
+	VectorDBUser                      string
+	VectorDBPassword                  string
+	VectorDBSSLMode                   string
+	OverridesFilePath                 string
+	OverridesReloadInterval           time.Duration
+	EnforcedQuotaResources            []string
+	QuotasErrorMessageSupportInfo     string
+	EnableSQLKVBackend                bool
+	EnableSQLKVCompatibilityMode      bool
+	EnableGarbageCollection           bool
+	GarbageCollectionDryRun           bool
+	GarbageCollectionInterval         time.Duration
+	GarbageCollectionBatchSize        int
+	GarbageCollectionBatchWait        time.Duration
+	GarbageCollectionMaxAge           time.Duration
+	DashboardsGarbageCollectionMaxAge time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
 	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
