@@ -82,13 +82,15 @@ export const InlineField = ({
   const Wrapper = useFieldset ? 'fieldset' : 'div';
 
   return (
-    <FieldContext.Provider value={{
-      id: inputId,
-      invalid,
-      disabled,
-      loading,
-      'aria-labelledby': useFieldset ? labelId : undefined,
-    }}>
+    <FieldContext.Provider
+      value={{
+        id: inputId,
+        invalid,
+        disabled,
+        loading,
+        'aria-labelledby': useFieldset ? labelId : undefined,
+      }}
+    >
       <Wrapper className={cx(styles.container, className)} {...htmlProps}>
         {labelElement}
         <div className={styles.childContainer}>
