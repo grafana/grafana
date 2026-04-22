@@ -55,12 +55,11 @@ describe('panel-timerange/utils', () => {
       ['should shift by 1 day when compareWith is 1d', '1d', '2024-01-09T06:00:00.000Z', '2024-01-09T12:00:00.000Z'],
       ['should shift by 1 week when compareWith is 1w', '1w', '2024-01-03T06:00:00.000Z', '2024-01-03T12:00:00.000Z'],
       ['should shift by 2 hours when compareWith is 2h', '2h', '2024-01-10T04:00:00.000Z', '2024-01-10T10:00:00.000Z'],
-    ])('%s', (_,  compareWith, expectedFrom, expectedTo ) => {
+    ])('%s', (_, compareWith, expectedFrom, expectedTo) => {
       const result = getCompareTimeRange(baseRange, compareWith)!;
       expect(result.from.toISOString()).toBe(expectedFrom);
       expect(result.to.toISOString()).toBe(expectedTo);
     });
-
 
     it('should populate raw to match the shifted range', () => {
       // raw.from/to are typed `string | DateTime`; dateTime() normalizes either for ISO comparison.
