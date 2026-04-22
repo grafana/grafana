@@ -271,28 +271,30 @@ export const LogLineDetailsHeader = ({
             tabIndex={0}
           />
         )}
-        <div className={`${styles.divider} ${styles.dividerMargin}`} />
-        {detailsMode === 'inline' && inlineNoScroll !== undefined && (
-          <IconButton
-            name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
-            tooltip={
-              inlineNoScroll === true
-                ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
-                : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
-            }
-            onClick={toggleDetailsScroll}
-          />
-        )}
         {setDetailsMode && (
-          <IconButton
-            name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
-            tooltip={
-              detailsMode === 'inline'
-                ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
-                : t('logs.log-line-details.inline-mode', 'Display inline')
-            }
-            onClick={toggleDetailsMode}
-          />
+          <>
+            <div className={`${styles.divider} ${styles.dividerMargin}`} />
+            {detailsMode === 'inline' && inlineNoScroll !== undefined && (
+              <IconButton
+                name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
+                tooltip={
+                  inlineNoScroll === true
+                    ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
+                    : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
+                }
+                onClick={toggleDetailsScroll}
+              />
+            )}
+            <IconButton
+              name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
+              tooltip={
+                detailsMode === 'inline'
+                  ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
+                  : t('logs.log-line-details.inline-mode', 'Display inline')
+              }
+              onClick={toggleDetailsMode}
+            />
+          </>
         )}
         <div className={styles.divider} />
         {detailsMode === 'sidebar' ? (
