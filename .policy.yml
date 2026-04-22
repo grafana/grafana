@@ -44,7 +44,6 @@ policy:
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
             - Workflow .github/workflows/storybook-a11y.yml succeeded or skipped
             - Workflow .github/workflows/swagger-gen.yml succeeded or skipped
-            - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
         - override policies
