@@ -1839,13 +1839,32 @@
         "tags": ["ServiceAccount"],
         "description": "connect GET requests to tokens of ServiceAccount",
         "operationId": "getServiceAccountTokens",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of tokens to return in a single page",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token returned by a previous list response to fetch the next page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListTokensBody"
+                  "$ref": "#/components/schemas/ListServiceAccountTokensBody"
                 }
               }
             }
@@ -1855,7 +1874,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "post": {
@@ -1866,7 +1885,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTokenRequestBody"
+                "$ref": "#/components/schemas/CreateServiceAccountTokenRequestBody"
               }
             }
           }
@@ -1877,7 +1896,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateTokenBody"
+                  "$ref": "#/components/schemas/CreateServiceAccountTokenBody"
                 }
               }
             }
@@ -1887,7 +1906,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
@@ -1914,7 +1933,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenItem"
+                  "$ref": "#/components/schemas/GetServiceAccountTokenBody"
                 }
               }
             }
@@ -1924,7 +1943,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "delete": {
@@ -1937,7 +1956,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeleteTokenBody"
+                  "$ref": "#/components/schemas/DeleteServiceAccountTokenBody"
                 }
               }
             }
@@ -1947,7 +1966,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
@@ -4590,24 +4609,26 @@
   },
   "components": {
     "schemas": {
-      "CreateTokenBody": {
+      "CreateServiceAccountTokenBody": {
         "type": "object",
-        "required": ["token", "serviceAccountTokenName"],
+        "required": ["token", "serviceAccountTokenName", "expires"],
         "properties": {
           "expires": {
-            "description": "Unix timestamp in seconds when the token expires. 0 means the token never expires.",
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "default": 0
           },
           "serviceAccountTokenName": {
-            "type": "string"
+            "type": "string",
+            "default": ""
           },
           "token": {
-            "type": "string"
+            "type": "string",
+            "default": ""
           }
         }
       },
-      "CreateTokenRequestBody": {
+      "CreateServiceAccountTokenRequestBody": {
         "type": "object",
         "required": ["tokenName"],
         "properties": {
@@ -4620,13 +4641,74 @@
           }
         }
       },
-      "DeleteTokenBody": {
+      "CreateServiceAccountTokenResponse": {
         "type": "object",
+        "required": ["token", "serviceAccountTokenName", "expires"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "CreateServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "DeleteServiceAccountTokenBody": {
+        "type": "object",
+        "required": ["message"],
         "properties": {
           "message": {
-            "type": "string"
+            "type": "string",
+            "default": ""
           }
         }
+      },
+      "DeleteServiceAccountTokenResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "DeleteServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "ExternalGroupMapping": {
         "type": "object",
@@ -4924,6 +5006,66 @@
           "title": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "GetServiceAccountTokenBody": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "default": {}
+          }
+        }
+      },
+      "GetServiceAccountTokenResponse": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "body": {
+            "default": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "GetServiceAccountTokenToken": {
+        "type": "object",
+        "required": ["title", "revoked", "expires", "created", "updated", "lastUsed"],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5270,18 +5412,89 @@
           }
         }
       },
-      "ListTokensBody": {
+      "ListServiceAccountTokensBody": {
         "type": "object",
-        "required": ["items"],
+        "required": ["items", "continue"],
         "properties": {
           "continue": {
-            "type": "string"
+            "type": "string",
+            "default": ""
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TokenItem"
+              "default": {}
             }
+          }
+        }
+      },
+      "ListServiceAccountTokensResponse": {
+        "type": "object",
+        "required": ["items", "continue"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ListServiceAccountTokensToken"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ListServiceAccountTokensResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "ListServiceAccountTokensToken": {
+        "type": "object",
+        "required": ["title", "revoked", "expires", "created", "updated", "lastUsed"],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5997,38 +6210,6 @@
           "title": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "TokenItem": {
-        "type": "object",
-        "required": ["title"],
-        "properties": {
-          "created": {
-            "description": "Unix timestamp in seconds when the token was created.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "expires": {
-            "description": "Unix timestamp in seconds when the token expires. 0 means the token never expires.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "lastUsed": {
-            "description": "Unix timestamp in seconds when the token was last used. 0 means never used.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "revoked": {
-            "type": "boolean"
-          },
-          "title": {
-            "type": "string"
-          },
-          "updated": {
-            "description": "Unix timestamp in seconds when the token was last updated.",
-            "type": "integer",
-            "format": "int64"
           }
         }
       },
@@ -7129,20 +7310,6 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
-      },
-      "TypeMeta": {
-        "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          }
-        }
       },
       "WatchEvent": {
         "description": "Event represents a single event to a watched resource.",

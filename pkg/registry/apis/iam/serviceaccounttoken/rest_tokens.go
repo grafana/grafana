@@ -75,7 +75,7 @@ type TokensREST struct {
 }
 
 func (s *TokensREST) New() runtime.Object {
-	return &iamv0alpha1.ListSATokenResponse{}
+	return &iamv0alpha1.ListServiceAccountTokensResponse{}
 }
 func (s *TokensREST) Destroy()                               {}
 func (s *TokensREST) NamespaceScoped() bool                  { return true }
@@ -83,13 +83,13 @@ func (s *TokensREST) ProducesMIMETypes(verb string) []string { return []string{"
 func (s *TokensREST) ProducesObject(verb string) any {
 	switch verb {
 	case "GET":
-		return &iamv0alpha1.ListSATokenResponse{}
+		return &iamv0alpha1.ListServiceAccountTokensResponse{}
 	case "POST":
-		return &iamv0alpha1.CreateSATokenResponse{}
+		return &iamv0alpha1.CreateServiceAccountTokenResponse{}
 	case "DELETE":
-		return &iamv0alpha1.DeleteSATokenResponse{}
+		return &iamv0alpha1.DeleteServiceAccountTokenResponse{}
 	default:
-		return &iamv0alpha1.ListSATokenResponse{}
+		return &iamv0alpha1.ListServiceAccountTokensResponse{}
 	}
 }
 func (s *TokensREST) ConnectMethods() []string {
@@ -175,8 +175,10 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 		return
 	}
 
-	resp := &iamv0alpha1.SATokenResponse{
-		TokenItem: mapTokenItem(*token),
+	resp := &iamv0alpha1.GetServiceAccountTokenResponse{
+		GetServiceAccountTokenBody: iamv0alpha1.GetServiceAccountTokenBody{
+			Body: mapGetToken(*token),
+		},
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -199,13 +201,13 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 		return
 	}
 
-	items := make([]iamv0alpha1.TokenItem, 0, len(res.Items))
+	items := make([]iamv0alpha1.ListServiceAccountTokensToken, 0, len(res.Items))
 	for _, t := range res.Items {
-		items = append(items, mapTokenItem(t))
+		items = append(items, mapListToken(t))
 	}
 
-	resp := &iamv0alpha1.ListSATokenResponse{
-		ListTokensBody: iamv0alpha1.ListTokensBody{
+	resp := &iamv0alpha1.ListServiceAccountTokensResponse{
+		ListServiceAccountTokensBody: iamv0alpha1.ListServiceAccountTokensBody{
 			Items:    items,
 			Continue: common.OptionalFormatInt(res.Continue),
 		},
@@ -219,7 +221,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	var req iamv0alpha1.CreateTokenRequestBody
+	var req iamv0alpha1.CreateServiceAccountTokenRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid request body: %v", err)))
 		return
@@ -289,8 +291,8 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 
 	// TODO: Write to custom token store when configured (Mode5 / MT).
 
-	resp := &iamv0alpha1.CreateSATokenResponse{
-		CreateTokenBody: iamv0alpha1.CreateTokenBody{
+	resp := &iamv0alpha1.CreateServiceAccountTokenResponse{
+		CreateServiceAccountTokenBody: iamv0alpha1.CreateServiceAccountTokenBody{
 			Token:                   keyResult.ClientSecret,
 			ServiceAccountTokenName: req.TokenName,
 			Expires:                 expires,
@@ -346,16 +348,16 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 
 	// TODO: Delete from custom token store when configured (Mode5 / MT).
 
-	resp := &iamv0alpha1.DeleteSATokenResponse{
-		DeleteTokenBody: iamv0alpha1.DeleteTokenBody{
+	resp := &iamv0alpha1.DeleteServiceAccountTokenResponse{
+		DeleteServiceAccountTokenBody: iamv0alpha1.DeleteServiceAccountTokenBody{
 			Message: fmt.Sprintf("token %q deleted", tokenName),
 		},
 	}
 	responder.Object(http.StatusOK, resp)
 }
 
-func mapTokenItem(t legacy.ServiceAccountToken) iamv0alpha1.TokenItem {
-	item := iamv0alpha1.TokenItem{
+func mapListToken(t legacy.ServiceAccountToken) iamv0alpha1.ListServiceAccountTokensToken {
+	item := iamv0alpha1.ListServiceAccountTokensToken{
 		Title:   t.Name,
 		Revoked: t.Revoked,
 		Created: t.Created.Unix(),
@@ -370,12 +372,22 @@ func mapTokenItem(t legacy.ServiceAccountToken) iamv0alpha1.TokenItem {
 	return item
 }
 
-// PostProcessOpenAPI patches the OpenAPI spec for the /tokens endpoints:
-//   - Registers component schemas for request/response bodies
-//   - Fixes 200 response schemas (k8s defaults to TypeMeta)
-//   - Adds request body and 201 response for POST /tokens
+func mapGetToken(t legacy.ServiceAccountToken) iamv0alpha1.GetServiceAccountTokenToken {
+	return iamv0alpha1.GetServiceAccountTokenToken(mapListToken(t))
+}
+
+// PostProcessOpenAPI patches the OpenAPI spec for the /tokens subresource paths:
+//   - Registers the POST request body schema (not emitted by openapi-gen)
+//   - Fixes 200 response schemas on GET (k8s defaults to TypeMeta)
+//   - Wires request body and 201 response for POST /tokens
+//   - Adds limit/continue query params on GET /tokens
 //   - Renames {path} to {tokenName} on /tokens/{path}
-//   - Removes DELETE, PUT, and PATCH from the collection path (DELETE only applies to /tokens/{tokenName})
+//   - Removes DELETE, PUT, and PATCH from the collection path
+//     (DELETE only applies to /tokens/{tokenName})
+//
+// Response schemas are registered automatically by the generated openapi
+// (zz_openapi_gen.go); only the request body is registered manually because
+// it isn't tagged with +k8s:openapi-gen=true.
 func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 	if oas.Paths == nil || oas.Paths.Paths == nil {
 		return
@@ -398,10 +410,28 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 		}
 	}
 
-	// --- /tokens: fix GET/POST response schemas, remove DELETE/PUT/PATCH ---
+	// --- /tokens: fix GET/POST schemas, add list query params, remove DELETE/PUT/PATCH ---
 	if p, ok := oas.Paths.Paths[tokensBasePath]; ok {
 		if p.Get != nil {
-			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("ListTokensBody", "OK")
+			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("ListServiceAccountTokensBody", "OK")
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "maximum number of tokens to return in a single page",
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "continue",
+						In:          "query",
+						Description: "continue token returned by a previous list response to fetch the next page",
+						Schema:      spec.StringProperty(),
+					},
+				},
+			)
 		}
 
 		if p.Post != nil {
@@ -410,14 +440,14 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 					Content: map[string]*spec3.MediaType{
 						"application/json": {
 							MediaTypeProps: spec3.MediaTypeProps{
-								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateTokenRequestBody"),
+								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateServiceAccountTokenRequestBody"),
 							},
 						},
 					},
 				},
 			}
 			delete(p.Post.Responses.StatusCodeResponses, 200)
-			p.Post.Responses.StatusCodeResponses[201] = jsonResponse("CreateTokenBody", "Token created")
+			p.Post.Responses.StatusCodeResponses[201] = jsonResponse("CreateServiceAccountTokenBody", "Token created")
 		}
 
 		p.Delete = nil
@@ -438,10 +468,10 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 		}
 
 		if p.Get != nil {
-			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("TokenItem", "OK")
+			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("GetServiceAccountTokenBody", "OK")
 		}
 		if p.Delete != nil {
-			p.Delete.Responses.StatusCodeResponses[200] = jsonResponse("DeleteTokenBody", "OK")
+			p.Delete.Responses.StatusCodeResponses[200] = jsonResponse("DeleteServiceAccountTokenBody", "OK")
 		}
 
 		p.Post = nil
@@ -456,7 +486,7 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 }
 
 // fixNameParam corrects the "name" parameter description from the k8s-generated
-// "name of the ListSATokenResponse" to "name of the ServiceAccount".
+// "name of the ListServiceAccountTokensResponse" to "name of the ServiceAccount".
 func fixNameParam(p *spec3.Path) {
 	for _, v := range p.Parameters {
 		if v.Name == "name" {
@@ -466,80 +496,29 @@ func fixNameParam(p *spec3.Path) {
 	}
 }
 
-// ensureComponentSchemas registers all token-related schemas if not already present.
+// ensureComponentSchemas registers schemas that aren't emitted by openapi-gen.
+// The generated request body type has no +k8s:openapi-gen=true marker, so we
+// have to hand-register it to avoid "MissingPointerError" for $ref lookups.
 func ensureComponentSchemas(oas *spec3.OpenAPI) {
-	schemas := map[string]*spec.Schema{
-		"CreateTokenRequestBody": {
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"tokenName":        *spec.StringProperty(),
-					"expiresInSeconds": *spec.Int64Property(),
-				},
-				Required: []string{"tokenName"},
-			},
-		},
-		"CreateTokenBody": {
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"token":                   *spec.StringProperty(),
-					"serviceAccountTokenName": *spec.StringProperty(),
-					"expires":                 *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token expires. 0 means the token never expires."),
-				},
-				Required: []string{"token", "serviceAccountTokenName"},
-			},
-		},
-		"TokenItem": {
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title":    *spec.StringProperty(),
-					"revoked":  *spec.BooleanProperty(),
-					"expires":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token expires. 0 means the token never expires."),
-					"created":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was created."),
-					"updated":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was last updated."),
-					"lastUsed": *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was last used. 0 means never used."),
-				},
-				Required: []string{"title"},
-			},
-		},
-		"ListTokensBody": {
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "TokenItem"),
-							},
-						},
-					},
-					"continue": *spec.StringProperty(),
-				},
-				Required: []string{"items"},
-			},
-		},
-		"DeleteTokenBody": {
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"message": *spec.StringProperty(),
-				},
-			},
-		},
+	if oas.Components == nil {
+		oas.Components = &spec3.Components{}
+	}
+	if oas.Components.Schemas == nil {
+		oas.Components.Schemas = map[string]*spec.Schema{}
 	}
 
-	for name, s := range schemas {
-		key := appSchemaBase + name
-		if oas.Components.Schemas[key] == nil {
-			oas.Components.Schemas[key] = s
-		}
+	key := appSchemaBase + "CreateServiceAccountTokenRequestBody"
+	if oas.Components.Schemas[key] != nil {
+		return
 	}
-}
-
-func withDescription(s *spec.Schema, desc string) *spec.Schema {
-	s.Description = desc
-	return s
+	oas.Components.Schemas[key] = &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"tokenName":        *spec.StringProperty(),
+				"expiresInSeconds": *spec.Int64Property(),
+			},
+			Required: []string{"tokenName"},
+		},
+	}
 }

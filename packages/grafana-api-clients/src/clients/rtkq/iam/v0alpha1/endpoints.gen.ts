@@ -314,7 +314,13 @@ const injectedRtkApi = api
         invalidatesTags: ['ServiceAccount'],
       }),
       getServiceAccountTokens: build.query<GetServiceAccountTokensApiResponse, GetServiceAccountTokensApiArg>({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens` }),
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['ServiceAccount'],
       }),
       createServiceAccountTokens: build.mutation<
@@ -324,7 +330,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/serviceaccounts/${queryArg.name}/tokens`,
           method: 'POST',
-          body: queryArg.createTokenRequestBody,
+          body: queryArg.createServiceAccountTokenRequestBody,
         }),
         invalidatesTags: ['ServiceAccount'],
       }),
@@ -1146,25 +1152,29 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListTokensBody;
+export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListServiceAccountTokensBody;
 export type GetServiceAccountTokensApiArg = {
   /** name of the ServiceAccount */
   name: string;
+  /** maximum number of tokens to return in a single page */
+  limit?: number;
+  /** continue token returned by a previous list response to fetch the next page */
+  continue?: string;
 };
-export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateTokenBody;
+export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateServiceAccountTokenBody;
 export type CreateServiceAccountTokensApiArg = {
   /** name of the ServiceAccount */
   name: string;
-  createTokenRequestBody: CreateTokenRequestBody;
+  createServiceAccountTokenRequestBody: CreateServiceAccountTokenRequestBody;
 };
-export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TokenItem;
+export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ GetServiceAccountTokenBody;
 export type GetServiceAccountTokensWithPathApiArg = {
   /** name of the ServiceAccount */
   name: string;
   /** name of the token to operate on */
   tokenName: string;
 };
-export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteTokenBody;
+export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteServiceAccountTokenBody;
 export type DeleteServiceAccountTokensWithPathApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -1982,34 +1992,24 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TokenItem = {
-  /** Unix timestamp in seconds when the token was created. */
-  created?: number;
-  /** Unix timestamp in seconds when the token expires. 0 means the token never expires. */
-  expires?: number;
-  /** Unix timestamp in seconds when the token was last used. 0 means never used. */
-  lastUsed?: number;
-  revoked?: boolean;
-  title: string;
-  /** Unix timestamp in seconds when the token was last updated. */
-  updated?: number;
+export type ListServiceAccountTokensBody = {
+  continue: string;
+  items: any[];
 };
-export type ListTokensBody = {
-  continue?: string;
-  items: TokenItem[];
-};
-export type CreateTokenBody = {
-  /** Unix timestamp in seconds when the token expires. 0 means the token never expires. */
-  expires?: number;
+export type CreateServiceAccountTokenBody = {
+  expires: number;
   serviceAccountTokenName: string;
   token: string;
 };
-export type CreateTokenRequestBody = {
+export type CreateServiceAccountTokenRequestBody = {
   expiresInSeconds?: number;
   tokenName: string;
 };
-export type DeleteTokenBody = {
-  message?: string;
+export type GetServiceAccountTokenBody = {
+  body: any;
+};
+export type DeleteServiceAccountTokenBody = {
+  message: string;
 };
 export type TeamBindingspecSubject = {
   /** kind of the identity */

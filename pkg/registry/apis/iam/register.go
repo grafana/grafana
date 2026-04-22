@@ -762,7 +762,7 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 			}},
 	}
 
-	// Patch /tokens endpoints: add request/response schemas, rename {path} to {tokenName}.
+	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
 	serviceaccounttoken.PostProcessOpenAPI(oas)
 
 	if oas.Paths != nil && oas.Paths.Paths != nil {

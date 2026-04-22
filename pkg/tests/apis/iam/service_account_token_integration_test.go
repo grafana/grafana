@@ -41,7 +41,11 @@ type tokenItem struct {
 
 type listTokensResponse struct {
 	Items    []tokenItem `json:"items"`
-	Continue string      `json:"continue,omitempty"`
+	Continue string      `json:"continue"`
+}
+
+type getTokenResponse struct {
+	Body tokenItem `json:"body"`
 }
 
 type deleteTokenResponse struct {
@@ -153,7 +157,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	t.Run("should get a single token by name", func(t *testing.T) {
-		var res tokenItem
+		var res getTokenResponse
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
@@ -161,14 +165,14 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, &res)
 
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
-		require.Equal(t, "test-token-1", res.Title)
-		require.False(t, res.Revoked)
-		require.Greater(t, res.Expires, int64(0))
-		require.Greater(t, res.Created, int64(0))
+		require.Equal(t, "test-token-1", res.Body.Title)
+		require.False(t, res.Body.Revoked)
+		require.Greater(t, res.Body.Expires, int64(0))
+		require.Greater(t, res.Body.Created, int64(0))
 	})
 
 	t.Run("should return 404 for non-existent token", func(t *testing.T) {
-		var res tokenItem
+		var res getTokenResponse
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
@@ -224,7 +228,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, delRes.Message, "token-to-delete")
 
 		// Verify it's gone.
-		var getRes tokenItem
+		var getRes getTokenResponse
 		getRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
@@ -423,7 +427,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, "my-token_v2.prod", res.ServiceAccountTokenName)
 
 		// Verify we can get it back.
-		var getRes tokenItem
+		var getRes getTokenResponse
 		getRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
@@ -431,7 +435,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, &getRes)
 
 		require.Equal(t, http.StatusOK, getRsp.Response.StatusCode)
-		require.Equal(t, "my-token_v2.prod", getRes.Title)
+		require.Equal(t, "my-token_v2.prod", getRes.Body.Title)
 	})
 
 	t.Run("should reject token names with invalid characters", func(t *testing.T) {
