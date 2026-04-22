@@ -22,6 +22,7 @@ on:
       - scripts/ci/backend-tests/**
       - devenv/**
       - .github/actions/setup-go/**
+      - .github/actions/setup-enterprise/**
       - .github/workflows/pr-test-integration.yml
 
 concurrency:

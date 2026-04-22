@@ -9,6 +9,7 @@ on:
     paths:
       - .github/workflows/**
       - .github/actions/**
+      - .github/actionlint.yaml
   pull_request:
     types:
       - opened
@@ -17,6 +18,7 @@ on:
     paths:
       - .github/workflows/**
       - .github/actions/**
+      - .github/actionlint.yaml
 
 permissions: {}
 

@@ -13,8 +13,14 @@ on:
       - 'pkg/**'
       - 'apps/**'
       - Makefile
+      - packaging/**
+      - scripts/build-rpm.sh
+      - scripts/build-deb.sh
+      - scripts/build-targz.sh
+      - scripts/verify-pkg-stig.sh
       - .github/actions/setup-go/**
       - .github/actions/setup-fpm/**
+      - .github/actions/setup-enterprise/**
       - .github/workflows/build-go-matrix.yml
   push:
     branches:
