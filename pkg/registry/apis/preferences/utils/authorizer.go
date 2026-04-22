@@ -7,16 +7,14 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/authz"
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type AuthorizeFromName struct {
-	AccessClient authlib.AccessClient
-	OKNames      []string
-	Resource     map[string][]ResourceOwner // may include unknown
+	Teams    TeamService
+	OKNames  []string
+	Resource map[string][]ResourceOwner // may include unknown
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -83,27 +81,21 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
 	case TeamResourceOwner:
-		if !attr.IsReadOnly() {
-			rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:      utils.VerbUpdate,
-				Group:     "iam.grafana.app",
-				Resource:  "teams",
-				Namespace: user.GetNamespace(),
-				Name:      info.Identifier,
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "error fetching team permissions", err
-			}
-			if rsp.Allowed {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "no edit permissions for the team", nil
+		if a.Teams == nil {
+			return authorizer.DecisionDeny, "team checker not configured", err
 		}
-
-		if slices.Contains(user.GetGroups(), info.Identifier) {
+		ok, err := a.Teams.InTeam(ctx, user, info.Identifier, !attr.IsReadOnly())
+		if err != nil {
+			return authorizer.DecisionDeny, "error fetching teams", err
+		}
+		if ok {
 			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "you are not a member of the referenced team", err
+		msg := "you are not an admin of the referenced team"
+		if attr.IsReadOnly() {
+			msg = "you are not a member of the referenced team"
+		}
+		return authorizer.DecisionDeny, msg, nil
 
 	case UnknownResourceOwner:
 		return authorizer.DecisionAllow, "", nil

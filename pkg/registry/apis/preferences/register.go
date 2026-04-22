@@ -15,7 +15,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -34,31 +35,29 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs rest.Storage
+	authorizer      authorizer.Authorizer
+	clientGenerator resource.ClientGenerator
+	legacyPrefs     rest.Storage
 
 	merger *merger // joins all preferences
 }
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	db db.DB,
 	prefs pref.Service,
-	accessClient authlib.AccessClient,
+	users user.Service,
 	apiregistration builder.APIRegistrar,
 	clientGenerator resource.ClientGenerator,
-) (*APIBuilder, error) {
-	client, err := preferences.NewPreferencesClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, err
-	}
-
+) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, client),
+		clientGenerator: clientGenerator,
+		merger:          newMerger(cfg, sql),
 		authorizer: &utils.AuthorizeFromName{
-			OKNames:      []string{"merged"},
-			AccessClient: accessClient, // can i edit a team
+			OKNames: []string{"merged"},
+			Teams:   sql, // should be from the IAM service
 			Resource: map[string][]utils.ResourceOwner{
 				"preferences": {
 					utils.NamespaceResourceOwner,
@@ -74,7 +73,7 @@ func RegisterAPIService(
 		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder, nil
+	return builder
 }
 
 // AllowedV0Alpha1Resources implements builder.APIGroupBuilder.

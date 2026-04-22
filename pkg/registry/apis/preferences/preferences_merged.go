@@ -10,9 +10,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -20,12 +20,12 @@ import (
 
 type merger struct {
 	defaults preferences.PreferencesSpec
-	client   *preferences.PreferencesClient
+	sql      *legacy.LegacySQL
 }
 
-func newMerger(cfg *setting.Cfg, client *preferences.PreferencesClient) *merger {
+func newMerger(cfg *setting.Cfg, sql *legacy.LegacySQL) *merger {
 	return &merger{
-		client: client,
+		sql: sql,
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -95,8 +95,7 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ns := user.GetNamespace() // namespace not in context!
-
-	list, err := s.client.List(ctx, ns, resource.ListOptions{})
+	list, err := s.sql.ListPreferences(ctx, ns, user, false)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

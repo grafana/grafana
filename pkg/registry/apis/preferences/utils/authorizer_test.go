@@ -2,8 +2,10 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -28,7 +30,6 @@ type testCase struct {
 func TestAuthorizer_Authorize(t *testing.T) {
 	userABC := &identity.StaticRequester{
 		UserUID: "abc",
-		Groups:  []string{"XYZ"},
 		OrgRole: identity.RoleViewer,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
@@ -39,6 +40,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 
 	tests := []struct {
 		name     string
+		teams    func(t *testing.T) TeamService
 		resource map[string][]ResourceOwner
 		check    []testCase
 	}{
@@ -67,7 +69,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Verb:            "get",
 					APIGroup:        "group",
 					Resource:        "stars",
-					Name:            "user-XYZ", // not abc
+					Name:            "user-xyz", // not abc
 					ResourceRequest: true,
 				},
 				expect: expect{
@@ -166,7 +168,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					decision: authorizer.DecisionAllow,
 				},
 			}, {
-				name: "teams request",
+				name: "teams request (but not configured)",
 				user: userABC,
 				attrs: authorizer.AttributesRecord{
 					APIGroup:        "group",
@@ -176,21 +178,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Name:            "team-XYZ",
 				},
 				expect: expect{
-					decision: authorizer.DecisionAllow,
-				},
-			}, {
-				name: "teams request (bad)",
-				user: userABC,
-				attrs: authorizer.AttributesRecord{
-					APIGroup:        "group",
-					Resource:        "preferences",
-					ResourceRequest: true,
-					Verb:            "get",
-					Name:            "team-zzz",
-				},
-				expect: expect{
 					decision: authorizer.DecisionDeny,
-					reason:   "you are not a member of the referenced team",
+					reason:   "team checker not configured",
 				},
 			}},
 		}, {
@@ -268,6 +257,13 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "preferences teams",
+			teams: func(t *testing.T) TeamService {
+				teams := NewMockTeamService(t)
+				teams.On("InTeam", mock.Anything, userABC, "xyz", false).Return(true, nil)
+				teams.On("InTeam", mock.Anything, userABC, "456", false).Return(false, nil)
+				teams.On("InTeam", mock.Anything, userABC, "XXX", false).Return(true, fmt.Errorf("error from team"))
+				return teams
+			},
 			resource: map[string][]ResourceOwner{
 				"preferences": {
 					TeamResourceOwner,
@@ -280,7 +276,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					Verb:            "get",
 					APIGroup:        "group",
 					Resource:        "preferences",
-					Name:            "team-XYZ",
+					Name:            "team-xyz",
 					ResourceRequest: true,
 				},
 				expect: expect{
@@ -300,6 +296,21 @@ func TestAuthorizer_Authorize(t *testing.T) {
 					decision: authorizer.DecisionDeny,
 					reason:   "you are not a member of the referenced team",
 				},
+			}, {
+				name: "team error",
+				user: userABC,
+				attrs: authorizer.AttributesRecord{
+					Verb:            "get",
+					APIGroup:        "group",
+					Resource:        "preferences",
+					Name:            "team-XXX",
+					ResourceRequest: true,
+				},
+				expect: expect{
+					decision: authorizer.DecisionDeny,
+					reason:   "error fetching teams",
+					err:      "error from team",
+				},
 			}},
 		},
 	}
@@ -308,6 +319,9 @@ func TestAuthorizer_Authorize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			authz := &AuthorizeFromName{
 				Resource: tt.resource,
+			}
+			if tt.teams != nil {
+				authz.Teams = tt.teams(t)
 			}
 			for _, check := range tt.check {
 				t.Run(check.name, func(t *testing.T) {

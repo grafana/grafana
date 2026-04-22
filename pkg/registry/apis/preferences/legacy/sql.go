@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -134,10 +135,16 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 		return nil, err
 	}
 
+	var teams []string
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
-				req.UserTeams = user.GetGroups()
+				req.UserUID = user.GetIdentifier()
+				teams, err = s.GetTeams(ctx, &identity.StaticRequester{
+					OrgID:   info.OrgID,
+					UserUID: req.UserUID,
+				}, false)
+				req.UserTeams = teams
 			} else {
 				req.All = true
 			}
@@ -154,6 +161,37 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 		list.ResourceVersion = strconv.FormatInt(rv, 10)
 	}
 	return list, nil
+}
+
+func (s *LegacySQL) InTeam(ctx context.Context, id authlib.AuthInfo, team string, admin bool) (bool, error) {
+	// Could be faster, but find for now
+	teams, err := s.GetTeams(ctx, id, admin)
+	if err != nil {
+		return false, err
+	}
+	return slices.Contains(teams, team), nil
+}
+
+func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin bool) ([]string, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	xid, ok := id.(identity.Requester)
+	if !ok {
+		return nil, fmt.Errorf("expected identity.Requester")
+	}
+	req := newTeamsQueryReq(sql, xid.GetOrgID(), id.GetIdentifier(), admin)
+
+	q, err := sqltemplate.Execute(sqlTeams, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlTeams.Name(), err)
+	}
+	teams := []string{}
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
+	return teams, err
 }
 
 func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team string) (int64, error) {
