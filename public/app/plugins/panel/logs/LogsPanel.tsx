@@ -144,8 +144,6 @@ interface LogsPanelProps extends PanelProps<Options> {
 }
 const noCommonLabels: Labels = {};
 
-const dashboardApps = [CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer];
-
 export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
   const {
     allowDownload,

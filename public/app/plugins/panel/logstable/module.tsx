@@ -38,7 +38,8 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         category: logsTableCategory,
         description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: defaultOptions.showControls ?? false,
-      }).addBooleanSwitch({
+      })
+      .addBooleanSwitch({
         path: 'allowDownload',
         name: t('logs.name-allow-download', 'Display download control'),
         category: logsTableCategory,
@@ -47,6 +48,6 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'When controls are enabled, show an option to download the logs on display.'
         ),
         showIf: (currentOptions) => Boolean(currentOptions.showControls),
-      })
+      });
   })
   .setSuggestionsSupplier(logstableSuggestionsSupplier);
