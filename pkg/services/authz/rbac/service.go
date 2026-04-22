@@ -116,6 +116,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		"namespace", req.GetNamespace(),
 		"group", req.GetGroup(),
 		"resource", req.GetResource(),
+		"subresource", req.GetSubresource(),
 		"verb", req.GetVerb(),
 	)
 	defer func(start time.Time) {
@@ -128,7 +129,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	checkReq, err := s.validateCheckRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
-		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 		return deny, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -145,7 +146,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
 	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
-		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 		return deny, nil
 	}
 
@@ -156,12 +157,12 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq, getTree)
 		if err != nil {
 			ctxLogger.Error("could not check permission", "error", err)
-			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 			return deny, err
 		}
 		if allowed {
 			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
-			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 			span.SetAttributes(attribute.Bool("allowed", true))
 			return allow, nil
 		}
@@ -171,14 +172,14 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action, checkReq.ActionSets)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
-		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 		return deny, err
 	}
 
 	allowed, err := s.checkPermission(ctx, permissions, checkReq, getTree)
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
-		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 		return deny, err
 	}
 
@@ -186,7 +187,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		s.permDenialCache.Set(ctx, permDenialKey, true)
 	}
 
-	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 	span.SetAttributes(attribute.Bool("allowed", allowed))
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
@@ -252,10 +253,21 @@ func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest
 		return s.batchCheckErrorResponse(checks, err), nil
 	}
 
-	// Group checks by action and process each group
+	// Group checks by action and process each group.
+	// Share a single folder tree getter across all groups to avoid redundant folder list calls.
+	// If any group requires fresh data, skip the cache for everyone — the fresh tree is
+	// at least as recent as what the cache would return.
 	groups := s.groupBatchCheckItems(ctx, checks, ns, userUID, idType, results)
+	var skipCache bool
+	for _, g := range groups {
+		if g.requiresFreshData {
+			skipCache = true
+			break
+		}
+	}
+	getTree := s.newFolderTreeGetter(ctx, ns, skipCache)
 	for _, group := range groups {
-		s.processBatchCheckGroup(ctx, ctxLogger, group, ns, idType, userUID, results)
+		s.processBatchCheckGroup(ctx, ctxLogger, group, ns, idType, userUID, getTree, results)
 	}
 
 	// Verify all checks have a result (defensive check)
@@ -295,7 +307,7 @@ func (s *Service) groupBatchCheckItems(
 	groups := make(map[string]*batchCheckGroup)
 
 	for _, item := range checks {
-		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetVerb())
+		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetSubresource(), item.GetVerb())
 		if err != nil {
 			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
 			continue
@@ -309,6 +321,7 @@ func (s *Service) groupBatchCheckItems(
 			ActionSets:   actionSets,
 			Group:        item.GetGroup(),
 			Resource:     item.GetResource(),
+			Subresource:  item.GetSubresource(),
 			Verb:         item.GetVerb(),
 			Name:         item.GetName(),
 			ParentFolder: item.GetFolder(),
@@ -358,6 +371,7 @@ func (s *Service) processBatchCheckGroup(
 	ns types.NamespaceInfo,
 	idType types.IdentityType,
 	userUID string,
+	getTree folderTreeGetter,
 	results map[string]*authzv1.BatchCheckResult,
 ) {
 	permissions, err := s.getPermissionsForGroup(ctx, group, ns, idType, userUID)
@@ -368,8 +382,6 @@ func (s *Service) processBatchCheckGroup(
 		}
 		return
 	}
-
-	getTree := s.newFolderTreeGetter(ctx, ns, group.requiresFreshData)
 
 	for i, item := range group.items {
 		checkReq := group.checkReqs[i]
@@ -411,6 +423,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		"namespace", req.GetNamespace(),
 		"group", req.GetGroup(),
 		"resource", req.GetResource(),
+		"subresource", req.GetSubresource(),
 		"verb", req.GetVerb(),
 	)
 	defer func(start time.Time) {
@@ -420,7 +433,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
-		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 		return &authzv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -447,13 +460,13 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action, listReq.ActionSets)
 		if err != nil {
 			ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
-			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 			return nil, err
 		}
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
-	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource(), req.GetSubresource()).Inc()
 	if err != nil {
 		return nil, err
 	}
@@ -481,9 +494,13 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
+	}
+
+	if req.GetResource() == "" && req.GetSubresource() != "" {
+		return nil, status.Error(codes.InvalidArgument, "resource is required when subresource is provided")
 	}
 
 	checkReq := &checkRequest{
@@ -494,6 +511,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
+		Subresource:  req.GetSubresource(),
 		Verb:         req.GetVerb(),
 		Name:         req.GetName(),
 		ParentFolder: req.GetFolder(),
@@ -515,7 +533,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -536,6 +554,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
+		Subresource:  req.GetSubresource(),
 		Verb:         req.GetVerb(),
 		Options:      options,
 	}
@@ -582,18 +601,18 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 }
 
 // Find the action for a selected verb
-func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, []string, error) {
+func (s *Service) validateAction(ctx context.Context, group, resource, subresource, verb string) (string, []string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(group, resource)
+	t, ok := s.mapper.Get(group, resource, subresource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
-		return "", nil, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", group, "resource", resource, "subresource", subresource)
+		t = newK8sNativeMapping(group, resource, subresource)
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
-		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
+		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "subresource", subresource, "verb", verb)
 		return "", nil, status.Error(codes.NotFound, "unsupported verb")
 	}
 
@@ -722,12 +741,12 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 	return res.(map[string]bool), nil
 }
 
-// Renderer is granted permissions to read all dashboards and folders, and no other permissions
+// Renderer permissions are not stored in the database and are instead derived from the action being checked.
 func (s *Service) getRendererPermissions(ctx context.Context, action string) (map[string]bool, error) {
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" {
+	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
@@ -856,10 +875,10 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
 	if !ok {
-		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
-		return false, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
+		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
 	}
 
 	if req.Name == "" && req.Verb != utils.VerbCreate {
@@ -1017,10 +1036,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
+		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
 	}
 
 	var tree folderTree

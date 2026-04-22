@@ -84,6 +84,14 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		// Rewrite the deprecated query path
+		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
+		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
+		ReplaceFunc: func(matches []string) string {
+			return strings.Replace(matches[0], "connections", "datasources", 1)
+		},
+	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
@@ -287,36 +295,11 @@ func InstallAPIs(
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
-			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
-				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			key := gr.String()
+			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 			}
-
-			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
-
-			// Get the option from custom.ini/command line
-			// when missing this will default to mode zero (legacy only)
-			var mode = grafanarest.DualWriterMode(0)
-
-			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
-			if resourceExists {
-				mode = resourceConfig.DualWriterMode
-			}
-
-			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode)
-
-			if dualWriteService != nil {
-				dualWriteService.LogStorageModeComparison(gr, mode)
-			}
-
-			switch mode {
-			case grafanarest.Mode0:
-				return legacy, nil
-			case grafanarest.Mode4, grafanarest.Mode5:
-				return storage, nil
-			default:
-				return dualwrite.NewStaticStorage(gr, mode, legacy, storage)
-			}
+			return dualWriteService.NewStorage(gr, legacy, storage)
 		}
 	}
 

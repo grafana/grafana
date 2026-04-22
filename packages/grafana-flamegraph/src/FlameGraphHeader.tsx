@@ -3,14 +3,14 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
-import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, IconButton, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { ColorSchemeButton } from './ColorSchemeButton';
-import { CollapsedMap } from './FlameGraph/dataTransform';
+import { type CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
-import { ColorScheme, ColorSchemeDiff, PaneView, SelectedView, TextAlign, ViewMode } from './types';
+import { type ColorScheme, type ColorSchemeDiff, PaneView, SelectedView, type TextAlign, ViewMode } from './types';
 
 type LegacyProps = {
   search: string;

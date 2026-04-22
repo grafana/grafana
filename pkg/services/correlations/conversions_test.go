@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
@@ -41,6 +42,7 @@ func TestConversion(t *testing.T) {
 			expect: correlationsV0.Correlation{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "uid",
+					UID:       types.UID("uid"),
 					Namespace: "org-2",
 					Annotations: map[string]string{
 						"grafana.app/managedBy": "classic-file-provisioning",

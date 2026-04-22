@@ -1,17 +1,17 @@
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
-import { StoreState, ThunkDispatch } from 'app/types/store';
+import { type SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getVariablesState } from '../state/selectors';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';

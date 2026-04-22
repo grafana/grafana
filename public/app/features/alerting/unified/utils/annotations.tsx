@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Annotations } from 'app/types/unified-alerting-dto';
+import { type Annotations } from 'app/types/unified-alerting-dto';
 
 import { Annotation } from './constants';
 import { makeDashboardLink, makePanelLink } from './misc';

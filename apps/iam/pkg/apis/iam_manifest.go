@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "iam",
+	AppDisplayName:   "iam",
 	Group:            "iam.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -37,13 +38,6 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRoleBinding",
 					Plural:     "GlobalRoleBindings",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
-					Kind:       "CoreRole",
-					Plural:     "CoreRoles",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -546,6 +540,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -554,6 +560,11 @@ var appManifestData = app.ManifestData{
 								"externalUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"memberCount": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
 									},
 								},
 								"name": {
@@ -673,7 +684,6 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
 	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":                 v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),

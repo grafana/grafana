@@ -1,19 +1,19 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, VariableOption, VariableRefresh } from '@grafana/data';
+import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import config from 'app/core/config';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
-import { DashboardModel } from '../../state/DashboardModel';
-import { GridPos } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type GridPos } from '../../state/PanelModel';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanel[];

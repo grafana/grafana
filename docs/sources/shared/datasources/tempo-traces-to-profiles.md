@@ -16,7 +16,7 @@ labels:
 
 <!-- # Trace to profiles  -->
 
-Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
+Using Trace to profiles, you can use the ability to correlate different signals in Grafana by adding the functionality to link between traces and profiles.
 
 **Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data.
 When configured, this connection lets you run queries from a trace span into the profile data using **Explore**.
@@ -38,9 +38,14 @@ There are two ways to configure the trace to profiles feature:
 
 ## Before you begin
 
-Traces to profile requires a Tempo data source with Traces to profiles configured and a [Grafana Pyroscope data source](/docs/grafana/<GRAFANA_VERSION>/datasources/grafana-pyroscope/).
+To use Trace to profiles, you need:
 
-As with traces, your application needs to be instrumented to emit profiling data. For more information, refer to [Linking tracing and profiling with span profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
+- A [Grafana Pyroscope data source](/docs/grafana/<GRAFANA_VERSION>/datasources/grafana-pyroscope/) connected to your Pyroscope instance.
+- A Tempo data source configured with the Trace to profiles settings described on this page.
+- Your application instrumented with all three of the following:
+  1. **Profiling**: A Pyroscope SDK or Grafana Alloy sending profiling data to Pyroscope. Refer to [Configure the client to send profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/) for setup instructions.
+  1. **Tracing**: An OpenTelemetry SDK sending trace data to Tempo. Refer to the [OpenTelemetry getting started documentation](https://opentelemetry.io/docs/getting-started/) for setup instructions.
+  1. **Span profiling bridge**: A language-specific OpenTelemetry integration package that links profiling data with trace spans. Without this package, traces and profiles are independent signals with no connection between them. Refer to [Link tracing and profiling with span profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) for per-language setup instructions.
 
 ## Use a basic configuration
 
@@ -58,7 +63,7 @@ To use a basic configuration, follow these steps:
 
 1. Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 
-   The profile type or app must be selected for the query to be valid. Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
+   The profile type or app must be selected for the query to be valid. Grafana doesn't show any data if the profile type or app isn't selected when a query runs.
 
 1. Select **Save and Test**.
 
@@ -77,7 +82,7 @@ To use a custom query with the configuration, follow these steps:
 
     These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only tags present in the span are included. Tags that aren't present are omitted.
 
-    You can also configure a name for the tag. Tag names are useful where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. Learn more about [custom query variables](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
+    You can also configure a name for the tag. Tag names are useful where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don't map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. Learn more about [custom query variables](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
 
 1.  Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 1.  Switch on **Use custom query** to enter a custom query.
@@ -92,6 +97,6 @@ The following table describes options for configuring your **Trace to profiles**
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Data source      | Defines the target data source. You can select a Pyroscope \[profiling\] data source.                                                                                                                                                                                                                          |
 | Tags             | Defines the tags to use in the profile query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they're not allowed in the target data source. For example, map `http.status` to `http_status`. |
-| Profile type     | Defines the profile type that used in the query.                                                                                                                                                                                                                                                               |
+| Profile type     | Defines the profile type to use in the query.                                                                                                                                                                                                                                                                  |
 | Use custom query | Toggles use of custom query with interpolation.                                                                                                                                                                                                                                                                |
 | Query            | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                                                              |

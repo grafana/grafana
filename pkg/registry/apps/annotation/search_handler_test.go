@@ -2,22 +2,24 @@ package annotation
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func TestSearchHandler(t *testing.T) {
-	ctx := context.Background()
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
 
 	// create several test annotations with different tags and scopes
 	store := NewMemoryStore()
@@ -48,7 +50,8 @@ func TestSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	handler := newSearchHandler(store)
+	accessClient := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+	handler := newSearchHandler(store, accessClient)
 
 	tests := []struct {
 		name          string

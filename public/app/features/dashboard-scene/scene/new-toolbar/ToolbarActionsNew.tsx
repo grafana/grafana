@@ -1,6 +1,6 @@
 import { Stack } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { LeftActions } from './LeftActions';
 import { RightActions } from './RightActions';

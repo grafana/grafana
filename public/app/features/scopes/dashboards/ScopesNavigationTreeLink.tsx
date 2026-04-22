@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, IconName, locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, locationUtil, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 

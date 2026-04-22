@@ -41,12 +41,12 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		iniFile := ini.Empty()
 		securitySection, _ := iniFile.NewSection("security")
-		_, _ = securitySection.NewKey("content_security_policy", "true")
+		_, _ = securitySection.NewKey("allow_embedding_hosts", "foo.example.com")
 
 		config.ApplyOverrides(iniFile, log.New("test"))
 
 		// CSP overridden field
-		assert.True(t, config.CSPEnabled)
+		assert.Equal(t, []string{"foo.example.com"}, config.AllowEmbeddingHosts)
 
 		// Non-overridden fields should be preserved
 		assert.Equal(t, "https://base.example.com", config.AppURL)
@@ -75,39 +75,71 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
 	})
 
-	t.Run("should apply multiple CSP overrides at once", func(t *testing.T) {
+	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
 		config := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				AnonymousEnabled:  false,
-				DisableLoginForm:  false,
-				DisableUserSignUp: false,
-			},
-			AppURL:                "https://base.example.com",
-			CSPEnabled:            false,
-			CSPTemplate:           "",
-			CSPReportOnlyEnabled:  false,
-			CSPReportOnlyTemplate: "",
+			AllowEmbeddingHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("allow_embedding_hosts", "wiki.example.com foo.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"wiki.example.com", "foo.example.com"}, config.AllowEmbeddingHosts)
+	})
+
+	t.Run("should override allow_embedding_hosts with wildcard from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			AllowEmbeddingHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("allow_embedding_hosts", "*")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"*"}, config.AllowEmbeddingHosts)
+	})
+
+	t.Run("should override form_action_additional_hosts from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("form_action_additional_hosts", "login.example.com auth.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"login.example.com", "auth.example.com"}, config.FormActionAdditionalHosts)
+	})
+
+	t.Run("should override form_action_additional_hosts with wildcard from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("form_action_additional_hosts", "*")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"*"}, config.FormActionAdditionalHosts)
+	})
+
+	t.Run("should preserve form_action_additional_hosts when not overridden", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: []string{"base.example.com"},
 		}
 
 		iniFile := ini.Empty()
 
-		securitySection, _ := iniFile.NewSection("security")
-		_, _ = securitySection.NewKey("content_security_policy", "true")
-		_, _ = securitySection.NewKey("content_security_policy_template", "script-src 'self'")
-		_, _ = securitySection.NewKey("content_security_policy_report_only", "true")
-		_, _ = securitySection.NewKey("content_security_policy_report_only_template", "default-src 'none'")
-
 		config.ApplyOverrides(iniFile, log.New("test"))
 
-		// All CSP settings should be overridden
-		assert.True(t, config.CSPEnabled)
-		assert.Equal(t, "script-src 'self'", config.CSPTemplate)
-		assert.True(t, config.CSPReportOnlyEnabled)
-		assert.Equal(t, "default-src 'none'", config.CSPReportOnlyTemplate)
-
-		// Other settings should remain unchanged
-		assert.Equal(t, "https://base.example.com", config.AppURL)
-		assert.False(t, config.DisableLoginForm)
-		assert.False(t, config.AnonymousEnabled)
+		assert.Equal(t, []string{"base.example.com"}, config.FormActionAdditionalHosts)
 	})
 }

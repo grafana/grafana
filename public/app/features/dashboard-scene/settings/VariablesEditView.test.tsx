@@ -6,7 +6,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import {
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,

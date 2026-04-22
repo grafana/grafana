@@ -636,10 +636,14 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		}
 
 		lines := model.Lines
+		if lines > 10000 {
+			lines = 10000
+		}
 		includeLevelColumn := model.LevelColumn
 
 		logLevelGenerator := newRandomStringProvider([]string{
 			"emerg",
+			"emergency",
 			"alert",
 			"crit",
 			"critical",
@@ -951,7 +955,11 @@ func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.F
 	var info strings.Builder
 	state := data.EnumItemIndex(0)
 
-	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
+	maxDataPoints := query.MaxDataPoints
+	if maxDataPoints > 10000 {
+		maxDataPoints = 10000
+	}
+	for i := int64(0); i < maxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
 		walker += delta
 

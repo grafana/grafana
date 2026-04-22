@@ -21,6 +21,7 @@ type ConcurrentJobDriver struct {
 	historicJobs         HistoryWriter
 	workers              []Worker
 	notifications        chan struct{}
+	metrics              *JobMetrics
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job drivers.
@@ -32,6 +33,7 @@ func NewConcurrentJobDriver(
 	historicJobs HistoryWriter,
 	notifications chan struct{},
 	registry prometheus.Registerer,
+	metrics *JobMetrics,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -57,6 +59,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		metrics:              metrics,
 	}, nil
 }
 
@@ -89,6 +92,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.repoGetter,
 				c.historicJobs,
 				c.notifications,
+				c.metrics,
 				c.workers...,
 			)
 			if err != nil {

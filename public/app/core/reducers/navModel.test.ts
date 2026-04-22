@@ -1,4 +1,4 @@
-import { NavIndex } from '@grafana/data';
+import { type NavIndex } from '@grafana/data';
 
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 

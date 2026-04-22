@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
-import { RestoreNotificationData } from '../types';
+import { type RestoreNotificationData } from '../types';
 
 interface RestoreFailure {
   uid: string;

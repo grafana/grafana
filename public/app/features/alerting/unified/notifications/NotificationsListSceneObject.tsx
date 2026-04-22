@@ -5,19 +5,20 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryMatcher,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
   sceneGraph,
 } from '@grafana/scenes';
@@ -25,6 +26,7 @@ import {
   Alert,
   Badge,
   Icon,
+  LinkButton,
   LoadingBar,
   Pagination,
   Spinner,
@@ -35,14 +37,18 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
+import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
 import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
+import { INTEGRATION_ICONS } from '../types/contact-points';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
+import { createRelativeUrl } from '../utils/url';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
@@ -208,6 +214,9 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
+      {config.featureToggles.alertingNotificationHistoryDetail && (
+        <div className={styles.viewCol}>{/* View link column */}</div>
+      )}
     </div>
   );
 }
@@ -262,8 +271,37 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
           )}
         </div>
         <div className={styles.receiverCol}>
-          <Text>{record.receiver || '-'}</Text>
+          <Tooltip
+            content={t('alerting.notifications-list.integration-tooltip', '{{integration}} #{{index}}', {
+              integration: receiverTypeNames[record.integration] ?? record.integration,
+              index: record.integrationIndex + 1,
+            })}
+          >
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Icon name={INTEGRATION_ICONS[record.integration] || 'bell'} size="sm" />
+              <Text>{record.receiver || '-'}</Text>
+              {record.integrationIndex > 0 && (
+                <Text variant="bodySmall" color="secondary">
+                  (#{record.integrationIndex + 1})
+                </Text>
+              )}
+            </Stack>
+          </Tooltip>
         </div>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <div className={styles.viewCol}>
+            <LinkButton
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
+              )}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+            >
+              <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+            </LinkButton>
+          </div>
+        )}
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
@@ -383,14 +421,12 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           )}
           {alert.startsAt && (
             <Text variant="bodySmall" color="secondary">
-              <Trans
-                i18nKey="alerting.notifications-scene.started"
-                values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
-              >
-                Started: {{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
+              <Trans i18nKey="alerting.notifications-scene.started" values={{ value: dateTimeFormat(alert.startsAt) }}>
+                Started: {{ value: dateTimeFormat(alert.startsAt) }}
               </Trans>
             </Text>
           )}
+          {alert.enrichments && <AlertEnrichments enrichments={alert.enrichments} />}
         </Stack>
       </div>
     );
@@ -444,7 +480,7 @@ interface TimestampProps {
 }
 
 const Timestamp = ({ time }: TimestampProps) => {
-  const formattedDate = time ? dateTime(time).format('YYYY-MM-DD HH:mm:ss') : '-';
+  const formattedDate = time ? dateTimeFormat(time) : '-';
 
   return (
     <Text variant="body" weight="light">
@@ -502,7 +538,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     receiverCol: css({
-      width: '250px',
+      width: '200px',
+      flexShrink: 0,
+    }),
+    viewCol: css({
+      width: '80px',
     }),
     expandedRow: css({
       padding: theme.spacing(2),

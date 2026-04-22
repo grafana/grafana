@@ -32,54 +32,6 @@
         }
       }
     },
-    "/connections/{name}/query": {
-      "post": {
-        "tags": ["Connections (deprecated)"],
-        "description": "connect POST requests to query of QueryDataResponse",
-        "operationId": "createQueryDataResponseQuery",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueryDataResponse"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true,
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "QueryDataResponse",
-          "version": "v0alpha1"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the QueryDataResponse",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/datasources": {
       "get": {
         "tags": ["DataSource"],
@@ -879,7 +831,7 @@
       "post": {
         "tags": ["DataSource"],
         "description": "Query the TestData datasources",
-        "operationId": "createDataSourceQuery",
+        "operationId": "queryDataSource",
         "requestBody": {
           "content": {
             "application/json": {
@@ -912,7 +864,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the QueryDataResponse",
+          "description": "DataSource identifier",
           "required": true,
           "schema": {
             "type": "string",
@@ -921,11 +873,149 @@
         }
       ]
     },
-    "/datasources/{name}/resource": {
+    "/datasources/{name}/resources": {
       "get": {
         "tags": ["DataSource"],
-        "description": "Get resources in the datasource plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
-        "operationId": "getDataSourceResource",
+        "description": "connect GET requests to resources of DataSource",
+        "operationId": "getDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "put": {
+        "tags": ["DataSource"],
+        "description": "connect PUT requests to resources of DataSource",
+        "operationId": "replaceDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "post": {
+        "tags": ["DataSource"],
+        "description": "connect POST requests to resources of DataSource",
+        "operationId": "createDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "delete": {
+        "tags": ["DataSource"],
+        "description": "connect DELETE requests to resources of DataSource",
+        "operationId": "deleteDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "options": {
+        "tags": ["DataSource"],
+        "description": "connect OPTIONS requests to resources of DataSource",
+        "operationId": "optionsDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "head": {
+        "tags": ["DataSource"],
+        "description": "connect HEAD requests to resources of DataSource",
+        "operationId": "headDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "patch": {
+        "tags": ["DataSource"],
+        "description": "connect PATCH requests to resources of DataSource",
+        "operationId": "updateDataSourceResources",
         "responses": {
           "200": {
             "description": "OK",
@@ -950,6 +1040,191 @@
           "name": "name",
           "in": "path",
           "description": "name of the Status",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/{path}": {
+      "get": {
+        "tags": ["DataSource"],
+        "description": "connect GET requests to resources of DataSource",
+        "operationId": "getDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "put": {
+        "tags": ["DataSource"],
+        "description": "connect PUT requests to resources of DataSource",
+        "operationId": "replaceDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "post": {
+        "tags": ["DataSource"],
+        "description": "connect POST requests to resources of DataSource",
+        "operationId": "createDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "delete": {
+        "tags": ["DataSource"],
+        "description": "connect DELETE requests to resources of DataSource",
+        "operationId": "deleteDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "options": {
+        "tags": ["DataSource"],
+        "description": "connect OPTIONS requests to resources of DataSource",
+        "operationId": "optionsDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "head": {
+        "tags": ["DataSource"],
+        "description": "connect HEAD requests to resources of DataSource",
+        "operationId": "headDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "patch": {
+        "tags": ["DataSource"],
+        "description": "connect PATCH requests to resources of DataSource",
+        "operationId": "updateDataSourceResourcesWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Status",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "description": "path to the resource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1051,6 +1326,10 @@
             "type": "string",
             "maxLength": 24576,
             "minLength": 1
+          },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
           },
           "name": {
             "description": "Name in the secret service (reference)",

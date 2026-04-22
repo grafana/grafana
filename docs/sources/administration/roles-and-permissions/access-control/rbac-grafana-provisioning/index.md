@@ -9,7 +9,7 @@ labels:
     - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
-weight: 60
+weight: 300
 refs:
   api-rbac-create-and-manage-custom-roles:
     - pattern: /docs/grafana/
@@ -107,7 +107,7 @@ roles:
     uid: customuserswriter1
     # <string> description of the role, informative purpose only.
     description: 'Create, read, write users'
-    # <int> version of the role, Grafana will update the role when increased.
+    # <int> version of the role. Has to be greater than the stored role version to apply updates. Increase by 1 when you change the role.
     version: 2
     # <int> org id. Defaults to Grafana's default if not specified.
     orgId: 1
@@ -120,6 +120,12 @@ roles:
       - action: 'users:write'
         scope: 'users:*'
       - action: 'users:create'
+      # Optional `datasourceType` for scopes `datasources:uid:<DATASOURCE_UID>`.
+      # If you omit it, Grafana resolves the plugin type from the data source when this file is provisioned.
+      # It is required if there are two datasources with the same uid.
+      - action: 'datasources:query'
+        scope: 'datasources:uid:loki-uid-here'
+        datasourceType: loki
   - name: 'custom:global:users:reader'
     # <bool> overwrite org id and creates a global role.
     global: true

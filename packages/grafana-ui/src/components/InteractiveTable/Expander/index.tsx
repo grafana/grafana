@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CellProps, HeaderProps } from 'react-table';
+import { type CellProps, type HeaderProps } from 'react-table';
 
 import { t, Trans } from '@grafana/i18n';
 

@@ -1,12 +1,12 @@
 import {
   AppPlugin,
-  AppPluginMeta,
+  type AppPluginMeta,
   DataSourcePlugin,
-  DataSourcePluginMeta,
+  type DataSourcePluginMeta,
   PanelPlugin,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   PluginType,
 } from '@grafana/data';
 

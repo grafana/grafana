@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
@@ -229,7 +229,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
         expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
 
-        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByRole('combobox', { name: /team/i }));
         await user.click(await screen.findByText(/test team/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
@@ -444,6 +444,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
+      await screen.findByText('Sort');
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
   });

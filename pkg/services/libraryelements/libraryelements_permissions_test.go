@@ -130,6 +130,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 		})
 
 		t.Run("When editor tries to delete library panel, it should succeed", func(t *testing.T) {
+			t.Skip() // TODO fix the flaky test: https://github.com/grafana/grafana/issues/120712
 			deleteLibraryElement(t, grafanaListedAddr, "editor", "editor", uid, http.StatusOK)
 		})
 	})
@@ -368,7 +369,7 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

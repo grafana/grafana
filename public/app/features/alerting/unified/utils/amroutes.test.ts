@@ -1,8 +1,8 @@
 import { uniqueId } from 'lodash';
 
-import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../types/amroutes';
+import { type FormAmRoute } from '../types/amroutes';
 
 import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';

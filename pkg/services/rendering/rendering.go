@@ -109,18 +109,40 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	}
 
 	var renderKeyProvider renderKeyProvider
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
-		renderKeyProvider = &jwtRenderKeyProvider{
-			log:       logger,
-			authToken: []byte(cfg.RendererAuthToken),
-			keyExpiry: cfg.RendererRenderKeyLifeTime,
-		}
-	} else {
-		renderKeyProvider = &perRequestRenderKeyProvider{
-			cache:     remoteCache,
-			log:       logger,
-			keyExpiry: cfg.RendererRenderKeyLifeTime,
+	if cfg.RendererServerUrl != "" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
+			// only check if the renderer is configured otherwise we dont need to force changing the default.
+			if strings.TrimSpace(cfg.RendererAuthToken) == "" {
+				err := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
+					"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
+				logger.Error(err)
+				return nil, fmt.Errorf("failed to start rendering service: %v", err)
+			}
+
+			if cfg.RendererAuthToken == setting.DefaultRendererAuthToken {
+				if cfg.Env == setting.Dev {
+					logger.Warn("Using the default [rendering]renderer_token is not allowed for production settings, and Grafana will refuse to start.")
+				} else {
+					err := "Using the default [rendering]renderer_token is not allowed for production settings, set it to another value. " +
+						"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
+					logger.Error(err)
+					return nil, fmt.Errorf("failed to start rendering service: %v", err)
+				}
+			}
+
+			// overwrite the default key provider when we know we have a better way.
+			renderKeyProvider = &jwtRenderKeyProvider{
+				log:       logger,
+				authToken: []byte(cfg.RendererAuthToken),
+				keyExpiry: cfg.RendererRenderKeyLifeTime,
+			}
+		} else {
+			renderKeyProvider = &perRequestRenderKeyProvider{
+				cache:     remoteCache,
+				log:       logger,
+				keyExpiry: cfg.RendererRenderKeyLifeTime,
+			}
 		}
 	}
 
@@ -267,13 +289,15 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 }
 
 // Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
-func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
+	if renderKeyProvider == nil {
+		// Rendering is not configured. Just reject the token; it has no reasonable use here.
+		return nil, ErrRenderUnavailable
 	}
+
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
@@ -345,13 +369,15 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	return res, nil
 }
 
-func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
+	if renderKeyProvider == nil {
+		// Rendering is not configured. Just reject the token; it has no reasonable use here.
+		return nil, ErrRenderUnavailable
 	}
+
 	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()

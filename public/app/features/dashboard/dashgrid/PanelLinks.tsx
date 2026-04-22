@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import type { JSX } from 'react';
 
-import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type DataLink, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
 

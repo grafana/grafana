@@ -2,7 +2,14 @@ import { setBackendSrv } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from '../constants';
 import * as permissions from '../permissions';
-import { CatalogPlugin, LocalPlugin, RemotePlugin, Version, ReducerState, RequestStatus } from '../types';
+import {
+  type CatalogPlugin,
+  type LocalPlugin,
+  type RemotePlugin,
+  type Version,
+  type ReducerState,
+  RequestStatus,
+} from '../types';
 
 import catalogPluginMock from './catalogPlugin.mock';
 import localPluginMock from './localPlugin.mock';

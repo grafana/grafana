@@ -17,11 +17,23 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// ErrUserRequired is returned when a nil user is passed to protected field authorization checks.
+var ErrUserRequired = errors.New("user is required to check protected field authorization")
+
+type receiverAuthz interface {
+	HasUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) error
+	AuthorizeCreate(context.Context, identity.Requester) error
+	AuthorizeUpdateByUID(context.Context, identity.Requester, string) error
+	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+}
 
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
@@ -30,6 +42,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type ContactPointService struct {
+	authz                     receiverAuthz
 	configStore               alertmanagerConfigStore
 	encryptionService         secrets.Service
 	provenanceStore           ProvisioningStore
@@ -38,6 +51,7 @@ type ContactPointService struct {
 	receiverService           receiverService
 	log                       log.Logger
 	resourcePermissions       ac.ReceiverPermissionsService
+	allowedIntegrations       map[schema.IntegrationType]struct{}
 }
 
 type receiverService interface {
@@ -47,6 +61,7 @@ type receiverService interface {
 }
 
 func NewContactPointService(
+	authz receiverAuthz,
 	store alertmanagerConfigStore,
 	encryptionService secrets.Service,
 	provenanceStore ProvisioningStore,
@@ -55,8 +70,10 @@ func NewContactPointService(
 	log log.Logger,
 	nsStore AlertRuleNotificationSettingsStore,
 	resourcePermissions ac.ReceiverPermissionsService,
+	allowedIntegrations map[schema.IntegrationType]struct{},
 ) *ContactPointService {
 	return &ContactPointService{
+		authz:                     authz,
 		configStore:               store,
 		receiverService:           receiverService,
 		encryptionService:         encryptionService,
@@ -65,6 +82,7 @@ func NewContactPointService(
 		log:                       log,
 		notificationSettingsStore: nsStore,
 		resourcePermissions:       resourcePermissions,
+		allowedIntegrations:       allowedIntegrations,
 	}
 }
 
@@ -151,7 +169,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -188,6 +206,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
+		Version:               string(schema.V1),
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
@@ -204,10 +223,16 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if receiver.Name == contactPoint.Name {
 			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true
+			if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(receiver.Name)); err != nil {
+				return apimodels.EmbeddedContactPoint{}, err
+			}
 		}
 	}
 
 	if !receiverFound {
+		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
+			return apimodels.EmbeddedContactPoint{}, err
+		}
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
 			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
@@ -238,7 +263,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	return contactPoint, nil
 }
 
-func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
+func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
@@ -266,7 +291,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -277,6 +302,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+
+	// Check protected fields authorization
+	if err := ecp.checkProtectedFields(ctx, user, typeSchema, rawContactPoint, contactPoint); err != nil {
+		return err
 	}
 	// transform to internal model
 	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
@@ -299,6 +329,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
+		Version:               string(schema.V1),
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
@@ -314,6 +345,10 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, mergedReceiver.UID)
 	}
 	oldReceiverName := *oldReceiverNameRef
+
+	if err := ecp.authorizeUpdate(ctx, user, mergedReceiver.Name, oldReceiverName, fullRemoval, newReceiverCreated); err != nil {
+		return err
+	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if mergedReceiver.Name != oldReceiverName && oldReceiverName != "" {
@@ -348,7 +383,31 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	return nil
 }
 
-func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
+// authorizeUpdate checks authorization for a contact point update, handling the
+// different cases: simple update, rename into existing receiver, and rename creating a new receiver.
+func (ecp *ContactPointService) authorizeUpdate(ctx context.Context, user identity.Requester, newName, oldName string, fullRemoval, newReceiverCreated bool) error {
+	renamed := newName != oldName && oldName != ""
+	if !renamed {
+		return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName))
+	}
+
+	// Authorize the target: create if it's a new receiver group, update otherwise.
+	if newReceiverCreated {
+		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
+			return err
+		}
+	} else if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName)); err != nil {
+		return err
+	}
+
+	// Authorize the source: delete if fully removed, update otherwise.
+	if fullRemoval {
+		return ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(oldName))
+	}
+	return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(oldName))
+}
+
+func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, user identity.Requester, uid string) error {
 	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -376,6 +435,16 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	}
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
+	}
+
+	if fullRemoval {
+		if err := ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(name)); err != nil {
+			return err
+		}
+	} else {
+		if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(name)); err != nil {
+			return err
+		}
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -439,6 +508,61 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)
 	}
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
+}
+
+// checkProtectedFields checks if user has permission to modify protected fields in the contact point.
+// It compares the existing contact point with the incoming one and returns an error if protected fields
+// are modified without proper authorization.
+func (ecp *ContactPointService) checkProtectedFields(
+	ctx context.Context,
+	user identity.Requester,
+	typeSchema schema.IntegrationSchemaVersion,
+	existing apimodels.EmbeddedContactPoint,
+	incoming apimodels.EmbeddedContactPoint,
+) error {
+	if user == nil {
+		return ErrUserRequired
+	}
+
+	// Create a receiver wrapper for authorization check.
+	// Use the existing receiver's name for UID derivation since authorization
+	// should be checked against the existing resource, not the potentially renamed one.
+	receiver := &models.Receiver{
+		UID:  legacy_storage.NameToUid(existing.Name),
+		Name: existing.Name,
+	}
+
+	// Check if user has permission to update protected fields first, before doing
+	// expensive conversion and diff calculations.
+	canUpdateProtected, _ := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	if canUpdateProtected {
+		return nil
+	}
+
+	// User doesn't have blanket permission, so we need to check if they're actually
+	// modifying any protected fields.
+	existingIntegration, err := EmbeddedContactPointToIntegration(existing, typeSchema)
+	if err != nil {
+		return fmt.Errorf("failed to convert existing contact point: %w", err)
+	}
+	incomingIntegration, err := EmbeddedContactPointToIntegration(incoming, typeSchema)
+	if err != nil {
+		return fmt.Errorf("failed to convert incoming contact point: %w", err)
+	}
+
+	protectedFieldChanges := models.HasIntegrationsDifferentProtectedFields(existingIntegration, incomingIntegration)
+	if len(protectedFieldChanges) == 0 {
+		return nil
+	}
+
+	// User is modifying protected fields without permission - return authorization error
+	err = ecp.authz.AuthorizeUpdateProtected(ctx, user, receiver)
+	if err != nil {
+		return notifier.MakeProtectedFieldsAuthzError(err, map[string][]schema.IntegrationFieldPath{
+			incoming.UID: protectedFieldChanges,
+		})
+	}
+	return nil
 }
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
@@ -520,13 +644,18 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
 	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
 	if err != nil {
 		return err
+	}
+	if allowedIntegrations != nil {
+		if _, allowed := allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
 	}
 	e.Type = string(iType)
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)

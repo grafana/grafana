@@ -10,6 +10,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -375,7 +376,7 @@ func TestRouteAccess(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, false)
+			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
 			actual, err := svc.Access(context.Background(), testCase.user, allRoutes...)
 
@@ -470,7 +471,7 @@ func TestRouteAccessFilterRead(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, testCase.includeProvisioning)
+			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), testCase.includeProvisioning)
 
 			actual, err := svc.FilterRead(context.Background(), testCase.user, allRoutes...)
 
@@ -689,7 +690,7 @@ func TestRouteAccessAuthorizeLegacy(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, false)
+			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
 			err := testCase.authorize(svc, context.Background(), testCase.user)
 
@@ -865,7 +866,7 @@ func TestRouteAccessAuthorizeScoped(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, false)
+			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
 			err := testCase.authorize(svc, context.Background(), testCase.user)
 
@@ -1061,7 +1062,7 @@ func TestRouteAccessAuthorizeProvisioning(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, testCase.includeProvisioning)
+			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), testCase.includeProvisioning)
 
 			err := testCase.authorize(svc, context.Background(), testCase.user)
 

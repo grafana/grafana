@@ -114,9 +114,11 @@ For general information about querying in Grafana, and common options and user i
 
 ## Build a dashboard from the data source
 
-After you've configured a data source, you can start creating a dashboard directly from it, by clicking the **Build a dashboard** button.
+After you've configured a data source, you can start creating a dashboard directly from it.
+To do so, click the **Build a dashboard** drop-down list and select **From suggestions**.
+This opens a dialog box with suggested dashboards based on the data source type.
 
-For more information, refer to [Begin dashboard creation from data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#begin-dashboard-creation-from-connections).
+For more information on suggested dashboards, refer to [Create dashboards from suggestions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-dashboards-from-suggestions).
 
 ## Special data sources
 
@@ -159,6 +161,7 @@ These built-in core data sources are also included in the Grafana documentation:
 - [Microsoft SQL Server (MSSQL)](mssql/)
 - [MySQL](mysql/)
 - [OpenTSDB](opentsdb/)
+- [Parca](parca/)
 - [PostgreSQL](postgres/)
 - [Prometheus](prometheus/)
 - [Pyroscope](pyroscope/)

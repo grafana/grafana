@@ -1,39 +1,64 @@
-import { FormEvent, useCallback } from 'react';
+import { css } from '@emotion/css';
+import { type FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
+  type MetricFindValue,
+  type SelectableValue,
+  readCSV,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
-import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { type AdHocFiltersController } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
+import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { VariableCheckboxField } from './VariableCheckboxField';
+import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
+import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   allowCustomValue?: boolean;
+  enableGroupBy?: boolean;
   infoText?: string;
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  onEnableGroupByChange?: (event: FormEvent<HTMLInputElement>) => void;
+  originFiltersController?: AdHocFiltersController;
+  defaultGroupByValues?: Array<SelectableValue<string>>;
+  defaultGroupByOptions?: Array<SelectableValue<string>>;
+  onDefaultGroupByChange?: (items: Array<SelectableValue<string>>) => void;
   inline?: boolean;
   datasourceSupported: boolean;
+  datasourceSupportsGroupBy?: boolean;
 }
 
 export function AdHocVariableForm({
   datasource,
   infoText,
   allowCustomValue,
+  enableGroupBy,
   onDataSourceChange,
   onDefaultKeysChange,
   onAllowCustomValueChange,
+  onEnableGroupByChange,
+  originFiltersController,
+  defaultGroupByValues,
+  defaultGroupByOptions,
+  onDefaultGroupByChange,
   defaultKeys,
   inline,
   datasourceSupported,
+  datasourceSupportsGroupBy,
 }: AdHocVariableFormProps) {
+  const styles = useStyles2(getStyles);
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -51,7 +76,7 @@ export function AdHocVariableForm({
     <Stack direction="column" gap={2}>
       {!inline && (
         <VariableLegend>
-          <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
+          <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Filter options</Trans>
         </VariableLegend>
       )}
 
@@ -74,13 +99,50 @@ export function AdHocVariableForm({
         <Alert
           title={t(
             'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
-            'This data source does not support ad hoc filters'
+            'This data source does not support filters'
           )}
           severity="warning"
           bottomSpacing={0}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && originFiltersController && (
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <AdHocOriginFiltersEditor controller={originFiltersController} />
+        </div>
+      )}
+
+      {config.featureToggles.dashboardUnifiedDrilldownControls &&
+        datasource &&
+        datasourceSupported &&
+        datasourceSupportsGroupBy &&
+        onEnableGroupByChange && (
+          <Field
+            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+            description={t(
+              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+              'Enables group by operator in the filter combobox'
+            )}
+            noMargin
+          >
+            <Switch
+              value={enableGroupBy ?? false}
+              onChange={onEnableGroupByChange}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+            />
+          </Field>
+        )}
+
+      {datasourceSupported && onDefaultGroupByChange && (
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <DefaultGroupByValueEditor
+            values={defaultGroupByValues ?? []}
+            options={defaultGroupByOptions}
+            onChange={onDefaultGroupByChange}
+          />
+        </div>
+      )}
 
       {datasourceSupported && onDefaultKeysChange && (
         <>
@@ -124,17 +186,29 @@ export function AdHocVariableForm({
       )}
 
       {datasourceSupported && onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
+        <Field
+          label={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
           )}
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
+          noMargin
+        >
+          <Switch
+            value={allowCustomValue ?? true}
+            onChange={onAllowCustomValueChange}
+            data-testid={
+              selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+            }
+          />
+        </Field>
       )}
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  originFiltersWrapper: css({
+    maxWidth: theme.spacing(55),
+  }),
+});

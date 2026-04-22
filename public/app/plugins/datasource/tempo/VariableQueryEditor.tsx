@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { DataQuery, SelectableValue, TimeRange } from '@grafana/data';
-import { InlineField, InlineFieldRow, InputActionMeta, Select } from '@grafana/ui';
+import { type DataQuery, type SelectableValue, type TimeRange } from '@grafana/data';
+import { InlineField, InlineFieldRow, type InputActionMeta, Select } from '@grafana/ui';
 
-import { TempoDatasource } from './datasource';
+import { type TempoDatasource } from './datasource';
 import { OPTIONS_LIMIT } from './language_provider';
 
 export enum TempoVariableQueryType {

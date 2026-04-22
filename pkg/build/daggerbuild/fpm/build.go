@@ -104,7 +104,7 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 		packagePaths = []string{
 			"/pkg/usr/sbin",
 			"/pkg/usr/share",
-			// holds default environment variables for the grafana-server service
+			// holds default environment variables for the grafana service
 			opts.EnvFolder,
 			// /etc/grafana is empty in the installation, but is set up by the postinstall script and must be created first.
 			"/pkg/etc/grafana",
@@ -127,8 +127,8 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 
 	container = container.
 		WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
-		// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
-		WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
+		// Wrapper scripts for the unified grafana binary (server/cli subcommands) and legacy names.
+		WithExec([]string{"cp", "/src/packaging/wrappers/grafana", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
 		WithExec([]string{"cp", "-r", "/src", "/pkg/usr/share/grafana"})
 
 	for _, conf := range opts.ConfigFiles {

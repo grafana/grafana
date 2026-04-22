@@ -23,14 +23,16 @@ func (GlobalRoleBindingspecSubject) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type GlobalRoleBindingspecRoleRef struct {
 	// kind of role
-	Kind GlobalRoleBindingSpecRoleRefKind `json:"kind"`
+	Kind string `json:"kind"`
 	// uid of the role
 	Name string `json:"name"`
 }
 
 // NewGlobalRoleBindingspecRoleRef creates a new GlobalRoleBindingspecRoleRef object.
 func NewGlobalRoleBindingspecRoleRef() *GlobalRoleBindingspecRoleRef {
-	return &GlobalRoleBindingspecRoleRef{}
+	return &GlobalRoleBindingspecRoleRef{
+		Kind: "GlobalRole",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for GlobalRoleBindingspecRoleRef.
@@ -64,23 +66,9 @@ const (
 	GlobalRoleBindingSpecSubjectKindUser           GlobalRoleBindingSpecSubjectKind = "User"
 	GlobalRoleBindingSpecSubjectKindServiceAccount GlobalRoleBindingSpecSubjectKind = "ServiceAccount"
 	GlobalRoleBindingSpecSubjectKindTeam           GlobalRoleBindingSpecSubjectKind = "Team"
-	GlobalRoleBindingSpecSubjectKindBasicRole      GlobalRoleBindingSpecSubjectKind = "BasicRole"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for GlobalRoleBindingSpecSubjectKind.
 func (GlobalRoleBindingSpecSubjectKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingSpecSubjectKind"
-}
-
-// +k8s:openapi-gen=true
-type GlobalRoleBindingSpecRoleRefKind string
-
-const (
-	GlobalRoleBindingSpecRoleRefKindCoreRole   GlobalRoleBindingSpecRoleRefKind = "CoreRole"
-	GlobalRoleBindingSpecRoleRefKindGlobalRole GlobalRoleBindingSpecRoleRefKind = "GlobalRole"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for GlobalRoleBindingSpecRoleRefKind.
-func (GlobalRoleBindingSpecRoleRefKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingSpecRoleRefKind"
 }

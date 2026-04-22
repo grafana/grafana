@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
@@ -36,15 +37,14 @@ var (
 
 var teamResource = iamv0alpha1.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
 }
 
 type LegacyStore struct {
-	store               legacy.LegacyIdentityStore
-	ac                  claims.AccessClient
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -78,10 +78,6 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "team.Delete")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -119,10 +115,6 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "team.Update")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -172,12 +164,15 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	ctx, span := s.tracer.Start(ctx, "team.List")
 	defer span.End()
 
+	query := legacy.ListTeamQuery{}
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
+
 	res, err := common.List(
 		ctx, teamResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.Team], error) {
-			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
-				Pagination: p,
-			})
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListTeams(ctx, ns, q)
 
 			if err != nil {
 				return nil, err
@@ -242,10 +237,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	ctx, span := s.tracer.Start(ctx, "team.Create")
 	defer span.End()
 
-	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "create")
-	}
-
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -282,6 +273,35 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	iamTeam := toTeamObject(result.Team, ns)
 	return &iamTeam, nil
+}
+
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
+	if options.LabelSelector == nil {
+		return 0
+	}
+
+	reqs, selectable := options.LabelSelector.Requirements()
+	if !selectable {
+		return 0
+	}
+
+	for _, req := range reqs {
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
+		}
+	}
+
+	return 0
 }
 
 func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {

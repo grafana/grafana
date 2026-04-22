@@ -14,7 +14,7 @@ import {
   userLoaded,
   userReducer,
   userSessionRevoked,
-  UserState,
+  type UserState,
 } from './reducers';
 
 describe('userReducer', () => {

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, HTMLAttributes, useMemo } from 'react';
+import { type CSSProperties, type HTMLAttributes, useMemo } from 'react';
 import tinycolor2 from 'tinycolor2';
-import { MergeExclusive } from 'type-fest';
+import { type MergeExclusive } from 'type-fest';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Icon, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm' | 'xs';

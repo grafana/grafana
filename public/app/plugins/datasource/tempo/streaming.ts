@@ -1,30 +1,30 @@
 import { capitalize } from 'lodash';
-import { map, Observable, scan, takeWhile } from 'rxjs';
+import { map, type Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameFromJSON,
-  DataFrameJSON,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrameJSON,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   FieldCache,
   FieldType,
   LiveChannelScope,
   LoadingState,
-  MutableDataFrame,
+  type MutableDataFrame,
   sortDataFrame,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { MetricsQueryType, SearchStreamingState } from './dataquery.gen';
-import { DEFAULT_SPSS, TempoDatasource } from './datasource';
+import { DEFAULT_SPSS, type TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
-import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
+import { type SearchMetrics, type TempoJsonData, type TempoQuery } from './types';
 import { stepToNanos } from './utils';
 
 function getLiveStreamKey(): string {

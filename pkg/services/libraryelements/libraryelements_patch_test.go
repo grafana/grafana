@@ -89,7 +89,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
 					},
 				},

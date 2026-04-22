@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Sertifikat Klien",
       "aria-label-client-id": "ID Klien",
       "aria-label-client-secret": "Rahasia Klien",
+      "aria-label-private-key": "Kunci Pribadi",
+      "aria-label-private-key-password": "Kata Sandi Sertifikat",
       "aria-label-symbol-client-secret": "Rahasia Klien",
       "aria-label-tenant-id": "ID Tenant",
+      "description-certificate-format": "Pilih format sertifikat (sertifikat PEM harus dalam format PEM teks biasa, sertifikat PFX harus dalam format PFX yang dikodekan base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Format",
+      "label-client-certificate": "Sertifikat Klien",
       "label-client-id": "ID Aplikasi (klien)",
       "label-client-secret": "Rahasia Klien",
+      "label-private-key": "Kunci Pribadi",
       "label-symbol-client-secret": "Rahasia Klien",
+      "label-symbol-private-key-password": "Kata Sandi Sertifikat",
       "label-tenant-id": "ID Direktori (tenant)",
       "placeholder-symbol-client-secret": "dikonfigurasi",
       "reset-symbol-client-secret": "Atur ulang"
@@ -62,8 +70,8 @@
       "title-kick-start": "Mulai kueri Anda"
     },
     "azure-credentials-form": {
-      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
-      "label-authentication": "Autentikasi",
+      "description-authentication": "Pilih jenis autentikasi ke service Azure",
+      "label-authentication": "Jenis autentikasi",
       "title-authentication": "Autentikasi"
     },
     "basic-logs-toggle": {
@@ -78,14 +86,14 @@
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",
       "body-service-credentials": "Autentikasi berbasis pengguna pada dasarnya tidak mendukung fitur Grafana yang membuat permintaan ke sumber data tanpa detail pengguna yang tersedia untuk permintaan tersebut. Contohnya adalah peringatan. Jika Anda ingin memastikan bahwa fitur yang tidak memiliki pengguna dalam konteks permintaan masih berfungsi, harap berikan kredensial fallback (cadangan) di bawah ini.",
-      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
-      "description-service-credentials": "Pilih apakah kredensial layanan fallback diaktifkan atau dinonaktifkan untuk sumber data ini",
+      "description-authentication": "Pilih jenis autentikasi ke service Azure",
+      "description-service-credentials": "Pilih apakah kredensial service fallback diaktifkan atau dinonaktifkan untuk sumber data ini",
       "label-authentication": "Autentikasi",
-      "label-service-credentials": "Kredensial Layanan",
+      "label-service-credentials": "Kredensial Service",
       "note-service-credentials": "Catatan: Fitur seperti peringatan akan dibatasi pada tingkat akses kredensial fallback, bukan pengguna. Ini dapat menimbulkan kebingungan bagi pengguna dan harus diklarifikasi.",
       "title-fallback-credentials-disabled": "Kredensial Fallback Dinonaktifkan",
-      "title-fallback-service-credentials": "Kredensial Layanan Fallback",
-      "title-service-credentials": "Kredensial Layanan"
+      "title-fallback-service-credentials": "Kredensial Service Fallback",
+      "title-service-credentials": "Kredensial Service"
     },
     "default-subscription": {
       "aria-label-default-subscription": "Langganan Default",
@@ -211,7 +219,7 @@
         "label-builder": "Pembangun",
         "label-kql": "KQL"
       },
-      "label-service": "Layanan",
+      "label-service": "Service",
       "placeholder-service": "Melayani...",
       "title-switch-mode": "Beralih ke mode editor?"
     },
@@ -277,7 +285,7 @@
       "tooltip-time-range": "<0>Menentukan rentang waktu yang digunakan untuk kueri. Opsi <1>Kueri</1> hanya akan menggunakan rentang waktu yang ditentukan dalam kueri. <3>Dasbor</3> hanya akan menggunakan rentang waktu Grafana.</0>"
     },
     "top-field": {
-      "label-top": "Top"
+      "label-top": "Atas"
     },
     "trace-type-field": {
       "label-event-type": "Jenis Peristiwa",
@@ -291,7 +299,7 @@
       "title-unsupported-auth": "Penyedia autentikasi tidak didukung"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "Fitur backend sumber data (seperti peringatan) memerlukan kredensial layanan agar dapat berfungsi dengan baik. Sumber data ini dikonfigurasi tanpa fallback kredensial layanan, atau fungsi fallback dinonaktifkan. Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
+      "body-no-fallback-credentials": "Fitur backend sumber data (seperti peringatan) memerlukan kredensial service agar dapat berfungsi dengan baik. Sumber data ini dikonfigurasi tanpa fallback kredensial service, atau fungsi fallback dinonaktifkan. Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
       "title-no-fallback-credentials": "Tidak ada kredensial fallback yang tersedia"
     },
     "variable-editor": {

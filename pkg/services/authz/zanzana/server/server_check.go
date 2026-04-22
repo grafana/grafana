@@ -117,7 +117,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 
 	if resource.HasSubresource() {
 		// Check if subject has access as a subresource
-		res, err := s.openfgaCheck(ctx, store, subject, subresourceRelation, resourceIdent, contextuals, resourceCtx)
+		res, err := s.openfgaCheck(ctx, store, subject, common.SubresourcePermissionRelation(subresourceRelation), resourceIdent, contextuals, resourceCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +174,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 
 	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
-		res, err := s.openfgaCheck(ctx, store, subject, folderRelation, folderIdent, contextuals, resourceCtx)
+		res, err := s.openfgaCheck(ctx, store, subject, common.SubresourcePermissionRelation(folderRelation), folderIdent, contextuals, resourceCtx)
 		if err != nil {
 			return nil, err
 		}

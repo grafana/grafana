@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { LogListFontSize } from './LogList';
+import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
@@ -78,7 +80,10 @@ LogLineDetails.displayName = 'LogLineDetails';
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
-    const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+    const { currentLog, closeDetails, detailsMode, setCurrentLog, showDetails, setDetailsMode, toggleDetails } =
+      useLogDetailsContext();
+    const [search, setSearch] = useState('');
+    const inputRef = useRef('');
 
     const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize);
 
@@ -98,6 +103,13 @@ const LogLineDetailsTabs = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const handleSearch = useCallback((newSearch: string) => {
+      inputRef.current = newSearch;
+      startTransition(() => {
+        setSearch(inputRef.current);
+      });
+    }, []);
+
     const tabs = useMemo(() => showDetails.slice().reverse(), [showDetails]);
 
     if (!currentLog) {
@@ -105,7 +117,7 @@ const LogLineDetailsTabs = memo(
     }
 
     return (
-      <>
+      <div className={styles.tabsWrapper}>
         {showDetails.length > 1 && (
           <TabsBar>
             {tabs.map((log) => {
@@ -131,16 +143,25 @@ const LogLineDetailsTabs = memo(
             })}
           </TabsBar>
         )}
-        <div className={styles.scrollContainer}>
+        <LogLineDetailsHeader
+          closeDetails={closeDetails}
+          detailsMode={detailsMode}
+          focusLogLine={focusLogLine}
+          log={currentLog}
+          search={search}
+          setDetailsMode={setDetailsMode}
+          onSearch={handleSearch}
+        />
+        <ScrollContainer>
           <LogLineDetailsComponent
-            focusLogLine={focusLogLine}
             log={currentLog}
             logs={logs}
+            search={search}
             timeRange={timeRange}
             timeZone={timeZone}
           />
-        </div>
-      </>
+        </ScrollContainer>
+      </div>
     );
   }
 );
@@ -155,10 +176,19 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
-  const { app, fontSize, noInteractions } = useLogListContext();
-  const { detailsWidth } = useLogDetailsContext();
+  const { app, fontSize, logOptionsStorageKey, noInteractions } = useLogListContext();
+  const { closeDetails, detailsMode, detailsWidth, setDetailsMode } = useLogDetailsContext();
   const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [search, setSearch] = useState('');
+  const inputRef = useRef('');
+  const [autoScrolled, setAutoScrolled] = useState(false);
+  const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
+  const [inlineNoScroll, setInlineNoScroll] = useState(
+    inlineLogDetailsNoScrolls && logOptionsStorageKey
+      ? store.getBool(`${logOptionsStorageKey}.inlineDetailsNoScrolls`, true)
+      : undefined
+  );
 
   useEffect(() => {
     if (!noInteractions) {
@@ -178,19 +208,47 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
     saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
   }, [log]);
 
+  const handleSearch = useCallback((newSearch: string) => {
+    inputRef.current = newSearch;
+    startTransition(() => {
+      setSearch(inputRef.current);
+    });
+  }, []);
+
+  // Keep scroll position when adding filters or using displayed fields
   useEffect(() => {
-    if (!scrollRef.current) {
+    if (!scrollRef.current || inlineNoScroll || autoScrolled) {
       return;
     }
-    scrollRef.current.scrollTop = getDetailsScrollPosition(log);
-  }, [log]);
+    if (scrollRef.current.scrollHeight === scrollRef.current.clientHeight) {
+      return;
+    }
+    scrollRef.current.scrollTo(0, getDetailsScrollPosition(log));
+    setAutoScrolled(true);
+  }, [inlineNoScroll, autoScrolled, log, scrollRef.current?.scrollHeight]);
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.inlineContainer}>
-        <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
-          <LogLineDetailsComponent log={log} logs={logs} timeRange={timeRange} timeZone={timeZone} />
-        </div>
+        <LogLineDetailsHeader
+          closeDetails={closeDetails}
+          detailsMode={detailsMode}
+          inlineNoScroll={inlineNoScroll}
+          log={log}
+          search={search}
+          setDetailsMode={setDetailsMode}
+          setInlineNoScroll={setInlineNoScroll}
+          onSearch={handleSearch}
+        />
+        {inlineNoScroll ? (
+          <div>
+            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+          </div>
+        ) : (
+          <ScrollContainer ref={scrollRef} onScroll={saveScroll} overflowY="auto" maxHeight={LOG_LINE_DETAILS_HEIGHT}>
+            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+          </ScrollContainer>
+        )}
       </div>
     </div>
   );
@@ -207,7 +265,6 @@ const getStyles = (
 ) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
-    height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
@@ -215,8 +272,9 @@ const getStyles = (
     backgroundColor: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+    display: 'flex',
+    flexDirection: 'column',
     height: '100%',
-    overflow: 'auto',
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
@@ -228,15 +286,8 @@ const getStyles = (
     borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
     height: '100%',
-    overflow: 'auto',
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
-  scrollContainer: css({
-    overflow: 'auto',
-    height: '100%',
-  }),
-  componentWrapper: css({
-    padding: theme.spacing(0, 1, 1, 1),
-  }),
+  tabsWrapper: css({ height: '100%', display: 'flex', flexDirection: 'column' }),
 });

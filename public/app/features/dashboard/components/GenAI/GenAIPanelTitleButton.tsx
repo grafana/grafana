@@ -1,8 +1,8 @@
-import { Dashboard, Panel } from '@grafana/schema';
+import { type Dashboard, type Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { Message, Role, getFilteredPanelString } from './utils';
+import { type Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;

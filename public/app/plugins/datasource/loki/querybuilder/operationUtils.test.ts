@@ -1,4 +1,4 @@
-import { QueryBuilderOperation, QueryBuilderOperationDefinition } from '@grafana/plugin-ui';
+import { type QueryBuilderOperation, type QueryBuilderOperationDefinition } from '@grafana/plugin-ui';
 
 import {
   createAggregationOperation,

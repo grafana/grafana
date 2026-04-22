@@ -1,6 +1,6 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { TimeSeries, TableData } from '../types/data';
-import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
+import { type TimeSeries, type TableData } from '../types/data';
+import { FieldType, type DataFrameDTO, type Field } from '../types/dataFrame';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
@@ -33,12 +33,12 @@ describe('toDataFrame', () => {
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
     expect(v0.length).toEqual(2);
-    expect(v0.get(0)).toEqual(1);
-    expect(v0.get(1)).toEqual(2);
+    expect(v0[0]).toEqual(1);
+    expect(v0[1]).toEqual(2);
 
     expect(v1.length).toEqual(2);
-    expect(v1.get(0)).toEqual(100);
-    expect(v1.get(1)).toEqual(200);
+    expect(v1[0]).toEqual(100);
+    expect(v1[1]).toEqual(200);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -174,7 +174,7 @@ describe('toDataFrame', () => {
 
     const v0 = dataFrame.fields[0].values;
     expect(v0.length).toEqual(1);
-    expect(v0.get(0)).toEqual(input1.datapoints[0]);
+    expect(v0[0]).toEqual(input1.datapoints[0]);
   });
 
   it('converts JSON response to dataframes', () => {

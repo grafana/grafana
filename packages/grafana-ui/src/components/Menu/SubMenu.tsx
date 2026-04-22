@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
-import { memo, CSSProperties, ReactElement } from 'react';
+import { memo, type CSSProperties, type ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { Icon } from '../Icon/Icon';
 
-import { MenuItemProps } from './MenuItem';
+import { type MenuItemProps } from './MenuItem';
 import { useMenuFocus } from './hooks';
 
 /** @internal */

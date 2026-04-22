@@ -1,19 +1,19 @@
 /* Prometheus internal models */
 
-import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
-import { PromOptions } from '@grafana/prometheus';
-import { LokiOptions } from 'app/plugins/datasource/loki/types';
+import { type AlertState, type DataSourceInstanceSettings } from '@grafana/data';
+import { type PromOptions } from '@grafana/prometheus';
+import { type LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
-  Annotations,
-  GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  Labels,
+  type Annotations,
+  type GrafanaAlertState,
+  type GrafanaAlertStateWithReason,
+  type Labels,
   mapStateWithReasonToBaseState,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleType,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
 } from './unified-alerting-dto';
 
 export type Alert = {

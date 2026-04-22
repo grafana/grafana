@@ -1,5 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { getLogger, setLogger } from '../logging/registry';
+
 import {
   getAppPluginMeta,
   getAppPluginMetas,
@@ -8,11 +10,14 @@ import {
   setAppPluginMetas,
 } from './apps';
 import { initPluginMetas } from './plugins';
-import { app } from './test-fixtures/config.apps';
+import { app, apps as testApps } from './test-fixtures/config.apps';
+import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 
 jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
+const getGrafanaExploretracesApp = () =>
+  structuredClone(v0alpha1Response.items.find((a) => a.spec.pluginJson.id === 'grafana-exploretraces-app'));
 
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
@@ -27,35 +32,97 @@ describe('when useMTPlugins flag is enabled', () => {
     beforeEach(() => {
       setAppPluginMetas({});
       jest.resetAllMocks();
-      initPluginMetasMock.mockResolvedValue({ items: [] });
+      initPluginMetasMock.mockResolvedValue({ items: [getGrafanaExploretracesApp()!] });
     });
 
     it('getAppPluginMetas should call initPluginMetas and return correct result', async () => {
       const apps = await getAppPluginMetas();
 
-      expect(apps).toEqual([]);
+      expect(apps).toMatchObject([testApps['grafana-exploretraces-app']]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getAppPluginMeta should call initPluginMetas and return correct result', async () => {
+    it('getAppPluginMeta should call initPluginMetas and return app if app exists', async () => {
+      const result = await getAppPluginMeta('grafana-exploretraces-app');
+
+      expect(result).toMatchObject(testApps['grafana-exploretraces-app']);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getAppPluginMeta should call initPluginMetas and return null if app does not exist', async () => {
       const result = await getAppPluginMeta('myorg-someplugin-app');
 
       expect(result).toEqual(null);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('isAppPluginInstalled should call initPluginMetas and return false', async () => {
+    it('isAppPluginInstalled should call initPluginMetas and return true if app exists', async () => {
+      const installed = await isAppPluginInstalled('grafana-exploretraces-app');
+
+      expect(installed).toEqual(true);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('isAppPluginInstalled should call initPluginMetas and return false if app does not exist', async () => {
       const installed = await isAppPluginInstalled('myorg-someplugin-app');
 
       expect(installed).toEqual(false);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getAppPluginVersion should call initPluginMetas and return null', async () => {
+    it('getAppPluginVersion should call initPluginMetas and return null if app exists', async () => {
+      const result = await getAppPluginVersion('grafana-exploretraces-app');
+
+      expect(result).toEqual('1.2.2');
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getAppPluginVersion should call initPluginMetas and return null if app does not exist', async () => {
       const result = await getAppPluginVersion('myorg-someplugin-app');
 
       expect(result).toEqual(null);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('and initPluginMetas returns an empty result', () => {
+      beforeEach(() => {
+        jest.resetAllMocks();
+        initPluginMetasMock.mockResolvedValue({ items: [] });
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+      });
+
+      it.each([{ func: getAppPluginMetas }])(
+        `when func:$func is called then a warning should be logged`,
+        async ({ func }) => {
+          await func();
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
+            { type: 'app' }
+          );
+        }
+      );
+
+      it.each([{ func: getAppPluginMeta }, { func: isAppPluginInstalled }, { func: getAppPluginVersion }])(
+        `when func:$func is called then a warning should be logged`,
+        async ({ func }) => {
+          await func('');
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
+            { type: 'app' }
+          );
+        }
+      );
     });
   });
 
@@ -113,7 +180,7 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when useMTPlugins flag is disabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: false });
   });

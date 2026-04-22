@@ -3,7 +3,11 @@ import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRuleGroup, CombinedRuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
+  type RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';

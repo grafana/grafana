@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { mergeMap } from 'rxjs';
 
-import { DataFrame, DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
+import { type DataFrame, type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;

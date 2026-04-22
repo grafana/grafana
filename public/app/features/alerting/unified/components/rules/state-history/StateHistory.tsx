@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type AlertState, type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
-import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type StateHistoryItem, type StateHistoryItemData } from 'app/types/unified-alerting';
+import { type GrafanaAlertStateWithReason, type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../../AlertLabel';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../../DynamicTable';
 import { AlertStateTag } from '../AlertStateTag';
 
 type StateHistoryRowItem = {

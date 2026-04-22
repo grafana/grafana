@@ -1,5 +1,5 @@
-import { ActionItem } from '../../../Actions';
-import { QueryEditorType } from '../../../constants';
+import { type ActionItem } from '../../../Actions';
+import { type QueryEditorType } from '../../../constants';
 
 import { SidebarCard } from './SidebarCard';
 
@@ -12,7 +12,7 @@ export function GhostSidebarCard({ id, type }: GhostSidebarCardProps) {
   const item: ActionItem = { name: '', type, isHidden: false };
 
   return (
-    <SidebarCard id={id} isSelected={false} item={item} onClick={() => {}} variant="ghost">
+    <SidebarCard id={id} isSelected={false} item={item} onSelect={() => {}} variant="ghost">
       {null}
     </SidebarCard>
   );

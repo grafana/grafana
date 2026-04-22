@@ -1,16 +1,16 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponseData,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   createDataFrame,
-  AdHocVariableFilter,
-  ScopedVars,
+  type AdHocVariableFilter,
+  type ScopedVars,
   getDefaultTimeRange,
 } from '@grafana/data';
 
@@ -18,6 +18,8 @@ import { config } from '../config';
 
 import {
   DataSourceWithBackend,
+  type HealthCheckResult,
+  HealthStatus,
   isExpressionReference,
   standardStreamOptionsProvider,
   toStreamingDataResponse,
@@ -68,6 +70,14 @@ jest.mock('../services', () => ({
   },
 }));
 jest.mock('./publicDashboardQueryHandler');
+
+const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+jest.mock('../internal/openFeature', () => ({
+  ...jest.requireActual('../internal/openFeature'),
+  getFeatureFlagClient: () => ({
+    getBooleanValue: mockGetBooleanValue,
+  }),
+}));
 
 describe('DataSourceWithBackend', () => {
   beforeEach(async () => {
@@ -473,20 +483,147 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
-  test('check that callHealthCheck uses the data source UID', () => {
-    const { mock, ds } = createMockDatasource();
-    ds.callHealthCheck();
+  describe('callHealthCheck', () => {
+    test('check that callHealthCheck uses the data source UID', () => {
+      const { mock, ds } = createMockDatasource();
+      ds.callHealthCheck();
 
-    const args = mock.calls[0][0];
+      const args = mock.calls[0][0];
 
-    expect(mock.calls.length).toBe(1);
-    expect(args).toMatchObject({
-      headers: {
-        'X-Datasource-Uid': 'abc',
-        'X-Plugin-Id': 'dummy',
-      },
-      method: 'GET',
-      url: '/api/datasources/uid/abc/health',
+      expect(mock.calls.length).toBe(1);
+      expect(args).toMatchObject({
+        headers: {
+          'X-Datasource-Uid': 'abc',
+          'X-Plugin-Id': 'dummy',
+        },
+        method: 'GET',
+        url: '/api/datasources/uid/abc/health',
+      });
+    });
+
+    test('uses the new URL when feature toggle is enabled', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { mock, ds } = createMockDatasource();
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+      );
+    });
+
+    test('uses the legacy URL when feature toggle is disabled', () => {
+      const { mock, ds } = createMockDatasource();
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
+    });
+
+    test('parses legacy API OK response (status, message, details)', async () => {
+      const response: HealthCheckResult = {
+        status: HealthStatus.OK,
+        message: 'Data source is working',
+        details: { version: '1.0', latencyMs: 42 },
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({ data: response } as FetchResponse);
+
+      const result = await ds.callHealthCheck();
+
+      expect(result).toEqual(response);
+      expect(result.status).toBe(HealthStatus.OK);
+      expect(result.message).toBe('Data source is working');
+      expect(result.details).toEqual({ version: '1.0', latencyMs: 42 });
+    });
+
+    test('parses legacy API ERROR response', async () => {
+      const response: HealthCheckResult = {
+        status: HealthStatus.Error,
+        message: 'Connection refused',
+        details: { endpoint: 'http://localhost:9090' },
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({ data: response } as FetchResponse);
+
+      const result = await ds.callHealthCheck();
+
+      expect(result.status).toBe(HealthStatus.Error);
+      expect(result.message).toBe('Connection refused');
+      expect(result.details).toEqual({ endpoint: 'http://localhost:9090' });
+    });
+
+    test('parses new API response via toHealthCheckResult (OK)', async () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({
+        data: {
+          kind: 'HealthCheckResult',
+          apiVersion: 'v0alpha1',
+          status: HealthStatus.OK,
+          message: 'OK',
+          details: { checkedAt: '2023-10-13' },
+        },
+      } as FetchResponse);
+
+      const result = await ds.callHealthCheck();
+
+      expect(result).toEqual({
+        status: HealthStatus.OK,
+        message: 'OK',
+        details: { checkedAt: '2023-10-13' },
+      });
+    });
+
+    test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({
+        data: {
+          status: 'CUSTOM_STATUS',
+          message: 'Unknown state',
+          details: undefined,
+        },
+      } as FetchResponse);
+
+      const result = await ds.callHealthCheck();
+
+      expect(result.status).toBe(HealthStatus.Unknown);
+      expect(result.message).toBe('Unknown state');
+      expect(result.details).toBeUndefined();
+    });
+
+    test('returns err.data when legacy API fetch rejects', async () => {
+      const errorData: HealthCheckResult = {
+        status: HealthStatus.Error,
+        message: 'Network error',
+        details: {},
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockRejectedValueOnce({ data: errorData });
+
+      const result = await ds.callHealthCheck();
+
+      expect(result).toEqual(errorData);
+      expect(result.status).toBe(HealthStatus.Error);
+      expect(result.message).toBe('Network error');
+    });
+
+    test('returns err.data when new API fetch rejects', async () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const errorData = {
+        status: HealthStatus.Error,
+        message: 'Service unavailable',
+        details: { code: 503 },
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockRejectedValueOnce({ data: errorData });
+
+      const result = await ds.callHealthCheck();
+
+      expect(result).toEqual(errorData);
+      expect(result.status).toBe(HealthStatus.Error);
+      expect(result.message).toBe('Service unavailable');
     });
   });
 
@@ -579,6 +716,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -594,6 +732,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
@@ -604,6 +743,27 @@ describe('DataSourceWithBackend', () => {
 
       await ds.setValue('multiplier', '1');
       expect(await ds.getValue('multiplier')).toBe('1');
+    });
+  });
+
+  describe('buildResourcesDatasourceUrl', () => {
+    afterEach(() => {
+      mockGetBooleanValue.mockReset().mockReturnValue(false);
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
+      mockGetBooleanValue.mockReturnValue(false);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourcePluginMeta } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 
 import { buildCategories } from './buildCategories';

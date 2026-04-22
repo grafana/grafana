@@ -4,7 +4,7 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Collapse, Space } from '@grafana/ui';
 
-import { AzureMonitorResource } from '../../dataquery.gen';
+import { type AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 
 export interface ResourcePickerProps<T> {

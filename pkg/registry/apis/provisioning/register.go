@@ -19,13 +19,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -47,10 +48,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -86,10 +89,13 @@ type JobHistoryConfig struct {
 }
 
 type APIBuilder struct {
+	gv schema.GroupVersion
+
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
 	onlyApiServer                       bool
+	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
@@ -133,12 +139,31 @@ type APIBuilder struct {
 	registry              prometheus.Registerer
 	quotaGetter           quotas.QuotaGetter
 	folderMetadataEnabled bool
+	maxIncrementalChanges int
+	folderAPIVersion      string
 }
 
-// NewAPIBuilder creates an API builder.
+// NewAPIBuilder creates an API builder for the provisioning API.
+//
+// This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
+// separate API builders for each version. The same types are served under different versions using
+// OpenAPI schema transformation.
+//
+// Key parameters for multi-version support:
+//   - gv: The GroupVersion (group + version) this builder serves. This determines which API version
+//     the builder registers (e.g., "provisioning.grafana.app/v0alpha1" or "provisioning.grafana.app/v1beta1").
+//     The version is used to generate the correct API paths (/apis/{group}/{version}/...) and to
+//     transform OpenAPI schemas to match the version.
+//   - isPreferredVersion: Indicates whether this version is the preferred/default version for the API group.
+//     Only ONE version should be marked as preferred. The preferred version is used by kubectl and other
+//     clients when they query the API without specifying a version. It also controls which version runs
+//     the controllers and background workers (only the preferred version starts these to avoid duplicates).
+//
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
+	gv schema.GroupVersion,
+	isPreferredVersion bool,
 	onlyApiServer bool,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
@@ -157,16 +182,21 @@ func NewAPIBuilder(
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
-) *APIBuilder {
+	folderAPIVersion string,
+	maxIncrementalChanges int,
+) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
 		clients = resources.NewClientFactory(configProvider)
+	}
+	if gv.Version == "" {
+		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
@@ -181,7 +211,9 @@ func NewAPIBuilder(
 	}
 
 	b := &APIBuilder{
+		gv:                                  gv,
 		onlyApiServer:                       onlyApiServer,
+		isPreferredVersion:                  isPreferredVersion,
 		minSyncInterval:                     minSyncInterval,
 		tracer:                              tracer,
 		usageStats:                          usageStats,
@@ -190,7 +222,7 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -206,13 +238,15 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
+		folderAPIVersion:                    folderAPIVersion,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
 
-	return b
+	return b, nil
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -272,17 +306,24 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(context.Background(), storageStatus) {
-		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please enable data migration in settings for folders and dashboards by adding the following configuration:\n[unified_storage.folders.folder.grafana.app]\nenableMigration = true\n\n[unified_storage.dashboards.dashboard.grafana.app]\nenableMigration = true\n\nAlternatively, disable provisioning")
-	}
-
 	allowedTargets := []provisioning.SyncTargetType{}
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	builder := NewAPIBuilder(
-		cfg.DisableControllers,
+	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
+	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
+
+	// Register v0alpha1 (preferred version)
+	builder, err := NewAPIBuilder(
+		schema.GroupVersion{
+			Group:   provisioning.GROUP,
+			Version: provisioning.VERSION, // v0alpha1
+		},
+		true,                   // isPreferredVersion
+		cfg.DisableControllers, // onlyApiServer
 		repoFactory,
 		connectionFactory,
 		features,
@@ -294,18 +335,62 @@ func RegisterAPIService(
 		tracer,
 		extraBuilders,
 		extraWorkers,
-		createJobHistoryConfigFromSettings(cfg),
+		jobHistoryConfig,
 		allowedTargets,
-		nil, // will use loopback instead
+		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
 		reg,
-		nil,
-		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
+		nil,   // newStandaloneClientFactoryFunc
+		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
+		folderMetadataEnabled,
+		folderAPIVersion,
+		maxIncrementalChanges,
 	)
+	if err != nil {
+		return nil, err
+	}
 	apiregistration.RegisterAPI(builder)
+
+	// Register v1beta1
+	v1beta1Builder, err := NewAPIBuilder(
+		schema.GroupVersion{
+			Group:   provisioning.GROUP,
+			Version: "v1beta1",
+		},
+		false, // isPreferredVersion
+		true,  // onlyApiServer
+		repoFactory,
+		connectionFactory,
+		features,
+		client,
+		configProvider,
+		storageStatus,
+		usageStats,
+		access,
+		tracer,
+		extraBuilders,
+		extraWorkers,
+		jobHistoryConfig,
+		allowedTargets,
+		nil, // restConfigGetter
+		cfg.ProvisioningAllowImageRendering,
+		cfg.ProvisioningMinSyncInterval,
+		reg,
+		nil,   // newStandaloneClientFactoryFunc
+		false, // useExclusivelyAccessCheckerForAuthz
+		quotaGetter,
+		folderMetadataEnabled,
+		folderAPIVersion,
+		maxIncrementalChanges,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	apiregistration.RegisterAPI(v1beta1Builder)
+	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
 
@@ -551,7 +636,7 @@ func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision,
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
-	return provisioning.SchemeGroupVersion
+	return b.gv
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
@@ -571,7 +656,7 @@ func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := provisioning.AddToScheme(scheme)
+	err := provisioning.AddKnownTypes(b.gv, scheme)
 	if err != nil {
 		return err
 	}
@@ -584,7 +669,7 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	// Register custom field label conversion for Repository to enable field selectors like spec.connection.name
 	err = scheme.AddFieldLabelConversionFunc(
-		provisioning.SchemeGroupVersion.WithKind("Repository"),
+		b.gv.WithKind("Repository"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "metadata.name", "metadata.namespace", "spec.connection.name":
@@ -598,9 +683,12 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
-	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
-	// Only 1 version (for now?)
-	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, b.gv)
+
+	if b.isPreferredVersion {
+		return scheme.SetVersionPriority(b.gv)
+	}
+	return nil
 }
 
 func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
@@ -622,7 +710,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.repoStore = repositoryStorage
 	b.repoLister = repository.NewStorageLister(repositoryStorage)
 
 	// Create admission handler and register mutators/validators
@@ -675,13 +762,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
-	b.connectionStore = connectionsStore
 
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
+	// so that List re-stamps each item's apiVersion to match the served version.
+	// See grafanaregistry.VersionedStore for details on why this is necessary.
+	if b.gv.Version != provisioning.VERSION {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+	} else {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		b.repoStore = repositoryStorage
+		b.connectionStore = connectionsStore
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
@@ -691,7 +790,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -700,7 +799,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -709,7 +808,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		}
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
 }
 
@@ -730,8 +829,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	// Use version-specific hook name to avoid conflicts when multiple versions are registered
+	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
-		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
@@ -762,8 +863,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// if running solely CRUD, skip the rest of the setup
-			if b.onlyApiServer {
+			// if running solely CRUD or not the preferred version, skip controllers/workers setup
+			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
 			}
 
@@ -796,6 +897,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
+				b.folderAPIVersion,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
@@ -819,6 +921,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
+				b.folderAPIVersion,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -833,16 +936,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(b.folderAPIVersion))
+			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
+			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
 			// All workers registered - export/migrate will check feature flag at runtime
-			workers := make([]jobs.Worker, 0, 6+len(b.extraWorkers))
+			workers := make([]jobs.Worker, 0, 8+len(b.extraWorkers))
 			workers = append(workers,
+				deleteResourcesWorker,
 				deleteWorker,
 				exportWorker,
 				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
+				releaseResourcesWorker,
 				syncWorker,
 			)
 
@@ -881,6 +988,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
+				&metrics,
 				workers...,
 			)
 			if err != nil {
@@ -916,6 +1024,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
+				b.folderMetadataEnabled,
+				b.folderAPIVersion,
+				b.maxIncrementalChanges,
 			)
 			if err != nil {
 				return err
@@ -934,11 +1045,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connHealthChecker,
 				b.connectionFactory,
 				informerFactoryResyncInterval,
+				30*time.Second,
+				b.registry,
 			)
 			if err != nil {
 				return err
 			}
-			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {})
+			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+				return fmt.Errorf("connection controller cache sync failed")
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -966,6 +1082,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	if b.gv.Version == "v1beta1" {
+		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			defs := provisioning.GetOpenAPIDefinitions(rc)
+			return ReplaceOpenAPIVersion(defs, "provisioning", "v0alpha1", "v1beta1")
+		}
+	}
 	return provisioning.GetOpenAPIDefinitions
 }
 
@@ -988,11 +1110,16 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	refsBase := provisioning.OpenAPIPrefix
 	compBase := refsBase
 
+	// For v1beta1, update the component base to use the correct version
+	if b.gv.Version == "v1beta1" {
+		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
+	}
+
 	// TODO: Remove this endpoint when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
-		repoSchema := defs[refsBase+"Repository"].Schema
+		repoSchema := defs[compBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
 		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
@@ -1063,7 +1190,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"RefList"].Schema
+		s := defs[compBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1081,7 +1208,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"FileList"].Schema
+		s := defs[compBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1275,7 +1402,7 @@ spec:
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"ExternalRepositoryList"].Schema
+		s := defs[compBase+"ExternalRepositoryList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1351,6 +1478,18 @@ spec:
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
+	// Clean up version-specific schemas and metadata
+	switch b.gv.Version {
+	case "v1beta1":
+		// For v1beta1, replace all v0alpha1 references with v1beta1 and remove old schemas
+		ReplaceOpenAPISpecVersion(oas, "provisioning", "v0alpha1", "v1beta1")
+		// Ensure GVK extensions are present for top-level resources
+		ensureGVKForVersion(oas, "provisioning.grafana.app", "v1beta1")
+	case "v0alpha1":
+		// For v0alpha1, remove any v1beta1 schemas and filter GVK metadata
+		ReplaceOpenAPISpecVersion(oas, "provisioning", "v1beta1", "v0alpha1")
+	}
+
 	return oas, nil
 }
 
@@ -1392,6 +1531,11 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	}
 
 	return repo, err
+}
+
+// GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
+func (b *APIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
+	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
 }
 
 func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old runtime.Object) (repository.Repository, error) {

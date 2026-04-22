@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { shuffle } from 'lodash';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TextLink, Themeable2, withTheme2 } from '@grafana/ui';
+import { TextLink, type Themeable2, withTheme2 } from '@grafana/ui';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector } from '../languageUtils';
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];

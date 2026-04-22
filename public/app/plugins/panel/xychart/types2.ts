@@ -1,7 +1,7 @@
-import { Field } from '@grafana/data';
-import * as common from '@grafana/schema';
+import { type Field } from '@grafana/data';
+import type * as common from '@grafana/schema';
 
-import { PointShape } from './panelcfg.gen';
+import { type PointShape } from './panelcfg.gen';
 
 // import { SeriesMapping, XYSeriesConfig } from './panelcfg.gen';
 

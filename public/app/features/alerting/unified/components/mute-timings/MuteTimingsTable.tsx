@@ -13,12 +13,12 @@ import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/c
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { makeAMLink } from '../../utils/misc';
-import { DynamicTable, DynamicTableColumnProps } from '../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { MuteTiming, useMuteTimings } from './useMuteTimings';
+import { type MuteTiming, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
 
 type TableItem = {

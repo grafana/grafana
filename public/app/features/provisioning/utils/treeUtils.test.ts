@@ -1,6 +1,6 @@
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { TreeItem } from '../types';
+import { type TreeItem } from '../types';
 
 import { buildTree, filterTree, flattenTree, getItemType, getStatus, mergeFilesAndResources } from './treeUtils';
 

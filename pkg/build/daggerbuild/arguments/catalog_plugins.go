@@ -24,6 +24,13 @@ type CatalogPluginsManifest struct {
 	Plugins []CatalogPluginSpec `json:"plugins"`
 }
 
+// DefaultCatalogPlugins defines the plugins that are always bundled unless
+// explicitly disabled with --no-default-catalog-plugins. Versions are left
+// empty so the resolver picks the latest compatible version automatically.
+var DefaultCatalogPlugins = []CatalogPluginSpec{
+	{ID: "elasticsearch"},
+}
+
 var flagBundleCatalogPlugins = &cli.StringSliceFlag{
 	Name:  "bundle-catalog-plugins",
 	Usage: "Plugins to download from grafana.com catalog (format: id or id:version, version optional). Supports comma-separated and repeated flags.",
@@ -34,9 +41,15 @@ var flagBundleCatalogPluginsFile = &cli.StringFlag{
 	Usage: "Path to JSON manifest file containing catalog plugins to bundle",
 }
 
+var flagNoDefaultCatalogPlugins = &cli.BoolFlag{
+	Name:  "no-default-catalog-plugins",
+	Usage: "Skip bundling the default catalog plugins",
+}
+
 var CatalogPluginsFlags = []cli.Flag{
 	flagBundleCatalogPlugins,
 	flagBundleCatalogPluginsFile,
+	flagNoDefaultCatalogPlugins,
 }
 
 // CatalogPlugins is the argument that provides the list of catalog plugins to bundle.
@@ -51,8 +64,13 @@ func catalogPluginsValueFunc(ctx context.Context, opts *pipeline.ArgumentOpts) (
 	// StringSlice handles both comma-separated and repeated flags
 	pluginsList := opts.CLIContext.StringSlice("bundle-catalog-plugins")
 	manifestFile := opts.CLIContext.String("bundle-catalog-plugins-file")
+	skipDefaults := opts.CLIContext.Bool("no-default-catalog-plugins")
 
 	var plugins []CatalogPluginSpec
+
+	if !skipDefaults {
+		plugins = append(plugins, DefaultCatalogPlugins...)
+	}
 
 	// Parse plugin specs from CLI flags
 	for _, item := range pluginsList {
@@ -139,11 +157,17 @@ func ParseCatalogPluginsFile(path string) ([]CatalogPluginSpec, error) {
 	return manifest.Plugins, nil
 }
 
-// HasCatalogPlugins returns true if any catalog plugins were specified via CLI flags.
+// HasCatalogPlugins returns true if any catalog plugins will be bundled,
+// including default plugins (unless --no-default-catalog-plugins is set).
 func HasCatalogPlugins(ctx context.Context, opts *pipeline.ArgumentOpts) bool {
 	pluginsList := opts.CLIContext.StringSlice("bundle-catalog-plugins")
 	manifestFile := opts.CLIContext.String("bundle-catalog-plugins-file")
-	return len(pluginsList) > 0 || manifestFile != ""
+	skipDefaults := opts.CLIContext.Bool("no-default-catalog-plugins")
+
+	if len(pluginsList) > 0 || manifestFile != "" {
+		return true
+	}
+	return !skipDefaults && len(DefaultCatalogPlugins) > 0
 }
 
 // GetCatalogPlugins retrieves the catalog plugins from the argument state.
@@ -192,7 +216,15 @@ func MergeCatalogPluginSpecs(plugins []CatalogPluginSpec) ([]CatalogPluginSpec, 
 		}
 
 		existing := merged[idx]
-		if existing.Version != plugin.Version {
+
+		switch {
+		case existing.Version == plugin.Version:
+			// Same version, continue to checksum merge.
+		case existing.Version == "":
+			existing.Version = plugin.Version
+		case plugin.Version == "":
+			// Keep existing pinned version.
+		default:
 			return nil, fmt.Errorf("conflicting versions for plugin %q: %q vs %q", plugin.ID, existing.Version, plugin.Version)
 		}
 
@@ -201,12 +233,13 @@ func MergeCatalogPluginSpecs(plugins []CatalogPluginSpec) ([]CatalogPluginSpec, 
 			// Identical duplicate, no-op.
 		case existing.Checksum == "":
 			existing.Checksum = plugin.Checksum
-			merged[idx] = existing
 		case plugin.Checksum == "":
 			// Keep existing checksum.
 		default:
 			return nil, fmt.Errorf("conflicting checksums for plugin %q", plugin.ID)
 		}
+
+		merged[idx] = existing
 	}
 
 	return merged, nil

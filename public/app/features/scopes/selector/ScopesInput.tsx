@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { getPathOfNode } from './scopesTreeUtils';
-import { NodesMap, ScopesMap, SelectedScope } from './types';
+import { type NodesMap, type ScopesMap, type SelectedScope } from './types';
 import { useScopeNode } from './useScopeNode';
 
 export interface ScopesInputProps {

@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { useUpdateCorrelationMutation } from 'app/api/clients/correlations/v0alpha1';
 
 import { Wizard } from '../components/Wizard/Wizard';
-import { Correlation } from '../types';
+import { type Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
 import { generatePartialEditSpec } from '../utils';
 
@@ -13,7 +13,7 @@ import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm
 import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
 import { CorrelationFormNavigation } from './CorrelationFormNavigation';
 import { CorrelationsFormContextProvider } from './correlationsFormContext';
-import { EditFormDTO } from './types';
+import { type EditFormDTO } from './types';
 
 interface Props {
   onUpdated: () => void;

@@ -1,5 +1,5 @@
 import { dispatch } from 'app/store/store';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';

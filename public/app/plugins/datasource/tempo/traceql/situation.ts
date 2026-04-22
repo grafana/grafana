@@ -1,4 +1,4 @@
-import { SyntaxNode, Tree } from '@lezer/common';
+import { type SyntaxNode, type Tree } from '@lezer/common';
 
 import {
   Aggregate,

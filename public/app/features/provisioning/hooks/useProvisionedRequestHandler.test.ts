@@ -1,17 +1,12 @@
 import { renderHook } from '@testing-library/react';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { setAppEvents } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type appEvents } from 'app/core/app_events';
 
-import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';
-
-jest.mock('@grafana/runtime', () => ({
-  getAppEvents: jest.fn(),
-}));
-
-const mockGetAppEvents = jest.mocked(getAppEvents);
+import { useProvisionedRequestHandler, type RequestHandlers } from './useProvisionedRequestHandler';
 
 const mockDispatch = jest.fn();
 jest.mock('react-redux', () => {
@@ -298,9 +293,7 @@ function setup({
 } = {}) {
   const mockPublish = jest.fn();
 
-  mockGetAppEvents.mockReturnValue({
-    publish: mockPublish,
-  } as unknown as ReturnType<typeof getAppEvents>);
+  setAppEvents({ publish: mockPublish } as unknown as typeof appEvents);
 
   const request = {
     isError: false,

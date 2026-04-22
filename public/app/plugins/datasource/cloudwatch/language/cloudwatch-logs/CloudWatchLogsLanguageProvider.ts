@@ -1,13 +1,19 @@
-import Prism, { Grammar } from 'prismjs';
+import Prism, { type Grammar } from 'prismjs';
 import { lastValueFrom } from 'rxjs';
 
-import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { type AbsoluteTimeRange, type HistoryItem, LanguageProvider } from '@grafana/data';
+import { type BackendDataSourceResponse, type FetchResponse, type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import {
+  type CompletionItemGroup,
+  SearchFunctionType,
+  type Token,
+  type TypeaheadInput,
+  type TypeaheadOutput,
+} from '@grafana/ui';
 
-import { LogGroup } from '../../dataquery.gen';
-import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery } from '../../types';
+import { type LogGroup } from '../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchQuery } from '../../types';
 import { fetchLogGroupFields } from '../utils';
 
 import syntax, {

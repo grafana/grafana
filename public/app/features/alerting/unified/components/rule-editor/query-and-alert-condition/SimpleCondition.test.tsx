@@ -2,12 +2,13 @@ import { render, screen } from 'test/test-utils';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { mockReduceExpression, mockThresholdExpression } from '../../../mocks';
+import { type SimpleCondition } from '../../../types/rule-form';
 
-import { SimpleCondition, SimpleConditionEditor } from './SimpleCondition';
+import { SimpleConditionEditor } from './SimpleCondition';
 
 const defaultSimpleCondition: SimpleCondition = {
   whenField: ReducerID.last,

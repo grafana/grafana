@@ -2,24 +2,27 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { usePanelPluginMetas } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema';
-import { Checkbox, Combobox, ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { type VizPanel } from '@grafana/scenes';
+import { type AnnotationPanelFilter } from '@grafana/schema';
+import { Checkbox, Combobox, type ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 
+import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
-import { AnnotationLayer } from './AnnotationEditableElement';
+import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
 
-export function AnnotationNameInput({ layer }: { layer: AnnotationLayer }) {
+export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLayer; autoFocus: boolean }) {
   const { name } = layer.useState();
   const oldName = useRef(name);
+  const inputRef = useEditPaneInputAutoFocus({ autoFocus });
 
   return (
     <Field label={t('dashboard.edit-pane.annotation.name', 'Name')} noMargin>
       <Input
+        ref={inputRef}
         value={name}
         onFocus={() => {
           oldName.current = name;

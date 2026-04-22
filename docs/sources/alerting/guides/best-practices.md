@@ -61,6 +61,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/examples/multi-dimensional-alerts/
+  email-optional-settings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/#optional-settings
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email/#optional-settings
 ---
 
 # Alerting best practices
@@ -143,6 +148,8 @@ For example, a database failure can trigger several alerts at the same time like
 [Notification grouping](ref:group-alert-notifications) consolidates related alerts into a single notification. Instead of receiving multiple pages for the same issue, responders get one alert that represents the incident and includes all related firing alerts.
 
 Grouping should follow operational boundaries such as service or owner, as defined by notification policies. Downstream or cascading failures should be grouped together so they surface as one issue rather than many.
+
+There is also a limit to how many notifications can be sent out per second. You can configure your Contact Point settings to reduce the email expenditure by setting up single email notifications rather than individual email notifications. To configure this, go to your desired email Contact Point and enable **Single email** in the [optional settings](ref:email-optional-settings).
 
 ## Mitigate flapping alerts
 

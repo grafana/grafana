@@ -1,19 +1,23 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { pick, uniq } from 'lodash';
-import memoize from 'micro-memoize';
 import { useMemo, useState } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeRoute,
-  RoutingTreeRouteDefaults,
+  type RoutingTree,
+  type RoutingTreeRoute,
+  type RoutingTreeRouteDefaults,
   generatedAPI as routingTreeApi,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
+import {
+  MatcherOperator,
+  ROUTES_META_SYMBOL,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -24,13 +28,13 @@ import {
   deleteRouteAction,
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
-  InsertPosition,
+  type InsertPosition,
   addRouteToReferenceRoute,
   cleanKubernetesRouteIDs,
   mergePartialAmRouteWithRouteTree,
@@ -53,7 +57,21 @@ const {
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-const memoK8sRouteToRoute = memoize(k8sRouteToRoute);
+// WeakMap-based caches for stable Route object references. Using WeakMap rather than a
+// fixed-size LRU (micro-memoize's default) avoids cache eviction when multiple external
+// Alertmanagers are configured — each AM calls the function with a different route object,
+// and evictions cause new references on every render, triggering infinite re-renders in
+// useAsync. WeakMap has no size limit and automatically GCs entries when keys are released.
+const k8sRouteToRouteCache = new WeakMap<RoutingTree, Route>();
+function memoK8sRouteToRoute(route: RoutingTree): Route {
+  const cached = k8sRouteToRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result = k8sRouteToRoute(route);
+  k8sRouteToRouteCache.set(route, result);
+  return result;
+}
 
 export const useNotificationPolicyRoute = (
   { alertmanager }: BaseAlertmanagerArgs,
@@ -114,14 +132,21 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
   );
 };
 
-const parseAmConfigRoute = memoize((route: Route): Route => {
-  return {
+const amConfigRouteCache = new WeakMap<Route, Route>();
+export function parseAmConfigRoute(route: Route): Route {
+  const cached = amConfigRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result: Route = {
     ...route,
     [ROUTES_META_SYMBOL]: {
       provenance: route.provenance,
     },
   };
-});
+  amConfigRouteCache.set(route, result);
+  return result;
+}
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);

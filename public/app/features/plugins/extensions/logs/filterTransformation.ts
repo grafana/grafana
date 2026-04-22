@@ -1,9 +1,9 @@
 import { isEmpty } from 'lodash';
-import { Observable, scan } from 'rxjs';
+import { type Observable, scan } from 'rxjs';
 
-import { createDataFrame, CustomTransformOperator, DataFrame, PartialDataFrame } from '@grafana/data';
+import { createDataFrame, type CustomTransformOperator, type DataFrame, type PartialDataFrame } from '@grafana/data';
 
-import { LogFilter } from './LogViewFilters';
+import { type LogFilter } from './LogViewFilters';
 
 export function createFilterTransformation(filter: LogFilter): CustomTransformOperator {
   return function cascadingFilterTransformation() {

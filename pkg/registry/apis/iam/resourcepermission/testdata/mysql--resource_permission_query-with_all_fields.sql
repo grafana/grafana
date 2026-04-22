@@ -5,7 +5,8 @@ SELECT
   CASE WHEN u.uid IS NOT NULL THEN 'user' 
        WHEN t.uid IS NOT NULL THEN 'team'
        ELSE 'builtin_role' END as subject_type,
-  COALESCE(u.is_service_account, FALSE) as is_service_account
+  COALESCE(u.is_service_account, FALSE) as is_service_account,
+  COALESCE(p.datasource_type, '') as datasource_type
 FROM `grafana`.`permission` p
 INNER JOIN `grafana`.`role` r ON p.role_id = r.id
 LEFT JOIN `grafana`.`user_role` ur ON r.id = ur.role_id AND ur.org_id = r.org_id

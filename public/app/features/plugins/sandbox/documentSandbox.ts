@@ -1,4 +1,4 @@
-import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
+import { isNearMembraneProxy, type ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 

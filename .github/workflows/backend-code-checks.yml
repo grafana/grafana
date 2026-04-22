@@ -46,10 +46,18 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
+        uses: ./.github/actions/setup-go
         with:
-          go-version-file: go.mod
-          cache: true
+          cache-build: 'false'
+
+      - name: Verify CUE formatting
+        run: |
+          make fix-cue
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "CUE files are not formatted. Please run 'make fix-cue' and commit the changes."
+            git diff --name-only
+            exit 1
+          fi
 
       - name: Verify code generation
         run: |

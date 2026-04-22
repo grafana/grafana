@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import * as React from 'react';
 
-import { FieldConfig, getMinMaxAndDelta, Field, isDataFrameWithValue } from '@grafana/data';
+import { type FieldConfig, getMinMaxAndDelta, type Field, isDataFrameWithValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  TableSparklineCellOptions,
+  type TableSparklineCellOptions,
   TableCellDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
@@ -20,7 +20,7 @@ import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedV
 import { Sparkline } from '../../../Sparkline/Sparkline';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { isTableCellStylesKeyEqual } from '../styles';
-import { SparklineCellProps, TableCellStyles } from '../types';
+import { type SparklineCellProps, type TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions, prepareSparklineValue } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {

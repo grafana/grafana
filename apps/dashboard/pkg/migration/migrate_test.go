@@ -438,12 +438,32 @@ func runDevDashboardMigrationTests(t *testing.T, targetVersion int, outputDir st
 
 		// Load a fresh copy of the dashboard for this test (ensures no object sharing)
 		inputDash := loadDashboard(t, jsonFile)
-		inputVersion := getSchemaVersion(t, inputDash)
+		inputVersion, ok := getSchemaVersionIfPresent(inputDash)
+		if !ok {
+			t.Logf("Skipping %s: dashboard missing schemaVersion (likely non-legacy dashboard format)", relativeOutputPath)
+			continue
+		}
 
 		testName := fmt.Sprintf("%s v%d to v%d", relativeOutputPath, inputVersion, targetVersion)
 		t.Run(testName, func(t *testing.T) {
 			testMigrationUnified(t, inputDash, relativeOutputPath, inputVersion, targetVersion, outputDir)
 		})
+	}
+}
+
+func getSchemaVersionIfPresent(dash map[string]interface{}) (int, bool) {
+	version, ok := dash["schemaVersion"]
+	if !ok {
+		return 0, false
+	}
+
+	switch v := version.(type) {
+	case int:
+		return v, true
+	case float64:
+		return int(v), true
+	default:
+		return 0, false
 	}
 }
 

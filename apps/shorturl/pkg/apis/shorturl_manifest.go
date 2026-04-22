@@ -27,6 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "shorturl",
+	AppDisplayName:   "shorturl",
 	Group:            "shorturl.grafana.app",
 	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{

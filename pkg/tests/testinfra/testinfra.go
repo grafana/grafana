@@ -58,6 +58,16 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 }
 
 func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB) {
+	addr, env, testDB, cleanup := StartGrafanaEnvWithManualCleanup(t, grafDir, cfgPath)
+	t.Cleanup(cleanup)
+	return addr, env, testDB
+}
+
+// StartGrafanaEnvWithManualCleanup starts a Grafana server without registering
+// shutdown on t.Cleanup. The caller is responsible for calling the returned
+// cleanup function. This is useful when the server must outlive any single
+// test, e.g. when shared across an entire package via sync.Once.
+func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -141,14 +151,14 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
-		tracingService := tracing.NewNoopTracerService()
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
+		env.Cfg.DisablePruner = db.IsTestDbSQLite()
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, false)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
@@ -175,12 +185,13 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
-			t.Log("Server exited uncleanly", "error", err)
+			fmt.Fprintf(os.Stderr, "Server exited uncleanly: %v\n", err)
 		}
 	}()
-	t.Cleanup(func() {
+
+	cleanup := func() {
 		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
-			t.Error("Timed out waiting on server to shut down")
+			fmt.Fprintf(os.Stderr, "Timed out waiting on server to shut down: %v\n", err)
 		}
 		if storage != nil {
 			storage.StopAsync()
@@ -188,32 +199,57 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		if grpcService != nil {
 			grpcService.StopAsync()
 		}
-	})
+	}
 
-	// Wait for Grafana to be ready
+	// Wait for Grafana to be ready, retrying until the health endpoint responds or the timeout is reached.
 	addr := listener.Addr().String()
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		assert.NoError(t, err)
-	})
-	require.Equal(t, 200, resp.StatusCode)
+	healthURL := fmt.Sprintf("http://%s/api/health", addr)
+	healthClient := &http.Client{Timeout: 2 * time.Second}
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		resp, err := healthClient.Get(healthURL)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+		if err == nil && resp != nil && resp.StatusCode == 200 {
+			break
+		}
+		if err != nil {
+			t.Logf("Health check error: %v", err)
+		} else if resp != nil {
+			t.Logf("Health check returned status %d", resp.StatusCode)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("Grafana health endpoint did not return 200 within 30s")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr, env, testDB
+	return addr, env, testDB, cleanup
 }
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
-//
-//nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
+	return createGrafDir(t, t.TempDir(), opts)
+}
 
-	tmpDir := t.TempDir()
+// CreateGrafDirShared is like CreateGrafDir but uses os.MkdirTemp instead of
+// t.TempDir() so the directory outlives the initializing test. The caller is
+// responsible for removing the returned directory.
+func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
+	t.Helper()
+	tmpDir, err := os.MkdirTemp("", "grafana-shared-*")
+	require.NoError(t, err)
+	return createGrafDir(t, tmpDir, opts)
+}
+
+//nolint:gocyclo
+func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
+	t.Helper()
 
 	// Search upwards in directory tree for project root
 	var rootDir string
@@ -388,6 +424,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
+	if opts.RBACSingleOrganization {
+		_, err = rbacSect.NewKey("single_organization", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -449,7 +489,6 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		return section, err
 	}
 
-	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -543,6 +582,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 		require.NoError(t, err)
 	}
+	if len(opts.UnifiedAlertingAllowedIntegrations) > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -574,9 +619,15 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = logSection.NewKey("address", opts.GRPCServerAddress)
 		require.NoError(t, err)
 	}
-	// retry queries 3 times by default
+
+	// retry queries 10 times by default
+	queryRetries := 10
 	if opts.QueryRetries != 0 {
-		queryRetries = int(opts.QueryRetries)
+		queryRetries = opts.QueryRetries
+	}
+	transactionRetries := 10
+	if opts.TransactionRetries != 0 {
+		transactionRetries = opts.TransactionRetries
 	}
 
 	if opts.NGAlertSchedulerBaseInterval > 0 {
@@ -649,22 +700,28 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = section.NewKey("enable_search", "false")
 		require.NoError(t, err)
 	}
+	if opts.SearchInjectFailuresPercent > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("search_inject_failures_percent", fmt.Sprintf("%d", opts.SearchInjectFailuresPercent))
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
-	if opts.DisableDataMigrations {
-		section, err := getOrCreateSection("unified_storage")
-		require.NoError(t, err)
-		_, err = section.NewKey("disable_data_migrations", "true")
-		require.NoError(t, err)
-	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("migration_parquet_buffer", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableSQLKVBackend {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -695,6 +752,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningFolderAPIVersion != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
+		require.NoError(t, err)
+	}
+	// nil means "use the ini default" (100). Non-nil writes the value, including
+	// 0 which disables the size check.
+	if opts.ProvisioningMaxIncrementalChanges != nil {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_incremental_changes", fmt.Sprintf("%d", *opts.ProvisioningMaxIncrementalChanges))
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -748,6 +819,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("transaction_retries", fmt.Sprintf("%d", transactionRetries))
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
@@ -803,27 +876,33 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	UnifiedAlertingAllowedIntegrations    []string
 	EnableLog                             bool
 	GRPCServerAddress                     string
-	QueryRetries                          int64
+	QueryRetries                          int
+	TransactionRetries                    int
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	UnifiedStorageDisableSearch           bool
+	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
 	ProvisioningRepositoryTypes           []string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
+	ProvisioningFolderAPIVersion          string
+	ProvisioningMaxIncrementalChanges     *int
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	RBACSingleOrganization                bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
-	DisableDataMigrations                 bool
 	MigrationParquetBuffer                bool
+	EnableSQLKVBackend                    bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool
@@ -863,7 +942,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(),
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

@@ -3,7 +3,6 @@ package legacy
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -14,6 +13,76 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type GetTeamUIDByIDQuery struct {
+	OrgID int64
+	ID    int64
+}
+
+type GetTeamUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryTeamUIDByIDTemplate = mustTemplate("team_uid_by_id.sql")
+
+func newGetTeamUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetTeamUIDByIDQuery) getTeamUIDByIDQuery {
+	return getTeamUIDByIDQuery{
+		SQLTemplate: sqltemplate.New(sqlHelper.DialectForDriver()),
+		TeamTable:   sqlHelper.Table("team"),
+		Query:       q,
+	}
+}
+
+type getTeamUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Query     *GetTeamUIDByIDQuery
+}
+
+func (r getTeamUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) GetTeamUIDByID(
+	ctx context.Context,
+	ns claims.NamespaceInfo,
+	query GetTeamUIDByIDQuery,
+) (*GetTeamUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetTeamUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, team.ErrTeamNotFound
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetTeamUIDByIDResult{UID: uid}, nil
+}
 
 type GetTeamInternalIDQuery struct {
 	OrgID int64
@@ -52,7 +121,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +144,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 	}
 
 	if !rows.Next() {
-		return nil, errors.New("team not found")
+		return nil, fmt.Errorf("team by uid %q: %w", query.UID, team.ErrTeamNotFound)
 	}
 
 	var id int64
@@ -91,6 +160,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 type ListTeamQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 
 	Pagination common.Pagination
 }
@@ -123,6 +193,9 @@ func (r listTeamsQuery) Validate() error {
 
 // ListTeams implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
@@ -130,7 +203,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sqlConn, err := s.sql(ctx)
+	sqlConn, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +312,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +392,7 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +463,7 @@ func (r deleteTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}

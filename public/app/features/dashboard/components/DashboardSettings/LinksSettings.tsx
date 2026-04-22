@@ -7,7 +7,7 @@ import { NEW_LINK } from 'app/features/dashboard-scene/settings/links/utils';
 import { LinkSettingsEdit } from '../LinksSettings/LinkSettingsEdit';
 import { LinkSettingsList } from '../LinksSettings/LinkSettingsList';
 
-import { SettingsPageProps } from './types';
+import { type SettingsPageProps } from './types';
 
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 

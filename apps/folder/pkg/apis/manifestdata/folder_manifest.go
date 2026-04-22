@@ -15,14 +15,37 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	v1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "folder",
+	AppDisplayName:   "folder",
 	Group:            "folder.grafana.app",
-	PreferredVersion: "v1beta1",
+	PreferredVersion: "v1",
 	Versions: []app.ManifestVersion{
+		{
+			Name:   "v1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "Folder",
+					Plural:     "Folders",
+					Scope:      "Namespaced",
+					Conversion: false,
+					SelectableFields: []string{
+						"spec.title",
+					},
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
+
 		{
 			Name:   "v1beta1",
 			Served: true,
@@ -55,6 +78,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
+	"Folder/v1":      v1.FolderKind(),
 	"Folder/v1beta1": v1beta1.FolderKind(),
 }
 

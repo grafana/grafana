@@ -6,12 +6,12 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { type ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import {
-  AlertmanagerGroup,
+  type AlertmanagerGroup,
   MatcherOperator,
-  ObjectMatcher,
-  RouteWithID,
+  type ObjectMatcher,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';

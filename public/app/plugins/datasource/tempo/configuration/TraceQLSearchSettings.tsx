@@ -1,12 +1,12 @@
 import * as React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { TempoDatasource } from '../datasource';
-import { TempoJsonData } from '../types';
+import { type TempoDatasource } from '../datasource';
+import { type TempoJsonData } from '../types';
 
 import { getStyles } from './QuerySettings';
 import { TraceQLSearchTags } from './TraceQLSearchTags';

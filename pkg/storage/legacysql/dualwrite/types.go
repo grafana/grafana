@@ -32,29 +32,10 @@ type StorageStatus struct {
 	UpdateKey int64 `json:"update_key"`
 }
 
-func (status *StorageStatus) validate() bool {
-	changed := false
-
-	// Must write to unified if we are reading unified
-	if status.ReadUnified && !status.WriteUnified {
-		status.WriteUnified = true
-		changed = true
-	}
-
-	// Make sure we are writing somewhere
-	if !status.WriteLegacy && !status.WriteUnified {
-		status.WriteLegacy = true
-		changed = true
-	}
-	return changed
-}
-
 // Service is a service for managing the dual write storage
 //
 //go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
-	ShouldManage(gr schema.GroupResource) bool
-
 	// Create a managed k8s storage instance
 	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)
 
@@ -64,17 +45,8 @@ type Service interface {
 	// Get status details for a Group/Resource
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)
 
-	// Start a migration process (writes will be locked)
-	StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error)
-
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
-
-	// LogStorageModeComparison compares the config-based storage mode with the mode
-	// reported by MigrationStatusReader and emits metrics/logs for observability.
-	// This is used for non-managed resources that bypass NewStorage and go through
-	// NewStaticStorage directly.
-	LogStorageModeComparison(gr schema.GroupResource, configMode grafanarest.DualWriterMode)
 }
 
 type SearchAdapter struct {
@@ -83,10 +55,4 @@ type SearchAdapter struct {
 
 func NewSearchAdapter(s Service) *SearchAdapter {
 	return &SearchAdapter{Service: s}
-}
-
-func (d *SearchAdapter) IsEnabled(gr schema.GroupResource) bool {
-	//nolint:errcheck
-	status, _ := d.Status(context.Background(), gr)
-	return status.Runtime && d.ShouldManage(gr)
 }

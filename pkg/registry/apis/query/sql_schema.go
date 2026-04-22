@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,9 +20,6 @@ func (b *QueryAPIBuilder) GetSQLSchemas(w http.ResponseWriter, r *http.Request) 
 	ctx, span := b.tracer.Start(r.Context(), "QueryService.GetSQLSchemas")
 	defer span.End()
 
-	ns := mux.Vars(r)["namespace"]
-
-	ctx = request.WithNamespace(ctx, ns)
 	traceId := span.SpanContext().TraceID()
 	connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", r.Header.Get("X-Rule-Uid"))
 

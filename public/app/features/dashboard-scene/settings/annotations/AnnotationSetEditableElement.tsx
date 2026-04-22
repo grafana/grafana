@@ -1,29 +1,18 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneDataLayerProvider, SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { partitionAnnotationsByDisplay } from '../../edit-pane/dashboard/DashboardAnnotationsList';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import { AnnotationList } from './AnnotationList';
-
-export function partitionAnnotationLayers(layers: SceneDataLayerProvider[]) {
-  const standardLayers: SceneDataLayerProvider[] = [];
-  const controlsMenuLayers: SceneDataLayerProvider[] = [];
-
-  layers.forEach((layer) => {
-    if (layer.state.placement === 'inControlsMenu') {
-      controlsMenuLayers.push(layer);
-    } else {
-      standardLayers.push(layer);
-    }
-  });
-
-  return { standardLayers, controlsMenuLayers };
-}
 
 function useEditPaneOptions(
   this: AnnotationSetEditableElement,
@@ -60,8 +49,8 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren(): SceneObject[] {
-    const { standardLayers, controlsMenuLayers } = partitionAnnotationLayers(this.dataLayerSet.state.annotationLayers);
-    return [...standardLayers, ...controlsMenuLayers];
+    const { visible, controlsMenu, hidden } = partitionAnnotationsByDisplay(this.dataLayerSet.state.annotationLayers);
+    return [...visible, ...controlsMenu, ...hidden];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dataLayerSet);

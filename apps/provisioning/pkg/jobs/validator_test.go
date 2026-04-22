@@ -593,6 +593,32 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid releaseResources job",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionReleaseResources,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid deleteResources job",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionDeleteResources,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "valid fix-folder-metadata job with options",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{

@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { StoreState } from 'app/types/store';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type StoreState } from 'app/types/store';
 
 import { useGrafana } from '../../../core/context/GrafanaContext';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
@@ -119,7 +119,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
   return (
     <div className={styles.container}>
       <AutoSizer>
-        {({ width, height }) => {
+        {({ width, height }: Size) => {
           if (width === 0) {
             return null;
           }

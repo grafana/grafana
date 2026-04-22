@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
-import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -25,11 +25,11 @@ import {
 } from 'app/features/alerting/unified/Analytics';
 import { templatesApi } from 'app/features/alerting/unified/api/templateApi';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 

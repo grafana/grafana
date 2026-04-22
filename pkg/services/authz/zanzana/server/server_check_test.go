@@ -230,4 +230,12 @@ func TestIntegrationServerCheck(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, true, res.GetAllowed())
 	})
+
+	t.Run("wildcard name for typed resource should be allowed when subject has group_resource get_permissions and returns no error", func(t *testing.T) {
+		// user:19 has get_permissions on the group_resource for users — they can manage
+		// permissions for all users. A check with name="*" must succeed via group_resource only.
+		res, err := server.Check(newContextWithNamespace(), newReq("user:19", utils.VerbGetPermissions, userGroup, userResource, "", "", "*"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
 }

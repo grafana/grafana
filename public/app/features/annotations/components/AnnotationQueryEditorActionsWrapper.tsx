@@ -1,7 +1,7 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { AnnotationQuery, CoreApp, DataSourceApi } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AnnotationQuery, CoreApp, type DataSourceApi } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 

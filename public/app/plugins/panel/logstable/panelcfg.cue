@@ -25,14 +25,17 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-					showInspectLogLine?: bool | *true
-					showCopyLogLink?:    bool | *false
-					showControls?:       bool | *true
-					sortOrder?:          common.LogsSortOrder | (*"Descending" | _)
-					fieldSelectorWidth?: number | *220
+					permalinkedLogId?:    string
+					enableLogDetails?:    bool | *true
+					showCopyLogLink?:     bool | *false
+					showControls?:        bool | *true
+					sortOrder?:           common.LogsSortOrder | (*"Descending" | _)
+					fieldSelectorWidth?:  number | *220
+					isLabelFilterActive?: _
+					logDetailsWidth?:     number | *400
 					displayedFields?: [...string]
-					setDisplayedFields?: _
 					buildLinkToLogLine?: _
+					wrapText?:           bool
 				} @cuetsy(kind="interface")
 			}
 		}]

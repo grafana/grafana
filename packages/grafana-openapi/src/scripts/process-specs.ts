@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 /**
@@ -31,15 +31,6 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
     // Filter out namespace parameter at path level
     if (Array.isArray(pathItem.parameters)) {
       pathItem.parameters = filterNamespaceParameters(pathItem.parameters);
-    }
-
-    // Remove the `name` path parameter from /find/* endpoints.
-    // K8s codegen adds it to all connect-type endpoints, but /find/* paths
-    // don't contain {name} so the parameter is unused.
-    if (newPathKey.startsWith('/find/') && Array.isArray(pathItem.parameters)) {
-      pathItem.parameters = pathItem.parameters.filter(
-        (param) => !('in' in param && param.in === 'path' && 'name' in param && param.name === 'name')
-      );
     }
 
     for (const method of Object.keys(pathItem)) {

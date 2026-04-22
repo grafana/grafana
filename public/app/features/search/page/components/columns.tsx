@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {
-  DisplayProcessor,
-  Field,
+  type DisplayProcessor,
+  type Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
@@ -13,18 +13,18 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { QueryResponse, SearchResultMeta } from '../../service/types';
+import { type QueryResponse, type SearchResultMeta } from '../../service/types';
 import { getIconForKind } from '../../service/utils';
-import { SelectionChecker, SelectionToggle } from '../selection';
+import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { TableColumn } from './SearchResultsTable';
+import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;

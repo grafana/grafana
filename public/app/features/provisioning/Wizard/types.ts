@@ -1,7 +1,7 @@
-import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { AlertAction } from '../Shared/ProvisioningAlert';
-import { RepositoryFormData, StatusInfo } from '../types';
+import { type AlertAction } from '../Shared/ProvisioningAlert';
+import { type RepositoryFormData, type StatusInfo } from '../types';
 
 export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 

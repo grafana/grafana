@@ -1,5 +1,5 @@
 import { dateTimeFormat } from '@grafana/data';
-import { FormatVariable, sceneGraph, SceneObject } from '@grafana/scenes';
+import { type FormatVariable, sceneGraph, type SceneObject } from '@grafana/scenes';
 
 /**
  * This macro is used to support the old __to and __from macros that always used the dashboard level time range.

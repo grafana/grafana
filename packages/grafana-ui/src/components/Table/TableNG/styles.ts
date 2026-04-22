@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
-import memoize, { Key, RawKey } from 'micro-memoize';
+import { type Property } from 'csstype';
+import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
-import { TableCellStyles } from './types';
-import { getJustifyContent, IS_SAFARI_26, TextAlign } from './utils';
+import { type TableCellStyles } from './types';
+import { getJustifyContent, IS_SAFARI_26, type TextAlign } from './utils';
 
 /**
  * @internal

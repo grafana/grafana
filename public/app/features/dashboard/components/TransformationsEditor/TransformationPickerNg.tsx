@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
+import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback } from 'react';
 
-import { DataFrame, GrafanaTheme2, TransformerRegistryItem, SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -11,7 +11,7 @@ import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from './TransformationCard';
-import { FilterCategory } from './TransformationsEditor';
+import { type FilterCategory } from './TransformationsEditor';
 
 const VIEW_ALL_VALUE = 'viewAll';
 

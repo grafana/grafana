@@ -1,5 +1,5 @@
 import { MetricKind, ValueTypes } from '../dataquery.gen';
-import { MetricDescriptor } from '../types/types';
+import { type MetricDescriptor } from '../types/types';
 
 export const createMockMetricDescriptor = (overrides?: Partial<MetricDescriptor>): MetricDescriptor => {
   return {

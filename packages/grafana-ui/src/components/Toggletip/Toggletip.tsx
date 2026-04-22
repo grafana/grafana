@@ -10,10 +10,10 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { Placement } from '@popperjs/core';
+import { type Placement } from '@popperjs/core';
 import { memo, cloneElement, isValidElement, useRef, useState, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -22,7 +22,7 @@ import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 import { getPortalContainer, Portal } from '../Portal/Portal';
 
-import { ToggletipContent } from './types';
+import { type ToggletipContent } from './types';
 
 export interface ToggletipProps {
   /** The theme used to display the toggletip */
@@ -47,6 +47,8 @@ export interface ToggletipProps {
   show?: boolean;
   /** Callback function to be called when the toggletip is opened */
   onOpen?: () => void;
+  /** Dismiss the toggletip when an ancestor element is scrolled */
+  dismissOnScroll?: boolean;
 }
 
 /**
@@ -67,6 +69,7 @@ export const Toggletip = memo(
     fitContent = false,
     onOpen,
     show,
+    dismissOnScroll = false,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
@@ -106,7 +109,7 @@ export const Toggletip = memo(
     });
 
     const click = useClick(context);
-    const dismiss = useDismiss(context);
+    const dismiss = useDismiss(context, { ancestorScroll: dismissOnScroll });
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 

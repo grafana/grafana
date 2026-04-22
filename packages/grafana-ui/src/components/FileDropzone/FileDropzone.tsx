@@ -1,12 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { isString, uniqueId } from 'lodash';
-import { ReactNode, useCallback, useState } from 'react';
-import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
+import { type ReactNode, useCallback, useState } from 'react';
+import {
+  type Accept,
+  type DropEvent,
+  type DropzoneOptions,
+  type FileError,
+  type FileRejection,
+  useDropzone,
+  ErrorCode,
+} from 'react-dropzone';
 
-import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -259,7 +267,7 @@ export function getMimeTypeByExtension(ext: string) {
 }
 
 export function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
-  if (isString(accept)) {
+  if (typeof accept === 'string') {
     return {
       [getMimeTypeByExtension(accept)]: [accept],
     };
@@ -299,7 +307,7 @@ function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDrop
 }
 
 function getAcceptedFileTypeText(accept: string | string[] | Accept) {
-  if (isString(accept)) {
+  if (typeof accept === 'string') {
     return `Accepted file type: ${accept}`;
   }
 

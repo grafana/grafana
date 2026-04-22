@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -484,28 +485,89 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 }
 
 func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
-	t.Run("backend datasource with aws settings", func(t *testing.T) {
-		tcs := []struct {
-			name             string
-			pluginID         string
-			forwardToPlugins []string
-			expected         []string
-		}{
-			{
-				name:             "Will generate AWS env vars for plugin as long as is in the forwardToPlugins list",
-				forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
-				pluginID:         "cloudwatch",
-				expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+	tcs := []struct {
+		name             string
+		pluginID         string
+		forwardToPlugins []string
+		hostEnvVars      map[string]string
+		expected         []string
+		unexpectedKeys   []string
+	}{
+		{
+			name:             "generates AWS auth settings for whitelisted plugin",
+			forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
+			pluginID:         "cloudwatch",
+			expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+		},
+		{
+			name:             "does not generate AWS env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
+			pluginID:         "prometheus",
+			expected:         []string{"GF_VERSION="},
+		},
+		{
+			name:             "forwards AWS SDK credential chain env vars for whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN":                           "arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE":            "/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/v2/credentials/uuid",
+				"AWS_REGION":                             "us-east-1",
 			},
-			{
-				name:             "Will not generate AWS env vars for plugin as long as is in not the forwardToPlugins list",
-				forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
-				pluginID:         "prometheus",
-				expected:         []string{"GF_VERSION="},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_ROLE_ARN=arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/uuid",
+				"AWS_REGION=us-east-1",
 			},
-		}
+		},
+		{
+			name:             "does not forward AWS SDK credential chain env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "some-other-plugin",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN": "arn:aws:iam::123456789012:role/test-role",
+				"AWS_REGION":   "us-east-1",
+			},
+			expected:       []string{"GF_VERSION="},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_REGION"},
+		},
+		{
+			name:             "only forwards AWS SDK env vars that are set in the host environment",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_REGION": "eu-west-1",
+			},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_REGION=eu-west-1",
+			},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_WEB_IDENTITY_TOKEN_FILE", "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"},
+		},
+	}
 
-		for _, tc := range tcs {
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing AWS host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range awsHostEnvVarNames {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					t.Setenv(envVarName, "")
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+
+			for k, v := range tc.hostEnvVars {
+				t.Setenv(k, v)
+			}
+
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: tc.pluginID,
@@ -524,8 +586,13 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
 			envVars := provider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
-		}
-	})
+
+			for _, key := range tc.unexpectedKeys {
+				_, ok := getEnvVarWithExists(envVars, key)
+				assert.False(t, ok, "env var %s should not be present", key)
+			}
+		})
+	}
 }
 
 func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {

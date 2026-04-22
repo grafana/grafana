@@ -1,5 +1,5 @@
 import { standardTransformersRegistry } from '../../transformations/standardTransformersRegistry';
-import { DataTransformerInfo } from '../../types/transformations';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 export const mockTransformationsRegistry = (transformers: DataTransformerInfo[]) => {
   standardTransformersRegistry.setInit(() => {

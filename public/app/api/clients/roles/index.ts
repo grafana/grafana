@@ -1,9 +1,9 @@
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { type FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
-import { generatedAPI, RoleDto } from '@grafana/api-clients/rtkq/legacy';
+import { generatedAPI, type RoleDto } from '@grafana/api-clients/internal/rtkq/legacy';
 import { isFetchError } from '@grafana/runtime';
 import { addDisplayNameForFixedRole, addFilteredDisplayName } from 'app/core/utils/roles';
-import { Role } from 'app/types/accessControl';
+import { type Role } from 'app/types/accessControl';
 
 const transformRolesResponse = (response: RoleDto[]): Role[] => {
   if (!response?.length) {

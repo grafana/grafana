@@ -242,6 +242,8 @@ resource "grafana_asserts_profile_config" "example" {
 
 ## Best practices
 
+Consider the following best practices when configuring profile correlation with Terraform.
+
 ### Priority management
 
 - Assign lower priority numbers to more specific configurations
