@@ -34,7 +34,11 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, context.Context) {
 
 	engine, err := xorm.NewEngine("postgres", connStr)
 	require.NoError(t, err)
-	t.Cleanup(func() { engine.Close() })
+	t.Cleanup(func() {
+		if err := engine.Close(); err != nil {
+			t.Logf("closing xorm engine: %v", err)
+		}
+	})
 
 	cfg := setting.NewCfg()
 	err = MigrateVectorStore(ctx, engine, cfg)
@@ -43,10 +47,8 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, context.Context) {
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
 	backend := NewPgvectorBackend(database)
 
-	// Clean up any leftover test data.
-	_, err = engine.DB().DB.ExecContext(ctx, `DELETE FROM resource_embeddings WHERE namespace = 'integration-test'`)
-	// Ignore error if partition doesn't exist yet.
-	_ = err
+	// Clean up any leftover test data. Ignore error if partition doesn't exist yet.
+	_, _ = engine.DB().ExecContext(ctx, `DELETE FROM resource_embeddings WHERE namespace = 'integration-test'`)
 
 	return backend, ctx
 }

@@ -93,7 +93,6 @@ func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, group, r
 
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, group, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error) {
-
 	req := &sqlEmbeddingsSearchRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Namespace:      namespace,
