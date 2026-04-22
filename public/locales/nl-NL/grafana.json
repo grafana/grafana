@@ -11124,6 +11124,12 @@
       "update-all": "Alles bijwerken",
       "num-affected_one": "Deze update is van invloed op <1>{{count}} dashboards.</1>",
       "num-affected_other": "Deze update is van invloed op <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Er is een update beschikbaar."
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Gebruik van plug-ins vereist de nieuwe zoekindex om gebruik over dashboards te vinden. Schakel de functieschakelaar in",
       "num-usages": "{{pluginName}} wordt <2>{{numUsages}}</2> keer gebruikt.",
-      "title-missing-feature-toggle-panel-title-search": "Ontbrekende functieschakelaar: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wordt nog niet gebruikt in een dashboard"
     },
     "plugins-errors-info": {

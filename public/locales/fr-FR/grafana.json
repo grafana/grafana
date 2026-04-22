@@ -11124,6 +11124,12 @@
       "update-all": "Tout mettre à jour",
       "num-affected_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>",
       "num-affected_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Mise à jour disponible !"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "L’utilisation du plugin nécessite le nouvel index de recherche pour trouver l’utilisation dans les tableaux de bord. Veuillez activer le basculement de fonctionnalité",
       "num-usages": "{{pluginName}} est utilisé <2>{{numUsages}} </2> fois.",
-      "title-missing-feature-toggle-panel-title-search": "Basculement de fonctionnalité manquant : {{toggle}}",
       "title-not-used-yet": "{{pluginName}} n’est pas encore utilisé dans les tableaux de bord"
     },
     "plugins-errors-info": {

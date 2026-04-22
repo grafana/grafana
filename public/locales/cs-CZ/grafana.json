@@ -11250,6 +11250,12 @@
       "num-affected_few": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>",
       "num-affected_many": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>",
       "num-affected_other": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -13131,9 +13137,7 @@
       "update-available": "Aktualizace k dispozici!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Použití pluginu vyžaduje nový vyhledávací index pro nalezení použití napříč nástěnkami. Povolte přepínač funkcí",
       "num-usages": "Plugin {{pluginName}} se použije <2>{{numUsages}}krát</2>.",
-      "title-missing-feature-toggle-panel-title-search": "Chybějící přepínač funkce: {{toggle}}",
       "title-not-used-yet": "Plugin {{pluginName}} se zatím nepoužívá v žádných nástěnkách"
     },
     "plugins-errors-info": {

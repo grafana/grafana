@@ -11124,6 +11124,12 @@
       "update-all": "Actualizar todo",
       "num-affected_one": "Esta actualización afectará a <1>{{count}} dashboards.</1>",
       "num-affected_other": "Esta actualización afectará a <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "¡Actualización disponible!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "El uso del plugin requiere el nuevo índice de búsqueda para encontrar el uso en todos los paneles. Habilita la opción de alternar características",
       "num-usages": "{{pluginName}} se utiliza <2>{{numUsages}}</2> veces.",
-      "title-missing-feature-toggle-panel-title-search": "Falta el conmutador de características: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} todavía no se utiliza en ningún dashboard"
     },
     "plugins-errors-info": {
