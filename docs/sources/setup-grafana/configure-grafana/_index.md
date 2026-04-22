@@ -2032,7 +2032,7 @@ The default `0` value means there's no limit.
 
 #### `limit_email_to_org_members`
 
-When enabled, email contact point recipients are restricted to users that are members of the organization.
+When enabled, email contact point recipients are restricted to users that are active members of the organization.
 This validation is applied only when creating or updating contact points, not at notification send time.
 
 Enabling this flag does not retroactively validate existing contact points.
