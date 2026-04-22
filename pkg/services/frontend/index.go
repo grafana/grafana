@@ -52,6 +52,9 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
+	MeticulousAIRecorderEnabled bool
+	MeticulousAIProjectID       string
+
 	BootScript template.JS
 }
 
@@ -122,17 +125,20 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana",
-		AppSubUrl:                  p.config.AppSubURL,
-		IsDevelopmentEnv:           p.config.Env == setting.Dev,
-		Assets:                     assetsManifest,
-		DefaultUser:                dtos.CurrentUser{},
-		Nonce:                      reqCtx.RequestNonce,
-		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
-		Settings:                   fsSettings,
-		RenderBindingSupported:     renderBindingSupported,
+		AppTitle:                    "Grafana",
+		AppSubUrl:                   p.config.AppSubURL,
+		IsDevelopmentEnv:            p.config.Env == setting.Dev,
+		Assets:                      assetsManifest,
+		DefaultUser:                 dtos.CurrentUser{},
+		Nonce:                       reqCtx.RequestNonce,
+		PublicDashboardAccessToken:  reqCtx.PublicDashboardAccessToken,
+		Settings:                    fsSettings,
+		RenderBindingSupported:      renderBindingSupported,
+		MeticulousAIRecorderEnabled: meticulousAIRecorderEnabled,
+		MeticulousAIProjectID:       p.config.MeticulousAIProjectID,
 	}
 
 	if compiledBootScript {

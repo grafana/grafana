@@ -263,6 +263,7 @@
     "zod": "^4.3.0"
   },
   "dependencies": {
+    "@alwaysmeticulous/recorder-loader": "^2.276.2",
     "@bsull/augurs": "^0.10.0",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",

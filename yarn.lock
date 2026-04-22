@@ -19,6 +19,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alwaysmeticulous/api@npm:2.276.2":
+  version: 2.276.2
+  resolution: "@alwaysmeticulous/api@npm:2.276.2"
+  checksum: 10/26b59edda04113c6e233cb021c14de15f4f5400c3133b5e11eac54bd668c4e12323f0daa957e4c5b96646d52aa9353680dc79269054895ebf0191cc8b7fa8d83
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/recorder-loader@npm:^2.276.2":
+  version: 2.276.2
+  resolution: "@alwaysmeticulous/recorder-loader@npm:2.276.2"
+  dependencies:
+    "@alwaysmeticulous/sdk-bundles-api": "npm:2.276.2"
+  checksum: 10/4886ea2510d50ddf799b6e0a71d97714fabb8ae7ebe5e23c466459a01b022222dad3743f93095fbea2cbcc30fecec0f3d5b8a035ea3a4d38a008887710500e48
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/sdk-bundles-api@npm:2.276.2":
+  version: 2.276.2
+  resolution: "@alwaysmeticulous/sdk-bundles-api@npm:2.276.2"
+  dependencies:
+    "@alwaysmeticulous/api": "npm:2.276.2"
+  checksum: 10/1dca2e12c9afce14bd63bee1562c9a3821f0a09db9ab8fedd82d3d8c4e9bbac8037a0d033dd587c6508c1ecd5a55993fe3c35dd2707781c356c84e0428317bde
+  languageName: node
+  linkType: hard
+
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.2.0
   resolution: "@ampproject/remapping@npm:2.2.0"
@@ -19757,6 +19782,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "grafana@workspace:."
   dependencies:
+    "@alwaysmeticulous/recorder-loader": "npm:^2.276.2"
     "@arethetypeswrong/cli": "npm:^0.18.2"
     "@axe-core/playwright": "npm:^4.11.1"
     "@babel/core": "npm:7.28.0"

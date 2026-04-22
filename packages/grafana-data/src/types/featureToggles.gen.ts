@@ -1736,4 +1736,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enable Meticulous AI session recorder for automated UI test generation
+  * @default false
+  */
+  meticulousAIRecorder?: boolean;
 }

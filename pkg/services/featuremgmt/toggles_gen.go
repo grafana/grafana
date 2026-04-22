@@ -957,4 +957,8 @@ const (
 	// FlagReportingAnyPageReporting
 	// Enables reporting for any page in Grafana
 	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagMeticulousAIRecorder
+	// Enable Meticulous AI session recorder for automated UI test generation
+	FlagMeticulousAIRecorder = "meticulousAIRecorder"
 )
