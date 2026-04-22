@@ -12,47 +12,12 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { receiverConfigToK8sIntegration } from 'app/features/alerting/unified/utils/k8s/utils';
 
+import { filterBySelector } from './utils';
+
 const usedByPolicies = ['grafana-default-email'];
 const usedByRules = ['grafana-default-email'];
 const cannotBeEdited = ['grafana-default-email'];
 const cannotBeDeleted = ['grafana-default-email'];
-
-/**
- * MSW list handler must support the same `fieldSelector` filtering the real API applies: clients send
- * `metadata.name` as either the plain K8s name or a base64url-encoded title (see `ContactPointSelector`).
- * `parseMetadataNameFromFieldSelector` reads the query param; `receiverMetadataNameMatchesFieldSelector`
- * matches list items to that value.
- */
-function parseMetadataNameFromFieldSelector(fieldSelector: string | null): string | undefined {
-  if (!fieldSelector) {
-    return undefined;
-  }
-  for (const part of fieldSelector.split(',')) {
-    const trimmed = part.trim();
-    const m = /^metadata\.name=(.+)$/.exec(trimmed);
-    if (m) {
-      return m[1].replace(/\\,/g, ',').replace(/\\=/g, '=').replace(/\\\\/g, '\\');
-    }
-  }
-  return undefined;
-}
-
-/**
- * listReceiver fieldSelector may use plain `metadata.name` or base64url-encoded title
- * (see ContactPointSelector + notifications API); mock data uses plain names from alertmanager config.
- */
-function receiverMetadataNameMatchesFieldSelector(
-  receiverName: string | undefined,
-  fieldSelectorName: string
-): boolean {
-  if (!receiverName) {
-    return false;
-  }
-  if (receiverName === fieldSelectorName) {
-    return true;
-  }
-  return base64UrlEncode(receiverName) === fieldSelectorName;
-}
 
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
@@ -97,11 +62,19 @@ const listNamespacedReceiverHandler = () =>
   http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, ({ request }) => {
     const list = getReceiversList();
     const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
-    const wantedName = parseMetadataNameFromFieldSelector(fieldSelector);
-    if (wantedName !== undefined) {
-      const filtered = list.items.filter((receiver) =>
-        receiverMetadataNameMatchesFieldSelector(receiver.metadata?.name, wantedName)
-      );
+
+    if (fieldSelector) {
+      let filtered = filterBySelector(list.items, fieldSelector);
+
+      if (filtered.length === 0 && fieldSelector.includes('metadata.name=')) {
+        const fieldSelectorValue = fieldSelector.split('metadata.name=')[1]?.split(',')[0]?.trim();
+        if (fieldSelectorValue) {
+          filtered = list.items.filter(
+            (receiver) => receiver.metadata?.name && base64UrlEncode(receiver.metadata.name) === fieldSelectorValue
+          );
+        }
+      }
+
       return HttpResponse.json({ ...list, items: filtered });
     }
     return HttpResponse.json(list);
