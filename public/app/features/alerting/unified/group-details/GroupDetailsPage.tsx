@@ -86,7 +86,7 @@ function GroupDetailsPage() {
   const firstPromRuleName = firstPromRule?.name;
   const firstRulerRuleName = rulerGroup?.rules?.[0] ? getRuleName(rulerGroup.rules[0]) : undefined;
   const ungroupedRuleName =
-    firstPromRuleName || firstRulerRuleName || t('alerting.rules-group.unknown-rule', 'Unknown rule');
+    firstPromRuleName || firstRulerRuleName || t('alerting.rules-group.unknown-rule', 'Unknown Rule');
   const groupDisplayName = isUngroupedRuleGroup(groupName)
     ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: ungroupedRuleName })
     : groupName;

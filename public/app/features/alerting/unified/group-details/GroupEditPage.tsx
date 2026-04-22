@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
 import { useCallback, useEffect, useState } from 'react';
-import { RegisterOptions, type SubmitHandler, useForm } from 'react-hook-form';
+import { type RegisterOptions, type SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
