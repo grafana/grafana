@@ -455,7 +455,7 @@ func (ng *AlertNG) init() error {
 		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
-	emailValidator := notifier.NewEmailValidator(ng.userService, ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
+	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
 
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
