@@ -85,15 +85,17 @@ func (s CorrelationsService) DeleteCorrelationsByTargetUID(ctx context.Context, 
 func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
-			SourceUID: event.UID,
-			OrgId:     event.OrgID,
+			SourceUID:  event.UID,
+			OrgId:      event.OrgID,
+			SourceType: event.Type,
 		}); err != nil {
 			return err
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
-			TargetUID: event.UID,
-			OrgId:     event.OrgID,
+			TargetUID:  event.UID,
+			OrgId:      event.OrgID,
+			SourceType: event.Type,
 		}); err != nil {
 			return err
 		}
@@ -274,9 +276,10 @@ func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Conte
 	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/targetDS-ref=" + cmd.TargetUID})
 }
 
+// TODO this is onl
 // this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
-	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID})
+	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID, SourceType: event.Type})
 	if err != nil {
 		return err
 	}

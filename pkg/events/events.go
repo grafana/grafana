@@ -25,4 +25,5 @@ type DataSourceDeleted struct {
 	ID        int64     `json:"id"`
 	UID       string    `json:"uid"`
 	OrgID     int64     `json:"org_id"`
+	Type      string    `json:"type"`
 }

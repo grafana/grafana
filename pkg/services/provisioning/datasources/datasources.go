@@ -102,6 +102,7 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 
 		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 			SourceUID:       dataSource.UID,
+			SourceType:      dataSource.Type,
 			OrgId:           dataSource.OrgID,
 			OnlyProvisioned: true,
 		}); err != nil {

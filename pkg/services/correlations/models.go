@@ -284,11 +284,13 @@ type GetCorrelationsQuery struct {
 
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID       string
+	SourceType      string
 	OrgId           int64
 	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
-	TargetUID string
-	OrgId     int64
+	TargetUID  string
+	SourceType string
+	OrgId      int64
 }
