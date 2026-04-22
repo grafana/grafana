@@ -199,7 +199,12 @@ export function SaveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onError: showError,
+      onError: (err) => {
+        // Release suppression so later live save/conflict events from other sessions
+        // aren't hidden while the user retries or abandons the save.
+        dashboardWatcher.clearIgnoreSave();
+        showError(err);
+      },
     },
   });
 

@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -7,8 +7,10 @@ import server from '@grafana/test-utils/server';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
+import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -35,6 +37,14 @@ jest.mock('../../hooks/useProvisionedRequestHandler', () => {
     useProvisionedRequestHandler: jest.fn(),
   };
 });
+
+jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
+  dashboardWatcher: {
+    ignoreSaveIndefinitely: jest.fn(),
+    clearIgnoreSave: jest.fn(),
+    ignoreNextSave: jest.fn(),
+  },
+}));
 
 jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
   return {
@@ -840,5 +850,65 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Save with raw JSON');
     expect(request.body).toEqual(dashboardFromRawJson);
+  });
+
+  it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {
+    const updatedDashboard = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: {
+        name: 'test-dashboard',
+        annotations: {
+          [AnnoKeyFolder]: 'folder-uid',
+          [AnnoKeySourcePath]: 'path/to/file.json',
+        },
+      },
+      spec: { title: 'Test Dashboard', description: 'Test Description' },
+    };
+
+    const { user } = setup({
+      isNew: false,
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
+            slug: 'test-dashboard',
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    // Populate the commit comment so the submit handler doesn't fall back to
+    // `dashboard.state.title` (which the mocked scene doesn't expose).
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.type(commentInput, 'Retry save');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    // Submit must enter the suppressed state before the error path is exercised;
+    // the whole point of the regression is that a *subsequent* error still clears it.
+    await waitFor(() => {
+      expect(dashboardWatcher.ignoreSaveIndefinitely).toHaveBeenCalled();
+    });
+
+    const mockHook = useProvisionedRequestHandler as jest.Mock;
+    const { handlers } = mockHook.mock.calls.at(-1)![0];
+    await act(async () => {
+      handlers.onError(new Error('boom'), { repoType: 'github' });
+    });
+
+    expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
+    // getProvisionedRequestError -> extractErrorMessage surfaces error.message verbatim
+    // as the ProvisioningAlert title.
+    expect(await screen.findByText('boom')).toBeInTheDocument();
   });
 });
