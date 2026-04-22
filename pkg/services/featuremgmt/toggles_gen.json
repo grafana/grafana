@@ -4978,6 +4978,19 @@
     },
     {
       "metadata": {
+        "name": "reporting.pdfTablesFrontend",
+        "resourceVersion": "1775986360314",
+        "creationTimestamp": "2026-04-12T09:32:40Z"
+      },
+      "spec": {
+        "description": "Enables frontend-rendered table appendix pages in PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
