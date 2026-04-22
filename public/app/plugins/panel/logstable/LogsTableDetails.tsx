@@ -189,5 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
     height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
   }),
 });
