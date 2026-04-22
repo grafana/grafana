@@ -228,6 +228,15 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 
 	armURL := dsInfo.Routes["Azure Monitor"].URL
 
+	// Use the dedicated data-plane client for batch requests so that requests to
+	// *.metrics.monitor.azure.com carry a token scoped to that audience rather
+	// than the ARM audience. Fall back to the ARM client if the service is absent
+	// (e.g. in tests or customized-cloud setups that predate this route).
+	batchClient := client
+	if svc, ok := dsInfo.Services["Azure Monitor Batch Metrics"]; ok {
+		batchClient = svc.HTTPClient
+	}
+
 	// Separate batchable from non-batchable (custom namespace / Guest OS) queries.
 	// Non-batchable queries are executed individually via the legacy ARM endpoint.
 	var batchableQueries []backend.DataQuery
@@ -284,7 +293,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 
 	// Group into batches and execute all in parallel.
 	batches := createBatches(groupQueriesForBatch(azureQueries))
-	batchResults := executeBatchRequests(ctx, batches, client)
+	batchResults := executeBatchRequests(ctx, batches, batchClient)
 
 	// Distribute successful frames into per-RefID responses first, so that
 	// partial data from successful batches is never discarded by a failed batch.

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -53,6 +54,11 @@ var testRoutes = map[string]types.AzRoute{
 	},
 	azurePortal: {
 		URL: "https://portal.azure.com",
+	},
+	azureMonitorBatchMetrics: {
+		URL:     "https://metrics.monitor.azure.com",
+		Scopes:  []string{"https://metrics.monitor.azure.com/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana"},
 	},
 }
 
@@ -97,7 +103,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
-				Services:                map[string]types.DatasourceService{},
+				Services: map[string]types.DatasourceService{
+					azureMonitorBatchMetrics: {URL: testRoutes[azureMonitorBatchMetrics].URL},
+				},
 			},
 			Err: require.NoError,
 		},
@@ -152,8 +160,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Nil(t, instance, "Expected instance to be nil")
 			} else {
 				require.NotNil(t, instance, "Expected instance to be created")
-				if !cmp.Equal(instance, *tt.expectedModel) {
-					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel))
+				opts := []cmp.Option{cmpopts.IgnoreFields(types.DatasourceService{}, "HTTPClient", "Logger")}
+				if !cmp.Equal(instance, *tt.expectedModel, opts...) {
+					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel, opts...))
 				}
 			}
 		})
