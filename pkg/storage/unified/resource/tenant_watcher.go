@@ -87,7 +87,7 @@ type TenantWatcherConfig struct {
 	// Polling is only memory bound by page size.
 	UsePolling bool
 	// PollInterval is the delay between poll cycles when UsePolling is true.
-	// Defaults to 5 minutes if zero.
+	// Defaults to 1 hour if zero.
 	PollInterval time.Duration
 	Log          log.Logger
 }
