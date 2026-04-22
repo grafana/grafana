@@ -374,7 +374,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 					continue
 				}
 
-				fss, err := fs.Sub(p.Primary.FS, "schema/")
+				fss, err := fs.Sub(p.Primary.FS, "schema")
 				if err != nil {
 					return nil, fmt.Errorf("error accessing plugin fs %s: %w", p.Primary.JSONData.ID, err)
 				}
@@ -391,7 +391,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 						backend.Logger.Info("Found duplicate plugin %s when registering API groups.", child.JSONData.ID)
 						continue
 					}
-					fss, err := fs.Sub(child.FS, "schema/")
+					fss, err := fs.Sub(child.FS, "schema")
 					if err != nil {
 						return nil, fmt.Errorf("error accessing plugin fs %s: %w", p.Primary.JSONData.ID, err)
 					}
