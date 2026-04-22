@@ -1,8 +1,8 @@
-import { DataSourceInstanceSettings, DataSourceSettings, PluginType } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourceSettings, PluginType } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { LokiDatasource } from '../datasource';
-import { LokiOptions } from '../types';
+import { type LokiOptions } from '../types';
 
 export function createDefaultConfigOptions() {
   return {

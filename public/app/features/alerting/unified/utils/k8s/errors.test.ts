@@ -1,5 +1,5 @@
 import {
-  ApiMachineryErrorResponse,
+  type ApiMachineryErrorResponse,
   ERROR_ROUTES_MATCHER_CONFLICT,
   getErrorMessageFromApiMachineryErrorResponse,
 } from './errors';

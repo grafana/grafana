@@ -1,7 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useHasRulerV2 } from '../../../hooks/useHasRuler';
 import { RuleFormType } from '../../../types/rule-form';

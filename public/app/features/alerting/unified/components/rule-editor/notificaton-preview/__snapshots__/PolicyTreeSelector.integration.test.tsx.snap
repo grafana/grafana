@@ -97,7 +97,7 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -115,7 +115,9 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -132,7 +134,7 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
@@ -262,7 +264,7 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -280,7 +282,9 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -297,7 +301,7 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],

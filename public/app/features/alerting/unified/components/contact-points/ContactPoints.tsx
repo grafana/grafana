@@ -37,7 +37,7 @@ import { GlobalConfigAlert } from './components/GlobalConfigAlert';
 import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
-import { ContactPointWithMetadata } from './utils';
+import { type ContactPointWithMetadata } from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',

@@ -395,7 +395,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test.json",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
@@ -407,7 +407,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test/.keep",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})

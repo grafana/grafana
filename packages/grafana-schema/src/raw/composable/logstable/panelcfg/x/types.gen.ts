@@ -12,17 +12,18 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.0.0-pre";
+export const pluginVersion = "13.1.0-pre";
 
 export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
-  setDisplayedFields?: unknown;
+  permalinkedLogId?: string;
   showControls?: boolean;
   showCopyLogLink?: boolean;
   showInspectLogLine?: boolean;
   sortOrder?: common.LogsSortOrder;
+  wrapText?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {

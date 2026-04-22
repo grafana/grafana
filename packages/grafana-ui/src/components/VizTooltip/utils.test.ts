@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { calculateTooltipPosition, getContentItems, getTooltipDisplayValue } from './utils';

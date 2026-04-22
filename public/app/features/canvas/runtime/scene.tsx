@@ -1,23 +1,23 @@
 import { css } from '@emotion/css';
-import InfiniteViewer from 'infinite-viewer';
-import Moveable from 'moveable';
-import { CSSProperties } from 'react';
-import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
-import Selecto from 'selecto';
+import type InfiniteViewer from 'infinite-viewer';
+import type Moveable from 'moveable';
+import { type CSSProperties } from 'react';
+import { BehaviorSubject, ReplaySubject, Subject, type Subscription } from 'rxjs';
+import type Selecto from 'selecto';
 
-import { AppEvents, PanelData, OneClickMode, ActionType } from '@grafana/data';
+import { AppEvents, type PanelData, OneClickMode, ActionType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  ColorDimensionConfig,
-  ResourceDimensionConfig,
-  ScalarDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
+  type ColorDimensionConfig,
+  type ResourceDimensionConfig,
+  type ScalarDimensionConfig,
+  type ScaleDimensionConfig,
+  type TextDimensionConfig,
   TooltipDisplayMode,
-  DirectionDimensionConfig,
+  type DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import {
   getColorDimensionFromData,
   getResourceDimensionFromData,
@@ -30,17 +30,17 @@ import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasCon
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Connections2';
-import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
+import { type Options } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { type AnchorPoint, type CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 
 import { appEvents } from '../../../core/app_events';
-import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
+import { type CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { isInfinityActionWithAuth } from '../../actions/utils';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { CanvasFrameOptions } from '../frame';
+import { type CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
-import { ElementState } from './element';
+import { type ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
 import { initMoveable, calculateZoomToFitScale } from './sceneAbleManagement';

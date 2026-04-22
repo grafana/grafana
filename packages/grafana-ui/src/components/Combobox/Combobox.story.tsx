@@ -1,14 +1,15 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
-import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
+import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 
-import { Combobox, ComboboxProps } from './Combobox';
+import { Combobox, type ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
 import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
   numberOfOptions: number;
@@ -119,6 +120,50 @@ export const CustomValue: Story = {
     createCustomValue: true,
   },
   render: BaseCombobox,
+};
+
+const onIsOpenChangeAction = action('onIsOpenChange');
+
+export const ControlledOpenState: Story = {
+  name: 'Control isOpen',
+  args: {
+    value: null,
+    placeholder: 'Choose fruit…',
+  },
+
+  render: function ControlledOpenStateStory(args: PropsAndCustomArgs) {
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [dynamicArgs, setArgs] = useArgs();
+
+    return (
+      <>
+        <Field
+          label="Controlled dropdown open"
+          description="Button triggers combobox open via isOpen and onIsOpenChange. Close with Escape or by selecting."
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Combobox
+              id="controlled-open-combobox"
+              {...args}
+              {...dynamicArgs}
+              isOpen={dropdownOpen}
+              onIsOpenChange={(open) => {
+                onIsOpenChangeAction(open);
+                setDropdownOpen(open);
+              }}
+              onChange={(value: ComboboxOption | null) => {
+                setArgs({ value: value?.value ?? null });
+                onChangeAction(value);
+              }}
+            />
+          </div>
+        </Field>
+        <Button variant="primary" onClick={() => setDropdownOpen(true)}>
+          Open dropdown
+        </Button>
+      </>
+    );
+  },
 };
 
 export const GroupsWithMixedLabels: Story = {

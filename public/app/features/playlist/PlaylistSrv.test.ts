@@ -1,14 +1,14 @@
-import { Store } from 'redux';
+import { type Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
-import { Playlist } from '../../api/clients/playlist/v1';
-import { DashboardQueryResult } from '../search/service/types';
+import { type Playlist } from '../../api/clients/playlist/v1';
+import { type DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 
 jest.mock('./utils', () => ({
   loadDashboards: (items: PlaylistItemUI[]) => {

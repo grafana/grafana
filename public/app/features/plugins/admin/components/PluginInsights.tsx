@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { CatalogPluginInsights } from '../types';
+import { type CatalogPluginInsights } from '../types';
 
 type Props = { pluginInsights: CatalogPluginInsights | undefined };
 
@@ -32,22 +32,20 @@ export function PluginInsights(props: Props): React.ReactElement | null {
         <Icon name="check-circle" size="md" color={theme.colors.success.main} />
         <Text color="primary" variant="body">
           <Trans i18nKey="plugins.details.labels.pluginInsightsSuccessTooltip">
-            All relevant signals are present and verified
+            All relevant checks are present and verified
           </Trans>
         </Text>
       </Stack>
       <Stack direction="row" alignItems="center">
         <Icon name="exclamation-triangle" size="md" />
         <Text color="primary" variant="body">
-          <Trans i18nKey="plugins.details.labels.pluginInsightsWarningTooltip">
-            One or more signals are missing or need attention
-          </Trans>
+          <Trans i18nKey="plugins.details.labels.pluginInsightsWarningTooltip">One or more checks need attention</Trans>
         </Text>
       </Stack>
       <hr className={styles.pluginInsightsTooltipSeparator} />
       <Text color="secondary" variant="body">
         <Trans i18nKey="plugins.details.labels.moreDetails">
-          Do you find Plugin Insights usefull? Please share your feedback{' '}
+          Plugin Insights are currently in preview, share your feedback to help us surface the most useful information{' '}
           <TextLink href="https://forms.gle/1ZVLbecyQ8aY9mDYA" external>
             here
           </TextLink>

@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 

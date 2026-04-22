@@ -68,6 +68,7 @@ func ProvideService(
 	dual dualwrite.Service,
 	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 	serverLockService *serverlock.ServerLockService,
+	routesPermissions accesscontrol.RoutePermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -96,6 +97,7 @@ func ProvideService(
 		migratePrometheusType:        promTypeMigrationProvider.Run,
 		dual:                         dual,
 		serverLock:                   serverLockService,
+		routesPermissions:            routesPermissions,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -238,6 +240,7 @@ type ProvisioningServiceImpl struct {
 	secretService                secrets.Service
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
+	routesPermissions            accesscontrol.RoutePermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
@@ -325,9 +328,20 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		features = ps.alertingStore.FeatureToggles
 	}
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
-	routeService := routes.NewService(configStore, ps.alertingStore, ps.alertingStore, ps.Cfg.UnifiedAlerting, features, ps.log, validation.ValidateProvenanceRelaxed, ps.tracer)
+	routeService := routes.NewService(
+		configStore,
+		ps.alertingStore,
+		ps.alertingStore,
+		ps.Cfg.UnifiedAlerting,
+		features,
+		ps.log,
+		validation.ValidateProvenanceRelaxed,
+		ps.tracer,
+		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
+	)
+	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	receiverSvc := notifier.NewReceiverService(
-		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
+		receiverAuthz,
 		configStore,
 		ps.alertingStore,
 		ps.alertingStore,
@@ -337,14 +351,16 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		ps.resourcePermissions,
 		ps.tracer,
+		validation.ValidateProvenanceRelaxed,
 		false,
+		ps.Cfg.UnifiedAlerting.AllowedIntegrations,
 	)
-	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
-		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
+	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
+		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
-		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
-	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore, routeService)
-	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
+		ps.alertingStore, ps.SQLStore, routeService, ps.Cfg.UnifiedAlerting, ps.log, validation.ValidateProvenanceRelaxed)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore, routeService, validation.ValidateProvenanceRelaxed)
+	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log, validation.ValidateProvenanceRelaxed)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,

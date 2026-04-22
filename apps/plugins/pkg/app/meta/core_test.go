@@ -3,6 +3,7 @@ package meta
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,13 +16,14 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 )
 
 func TestCoreProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns cached plugin when available", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "", false, defaultCoreTTL)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -45,7 +47,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns ErrMetaNotFound for non-existent plugin", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "", false, defaultCoreTTL)
 
 		provider.mu.Lock()
 		provider.initialized = true
@@ -59,7 +61,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("ignores version parameter", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "", false, defaultCoreTTL)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -84,7 +86,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 	t.Run("uses custom TTL when provided", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc(""), customTTL)
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "", false, customTTL)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -106,25 +108,12 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		assert.Equal(t, customTTL, result.TTL)
 	})
 
-	t.Run("gracefully handles initialization failure and returns ErrMetaNotFound", func(t *testing.T) {
-		tempDir := t.TempDir()
-
-		oldWd, err := os.Getwd()
-		require.NoError(t, err)
-		defer func() {
-			_ = os.Chdir(oldWd)
-		}()
-
-		require.NoError(t, os.Chdir(tempDir))
-
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
-		result, err := provider.GetMeta(ctx, PluginRef{ID: "any-plugin", Version: "1.0.0"})
+	t.Run("returns error when static root path func fails", func(t *testing.T) {
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			StaticRootPath: func() (string, error) { return "", errors.New("not found") },
+		})
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, ErrMetaNotFound))
-		assert.Nil(t, result)
-
-		initialized := provider.initialized
-		assert.True(t, initialized, "provider should be marked as initialized even after failure")
+		assert.Nil(t, provider)
 	})
 }
 
@@ -138,41 +127,55 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		grafanaRoot, err := filepath.Abs(grafanaRoot)
 		require.NoError(t, err)
 
-		publicPath := filepath.Join(grafanaRoot, "public", "app", "plugins")
-		if _, err = os.Stat(publicPath); err != nil {
-			t.Skipf("Grafana root not found at %s, skipping integration test: %v", publicPath, err)
+		staticRootPath := filepath.Join(grafanaRoot, "public")
+		if _, err = os.Stat(filepath.Join(staticRootPath, "app", "plugins")); err != nil {
+			t.Skipf("Grafana root not found at %s, skipping integration test: %v", staticRootPath, err)
 		}
 
 		require.NoError(t, os.Chdir(grafanaRoot))
 
-		pluginsPath := filepath.Join(grafanaRoot, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 53)
+		assert.Len(t, provider.loadedPlugins, 51)
 	})
 
-	t.Run("returns error when static root path not found", func(t *testing.T) {
+	t.Run("loads plugins from staticRootPath", func(t *testing.T) {
+		// Uses a unique plugin ID that cannot exist in any hardcoded fallback path,
+		// so this test fails if loadPlugins ignores p.staticRootPath.
 		tempDir := t.TempDir()
+		staticRootPath := filepath.Join(tempDir, "public")
+		pluginDir := filepath.Join(staticRootPath, "app", "plugins", "datasource", "unique-sentinel-plugin-xk92")
+		require.NoError(t, os.MkdirAll(pluginDir, 0750))
 
-		oldWd, err := os.Getwd()
+		pluginJSON := `{"id":"unique-sentinel-plugin-xk92","name":"Sentinel","type":"datasource","info":{"version":"1.0.0"}}`
+		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644))
+
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
+		err := provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		defer func() {
-			_ = os.Chdir(oldWd)
-		}()
 
-		require.NoError(t, os.Chdir(tempDir))
+		provider.mu.RLock()
+		_, found := provider.loadedPlugins["unique-sentinel-plugin-xk92"]
+		provider.mu.RUnlock()
 
-		provider := NewCoreProvider(&logging.NoOpLogger{}, func() (string, error) { return "", errors.New("not found") })
-		err = provider.loadPlugins(ctx)
+		assert.True(t, found, "plugin from staticRootPath must be loaded; hardcoded paths would miss it")
+	})
 
-		assert.Error(t, err)
+	t.Run("returns no error when plugins directory does not exist", func(t *testing.T) {
+		// Path validation happens upstream (in CoreProviderOpts.StaticRootPath); loadPlugins
+		// itself logs a warning and returns no plugins when the directory is missing.
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "/nonexistent/path", false, defaultCoreTTL)
+		err := provider.loadPlugins(ctx)
+
+		assert.NoError(t, err)
+		assert.Empty(t, provider.loadedPlugins)
 	})
 
 	t.Run("returns no error when no plugins found", func(t *testing.T) {
 		tempDir := t.TempDir()
-		publicPath := filepath.Join(tempDir, "public", "app", "plugins")
-		require.NoError(t, os.MkdirAll(publicPath, 0750))
+		staticRootPath := filepath.Join(tempDir, "public")
+		require.NoError(t, os.MkdirAll(filepath.Join(staticRootPath, "app", "plugins"), 0750))
 
 		oldWd, err := os.Getwd()
 		require.NoError(t, err)
@@ -182,17 +185,16 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
 		err = provider.loadPlugins(ctx)
 		assert.NoError(t, err)
 	})
 
 	t.Run("successfully loads plugins when structure exists", func(t *testing.T) {
 		tempDir := t.TempDir()
-		publicPath := filepath.Join(tempDir, "public", "app", "plugins")
-		datasourcePath := filepath.Join(publicPath, "datasource")
-		panelPath := filepath.Join(publicPath, "panel")
+		staticRootPath := filepath.Join(tempDir, "public")
+		datasourcePath := filepath.Join(staticRootPath, "app", "plugins", "datasource")
+		panelPath := filepath.Join(staticRootPath, "app", "plugins", "panel")
 
 		require.NoError(t, os.MkdirAll(datasourcePath, 0750))
 		require.NoError(t, os.MkdirAll(panelPath, 0750))
@@ -220,8 +222,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
 		err = provider.loadPlugins(ctx)
 
 		if err != nil {
@@ -243,33 +244,80 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 func TestNewCoreProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			StaticRootPath: staticRootPathFunc("/test/public"),
+		})
+		require.NoError(t, err)
 		assert.Equal(t, defaultCoreTTL, provider.ttl)
 		assert.NotNil(t, provider.loadedPlugins)
 		assert.False(t, provider.initialized)
-		assert.NotNil(t, provider.pluginsPathFunc)
+		assert.Equal(t, "/test/public", provider.staticRootPath)
 	})
 }
 
 func TestNewCoreProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"), customTTL)
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "/test/public", false, customTTL)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"), 0)
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "/test/public", false, 0)
 		assert.Equal(t, time.Duration(0), provider.ttl)
 	})
 
-	t.Run("stores plugins path function", func(t *testing.T) {
-		expectedPath := "/usr/share/grafana/public/app/plugins"
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc(expectedPath), defaultCoreTTL)
-		assert.NotNil(t, provider.pluginsPathFunc)
-		path, err := provider.pluginsPathFunc()
+	t.Run("stores static root path", func(t *testing.T) {
+		expectedPath := "/usr/share/grafana/public"
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, expectedPath, false, defaultCoreTTL)
+		assert.Equal(t, expectedPath, provider.staticRootPath)
+	})
+}
+
+func TestAssetProvider(t *testing.T) {
+	const staticRoot = "/srv/grafana/public"
+	p := newAssetProvider(staticRoot)
+
+	// Non-decoupled plugins: FS.Base() points directly to the plugin directory (no /dist).
+	// module  → "core:plugin/<name>"
+	// baseUrl → "app/plugins/<type>/<name>"
+	t.Run("non-decoupled datasource", func(t *testing.T) {
+		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/prometheus"}}
+
+		module, err := p.Module(pi)
 		require.NoError(t, err)
-		assert.Equal(t, expectedPath, path)
+		assert.Equal(t, "core:plugin/prometheus", module)
+
+		baseURL, err := p.AssetPath(pi)
+		require.NoError(t, err)
+		assert.Equal(t, "app/plugins/datasource/prometheus", baseURL)
+	})
+
+	t.Run("non-decoupled panel", func(t *testing.T) {
+		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"}}
+
+		module, err := p.Module(pi)
+		require.NoError(t, err)
+		assert.Equal(t, "core:plugin/alertlist", module)
+
+		baseURL, err := p.AssetPath(pi)
+		require.NoError(t, err)
+		assert.Equal(t, "app/plugins/panel/alertlist", baseURL)
+	})
+
+	// Decoupled plugins: FS.Base() points to the /dist directory.
+	// module  → "app/plugins/<type>/<name>/dist/module.js"
+	// baseUrl → "app/plugins/<type>/<name>/dist"
+	t.Run("decoupled datasource (grafana-testdata-datasource)", func(t *testing.T) {
+		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/grafana-testdata-datasource/dist"}}
+
+		module, err := p.Module(pi)
+		require.NoError(t, err)
+		assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist/module.js", module)
+
+		baseURL, err := p.AssetPath(pi)
+		require.NoError(t, err)
+		assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist", baseURL)
 	})
 }
 
@@ -406,8 +454,17 @@ func TestJsonDataToMeta(t *testing.T) {
 	})
 }
 
-func pluginsPathFunc(path string) func() (string, error) {
+func staticRootPathFunc(path string) func() (string, error) {
 	return func() (string, error) {
 		return path, nil
 	}
 }
+
+// stubFS implements plugins.FS with a fixed base path for testing.
+type stubFS struct{ base string }
+
+func (s *stubFS) Open(string) (fs.File, error) { return nil, nil }
+func (s *stubFS) Type() plugins.FSType         { return plugins.FSTypeLocal }
+func (s *stubFS) Base() string                 { return s.base }
+func (s *stubFS) Files() ([]string, error)     { return nil, nil }
+func (s *stubFS) Rel(string) (string, error)   { return "", nil }

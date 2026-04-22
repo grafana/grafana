@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, offset, Side, useFloating, useTransitionStyles } from '@floating-ui/react';
+import { autoUpdate, offset, type Side, useFloating, useTransitionStyles } from '@floating-ui/react';
 import { useLayoutEffect } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';

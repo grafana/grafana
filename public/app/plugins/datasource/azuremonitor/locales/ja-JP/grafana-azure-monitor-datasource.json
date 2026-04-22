@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "クライアント証明書",
       "aria-label-client-id": "クライアントID",
       "aria-label-client-secret": "クライアントシークレット",
+      "aria-label-private-key": "秘密鍵",
+      "aria-label-private-key-password": "証明書パスワード",
       "aria-label-symbol-client-secret": "クライアントシークレット",
       "aria-label-tenant-id": "テナントID",
+      "description-certificate-format": "証明書の形式を選択してください（PEM証明書はプレーンテキストのPEM形式、PFX証明書はBase64でエンコードされたPFX形式である必要があります）",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "形式",
+      "label-client-certificate": "クライアント証明書",
       "label-client-id": "アプリケーション（クライアント）ID",
       "label-client-secret": "クライアントシークレット",
+      "label-private-key": "秘密鍵",
       "label-symbol-client-secret": "クライアントシークレット",
+      "label-symbol-private-key-password": "証明書パスワード",
       "label-tenant-id": "ディレクトリ（テナント）ID",
       "placeholder-symbol-client-secret": "設定済み",
       "reset-symbol-client-secret": "リセット"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Azureサービスへの認証タイプを選択",
-      "label-authentication": "認証",
+      "label-authentication": "認証タイプ",
       "title-authentication": "認証"
     },
     "basic-logs-toggle": {
@@ -277,7 +285,7 @@
       "tooltip-time-range": "<0>クエリに使用する時間範囲を指定します。<1>クエリ</1>オプションの場合、クエリで指定された時間範囲のみを使用します。<3>ダッシュボード</3>の場合、Grafanaの時間範囲のみを使用します。</0>"
     },
     "top-field": {
-      "label-top": "上位"
+      "label-top": "上"
     },
     "trace-type-field": {
       "label-event-type": "イベントタイプ",

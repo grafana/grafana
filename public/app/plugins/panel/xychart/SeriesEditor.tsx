@@ -4,20 +4,20 @@ import { usePrevious } from 'react-use';
 
 import {
   getFrameDisplayName,
-  StandardEditorProps,
+  type StandardEditorProps,
   // getFieldDisplayName,
   FrameMatcherID,
   FieldMatcherID,
   FieldNamePickerBaseNameMode,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
-import { Options, SeriesMapping, XYSeriesConfig } from './panelcfg.gen';
+import { type Options, SeriesMapping, type XYSeriesConfig } from './panelcfg.gen';
 
 export const SeriesEditor = ({
   value: seriesCfg,

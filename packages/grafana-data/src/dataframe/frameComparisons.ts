@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { DataFrame } from '../types/dataFrame';
+import { type DataFrame } from '../types/dataFrame';
 
 /**
  * Returns true if both frames have the same name, fields, labels and configs.

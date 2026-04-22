@@ -2,7 +2,7 @@
 import './global-jquery-shim';
 
 import { TransformStream } from 'node:stream/web';
-import { MessageChannel, MessagePort } from 'node:worker_threads';
+import { MessageChannel, type MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
@@ -14,7 +14,7 @@ jest.isolateModulesAsync(async () => {
     appEvents: testAppEvents,
   }));
 });
-import { GrafanaBootConfig } from '@grafana/runtime';
+import { type GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
 import 'mutationobserver-shim';

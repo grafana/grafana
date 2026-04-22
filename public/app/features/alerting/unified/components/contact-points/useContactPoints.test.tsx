@@ -1,12 +1,12 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';

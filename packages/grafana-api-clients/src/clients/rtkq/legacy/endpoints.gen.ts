@@ -1,7 +1,7 @@
 import { api } from './baseAPI';
 export const addTagTypes = [
-  'enterprise',
   'access_control',
+  'enterprise',
   'admin_ldap',
   'admin_provisioning',
   'admin',
@@ -14,12 +14,11 @@ export const addTagTypes = [
   'dashboards',
   'snapshots',
   'dashboard_public',
-  'permissions',
-  'versions',
   'datasources',
   'correlations',
   'health',
   'folders',
+  'permissions',
   'group_attribute_sync',
   'library_elements',
   'licensing',
@@ -48,10 +47,6 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      searchResult: build.mutation<SearchResultApiResponse, SearchResultApiArg>({
-        query: () => ({ url: `/access-control/assignments/search`, method: 'POST' }),
-        invalidatesTags: ['enterprise'],
-      }),
       listRoles: build.query<ListRolesApiResponse, ListRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/roles`,
@@ -162,7 +157,6 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           params: {
             includeHidden: queryArg.includeHidden,
-            includeMapped: queryArg.includeMapped,
             targetOrgId: queryArg.targetOrgId,
           },
         }),
@@ -672,10 +666,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['dashboards', 'snapshots'],
       }),
-      postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
-        invalidatesTags: ['dashboards'],
-      }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
         invalidatesTags: ['dashboards'],
@@ -687,10 +677,6 @@ const injectedRtkApi = api
       listPublicDashboards: build.query<ListPublicDashboardsApiResponse, ListPublicDashboardsApiArg>({
         query: () => ({ url: `/dashboards/public-dashboards` }),
         providesTags: ['dashboards', 'dashboard_public'],
-      }),
-      getDashboardTags: build.query<GetDashboardTagsApiResponse, GetDashboardTagsApiArg>({
-        query: () => ({ url: `/dashboards/tags` }),
-        providesTags: ['dashboards'],
       }),
       getPublicDashboard: build.query<GetPublicDashboardApiResponse, GetPublicDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.dashboardUid}/public-dashboards` }),
@@ -718,46 +704,6 @@ const injectedRtkApi = api
           body: queryArg.publicDashboardDto,
         }),
         invalidatesTags: ['dashboards', 'dashboard_public'],
-      }),
-      deleteDashboardByUid: build.mutation<DeleteDashboardByUidApiResponse, DeleteDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['dashboards'],
-      }),
-      getDashboardByUid: build.query<GetDashboardByUidApiResponse, GetDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}` }),
-        providesTags: ['dashboards'],
-      }),
-      getDashboardPermissionsListByUid: build.query<
-        GetDashboardPermissionsListByUidApiResponse,
-        GetDashboardPermissionsListByUidApiArg
-      >({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}/permissions` }),
-        providesTags: ['dashboards', 'permissions'],
-      }),
-      updateDashboardPermissionsByUid: build.mutation<
-        UpdateDashboardPermissionsByUidApiResponse,
-        UpdateDashboardPermissionsByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/permissions`,
-          method: 'POST',
-          body: queryArg.updateDashboardAclCommand,
-        }),
-        invalidatesTags: ['dashboards', 'permissions'],
-      }),
-      getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/versions`,
-          params: {
-            limit: queryArg.limit,
-            start: queryArg.start,
-          },
-        }),
-        providesTags: ['dashboards', 'versions'],
-      }),
-      getDashboardVersionByUid: build.query<GetDashboardVersionByUidApiResponse, GetDashboardVersionByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}/versions/${queryArg.dashboardVersionId}` }),
-        providesTags: ['dashboards', 'versions'],
       }),
       getDataSources: build.query<GetDataSourcesApiResponse, GetDataSourcesApiArg>({
         query: () => ({ url: `/datasources` }),
@@ -931,60 +877,6 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({ url: `/ds/query`, method: 'POST', body: queryArg.metricRequest }),
         invalidatesTags: ['datasources'],
-      }),
-      getFolders: build.query<GetFoldersApiResponse, GetFoldersApiArg>({
-        query: (queryArg) => ({
-          url: `/folders`,
-          params: {
-            limit: queryArg.limit,
-            page: queryArg.page,
-            parentUid: queryArg.parentUid,
-            permission: queryArg.permission,
-          },
-        }),
-        providesTags: ['folders'],
-      }),
-      createFolder: build.mutation<CreateFolderApiResponse, CreateFolderApiArg>({
-        query: (queryArg) => ({ url: `/folders`, method: 'POST', body: queryArg.createFolderCommand }),
-        invalidatesTags: ['folders'],
-      }),
-      deleteFolder: build.mutation<DeleteFolderApiResponse, DeleteFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}`,
-          method: 'DELETE',
-          params: {
-            forceDeleteRules: queryArg.forceDeleteRules,
-          },
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderByUid: build.query<GetFolderByUidApiResponse, GetFolderByUidApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}` }),
-        providesTags: ['folders'],
-      }),
-      updateFolder: build.mutation<UpdateFolderApiResponse, UpdateFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}`,
-          method: 'PUT',
-          body: queryArg.updateFolderCommand,
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderDescendantCounts: build.query<GetFolderDescendantCountsApiResponse, GetFolderDescendantCountsApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}/counts` }),
-        providesTags: ['folders'],
-      }),
-      moveFolder: build.mutation<MoveFolderApiResponse, MoveFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}/move`,
-          method: 'POST',
-          body: queryArg.moveFolderCommand,
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderPermissionList: build.query<GetFolderPermissionListApiResponse, GetFolderPermissionListApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}/permissions` }),
-        providesTags: ['folders', 'permissions'],
       }),
       updateFolderPermissions: build.mutation<UpdateFolderPermissionsApiResponse, UpdateFolderPermissionsApiArg>({
         query: (queryArg) => ({
@@ -1783,21 +1675,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/users/${queryArg.userId}/teams` }),
         providesTags: ['users'],
       }),
-      routeGetAlertRules: build.query<RouteGetAlertRulesApiResponse, RouteGetAlertRulesApiArg>({
-        query: () => ({ url: `/v1/provisioning/alert-rules` }),
-        providesTags: ['provisioning'],
-      }),
-      routePostAlertRule: build.mutation<RoutePostAlertRuleApiResponse, RoutePostAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules`,
-          method: 'POST',
-          body: queryArg.provisionedAlertRule,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRulesExport: build.query<RouteGetAlertRulesExportApiResponse, RouteGetAlertRulesExportApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/alert-rules/export`,
@@ -1811,31 +1688,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeDeleteAlertRule: build.mutation<RouteDeleteAlertRuleApiResponse, RouteDeleteAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules/${queryArg.uid}`,
-          method: 'DELETE',
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetAlertRule: build.query<RouteGetAlertRuleApiResponse, RouteGetAlertRuleApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/alert-rules/${queryArg.uid}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutAlertRule: build.mutation<RoutePutAlertRuleApiResponse, RoutePutAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.provisionedAlertRule,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRuleExport: build.query<RouteGetAlertRuleExportApiResponse, RouteGetAlertRuleExportApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/alert-rules/${queryArg.uid}/export`,
@@ -1845,26 +1697,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['provisioning'],
-      }),
-      routeGetContactpoints: build.query<RouteGetContactpointsApiResponse, RouteGetContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          params: {
-            name: queryArg.name,
-          },
-        }),
-        providesTags: ['provisioning'],
-      }),
-      routePostContactpoints: build.mutation<RoutePostContactpointsApiResponse, RoutePostContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          method: 'POST',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       routeGetContactpointsExport: build.query<
         RouteGetContactpointsExportApiResponse,
@@ -1881,43 +1713,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeDeleteContactpoints: build.mutation<RouteDeleteContactpointsApiResponse, RouteDeleteContactpointsApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/contact-points/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routePutContactpoint: build.mutation<RoutePutContactpointApiResponse, RoutePutContactpointApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeDeleteAlertRuleGroup: build.mutation<RouteDeleteAlertRuleGroupApiResponse, RouteDeleteAlertRuleGroupApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}`,
-          method: 'DELETE',
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetAlertRuleGroup: build.query<RouteGetAlertRuleGroupApiResponse, RouteGetAlertRuleGroupApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutAlertRuleGroup: build.mutation<RoutePutAlertRuleGroupApiResponse, RoutePutAlertRuleGroupApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}`,
-          method: 'PUT',
-          body: queryArg.alertRuleGroup,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRuleGroupExport: build.query<
         RouteGetAlertRuleGroupExportApiResponse,
         RouteGetAlertRuleGroupExportApiArg
@@ -1931,21 +1726,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeGetMuteTimings: build.query<RouteGetMuteTimingsApiResponse, RouteGetMuteTimingsApiArg>({
-        query: () => ({ url: `/v1/provisioning/mute-timings` }),
-        providesTags: ['provisioning'],
-      }),
-      routePostMuteTiming: build.mutation<RoutePostMuteTimingApiResponse, RoutePostMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings`,
-          method: 'POST',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeExportMuteTimings: build.query<RouteExportMuteTimingsApiResponse, RouteExportMuteTimingsApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/mute-timings/export`,
@@ -1955,34 +1735,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['provisioning'],
-      }),
-      routeDeleteMuteTiming: build.mutation<RouteDeleteMuteTimingApiResponse, RouteDeleteMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'DELETE',
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetMuteTiming: build.query<RouteGetMuteTimingApiResponse, RouteGetMuteTimingApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/mute-timings/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutMuteTiming: build.mutation<RoutePutMuteTimingApiResponse, RoutePutMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       routeExportMuteTiming: build.query<RouteExportMuteTimingApiResponse, RouteExportMuteTimingApiArg>({
         query: (queryArg) => ({
@@ -1994,57 +1746,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeResetPolicyTree: build.mutation<RouteResetPolicyTreeApiResponse, RouteResetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetPolicyTree: build.query<RouteGetPolicyTreeApiResponse, RouteGetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutPolicyTree: build.mutation<RoutePutPolicyTreeApiResponse, RoutePutPolicyTreeApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/policies`,
-          method: 'PUT',
-          body: queryArg.route,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetPolicyTreeExport: build.query<RouteGetPolicyTreeExportApiResponse, RouteGetPolicyTreeExportApiArg>({
         query: () => ({ url: `/v1/provisioning/policies/export` }),
         providesTags: ['provisioning'],
-      }),
-      routeGetTemplates: build.query<RouteGetTemplatesApiResponse, RouteGetTemplatesApiArg>({
-        query: () => ({ url: `/v1/provisioning/templates` }),
-        providesTags: ['provisioning'],
-      }),
-      routeDeleteTemplate: build.mutation<RouteDeleteTemplateApiResponse, RouteDeleteTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'DELETE',
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetTemplate: build.query<RouteGetTemplateApiResponse, RouteGetTemplateApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/templates/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutTemplate: build.mutation<RoutePutTemplateApiResponse, RoutePutTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.notificationTemplateContent,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       listAllProvidersSettings: build.query<ListAllProvidersSettingsApiResponse, ListAllProvidersSettingsApiArg>({
         query: () => ({ url: `/v1/sso-settings` }),
@@ -2070,8 +1774,6 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type SearchResultApiResponse = /** status 200 (empty) */ SearchResult;
-export type SearchResultApiArg = void;
 export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
@@ -2150,7 +1852,6 @@ export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
   includeHidden?: boolean;
-  includeMapped?: boolean;
   targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
@@ -2543,25 +2244,6 @@ export type SearchDashboardSnapshotsApiArg = {
   /** Limit the number of returned results */
   limit?: number;
 };
-export type PostDashboardApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type PostDashboardApiArg = {
-  saveDashboardCommand: SaveDashboardCommand;
-};
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -2571,8 +2253,6 @@ export type InterpolateDashboardApiResponse = /** status 200 (empty) */ any;
 export type InterpolateDashboardApiArg = void;
 export type ListPublicDashboardsApiResponse = /** status 200 (empty) */ PublicDashboardListResponseWithPagination;
 export type ListPublicDashboardsApiArg = void;
-export type GetDashboardTagsApiResponse = /** status 200 (empty) */ DashboardTagCloudItem[];
-export type GetDashboardTagsApiArg = void;
 export type GetPublicDashboardApiResponse = /** status 200 (empty) */ PublicDashboard;
 export type GetPublicDashboardApiArg = {
   dashboardUid: string;
@@ -2593,44 +2273,6 @@ export type UpdatePublicDashboardApiArg = {
   dashboardUid: string;
   uid: string;
   publicDashboardDto: PublicDashboardDto;
-};
-export type DeleteDashboardByUidApiResponse = /** status 200 (empty) */ {
-  /** Message Message of the deleted dashboard. */
-  message: string;
-  /** Title Title of the deleted dashboard. */
-  title: string;
-  /** UID Identifier of the deleted dashboard. */
-  uid: string;
-};
-export type DeleteDashboardByUidApiArg = {
-  uid: string;
-};
-export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
-export type GetDashboardByUidApiArg = {
-  uid: string;
-};
-export type GetDashboardPermissionsListByUidApiResponse = /** status 200 (empty) */ DashboardAclInfoDto[];
-export type GetDashboardPermissionsListByUidApiArg = {
-  uid: string;
-};
-export type UpdateDashboardPermissionsByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateDashboardPermissionsByUidApiArg = {
-  uid: string;
-  updateDashboardAclCommand: UpdateDashboardAclCommand;
-};
-export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
-export type GetDashboardVersionsByUidApiArg = {
-  uid: string;
-  /** Maximum number of results to return */
-  limit?: number;
-  /** Version to start from when returning queries */
-  start?: number;
-};
-export type GetDashboardVersionByUidApiResponse = /** status 200 (empty) */ DashboardVersionMeta;
-export type GetDashboardVersionByUidApiArg = {
-  dashboardVersionId: number;
-  uid: string;
 };
 export type GetDataSourcesApiResponse = /** status 200 (empty) */ DataSourceList;
 export type GetDataSourcesApiArg = void;
@@ -2774,60 +2416,6 @@ export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | /** status 207 (empty) */ QueryDataResponseContainsTheResultsFromAQueryDataRequest;
 export type QueryMetricsWithExpressionsApiArg = {
   metricRequest: MetricRequest;
-};
-export type GetFoldersApiResponse = /** status 200 (empty) */ FolderSearchHit[];
-export type GetFoldersApiArg = {
-  /** Limit the maximum number of folders to return */
-  limit?: number;
-  /** Page index for starting fetching folders */
-  page?: number;
-  /** The parent folder UID */
-  parentUid?: string;
-  /** Set to `Edit` to return folders that the user can edit */
-  permission?: 'Edit' | 'View';
-};
-export type CreateFolderApiResponse = /** status 200 (empty) */ Folder;
-export type CreateFolderApiArg = {
-  createFolderCommand: CreateFolderCommand;
-};
-export type DeleteFolderApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted folder. */
-  id: number;
-  /** Message Message of the deleted folder. */
-  message: string;
-  /** Title of the deleted folder. */
-  title: string;
-};
-export type DeleteFolderApiArg = {
-  folderUid: string;
-  /** If `true` any Grafana 8 Alerts under this folder will be deleted.
-    Set to `false` so that the request will fail if the folder contains any Grafana 8 Alerts. */
-  forceDeleteRules?: boolean;
-};
-export type GetFolderByUidApiResponse = /** status 200 (empty) */ Folder;
-export type GetFolderByUidApiArg = {
-  folderUid: string;
-};
-export type UpdateFolderApiResponse = /** status 200 (empty) */ Folder;
-export type UpdateFolderApiArg = {
-  folderUid: string;
-  /** To change the unique identifier (uid), provide another one.
-    To overwrite an existing folder with newer version, set `overwrite` to `true`.
-    Provide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`. */
-  updateFolderCommand: UpdateFolderCommand;
-};
-export type GetFolderDescendantCountsApiResponse = /** status 200 (empty) */ DescendantCounts;
-export type GetFolderDescendantCountsApiArg = {
-  folderUid: string;
-};
-export type MoveFolderApiResponse = /** status 200 (empty) */ Folder;
-export type MoveFolderApiArg = {
-  folderUid: string;
-  moveFolderCommand: MoveFolderCommand;
-};
-export type GetFolderPermissionListApiResponse = /** status 200 (empty) */ DashboardAclInfoDto[];
-export type GetFolderPermissionListApiArg = {
-  folderUid: string;
 };
 export type UpdateFolderPermissionsApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -3550,13 +3138,6 @@ export type GetUserTeamsApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetUserTeamsApiArg = {
   userId: number;
 };
-export type RouteGetAlertRulesApiResponse = /** status 200 ProvisionedAlertRules */ ProvisionedAlertRulesRead;
-export type RouteGetAlertRulesApiArg = void;
-export type RoutePostAlertRuleApiResponse = /** status 201 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RoutePostAlertRuleApiArg = {
-  'X-Disable-Provenance'?: string;
-  provisionedAlertRule: ProvisionedAlertRule;
-};
 export type RouteGetAlertRulesExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRulesExportApiArg = {
@@ -3571,24 +3152,6 @@ export type RouteGetAlertRulesExportApiArg = {
   /** UID of alert rule to export. If specified, parameters folderUid and group must be empty. */
   ruleUid?: string;
 };
-export type RouteDeleteAlertRuleApiResponse = unknown;
-export type RouteDeleteAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-};
-export type RouteGetAlertRuleApiResponse = /** status 200 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RouteGetAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-};
-export type RoutePutAlertRuleApiResponse = /** status 200 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RoutePutAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-  provisionedAlertRule: ProvisionedAlertRule;
-};
 export type RouteGetAlertRuleExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRuleExportApiArg = {
@@ -3598,16 +3161,6 @@ export type RouteGetAlertRuleExportApiArg = {
   format?: 'yaml' | 'json' | 'hcl';
   /** Alert rule UID */
   uid: string;
-};
-export type RouteGetContactpointsApiResponse = /** status 200 ContactPoints */ ContactPointsRead;
-export type RouteGetContactpointsApiArg = {
-  /** Filter by name */
-  name?: string;
-};
-export type RoutePostContactpointsApiResponse = /** status 202 EmbeddedContactPoint */ EmbeddedContactPointRead;
-export type RoutePostContactpointsApiArg = {
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
 };
 export type RouteGetContactpointsExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -3621,35 +3174,6 @@ export type RouteGetContactpointsExportApiArg = {
   /** Filter by name */
   name?: string;
 };
-export type RouteDeleteContactpointsApiResponse = unknown;
-export type RouteDeleteContactpointsApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-};
-export type RoutePutContactpointApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutContactpointApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
-};
-export type RouteDeleteAlertRuleGroupApiResponse = unknown;
-export type RouteDeleteAlertRuleGroupApiArg = {
-  folderUid: string;
-  group: string;
-};
-export type RouteGetAlertRuleGroupApiResponse = /** status 200 AlertRuleGroup */ AlertRuleGroupRead;
-export type RouteGetAlertRuleGroupApiArg = {
-  folderUid: string;
-  group: string;
-};
-export type RoutePutAlertRuleGroupApiResponse = /** status 200 AlertRuleGroup */ AlertRuleGroupRead;
-export type RoutePutAlertRuleGroupApiArg = {
-  'X-Disable-Provenance'?: string;
-  folderUid: string;
-  group: string;
-  alertRuleGroup: AlertRuleGroup;
-};
 export type RouteGetAlertRuleGroupExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRuleGroupExportApiArg = {
@@ -3660,14 +3184,6 @@ export type RouteGetAlertRuleGroupExportApiArg = {
   folderUid: string;
   group: string;
 };
-export type RouteGetMuteTimingsApiResponse = /** status 200 MuteTimings */ MuteTimings;
-export type RouteGetMuteTimingsApiArg = void;
-export type RoutePostMuteTimingApiResponse =
-  /** status 201 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePostMuteTimingApiArg = {
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-};
 export type RouteExportMuteTimingsApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteExportMuteTimingsApiArg = {
@@ -3675,28 +3191,6 @@ export type RouteExportMuteTimingsApiArg = {
   download?: boolean;
   /** Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. */
   format?: 'yaml' | 'json' | 'hcl';
-};
-export type RouteDeleteMuteTimingApiResponse = unknown;
-export type RouteDeleteMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  /** Version of mute timing to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-  'X-Disable-Provenance'?: string;
-};
-export type RouteGetMuteTimingApiResponse =
-  /** status 200 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RouteGetMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-};
-export type RoutePutMuteTimingApiResponse =
-  /** status 202 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePutMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
 };
 export type RouteExportMuteTimingApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -3708,40 +3202,9 @@ export type RouteExportMuteTimingApiArg = {
   /** Mute timing name */
   name: string;
 };
-export type RouteResetPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RouteResetPolicyTreeApiArg = void;
-export type RouteGetPolicyTreeApiResponse = /** status 200 Route */ Route;
-export type RouteGetPolicyTreeApiArg = void;
-export type RoutePutPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutPolicyTreeApiArg = {
-  'X-Disable-Provenance'?: string;
-  /** The new notification routing tree to use */
-  route: Route;
-};
 export type RouteGetPolicyTreeExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetPolicyTreeExportApiArg = void;
-export type RouteGetTemplatesApiResponse = /** status 200 NotificationTemplates */ NotificationTemplates;
-export type RouteGetTemplatesApiArg = void;
-export type RouteDeleteTemplateApiResponse = unknown;
-export type RouteDeleteTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  /** Version of template to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-};
-export type RouteGetTemplateApiResponse = /** status 200 NotificationTemplate */ NotificationTemplate;
-export type RouteGetTemplateApiArg = {
-  /** Template group name */
-  name: string;
-};
-export type RoutePutTemplateApiResponse = /** status 202 NotificationTemplate */ NotificationTemplate;
-export type RoutePutTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  notificationTemplateContent: NotificationTemplateContent;
-};
 export type ListAllProvidersSettingsApiResponse = /** status 200 (empty) */ {
   id?: string;
   provider?: string;
@@ -3789,29 +3252,6 @@ export type UpdateProviderSettingsApiArg = {
     };
   };
 };
-export type SearchResultItem = {
-  action?: string;
-  basicRole?: string;
-  orgId?: number;
-  roleName?: string;
-  scope?: string;
-  teamId?: number;
-  userId?: number;
-  version?: number;
-};
-export type SearchResult = {
-  result?: SearchResultItem[];
-};
-export type ErrorResponseBody = {
-  /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
-  error?: string;
-  /** a human readable version of the error */
-  message: string;
-  /** Status An optional status to denote the cause of the error.
-    
-    For example, a 412 Precondition Failed error may include additional information of why that error happened. */
-  status?: string;
-};
 export type Permission = {
   action?: string;
   created?: string;
@@ -3833,6 +3273,16 @@ export type RoleDto = {
   updated: string;
   version: number;
 };
+export type ErrorResponseBody = {
+  /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
+  error?: string;
+  /** a human readable version of the error */
+  message: string;
+  /** Status An optional status to denote the cause of the error.
+    
+    For example, a 412 Precondition Failed error may include additional information of why that error happened. */
+  status?: string;
+};
 export type CreateRoleForm = {
   description?: string;
   displayName?: string;
@@ -3842,7 +3292,6 @@ export type CreateRoleForm = {
   name?: string;
   permissions?: Permission[];
   uid?: string;
-  version?: number;
 };
 export type SuccessResponseBody = {
   message?: string;
@@ -3855,7 +3304,6 @@ export type UpdateRoleCommand = {
   hidden?: boolean;
   name?: string;
   permissions?: Permission[];
-  version?: number;
 };
 export type RoleAssignmentsDto = {
   role_uid?: string;
@@ -4324,17 +3772,6 @@ export type DashboardSnapshotDto = {
   name?: string;
   updated?: string;
 };
-export type SaveDashboardCommand = {
-  UpdatedAt?: string;
-  dashboard?: Json;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderUid?: string;
-  isFolder?: boolean;
-  message?: string;
-  overwrite?: boolean;
-  userId?: number;
-};
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
   description?: string;
@@ -4395,10 +3832,6 @@ export type PublicError2 = {
   /** StatusCode The HTTP status code returned */
   statusCode: number;
 };
-export type DashboardTagCloudItem = {
-  count?: number;
-  term?: string;
-};
 export type EmailDto = {
   recipient?: string;
   uid?: string;
@@ -4425,102 +3858,6 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
-};
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type DashboardFullWithMeta = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-};
-export type PermissionType = number;
-export type DashboardAclInfoDto = {
-  created?: string;
-  dashboardId?: number;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderUid?: string;
-  inherited?: boolean;
-  isFolder?: boolean;
-  permission?: PermissionType;
-  permissionName?: string;
-  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
-  slug?: string;
-  team?: string;
-  teamAvatarUrl?: string;
-  teamEmail?: string;
-  teamId?: number;
-  teamUid?: string;
-  title?: string;
-  uid?: string;
-  updated?: string;
-  url?: string;
-  userAvatarUrl?: string;
-  userEmail?: string;
-  userId?: number;
-  userLogin?: string;
-  userUid?: string;
-};
-export type DashboardAclUpdateItem = {
-  permission?: PermissionType;
-  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
-  teamId?: number;
-  userId?: number;
-};
-export type UpdateDashboardAclCommand = {
-  items?: DashboardAclUpdateItem[];
-};
-export type DashboardVersionMeta = {
-  created?: string;
-  createdBy?: string;
-  dashboardId?: number;
-  data?: Json;
-  id?: number;
-  message?: string;
-  parentVersion?: number;
-  restoredFrom?: number;
-  uid?: string;
-  version?: number;
-};
-export type DashboardVersionResponseMeta = {
-  continueToken?: string;
-  versions?: DashboardVersionMeta[];
 };
 export type DsAccess = string;
 export type DataSourceListItemDto = {
@@ -4953,59 +4290,15 @@ export type MetricRequest = {
   /** To End time in epoch timestamps in milliseconds or relative using Grafana time units. */
   to: string;
 };
-export type ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource = string;
-export type FolderSearchHit = {
-  id?: number;
-  managedBy?: ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource;
-  parentUid?: string;
-  title?: string;
-  uid?: string;
+export type PermissionType = number;
+export type DashboardAclUpdateItem = {
+  permission?: PermissionType;
+  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
+  teamId?: number;
+  userId?: number;
 };
-export type Folder = {
-  accessControl?: Metadata;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  created?: string;
-  createdBy?: string;
-  hasAcl?: boolean;
-  /** Deprecated: use UID instead */
-  id?: number;
-  managedBy?: ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource;
-  orgId?: number;
-  /** only used if nested folders are enabled */
-  parentUid?: string;
-  /** the parent folders starting from the root going down */
-  parents?: Folder[];
-  title?: string;
-  uid?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type CreateFolderCommand = {
-  description?: string;
-  parentUid?: string;
-  title?: string;
-  uid?: string;
-};
-export type UpdateFolderCommand = {
-  /** NewDescription it's an optional parameter used for overriding the existing folder description */
-  description?: string;
-  /** Overwrite only used by the legacy folder implementation */
-  overwrite?: boolean;
-  /** NewTitle it's an optional parameter used for overriding the existing folder title */
-  title?: string;
-  /** Version only used by the legacy folder implementation */
-  version?: number;
-};
-export type DescendantCounts = {
-  [key: string]: number;
-};
-export type MoveFolderCommand = {
-  parentUid?: string;
+export type UpdateDashboardAclCommand = {
+  items?: DashboardAclUpdateItem[];
 };
 export type Group = {
   groupID?: string;
@@ -5022,6 +4315,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;
@@ -5306,6 +4600,47 @@ export type SearchOrgUsersQueryResult = {
   perPage?: number;
   totalCount?: number;
 };
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
+};
+export type DashboardFullWithMeta = {
+  dashboard?: Json;
+  meta?: DashboardMeta;
+};
 export type DataSourceRef = {
   /** The plugin type-id */
   type?: string;
@@ -5504,12 +4839,25 @@ export type ReportBrandingOptions = {
   emailLogoUrl?: string;
   reportLogoUrl?: string;
 };
+export type FooterItem = {
+  color?: string;
+  fontSize?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  type?: string;
+  value?: string;
+};
 export type ReportSettings = {
   branding?: ReportBrandingOptions;
   embeddedImageTheme?: string;
+  footerFontFamily?: string;
+  footerItems?: FooterItem[];
   id?: number;
   orgId?: number;
+  pdfDashboardTitleEnabled?: boolean;
+  pdfHeaderEnabled?: boolean;
   pdfTheme?: string;
+  pdfTimeRangeEnabled?: boolean;
   userId?: number;
 };
 export type HitType = string;
@@ -5999,118 +5347,6 @@ export type SearchUserQueryResult = {
   totalCount?: number;
   users?: UserSearchHitDto[];
 };
-export type RelativeTimeRange = {
-  from?: Duration;
-  to?: Duration;
-};
-export type AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition = {
-  /** Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation. */
-  datasourceUid?: string;
-  /** JSON is the raw JSON query and includes the above properties as well as custom properties. */
-  model?: object;
-  /** QueryType is an optional identifier for the type of query.
-    It can be used to distinguish different types of queries. */
-  queryType?: string;
-  /** RefID is the unique identifier of the query, set by the frontend call. */
-  refId?: string;
-  relativeTimeRange?: RelativeTimeRange;
-};
-export type AlertRuleNotificationSettings = {
-  /** Override the times when notifications should not be muted. These must match the name of a mute time interval defined
-    in the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent
-    at the time that matches any interval. */
-  active_time_intervals?: string[];
-  /** Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for
-    cluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels
-    use the special value '...' as the sole label name.
-    This effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what
-    you want, unless you have a very low alert volume or your upstream notification system performs its own grouping.
-    Must include 'alertname' and 'grafana_folder' if not using '...'. */
-  group_by?: string[];
-  /** Override how long to wait before sending a notification about new alerts that are added to a group of alerts for
-    which an initial notification has already been sent. (Usually ~5m or more.) */
-  group_interval?: string;
-  /** Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an
-    inhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.) */
-  group_wait?: string;
-  /** Override the times when notifications should be muted. These must match the name of a mute time interval defined
-    in the alertmanager configuration time_intervals section. When muted it will not send any notifications, but
-    otherwise acts normally. */
-  mute_time_intervals?: string[];
-  /** Name of the receiver to send notifications to. */
-  receiver: string;
-  /** Override how long to wait before sending a notification again if it has already been sent successfully for an
-    alert. (Usually ~3h or more).
-    Note that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.
-    Notifications will be resent after either repeat_interval or the data retention period have passed, whichever
-    occurs first. `repeat_interval` should not be less than `group_interval`. */
-  repeat_interval?: string;
-};
-export type Provenance = string;
-export type Record = {
-  /** Which expression node should be used as the input for the recorded metric. */
-  from: string;
-  /** Name of the recorded metric. */
-  metric: string;
-  /** Which data source should be used to write the output of the recording rule, specified by UID. */
-  target_datasource_uid?: string;
-};
-export type ProvisionedAlertRule = {
-  annotations?: {
-    [key: string]: string;
-  };
-  condition: string;
-  data: AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition[];
-  execErrState: 'OK' | 'Alerting' | 'Error';
-  folderUID: string;
-  for: string;
-  id?: number;
-  isPaused?: boolean;
-  keep_firing_for?: string;
-  labels?: {
-    [key: string]: string;
-  };
-  missingSeriesEvalsToResolve?: number;
-  noDataState: 'Alerting' | 'NoData' | 'OK';
-  notification_settings?: AlertRuleNotificationSettings;
-  orgID: number;
-  provenance?: Provenance;
-  record?: Record;
-  ruleGroup: string;
-  title: string;
-  uid?: string;
-};
-export type ProvisionedAlertRuleRead = {
-  annotations?: {
-    [key: string]: string;
-  };
-  condition: string;
-  data: AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition[];
-  execErrState: 'OK' | 'Alerting' | 'Error';
-  folderUID: string;
-  for: string;
-  id?: number;
-  isPaused?: boolean;
-  keep_firing_for?: string;
-  labels?: {
-    [key: string]: string;
-  };
-  missingSeriesEvalsToResolve?: number;
-  noDataState: 'Alerting' | 'NoData' | 'OK';
-  notification_settings?: AlertRuleNotificationSettings;
-  orgID: number;
-  provenance?: Provenance;
-  record?: Record;
-  ruleGroup: string;
-  title: string;
-  uid?: string;
-  updated?: string;
-};
-export type ProvisionedAlertRules = ProvisionedAlertRule[];
-export type ProvisionedAlertRulesRead = ProvisionedAlertRuleRead[];
-export type ValidationError = {
-  message?: string;
-};
 export type RawMessage = object;
 export type ReceiverExportIsTheProvisionedFileExportOfAlertingReceiverV1 = {
   disableResolveMessage?: boolean;
@@ -6245,119 +5481,9 @@ export type AlertingFileExportIsTheFullProvisionedFileExport = {
   muteTimes?: MuteTimeIntervalExport[];
   policies?: NotificationPolicyExportIsTheProvisionedFileExportOfAlertingNotificiationPolicyV1[];
 };
-export type EmbeddedContactPoint = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type EmbeddedContactPointRead = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  provenance?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type ContactPoints = EmbeddedContactPoint[];
-export type ContactPointsRead = EmbeddedContactPointRead[];
 export type PermissionDenied = object;
-export type Ack = object;
 export type NotFound = object;
-export type AlertRuleGroup = {
-  folderUid?: string;
-  interval?: number;
-  rules?: ProvisionedAlertRule[];
-  title?: string;
-};
-export type AlertRuleGroupRead = {
-  folderUid?: string;
-  interval?: number;
-  rules?: ProvisionedAlertRuleRead[];
-  title?: string;
-};
-export type MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted = {
-  name?: string;
-  time_intervals?: TimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-};
-export type MuteTimings = MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-export type Route = {
-  active_time_intervals?: string[];
-  continue?: boolean;
-  group_by?: string[];
-  group_interval?: string;
-  group_wait?: string;
-  /** Deprecated. Remove before v1.0 release. */
-  match?: {
-    [key: string]: string;
-  };
-  match_re?: MatchRegexpsRepresentsAMapOfRegexp;
-  matchers?: Matchers;
-  mute_time_intervals?: string[];
-  object_matchers?: ObjectMatchersIsAListOfMatchersThatCanBeUsedToFilterAlerts;
-  provenance?: Provenance;
-  receiver?: string;
-  repeat_interval?: string;
-  routes?: Route[];
-};
-export type NotificationTemplate = {
-  name?: string;
-  provenance?: Provenance;
-  template?: string;
-  version?: string;
-};
-export type NotificationTemplates = NotificationTemplate[];
-export type NotificationTemplateContent = {
-  template?: string;
-  version?: string;
-};
 export const {
-  useSearchResultMutation,
   useListRolesQuery,
   useLazyListRolesQuery,
   useCreateRoleMutation,
@@ -6477,28 +5603,15 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  usePostDashboardMutation,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,
   useLazyListPublicDashboardsQuery,
-  useGetDashboardTagsQuery,
-  useLazyGetDashboardTagsQuery,
   useGetPublicDashboardQuery,
   useLazyGetPublicDashboardQuery,
   useCreatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
-  useDeleteDashboardByUidMutation,
-  useGetDashboardByUidQuery,
-  useLazyGetDashboardByUidQuery,
-  useGetDashboardPermissionsListByUidQuery,
-  useLazyGetDashboardPermissionsListByUidQuery,
-  useUpdateDashboardPermissionsByUidMutation,
-  useGetDashboardVersionsByUidQuery,
-  useLazyGetDashboardVersionsByUidQuery,
-  useGetDashboardVersionByUidQuery,
-  useLazyGetDashboardVersionByUidQuery,
   useGetDataSourcesQuery,
   useLazyGetDataSourcesQuery,
   useAddDataSourceMutation,
@@ -6533,18 +5646,6 @@ export const {
   useDisableDataSourceCacheMutation,
   useEnableDataSourceCacheMutation,
   useQueryMetricsWithExpressionsMutation,
-  useGetFoldersQuery,
-  useLazyGetFoldersQuery,
-  useCreateFolderMutation,
-  useDeleteFolderMutation,
-  useGetFolderByUidQuery,
-  useLazyGetFolderByUidQuery,
-  useUpdateFolderMutation,
-  useGetFolderDescendantCountsQuery,
-  useLazyGetFolderDescendantCountsQuery,
-  useMoveFolderMutation,
-  useGetFolderPermissionListQuery,
-  useLazyGetFolderPermissionListQuery,
   useUpdateFolderPermissionsMutation,
   useGetMappedGroupsQuery,
   useLazyGetMappedGroupsQuery,
@@ -6747,53 +5848,20 @@ export const {
   useLazyGetUserOrgListQuery,
   useGetUserTeamsQuery,
   useLazyGetUserTeamsQuery,
-  useRouteGetAlertRulesQuery,
-  useLazyRouteGetAlertRulesQuery,
-  useRoutePostAlertRuleMutation,
   useRouteGetAlertRulesExportQuery,
   useLazyRouteGetAlertRulesExportQuery,
-  useRouteDeleteAlertRuleMutation,
-  useRouteGetAlertRuleQuery,
-  useLazyRouteGetAlertRuleQuery,
-  useRoutePutAlertRuleMutation,
   useRouteGetAlertRuleExportQuery,
   useLazyRouteGetAlertRuleExportQuery,
-  useRouteGetContactpointsQuery,
-  useLazyRouteGetContactpointsQuery,
-  useRoutePostContactpointsMutation,
   useRouteGetContactpointsExportQuery,
   useLazyRouteGetContactpointsExportQuery,
-  useRouteDeleteContactpointsMutation,
-  useRoutePutContactpointMutation,
-  useRouteDeleteAlertRuleGroupMutation,
-  useRouteGetAlertRuleGroupQuery,
-  useLazyRouteGetAlertRuleGroupQuery,
-  useRoutePutAlertRuleGroupMutation,
   useRouteGetAlertRuleGroupExportQuery,
   useLazyRouteGetAlertRuleGroupExportQuery,
-  useRouteGetMuteTimingsQuery,
-  useLazyRouteGetMuteTimingsQuery,
-  useRoutePostMuteTimingMutation,
   useRouteExportMuteTimingsQuery,
   useLazyRouteExportMuteTimingsQuery,
-  useRouteDeleteMuteTimingMutation,
-  useRouteGetMuteTimingQuery,
-  useLazyRouteGetMuteTimingQuery,
-  useRoutePutMuteTimingMutation,
   useRouteExportMuteTimingQuery,
   useLazyRouteExportMuteTimingQuery,
-  useRouteResetPolicyTreeMutation,
-  useRouteGetPolicyTreeQuery,
-  useLazyRouteGetPolicyTreeQuery,
-  useRoutePutPolicyTreeMutation,
   useRouteGetPolicyTreeExportQuery,
   useLazyRouteGetPolicyTreeExportQuery,
-  useRouteGetTemplatesQuery,
-  useLazyRouteGetTemplatesQuery,
-  useRouteDeleteTemplateMutation,
-  useRouteGetTemplateQuery,
-  useLazyRouteGetTemplateQuery,
-  useRoutePutTemplateMutation,
   useListAllProvidersSettingsQuery,
   useLazyListAllProvidersSettingsQuery,
   useRemoveProviderSettingsMutation,

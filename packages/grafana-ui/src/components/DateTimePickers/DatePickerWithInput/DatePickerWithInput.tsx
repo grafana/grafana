@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
+import { type ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { type GrafanaTheme2, dateTime } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../../utils/floating';
-import { Props as InputProps, Input } from '../../Input/Input';
+import { type Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
 export const formatDate = (date: Date | string) => dateTime(date).format('L');

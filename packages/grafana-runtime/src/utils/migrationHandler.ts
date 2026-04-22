@@ -1,5 +1,5 @@
-import { DataQueryRequest } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQueryRequest } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
 import { config } from '../config';
 import { getBackendSrv } from '../services';

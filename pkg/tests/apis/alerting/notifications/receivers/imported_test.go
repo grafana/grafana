@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -35,7 +35,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		},
 	})
 
-	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -104,11 +104,11 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 				continue
 			}
 			assert.EqualValuesf(t, models.ProvenanceConvertedPrometheus, receiver.GetProvenanceStatus(), "receiver %s has unexpected provenance", receiver.Name)
-			assert.Equalf(t, "false", receiver.Annotations[v0alpha1.CanUseAnnotationKey], "receiver %s has unexpected can use annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canAdmin")], "receiver %s has unexpected can admin annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canDelete")], "receiver %s has unexpected can delete annotation", receiver.Name)
-			assert.Equalf(t, "true", receiver.Annotations[v0alpha1.AccessControlAnnotation("canReadSecrets")], "receiver %s has unexpected can read secrets annotation", receiver.Name)
-			assert.Equalf(t, "", receiver.Annotations[v0alpha1.AccessControlAnnotation("canWrite")], "receiver %s has unexpected can write annotation", receiver.Name)
+			assert.Equalf(t, "false", receiver.Annotations[v1beta1.CanUseAnnotationKey], "receiver %s has unexpected can use annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canAdmin")], "receiver %s has unexpected can admin annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canDelete")], "receiver %s has unexpected can delete annotation", receiver.Name)
+			assert.Equalf(t, "true", receiver.Annotations[v1beta1.AccessControlAnnotation("canReadSecrets")], "receiver %s has unexpected can read secrets annotation", receiver.Name)
+			assert.Equalf(t, "", receiver.Annotations[v1beta1.AccessControlAnnotation("canWrite")], "receiver %s has unexpected can write annotation", receiver.Name)
 		}
 	})
 

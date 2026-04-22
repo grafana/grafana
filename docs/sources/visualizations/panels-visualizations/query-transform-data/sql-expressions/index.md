@@ -116,7 +116,7 @@ Use the following workflow to create a SQL expression:
    **Inspect inputs**. Start with simple test queries to understand the shape of your input frames.
 
    ```sql
-   SELECT * FROM A LIMIT 10.
+   SELECT * FROM A LIMIT 10
    ```
 
    This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., `SELECT * FROM B LIMIT 10`).

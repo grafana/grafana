@@ -1,9 +1,9 @@
 import { memo } from 'react';
 
-import { getValueFormats, SelectableValue } from '@grafana/data';
+import { getValueFormats, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { Cascader, CascaderOption } from '../Cascader/Cascader';
+import { Cascader, type CascaderOption } from '../Cascader/Cascader';
 
 export interface UnitPickerProps {
   onChange: (item?: string) => void;

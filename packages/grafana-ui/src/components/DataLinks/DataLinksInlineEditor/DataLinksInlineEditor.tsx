@@ -1,7 +1,7 @@
-import { DataLink, VariableSuggestion } from '@grafana/data';
+import { type DataLink, type VariableSuggestion } from '@grafana/data';
 
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
-import { DataLinksInlineEditorBase, DataLinksInlineEditorBaseProps } from './DataLinksInlineEditorBase';
+import { DataLinksInlineEditorBase, type DataLinksInlineEditorBaseProps } from './DataLinksInlineEditorBase';
 
 type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<DataLink>, 'children' | 'type' | 'items'> & {
   links?: DataLink[];

@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
+import { type ConnectionStatus } from '../../hooks/useExternalAmSelector';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
 

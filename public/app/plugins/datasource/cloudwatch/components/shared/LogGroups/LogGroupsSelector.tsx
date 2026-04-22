@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import {
   Button,
@@ -15,8 +15,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
-import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../../resources/types';
+import { type LogGroup } from '../../../dataquery.gen';
+import { type DescribeLogGroupsRequest, type ResourceResponse, type LogGroupResponse } from '../../../resources/types';
 import getStyles from '../../styles';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 

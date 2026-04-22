@@ -9,6 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+type Calls []Call
+
+func (c Calls) Methods() []string {
+	methods := make([]string, len(c))
+	for i, call := range c {
+		methods[i] = call.MethodName
+	}
+	return methods
+}
+
 type Call struct {
 	MethodName string
 	Arguments  []interface{}

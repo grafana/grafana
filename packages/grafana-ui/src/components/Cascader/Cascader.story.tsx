@@ -1,9 +1,9 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 import { useId, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Cascader, CascaderOption } from './Cascader';
+import { Cascader, type CascaderOption } from './Cascader';
 import mdx from './Cascader.mdx';
 
 const onSelect = (val: string) => console.log(val);

@@ -1,14 +1,13 @@
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { SeriesToRowsTransformerOptions } from '@grafana/data/internal';
+import { type SeriesToRowsTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/seriesToRows.svg';
 import lightImage from '../images/light/seriesToRows.svg';
 
@@ -31,7 +30,6 @@ export const getSeriesToRowsTransformerRegistryItem: () => TransformerRegistryIt
       'Merge multiple series. Return time, metric and values as a row.'
     ),
     categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-    help: getTransformationContent(DataTransformerID.seriesToRows).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

@@ -3,24 +3,29 @@ import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  type DataFrame,
+  type FieldNamePickerConfigSettings,
+  type GrafanaTheme2,
+  type StandardEditorsRegistryItem,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker, frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/internal';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  CanvasElementItem,
-  CanvasElementOptions,
-  CanvasElementProps,
+  type CanvasElementItem,
+  type CanvasElementOptions,
+  type CanvasElementProps,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { ElementState } from '../runtime/element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import { type ElementState } from '../runtime/element';
+import { Align, type TextConfig, type TextData, VAlign } from '../types';
 
 // eslint-disable-next-line
 const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {

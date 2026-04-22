@@ -1,10 +1,10 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { EventBus, GrafanaTheme2, MapLayerOptions } from '@grafana/data';
+import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 
-import { xyzTiles, XYZConfig } from './generic';
+import { xyzTiles, type XYZConfig } from './generic';
 
 const replaceMock = jest.fn((text: string) => text);
 jest.mock('@grafana/runtime', () => ({

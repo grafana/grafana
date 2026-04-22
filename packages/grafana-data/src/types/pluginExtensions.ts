@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
-import { IconName } from './icon';
-import { PanelData } from './panel';
-import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
+import { type IconName } from './icon';
+import { type PanelData } from './panel';
+import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -234,6 +234,9 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
   SingleTopBarAction = 'grafana/singletopbar/action',
+  AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
+  AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
+  AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
 }
 
 // Don't use directly in a plugin!

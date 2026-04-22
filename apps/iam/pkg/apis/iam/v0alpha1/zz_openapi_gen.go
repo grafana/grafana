@@ -8,299 +8,69 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		CoreRole{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_CoreRole(ref),
-		CoreRoleList{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref),
-		CoreRoleSpec{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref),
-		CoreRolespecPermission{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref),
-		CoreRolespecRoleRef{}.OpenAPIModelName():               schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref),
-		ExternalGroupMapping{}.OpenAPIModelName():              schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
-		ExternalGroupMappingList{}.OpenAPIModelName():          schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
-		ExternalGroupMappingSpec{}.OpenAPIModelName():          schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
-		ExternalGroupMappingTeamRef{}.OpenAPIModelName():       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
-		GetSearchTeamsBody{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
-		GetSearchTeamsResponse{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref),
-		GetSearchTeamsTeamHit{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
-		GetSearchUsersResponse{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref),
-		GetSearchUsersUserHit{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref),
-		GetTeamGroupsBody{}.OpenAPIModelName():                 schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref),
-		GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName(): schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref),
-		GetTeamGroupsResponse{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref),
-		GetTeamMembersBody{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref),
-		GetTeamMembersResponse{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetTeamMembersResponse(ref),
-		GetTeamMembersTeamUser{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetTeamMembersTeamUser(ref),
-		GetUserTeamsBody{}.OpenAPIModelName():                  schema_pkg_apis_iam_v0alpha1_GetUserTeamsBody(ref),
-		GetUserTeamsResponse{}.OpenAPIModelName():              schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref),
-		GetUserTeamsUserTeam{}.OpenAPIModelName():              schema_pkg_apis_iam_v0alpha1_GetUserTeamsUserTeam(ref),
-		GlobalRole{}.OpenAPIModelName():                        schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
-		GlobalRoleBinding{}.OpenAPIModelName():                 schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref),
-		GlobalRoleBindingList{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref),
-		GlobalRoleBindingSpec{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref),
-		GlobalRoleBindingspecRoleRef{}.OpenAPIModelName():      schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecRoleRef(ref),
-		GlobalRoleBindingspecSubject{}.OpenAPIModelName():      schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecSubject(ref),
-		GlobalRoleList{}.OpenAPIModelName():                    schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref),
-		GlobalRoleSpec{}.OpenAPIModelName():                    schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
-		GlobalRolespecPermission{}.OpenAPIModelName():          schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
-		GlobalRolespecRoleRef{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref),
-		ResourcePermission{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
-		ResourcePermissionList{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
-		ResourcePermissionSpec{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref),
-		ResourcePermissionspecPermission{}.OpenAPIModelName():  schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref),
-		ResourcePermissionspecResource{}.OpenAPIModelName():    schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecResource(ref),
-		Role{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_Role(ref),
-		RoleBinding{}.OpenAPIModelName():                       schema_pkg_apis_iam_v0alpha1_RoleBinding(ref),
-		RoleBindingList{}.OpenAPIModelName():                   schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref),
-		RoleBindingSpec{}.OpenAPIModelName():                   schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref),
-		RoleBindingspecRoleRef{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_RoleBindingspecRoleRef(ref),
-		RoleBindingspecSubject{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_RoleBindingspecSubject(ref),
-		RoleList{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_RoleList(ref),
-		RoleSpec{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
-		RolespecPermission{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
-		RolespecRoleRef{}.OpenAPIModelName():                   schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref),
-		ServiceAccount{}.OpenAPIModelName():                    schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
-		ServiceAccountList{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
-		ServiceAccountSpec{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
-		Team{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_Team(ref),
-		TeamBinding{}.OpenAPIModelName():                       schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
-		TeamBindingList{}.OpenAPIModelName():                   schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
-		TeamBindingSpec{}.OpenAPIModelName():                   schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
-		TeamBindingTeamRef{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_TeamBindingTeamRef(ref),
-		TeamBindingspecSubject{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
-		TeamLBACRule{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref),
-		TeamLBACRuleList{}.OpenAPIModelName():                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
-		TeamLBACRuleSpec{}.OpenAPIModelName():                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
-		TeamList{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_TeamList(ref),
-		TeamSpec{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
-		User{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_User(ref),
-		UserList{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_UserList(ref),
-		UserSpec{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
-		UserStatus{}.OpenAPIModelName():                        schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(metav1.ObjectMeta{}.OpenAPIModelName()),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Spec is the spec of the CoreRole",
-							Default:     map[string]interface{}{},
-							Ref:         ref(CoreRoleSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"metadata", "spec"},
-			},
-		},
-		Dependencies: []string{
-			CoreRoleSpec{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CoreRole{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"metadata", "items"},
-			},
-		},
-		Dependencies: []string{
-			CoreRole{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Display name of the role",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"group": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"permissions": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CoreRolespecPermission{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"permissionsOmitted": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CoreRolespecPermission{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"roleRefs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CoreRolespecRoleRef{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"title", "description", "group"},
-			},
-		},
-		Dependencies: []string{
-			CoreRolespecPermission{}.OpenAPIModelName(), CoreRolespecRoleRef{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"action": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RBAC action (e.g: \"dashbaords:read\")",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"scope": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RBAC scope (e.g: \"dashboards:uid:dash1\")",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"action", "scope"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name of the role being referenced",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"kind", "name"},
-			},
-		},
+		ExternalGroupMapping{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
+		ExternalGroupMappingList{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
+		ExternalGroupMappingSpec{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
+		ExternalGroupMappingTeamRef{}.OpenAPIModelName():                                    schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
+		GetSearchTeamsBody{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
+		GetSearchTeamsResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref),
+		GetSearchTeamsTeamHit{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
+		GetSearchUsersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref),
+		GetSearchUsersUserHit{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref),
+		GetTeamGroupsBody{}.OpenAPIModelName():                                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref),
+		GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref),
+		GetTeamGroupsResponse{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref),
+		GetTeamMembersBody{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref),
+		GetTeamMembersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersResponse(ref),
+		GetTeamMembersTeamUser{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersTeamUser(ref),
+		GetUserTeamsBody{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_GetUserTeamsBody(ref),
+		GetUserTeamsResponse{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref),
+		GetUserTeamsUserTeam{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_GetUserTeamsUserTeam(ref),
+		GlobalRole{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
+		GlobalRoleBinding{}.OpenAPIModelName():                                              schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref),
+		GlobalRoleBindingList{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref),
+		GlobalRoleBindingSpec{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref),
+		GlobalRoleBindingspecRoleRef{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecRoleRef(ref),
+		GlobalRoleBindingspecSubject{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecSubject(ref),
+		GlobalRoleList{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref),
+		GlobalRoleSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
+		GlobalRolespecPermission{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionSpec":          schema_pkg_apis_iam_v0alpha1_PermissionSpec(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult": schema_pkg_apis_iam_v0alpha1_PermissionsSearchResult(ref),
+		ResourcePermission{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
+		ResourcePermissionList{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
+		ResourcePermissionSpec{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref),
+		ResourcePermissionspecPermission{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref),
+		ResourcePermissionspecResource{}.OpenAPIModelName():                                 schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecResource(ref),
+		Role{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_Role(ref),
+		RoleBinding{}.OpenAPIModelName():                                                    schema_pkg_apis_iam_v0alpha1_RoleBinding(ref),
+		RoleBindingList{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref),
+		RoleBindingSpec{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref),
+		RoleBindingspecRoleRef{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_RoleBindingspecRoleRef(ref),
+		RoleBindingspecSubject{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_RoleBindingspecSubject(ref),
+		RoleList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_RoleList(ref),
+		RoleSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
+		RolespecPermission{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
+		RolespecRoleRef{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref),
+		ServiceAccount{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
+		ServiceAccountList{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
+		ServiceAccountSpec{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
+		Team{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_Team(ref),
+		TeamBinding{}.OpenAPIModelName():                                                    schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
+		TeamBindingList{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
+		TeamBindingSpec{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
+		TeamBindingTeamRef{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_TeamBindingTeamRef(ref),
+		TeamBindingspecSubject{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
+		TeamLBACRule{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref),
+		TeamLBACRuleList{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
+		TeamLBACRuleSpec{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
+		TeamList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamList(ref),
+		TeamSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
+		User{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_User(ref),
+		UserList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserList(ref),
+		UserSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
+		UserStatus{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
+		UserTeamSyncStatus{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref),
 	}
 }
 
@@ -608,6 +378,27 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"memberCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"accessControl": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: false,
+										Type:    []string{"boolean"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1385,41 +1176,13 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
+							Description: "Permissions for this role",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref:     ref(GlobalRolespecPermission{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"permissionsOmitted": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRolespecPermission{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"roleRefs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRolespecRoleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1430,7 +1193,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			GlobalRolespecPermission{}.OpenAPIModelName(), GlobalRolespecRoleRef{}.OpenAPIModelName()},
+			GlobalRolespecPermission{}.OpenAPIModelName()},
 	}
 }
 
@@ -1463,32 +1226,74 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_PermissionSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "DirectPermissionSpec is a single permission (action + scope) in a PermissionsSearchResult.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"kind": {
+					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
-					"name": {
+					"scope": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the role being referenced",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 				},
-				Required: []string{"kind", "name"},
+				Required: []string{"action", "scope"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_PermissionsSearchResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PermissionsSearchResult is the response body for the resourcepermissions search endpoint (GET /apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search?userUID=...).",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"permissions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionSpec"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"permissions"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionSpec"},
 	}
 }
 
@@ -2863,8 +2668,42 @@ func schema_pkg_apis_iam_v0alpha1_UserStatus(ref common.ReferenceCallback) commo
 							Format:  "int64",
 						},
 					},
+					"teamSync": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(UserTeamSyncStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"lastSeenAt"},
+			},
+		},
+		Dependencies: []string{
+			UserTeamSyncStatus{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"lastSyncAt": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"state", "lastSyncAt"},
 			},
 		},
 	}

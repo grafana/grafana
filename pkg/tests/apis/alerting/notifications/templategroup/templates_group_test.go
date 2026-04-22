@@ -14,7 +14,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -46,22 +47,22 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	newTemplate := &v0alpha1.TemplateGroup{
+	newTemplate := &v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
 	t.Run("create should fail if object name is specified", func(t *testing.T) {
-		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
+		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
 		template.Name = "new-templateGroup"
 		_, err := client.Create(ctx, template, resource.CreateOptions{})
 		assert.Error(t, err)
@@ -77,7 +78,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		resourceID = actual.GetStaticMetadata().Identifier()
 	})
 
-	var existingTemplateGroup *v0alpha1.TemplateGroup
+	var existingTemplateGroup *v1beta1.TemplateGroup
 	t.Run("resource should be available by the identifier", func(t *testing.T) {
 		actual, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
@@ -90,7 +91,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		if existingTemplateGroup == nil {
 			t.Skip()
 		}
-		updated := existingTemplateGroup.Copy().(*v0alpha1.TemplateGroup)
+		updated := existingTemplateGroup.Copy().(*v1beta1.TemplateGroup)
 		updated.Spec.Title = "another-templateGroup"
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -104,7 +105,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existingTemplateGroup = actual
 	})
 
-	var defaultTemplateGroup *v0alpha1.TemplateGroup
+	var defaultTemplateGroup *v1beta1.TemplateGroup
 	t.Run("default template should be available by the identifier", func(t *testing.T) {
 		actual, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: templates.DefaultTemplateName})
 		require.NoError(t, err)
@@ -112,17 +113,17 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 		require.NoError(t, err)
-		require.Equal(t, v0alpha1.TemplateGroupSpec{
-			Title:   v0alpha1.DefaultTemplateTitle,
+		require.Equal(t, v1beta1.TemplateGroupSpec{
+			Title:   v1beta1.DefaultTemplateTitle,
 			Content: defaultDefn.Template,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		}, actual.Spec)
 		defaultTemplateGroup = actual
 	})
 
-	var newTemplateWithOverlappingName *v0alpha1.TemplateGroup
+	var newTemplateWithOverlappingName *v1beta1.TemplateGroup
 	t.Run("create with reserved default title should work", func(t *testing.T) {
-		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
+		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
 		template.Spec.Title = defaultTemplateGroup.Spec.Title
 		actual, err := client.Create(ctx, template, resource.CreateOptions{})
 		require.NoError(t, err)
@@ -217,22 +218,22 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client, err := v0alpha1.NewTemplateGroupClientFromGenerator(tc.user.GetClientRegistry())
+			client, err := v1beta1.NewTemplateGroupClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
 
-			var expected = &v0alpha1.TemplateGroup{
+			var expected = &v1beta1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.TemplateGroupSpec{
+				Spec: v1beta1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
-					Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+					Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 				},
 			}
 			expected.SetProvenanceStatus("")
@@ -298,7 +299,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			}
 
-			updatedExpected := expected.Copy().(*v0alpha1.TemplateGroup)
+			updatedExpected := expected.Copy().(*v1beta1.TemplateGroup)
 			updatedExpected.Spec.Content = `{{ define "another-test" }} test {{ end }}`
 
 			d, err = json.Marshal(updatedExpected)
@@ -312,7 +313,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
+						up := updatedExpected.Copy().(*v1beta1.TemplateGroup)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
@@ -324,7 +325,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
+						up := updatedExpected.Copy().(*v1beta1.TemplateGroup)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{
 							ResourceVersion: up.ResourceVersion,
@@ -377,50 +378,166 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	created, err := adminClient.Create(ctx, &v0alpha1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("TemplatesWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTemplatesRead,
+				accesscontrol.ActionAlertingNotificationsTemplatesWrite,
+				accesscontrol.ActionAlertingNotificationsTemplatesDelete,
+			},
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
-			Title:   "template-group-1",
-			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
-		},
-	}, resource.CreateOptions{})
+	})
+	writerClient, err := v1beta1.NewTemplateGroupClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
 
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
-			Name: created.Spec.Title,
-		}, admin.Identity.GetOrgID(), "API"))
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("TemplatesProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTemplatesRead,
+				accesscontrol.ActionAlertingNotificationsTemplatesWrite,
+				accesscontrol.ActionAlertingNotificationsTemplatesDelete,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewTemplateGroupClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+	newTemplate := func(title string) *v1beta1.TemplateGroup {
+		return &v1beta1.TemplateGroup{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.TemplateGroupSpec{
+				Title:   title,
+				Content: `{{ define "` + title + `" }} test {{ end }}`,
+				Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
+			},
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newTemplate("writer-create-no-prov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			tmpl := newTemplate("writer-create-with-prov")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			tmpl := newTemplate("provisioner-create-with-prov")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newTemplate("update-unprov"), resource.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TemplateGroup)
-		updated.Spec.Content = `{{ define "another-test" }} test {{ end }}`
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		provTmpl := newTemplate("update-prov")
+		provTmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provTmpl, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-unprov-v2" }} updated {{ end }}`
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-prov-v2" }} updated {{ end }}`
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-prov-v3" }} updated {{ end }}`
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newTemplate("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			tmpl := newTemplate("delete-prov-forbidden")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			tmpl := newTemplate("delete-prov-ok")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -430,17 +547,17 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	oldClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
-	template := v0alpha1.TemplateGroup{
+	template := v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -450,14 +567,14 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	require.NotEmpty(t, created.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TemplateGroup)
+		updated := created.Copy().(*v1beta1.TemplateGroup)
 		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
 			ResourceVersion: "test",
 		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TemplateGroup)
+		updated := created.Copy().(*v1beta1.TemplateGroup)
 		updated.Spec.Content = `{{ define "test-another" }} test {{ end }}`
 		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -465,7 +582,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should update if version is empty", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TemplateGroup)
+		updated := created.Copy().(*v1beta1.TemplateGroup)
 		updated.ResourceVersion = ""
 		updated.Spec.Content = `{{ define "test-another-2" }} test {{ end }}`
 
@@ -515,17 +632,17 @@ func TestIntegrationPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	template := v0alpha1.TemplateGroup{
+	template := v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -574,30 +691,30 @@ func TestIntegrationListSelector(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	template1 := &v0alpha1.TemplateGroup{
+	template1 := &v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template1, err = adminClient.Create(ctx, template1, resource.CreateOptions{})
 	require.NoError(t, err)
 
-	template2 := &v0alpha1.TemplateGroup{
+	template2 := &v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template2, err = adminClient.Create(ctx, template2, resource.CreateOptions{})
@@ -657,7 +774,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	t.Run("should filter by default template name", func(t *testing.T) {
 		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
-			FieldSelectors: []string{"spec.title=" + v0alpha1.DefaultTemplateTitle},
+			FieldSelectors: []string{"spec.title=" + v1beta1.DefaultTemplateTitle},
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -665,7 +782,7 @@ func TestIntegrationListSelector(t *testing.T) {
 
 		// Now just non-default templates
 		list, err = adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
-			FieldSelectors: []string{"spec.title!=" + v0alpha1.DefaultTemplateTitle}},
+			FieldSelectors: []string{"spec.title!=" + v1beta1.DefaultTemplateTitle}},
 		)
 		require.NoError(t, err)
 		require.Len(t, list.Items, 2)
@@ -679,17 +796,17 @@ func TestIntegrationKinds(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	newTemplate := &v0alpha1.TemplateGroup{
+	newTemplate := &v1beta1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+			Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 		},
 	}
 
@@ -699,11 +816,11 @@ func TestIntegrationKinds(t *testing.T) {
 	})
 
 	t.Run("should not let change kind", func(t *testing.T) {
-		newTemplate.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		newTemplate.Spec.Kind = v1beta1.TemplateGroupTemplateKindGrafana
 		created, err := client.Create(ctx, newTemplate, resource.CreateOptions{})
 		require.NoError(t, err)
 
-		created.Spec.Kind = v0alpha1.TemplateGroupTemplateKindMimir
+		created.Spec.Kind = v1beta1.TemplateGroupTemplateKindMimir
 		_, err = client.Update(ctx, created, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})

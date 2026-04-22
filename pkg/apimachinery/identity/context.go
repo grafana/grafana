@@ -11,6 +11,18 @@ import (
 
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
+type ctxOrgIDKey struct{}
+
+// WithOrgID stores the org ID in context as a fallback when no requester is available.
+func WithOrgID(ctx context.Context, orgID int64) context.Context {
+	return context.WithValue(ctx, ctxOrgIDKey{}, orgID)
+}
+
+// OrgIDFrom returns the org ID stored by WithOrgID, and whether it was present.
+func OrgIDFrom(ctx context.Context) (int64, bool) {
+	orgID, ok := ctx.Value(ctxOrgIDKey{}).(int64)
+	return orgID, ok
+}
 
 // WithOriginalIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
 // context identity is overridden (e.g. by the store wrapper using service identity). Storage
@@ -186,12 +198,19 @@ var serviceIdentityTokenPermissions = []string{
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
+	"annotation.grafana.app:*",
 
 	// allow access to all datasource types
 	"*.datasource.grafana.app:*",
 
 	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
 	"secret.grafana.app/securevalues:decrypt",
+
+	// Allow access to all apiextensions.k8s.io resources
+	"*.ext.grafana.app:*",
+
+	// Allow access to apps.grafana.app resources (e.g. AppManifest)
+	"apps.grafana.app:*",
 }
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

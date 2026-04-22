@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { RawListValue } from './RawListItem';
+import { type RawListValue } from './RawListItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   // Borrowed from the monaco styles

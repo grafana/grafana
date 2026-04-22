@@ -1,27 +1,39 @@
-import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
+import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
-import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
+import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  ImportDashboardDTO,
-  ImportFormDataV2,
+  type DashboardInput,
+  type DashboardInputs,
+  type DashboardJson,
+  type DataSourceInput,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
   InputType,
-  LibraryPanelInput,
+  type LibraryPanelInput,
   LibraryPanelInputState,
 } from '../../types';
+
+/**
+ * Remove export-only metadata keys (__inputs, __elements, __requires)
+ * that should not be persisted when saving the dashboard.
+ */
+export function stripExportMetadata(dashboard: Dashboard): Dashboard {
+  const json = JSON.parse(JSON.stringify(dashboard));
+  delete json.__inputs;
+  delete json.__elements;
+  delete json.__requires;
+  return json;
+}
 
 /** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
 export type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
@@ -50,10 +62,6 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
     typeof value.kind === 'number' &&
     isRecord(value.model)
   );
-}
-
-function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
-  return 'uid' in query && typeof query['uid'] === 'string';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -184,6 +192,20 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     return inputs;
   }
 
+  if (dashboard.variables) {
+    for (const variable of dashboard.variables) {
+      if (variable.kind === 'ConstantVariable') {
+        inputs.constants.push({
+          name: variable.spec.name,
+          label: variable.spec.label || variable.spec.name,
+          info: variable.spec.description || 'Specify a string constant',
+          value: variable.spec.query,
+          type: InputType.Constant,
+        });
+      }
+    }
+  }
+
   const dsTypes: { [label: string]: string } = {};
 
   if (dashboard.variables) {
@@ -272,6 +294,129 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
 }
 
 /**
+ * Input mapping shape used by the community dashboard / suggested dashboards flow.
+ * Matches the format previously sent to POST /api/dashboards/interpolate.
+ */
+export interface InterpolateInputMapping {
+  name: string;
+  type: 'datasource' | 'constant';
+  pluginId?: string;
+  value: string;
+}
+
+/**
+ * Interpolate a v1 dashboard in the frontend using applyV1Inputs, replacing the
+ * backend POST /api/dashboards/interpolate round-trip.
+ *
+ * Converts InputMapping[] (the format used by the community/suggested dashboard flow)
+ * into the shape that applyV1Inputs expects and applies the substitution.
+ */
+export function interpolateV1Dashboard(
+  dashboard: DashboardJson,
+  inputMappings: InterpolateInputMapping[]
+): DashboardJson {
+  const rawInputs = dashboard.__inputs;
+  const dsInputs: DataSourceInput[] = (rawInputs ?? [])
+    .filter((input) => input.type === 'datasource' && 'pluginId' in input && typeof input.pluginId === 'string')
+    .map((input) => ({
+      name: String(input.name ?? ''),
+      label: String(input.label ?? ''),
+      info: String(input.description ?? ''),
+      value: String(input.value ?? ''),
+      type: InputType.DataSource,
+      pluginId: String('pluginId' in input ? input.pluginId : ''),
+    }));
+  const constantRawInputs = (rawInputs ?? []).filter((input) => input.type === 'constant');
+
+  const wildcardMapping = inputMappings.find((m) => m.name === '*' && m.type === 'datasource');
+  const effectiveMappings = wildcardMapping
+    ? dsInputs.map((input) => ({
+        name: input.name,
+        type: 'datasource' as const,
+        pluginId: input.pluginId,
+        value: wildcardMapping.value,
+      }))
+    : inputMappings;
+
+  const formDataSources: DataSourceInstanceSettings[] = [];
+  const seenPluginIds = new Set<string>();
+  for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
+    const dsInput = dsInputs.find((i) => i.name === mapping.name);
+    const pluginId = mapping.pluginId ?? dsInput?.pluginId;
+    if (!pluginId || seenPluginIds.has(pluginId)) {
+      continue;
+    }
+
+    // Expression datasources are always forced to __expr__ regardless of user input,
+    // matching the backend behavior:
+    //   if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
+    //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
+    //   }
+    if (pluginId === ExpressionDatasourceRef.type) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(pluginId);
+      continue;
+    }
+
+    const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+    if (!settings) {
+      throw new Error(
+        `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`
+      );
+    }
+    formDataSources.push(settings);
+    seenPluginIds.add(pluginId);
+  }
+  // Ensure expression datasources are included even when not explicitly mapped
+  for (const dsInput of dsInputs) {
+    if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(ExpressionDatasourceRef.type);
+    }
+  }
+
+  const constants: DashboardInput[] = constantRawInputs.map((input) => ({
+    name: String(input.name ?? ''),
+    label: String(input.label ?? ''),
+    info: String(input.description ?? 'Specify a string constant'),
+    value: String(input.value ?? ''),
+    type: InputType.Constant,
+  }));
+  const formConstants: string[] = constants.map((c) => {
+    const mapping = effectiveMappings.find((m) => m.type === 'constant' && m.name === c.name);
+    return mapping ? mapping.value : c.value;
+  });
+
+  const form: ImportDashboardDTO = {
+    title: dashboard.title ?? '',
+    uid: dashboard.uid ?? '',
+    gnetId: '',
+    constants: formConstants,
+    dataSources: formDataSources,
+    elements: [],
+    folder: { uid: '' },
+  };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const interpolated = { ...result } as DashboardJson;
+  delete interpolated.__inputs;
+  delete interpolated.__elements;
+  delete interpolated.__requires;
+  return interpolated;
+}
+
+/**
  * Apply user's datasource selections to a v1 dashboard
  */
 export function applyV1Inputs(
@@ -320,7 +465,29 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
       }
     }
   }
-  return replaceDatasourcesInDashboard(dashboard, mappings);
+
+  const variables = dashboard.variables?.map((variable) => {
+    if (variable.kind !== 'ConstantVariable') {
+      return variable;
+    }
+
+    const formKey = `constant-${variable.spec.name}`;
+    const userValue = form[formKey];
+    if (typeof userValue !== 'string') {
+      return variable;
+    }
+
+    return {
+      ...variable,
+      spec: {
+        ...variable.spec,
+        query: userValue,
+        current: { text: userValue, value: userValue },
+      },
+    };
+  });
+
+  return replaceDatasourcesInDashboard({ ...dashboard, variables }, mappings);
 }
 
 export function isVariableRef(dsName: string | undefined): boolean {
@@ -503,6 +670,67 @@ function replaceElementDatasources(
   );
 }
 
+/**
+ * Replace ${DS_...} placeholders in a library panel model's datasource references
+ * using the user-selected datasources from the import form.
+ */
+export function interpolateLibraryPanelDatasources(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  model: any,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const result = { ...model };
+
+  const resolvedDs = resolveDatasource(result.datasource, inputs.dataSources, form.dataSources);
+  if (resolvedDs) {
+    result.datasource = resolvedDs;
+  }
+
+  if (Array.isArray(result.targets)) {
+    result.targets = result.targets.map((target: Record<string, unknown>) => {
+      const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+      return resolved ? { ...target, datasource: resolved } : target;
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Extract a ${DS_...} placeholder string from a datasource reference.
+ * Handles both the object form { uid: "${DS_...}" } and legacy string form "${DS_...}".
+ */
+function extractDatasourcePlaceholder(datasource: unknown): string | undefined {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (isRecord(datasource) && typeof datasource.uid === 'string' && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a datasource placeholder to the user-selected datasource.
+ */
+function resolveDatasource(
+  datasource: unknown,
+  datasourceInputs: DataSourceInput[],
+  userDsInputs: DataSourceInstanceSettings[]
+): { uid: string; type: string } | undefined {
+  const placeholder = extractDatasourcePlaceholder(datasource);
+  if (!placeholder) {
+    return undefined;
+  }
+  const userInput = checkUserInputMatch(placeholder, datasourceInputs, userDsInputs);
+  if (!userInput) {
+    return undefined;
+  }
+  return { uid: userInput.uid, type: userInput.type };
+}
+
 function checkUserInputMatch(
   templateizedUid: string,
   datasourceInputs: DataSourceInput[],
@@ -519,53 +747,33 @@ function processAnnotation(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): AnnotationQuery {
-  if (annotation.datasource && annotation.datasource.uid && annotation.datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(annotation.datasource.uid, inputs.dataSources, form.dataSources);
-    if (userInput) {
-      return {
-        ...annotation,
-        datasource: {
-          ...annotation.datasource,
-          uid: userInput.uid,
-        },
-      };
-    }
+  const resolved = resolveDatasource(annotation.datasource, inputs.dataSources, form.dataSources);
+  if (resolved) {
+    return { ...annotation, datasource: resolved };
   }
-
   return annotation;
 }
 
-function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, form: ImportDashboardDTO): Panel {
-  const queries = panel.targets?.map((target) => {
-    if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
-      const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...target,
-          datasource: {
-            ...target.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
-    }
-    return target;
-  });
-
-  const panelDs =
-    panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')
-      ? checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources)
-      : undefined;
+function processPanel(
+  panel: Panel | RowPanel,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel | RowPanel {
+  const resolvedPanelDs = resolveDatasource(panel.datasource, inputs.dataSources, form.dataSources);
 
   return {
     ...panel,
-    ...(queries && { targets: queries }),
-    ...(panelDs && {
-      datasource: {
-        ...panel.datasource,
-        uid: panelDs.uid,
-      },
+    ...(resolvedPanelDs && { datasource: resolvedPanelDs }),
+    ...('panels' in panel && {
+      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
+    ...('targets' in panel &&
+      panel.targets && {
+        targets: panel.targets.map((target) => {
+          const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+          return resolved ? { ...target, datasource: resolved } : target;
+        }),
+      }),
   };
 }
 
@@ -597,19 +805,10 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
-    const datasourceUid = variable.datasource.uid;
-    if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
-      const userInput = checkUserInputMatch(datasourceUid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...variable,
-          datasource: {
-            ...variable.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
+  if (variableType === 'query' && 'datasource' in variable) {
+    const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
+    if (resolved) {
+      return { ...variable, datasource: resolved };
     }
   }
 

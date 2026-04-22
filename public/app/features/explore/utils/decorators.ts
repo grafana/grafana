@@ -1,23 +1,23 @@
 import { groupBy, mapValues } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
   FieldType,
   getDisplayProcessor,
-  PanelData,
+  type PanelData,
   standardTransformers,
   preProcessPanelData,
   DataLinkConfigOrigin,
   getRawDisplayProcessor,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
-import { config, CorrelationData } from '@grafana/runtime';
-import { getPanelPluginMetas, PanelPluginMetas } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types/explore';
+import { config, type CorrelationData } from '@grafana/runtime';
+import { getPanelPluginMetas, type PanelPluginMetas } from '@grafana/runtime/internal';
+import { type DataQuery } from '@grafana/schema';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';

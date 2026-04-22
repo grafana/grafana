@@ -1,7 +1,7 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen } from '@testing-library/react';
 
-import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
+import { DataLinksListItem, type DataLinksListItemProps } from './DataLinksListItem';
 
 const baseLink = {
   url: '',

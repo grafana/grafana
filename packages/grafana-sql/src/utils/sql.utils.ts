@@ -1,14 +1,14 @@
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 
 import {
   QueryEditorExpressionType,
-  QueryEditorFunctionExpression,
-  QueryEditorFunctionParameterExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorFunctionParameterExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorPropertyExpression,
   QueryEditorPropertyType,
 } from '../expressions';
-import { SQLExpression } from '../types';
+import { type SQLExpression } from '../types';
 
 export function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): string {
   const columns = sqlColumns.map((c) => {

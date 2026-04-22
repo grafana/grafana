@@ -1,10 +1,10 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { EventBus, GrafanaTheme2, MapLayerOptions } from '@grafana/data';
+import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 
-import { carto, CartoConfig, LayerTheme } from './carto';
+import { carto, type CartoConfig, LayerTheme } from './carto';
 
 describe('CARTO basemap layer noRepeat functionality', () => {
   let mockMap: OpenLayersMap;

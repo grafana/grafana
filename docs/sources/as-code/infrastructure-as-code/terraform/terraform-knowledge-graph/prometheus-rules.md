@@ -610,6 +610,8 @@ resource "grafana_asserts_prom_rule_file" "example" {
 
 ## Best practices
 
+Consider the following best practices when managing Prometheus rules with Terraform.
+
 ### Rule organization
 
 - Group related rules together in the same rule group

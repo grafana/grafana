@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, type JSX } from 'react';
 
-import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
+import { type AnnotationQuery, type EventBus, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/internal';

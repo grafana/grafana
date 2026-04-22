@@ -30,17 +30,17 @@ func (_m *MockIncrementalSyncFn) EXPECT() *MockIncrementalSyncFn_Expecter {
 	return &MockIncrementalSyncFn_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker
-func (_m *MockIncrementalSyncFn) Execute(ctx context.Context, repo repository.Versioned, previousRef string, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
-	ret := _m.Called(ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker)
+// Execute provides a mock function with given fields: ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker, folderMetadataEnabled
+func (_m *MockIncrementalSyncFn) Execute(ctx context.Context, repo repository.Versioned, previousRef string, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
+	ret := _m.Called(ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker, folderMetadataEnabled)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Versioned, string, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, jobs.JobMetrics, quotas.QuotaTracker) error); ok {
-		r0 = rf(ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Versioned, string, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, jobs.JobMetrics, quotas.QuotaTracker, bool) error); ok {
+		r0 = rf(ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker, folderMetadataEnabled)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,13 +63,14 @@ type MockIncrementalSyncFn_Execute_Call struct {
 //   - tracer tracing.Tracer
 //   - metrics jobs.JobMetrics
 //   - quotaTracker quotas.QuotaTracker
-func (_e *MockIncrementalSyncFn_Expecter) Execute(ctx interface{}, repo interface{}, previousRef interface{}, currentRef interface{}, repositoryResources interface{}, progress interface{}, tracer interface{}, metrics interface{}, quotaTracker interface{}) *MockIncrementalSyncFn_Execute_Call {
-	return &MockIncrementalSyncFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker)}
+//   - folderMetadataEnabled bool
+func (_e *MockIncrementalSyncFn_Expecter) Execute(ctx interface{}, repo interface{}, previousRef interface{}, currentRef interface{}, repositoryResources interface{}, progress interface{}, tracer interface{}, metrics interface{}, quotaTracker interface{}, folderMetadataEnabled interface{}) *MockIncrementalSyncFn_Execute_Call {
+	return &MockIncrementalSyncFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, previousRef, currentRef, repositoryResources, progress, tracer, metrics, quotaTracker, folderMetadataEnabled)}
 }
 
-func (_c *MockIncrementalSyncFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Versioned, previousRef string, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker)) *MockIncrementalSyncFn_Execute_Call {
+func (_c *MockIncrementalSyncFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Versioned, previousRef string, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool)) *MockIncrementalSyncFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.Versioned), args[2].(string), args[3].(string), args[4].(resources.RepositoryResources), args[5].(jobs.JobProgressRecorder), args[6].(tracing.Tracer), args[7].(jobs.JobMetrics), args[8].(quotas.QuotaTracker))
+		run(args[0].(context.Context), args[1].(repository.Versioned), args[2].(string), args[3].(string), args[4].(resources.RepositoryResources), args[5].(jobs.JobProgressRecorder), args[6].(tracing.Tracer), args[7].(jobs.JobMetrics), args[8].(quotas.QuotaTracker), args[9].(bool))
 	})
 	return _c
 }
@@ -79,7 +80,7 @@ func (_c *MockIncrementalSyncFn_Execute_Call) Return(_a0 error) *MockIncremental
 	return _c
 }
 
-func (_c *MockIncrementalSyncFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Versioned, string, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, jobs.JobMetrics, quotas.QuotaTracker) error) *MockIncrementalSyncFn_Execute_Call {
+func (_c *MockIncrementalSyncFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Versioned, string, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, jobs.JobMetrics, quotas.QuotaTracker, bool) error) *MockIncrementalSyncFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

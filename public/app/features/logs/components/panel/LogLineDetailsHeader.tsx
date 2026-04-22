@@ -1,27 +1,36 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent, useRef, type ChangeEvent } from 'react';
 
-import { colorManipulator, GrafanaTheme2, LogRowModel, store } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineDetailsMode } from './LogLineDetails';
+import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface Props {
   focusLogLine?: (log: LogListModel) => void;
+  inlineNoScroll?: boolean;
   log: LogListModel;
   search: string;
+  setInlineNoScroll?(inlineNoScroll: boolean): void;
   onSearch(newSearch: string): void;
 }
 
-export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
+export const LogLineDetailsHeader = ({
+  focusLogLine,
+  inlineNoScroll,
+  log,
+  search,
+  setInlineNoScroll,
+  onSearch,
+}: Props) => {
   const {
     displayedFields,
     getRowContextQuery,
@@ -38,7 +47,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
-  const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
+  const { closeDetails, detailsMode, setDetailsMode, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -108,6 +117,19 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     });
   }, [detailsMode, logOptionsStorageKey, reportInteractionWrapper, setDetailsMode]);
 
+  const toggleDetailsScroll = useCallback(() => {
+    const newState = !inlineNoScroll;
+    if (logOptionsStorageKey) {
+      store.set(`${logOptionsStorageKey}.inlineDetailsNoScrolls`, newState);
+    }
+
+    setInlineNoScroll?.(newState);
+
+    reportInteractionWrapper('logs_log_line_details_header_toggle_inline_no_scroll', {
+      scroll: !newState,
+    });
+  }, [inlineNoScroll, logOptionsStorageKey, reportInteractionWrapper, setInlineNoScroll]);
+
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
       onClickHideField?.(LOG_LINE_BODY_FIELD_NAME);
@@ -145,6 +167,10 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     },
     [onSearch, reportInteractionWrapper]
   );
+
+  const closeInlineDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
 
   return (
     <div className={styles.header} ref={containerRef}>
@@ -240,6 +266,17 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           />
         )}
         <div className={`${styles.divider} ${styles.dividerMargin}`} />
+        {detailsMode === 'inline' && inlineNoScroll !== undefined && (
+          <IconButton
+            name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
+            tooltip={
+              inlineNoScroll === true
+                ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
+                : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
+            }
+            onClick={toggleDetailsScroll}
+          />
+        )}
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -250,12 +287,21 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           onClick={toggleDetailsMode}
         />
         <div className={styles.divider} />
-        <IconButton
-          name="times"
-          tooltip={t('logs.log-line-details.close', 'Close log details')}
-          variant="primary"
-          onClick={closeDetails}
-        />
+        {detailsMode === 'sidebar' ? (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-sidebar-details', 'Close log details sidebar')}
+            variant="primary"
+            onClick={closeDetails}
+          />
+        ) : (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-inline-details', 'Close details for this log')}
+            variant="primary"
+            onClick={closeInlineDetails}
+          />
+        )}
       </div>
     </div>
   );
@@ -272,6 +318,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
@@ -280,8 +328,6 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     height: theme.spacing(5.5),
     marginBottom: theme.spacing(1),
     padding: theme.spacing(0.5, 1),
-    position: 'sticky',
-    top: 0,
   }),
   icons: css({
     display: 'flex',

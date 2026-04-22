@@ -1,32 +1,30 @@
-import { memo, useCallback } from 'react';
-import * as React from 'react';
+import { memo, useState } from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Input } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { id, options, onChange } = props;
-
-  const onBlur = useCallback(
-    (e: React.FocusEvent<HTMLInputElement>) => {
-      return onChange(e.target.value);
-    },
-    [onChange]
-  );
+  const { id, options, onChange, scope = 'series' } = props;
+  const [regexp, setRegexp] = useState(options);
 
   return (
-    <Input
-      id={id}
-      placeholder={t('grafana-ui.field-name-by-regex-matcher.input-placeholder', 'Enter regular expression')}
-      defaultValue={options}
-      onBlur={onBlur}
-    />
+    <Stack gap={1} direction="column">
+      <Input
+        id={id}
+        placeholder={t('grafana-ui.field-name-by-regex-matcher.input-placeholder', 'Enter regular expression')}
+        value={regexp}
+        onChange={(e) => setRegexp(e.currentTarget.value)}
+        onBlur={() => onChange(regexp, scope)}
+      />
+    </Stack>
   );
 });
+
 FieldNameByRegexMatcherEditor.displayName = 'FieldNameByRegexMatcherEditor';
 
 export const getFieldNameByRegexMatcherItem: () => FieldMatcherUIRegistryItem<string> = () => ({

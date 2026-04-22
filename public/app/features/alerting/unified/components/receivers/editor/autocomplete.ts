@@ -4,7 +4,7 @@ import type { IDisposable, IRange, Position, editor, languages } from 'monaco-ed
 import type { Monaco } from '@grafana/ui';
 
 import { getAlertManagerSuggestions, getGomplateSuggestions } from './alertManagerSuggestions';
-import { SuggestionDefinition } from './suggestionDefinition';
+import { type SuggestionDefinition } from './suggestionDefinition';
 import {
   getAlertSuggestions,
   getAlertsSuggestions,

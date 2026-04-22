@@ -1,4 +1,4 @@
-import { PanelPluginMeta } from '@grafana/data';
+import { type PanelPluginMeta } from '@grafana/data';
 
 import { PanelTypeCard } from './PanelTypeCard';
 

@@ -1,7 +1,9 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
@@ -9,29 +11,30 @@ import {
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
-import { DashboardDTO } from 'app/types/dashboard';
-import { FolderDTO } from 'app/types/folders';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
 import {
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
-  AlertManagerCortexConfig,
-  AlertmanagerConfig,
-  AlertmanagerReceiver,
-  EmailConfig,
-  GrafanaManagedReceiverConfig,
-  MatcherOperator,
-  Route,
+  type AlertManagerCortexConfig,
+  type AlertmanagerConfig,
+  type AlertmanagerReceiver,
+  type EmailConfig,
+  type GrafanaManagedReceiverConfig,
+  type MatcherOperator,
+  type Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { DashboardSearchItem } from '../../search/types';
+import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
-import { RulerGroupUpdatedResponse } from './api/alertRuleModel';
+import { type RulerGroupUpdatedResponse } from './api/alertRuleModel';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -234,7 +237,48 @@ export function mockFolderApi(server: SetupServer) {
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
-      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
+      const dashboards: DashboardHit[] = results
+        .filter((item) => item.type !== DashboardSearchItemType.DashFolder)
+        .map((item) => ({
+          resource: 'dashboards',
+          name: item.uid || item.title,
+          title: item.title,
+          folder: item.folderUid,
+          field: {},
+        }));
+
+      const explicitFolders: DashboardHit[] = results
+        .filter((item) => item.type === DashboardSearchItemType.DashFolder)
+        .map((item) => ({
+          resource: 'folders',
+          name: item.uid || item.title,
+          title: item.title,
+          field: {},
+        }));
+
+      // We have to make sure we have the parent folders for the dashboards that have folderUid.
+      const derivedFolders = new Map<string, DashboardHit>();
+      for (const item of results) {
+        if (!item.folderUid || !item.folderTitle) {
+          continue;
+        }
+
+        derivedFolders.set(item.folderUid, {
+          resource: 'folders',
+          name: item.folderUid,
+          title: item.folderTitle,
+          field: {},
+        });
+      }
+
+      const folderHits = [...explicitFolders, ...derivedFolders.values()].filter(
+        (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
+      );
+
+      server.use(
+        http.get(`/api/search`, () => HttpResponse.json(results)),
+        getCustomSearchHandler([...folderHits, ...dashboards])
+      );
     },
     dashboard: (response: DashboardDTO) => {
       server.use(http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)));
@@ -262,6 +306,7 @@ export function setupMswServer() {
     setupAlertmanagerStatusMapDefaultState();
     resetRoutingTreeMap();
     resetUserStorage();
+    resetHistorianState();
   });
 
   return server;

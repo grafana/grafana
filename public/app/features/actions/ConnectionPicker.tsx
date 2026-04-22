@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { ActionType, DataSourceInstanceSettings } from '@grafana/data';
+import { ActionType, type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
@@ -19,6 +19,7 @@ interface ConnectionPickerProps {
   actionType: ActionType;
   datasourceUid?: string;
   onChange: (connectionType: 'direct' | DataSourceInstanceSettings) => void;
+  id?: string;
 }
 
 const DIRECT_OPTION_VALUE = 'direct';
@@ -31,7 +32,7 @@ const getSupportedDataSources = () => {
   });
 };
 
-export const ConnectionPicker = ({ actionType, datasourceUid, onChange }: ConnectionPickerProps) => {
+export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: ConnectionPickerProps) => {
   const connectionOptions: ConnectionOption[] = useMemo(() => {
     const options: ConnectionOption[] = [
       {
@@ -87,6 +88,7 @@ export const ConnectionPicker = ({ actionType, datasourceUid, onChange }: Connec
 
   return (
     <Select
+      inputId={id}
       value={currentValue}
       options={connectionOptions}
       onChange={(selected) => handleConnectionChange(selected.value!)}

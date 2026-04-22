@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { UseFormReturn, Controller } from 'react-hook-form';
+import { type UseFormReturn, Controller } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
-import { SSOProviderDTO, SSOSettingsField } from './types';
+import { type SSOProviderDTO, type SSOSettingsField } from './types';
 import { isSelectableValueArray } from './utils/guards';
 
 interface FieldRendererProps

@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { SQLQuery, QueryEditorProps } from '../../types';
+import { type SQLQuery, type QueryEditorProps } from '../../types';
 
 import { QueryEditorRaw } from './QueryEditorRaw';
 import { QueryToolbox } from './QueryToolbox';
@@ -61,7 +61,7 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const renderEditor = (standalone = false) => {
     return standalone ? (
       <AutoSizer>
-        {({ width, height }) => {
+        {({ width, height }: Size) => {
           return renderQueryEditor(width, height);
         }}
       </AutoSizer>

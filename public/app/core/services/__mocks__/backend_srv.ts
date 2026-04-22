@@ -1,8 +1,8 @@
 import { of } from 'rxjs';
 
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 
-import { BackendSrv } from '../backend_srv';
+import { type BackendSrv } from '../backend_srv';
 
 /**
  * Creates a pretty bogus prom response. Definitelly needs more work but right now we do not test the contents of the

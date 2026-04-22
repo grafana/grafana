@@ -12,6 +12,6 @@ SELECT p.id, p.org_id,
  LEFT JOIN `grafana`.`team` as t ON p.team_id = t.id
 WHERE p.org_id = 1 
   AND (u.uid = 'uuu'
-   OR p.user_id = 0
+   OR (p.user_id = 0 AND p.team_id = 0)
   )
 ORDER BY p.user_id asc, p.team_id asc, p.org_id asc

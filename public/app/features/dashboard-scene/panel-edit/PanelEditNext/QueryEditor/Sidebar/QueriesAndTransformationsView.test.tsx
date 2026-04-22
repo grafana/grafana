@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { dashboardDsSettingsMock, ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
+import { type Transformation } from '../types';
 
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 
@@ -17,16 +17,6 @@ jest.mock('@grafana/runtime', () => ({
 describe('QueryEditorSidebar', () => {
   afterAll(() => {
     jest.clearAllMocks();
-  });
-
-  it('should render loading bar when data is loading', () => {
-    renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
-      qrState: {
-        isLoading: true,
-      },
-    });
-
-    expect(screen.getByLabelText(/loading queries and transformations/i)).toBeInTheDocument();
   });
 
   it('should always render transformations section even when no transformations exist', () => {
@@ -147,5 +137,19 @@ describe('QueryEditorSidebar', () => {
 
     // Transformation cards should also have an add button
     expect(screen.getByRole('button', { name: /add transformation below organize/i })).toBeInTheDocument();
+  });
+
+  it('should disable "Add expression" when panel datasource is dashboard datasource', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'dashboard', uid: '-- Dashboard --' } }];
+
+    const { user } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries,
+      selectedQuery: queries[0],
+      dsState: { dsSettings: dashboardDsSettingsMock },
+    });
+
+    await user.click(screen.getByRole('button', { name: /add query or expression/i }));
+
+    expect(screen.getByRole('menuitem', { name: /add expression/i })).toBeDisabled();
   });
 });

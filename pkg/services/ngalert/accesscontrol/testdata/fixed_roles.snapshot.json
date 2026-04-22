@@ -6,23 +6,26 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.rules:read",
-        "scope": "folders:*"
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
       },
       {
         "action": "alert.rules.external:read",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.silences:read",
+        "action": "alert.rules:read",
         "scope": "folders:*"
       },
       {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.receivers:list"
+        "action": "alert.silences:read",
+        "scope": "folders:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -32,29 +35,21 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.rules:read",
-        "scope": "folders:*"
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
       },
       {
         "action": "alert.rules.external:read",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.silences:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.receivers:list"
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
       },
       {
         "action": "alert.rules:create",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules:write",
         "scope": "folders:*"
       },
       {
@@ -62,17 +57,28 @@
         "scope": "folders:*"
       },
       {
-        "action": "alert.rules.external:write",
-        "scope": "datasources:*"
+        "action": "alert.rules:read",
+        "scope": "folders:*"
       },
       {
-        "action": "alert.silences:write",
+        "action": "alert.rules:write",
         "scope": "folders:*"
       },
       {
         "action": "alert.silences:create",
         "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -82,12 +88,15 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.instances:read"
-      },
-      {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
+      },
+      {
+        "action": "alert.instances:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -97,22 +106,25 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.instances:read"
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.instances.external:read",
+        "action": "alert.instances.external:write",
         "scope": "datasources:*"
       },
       {
         "action": "alert.instances:create"
       },
       {
-        "action": "alert.instances:write"
+        "action": "alert.instances:read"
       },
       {
-        "action": "alert.instances.external:write",
-        "scope": "datasources:*"
+        "action": "alert.instances:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -121,6 +133,14 @@
     "description": "Read notification policies and contact points in Grafana and external providers",
     "group": "Alerting",
     "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
       {
         "action": "alert.notifications.receivers:read",
         "scope": "receivers:*"
@@ -132,18 +152,8 @@
         "action": "alert.notifications.time-intervals:read"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.inhibition-rules:read",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications.external:read",
-        "scope": "datasources:*"
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -154,81 +164,24 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.templates:read"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.inhibition-rules:read",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:read"
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
       },
       {
         "action": "alert.notifications.external:read",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:create"
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.receivers:test"
-      },
-      {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:uid:-"
-      },
-      {
-        "action": "alert.notifications.receivers:write",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers:delete",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.templates:read"
-      },
-      {
-        "action": "alert.notifications.templates:write"
-      },
-      {
-        "action": "alert.notifications.templates:delete"
-      },
-      {
-        "action": "alert.notifications.templates.test:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:delete"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
       },
       {
         "action": "alert.notifications.inhibition-rules:read",
@@ -239,15 +192,80 @@
         "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.inhibition-rules:delete",
-        "scope": "inhibition-rules:*"
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications:write"
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
       },
       {
-        "action": "alert.notifications.external:write",
-        "scope": "datasources:*"
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -258,29 +276,22 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.rules:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules.external:read",
+        "action": "alert.instances.external:read",
         "scope": "datasources:*"
-      },
-      {
-        "action": "alert.silences:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.receivers:list"
       },
       {
         "action": "alert.instances:read"
       },
       {
-        "action": "alert.instances.external:read",
+        "action": "alert.notifications.external:read",
         "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
       },
       {
         "action": "alert.notifications.receivers:read",
@@ -293,22 +304,24 @@
         "action": "alert.notifications.time-intervals:read"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.time-intervals:read"
       },
       {
-        "action": "alert.notifications.inhibition-rules:read",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications.external:read",
+        "action": "alert.rules.external:read",
         "scope": "datasources:*"
+      },
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
-    ],
-    "grants": [
-      "Viewer"
     ]
   },
   {
@@ -318,140 +331,41 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.rules:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules.external:read",
-        "scope": "datasources:*"
-      },
-      {
-        "action": "alert.silences:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.receivers:list"
-      },
-      {
-        "action": "alert.rules:create",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules:write",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules:delete",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules.external:write",
-        "scope": "datasources:*"
-      },
-      {
-        "action": "alert.silences:write",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.silences:create",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.instances:read"
-      },
-      {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
-      },
-      {
-        "action": "alert.instances:create"
-      },
-      {
-        "action": "alert.instances:write"
       },
       {
         "action": "alert.instances.external:write",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
+        "action": "alert.instances:create"
       },
       {
-        "action": "alert.notifications.templates:read"
+        "action": "alert.instances:read"
       },
       {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.inhibition-rules:read",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:read"
+        "action": "alert.instances:write"
       },
       {
         "action": "alert.notifications.external:read",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:create"
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:test"
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:uid:-"
-      },
-      {
-        "action": "alert.notifications.receivers:write",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers:delete",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.templates:read"
-      },
-      {
-        "action": "alert.notifications.templates:write"
-      },
-      {
-        "action": "alert.notifications.templates:delete"
-      },
-      {
-        "action": "alert.notifications.templates.test:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:delete"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
       },
       {
         "action": "alert.notifications.inhibition-rules:read",
@@ -462,19 +376,123 @@
         "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.inhibition-rules:delete",
-        "scope": "inhibition-rules:*"
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications:write"
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
       },
       {
-        "action": "alert.notifications.external:write",
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.rules.external:read",
         "scope": "datasources:*"
+      },
+      {
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.rules:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:delete",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
-    ],
-    "grants": [
-      "Editor"
     ]
   },
   {
@@ -484,140 +502,41 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.rules:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules.external:read",
-        "scope": "datasources:*"
-      },
-      {
-        "action": "alert.silences:read",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.receivers:list"
-      },
-      {
-        "action": "alert.rules:create",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules:write",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules:delete",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.rules.external:write",
-        "scope": "datasources:*"
-      },
-      {
-        "action": "alert.silences:write",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.silences:create",
-        "scope": "folders:*"
-      },
-      {
-        "action": "alert.instances:read"
-      },
-      {
         "action": "alert.instances.external:read",
         "scope": "datasources:*"
-      },
-      {
-        "action": "alert.instances:create"
-      },
-      {
-        "action": "alert.instances:write"
       },
       {
         "action": "alert.instances.external:write",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
+        "action": "alert.instances:create"
       },
       {
-        "action": "alert.notifications.templates:read"
+        "action": "alert.instances:read"
       },
       {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.inhibition-rules:read",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:read"
+        "action": "alert.instances:write"
       },
       {
         "action": "alert.notifications.external:read",
         "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:read",
-        "scope": "receivers:*"
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:create"
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
       },
       {
-        "action": "alert.notifications.receivers:test"
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:uid:-"
-      },
-      {
-        "action": "alert.notifications.receivers:write",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers:delete",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.templates:read"
-      },
-      {
-        "action": "alert.notifications.templates:write"
-      },
-      {
-        "action": "alert.notifications.templates:delete"
-      },
-      {
-        "action": "alert.notifications.templates.test:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:delete"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
       },
       {
         "action": "alert.notifications.inhibition-rules:read",
@@ -628,22 +547,7 @@
         "scope": "inhibition-rules:*"
       },
       {
-        "action": "alert.notifications.inhibition-rules:delete",
-        "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications:write"
-      },
-      {
-        "action": "alert.notifications.external:write",
-        "scope": "datasources:*"
-      },
-      {
-        "action": "receivers.permissions:read",
-        "scope": "receivers:*"
-      },
-      {
-        "action": "receivers.permissions:write",
+        "action": "alert.notifications.receivers.protected:write",
         "scope": "receivers:*"
       },
       {
@@ -651,7 +555,140 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.receivers.protected:write",
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.system-status:read"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.rules:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:delete",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "receivers.permissions:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "receivers.permissions:write",
         "scope": "receivers:*"
       }
     ],
@@ -661,10 +698,16 @@
   },
   {
     "name": "fixed:alerting.provisioning:writer",
-    "displayName": "Access to alert rules provisioning API",
+    "displayName": "Write via Provisioning API",
     "description": "Manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
     "group": "Alerting",
     "permissions": [
+      {
+        "action": "alert.notifications.provisioning:read"
+      },
+      {
+        "action": "alert.notifications.provisioning:write"
+      },
       {
         "action": "alert.provisioning:read"
       },
@@ -676,12 +719,6 @@
       },
       {
         "action": "alert.rules.provisioning:write"
-      },
-      {
-        "action": "alert.notifications.provisioning:read"
-      },
-      {
-        "action": "alert.notifications.provisioning:write"
       },
       {
         "action": "folders:read",
@@ -699,6 +736,9 @@
     "group": "Alerting",
     "permissions": [
       {
+        "action": "alert.notifications.provisioning:read"
+      },
+      {
         "action": "alert.provisioning.secrets:read"
       },
       {
@@ -706,9 +746,6 @@
       },
       {
         "action": "alert.rules.provisioning:read"
-      },
-      {
-        "action": "alert.notifications.provisioning:read"
       }
     ],
     "grants": [
@@ -731,6 +768,70 @@
     ]
   },
   {
+    "name": "fixed:alerting.notifications.external:reader",
+    "displayName": "External Notifications Reader",
+    "description": "Read notification policies and contact points in external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications.external:writer",
+    "displayName": "External Notifications Writer",
+    "description": "Add, update, and delete contact points and notification policies in external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy:writer",
+    "displayName": "Alerting legacy permissions (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.config-history:read"
+      },
+      {
+        "action": "alert.notifications.config-history:write"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications:write"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
     "name": "fixed:alerting.receivers:reader",
     "displayName": "Contact Point Reader",
     "description": "Read all contact points in Grafana",
@@ -740,6 +841,9 @@
         "action": "alert.notifications.receivers:read",
         "scope": "receivers:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -749,14 +853,14 @@
     "group": "Alerting",
     "permissions": [
       {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
         "action": "alert.notifications.receivers:create"
       },
       {
         "action": "alert.notifications.receivers:test"
-      },
-      {
-        "action": "alert.notifications.receivers.test:create",
-        "scope": "receivers:uid:-"
       }
     ]
   },
@@ -767,31 +871,34 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.receivers:read",
+        "action": "alert.notifications.receivers.test:create",
         "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.receivers:create"
-      },
-      {
-        "action": "alert.notifications.receivers:test"
       },
       {
         "action": "alert.notifications.receivers.test:create",
         "scope": "receivers:uid:-"
       },
       {
-        "action": "alert.notifications.receivers:write",
-        "scope": "receivers:*"
+        "action": "alert.notifications.receivers:create"
       },
       {
         "action": "alert.notifications.receivers:delete",
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.receivers.test:create",
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
         "scope": "receivers:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -803,6 +910,9 @@
       {
         "action": "alert.notifications.templates:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -812,17 +922,20 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.templates:read"
-      },
-      {
-        "action": "alert.notifications.templates:write"
+        "action": "alert.notifications.templates.test:write"
       },
       {
         "action": "alert.notifications.templates:delete"
       },
       {
-        "action": "alert.notifications.templates.test:write"
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -834,6 +947,9 @@
       {
         "action": "alert.notifications.time-intervals:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -843,14 +959,31 @@
     "group": "Alerting",
     "permissions": [
       {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
         "action": "alert.notifications.time-intervals:read"
       },
       {
         "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications.time-intervals:delete"
       }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting.managed-routes:creator",
+    "displayName": "Notification Policies Creator",
+    "description": "Create notification policies in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -860,22 +993,38 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
+    ],
+    "grants": [
+      "Admin"
     ]
   },
   {
     "name": "fixed:alerting.routes:writer",
     "displayName": "Notification Policies Writer",
-    "description": "Update and reset notification policies in Grafana alerting",
+    "description": "Create, update and delete notification policies in Grafana alerting",
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
+    ],
+    "grants": [
+      "Admin"
     ]
   },
   {
@@ -888,6 +1037,9 @@
         "action": "alert.notifications.inhibition-rules:read",
         "scope": "inhibition-rules:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -897,17 +1049,20 @@
     "group": "Alerting",
     "permissions": [
       {
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
+      },
+      {
         "action": "alert.notifications.inhibition-rules:read",
         "scope": "inhibition-rules:*"
       },
       {
         "action": "alert.notifications.inhibition-rules:write",
         "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications.inhibition-rules:delete",
-        "scope": "inhibition-rules:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   }
 ]

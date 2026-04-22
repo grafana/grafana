@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -42,7 +41,6 @@ const (
 	CloudWatch      = "cloudwatch"
 	CloudMonitoring = "stackdriver"
 	AzureMonitor    = "grafana-azure-monitor-datasource"
-	Elasticsearch   = "elasticsearch"
 	Graphite        = "graphite"
 	InfluxDB        = "influxdb"
 	Loki            = "loki"
@@ -99,7 +97,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 }
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
-	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
+	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
@@ -109,7 +107,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
-		Elasticsearch:   asBackendPlugin(es),
 		Graphite:        asBackendPlugin(grap),
 		InfluxDB:        asBackendPlugin(idb),
 		Loki:            asBackendPlugin(lk),
@@ -230,8 +227,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
-	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:

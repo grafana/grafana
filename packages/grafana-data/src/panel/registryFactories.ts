@@ -1,9 +1,9 @@
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
-import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { type FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { FieldConfigEditorBuilder } from '../utils/OptionsUIBuilders';
 
-import { SetFieldConfigOptionsArgs } from './PanelPlugin';
+import { type SetFieldConfigOptionsArgs } from './PanelPlugin';
 
 /**
  * Helper functionality to create a field config registry.

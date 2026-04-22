@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
 import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';

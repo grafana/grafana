@@ -71,7 +71,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.BlobThresholdBytes = apiserverCfg.Key("blob_threshold_bytes").MustInt(o.StorageOptions.BlobThresholdBytes)
 
 	// unified storage configs look like
-	// [unified_storage.<group>.<resource>]
+	// [unified_storage.{resource}.{group}]
 	// config = <value>
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg

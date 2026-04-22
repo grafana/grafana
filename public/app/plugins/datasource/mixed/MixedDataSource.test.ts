@@ -2,8 +2,13 @@ import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, LoadingState } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import {
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  LoadingState,
+} from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';

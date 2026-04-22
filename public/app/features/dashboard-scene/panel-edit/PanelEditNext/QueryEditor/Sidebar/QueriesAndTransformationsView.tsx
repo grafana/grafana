@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { LoadingBar } from '@grafana/ui';
 
 import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -10,12 +9,12 @@ import { AddCardButton } from './AddCardButton';
 import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
+import { CollapsableSection } from './CollapsableSection';
 import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
-import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
 export function QueriesAndTransformationsView() {
-  const { queries, isLoading } = useQueryRunnerContext();
+  const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { pendingExpression, pendingSavedQuery, pendingTransformation } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
@@ -26,21 +25,9 @@ export function QueriesAndTransformationsView() {
   const expandQueries = useCallback(() => setQueriesOpen(true), []);
   const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
 
-  if (isLoading) {
-    return (
-      <LoadingBar
-        width={400}
-        ariaLabel={t(
-          'query-editor-next.sidebar.loading-queries-transformations',
-          'Loading queries and transformations'
-        )}
-      />
-    );
-  }
-
   return (
     <>
-      <SidebarCollapsableHeader
+      <CollapsableSection
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
@@ -59,8 +46,8 @@ export function QueriesAndTransformationsView() {
         {pendingSavedQuery && !pendingSavedQuery.insertAfter && (
           <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
         )}
-      </SidebarCollapsableHeader>
-      <SidebarCollapsableHeader
+      </CollapsableSection>
+      <CollapsableSection
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
@@ -78,7 +65,7 @@ export function QueriesAndTransformationsView() {
         {pendingTransformation && !pendingTransformation.insertAfter && (
           <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}
-      </SidebarCollapsableHeader>
+      </CollapsableSection>
     </>
   );
 }

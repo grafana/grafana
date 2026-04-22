@@ -178,7 +178,7 @@ FieldConfigSource: {
 	overrides: [...{
 		// Describes config override rules created when interacting with Grafana.
 		"__systemRef"?: string
-		matcher: MatcherConfig
+		matcher:        MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
 }
@@ -271,11 +271,15 @@ DynamicConfigValue: {
 	value?: _
 }
 
+MatcherScope: "series" | "nested" | "annotation" | "exemplar"
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 MatcherConfig: {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string | *""
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope
 	// The matcher options. This is specific to the matcher implementation.
 	options?: _
 }
@@ -411,8 +415,8 @@ ActionType: "fetch" | "infinity"
 
 FetchOptions: {
 	method: HttpRequestMethod
-	url: string
-	body?: string
+	url:    string
+	body?:  string
 	// These are 2D arrays of strings, each representing a key-value pair
 	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
@@ -430,18 +434,18 @@ HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 ActionVariableType: "string"
 
 ActionVariable: {
-	key: string
+	key:  string
 	name: string
 	type: ActionVariableType
 }
 
 Action: {
-	type: ActionType
-	title: string
-	fetch?: FetchOptions
-	infinity?: InfinityOptions
+	type:          ActionType
+	title:         string
+	fetch?:        FetchOptions
+	infinity?:     InfinityOptions
 	confirmation?: string
-	oneClick?: bool
+	oneClick?:     bool
 	variables?: [...ActionVariable]
 	style?: {
 		backgroundColor?: string
@@ -478,9 +482,9 @@ AnnotationQuerySpec: {
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
 	// Mappings define how to convert data frame fields to annotation event fields.
-	mappings?:   [string]: AnnotationEventFieldMapping
+	mappings?: [string]: AnnotationEventFieldMapping
 	// Catch-all field for datasource-specific properties
-	legacyOptions?:     [string]: _
+	legacyOptions?: [string]: _
 }
 
 AnnotationQueryKind: {
@@ -646,10 +650,10 @@ AutoGridLayoutKind: {
 AutoGridLayoutSpec: {
 	maxColumnCount?: number | *3
 	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?: number
-	rowHeightMode: "short" | *"standard" | "tall" | "custom"
-	rowHeight?: number
-	fillScreen?: bool | *false
+	columnWidth?:    number
+	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
+	rowHeight?:      number
+	fillScreen?:     bool | *false
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -811,22 +815,22 @@ QueryVariableSpec: {
 		text:  ""
 		value: ""
 	}
-	label?:       string
-	hide:         VariableHide
-	refresh:      VariableRefresh
-	skipUrlSync:  bool | *false
-	description?: string
-	datasource?:  DataSourceRef
-	query:        DataQueryKind
-	regex:        string | *""
+	label?:        string
+	hide:          VariableHide
+	refresh:       VariableRefresh
+	skipUrlSync:   bool | *false
+	description?:  string
+	datasource?:   DataSourceRef
+	query:         DataQueryKind
+	regex:         string | *""
 	regexApplyTo?: VariableRegexApplyTo
-	sort:         VariableSort
-	definition?:  string
+	sort:          VariableSort
+	definition?:   string
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	placeholder?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	placeholder?:     string
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
@@ -889,13 +893,13 @@ DatasourceVariableSpec: {
 		value: ""
 	}
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -936,15 +940,15 @@ CustomVariableSpec: {
 	query:   string | *""
 	current: VariableOption
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
-	valuesFormat?: "csv" | "json"
+	valuesFormat?:    "csv" | "json"
 }
 
 // Custom variable kind
@@ -955,8 +959,8 @@ CustomVariableKind: {
 
 // GroupBy variable specification
 GroupByVariableSpec: {
-	name:        string | *""
-	datasource?: DataSourceRef
+	name:          string | *""
+	datasource?:   DataSourceRef
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -983,11 +987,13 @@ AdhocVariableSpec: {
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: bool | *false
 }
 
 // Define the MetricFindValue type
@@ -1007,7 +1013,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
-	origin?: FilterOrigin
+	origin?:    FilterOrigin
 	// @deprecated
 	condition?: string
 }
@@ -1020,8 +1026,8 @@ AdhocVariableKind: {
 
 // Switch variable specification
 SwitchVariableSpec: {
-	name:         string | *""
-	current:      string | *"false"
+	name:          string | *""
+	current:       string | *"false"
 	enabledValue:  string | *"true"
 	disabledValue: string | *"false"
 	label?:        string
@@ -1042,7 +1048,7 @@ ConditionalRenderingGroupKind: {
 
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
-	condition: "and" | "or"
+	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 

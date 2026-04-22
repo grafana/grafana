@@ -20,12 +20,17 @@ spec:
                   type: string
                 type: object
               execErrState:
-                default: Error
+                enum:
+                - Error
+                - Ok
+                - Alerting
+                - KeepLast
                 type: string
               expressions:
                 additionalProperties:
                   properties:
                     datasourceUID:
+                      pattern: ^[a-zA-Z0-9_-]+$
                       type: string
                     model:
                       type: object
@@ -36,8 +41,10 @@ spec:
                     relativeTimeRange:
                       properties:
                         from:
+                          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
                           type: string
                         to:
+                          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
                           type: string
                       required:
                       - from
@@ -69,9 +76,30 @@ spec:
                 minimum: 0
                 type: integer
               noDataState:
-                default: NoData
+                enum:
+                - NoData
+                - Ok
+                - Alerting
+                - KeepLast
                 type: string
               notificationSettings:
+                description: 'TODO(@moustafab): this should be imported from the notifications
+                  package'
+                oneOf:
+                - not:
+                    anyOf:
+                    - required:
+                      - routingTree
+                  required:
+                  - type
+                  - receiver
+                - not:
+                    anyOf:
+                    - required:
+                      - receiver
+                  required:
+                  - type
+                  - routingTree
                 properties:
                   activeTimeIntervals:
                     items:
@@ -84,8 +112,10 @@ spec:
                       type: string
                     type: array
                   groupInterval:
+                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                   groupWait:
+                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                   muteTimeIntervals:
                     items:
@@ -96,14 +126,21 @@ spec:
                   receiver:
                     type: string
                   repeatInterval:
+                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
-                required:
-                - receiver
+                  routingTree:
+                    type: string
+                  type:
+                    enum:
+                    - SimplifiedRouting
+                    - NamedRoutingTree
+                    type: string
                 type: object
               panelRef:
                 properties:
                   dashboardUID:
                     minLength: 1
+                    pattern: ^[a-zA-Z0-9_-]+$
                     type: string
                   panelID:
                     exclusiveMinimum: true
@@ -120,6 +157,7 @@ spec:
               trigger:
                 properties:
                   interval:
+                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                 required:
                 - interval
@@ -178,7 +216,6 @@ spec:
     - jsonPath: .spec.paused
     - jsonPath: .spec.panelRef.dashboardUID
     - jsonPath: .spec.panelRef.panelID
-    - jsonPath: .spec.notificationSettings.receiver
     served: true
     storage: true
     subresources:

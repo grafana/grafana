@@ -1,0 +1,7 @@
+name: Report Go Cache Sizes
+description: Logs GOMODCACHE and GOCACHE sizes. Runs at setup time and again as a post step at the end of the job.
+
+runs:
+  using: node20
+  main: index.js
+  post: index.js

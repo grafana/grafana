@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -206,8 +206,8 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
       expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
 
-      // Should use the new fieldConfig defaults
-      expect(mergedConfig.defaults.unit).toBe('percent');
+      // Should preserve the user's existing standard options
+      expect(mergedConfig.defaults.unit).toBe('bytes');
     });
 
     it('Should not call onFieldConfigChange when no fieldConfig provided', () => {

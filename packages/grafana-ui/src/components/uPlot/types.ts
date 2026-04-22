@@ -1,7 +1,7 @@
-import * as React from 'react';
-import uPlot, { Options, AlignedData } from 'uplot';
+import type * as React from 'react';
+import { type default as uPlot, type Options, type AlignedData } from 'uplot';
 
-import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 /**
  * @internal -- not a public API
@@ -32,9 +32,6 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-/**
- * @alpha
- */
 export type PlotTooltipInterpolator = (
   updateActiveSeriesIdx: (sIdx: number | null) => void,
   updateActiveDatapointIdx: (dIdx: number | null) => void,

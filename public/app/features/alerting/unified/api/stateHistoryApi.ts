@@ -1,4 +1,4 @@
-import { DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data';
 
 import { alertingApi } from './alertingApi';
 
@@ -11,12 +11,12 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
         from?: number;
         to?: number;
         limit?: number;
-        labels?: Record<string, string>;
+        matchers?: string;
         previous?: string;
         current?: string;
       }
     >({
-      query: ({ ruleUid, from, to, limit = 100, labels, previous, current }) => {
+      query: ({ ruleUid, from, to, limit = 100, matchers, previous, current }) => {
         const params: Record<string, string | number | undefined> = {
           ruleUID: ruleUid,
           from,
@@ -24,13 +24,8 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
           limit,
           previous,
           current,
+          matchers,
         };
-
-        if (labels) {
-          Object.entries(labels).forEach(([key, value]) => {
-            params[`labels_${key}`] = value;
-          });
-        }
 
         return {
           url: '/api/v1/rules/history',

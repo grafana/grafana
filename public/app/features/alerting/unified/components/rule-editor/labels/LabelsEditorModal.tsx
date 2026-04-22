@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 
-import { KBObjectArray } from '../../../types/rule-form';
+import { type KBObjectArray } from '../../../types/rule-form';
 
 import { LabelsSubForm } from './LabelsField';
 

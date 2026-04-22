@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,26 +15,21 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web"
 )
 
-// implements grafanaapiserver.DirectRestConfigProvider
-type mockDirectRestConfigProvider struct {
+// implements grafanaapiserver.RestConfigProvider
+type mockRestConfigProvider struct {
 	transport http.RoundTripper
 	host      string
 }
 
-func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+func (m *mockRestConfigProvider) GetRestConfig(_ context.Context) (*clientrest.Config, error) {
 	return &clientrest.Config{
 		Host:      m.host,
 		Transport: m.transport,
-	}
+	}, nil
 }
-
-func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
 
 type mockRoundTripper struct {
 	statusCode   int
@@ -99,7 +93,7 @@ func TestGetConnectionByUID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &connectionClientImpl{
-				clientConfigProvider: &mockDirectRestConfigProvider{
+				clientConfigProvider: &mockRestConfigProvider{
 					transport: &mockRoundTripper{
 						statusCode:   tt.statusCode,
 						responseBody: tt.responseBody,
@@ -109,13 +103,7 @@ func TestGetConnectionByUID(t *testing.T) {
 				namespaceMapper: func(orgID int64) string { return "default" },
 			}
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			reqCtx := &contextmodel.ReqContext{
-				Context:      &web.Context{Req: req},
-				SignedInUser: &user.SignedInUser{OrgID: 1},
-			}
-
-			result, err := client.GetConnectionByUID(reqCtx, tt.uid)
+			result, err := client.GetConnectionByUID(context.Background(), 1, tt.uid)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -186,13 +174,7 @@ func TestGetConnectionByUIDLegacy(t *testing.T) {
 				},
 			}
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			reqCtx := &contextmodel.ReqContext{
-				Context:      &web.Context{Req: req},
-				SignedInUser: &user.SignedInUser{OrgID: 1},
-			}
-
-			conn, err := client.GetConnectionByUID(reqCtx, "uid")
+			conn, err := client.GetConnectionByUID(context.Background(), 1, "uid")
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
@@ -214,6 +196,6 @@ type mockDataSourceService struct {
 	error    error
 }
 
-func (m *mockDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+func (m *mockDataSourceService) GetDataSource(_ context.Context, _ *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	return m.response, m.error
 }

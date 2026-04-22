@@ -293,6 +293,184 @@ func newMockQueryServiceWithMetricsRegistry(
 	return s, req
 }
 
+func TestTransformDataDegradedPipeline(t *testing.T) {
+	dsDF := data.NewFrame("test",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+	)
+
+	t.Run("returns partial results for broken expressions", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+		me := &mockEndpoint{
+			Responses: map[string]backend.DataResponse{
+				"A": {Frames: data.Frames{dsDF}},
+			},
+		}
+
+		cfg := setting.NewCfg()
+		cfg.ExpressionsEnabled = true
+		pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "test"}},
+			},
+		}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+		s := Service{
+			cfg:                       cfg,
+			dataService:               me,
+			features:                  featuremgmt.WithFeatures(),
+			tracer:                    tracing.NewNoopTracerService(),
+			metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
+			pCtxProvider:              pCtxProvider,
+			qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			converter: &ResultConverter{
+				Features: featuremgmt.WithFeatures(),
+				Tracer:   tracing.NewNoopTracerService(),
+			},
+		}
+
+		queries := []Query{
+			{
+				RefID: "A",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{},
+			},
+			{
+				RefID:      "B",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2" }`),
+			},
+		}
+
+		req := &Request{Queries: queries, User: &user.SignedInUser{}}
+		resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+		require.NoError(t, err, "TransformData should not return error for degraded pipelines")
+		require.NotNil(t, resp)
+
+		// A should have data
+		require.Contains(t, resp.Responses, "A")
+		require.NoError(t, resp.Responses["A"].Error)
+		require.NotEmpty(t, resp.Responses["A"].Frames)
+
+		// B should have an error
+		require.Contains(t, resp.Responses, "B")
+		require.Error(t, resp.Responses["B"].Error)
+		require.Contains(t, resp.Responses["B"].Error.Error(), "NONEXISTENT")
+	})
+
+	t.Run("still fails entirely when toggle OFF", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.ExpressionsEnabled = true
+
+		s := Service{
+			cfg:      cfg,
+			features: featuremgmt.WithFeatures(),
+			tracer:   tracing.NewNoopTracerService(),
+			metrics:  metrics.NewSSEMetrics(prometheus.NewRegistry()),
+			converter: &ResultConverter{
+				Features: featuremgmt.WithFeatures(),
+				Tracer:   tracing.NewNoopTracerService(),
+			},
+		}
+
+		queries := []Query{
+			{
+				RefID: "A",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{},
+			},
+			{
+				RefID:      "B",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2" }`),
+			},
+		}
+
+		req := &Request{Queries: queries, User: &user.SignedInUser{}}
+		resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+		require.Error(t, err, "TransformData should fail when toggle is off")
+		require.Nil(t, resp)
+	})
+}
+
+func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+	dsDF := data.NewFrame("test",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+	)
+
+	me := &mockEndpoint{
+		Responses: map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{dsDF}},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.ExpressionsEnabled = true
+	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+	s := Service{
+		cfg:                       cfg,
+		dataService:               me,
+		features:                  featuremgmt.WithFeatures(),
+		tracer:                    tracing.NewNoopTracerService(),
+		metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
+		pCtxProvider:              pCtxProvider,
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
+		converter: &ResultConverter{
+			Features: featuremgmt.WithFeatures(),
+			Tracer:   tracing.NewNoopTracerService(),
+		},
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2", "hide": true }`),
+		},
+	}
+
+	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	// A should have data
+	require.Contains(t, resp.Responses, "A")
+
+	// B should be excluded (hidden), even though it's broken
+	require.NotContains(t, resp.Responses, "B")
+}
+
 // Return the value of a prometheus counter with the given labels to test if it has been incremented, if the labels don't exist 0 will still be returned.
 func counterVal(t *testing.T, cv *prometheus.CounterVec, labels ...string) float64 {
 	t.Helper()

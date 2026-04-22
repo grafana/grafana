@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
-import { trackCardAction, CardActionSource } from './tracking';
+import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
+import { QueryEditorType } from './constants';
+import { trackCardAction, type CardActionSource } from './tracking';
 
 export interface ActionItem {
   name: string;
@@ -38,6 +39,16 @@ interface ActionsProps {
   };
 }
 
+const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
+  const isTransformation = item.type === QueryEditorType.Transformation;
+  const isHidden = item.isHidden;
+
+  if (isTransformation) {
+    return isHidden ? labels.enable : labels.disable;
+  }
+  return isHidden ? labels.show : labels.hide;
+};
+
 export function Actions({
   contentHeader = false,
   handleResetFocus,
@@ -47,11 +58,12 @@ export function Actions({
   onToggleHide,
   order,
 }: ActionsProps) {
+  const theme = useTheme2();
+  const typeConfig = useQueryEditorTypeConfig();
   const styles = useStyles2(getStyles);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
-  const typeLabel = config.getLabel();
-  const requiresDeleteConfirmation = config.deleteConfirmation;
+  const typeLabel = typeConfig[item.type].getLabel();
+  const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
   const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
 
   const labels = useMemo(
@@ -60,6 +72,8 @@ export function Actions({
       remove: t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel }),
       show: t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel }),
       hide: t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel }),
+      enable: t('query-editor-next.action.enable', 'Enable {{type}}', { type: typeLabel }),
+      disable: t('query-editor-next.action.disable', 'Disable {{type}}', { type: typeLabel }),
     }),
     [typeLabel]
   );
@@ -125,7 +139,7 @@ export function Actions({
       onToggleHide && {
         id: 'hide',
         icon: item.isHidden ? 'eye-slash' : 'eye',
-        label: item.isHidden ? labels.show : labels.hide,
+        label: getToggleLabel(item, labels),
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
           trackCardAction('toggle_hide', item.type, cardActionSource);
@@ -135,20 +149,7 @@ export function Actions({
     ]
       .filter((btn): btn is ActionButtonConfig => Boolean(btn))
       .sort((a, b) => (orderMap[a.id] ?? 0) - (orderMap[b.id] ?? 0));
-  }, [
-    onDuplicate,
-    labels.duplicate,
-    labels.show,
-    labels.hide,
-    labels.remove,
-    onToggleHide,
-    item.isHidden,
-    item.type,
-    onDelete,
-    handleDelete,
-    order,
-    cardActionSource,
-  ]);
+  }, [order, onDuplicate, labels, onDelete, handleDelete, onToggleHide, item, cardActionSource]);
 
   return (
     <>
@@ -165,7 +166,7 @@ export function Actions({
               name="exclamation-triangle"
               aria-label={t('query-editor-next.action.error', 'Error')}
               className={styles.errorIcon}
-              color={QUERY_EDITOR_COLORS.error}
+              color={theme.colors.error.text}
             />
           </Tooltip>
         )}

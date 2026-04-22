@@ -1,9 +1,11 @@
 package inhibitionrule
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
+	"os"
 	"path"
 	"testing"
 
@@ -13,7 +15,7 @@ import (
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -40,7 +42,7 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client, err := v0alpha1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
@@ -68,13 +70,18 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	importedRule := inhibitionRules.Items[0]
 
 	t.Run("list should return all imported inhibition rules", func(t *testing.T) {
-		got, err := json.MarshalIndent(inhibitionRules, "", "  ")
+		got, err := json.Marshal(inhibitionRules)
 		require.NoError(t, err)
 
-		exp, err := testData.ReadFile(path.Join("test-data", "list.json"))
+		snapshotPath := path.Join("test-data", "list.json")
+		exp, err := os.ReadFile(snapshotPath) // #nosec G304
 		require.NoError(t, err)
 
-		require.JSONEq(t, string(exp), string(got), "response should match expected snapshot")
+		if !assert.JSONEq(t, string(exp), string(got), "response should match expected snapshot") {
+			var prettyJSON bytes.Buffer
+			require.NoError(t, json.Indent(&prettyJSON, got, "", "  "))
+			require.NoError(t, os.WriteFile(snapshotPath, prettyJSON.Bytes(), 0o644))
+		}
 	})
 
 	t.Run("should not be able to update imported inhibition rules", func(t *testing.T) {

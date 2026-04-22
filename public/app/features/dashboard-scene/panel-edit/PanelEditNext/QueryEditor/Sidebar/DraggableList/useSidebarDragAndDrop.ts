@@ -1,4 +1,4 @@
-import { DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { trackReorder } from '../../../tracking';

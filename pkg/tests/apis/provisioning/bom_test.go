@@ -14,24 +14,21 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_BOMs tests that BOMs in provisioned files are handled correctly
 func TestIntegrationProvisioning_BOMs(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "bom-test-repo"
 
 	t.Run("dashboard JSON file with UTF-8 BOM prefix", func(t *testing.T) {
 		// Create repository first
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -113,10 +110,10 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository
 		repoName := "bom-embedded-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -187,10 +184,10 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository first
 		repoName := "bom-deletion-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -283,10 +280,10 @@ spec:
 
 		// Create repository first
 		repoName := "bom-yaml-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 

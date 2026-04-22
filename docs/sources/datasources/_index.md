@@ -91,6 +91,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/troubleshooting/
+  create-dashboards-from-suggestions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-template-dashboards/#create-dashboards-from-suggestions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-template-dashboards/#create-dashboards-from-suggestions
 ---
 
 # Data sources
@@ -264,7 +269,7 @@ Each built-in data source also has its own troubleshooting page with guidance sp
 
 After you've configured a data source, you can:
 
-- **Build a dashboard:** Click the **Build a dashboard** button on the data source configuration page, or refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/).
+- **Build a dashboard:** Click the **Build a dashboard** drop-down list on the data source configuration page and select **From suggestions** to open a dialog box with suggested dashboards based on the data source type. For more information, refer to [Create dashboards from suggestions](ref:create-dashboards-from-suggestions) or [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/).
 - **Explore your data:** Use [Explore](ref:explore) to run free-form queries without creating a dashboard.
 - **Set up alerts:** Create [alert rules](ref:alerts) to get notified when your data meets certain conditions.
 - **Use template variables:** Create dynamic, reusable dashboards with [template variables](ref:template-variables).

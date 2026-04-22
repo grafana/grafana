@@ -168,7 +168,7 @@ You can assign organization roles (`Viewer`, `Editor`, `Admin`) to a Grafana ser
 In [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also [assign RBAC roles](ref:rbac-assign-rbac-roles) to grant very specific permissions to applications that interact with Grafana.
 
 {{< admonition type="note" >}}
-Since Grafana 10.2.0, the `No Basic Role` is available for organization users or service accounts. This role has no permissions. Grant permissions with RBAC.
+Since Grafana 10.2.0, the `None` basic role is available for organization users or service accounts. This role has no permissions by default, and you can grant permissions with RBAC.
 {{< /admonition >}}
 
 ### Before you begin

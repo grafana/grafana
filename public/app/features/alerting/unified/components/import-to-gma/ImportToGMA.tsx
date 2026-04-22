@@ -3,14 +3,14 @@ import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
   trackImportToGMADryrunError,
@@ -23,7 +23,8 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
-import { Folder } from '../../types/rule-form';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
+import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
@@ -32,17 +33,23 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
+import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { MERGE_MATCHERS_LABEL_NAME, getPauseRulesLabel } from './Wizard/constants';
+import { getPauseRulesLabel } from './Wizard/constants';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { DryRunValidationResult } from './types';
-import { useExtraConfigState } from './useExtraConfigState';
-import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
+import { type DryRunValidationResult } from './types';
+import {
+  buildRoutingParams,
+  filterRulerRulesConfig,
+  useDryRunNotifications,
+  useImportNotifications,
+  useImportRules,
+} from './useImport';
 import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
@@ -80,7 +87,7 @@ export interface ImportFormValues {
 const ImportToGMA = () => {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.import-to-gma-tool.pageTitle', 'Import to Grafana Alerting'),
       }}
@@ -172,9 +179,6 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  // Check for existing extra config that will be replaced
-  const { existingIdentifier } = useExtraConfigState();
-
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
     const formValues = getValues();
@@ -221,14 +225,18 @@ function ImportWizardContent() {
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed
   const handleStep1Next = useCallback((): boolean => {
-    // Block navigation if dry-run validation failed
     if (dryRunState === 'error') {
       return false;
     }
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    const currentPolicyTreeName = getValues('policyTreeName');
+    const currentRoutingTree = getValues('selectedRoutingTree');
+    if (currentPolicyTreeName && !currentRoutingTree) {
+      setValue('selectedRoutingTree', currentPolicyTreeName);
+    }
     return true;
-  }, [dryRunState, setValue]);
+  }, [dryRunState, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -290,20 +298,25 @@ function ImportWizardContent() {
           rulesPayload = filteredConfig;
         }
 
-        // Add routing tree label to all imported rules
-        const extraLabels = values.selectedRoutingTree
-          ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
-          : undefined;
-
-        await importRules({
+        const baseParams = {
           dataSourceUID: values.rulesDatasourceUID,
           targetFolderUID: values.targetFolder?.uid,
           pauseAlertingRules: values.pauseAlertingRules,
           pauseRecordingRules: values.pauseRecordingRules,
           payload: rulesPayload,
           targetDatasourceUID: values.targetDatasourceUID,
-          extraLabels,
-        });
+        };
+
+        const { notificationSettings, extraLabels } = buildRoutingParams(
+          values.selectedRoutingTree,
+          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
+        );
+
+        if (notificationSettings !== undefined) {
+          await importRules({ ...baseParams, notificationSettings });
+        } else {
+          await importRules({ ...baseParams, extraLabels });
+        }
       }
 
       setImportStatus('success');
@@ -386,7 +399,6 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
-              existingIdentifier={existingIdentifier}
             />
           )}
 
@@ -437,8 +449,6 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
-  /** Identifier of an existing imported config that will be replaced, if any */
-  existingIdentifier?: string;
 }
 
 function Step1Wrapper({
@@ -449,7 +459,6 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  existingIdentifier,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
   // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
@@ -476,7 +485,6 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
-        existingIdentifier={existingIdentifier}
       />
     </WizardStep>
   );
@@ -680,7 +688,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
         </Text>
         <Text color="secondary">
           <Trans i18nKey="alerting.import-to-gma.review.subtitle">
-            Review each section and once you are happy, start the migration.
+            Review each section and once you are happy, start the import.
           </Trans>
         </Text>
       </Box>
@@ -722,9 +730,10 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                   </div>
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
-                    <Text weight="medium">
-                      {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
-                    </Text>
+                    <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
+                      <Text weight="medium">{formData.policyTreeName}</Text>
+                      <PolicyTreeNameHelp />
+                    </Stack>
                   </div>
                   {dryRunResult && (
                     <Box marginTop={1}>

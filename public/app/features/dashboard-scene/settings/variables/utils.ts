@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDataSourceRef, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -11,17 +11,17 @@ import {
   TextBoxVariable,
   QueryVariable,
   GroupByVariable,
-  SceneVariable,
-  MultiValueVariable,
+  type SceneVariable,
+  type MultiValueVariable,
   sceneUtils,
-  SceneObject,
+  type SceneObject,
   AdHocFiltersVariable,
-  SceneVariableState,
+  type SceneVariableState,
   SceneVariableSet,
   SwitchVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableType } from '@grafana/schema';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
@@ -97,7 +97,7 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
-    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Ad hoc filters'),
+    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Filter'),
     description: t(
       'dashboard-scene.get-editable-variables.description.add-keyvalue-filters-on-the-fly',
       'Add key/value filters on the fly'
@@ -162,12 +162,16 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
     description: editableVariables[variableType].description,
   }));
 
-  if (!config.featureToggles.groupByVariable) {
-    // Remove group by variable type if feature toggle is off
-    return results.filter((option) => option.value !== 'groupby');
-  }
+  return results.filter((option) => {
+    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+      return false;
+    }
+    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
+      return false;
+    }
 
-  return results;
+    return true;
+  });
 }
 
 export function getVariableEditor(type: EditableVariableType) {
@@ -206,7 +210,6 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
-        layout: 'combobox',
       });
     case 'groupby':
       return new GroupByVariable(initialState);
@@ -222,7 +225,14 @@ export function getVariableDefault(variables: Array<SceneVariable<SceneVariableS
   return getVariableScene('query', { name: nextVariableIdName });
 }
 
-export function getNextAvailableId(type: VariableType, variables: Array<SceneVariable<SceneVariableState>>): string {
+export function getVariableNamePrefix(type: EditableVariableType): string {
+  return type === 'adhoc' ? 'filter' : type;
+}
+
+export function getNextAvailableId(
+  type: VariableType | string,
+  variables: Array<SceneVariable<SceneVariableState>>
+): string {
   let counter = 0;
   let nextId = `${type}${counter}`;
 
@@ -294,10 +304,13 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
 export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
 export const WORD_CHARACTERS_REGEX = /^\w+$/;
 
-export function validateVariableName(
-  variable: SceneVariable,
-  name: string
-): { isValid: boolean; errorMessage?: string } {
+export interface VariableNameValidationResult {
+  isValid: boolean;
+  errorMessage?: string;
+  warningMessage?: string;
+}
+
+export function validateVariableName(variable: SceneVariable, name: string): VariableNameValidationResult {
   const set = variable.parent;
   if (!(set instanceof SceneVariableSet)) {
     throw new Error('Variable parent is not a SceneVariableSet');
@@ -320,7 +333,54 @@ export function validateVariableName(
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
   }
 
+  // Check ancestor variable sets — section variable shadows a dashboard-level variable
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
+      const ancestorVar = ancestorVars.getByName(name);
+      if (ancestorVar) {
+        return {
+          isValid: true,
+          warningMessage:
+            'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
+        };
+      }
+    }
+    ancestor = ancestor.parent;
+  }
+
+  // Check descendant variable sets — dashboard variable collides with a section variable
+  if (set.parent) {
+    const conflict = findNameInDescendantSets(set.parent, name, set);
+    if (conflict) {
+      return {
+        isValid: true,
+        warningMessage:
+          'A variable with this name already exists in a section. This variable will be ignored in that section.',
+      };
+    }
+  }
+
   return { isValid: true };
+}
+
+function findNameInDescendantSets(sceneObject: SceneObject, name: string, excludeSet: SceneVariableSet): boolean {
+  let found = false;
+  sceneObject.forEachChild((child) => {
+    if (found) {
+      return;
+    }
+    const childVars = child.state.$variables;
+    if (childVars instanceof SceneVariableSet && childVars !== excludeSet && childVars.getByName(name)) {
+      found = true;
+      return;
+    }
+    if (findNameInDescendantSets(child, name, excludeSet)) {
+      found = true;
+    }
+  });
+  return found;
 }
 
 export function isVariableEditable(variable: SceneVariable) {

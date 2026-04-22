@@ -1,7 +1,7 @@
-import { LogRowModel } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type LogListModel, NEWLINES_REGEX } from '../panel/processing';
 
 /**
  * The presence of this field along log fields determines OTel origin.
@@ -100,11 +100,9 @@ function getDefaultOTelDisplayFormat() {
 }
 
 const OTEL_RESOURCE_ATTRS_REGEX =
-  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_|cluster$|namespace$|pod$)/;
+  /^(aws_|aws\.|cloud_|cloud\.|cloudfoundry_|cloudfoundry\.|container_|container\.|deployment_|deployment\.|faas_|faas\.|gcp_|gcp\.|host_|host\.|k8s_|k8s\.|os_|os\.|process_|process\.|service_|service\.|telemetry_|telemetry\.|cluster$|cluster\.|namespace$|namespace\.|pod$|pod\.)/;
 const OTEL_LOG_FIELDS_REGEX =
-  /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
-
-export const OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME = '___OTEL_LOG_ATTRIBUTES___';
+  /^(flags|observed_timestamp|observed\.timestamp|severity_number|severity\.number|severity_text|severity\.text|span_id|span\.id|trace_id|trace\.id|detected_level)$/;
 
 export function getOtelAttributesField(log: LogListModel, wrapLogMessage: boolean) {
   const additionalFields = Object.keys(log.labels).filter(

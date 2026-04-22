@@ -1,22 +1,22 @@
 import {
   SceneDataNode,
   SceneDataTransformer,
-  SceneDeactivationHandler,
+  type SceneDeactivationHandler,
   SceneFlexItem,
   SceneFlexLayout,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   TestVariable,
 } from '@grafana/scenes';
-import { DataTransformerConfig, LoadingState } from '@grafana/schema';
+import { type DataTransformerConfig, LoadingState } from '@grafana/schema';
 
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { getDefaultTimeRange } from '../../types/time';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -28,7 +28,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import {
   CalculateFieldMode,
   calculateFieldTransformer,
-  ReduceOptions,
+  type ReduceOptions,
   WindowSizeMode,
   WindowAlignment,
   getNameFromOptions,

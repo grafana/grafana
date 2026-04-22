@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	_ "github.com/microsoft/go-mssqldb/integratedauth/krb5"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
@@ -91,7 +92,7 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			OrgID:                   pluginCfg.OrgID,
+			OrgID:                   pluginCfg.OrgID, // nolint:staticcheck
 		}
 
 		userFacingDefaultError, err := grafCfg.UserFacingDefaultError()

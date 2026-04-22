@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, dateTimeFormat, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 

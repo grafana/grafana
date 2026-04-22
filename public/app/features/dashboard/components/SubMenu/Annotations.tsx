@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { AnnotationQuery, DataQuery, EventBus } from '@grafana/data';
+import { type AnnotationQuery, type DataQuery, type EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { AnnotationPicker } from './AnnotationPicker';

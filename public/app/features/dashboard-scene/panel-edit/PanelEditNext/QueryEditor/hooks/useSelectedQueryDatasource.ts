@@ -1,8 +1,8 @@
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 /**
  * Hook to load the datasource for the currently selected query.

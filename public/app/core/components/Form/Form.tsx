@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { HTMLProps, useEffect } from 'react';
+import { type HTMLProps, useEffect } from 'react';
 import * as React from 'react';
 import {
   useForm,
-  Mode,
-  DefaultValues,
-  SubmitHandler,
-  FieldValues,
-  UseFormReturn,
-  FieldErrors,
-  FieldPath,
+  type Mode,
+  type DefaultValues,
+  type SubmitHandler,
+  type FieldValues,
+  type UseFormReturn,
+  type FieldErrors,
+  type FieldPath,
 } from 'react-hook-form';
 
 export type FormAPI<T extends FieldValues> = Omit<UseFormReturn<T>, 'handleSubmit'> & {

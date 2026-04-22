@@ -6,20 +6,28 @@ import "github.com/grafana/alerting/definition"
 //
 // Get all notification template groups.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: NotificationTemplates
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
 // Get a notification template group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: NotificationTemplate
+//       403: ForbiddenError
 //       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
 // Updates an existing notification template group.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -27,14 +35,18 @@ import "github.com/grafana/alerting/definition"
 //     Responses:
 //       202: NotificationTemplate
 //       400: PublicError
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
 // Delete a notification template group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       204: description: The template was deleted successfully.
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate

@@ -1,11 +1,11 @@
 import {
   AppEvents,
-  DataFrame,
+  type DataFrame,
   getPanelDataSummary,
-  PanelDataSummary,
-  PanelPlugin,
-  PanelPluginVisualizationSuggestion,
-  PreferredVisualisationType,
+  type PanelDataSummary,
+  type PanelPlugin,
+  type PanelPluginVisualizationSuggestion,
+  type PreferredVisualisationType,
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';

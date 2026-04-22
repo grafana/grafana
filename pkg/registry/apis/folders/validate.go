@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -19,6 +23,41 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by a repository")
+
+func isRepoManaged(f *folders.Folder) bool {
+	meta, err := utils.MetaAccessor(f)
+	if err != nil {
+		return false
+	}
+	kind := meta.GetAnnotation(utils.AnnoKeyManagerKind)
+	return kind != "" && utils.ParseManagerKindString(kind) == utils.ManagerKindRepo
+}
+
+func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Folder) error {
+	if !isRepoManaged(obj) && (old == nil || !isRepoManaged(old)) {
+		return nil
+	}
+
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+
+	if old == nil {
+		if len(obj.OwnerReferences) > 0 {
+			return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
+		}
+		return nil
+	}
+
+	if !apiequality.Semantic.DeepEqual(old.OwnerReferences, obj.OwnerReferences) {
+		return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
+	}
+
+	return nil
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name
 
@@ -26,7 +65,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return dashboards.ErrFolderInvalidUID
+		return folder.ErrInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -34,6 +73,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to read metadata from object: %w", err)
 	}
 
+	// UID format is only validated on create. On update the Kubernetes API server enforces
+	// that the object name (which maps to the UID) is immutable, so re-validating here
+	// would be redundant.
 	if !util.IsValidShortUID(id) {
 		return dashboards.ErrDashboardInvalidUid
 	}
@@ -42,8 +84,14 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return dashboards.ErrDashboardUidTooLong
 	}
 
+	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
+
 	if f.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	parentName := meta.GetFolder()
@@ -87,8 +135,14 @@ func validateOnUpdate(ctx context.Context,
 		return err
 	}
 
+	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
+
 	if obj.Spec.Title == "" {
-		return dashboards.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
+	}
+
+	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {

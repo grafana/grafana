@@ -366,4 +366,45 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, result.WarningReason())
 	})
+
+	t.Run("FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		result := NewResourceResult().WithWarning(conflictErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
+
+	t.Run("wrapped FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		wrapped := fmt.Errorf("processing folder: %w", conflictErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
+}
+
+func TestIsNonFailingWarning(t *testing.T) {
+	t.Run("nil is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(nil))
+	})
+
+	t.Run("MissingFolderMetadata is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(resources.NewMissingFolderMetadata("folder/")))
+	})
+
+	t.Run("InvalidFolderMetadata is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(resources.NewInvalidFolderMetadata("folder/", errors.New("bad json"))))
+	})
+
+	t.Run("FolderMetadataConflict is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(&resources.FolderMetadataConflict{Path: "folder/", Reason: "UID mismatch"}))
+	})
+
+	t.Run("ResourceValidationError is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(resources.NewResourceValidationError(errors.New("invalid"))))
+	})
+
+	t.Run("generic error is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(errors.New("something went wrong")))
+	})
 }

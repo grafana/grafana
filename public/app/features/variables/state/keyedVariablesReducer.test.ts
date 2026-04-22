@@ -4,7 +4,7 @@ import { TransactionStatus } from '../types';
 import {
   initialKeyedVariablesState,
   keyedVariablesReducer,
-  KeyedVariablesState,
+  type KeyedVariablesState,
   toKeyedAction,
 } from './keyedVariablesReducer';
 import { getInitialTemplatingState } from './reducers';

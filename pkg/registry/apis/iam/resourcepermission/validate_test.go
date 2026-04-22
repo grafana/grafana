@@ -43,6 +43,29 @@ func TestValidateOnCreate(t *testing.T) {
 			want: errInvalidName,
 		},
 		{
+			name: "wildcard resource name - should fail",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "folder.grafana.app-folders-*",
+				},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "*",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+							Name: "Editor",
+							Verb: "edit",
+						},
+					},
+				},
+			},
+			want: errInvalidSpec,
+		},
+		{
 			name: "mismatched name and spec - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
 				ObjectMeta: v1.ObjectMeta{
@@ -156,9 +179,61 @@ func TestValidateOnCreate(t *testing.T) {
 		},
 	}
 
+	mappers := NewMappersRegistry()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateCreateAndUpdateInput(context.Background(), test.obj)
+			err := ValidateCreateAndUpdateInput(context.Background(), test.obj, mappers)
+			if test.want == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorAs(t, test.want, &err)
+			}
+		})
+	}
+}
+
+func TestValidateDeleteInput(t *testing.T) {
+	tests := []struct {
+		name    string
+		objName string
+		want    error
+	}{
+		{
+			name:    "invalid name - should fail",
+			objName: "some-invalid-name",
+			want:    errInvalidName,
+		},
+		{
+			name:    "wildcard resource name - should fail",
+			objName: "folder.grafana.app-folders-*",
+			want:    errInvalidSpec,
+		},
+		{
+			name:    "enabled group/resource (folder) - should pass",
+			objName: "folder.grafana.app-folders-test_folder",
+			want:    nil,
+		},
+		{
+			name:    "enabled group/resource (dashboard) - should pass",
+			objName: "dashboard.grafana.app-dashboards-test_dashboard",
+			want:    nil,
+		},
+		{
+			name:    "disabled group/resource - should fail",
+			objName: "disabled.grafana.app-resources-test_resource",
+			want:    errUnknownGroupResource,
+		},
+		{
+			name:    "unknown group/resource - should fail",
+			objName: "unknown.group-app-resources-test",
+			want:    errUnknownGroupResource,
+		},
+	}
+
+	mappers := NewMappersRegistry()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := ValidateDeleteInput(context.Background(), test.objName, mappers)
 			if test.want == nil {
 				assert.NoError(t, err)
 			} else {

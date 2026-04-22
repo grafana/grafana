@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { sharedWithMeFolder, wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPageFulfilled, setAllSelection, setFolderOpenState, setItemSelectionState } from './reducers';
 

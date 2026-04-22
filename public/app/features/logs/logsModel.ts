@@ -3,37 +3,37 @@ import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   createDataFrame,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  DateTimeInput,
-  Field,
+  type DateTimeInput,
+  type Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
   findCommonLabels,
   findUniqueLabels,
   getTimeField,
-  Labels,
+  type Labels,
   LoadingState,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsMetaKind,
-  LogsModel,
-  LogsVolumeCustomMetaData,
+  type LogsModel,
+  type LogsVolumeCustomMetaData,
   LogsVolumeType,
   rangeUtil,
-  ScopedVars,
+  type ScopedVars,
   sortDataFrame,
   textUtil,
   toDataFrame,
@@ -46,7 +46,7 @@ import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
-import { LogsFrame, parseLogsFrame } from './logsFrame';
+import { type LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';

@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 type AsyncOptions<T extends string | number> =
@@ -120,7 +120,11 @@ export function useOptions<T extends string | number>(
     return [addCustomValue(options), groupStartIndices];
   }, [filteredOptions, addCustomValue]);
 
-  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
+  const resetSearch = useCallback(() => {
+    setUserTypedSearch('');
+  }, []);
+
+  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError, resetSearch };
 }
 
 /**

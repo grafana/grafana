@@ -16,12 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionString(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	skipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		desc        string
@@ -173,7 +172,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgres(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	skipIntegrationTestInShortMode(t)
 
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false

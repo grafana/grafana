@@ -1,9 +1,9 @@
-import { SyntheticEvent, useId } from 'react';
+import { type SyntheticEvent, useId } from 'react';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { type DataSourceSettings, type SelectableValue } from '@grafana/data';
 import { Select, Input, Field, FieldSet } from '@grafana/ui';
 
-import { OpenTsdbOptions } from '../types';
+import { type OpenTsdbOptions } from '../types';
 
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },

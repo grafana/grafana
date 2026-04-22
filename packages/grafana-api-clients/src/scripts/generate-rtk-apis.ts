@@ -1,6 +1,6 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 // Grafana root path - navigate up from this script's directory
@@ -92,6 +92,18 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../clients/rtkq/preferences/org/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/org/baseAPI.ts',
+      filterEndpoints: ['getOrgPreferences', 'updateOrgPreferences', 'patchOrgPreferences'],
+    },
+    '../clients/rtkq/preferences/team/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
+      filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
+    },
     '../clients/rtkq/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: defaultHooksOptions,
@@ -111,6 +123,7 @@ const config: ConfigFile = {
     ...createAPIConfig('provisioning', 'v0alpha1'),
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
+    ...createAPIConfig('notifications.alerting', 'v1beta1'),
     ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),

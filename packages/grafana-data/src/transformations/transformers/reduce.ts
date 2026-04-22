@@ -2,9 +2,9 @@ import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { KeyValue } from '../../types/data';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
+import { type KeyValue } from '../../types/data';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerInfo, type FieldMatcher, type MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';

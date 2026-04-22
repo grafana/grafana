@@ -1,6 +1,10 @@
-import { skipToken } from '@reduxjs/toolkit/query';
+import { type skipToken } from '@reduxjs/toolkit/query';
 
-import { ListRepositoryApiArg, Repository, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type ListRepositoryApiArg,
+  type Repository,
+  useListRepositoryQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 // Sort repositories alphabetically by title
 export function useRepositoryList(

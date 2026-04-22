@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 
-import { CoreApp, GrafanaTheme2, LocalStorageValueProvider, TimeRange } from '@grafana/data';
+import { type CoreApp, type GrafanaTheme2, LocalStorageValueProvider, type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import { LokiLabelBrowser } from '../../components/LokiLabelBrowser';
-import { LokiDatasource } from '../../datasource';
-import { LokiQuery } from '../../types';
+import { type LokiDatasource } from '../../datasource';
+import { type LokiQuery } from '../../types';
 
 export interface Props {
   isOpen: boolean;

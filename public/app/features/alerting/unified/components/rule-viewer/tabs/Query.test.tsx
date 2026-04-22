@@ -1,13 +1,13 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { AlertDataQuery, AlertQuery } from '../../../../../../types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
 import { mockCombinedRule, mockDataSource, mockRulerGrafanaRule } from '../../../mocks';
-import { AlertingQueryResponse } from '../../../state/AlertingQueryRunner';
+import { type AlertingQueryResponse } from '../../../state/AlertingQueryRunner';
 import { setupDataSources } from '../../../testSetup/datasources';
 
 import { QueryResults } from './Query';

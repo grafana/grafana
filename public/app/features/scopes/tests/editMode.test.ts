@@ -1,12 +1,12 @@
-import { act } from '@testing-library/react';
+import { act, cleanup } from '@testing-library/react';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesService } from '../ScopesService';
-import { ScopesSelectorService } from '../selector/ScopesSelectorService';
+import { type ScopesService } from '../ScopesService';
+import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import { expectDashboardsOpen } from './utils/assertions';
@@ -147,6 +147,18 @@ describe('setRedirectEnabled', () => {
     await enterEditMode(dashboardScene);
     act(() => {
       dashboardScene.exitEditMode({ skipConfirm: true });
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
+  });
+
+  it('Re-enables redirects when component unmounts while still in edit mode', async () => {
+    await enterEditMode(dashboardScene);
+
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    act(() => {
+      cleanup();
     });
 
     expect(spy).toHaveBeenCalledWith(true);

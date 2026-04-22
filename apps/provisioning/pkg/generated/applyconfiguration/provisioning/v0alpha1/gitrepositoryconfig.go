@@ -7,7 +7,7 @@ package v0alpha1
 // GitRepositoryConfigApplyConfiguration represents a declarative configuration of the GitRepositoryConfig type for use
 // with apply.
 type GitRepositoryConfigApplyConfiguration struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`

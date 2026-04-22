@@ -3,8 +3,8 @@ import { useCallback, useMemo } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { ExploreItemState } from 'app/types/explore';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';

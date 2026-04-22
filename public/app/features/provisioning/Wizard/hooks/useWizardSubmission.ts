@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { type UseFormReturn } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { dataToSpec } from '../../utils/data';
 import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
-import { Step } from '../Stepper';
-import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
 export interface UseWizardSubmissionParams {
   activeStep: WizardStep;

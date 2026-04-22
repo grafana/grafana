@@ -5,7 +5,7 @@ import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 import { Alert, CodeEditor } from '@grafana/ui';
 
-import { EditorProps } from '../QueryEditor';
+import { type EditorProps } from '../QueryEditor';
 
 export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
   const [error, setError] = useState<string>();

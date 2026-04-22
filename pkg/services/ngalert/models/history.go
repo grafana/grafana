@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -12,7 +14,7 @@ type HistoryQuery struct {
 	OrgID        int64
 	DashboardUID string
 	PanelID      int64
-	Labels       map[string]string
+	Labels       labels.Matchers
 	Previous     string
 	Current      string
 	From         time.Time

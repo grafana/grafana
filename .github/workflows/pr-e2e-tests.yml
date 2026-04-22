@@ -56,11 +56,8 @@ jobs:
           path: bin
 
       - name: Setup Go
-        uses: actions/setup-go@v6.3.0
+        uses: ./.github/actions/setup-go
         if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          go-version-file: 'go.mod'
-          cache: true
 
       - name: Build backend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -232,12 +229,15 @@ jobs:
 
       - name: Wait for Grafana server to start
         run: |
-          timeout=180
+          timeout=60
           elapsed=0
           printf "Waiting for Grafana to start"
           while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
             if [ $elapsed -ge $timeout ]; then
-              printf "\nTimeout after %d seconds waiting for Grafana\n" "$timeout"
+              printf "\n\n--- Grafana server logs ---\n"
+              cat grafana-server/grafana.log
+              printf "\n--- End of Grafana server logs ---\n\n"
+              printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
               exit 1
             fi
             printf "."
@@ -290,7 +290,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -365,7 +365,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*

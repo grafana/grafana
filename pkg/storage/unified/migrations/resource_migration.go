@@ -2,18 +2,24 @@ package migrations
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
@@ -70,6 +76,21 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 
 	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", r.resources)
 
+	// Skip migration if all resources are already on unified storage
+	// this handles earlier instances that were writing directly to unistore and never
+	// migrated through the legacy path. without this check, the migration would wipe
+	// unistore and repopulate from sql, resulting in data loss
+	alreadyMigrated, err := r.isAlreadyOnUnifiedStorage(sess)
+	if err != nil {
+		r.log.Error("failed to check dualwrite state, aborting migration", "error", err)
+		return fmt.Errorf("failed to check dualwrite state: %w", err)
+	}
+	if alreadyMigrated {
+		r.log.Debug("skipping migration: resources already on unified storage per dualwrite state",
+			"resources", r.definition.ConfigResources())
+		return nil
+	}
+
 	if opts.DriverName == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
 		tx, err := sess.Tx()
@@ -97,6 +118,22 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		return fmt.Errorf("failed to recover partial rename: %w", err)
 	}
 	lockTables := r.definition.GetLockTables()
+
+	// Skip migration if the table does not exist
+	// This is common for deployments that stop creating the legacy table for new instances
+	if r.definition.SkipWhenMissing {
+		for _, table := range lockTables {
+			found, err := sess.IsTableExist(table)
+			if err != nil {
+				return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
+			}
+			if !found {
+				r.log.Info("Migration is not required, the legacy SQL table does not exist", "table", table)
+				return nil
+			}
+		}
+	}
+
 	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
 	if err != nil {
 		return fmt.Errorf("failed to lock tables for migration: %w", err)
@@ -304,4 +341,125 @@ func ParseOrgIDFromNamespace(namespace string) (int64, error) {
 type orgInfo struct {
 	ID   int64  `xorm:"id"`
 	Name string `xorm:"name"`
+}
+
+// dualwriteKVNamespace was used in older versions of grafana to keep track of dual writer state.
+// it is no longer used, other than for backwards compatibility
+const dualwriteKVNamespace = "unified.dualwrite"
+
+// FoldersDashboardsMigrationID is the definition ID of the folders/dashboards migration.
+// It is the only migration whose legacy dualwrite state we need to verify.
+const FoldersDashboardsMigrationID = "folders-dashboards"
+
+// dualwriteFileName is the name of the file used by G12.0.0 to persist dualwrite state
+// in the data directory. It contains a JSON-encoded map of resource keys
+// (e.g. "dashboards.dashboard.grafana.app") to dualwriteStorageStatus.
+const dualwriteFileName = "dualwrite.json"
+
+// dualwriteStorageStatus holds info to determine whether a resource was already migrated to unified storage
+type dualwriteStorageStatus struct {
+	ReadUnified  bool  `json:"read_unified"`
+	WriteUnified bool  `json:"write_unified"`
+	WriteLegacy  bool  `json:"write_legacy"`
+	Migrated     int64 `json:"migrated"`
+}
+
+// migratedToUnified reports whether the status indicates a completed migration to unified storage.
+func (s dualwriteStorageStatus) migratedToUnified() bool {
+	return s.ReadUnified && s.WriteUnified && !s.WriteLegacy && s.Migrated > 0
+}
+
+// isAlreadyOnUnifiedStorage checks persisted dualwrite state used by prior versions of Grafana.
+// Returns true when all resources in the definition were already migrated to unified storage
+// (read_unified=true, write_unified=true, write_legacy=false, and migrated>0).
+// This is to prevent data loss, as otherwise unified storage will be wiped and repopulated
+// from sql, destroying resources that only exist in unified storage.
+//
+// Two historical locations are checked:
+//   - kv_store table with namespace "unified.dualwrite" (12.1.0+)
+//   - <data_path>/dualwrite.json file containing a map[string]StorageStatus (12.0.0)
+//
+// This legacy path was only ever exposed for folders/dashboards, so this check is skipped
+// for every other migration definition.
+func (r *MigrationRunner) isAlreadyOnUnifiedStorage(sess *xorm.Session) (bool, error) {
+	if r.definition.ID != FoldersDashboardsMigrationID {
+		return false, nil
+	}
+
+	configResources := r.definition.ConfigResources()
+	if len(configResources) == 0 {
+		return false, nil
+	}
+
+	fileStatuses, err := r.readDualwriteFile()
+	if err != nil {
+		return false, fmt.Errorf("failed to read dualwrite state file: %w", err)
+	}
+
+	for _, key := range configResources {
+		if status, ok := fileStatuses[key]; ok {
+			if !status.migratedToUnified() {
+				return false, nil
+			}
+			continue
+		}
+
+		status, found, err := r.readDualwriteKVState(sess, key)
+		if err != nil {
+			return false, err
+		}
+		if !found || !status.migratedToUnified() {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// readDualwriteKVState loads dualwrite state for the given resource key from kv_store.
+func (r *MigrationRunner) readDualwriteKVState(sess *xorm.Session, key string) (dualwriteStorageStatus, bool, error) {
+	orgID := int64(0)
+	ns := dualwriteKVNamespace
+	k := key
+	item := kvstore.Item{
+		OrgId:     &orgID,
+		Namespace: &ns,
+		Key:       &k,
+	}
+	found, err := sess.Get(&item)
+	if err != nil {
+		return dualwriteStorageStatus{}, false, fmt.Errorf("failed to query dualwrite state for %s: %w", key, err)
+	}
+	if !found {
+		return dualwriteStorageStatus{}, false, nil
+	}
+
+	var status dualwriteStorageStatus
+	if err := json.Unmarshal([]byte(item.Value), &status); err != nil {
+		return dualwriteStorageStatus{}, false, fmt.Errorf("failed to parse dualwrite state for %s: %w", key, err)
+	}
+	return status, true, nil
+}
+
+// readDualwriteFile loads dualwrite state written by G12.0.0 from <data_path>/dualwrite.json.
+// Returns an empty map (not an error) when the file or data path is not present.
+func (r *MigrationRunner) readDualwriteFile() (map[string]dualwriteStorageStatus, error) {
+	if r.cfg == nil || r.cfg.DataPath == "" {
+		return nil, nil
+	}
+
+	path := filepath.Clean(filepath.Join(r.cfg.DataPath, dualwriteFileName))
+	data, err := os.ReadFile(path) // #nosec G304 -- path is derived from trusted config
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var statuses map[string]dualwriteStorageStatus
+	if err := json.Unmarshal(data, &statuses); err != nil {
+		return nil, fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	return statuses, nil
 }

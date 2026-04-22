@@ -4,8 +4,8 @@ import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
-import { JobType } from '../types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { JobContent } from './JobContent';
 import { getJobMessages } from './getJobMessage';
