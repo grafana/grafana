@@ -10,7 +10,15 @@ export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
     received: Observable<T>,
     expectations: (received: T[]) => void
   ): Promise<jest.CustomMatcherResult>;
-  toMatchCanvasSnapshot(received: unknown, ...rest: ToMatchSnapshotRest): Promise<jest.CustomMatcherResult>;
+  toMatchUPlotSnapshot(
+    received: unknown,
+    data: unknown,
+    series: unknown[],
+    uPlotCanvasEvents: unknown[],
+    size?: { width?: number; height?: number },
+    snapshotHint?: string,
+    ...rest: ToMatchSnapshotRest
+  ): jest.CustomMatcherResult;
 }
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;

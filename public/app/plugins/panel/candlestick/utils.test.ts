@@ -40,8 +40,8 @@ const volumeSeries: uPlot.Series[] = [
 ];
 
 describe('drawMarkers', () => {
-  const height = 800;
-  const width = 1600;
+  const height = 400;
+  const width = 800;
   const upColor = '#73BF69';
   const downColor = '#F2495C';
   const flatColor = '#888888';

@@ -1,3 +1,4 @@
+import { type MatcherContext } from 'expect';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Context, toMatchSnapshot } from 'jest-snapshot';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -10,7 +11,7 @@ import {
   type UPlotComparePayloadV1,
 } from '../uplotComparePayload';
 
-type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
+export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
 
 type UPlotSnapshotSize = {
   width?: number;
@@ -22,7 +23,7 @@ type SnapshotMismatch = jest.CustomMatcherResult & {
 };
 
 export function toMatchUPlotSnapshot(
-  this: Context,
+  this: MatcherContext,
   received: CanvasRenderingContext2DEvent[],
   data: uPlot.AlignedData,
   series: uPlot.Series[],
@@ -33,11 +34,15 @@ export function toMatchUPlotSnapshot(
 ): jest.CustomMatcherResult {
   const payloadWidth = size?.width;
   const payloadHeight = size?.height;
-  const snapshotName = snapshotHint;
+  const [propertiesOrHint, hint] = rest;
+  const snapshotName = snapshotHint ?? hint;
+  const snapshotContext = this as Context;
   const result = (
-    snapshotName !== undefined
-      ? toMatchSnapshot.call(this, received, snapshotName, ...rest)
-      : toMatchSnapshot.call(this, received, ...rest)
+    propertiesOrHint !== undefined
+      ? toMatchSnapshot.call(snapshotContext, received, propertiesOrHint, snapshotName)
+      : snapshotName !== undefined
+        ? toMatchSnapshot.call(snapshotContext, received, snapshotName)
+        : toMatchSnapshot.call(snapshotContext, received)
   ) as SnapshotMismatch; // @todo how to properly get actual from jest?
 
   if (!result.pass && result.expected != null) {
@@ -83,7 +88,7 @@ export function toMatchUPlotSnapshot(
   return result;
 }
 
-export function parseSnapshotJson(text: string) {
+function parseSnapshotJson(text: string) {
   const withoutTrailingCommas = text.replace(/,(\s*[}\]])/g, '$1');
   return JSON.parse(withoutTrailingCommas);
 }
