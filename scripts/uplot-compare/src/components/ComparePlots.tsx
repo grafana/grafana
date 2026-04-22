@@ -3,7 +3,9 @@ import * as React from 'react';
 import type uPlot from 'uplot';
 import type { AlignedData } from 'uplot';
 
-import { eventsToCanvasScript } from '../canvasUtils.ts';
+import { type eventsToCanvasScript } from '../canvasUtils.ts';
+import { useCanvasEventsEffect } from '../hooks/useCanvasEventsEffect.ts';
+import { useDiffImageData } from '../hooks/useDiffImageData.ts';
 
 import { DiffCanvas } from './DiffCanvas.tsx';
 
@@ -33,6 +35,27 @@ interface ComparePlotsProps {
   payload: ResolvedPayload;
 }
 
+interface OverlayBlendSelectProps {
+  value: OverlayBlendMode;
+  onChange: (mode: OverlayBlendMode) => void;
+}
+
+function OverlayBlendSelect({ value, onChange }: OverlayBlendSelectProps) {
+  return (
+    <select
+      className="overlay-blend-select"
+      value={value}
+      onChange={(e) => onChange(toOverlayBlendMode(e.target.value))}
+    >
+      {OVERLAY_BLEND_MODES.map((mode) => (
+        <option key={mode} value={mode}>
+          Blend: {mode}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePlotsProps) {
   const width = payload.width ?? defaultWidth;
   const height = payload.height ?? defaultHeight;
@@ -40,8 +63,6 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const expectedUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
   const expectedOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
   const actualOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
-  const [hasDiff, setHasDiff] = React.useState(false);
-  const [diffImageData, setDiffImageData] = React.useState<ImageData | null>(null);
   const [showOverlay, setShowOverlay] = React.useState(false);
   const [expectedBlendMode, setExpectedBlendMode] = React.useState<OverlayBlendMode>('exclusion');
   const [actualBlendMode, setActualBlendMode] = React.useState<OverlayBlendMode>('exclusion');
@@ -49,33 +70,23 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const [renderActualSetupEvents, setRenderActualSetupEvents] = React.useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = React.useState(true);
 
-  React.useEffect(() => {
-    const canvas = actualUPlotInstance.current;
-    const context = canvas?.getContext('2d');
-    if (!canvas || !context) {
-      return;
-    }
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    if (renderActualSetupEvents) {
-      eventsToCanvasScript(payload.uPlotCanvasEvents, context);
-    }
-    eventsToCanvasScript(payload.actual, context);
-  }, [payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents]);
+  useCanvasEventsEffect(actualUPlotInstance, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
+  useCanvasEventsEffect(expectedUPlotInstance, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
+
+  const { hasDiff, diffImageData } = useDiffImageData({
+    expectedEvents: payload.expected,
+    actualEvents: payload.actual,
+    setupEvents: payload.uPlotCanvasEvents,
+    includeSetup: renderDiffSetupEvents,
+    width,
+    height,
+  });
 
   React.useEffect(() => {
-    const canvas = expectedUPlotInstance.current;
-    const context = canvas?.getContext('2d');
-    if (!canvas || !context) {
-      return;
+    if (!hasDiff && showOverlay) {
+      setShowOverlay(false);
     }
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    if (renderExpectedSetupEvents) {
-      eventsToCanvasScript(payload.uPlotCanvasEvents, context);
-    }
-    eventsToCanvasScript(payload.expected, context);
-  }, [payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents]);
+  }, [hasDiff, showOverlay]);
 
   React.useEffect(() => {
     for (const overlayCanvas of [expectedOverlayRef.current, actualOverlayRef.current]) {
@@ -89,14 +100,6 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
       }
     }
   }, [diffImageData, height, showOverlay, width]);
-
-  const onDiffComputed = React.useCallback((nextHasDiff: boolean, nextDiffImageData: ImageData | null) => {
-    setHasDiff(nextHasDiff);
-    setDiffImageData(nextDiffImageData);
-    if (!nextHasDiff) {
-      setShowOverlay(false);
-    }
-  }, []);
 
   return (
     <>
@@ -123,17 +126,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
               style={{ mixBlendMode: expectedBlendMode }}
             ></canvas>
             {showOverlay && hasDiff ? (
-              <select
-                className="overlay-blend-select"
-                value={expectedBlendMode}
-                onChange={(e) => setExpectedBlendMode(toOverlayBlendMode(e.target.value))}
-              >
-                {OVERLAY_BLEND_MODES.map((mode) => (
-                  <option key={mode} value={mode}>
-                    Blend: {mode}
-                  </option>
-                ))}
-              </select>
+              <OverlayBlendSelect value={expectedBlendMode} onChange={setExpectedBlendMode} />
             ) : null}
           </div>
         </div>
@@ -159,17 +152,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
               style={{ mixBlendMode: actualBlendMode }}
             ></canvas>
             {showOverlay && hasDiff ? (
-              <select
-                className="overlay-blend-select"
-                value={actualBlendMode}
-                onChange={(e) => setActualBlendMode(toOverlayBlendMode(e.target.value))}
-              >
-                {OVERLAY_BLEND_MODES.map((mode) => (
-                  <option key={mode} value={mode}>
-                    Blend: {mode}
-                  </option>
-                ))}
-              </select>
+              <OverlayBlendSelect value={actualBlendMode} onChange={setActualBlendMode} />
             ) : null}
           </div>
         </div>
@@ -177,14 +160,12 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
           <DiffCanvas
             width={width}
             height={height}
-            expectedEvents={payload.expected}
-            actualEvents={payload.actual}
-            setupEvents={payload.uPlotCanvasEvents}
+            hasDiff={hasDiff}
+            diffImageData={diffImageData}
             showOverlay={showOverlay}
             onToggleOverlay={() => setShowOverlay((prev) => !prev)}
             renderDiffSetupEvents={renderDiffSetupEvents}
             onToggleDiffSetupEvents={() => setRenderDiffSetupEvents((prev) => !prev)}
-            onDiffComputed={onDiffComputed}
           />
         </div>
       </div>

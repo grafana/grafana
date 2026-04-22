@@ -9,7 +9,7 @@ exports[`drawMarkers candle with volume events 1`] = `
   {
     "props": {
       "height": 230,
-      "width": 675,
+      "width": 300,
       "x": 100,
       "y": 17,
     },
@@ -156,7 +156,7 @@ exports[`drawMarkers candle with volume events 1`] = `
   },
   {
     "props": {
-      "value": "rgba(136, 136, 136, 0.5)",
+      "value": "rgba(100, 136, 136, 0.5)",
     },
     "type": "fillStyle",
   },
@@ -218,7 +218,7 @@ exports[`drawMarkers candle with volume events 1`] = `
             "height": 0,
             "width": 2,
             "x": 369,
-            "y": 350,
+            "y": 200,
           },
           "type": "rect",
         },
