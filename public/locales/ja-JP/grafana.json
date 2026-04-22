@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
       "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12924,9 +12930,7 @@
       "update-available": "更新が利用可能です！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "プラグイン使用状況を確認するには、ダッシュボード全体を検索するための新しい検索インデックスが必要です。機能トグルを有効にしてください",
       "num-usages": "{{pluginName}}は<2>{{numUsages}}</2>回使用されています。",
-      "title-missing-feature-toggle-panel-title-search": "機能トグルがありません：{{toggle}}",
       "title-not-used-yet": "{{pluginName}}はまだどのダッシュボードでも使用されていません"
     },
     "plugins-errors-info": {

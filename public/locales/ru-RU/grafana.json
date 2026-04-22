@@ -11250,6 +11250,12 @@
       "num-affected_few": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_many": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_other": "Обновление затронет <1>{{count}} дашбордов.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -13131,9 +13137,7 @@
       "update-available": "Доступно обновление"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Для использования плагина требуется новый индекс поиска, чтобы найти варианты использования на дашбордах. Включите переключатель функциональности",
       "num-usages": "Количество использований {{pluginName}}: <2>{{numUsages}}</2>.",
-      "title-missing-feature-toggle-panel-title-search": "Отсутствует переключатель функциональности: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} еще не используется ни на одном дашборде"
     },
     "plugins-errors-info": {

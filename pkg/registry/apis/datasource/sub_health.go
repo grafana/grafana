@@ -47,11 +47,17 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	m := newConnectMetric("health", r.builder.pluginJSON.ID)
+
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
@@ -61,10 +67,14 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		PluginContext: pluginCtx,
 	})
 	if err != nil {
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
@@ -73,6 +83,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if len(healthResponse.JSONDetails) > 0 {
 			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
+				m.SetError()
 				responder.Error(err)
 				return
 			}
@@ -80,6 +91,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
+			m.SetError()
 			statusCode = http.StatusBadRequest
 		}
 		responder.Object(statusCode, rsp)
