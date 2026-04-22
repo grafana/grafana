@@ -156,7 +156,7 @@ For general information about querying in Grafana, and common options and user i
 
 ## Provision data sources
 
-You can define and manage data sources as code using Grafana's provisioning system. This lets you configure data sources through YAML files or Terraform instead of the Grafana UI, which is useful for automated deployments and version-controlled configuration.
+You can define and manage data sources as code using the Grafana provisioning system. This lets you configure data sources through YAML files or Terraform instead of the Grafana UI, which is useful for automated deployments and version-controlled configuration.
 
 For more information, refer to [Provision data sources](ref:provisioning-data-sources).
 
@@ -166,7 +166,7 @@ Grafana includes three special data sources:
 
 ### Grafana
 
-A built-in data source that generates random walk data and can poll the [Testdata](testdata/) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+A built-in data source that generates random walk data and can poll the [TestData](testdata/) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
 
 ### Mixed
 
@@ -225,7 +225,7 @@ Grafana ships with the following core data sources, organized by their primary u
 
 ### Testing and debugging
 
-- [Testdata](testdata/)
+- [TestData](testdata/)
 
 ## Add additional data source plugins
 
@@ -258,14 +258,14 @@ You can set up these links in two ways:
 
 If you run into issues with a data source, refer to [Troubleshoot data sources](ref:troubleshoot-data-sources) for solutions to common problems like connection errors, authentication failures, and empty query results.
 
-Each built-in data source also has its own troubleshooting page with data-source-specific guidance.
+Each built-in data source also has its own troubleshooting page with guidance specific to that data source.
 
 ## Next steps
 
 After you've configured a data source, you can:
 
 - **Build a dashboard:** Click the **Build a dashboard** button on the data source configuration page, or refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/).
-- **Explore your data:** Use [Explore](ref:explore) to run ad-hoc queries without creating a dashboard.
+- **Explore your data:** Use [Explore](ref:explore) to run free-form queries without creating a dashboard.
 - **Set up alerts:** Create [alert rules](ref:alerts) to get notified when your data meets certain conditions.
 - **Use template variables:** Create dynamic, reusable dashboards with [template variables](ref:template-variables).
 - **Add annotations:** Overlay [annotations](ref:annotate-visualizations) on your graphs to mark events and correlate them with metrics.

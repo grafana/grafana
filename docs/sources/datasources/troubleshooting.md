@@ -37,7 +37,7 @@ refs:
 
 # Troubleshoot general data source issues
 
-This page provides solutions to common issues that apply across data sources in Grafana. For data-source-specific troubleshooting, refer to the troubleshooting page within each data source's documentation.
+This page provides solutions to common issues that apply across data sources in Grafana. For troubleshooting specific to a data source, refer to the troubleshooting page within each data source's documentation.
 
 ## Connection errors
 
@@ -71,7 +71,7 @@ These errors occur when Grafana can't reach the data source backend.
 **Solutions:**
 
 1. Verify the data source is using a valid TLS certificate.
-1. If you're using a self-signed certificate, enable **Skip TLS Verify** in the data source configuration (not recommended for production) or add the CA certificate to Grafana's trusted certificates.
+1. If you're using a self-signed certificate, enable **Skip TLS Verify** in the data source configuration (not recommended for production) or add the CA certificate to the list of trusted certificates in Grafana.
 1. Ensure the certificate hasn't expired.
 1. Confirm the certificate's Common Name or Subject Alternative Name matches the hostname in the data source URL.
 
@@ -179,7 +179,7 @@ To capture detailed error information for troubleshooting:
 
 If the solutions on this page don't resolve your issue:
 
-1. Check the data-source-specific troubleshooting page for your data source.
+1. Check the troubleshooting page for your specific data source.
 1. Search the [Grafana community forums](https://community.grafana.com/) for similar issues.
 1. Review [Grafana GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
 1. Contact [Grafana Support](https://grafana.com/support/) if you're a Grafana Enterprise, Cloud Pro, or Cloud Advanced user.
