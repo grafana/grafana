@@ -8,6 +8,7 @@ import { getChildId } from '../../utils/reactUtils';
 import { type PopoverContent } from '../Tooltip/types';
 
 import { type FieldProps } from './Field';
+import { FieldContext, type FieldContextType } from './FieldContext';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { InlineLabel } from './InlineLabel';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
@@ -56,9 +57,10 @@ export const InlineField = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, grow, shrink);
-  const inputId = htmlFor ?? getChildId(children);
-  const useFieldset = children.type === RadioButtonGroup;
+  const fieldId = useId();
   const labelId = useId();
+  const inputId = htmlFor ?? getChildId(children) ?? fieldId;
+  const useFieldset = children.type === RadioButtonGroup;
 
   const labelElement =
     typeof label === 'string' ? (
@@ -77,12 +79,22 @@ export const InlineField = ({
       label
     );
 
+  const fieldContextValue: FieldContextType = {
+    id: inputId,
+    invalid,
+    disabled,
+    loading,
+    'aria-labelledby': useFieldset ? labelId : undefined,
+  };
+
   const Wrapper = useFieldset ? 'fieldset' : 'div';
 
   return (
+    <FieldContext.Provider value={fieldContextValue}>
     <Wrapper className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
       <div className={styles.childContainer}>
+        {/* @deprecated — use FieldContext instead */}
         {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
         {invalid && error && (
           <div
@@ -95,6 +107,7 @@ export const InlineField = ({
         )}
       </div>
     </Wrapper>
+    </FieldContext.Provider>
   );
 };
 

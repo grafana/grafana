@@ -265,6 +265,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';

@@ -18,3 +18,32 @@ If `tooltip` prop is provided, an info icon with supplied tooltip content will b
 ```
 
 <ArgTypes of={InlineField} />
+
+## FieldContext
+
+`InlineField` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component.
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Resolved input id (`htmlFor` → child id → generated id) |
+| `invalid` | `boolean \| undefined` | Mirrors the `invalid` prop |
+| `disabled` | `boolean \| undefined` | Mirrors the `disabled` prop |
+| `loading` | `boolean \| undefined` | Mirrors the `loading` prop |
+| `aria-describedby` | `string \| undefined` | Always `undefined` in `InlineField` |
+| `aria-labelledby` | `string \| undefined` | Set when the child is a `RadioButtonGroup` (fieldset mode) |
+
+**Example:**
+
+```jsx
+import { useFieldContext } from '@grafana/ui';
+
+function MyCustomInput() {
+  const { id, invalid, 'aria-labelledby': labelledby } = useFieldContext();
+  return <input id={id} aria-invalid={invalid} aria-labelledby={labelledby} />;
+}
+
+// Usage:
+<InlineField label="Threshold">
+  <MyCustomInput />
+</InlineField>
+```

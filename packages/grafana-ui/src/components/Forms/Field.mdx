@@ -26,8 +26,6 @@ The Field component is suitable for various scenarios where you need to incorpor
   </Field>
 </ExampleFrame>
 
-Note that the Field component will pass the `invalid`, `disabled` and `loading` props, unless they are `undefined`, to the child component, which will override those props if they are set on the child component.
-
 ### Do's
 
 - Provide a meaningful label for the field to enhance accessibility.
@@ -49,3 +47,32 @@ Use the `loading` prop to indicate that the input is loading. This will add a sp
 ### Props
 
 <ArgTypes of={Field} />
+
+### FieldContext
+
+`Field` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component.
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Resolved input id (`htmlFor` → child id → generated id) |
+| `invalid` | `boolean \| undefined` | Mirrors the `invalid` prop |
+| `disabled` | `boolean \| undefined` | Mirrors the `disabled` prop |
+| `loading` | `boolean \| undefined` | Mirrors the `loading` prop |
+| `aria-describedby` | `string \| undefined` | Set when both `invalid` and `error` are truthy |
+| `aria-labelledby` | `string \| undefined` | Always `undefined` in `Field` |
+
+**Example:**
+
+```jsx
+import { useFieldContext } from '@grafana/ui';
+
+function MyCustomInput() {
+  const { id, invalid, disabled, 'aria-describedby': describedby } = useFieldContext();
+  return <input id={id} aria-invalid={invalid} disabled={disabled} aria-describedby={describedby} />;
+}
+
+// Usage:
+<Field label="Name" invalid error="Required">
+  <MyCustomInput />
+</Field>
+```
