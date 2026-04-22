@@ -35,8 +35,8 @@ type snapshotCandidate struct {
 }
 
 // tryDownloadRemoteSnapshot lists remote snapshots for the given resource,
-// picks the best candidate using the tiered preference described in the design
-// doc, downloads and opens it locally, and returns the resulting bleve index.
+// picks the best candidate (see pickBestSnapshot), downloads and opens it
+// locally, and returns the resulting bleve index.
 //
 // Return contract:
 //   - On success: (idx, dirName, rv, nil) — caller must take ownership of idx.
