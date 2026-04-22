@@ -70,8 +70,7 @@ export function toMatchUPlotSnapshot(
       console.log(
         'To debug this diff visually, run `yarn workspace uplot-compare dev`, then open:',
         `\n\n${compareUrl.toString()}`,
-        `\n\n(Payload written to ${fullPath})`,
-        `\nSet UPLOT_COMPARE_PAYLOAD_FILE to a fixed path to override (single file, overwritten each failure).`
+        `\n\n(Payload written to ${fullPath})`
       );
     } catch (e) {
       console.warn(

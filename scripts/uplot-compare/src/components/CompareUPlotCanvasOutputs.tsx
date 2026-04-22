@@ -334,6 +334,100 @@ function ComparePlots({
           <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
         </div>
       </div>
+      <div>
+        <DiffCanvas
+          width={width}
+          height={height}
+          expectedCanvasRef={expectedUPlotInstance}
+          actualCanvasRef={actualUPlotInstance}
+          expectedEvents={payload.expected}
+          actualEvents={payload.actual}
+          setupEvents={payload.uPlotCanvasEvents}
+        />
+      </div>
     </>
+  );
+}
+
+function DiffCanvas({
+  width,
+  height,
+  expectedCanvasRef,
+  actualCanvasRef,
+  expectedEvents,
+  actualEvents,
+  setupEvents,
+}: {
+  width: number;
+  height: number;
+  expectedCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  actualCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  expectedEvents: CanvasEventArray;
+  actualEvents: CanvasEventArray;
+  setupEvents: CanvasRenderingContext2DEvent[];
+}) {
+  const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const [hasDiff, setHasDiff] = React.useState(false);
+  const [diffImageData, setDiffImageData] = React.useState<ImageData | null>(null);
+
+  React.useEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      const expectedContext = expectedCanvasRef.current?.getContext('2d');
+      const actualContext = actualCanvasRef.current?.getContext('2d');
+      if (!expectedContext || !actualContext) {
+        return;
+      }
+
+      const expectedPixels = expectedContext.getImageData(0, 0, width, height);
+      const actualPixels = actualContext.getImageData(0, 0, width, height);
+      const diffPixels = expectedContext.createImageData(width, height);
+      let hasDifferences = false;
+
+      for (let i = 0; i < actualPixels.data.length; i += 4) {
+        const isDifferent =
+          expectedPixels.data[i] !== actualPixels.data[i] ||
+          expectedPixels.data[i + 1] !== actualPixels.data[i + 1] ||
+          expectedPixels.data[i + 2] !== actualPixels.data[i + 2] ||
+          expectedPixels.data[i + 3] !== actualPixels.data[i + 3];
+
+        if (isDifferent) {
+          diffPixels.data[i] = actualPixels.data[i];
+          diffPixels.data[i + 1] = actualPixels.data[i + 1];
+          diffPixels.data[i + 2] = actualPixels.data[i + 2];
+          diffPixels.data[i + 3] = actualPixels.data[i + 3];
+          hasDifferences = true;
+        }
+      }
+
+      setHasDiff(hasDifferences);
+      setDiffImageData(hasDifferences ? diffPixels : null);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [actualCanvasRef, actualEvents, expectedCanvasRef, expectedEvents, height, setupEvents, width]);
+
+  React.useEffect(() => {
+    if (!hasDiff || !diffImageData) {
+      return;
+    }
+    const diffContext = diffCanvasRef.current?.getContext('2d');
+    if (!diffContext) {
+      return;
+    }
+    diffContext.clearRect(0, 0, width, height);
+    diffContext.putImageData(diffImageData, 0, 0);
+  }, [diffImageData, hasDiff, height, width]);
+
+  if (!hasDiff) {
+    return <div>No visual differences!</div>;
+  }
+
+  return (
+    <div className={'diff'}>
+      <div className={'plot-label'}>Diff</div>
+      <canvas ref={diffCanvasRef} className="canvas" id="diff" width={width} height={height}></canvas>
+    </div>
   );
 }
