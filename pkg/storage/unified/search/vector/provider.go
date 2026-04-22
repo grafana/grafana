@@ -19,15 +19,15 @@ func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
 // and returns a ready-to-use VectorBackend. When runMigrations is true, the
 // schema migrations are applied before the backend is returned.
 //
-// Returns (nil, nil) if vector search is disabled via the
-// [unified_storage] enable_vector_search flag. Returns an error if the flag
-// is enabled but VectorDBHost is unset, so silent misconfiguration fails loud.
+// Returns (nil, nil) if the vector backend is disabled via the
+// [unified_storage] vector_backend flag. Returns an error if the flag is
+// enabled but VectorDBHost is unset, so silent misconfiguration fails loud.
 func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
-	if !cfg.EnableVectorSearch {
+	if !cfg.EnableVectorBackend {
 		return nil, nil
 	}
 	if cfg.VectorDBHost == "" {
-		return nil, fmt.Errorf("vector search is enabled but [database_vector] db_host is not set")
+		return nil, fmt.Errorf("vector backend is enabled but [database_vector] db_host is not set")
 	}
 
 	logger := log.New("vector-db")

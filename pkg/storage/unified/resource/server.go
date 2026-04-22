@@ -337,9 +337,9 @@ type ResourceServerOptions struct {
 	BookmarkFrequency time.Duration
 
 	// VectorBackend is the optional pgvector-backed store for semantic search.
-	// nil when the [unified_storage] enable_vector_search flag is off. When
-	// present, the resource and search servers hold a reference for use by
-	// future write and query paths.
+	// nil when the [unified_storage] vector_backend flag is off. When present,
+	// the resource and search servers hold a reference for use by future
+	// write and query paths.
 	VectorBackend vector.VectorBackend
 }
 

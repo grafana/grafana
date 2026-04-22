@@ -682,7 +682,7 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	// Vector storage (separate pgvector database)
-	EnableVectorSearch                bool
+	EnableVectorBackend               bool
 	VectorDBHost                      string
 	VectorDBPort                      string
 	VectorDBName                      string
