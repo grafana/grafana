@@ -22,6 +22,7 @@ type Service interface {
 	RemoveOrgUser(context.Context, *RemoveOrgUserCommand) error
 	GetOrgUsers(context.Context, *GetOrgUsersQuery) ([]*OrgUserDTO, error)
 	SearchOrgUsers(context.Context, *SearchOrgUsersQuery) (*SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmails(context.Context, *SearchOrgUsersByEmailsQuery) ([]*OrgUserDTO, error)
 	RegisterDelete(query string)
 }
 
