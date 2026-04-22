@@ -34,25 +34,21 @@ export function usePluginEntitlement(plugin: CatalogPlugin | undefined): Entitle
 
   useEffect(() => {
     const resolved = resolveEntitlement(pluginId, isMarketplace);
-    setState(resolved);
+    setState((prev) =>
+      prev.entitled === resolved.entitled && prev.isLoading === resolved.isLoading ? prev : resolved
+    );
 
     if (!resolved.isLoading) {
       return;
     }
 
     let cancelled = false;
-    getPluginEntitlement(pluginId!)
-      .then((entitled) => {
-        if (!cancelled) {
-          entitlementCache.set(pluginId!, entitled);
-          setState({ entitled, isLoading: false });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setState({ entitled: false, isLoading: false });
-        }
-      });
+    getPluginEntitlement(pluginId!).then((entitled) => {
+      if (!cancelled) {
+        entitlementCache.set(pluginId!, entitled);
+        setState({ entitled, isLoading: false });
+      }
+    });
     return () => {
       cancelled = true;
     };
