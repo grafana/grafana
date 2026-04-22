@@ -48,6 +48,63 @@ type ChildPluginReconciler struct {
 	logger          logging.Logger
 }
 
+type ChildPluginReconcilerFailureSource string
+
+const (
+	ChildPluginReconcilerFailureSourceOwnership      ChildPluginReconcilerFailureSource = "ownership"
+	ChildPluginReconcilerFailureSourceMetadataLookup ChildPluginReconcilerFailureSource = "metadata_lookup"
+	ChildPluginReconcilerFailureSourceApplyChildren  ChildPluginReconcilerFailureSource = "apply_children"
+	ChildPluginReconcilerFailureSourceCleanup        ChildPluginReconcilerFailureSource = "cleanup"
+)
+
+type ChildPluginReconcilerError struct {
+	Source    ChildPluginReconcilerFailureSource
+	PluginID  string
+	Version   string
+	Namespace string
+	Err       error
+}
+
+func (e *ChildPluginReconcilerError) Error() string {
+	return fmt.Sprintf(
+		"child plugin reconciliation failed: source=%s pluginId=%s version=%s namespace=%s: %v",
+		e.Source,
+		e.PluginID,
+		e.Version,
+		e.Namespace,
+		e.Err,
+	)
+}
+
+func (e *ChildPluginReconcilerError) Unwrap() error {
+	return e.Err
+}
+
+func newChildPluginReconcilerError(
+	source ChildPluginReconcilerFailureSource,
+	plugin *pluginsv0alpha1.Plugin,
+	err error,
+) error {
+	if err == nil {
+		return nil
+	}
+
+	if plugin == nil {
+		return &ChildPluginReconcilerError{
+			Source: source,
+			Err:    err,
+		}
+	}
+
+	return &ChildPluginReconcilerError{
+		Source:    source,
+		PluginID:  plugin.Spec.Id,
+		Version:   plugin.Spec.Version,
+		Namespace: plugin.Namespace,
+		Err:       err,
+	}
+}
+
 // NewChildPluginReconciler creates a new ChildPluginReconciler instance.
 func NewChildPluginReconciler(logger logging.Logger, metaManager *meta.ProviderManager, registrar Registrar, ownershipFilters ...OwnershipFilter) *ChildPluginReconciler {
 	ownershipFilter := NewNoopOwnershipFilter()
@@ -101,6 +158,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	ownsPlugin, err := r.ownershipFilter.OwnsPlugin(ctx, plugin)
 	if err != nil {
+		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceOwnership, plugin, err)
 		logger := baseLogger.With(
 			"pluginId", plugin.Spec.Id,
 			"requestNamespace", plugin.Namespace,
@@ -172,6 +230,9 @@ func (r *ChildPluginReconciler) reconcileAction(
 		return outcome, true, err
 	case operator.ReconcileActionDeleted:
 		_, err := r.cleanupChildren(ctx, plugin.Namespace, stored.appliedChildren)
+		if err != nil {
+			err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceCleanup, plugin, err)
+		}
 		return childReconcileResult{}, false, err
 	case operator.ReconcileActionUnknown:
 		return childReconcileResult{}, false, fmt.Errorf("invalid action: %d", req.Action)
@@ -187,6 +248,7 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 ) (childReconcileResult, bool, error) {
 	desiredChildren, err := r.getDesiredChildren(ctx, plugin)
 	if err != nil {
+		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceMetadataLookup, plugin, err)
 		msg := err.Error()
 		return childReconcileResult{
 			appliedChildren:    normalizeChildren(currentChildren),
@@ -198,6 +260,7 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 
 	outcome, err := r.applyChildren(ctx, plugin, currentChildren, desiredChildren)
 	if err != nil {
+		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceApplyChildren, plugin, err)
 		msg := err.Error()
 		outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateFailed
 		outcome.description = &msg

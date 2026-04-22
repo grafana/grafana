@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -26,6 +27,14 @@ import (
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
+
+const (
+	memcachedKeySyncInterval = 30 * time.Second
+)
+
+var noRetryPolicy operator.RetryPolicy = func(error, int) (bool, time.Duration) {
+	return false, 0
+}
 
 func New(cfg app.Config) (app.App, error) {
 	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
@@ -64,18 +73,8 @@ func New(cfg app.Config) (app.App, error) {
 				specificConfig.ChildReconciler.MemcachedSelector,
 				specificConfig.ChildReconciler.OwnershipFilter,
 			),
-			RetryPolicy: operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
-			InformerOptions: operator.InformerOptions{
-				ErrorHandler: func(ctx context.Context, err error) {
-					logger.Error("Child plugin informer failed", "error", err)
-				},
-				// Limit the number of plugin objects being reconciled concurrently.
-				// Each worker processes events for a distinct set of plugins sequentially.
-				MaxConcurrentWorkers: 5,
-				// Use watch-list streaming instead of paginated LIST to reduce API server
-				// memory usage. Requires Kubernetes 1.27+.
-				UseWatchList: true,
-			},
+			RetryPolicy:     childReconcilerRetryPolicy(specificConfig.ChildReconciler),
+			InformerOptions: childReconcilerInformerOptions(logger, specificConfig.ChildReconciler),
 		},
 		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},
 	}
@@ -105,9 +104,14 @@ type PluginAppConfig struct {
 }
 
 type ChildReconcilerConfig struct {
-	Enabled           bool
-	MemcachedSelector operator.MemcachedServerSelector
-	OwnershipFilter   install.OwnershipFilter
+	Enabled              bool
+	MemcachedSelector    operator.MemcachedServerSelector
+	OwnershipFilter      install.OwnershipFilter
+	RetryPolicy          operator.RetryPolicy
+	DisableRetries       bool
+	CacheResyncInterval  time.Duration
+	MaxConcurrentWorkers uint64
+	UseWatchList         *bool
 }
 
 type PluginAppInstallerConfig struct {
@@ -124,9 +128,14 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager: config.MetaProviderManager,
 		ChildReconciler: ChildReconcilerConfig{
-			Enabled:           config.ChildReconciler.Enabled,
-			MemcachedSelector: config.ChildReconciler.MemcachedSelector,
-			OwnershipFilter:   config.ChildReconciler.OwnershipFilter,
+			Enabled:              config.ChildReconciler.Enabled,
+			MemcachedSelector:    config.ChildReconciler.MemcachedSelector,
+			OwnershipFilter:      config.ChildReconciler.OwnershipFilter,
+			RetryPolicy:          config.ChildReconciler.RetryPolicy,
+			DisableRetries:       config.ChildReconciler.DisableRetries,
+			CacheResyncInterval:  config.ChildReconciler.CacheResyncInterval,
+			MaxConcurrentWorkers: config.ChildReconciler.MaxConcurrentWorkers,
+			UseWatchList:         config.ChildReconciler.UseWatchList,
 		},
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
@@ -203,15 +212,27 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 			return nil, err
 		}
 
-		inf, err := operator.NewMemcachedInformer(kind, client, operator.MemcachedInformerOptions{
-			ServerSelector: selector,
-			CustomCacheInformerOptions: operator.CustomCacheInformerOptions{
-				InformerOptions: options,
-			},
+		keySyncInterval := time.Duration(0)
+		if options.CacheResyncInterval > 0 {
+			keySyncInterval = memcachedKeySyncInterval
+		}
+
+		store, err := operator.NewMemcachedStore(kind, operator.MemcachedStoreConfig{
+			ServerSelector:  selector,
+			KeySyncInterval: keySyncInterval,
 		})
 		if err != nil {
 			return nil, err
 		}
+
+		inf := operator.NewCustomCacheInformer(
+			store,
+			operator.NewListerWatcher(client, kind, options.ListWatchOptions),
+			kind,
+			operator.CustomCacheInformerOptions{
+				InformerOptions: options,
+			},
+		)
 
 		return operator.NewConcurrentInformerFromOptions(inf, options)
 	}
@@ -225,6 +246,60 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 			return &gatedInformer{Informer: inf, gate: gate}, nil
 		}
 		return inf, nil
+	}
+}
+
+func childReconcilerRetryPolicy(cfg ChildReconcilerConfig) operator.RetryPolicy {
+	if cfg.DisableRetries {
+		return noRetryPolicy
+	}
+	if cfg.RetryPolicy != nil {
+		return cfg.RetryPolicy
+	}
+	return nil
+}
+
+func childReconcilerInformerOptions(logger logging.Logger, cfg ChildReconcilerConfig) operator.InformerOptions {
+	maxConcurrentWorkers := uint64(5)
+	if cfg.MaxConcurrentWorkers > 0 {
+		maxConcurrentWorkers = cfg.MaxConcurrentWorkers
+	}
+
+	useWatchList := true
+	if cfg.UseWatchList != nil {
+		useWatchList = *cfg.UseWatchList
+	}
+
+	return operator.InformerOptions{
+		ErrorHandler:        childReconcilerErrorHandler(logger),
+		CacheResyncInterval: cfg.CacheResyncInterval,
+		// Limit the number of plugin objects being reconciled concurrently.
+		// Each worker processes events for a distinct set of plugins sequentially.
+		MaxConcurrentWorkers: maxConcurrentWorkers,
+		// Use watch-list streaming instead of paginated LIST to reduce API server
+		// memory usage. Requires Kubernetes 1.27+.
+		UseWatchList: useWatchList,
+	}
+}
+
+func childReconcilerErrorHandler(logger logging.Logger) func(context.Context, error) {
+	return func(ctx context.Context, err error) {
+		log := logger.WithContext(ctx)
+
+		var reconcileErr *install.ChildPluginReconcilerError
+		if errors.As(err, &reconcileErr) {
+			log.Error(
+				"Child plugin reconciliation failed",
+				"failureSource", reconcileErr.Source,
+				"pluginId", reconcileErr.PluginID,
+				"requestNamespace", reconcileErr.Namespace,
+				"version", reconcileErr.Version,
+				"error", reconcileErr.Err,
+			)
+			return
+		}
+
+		log.Error("Child plugin informer failed", "error", err)
 	}
 }
 

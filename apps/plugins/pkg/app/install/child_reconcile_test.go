@@ -224,6 +224,12 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 			result, err := reconciler.reconcile(context.Background(), req)
 
 			require.ErrorIs(t, err, tt.metaErr)
+			var reconcileErr *ChildPluginReconcilerError
+			require.ErrorAs(t, err, &reconcileErr)
+			require.Equal(t, ChildPluginReconcilerFailureSourceMetadataLookup, reconcileErr.Source)
+			require.Equal(t, "test-plugin", reconcileErr.PluginID)
+			require.Equal(t, "1.0.0", reconcileErr.Version)
+			require.Equal(t, "default", reconcileErr.Namespace)
 			require.Equal(t, operator.ReconcileResult{}, result)
 			require.Empty(t, mockReg.registered)
 			require.Len(t, mockReg.updatedStatuses, 1)
