@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
+import { SecretInput } from '../SecretInput';
 import { Switch } from '../Switch/Switch';
 
 import { Checkbox } from './Checkbox';
@@ -37,6 +38,16 @@ describe('Field', () => {
     );
 
     expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with a SecretInput when no id is set', () => {
+    render(
+      <Field label="My label">
+        <SecretInput isConfigured={false} onReset={() => {}} />
+      </Field>
+    );
+
+    expect(screen.getByLabelText('My label')).toBeInTheDocument();
   });
 
   it('associates the label with a Checkbox when no id is set', () => {
