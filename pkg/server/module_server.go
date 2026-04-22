@@ -245,11 +245,6 @@ func (s *ModuleServer) Run() error {
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
 	})
 
-	// UnifiedVectorBackend opens the pgvector database connection (when the
-	// [unified_storage] enable_vector_search flag is on). Migrations run only
-	// on pods with the StorageServer role — matches the disableStorageServices
-	// gate used above for the main resource backend. Search-only pods still
-	// open the connection so they can serve vector queries locally.
 	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, func() (services.Service, error) {
 		if s.vectorBackend == nil {
 			runMigrations := m.IsModuleEnabled(modules.StorageServer)

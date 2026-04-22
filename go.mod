@@ -700,7 +700,7 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
 
-require github.com/pgvector/pgvector-go v0.3.0
+require github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
