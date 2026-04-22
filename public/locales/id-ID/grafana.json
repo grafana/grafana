@@ -4373,12 +4373,13 @@
       "button-label": "Pilih folder",
       "clear-selection": "Hapus pilihan",
       "empty-message": "Folder tidak ditemukan",
-      "error-title": "Kesalahan saat memuat folder",
+      "error-title": "",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}  ",
       "root-title": "Dasbor",
       "search-placeholder": "Cari folder",
       "shared-with-me": "Dibagikan kepada saya",
       "team-folders": "Folder tim",
+      "team-folders-error-title": "",
       "unknown-error": "Kesalahan tidak diketahui"
     },
     "manage-folder-nav": {
@@ -5592,6 +5593,8 @@
         "annotation-set": "Anotasi & Peringatan",
         "dashboard": "Dasbor",
         "element": "Elemen",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Tautan",
         "local-variable": "Variabel lokal",
         "multiple-elements": "Beberapa elemen",
@@ -5620,8 +5623,10 @@
           "title": "Header baris"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Tambah variabel",
         "title": "Variabel"
       },
       "variable": {
@@ -6172,6 +6177,9 @@
           "hide-header": "Sembunyikan header baris",
           "title": "Judul"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabel"
         },
@@ -6330,6 +6338,9 @@
             "description": "Ulangi tab ini untuk setiap nilai dalam variabel yang dipilih.",
             "title": "Ulangi menurut variabel"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variabel"
@@ -7039,6 +7050,13 @@
       "sql-name": "Ubah dengan SQL",
       "sql-transformation-description": "Manipulasi data Anda menggunakan sintaksis mirip MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7483,6 +7501,7 @@
       "affected-dashboards_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1> Dasbor berikut yang menggunakan panel akan terpengaruh:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Batalkan",
       "cannot-be-saved": "Dasbor ini tidak dapat disimpan dari UI Grafana karena telah disediakan dari sumber lain. Salin JSON atau simpan ke file di bawah ini, lalu Anda dapat memperbarui dasbor Anda di sumber penyediaan.",
       "copy-json-to-clipboard": "Salin JSON ke papan klip",
@@ -7490,6 +7509,11 @@
       "file-path": "<strong>Jalur file:</strong> {{filePath}}",
       "form-loading-error": "Terjadi kesalahan saat memuat formulir",
       "form-loading-error-unknown": "Terjadi kesalahan tak terduga saat memuat formulir.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Deskripsi",
       "label-target-folder": "Folder target",
       "label-title": "Judul",
@@ -7507,6 +7531,9 @@
       "disabled-tooltip": "Simpan dasbor sebelum membuat aturan peringatan",
       "new-alert-rule": "Aturan peringatan baru",
       "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Memungkinkan beberapa nilai untuk dipilih secara bersamaan",
@@ -7603,6 +7630,13 @@
       "page-nav": {
         "text": {
           "settings": "Pengaturan"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -11027,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
       "num-affected_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12890,9 +12930,7 @@
       "update-available": "Pembaruan tersedia!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Penggunaan plugin memerlukan indeks pencarian baru untuk menemukan penggunaan di seluruh dasbor. Aktifkan tombol fitur",
       "num-usages": "{{pluginName}} digunakan <2>{{numUsages}}</2> kali.",
-      "title-missing-feature-toggle-panel-title-search": "Tombol fitur tidak ada: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} belum digunakan di dasbor apa pun"
     },
     "plugins-errors-info": {

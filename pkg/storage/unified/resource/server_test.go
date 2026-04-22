@@ -1297,3 +1297,218 @@ func TestPeriodicBookmarks(t *testing.T) {
 		require.Empty(t, bookmarks)
 	})
 }
+
+// callbackAccessClient is a test helper whose Check behavior can be swapped between calls.
+type callbackAccessClient struct {
+	fn func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
+}
+
+func (c *callbackAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return c.fn(req, folder)
+}
+
+func (c *callbackAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (c *callbackAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		res, err := c.fn(authlib.CheckRequest{Verb: item.Verb, Group: item.Group, Resource: item.Resource, Name: item.Name}, item.Folder)
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: res.Allowed, Error: err}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func allow() (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+}
+
+func deny() (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: false, Zookie: authlib.NoopZookie{}}, nil
+}
+
+func TestNewEventPermissionChecks(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "playlist.grafana.app"
+		resource  = "playlists"
+		namespace = "default"
+		name      = "test-resource"
+		folderA   = "folder-a"
+		folderB   = "folder-b"
+	)
+
+	makeValue := func(folder string) []byte {
+		annotations := `"grafana.app/repoName":"test","grafana.app/repoPath":"p","grafana.app/repoTimestamp":"2024-01-01T00:00:00Z"`
+		if folder != "" {
+			annotations += `,"grafana.app/folder":"` + folder + `"`
+		}
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{` + annotations + `}},"spec":{"title":"t","interval":"5m","items":[]}}`)
+	}
+
+	key := &resourcepb.ResourceKey{
+		Group:     group,
+		Resource:  resource,
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	newServer := func(t *testing.T, ac authlib.AccessClient) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:      store,
+			AccessClient: ac,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+		return srv
+	}
+
+	// createResource creates a resource using an always-allow client,
+	// then replaces the server's access client with ac for subsequent calls.
+	createThenSwitch := func(t *testing.T, value []byte, ac *callbackAccessClient) *server {
+		t.Helper()
+		srv := newServer(t, ac)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("regular update is denied when user lacks update permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(""),
+			ResourceVersion: latest.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("regular update is allowed when user has update permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(""),
+			ResourceVersion: latest.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	})
+
+	t.Run("create is denied when user lacks create permission", func(t *testing.T) {
+		ac := &callbackAccessClient{
+			fn: func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() },
+		}
+		srv := newServer(t, ac)
+
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("folder move is denied when user cannot update in source folder", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		// Deny update on the source folder, allow everything else.
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "update" && folder == folderA {
+				return deny()
+			}
+			return allow()
+		}
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(folderB), // move to folder-b
+			ResourceVersion: latest.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "not allowed to update resource in the source folder")
+	})
+
+	t.Run("folder move is denied when user cannot create in destination folder", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		// Allow update on source, deny create on destination.
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "create" && folder == folderB {
+				return deny()
+			}
+			return allow()
+		}
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(folderB),
+			ResourceVersion: latest.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "not allowed to create resource in the destination folder")
+	})
+
+	t.Run("folder move is allowed when user has permission on both folders", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(folderB),
+			ResourceVersion: latest.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	})
+}

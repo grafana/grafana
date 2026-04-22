@@ -37,10 +37,6 @@ interface ComboboxStaticProps<T extends string | number>
    * Defaults to "Use custom value".
    */
   customValueDescription?: string;
-  /**
-   * Custom container for rendering the dropdown menu via Portal
-   */
-  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -75,6 +71,18 @@ interface ComboboxStaticProps<T extends string | number>
    * Message to display when there are no options found. Defaults to "No options found."
    */
   noOptionsMessage?: string;
+
+  /**
+   * When set, the dropdown open state is fully controlled by the parent. Use with {@link onIsOpenChange}
+   * (e.g. open the list after a tab click or other user action). Omit for normal uncontrolled behavior.
+   */
+  isOpen?: boolean;
+
+  /**
+   * Called whenever the menu opens or closes. Use with {@link isOpen} for controlled mode, or alone to
+   * observe open state.
+   */
+  onIsOpenChange?: (isOpen: boolean) => void;
 }
 
 interface ClearableProps<T extends string | number> {
@@ -153,10 +161,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
-    portalContainer,
     invalid,
     prefixIcon,
     noOptionsMessage,
+    isOpen: isOpenProp,
+    onIsOpenChange: onIsOpenChangeProp,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -207,6 +216,21 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const labelId = `${baseId}-downshift-label`;
 
   const styles = useStyles2(getComboboxStyles);
+
+  const onIsOpenChangeHandler = useCallback(
+    (changes: { isOpen: boolean; inputValue?: string }) => {
+      onIsOpenChangeProp?.(changes.isOpen);
+
+      if (changes.isOpen && (changes.inputValue ?? '') === '') {
+        updateOptions('');
+      }
+
+      if (!changes.isOpen) {
+        resetSearch();
+      }
+    },
+    [onIsOpenChangeProp, updateOptions, resetSearch]
+  );
 
   // Injects the group header for the first rendered item into the range to render.
   // Accepts the range that useVirtualizer wants to render, and then returns indexes
@@ -297,15 +321,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     scrollIntoView: () => {},
 
-    onIsOpenChange: ({ isOpen, inputValue }) => {
-      if (isOpen && inputValue === '') {
-        updateOptions(inputValue);
-      }
+    ...(isOpenProp !== undefined ? { isOpen: isOpenProp } : {}),
 
-      if (!isOpen) {
-        resetSearch();
-      }
-    },
+    onIsOpenChange: onIsOpenChangeHandler,
 
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
@@ -424,7 +442,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           },
         })}
       />
-      <Portal root={portalContainer}>
+      <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{

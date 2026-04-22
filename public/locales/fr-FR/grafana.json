@@ -4400,12 +4400,13 @@
       "button-label": "Sélectionner un dossier",
       "clear-selection": "Effacer la sélection",
       "empty-message": "Aucun dossier trouvé",
-      "error-title": "Impossible de charger les dossiers",
+      "error-title": "",
       "non-folder-item": "Non-dossier {{itemKind}} {{itemUID}}",
       "root-title": "Tableaux de bord",
       "search-placeholder": "Rechercher dans les dossiers",
       "shared-with-me": "Partagé avec moi",
       "team-folders": "Dossiers d’équipe",
+      "team-folders-error-title": "",
       "unknown-error": "Erreur inconnue"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotations et alertes",
         "dashboard": "Tableau de bord",
         "element": "Élément",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Liens",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
@@ -5650,8 +5653,10 @@
           "title": "En-tête de ligne"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Ajouter une variable",
         "title": "Variables"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Masquer l’en-tête de ligne",
           "title": "Titre"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6361,6 +6369,9 @@
             "description": "Répétez cet onglet pour chaque valeur de la variable sélectionnée.",
             "title": "Répéter par variable"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variables"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformer avec SQL",
       "sql-transformation-description": "Manipulez vos données à l’aide d’une syntaxe de type MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1> Les tableaux de bord suivants utilisant le panneau seront affectés :"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Annuler",
       "cannot-be-saved": "Ce tableau de bord ne peut pas être enregistré à partir de l’interface utilisateur Grafana, car il a été mis en service à partir d’une autre source. Copiez le JSON ou enregistrez-le dans un fichier ci-dessous, puis vous pourrez mettre à jour votre tableau de bord dans la source de mise en service.",
       "copy-json-to-clipboard": "Copier JSON dans le presse-papiers",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Chemin du fichier :</strong> {{filePath}}",
       "form-loading-error": "Erreur lors du chargement du formulaire",
       "form-loading-error-unknown": "Une erreur inattendue s’est produite lors du chargement du formulaire.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Description",
       "label-target-folder": "Dossier cible",
       "label-title": "Titre",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Enregistrez le tableau de bord avant de créer des règles d’alerte",
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permet de sélectionner plusieurs valeurs en même temps",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Paramètres"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -11087,6 +11124,12 @@
       "update-all": "Tout mettre à jour",
       "num-affected_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>",
       "num-affected_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12956,9 +12999,7 @@
       "update-available": "Mise à jour disponible !"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "L’utilisation du plugin nécessite le nouvel index de recherche pour trouver l’utilisation dans les tableaux de bord. Veuillez activer le basculement de fonctionnalité",
       "num-usages": "{{pluginName}} est utilisé <2>{{numUsages}} </2> fois.",
-      "title-missing-feature-toggle-panel-title-search": "Basculement de fonctionnalité manquant : {{toggle}}",
       "title-not-used-yet": "{{pluginName}} n’est pas encore utilisé dans les tableaux de bord"
     },
     "plugins-errors-info": {

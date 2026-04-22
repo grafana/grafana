@@ -2398,6 +2398,20 @@
     },
     {
       "metadata": {
+        "name": "frontendService.settingsSourceFilter",
+        "resourceVersion": "1776170446239",
+        "creationTimestamp": "2026-04-14T12:40:46Z"
+      },
+      "spec": {
+        "description": "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendServiceSSOAutoLogin",
         "resourceVersion": "1774373752487",
         "creationTimestamp": "2026-03-24T17:35:52Z"
@@ -4667,7 +4681,8 @@
       "metadata": {
         "name": "queryServiceQueryCaching",
         "resourceVersion": "1774711941702",
-        "creationTimestamp": "2026-03-28T15:32:21Z"
+        "creationTimestamp": "2026-03-28T15:32:21Z",
+        "deletionTimestamp": "2026-04-17T12:18:03Z"
       },
       "spec": {
         "description": "Enables the query service to do query caching",
@@ -4785,6 +4800,19 @@
       },
       "spec": {
         "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.useInQueryService",
+        "resourceVersion": "1776428829461",
+        "creationTimestamp": "2026-04-17T12:27:09Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
@@ -4950,6 +4978,19 @@
     },
     {
       "metadata": {
+        "name": "reporting.pdfTablesFrontend",
+        "resourceVersion": "1775986360314",
+        "creationTimestamp": "2026-04-12T09:32:40Z"
+      },
+      "spec": {
+        "description": "Enables frontend-rendered table appendix pages in PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
@@ -5095,14 +5136,17 @@
     {
       "metadata": {
         "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
+        "resourceVersion": "1776334251375",
+        "creationTimestamp": "2026-02-11T10:49:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5396,13 +5440,16 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1776767556250",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-21 10:32:36.250731 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
@@ -5624,7 +5671,8 @@
       "metadata": {
         "name": "unifiedStorageSearchUI",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-19T18:21:48Z"
+        "creationTimestamp": "2024-12-19T18:21:48Z",
+        "deletionTimestamp": "2026-03-19T15:30:35Z"
       },
       "spec": {
         "description": "Enable unified storage search UI",
@@ -5859,6 +5907,20 @@
     },
     {
       "metadata": {
+        "name": "zanzanaMergeUserPermissions",
+        "resourceVersion": "1776107616688",
+        "creationTimestamp": "2026-04-13T19:13:36Z"
+      },
+      "spec": {
+        "description": "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzanaNoLegacyClient",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-21T14:03:17Z"
@@ -5876,6 +5938,7 @@
         "name": "zanzanaSearchUsersPermissions",
         "resourceVersion": "1776076870099",
         "creationTimestamp": "2026-03-25T09:17:53Z",
+        "deletionTimestamp": "2026-04-13T19:13:36Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
         }

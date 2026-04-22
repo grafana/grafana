@@ -53,13 +53,6 @@ const (
 	contentTypeJSON = "application/json"
 )
 
-// String constants for instrumentation.
-const (
-	namespace         = "prometheus"
-	subsystem         = "notifications"
-	alertmanagerLabel = "alertmanager"
-)
-
 var userAgent = version.PrometheusUserAgent()
 
 // Alert is a generic representation of an alert in the Prometheus eco-system.
@@ -150,74 +143,6 @@ type alertMetrics struct {
 	queueLength             prometheus.GaugeFunc
 	queueCapacity           prometheus.Gauge
 	alertmanagersDiscovered prometheus.GaugeFunc
-}
-
-func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanagersDiscovered func() float64) *alertMetrics {
-	m := &alertMetrics{
-		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
-			Namespace:  namespace,
-			Subsystem:  subsystem,
-			Name:       "latency_seconds",
-			Help:       "Latency quantiles for sending alert notifications.",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-			[]string{alertmanagerLabel},
-		),
-		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "errors_total",
-			Help:      "Total number of sent alerts affected by errors.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		sent: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "sent_total",
-			Help:      "Total number of alerts sent.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		dropped: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "dropped_total",
-			Help:      "Total number of alerts dropped due to errors when sending to Alertmanager.",
-		}),
-		queueLength: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_length",
-			Help:      "The number of alert notifications in the queue.",
-		}, queueLen),
-		queueCapacity: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_capacity",
-			Help:      "The capacity of the alert notifications queue.",
-		}),
-		alertmanagersDiscovered: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "prometheus_notifications_alertmanagers_discovered",
-			Help: "The number of alertmanagers discovered and active.",
-		}, alertmanagersDiscovered),
-	}
-
-	m.queueCapacity.Set(float64(queueCap))
-
-	if r != nil {
-		r.MustRegister(
-			m.latency,
-			m.errors,
-			m.sent,
-			m.dropped,
-			m.queueLength,
-			m.queueCapacity,
-			m.alertmanagersDiscovered,
-		)
-	}
-
-	return m
 }
 
 // NewManager is the manager constructor.
@@ -574,57 +499,6 @@ func newAlertmanagerSet(cfg *config.AlertmanagerConfig, logger *slog.Logger, met
 		metrics: metrics,
 	}
 	return s, nil
-}
-
-// sync extracts a deduplicated set of Alertmanager endpoints from a list
-// of target groups definitions.
-func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
-	allAms := []alertmanager{}
-	allDroppedAms := []alertmanager{}
-
-	for _, tg := range tgs {
-		ams, droppedAms, err := AlertmanagerFromGroup(tg, s.cfg)
-		if err != nil {
-			s.logger.Error("Creating discovered Alertmanagers failed", "err", err)
-			continue
-		}
-		allAms = append(allAms, ams...)
-		allDroppedAms = append(allDroppedAms, droppedAms...)
-	}
-
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	previousAms := s.ams
-	// Set new Alertmanagers and deduplicate them along their unique URL.
-	s.ams = []alertmanager{}
-	s.droppedAms = []alertmanager{}
-	s.droppedAms = append(s.droppedAms, allDroppedAms...)
-	seen := map[string]struct{}{}
-
-	for _, am := range allAms {
-		us := am.url().String()
-		if _, ok := seen[us]; ok {
-			continue
-		}
-
-		// This will initialize the Counters for the AM to 0.
-		s.metrics.sent.WithLabelValues(us)
-		s.metrics.errors.WithLabelValues(us)
-
-		seen[us] = struct{}{}
-		s.ams = append(s.ams, am)
-	}
-	// Now remove counters for any removed Alertmanagers.
-	for _, am := range previousAms {
-		us := am.url().String()
-		if _, ok := seen[us]; ok {
-			continue
-		}
-		s.metrics.latency.DeleteLabelValues(us)
-		s.metrics.sent.DeleteLabelValues(us)
-		s.metrics.errors.DeleteLabelValues(us)
-		seen[us] = struct{}{}
-	}
 }
 
 func (s *alertmanagerSet) configHash() (string, error) {

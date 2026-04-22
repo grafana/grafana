@@ -688,9 +688,9 @@ var (
 		{
 			Name:        "sceneCsvExport",
 			Description: "Enables CSV export using scenes dashboard architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -755,6 +755,14 @@ var (
 			Description: "Enables generating table data as PDF in reporting",
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "reporting.pdfTablesFrontend",
+			Description: "Enables frontend-rendered table appendix pages in PDF reports",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -1218,8 +1226,8 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "zanzanaSearchUsersPermissions",
-			Description:  "Search users permissions using Zanzana.",
+			Name:         "zanzanaMergeUserPermissions",
+			Description:  "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1540,15 +1548,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
-		},
-		{
-			Name:         "unifiedStorageSearchUI",
-			Description:  "Enable unified storage search UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
@@ -2178,7 +2177,7 @@ var (
 		{
 			Name:        "teamFolders",
 			Description: "Enables team folders functionality",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
@@ -2749,6 +2748,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "frontendService.settingsSourceFilter",
+			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,
@@ -2921,14 +2929,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryServiceQueryCaching",
-			Description: "Enables the query service to do query caching",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "tracesDrilldownTimeSeeker",
 			Description: "Enables the time seeker in traces drilldown",
 			Stage:       FeatureStageExperimental,
@@ -2981,6 +2981,14 @@ var (
 		{
 			Name:        "querycaching.enableConnectionsClient",
 			Description: "Use connections client instead of storage to resolve datasource plugin ID in query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:        "querycaching.useInQueryService",
+			Description: "Enables the query service to do query caching",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",

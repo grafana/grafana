@@ -4400,12 +4400,13 @@
       "button-label": "Select folder",
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
-      "error-title": "Error loading folders",
+      "error-title": "Error loading some folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
       "team-folders": "Team folders",
+      "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "Filter",
+        "filters-set": "Filters",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -5650,8 +5653,10 @@
           "title": "Row header"
         }
       },
+      "section-filters": {
+        "title": "Filters"
+      },
       "section-variables": {
-        "add-tooltip": "Add variable",
         "title": "Variables"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-filters": {
+          "title": "Filters"
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6362,6 +6370,9 @@
             "title": "Repeat by variable"
           }
         },
+        "section-filters": {
+          "title": "Filters"
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6442,7 +6453,6 @@
         "save-library-panel": "Save library panel",
         "share": {
           "arrow": "Share",
-          "title": "Share",
           "tooltip": "Copy link"
         },
         "unlink-library-panel": "Unlink library panel"
@@ -7074,6 +7084,16 @@
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
+    "filters-list": {
+      "add-filter": "Add filter",
+      "reorder-description": "Reorder filters list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7542,7 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "Advanced options",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
@@ -7529,6 +7550,11 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
+      "format": {
+        "classic": "Classic",
+        "model-label": "Model",
+        "v2-resource": "V2 Resource"
+      },
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -7546,6 +7572,9 @@
       "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "section-filters-list": {
+      "add-filter": "Add filter"
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
@@ -7642,6 +7671,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
         }
       }
     },
@@ -8618,6 +8654,7 @@
         "copy-link": "Copy link to log line",
         "copy-to-clipboard": "Copy to Clipboard",
         "inspect-value": "Inspect value",
+        "show-details": "Show details",
         "view-log-line": "View log line"
       }
     },
@@ -11087,6 +11124,12 @@
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
     }
   },
   "link": {
@@ -11286,6 +11329,8 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "inline-no-scrolls": "Switch to expanded view",
+      "inline-with-scrolls": "Switch to condensed view",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -11534,13 +11579,13 @@
   "logstable": {
     "category-table": "Logs Table",
     "description-show-controls": "Display table controls",
+    "enable-log-details": {
+      "description": "When enabled, shows log details for each row.",
+      "name": "Enable log details"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
-    },
-    "show-inspect-button": {
-      "description": "Enables/disables the log line inspect button in the first column of each row",
-      "name": "Show inspect button"
     }
   },
   "manage-dashbaords": {
@@ -12956,9 +13001,7 @@
       "update-available": "Update available!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
       "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
-      "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
     "plugins-errors-info": {

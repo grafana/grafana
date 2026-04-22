@@ -49,7 +49,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 	}, {
 		Discriminators: data.NewDiscriminators("type", QueryTypeReduce),
-		GoType:         reflect.TypeOf(&ReduceQuery{}),
+		GoType:         reflect.TypeFor[*ReduceQuery](),
 		Examples: []data.QueryExample{
 			{
 				Name: "get max value",
