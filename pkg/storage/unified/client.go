@@ -154,7 +154,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer, false)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
 		if err != nil {
 			return nil, err
 		}
@@ -166,16 +166,17 @@ func newClient(opts options.StorageOptions,
 		}
 
 		serverOptions := sql.ServerOptions{
-			Backend:       backend,
+			Backend:        backend,
 			VectorBackend: vectorBackend,
-			Cfg:           cfg,
-			Tracer:        tracer,
-			Reg:           reg,
-			AccessClient:  authzc,
-			SearchOptions: searchOptions,
-			IndexMetrics:  indexMetrics,
-			Features:      features,
-			SecureValues:  secure,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   authzc,
+			SearchOptions:  searchOptions,
+			StorageMetrics: storageMetrics,
+			IndexMetrics:   indexMetrics,
+			Features:       features,
+			SecureValues:   secure,
 		}
 
 		if cfg.QOSEnabled {

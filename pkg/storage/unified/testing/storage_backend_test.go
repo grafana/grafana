@@ -196,7 +196,7 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	features := featuremgmt.WithFeatures()
 	reg := prometheus.NewPedanticRegistry()
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,

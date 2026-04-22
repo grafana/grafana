@@ -1,3 +1,17 @@
+<!-- 13.0.1 START -->
+
+# 13.0.1 (2026-04-17)
+
+### Features and enhancements
+
+- **Dashboard:** Preserve timezone user-preference when converting V1 → V2 [#122673](https://github.com/grafana/grafana/pull/122673), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Provisioning:** Include dashboard validation errors in pull request comments [#122433](https://github.com/grafana/grafana/pull/122433), [@gttrigger](https://github.com/gttrigger)
+
+### Bug fixes
+
+- **Unified storage:** Skip migrations if dualwrite state shows they were already migrated [#122880](https://github.com/grafana/grafana/pull/122880), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+
+<!-- 13.0.1 END -->
 <!-- 12.4.3 START -->
 
 # 12.4.3 (2026-04-14)

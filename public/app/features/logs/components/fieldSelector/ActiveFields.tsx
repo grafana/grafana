@@ -81,7 +81,7 @@ export const ActiveFields = ({
           <LogLevelField active={Boolean(logLevelActive)} toggle={toggleLevel} />
         </div>
       )}
-      {(active.length || suggested.length) && (
+      {(active.length > 0 || suggested.length > 0) && (
         <>
           <div className={styles.columnHeader}>
             <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>

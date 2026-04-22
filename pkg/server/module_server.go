@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -54,8 +55,9 @@ func NewModule(opts Options,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
+	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +82,7 @@ func newModuleServer(opts Options,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
+	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -113,6 +116,7 @@ func newModuleServer(opts Options,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
 		storeProvider:    storeProvider,
+		reconcileCRDs:    reconcileCRDs,
 	}
 
 	return s, nil
@@ -164,6 +168,10 @@ type ModuleServer struct {
 	// storeProvider creates OpenFGA datastores for the Zanzana server.
 	storeProvider zStore.StoreProvider
 
+	// reconcileCRDs is the list of namespaced CRDs the MT reconciler translates
+	// into Zanzana tuples when running as a standalone zanzana-server module.
+	reconcileCRDs []schema.GroupVersionResource
+
 	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
 	// so that operators can signal readiness to the /readyz endpoint.
 	healthNotifier *HealthNotifier
@@ -214,7 +222,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
 		var err error
-		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +234,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
 			if err != nil {
 				return nil, err
 			}
@@ -350,7 +358,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {

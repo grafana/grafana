@@ -75,6 +75,9 @@ export const versionedPages = {
     dataSourceAddButton: {
       '12.4.0': 'data-testid data-source-add-button',
     },
+    advisorRunChecksButton: {
+      [MIN_GRAFANA_VERSION]: 'data-testid advisor-run-checks-button',
+    },
   },
   EditDataSource: {
     url: {
@@ -1132,6 +1135,19 @@ export const versionedPages = {
       url: {
         '9.3.0': '/?search=open&layout=folders',
       },
+    },
+    table: {
+      body: {
+        '13.1.0': 'data-testid search-table',
+      },
+      row: {
+        '13.1.0': (name: string) => `data-testid search row ${name}`,
+      },
+    },
+  },
+  RecentlyDeleted: {
+    url: {
+      '13.1.0': '/dashboard/recently-deleted',
     },
   },
   PublicDashboards: {

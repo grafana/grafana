@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +54,6 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.GRPCServer.Network = "tcp"
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
 	cfg.EnableSQLKVBackend = false
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
@@ -71,7 +69,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	if maxOpenConn > 0 {
 		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -225,11 +223,10 @@ func TestClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		grpcService.StopAsync()
@@ -336,14 +333,13 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	tracingService := tracing.NewNoopTracerService()
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
 	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
