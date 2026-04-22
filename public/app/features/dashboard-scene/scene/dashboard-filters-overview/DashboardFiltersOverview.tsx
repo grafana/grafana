@@ -155,7 +155,10 @@ export const DashboardFiltersOverview = ({
           reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'apply_and_close' });
           onClose();
         }}
-        onClose={onClose}
+        onClose={() => {
+          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'close' });
+          onClose();
+        }}
       />
     </div>
   );
