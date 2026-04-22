@@ -1,10 +1,6 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-
-/** JSON written to `scripts/uplot-compare/public/` for the uplot-compare Vite app. */
-export const UPLOT_COMPARE_PAYLOAD_VERSION = 1 as const;
-
 /** Stable prefix for payload files: `uplot-compare-payload-<slug>-<id>.json`. */
-export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload' as const;
+export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload';
 
 const SLUG_MAX_LENGTH = 96;
 
@@ -48,7 +44,6 @@ export function createUPlotComparePayloadBasename(testName: string): string {
 }
 
 export interface UPlotComparePayload {
-  version: typeof UPLOT_COMPARE_PAYLOAD_VERSION;
   testName: string;
   expected: unknown;
   actual: unknown;
