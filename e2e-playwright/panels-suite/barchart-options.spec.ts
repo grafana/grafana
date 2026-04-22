@@ -44,7 +44,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
     const barchartUplot = page.locator('.uplot').first();
     await expect(barchartUplot, 'uplot renders with stacking=percent').toBeVisible();
 
-    // stacking toggle: Normal → None → back to 100%
+    // stacking toggle: Normal → Off → back to 100%
     const stackingOption = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.OptionsPane.fieldLabel('Bar chart Stacking')
     );
