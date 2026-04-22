@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { isEqual, omit } from 'lodash';
 
-import { type DataQuery, store } from '@grafana/data';
+import { type DataQuery } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type RichHistorySearchBackendFilters,
@@ -10,7 +10,6 @@ import {
 } from 'app/core/utils/richHistoryTypes';
 import type { RichHistoryQuery } from 'app/types/explore';
 
-import { RICH_HISTORY_KEY } from './RichHistoryLocalStorage';
 import {
   type default as RichHistoryStorage,
   type RichHistoryResults,
@@ -18,7 +17,6 @@ import {
   type RichHistoryStorageWarningDetails,
 } from './RichHistoryStorage';
 import { migrateToIndexedDB } from './indexedDBMigration';
-import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 const DB_NAME = 'grafana-query-history';
 const DB_VERSION = 1;
@@ -124,7 +122,6 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
 
   private dbPromise: Promise<IDBPDatabase<QueryHistoryDBSchema>>;
   private migrationPromise: Promise<void> | undefined;
-  private cleanupInFlight = false;
   private lastCleanupTime = 0;
 
   constructor() {
@@ -264,10 +261,9 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     // 3. Sort
     results = this.sortQueries(results, filters.sortOrder);
 
-    // 4. Fire-and-forget localStorage cleanup — never blocks reads
-    this.maybeCleanupLocalStorage().catch((err) => {
-      console.warn('localStorage cleanup failed:', err);
-    });
+    // TODO(v14): Re-enable localStorage cleanup once `queryHistoryLocalOnly` and
+    // the remote API are retired. localStorage is preserved as the rollback path
+    // while the flag still gates IndexedDB usage.
 
     return { richHistory: results, total: results.length };
   }
@@ -376,46 +372,6 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     }
 
     await tx.done;
-  }
-
-  /**
-   * After migration completes, track successful IndexedDB accesses.
-   * On the 2nd successful access, delete all localStorage query history keys.
-   */
-  private async maybeCleanupLocalStorage(): Promise<void> {
-    if (this.cleanupInFlight) {
-      return;
-    }
-    this.cleanupInFlight = true;
-    try {
-      const migrationComplete = await this.getMetadata('migrationComplete');
-      if (migrationComplete !== true) {
-        return;
-      }
-
-      const cleanupDone = await this.getMetadata('localStorageCleanupDone');
-      if (cleanupDone === true) {
-        return;
-      }
-
-      const rawCount = await this.getMetadata('successfulAccessCount');
-      const count = (typeof rawCount === 'number' ? rawCount : 0) + 1;
-      await this.setMetadata('successfulAccessCount', count);
-
-      if (count >= 2) {
-        store.delete(RICH_HISTORY_KEY);
-        for (const key of Object.values(RICH_HISTORY_SETTING_KEYS)) {
-          store.delete(key);
-        }
-        await this.setMetadata('localStorageCleanupDone', true);
-
-        reportInteraction('grafana_query_history_localstorage_cleanup', {
-          accessCountAtCleanup: count,
-        });
-      }
-    } finally {
-      this.cleanupInFlight = false;
-    }
   }
 
   // NOTE: DatasourceAZ/ZA sort labels are historically inverted in the existing
