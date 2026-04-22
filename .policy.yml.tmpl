@@ -7,6 +7,7 @@ policy:
   approval:
     - or:
         - MERGE_WITH_GENERATED
+        - require patches
         - override policies
     - policy bot config is valid when modified
 
@@ -20,6 +21,23 @@ approval_rules:
       conditions:
         has_successful_status:
           - Check .policy.yml is valid
+
+  - name: require patches
+    description: |
+      Ensure that all grafana security patches are still valid after this PR is merged.
+      If this is not the case, ask for help. We can regenerate the patch, or we can block this PR until ready.
+    if:
+      targets_branch:
+        pattern: "^(main|release-(?:[^/]*))$"
+      from_branch:
+        # Forks come from branches "username:branch".
+        # We only want to require this for in-tree PRs.
+        # The check can't run on forks, unfortunately.
+        pattern: "^[^:]+$"
+    requires:
+      conditions:
+        has_successful_status:
+          - Test patches (event)
 
   - name: override policies
     description: |
