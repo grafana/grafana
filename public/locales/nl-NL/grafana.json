@@ -4400,12 +4400,13 @@
       "button-label": "Map selecteren",
       "clear-selection": "Selectie wissen",
       "empty-message": "Geen mappen gevonden",
-      "error-title": "Fout bij laden van mappen",
+      "error-title": "",
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Mappen doorzoeken",
       "shared-with-me": "Gedeeld met mij",
       "team-folders": "Teammappen",
+      "team-folders-error-title": "",
       "unknown-error": "Onbekende fout"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotaties en waarschuwingen",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
@@ -5650,8 +5653,10 @@
           "title": "Rijkoptekst"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Variabele toevoegen",
         "title": "Variabelen"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Rij-koptekst verbergen",
           "title": "Titel"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabelen"
         },
@@ -6361,6 +6369,9 @@
             "description": "Herhaal dit tabblad voor elke waarde in de geselecteerde variabele.",
             "title": "Herhalen per variabele"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variabelen"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformeren met SQL",
       "sql-transformation-description": "Manipuleer je gegevens met MySQL-achtige syntaxis"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Annuleren",
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Bestandspad:</strong> {{filePath}}",
       "form-loading-error": "Er is een fout opgetreden bij het laden van het formulier",
       "form-loading-error-unknown": "Er is een onverwachte fout opgetreden bij het laden van het formulier.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Beschrijving",
       "label-target-folder": "Doelmap",
       "label-title": "Titel",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Sla het dashboard op voordat je waarschuwingsregels aanmaakt",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Maakt het mogelijk om meerdere waarden tegelijkertijd te selecteren",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Instellingen"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7969,6 +8006,15 @@
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8234,9 @@
       "current-value": "Huidige waarde: {{currentValue}} ",
       "label-state-name": "Statusnaam"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -11075,6 +11124,12 @@
       "update-all": "Alles bijwerken",
       "num-affected_one": "Deze update is van invloed op <1>{{count}} dashboards.</1>",
       "num-affected_other": "Deze update is van invloed op <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12944,9 +12999,7 @@
       "update-available": "Er is een update beschikbaar."
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Gebruik van plug-ins vereist de nieuwe zoekindex om gebruik over dashboards te vinden. Schakel de functieschakelaar in",
       "num-usages": "{{pluginName}} wordt <2>{{numUsages}}</2> keer gebruikt.",
-      "title-missing-feature-toggle-panel-title-search": "Ontbrekende functieschakelaar: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wordt nog niet gebruikt in een dashboard"
     },
     "plugins-errors-info": {
@@ -15418,6 +15471,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Liggend streepje",
         "label-dots": "Dots",
         "label-solid": "Stevig"

@@ -4400,12 +4400,13 @@
       "button-label": "Selecionar a pasta",
       "clear-selection": "Limpar a seleção",
       "empty-message": "Nenhuma pasta encontrada",
-      "error-title": "Erro ao carregar pastas",
+      "error-title": "",
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
       "shared-with-me": "Partilhado comigo",
       "team-folders": "Pastas da equipa",
+      "team-folders-error-title": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anotações e alertas",
         "dashboard": "Painel de controlo",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
@@ -5650,8 +5653,10 @@
           "title": "Cabeçalho da linha"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Adicionar variável",
         "title": "Variáveis"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Ocultar cabeçalho da linha",
           "title": "Título"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variáveis"
         },
@@ -6361,6 +6369,9 @@
             "description": "Repetir este separador para cada valor na variável selecionada.",
             "title": "Repetir por variável"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variáveis"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformar com SQL",
       "sql-transformation-description": "Manipule os seus dados usando sintaxe semelhante a MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
       "form-loading-error": "Erro ao carregar o formulário",
       "form-loading-error-unknown": "Ocorreu um erro inesperado ao carregar o formulário.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Guardar o painel de controlo antes de criar regras de alertas",
       "new-alert-rule": "Nova regra de alerta",
       "title-no-alerting-capable-query-found": "Não foi encontrada qualquer consulta com capacidade de alerta"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite que vários valores sejam selecionados ao mesmo tempo",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Definições"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7969,6 +8006,15 @@
     },
     "empty-state": {
       "message": "Nenhuma origem de dados encontrada"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8234,9 @@
       "current-value": "Valor atual: {{currentValue}} ",
       "label-state-name": "Nome do estado"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -11075,6 +11124,12 @@
       "update-all": "Atualizar tudo",
       "num-affected_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>",
       "num-affected_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12944,9 +12999,7 @@
       "update-available": "Atualização disponível!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "A utilização do plugin requer o novo índice de pesquisa para encontrar a utilização nos painéis. Ative a alternância de funcionalidades",
       "num-usages": " {{pluginName}} é utilizado <2>{{numUsages}}</2> vezes.",
-      "title-missing-feature-toggle-panel-title-search": "Alternância de funcionalidade em falta: {{toggle}}",
       "title-not-used-yet": "O plugin {{pluginName}} ainda não foi utilizado em nenhum painel de controlo"
     },
     "plugins-errors-info": {
@@ -15418,6 +15471,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Traço",
         "label-dots": "Pontos",
         "label-solid": "Sólido"

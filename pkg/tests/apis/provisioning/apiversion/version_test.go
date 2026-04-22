@@ -111,9 +111,11 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 					t.Run(tc.name, func(t *testing.T) {
 						name := fmt.Sprintf("ver-get-%s-%d", res.resource[:4], i)
 						body := res.body(name, "provisioning.grafana.app/"+tc.createVersion)
-						helper.RESTDo(t, "POST", tc.createVersion, res.resource, body)
+						_, err := helper.RESTDo("POST", tc.createVersion, res.resource, body)
+						require.NoError(t, err)
 
-						obj := helper.RESTDo(t, "GET", tc.queryVersion, res.resource+"/"+name)
+						obj, err := helper.RESTDo("GET", tc.queryVersion, res.resource+"/"+name)
+						require.NoError(t, err)
 						assert.Equal(t, tc.expectedVersion, obj["apiVersion"])
 					})
 				}
@@ -127,7 +129,8 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 				for _, version := range []string{"v0alpha1", "v1beta1"} {
 					t.Run(version, func(t *testing.T) {
 						expected := "provisioning.grafana.app/" + version
-						obj := helper.RESTDo(t, "GET", version, res.resource)
+						obj, err := helper.RESTDo("GET", version, res.resource)
+						require.NoError(t, err)
 						assert.Equal(t, expected, obj["apiVersion"])
 
 						items, _ := obj["items"].([]interface{})
@@ -149,7 +152,8 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 				expected := "provisioning.grafana.app/" + version
 				name := "ver-create-" + version
 				body := repositoryBody(name, expected, helper.ProvisioningPath)
-				obj := helper.RESTDo(t, "POST", version, "repositories", body)
+				obj, err := helper.RESTDo("POST", version, "repositories", body)
+				require.NoError(t, err)
 				assert.Equal(t, expected, obj["apiVersion"])
 			})
 		}
@@ -161,12 +165,22 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 				expected := "provisioning.grafana.app/" + version
 				name := "ver-update-" + version
 				body := repositoryBody(name, expected, helper.ProvisioningPath)
-				helper.RESTDo(t, "POST", version, "repositories", body)
+				_, err := helper.RESTDo("POST", version, "repositories", body)
+				require.NoError(t, err)
 
-				current := helper.RESTDo(t, "GET", version, "repositories/"+name)
-				require.NoError(t, unstructured.SetNestedField(current, "Updated Title", "spec", "title"))
-
-				obj := helper.RESTDo(t, "PUT", version, "repositories/"+name, current)
+				var obj map[string]interface{}
+				err = common.RetryOnConflict(t, func() error {
+					current, err := helper.RESTDo("GET", version, "repositories/"+name)
+					if err != nil {
+						return err
+					}
+					if err := unstructured.SetNestedField(current, "Updated Title", "spec", "title"); err != nil {
+						return err
+					}
+					obj, err = helper.RESTDo("PUT", version, "repositories/"+name, current)
+					return err
+				})
+				require.NoError(t, err)
 				assert.Equal(t, expected, obj["apiVersion"])
 			})
 		}
@@ -178,9 +192,11 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 				expected := "provisioning.grafana.app/" + version
 				name := "ver-delete-" + version
 				body := repositoryBody(name, expected, helper.ProvisioningPath)
-				helper.RESTDo(t, "POST", version, "repositories", body)
+				_, err := helper.RESTDo("POST", version, "repositories", body)
+				require.NoError(t, err)
 
-				obj := helper.RESTDo(t, "DELETE", version, "repositories/"+name)
+				obj, err := helper.RESTDo("DELETE", version, "repositories/"+name)
+				require.NoError(t, err)
 				if kind, _ := obj["kind"].(string); kind == "Repository" {
 					assert.Equal(t, expected, obj["apiVersion"])
 				}

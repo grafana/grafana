@@ -1148,6 +1148,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
 	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
 }
+
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()

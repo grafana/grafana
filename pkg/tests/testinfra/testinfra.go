@@ -151,7 +151,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()
@@ -582,6 +582,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 		require.NoError(t, err)
 	}
+	if len(opts.UnifiedAlertingAllowedIntegrations) > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -862,6 +868,7 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	UnifiedAlertingAllowedIntegrations    []string
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int

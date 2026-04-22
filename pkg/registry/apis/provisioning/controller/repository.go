@@ -107,6 +107,7 @@ func NewRepositoryController(
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
+	folderAPIVersion string,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -127,10 +128,11 @@ func NewRepositoryController(
 		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:        resourceLister,
-			clientFactory: clients,
-			metrics:       &finalizerMetrics,
-			maxWorkers:    parallelOperations,
+			lister:           resourceLister,
+			clientFactory:    clients,
+			metrics:          &finalizerMetrics,
+			maxWorkers:       parallelOperations,
+			folderAPIVersion: folderAPIVersion,
 		},
 		jobs:                  jobs,
 		logger:                logging.DefaultLogger.With("logger", loggerName),
@@ -649,6 +651,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
+	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+		logger.Info("webhook missing, reconciling")
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -804,7 +808,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 // processHooks handles hook execution with intelligent retry logic
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
-	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
+	webhookMissing := len(obj.Spec.Workflows) > 0 &&
+		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+
+	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
 	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
 	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {

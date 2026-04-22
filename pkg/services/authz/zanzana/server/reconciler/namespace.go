@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 // tupleKey generates a unique string key for a tuple based on user, relation, and object.
@@ -39,15 +40,15 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchGlobalRolePerms")
 	defer span.End()
 
-	gvr := iamv0.GlobalRoleInfo.GroupVersionResource()
+	crd := iamv0.GlobalRoleInfo.GroupVersionResource()
 
 	clients, err := r.clientFactory.Clients(ctx, "")
 	if err != nil {
 		return nil, tracing.Errorf(span, "failed to get cluster clients: %w", err)
 	}
-	resourceClient, _, err := clients.ForResource(ctx, gvr)
+	resourceClient, _, err := clients.ForResource(ctx, crd)
 	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get client for %s: %w", gvr, err)
+		return nil, tracing.Errorf(span, "failed to get client for %s: %w", crd, err)
 	}
 
 	// 1. Collect all GlobalRole objects into a map for two-pass resolution.
@@ -132,15 +133,15 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		"serviceaccounts":     TranslateServiceAccountToTuples,
 	}
 
-	// Process each GVR type and insert translated tuples directly into the map
-	for _, gvr := range reconcileGVRs {
-		translator, ok := translators[gvr.Resource]
+	// Process each crd type and insert translated tuples directly into the map
+	for _, crd := range r.cfg.CRDs {
+		translator, ok := translators[crd.Resource]
 		if !ok {
-			return nil, tracing.Errorf(span, "no translator found for resource type: %s", gvr.Resource)
+			return nil, tracing.Errorf(span, "no translator found for resource type: %s", crd.Resource)
 		}
 
-		if err := r.fetchAndTranslateCRD(ctx, namespace, gvr, translator, expectedMap); err != nil {
-			return nil, tracing.Errorf(span, "failed to process %s: %w", gvr.Resource, err)
+		if err := r.fetchAndTranslateCRD(ctx, namespace, crd, translator, expectedMap); err != nil {
+			return nil, tracing.Errorf(span, "failed to process %s: %w", crd.Resource, err)
 		}
 	}
 
@@ -167,14 +168,14 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 func (r *Reconciler) fetchAndTranslateCRD(
 	ctx context.Context,
 	namespace string,
-	gvr schema.GroupVersionResource,
+	crd schema.GroupVersionResource,
 	translator func(*unstructured.Unstructured) ([]*openfgav1.TupleKey, error),
 	dest map[string]*openfgav1.TupleKey,
 ) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateCRD", trace.WithAttributes(
-		attribute.String("crd.group", gvr.Group),
-		attribute.String("crd.version", gvr.Version),
-		attribute.String("crd.resource", gvr.Resource),
+		attribute.String("crd.group", crd.Group),
+		attribute.String("crd.version", crd.Version),
+		attribute.String("crd.resource", crd.Resource),
 	))
 	defer span.End()
 
@@ -188,10 +189,10 @@ func (r *Reconciler) fetchAndTranslateCRD(
 		return tracing.Errorf(span, "failed to get clients for namespace %s: %w", namespace, err)
 	}
 
-	// Get the resource interface for the specific GVR
-	resourceClient, _, err := clients.ForResource(ctx, gvr)
+	// Get the resource interface for the specific CRD
+	resourceClient, _, err := clients.ForResource(ctx, crd)
 	if err != nil {
-		return tracing.Errorf(span, "failed to get client for resource %s: %w", gvr.String(), err)
+		return tracing.Errorf(span, "failed to get client for resource %s: %w", crd.String(), err)
 	}
 
 	// Stream through pages using the Kubernetes dynamic client
@@ -199,7 +200,7 @@ func (r *Reconciler) fetchAndTranslateCRD(
 		objectsFetched++
 		tuples, err := translator(item)
 		if err != nil {
-			return fmt.Errorf("failed to translate %s/%s: %w", gvr.Resource, item.GetName(), err)
+			return fmt.Errorf("failed to translate %s/%s: %w", crd.Resource, item.GetName(), err)
 		}
 		tuplesProduced += len(tuples)
 		for _, t := range tuples {
@@ -218,7 +219,7 @@ func (r *Reconciler) fetchAndTranslateCRD(
 		attribute.Int("crd.objects_fetched", objectsFetched),
 		attribute.Int("crd.tuples_produced", tuplesProduced),
 	)
-	r.metrics.crdFetchDurationSeconds.WithLabelValues(gvr.Resource).Observe(elapsed.Seconds())
+	r.metrics.crdFetchDurationSeconds.WithLabelValues(crd.Resource).Observe(elapsed.Seconds())
 
 	return nil
 }
@@ -265,31 +266,25 @@ func (r *Reconciler) computeDiffStreaming(
 	defer span.End()
 
 	pagesRead := 0
-
-	// Get store info for the namespace
-	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
-	if err != nil {
-		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
-	}
-
 	var continuationToken string
 
 	// Read current tuples page-by-page and diff against expected
 	for {
-		req := &openfgav1.ReadRequest{
-			StoreId:           storeInfo.ID,
+		req := &authzextv1.ReadRequest{
+			Namespace:         namespace,
 			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
+		resp, err := r.server.Read(ctx, req)
 		if err != nil {
 			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}
 
 		pagesRead++
 
-		for _, tuple := range resp.GetTuples() {
+		for _, authzTuple := range resp.GetTuples() {
+			tuple := common.ToOpenFGATuple(authzTuple)
 			key := tupleKey(tuple.GetKey())
 			if expected, exists := expectedMap[key]; exists {
 				if proto.Equal(expected.GetCondition(), tuple.GetKey().GetCondition()) {

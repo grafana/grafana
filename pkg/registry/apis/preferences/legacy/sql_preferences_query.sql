@@ -22,6 +22,8 @@ WHERE p.org_id = {{ .Arg .OrgID }}
    OR (p.user_id = 0 AND p.team_id = 0)
   {{ end }}
   )
+{{ else if .Namespace }} 
+  AND p.user_id = 0 AND p.team_id = 0
 {{ else if not .All }}
   invalid query -- specify All to list all permissions in query
 {{ end }}

@@ -4400,12 +4400,13 @@
       "button-label": "Klasör seçin",
       "clear-selection": "Seçimi temizle",
       "empty-message": "Klasör bulunamadı",
-      "error-title": "Klasörler yüklenirken hata oluştu",
+      "error-title": "",
       "non-folder-item": "Klasörsüz {{itemKind}} {{itemUID}}",
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
       "shared-with-me": "Benimle paylaşılan",
       "team-folders": "Ekip klasörleri",
+      "team-folders-error-title": "",
       "unknown-error": "Bilinmeyen hata"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Ek açıklamalar ve uyarılar",
         "dashboard": "Pano",
         "element": "Bileşen",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Bağlantılar",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
@@ -5650,8 +5653,10 @@
           "title": "Satır başlığı"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Değişken ekle",
         "title": "Değişkenler"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Satır başlığını gizle",
           "title": "Başlık"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Değişkenler"
         },
@@ -6361,6 +6369,9 @@
             "description": "Seçilen değişkenin her değeri için bu sekmeyi tekrarla.",
             "title": "Değişkene göre tekrar et"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Değişkenler"
@@ -7074,6 +7085,16 @@
       "sql-name": "SQL ile dönüştür",
       "sql-transformation-description": "Verilerinizi MySQL benzeri söz dizimiyle işleyin"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "İptal",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
       "form-loading-error": "Form yüklenirken hata oluştu",
       "form-loading-error-unknown": "Form yüklenirken beklenmedik bir hata oluştu.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Açıklama",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Uyarı kuralları oluşturmadan önce panoyu kaydedin",
       "new-alert-rule": "Yeni uyarı kuralı",
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Aynı anda birden fazla değerin seçilmesini sağlar",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Ayarlar"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7969,6 +8006,15 @@
     },
     "empty-state": {
       "message": "Veri kaynağı bulunamadı"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8234,9 @@
       "current-value": "Geçerli değer: {{currentValue}} ",
       "label-state-name": "Durum adı"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -11075,6 +11124,12 @@
       "update-all": "Tümünü güncelle",
       "num-affected_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>",
       "num-affected_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12944,9 +12999,7 @@
       "update-available": "Güncelleme mevcut!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Eklenti kullanımı, panolar genelinde kullanım bulabilmek için yeni arama dizini gerektirir. Lütfen özellik anahtarını etkinleştirin",
       "num-usages": "{{pluginName}}, <2>{{numUsages}}</2> kez kullanılıyor.",
-      "title-missing-feature-toggle-panel-title-search": "Eksik özellik geçişi: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} henüz herhangi bir panoda kullanılmıyor"
     },
     "plugins-errors-info": {
@@ -15418,6 +15471,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Çizgi",
         "label-dots": "Noktalar",
         "label-solid": "Katı"

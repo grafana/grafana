@@ -187,7 +187,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -209,7 +209,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		// Echo back the current object via UpdateStatus. The admission webhook must
 		// pass status-subresource requests through without a Forbidden rejection,
 		// regardless of whether the pending-delete label is set.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -226,7 +226,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err

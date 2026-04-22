@@ -4400,12 +4400,13 @@
       "button-label": "Mappa kijelölése",
       "clear-selection": "Kijelölés törlése",
       "empty-message": "Nem található mappa",
-      "error-title": "Hiba történt a mappák betöltésekor",
+      "error-title": "",
       "non-folder-item": "Nem mappa {{itemKind}} {{itemUID}}",
       "root-title": "Irányítópultok",
       "search-placeholder": "Mappák keresése",
       "shared-with-me": "Velem megosztva",
       "team-folders": "Csapatmappák",
+      "team-folders-error-title": "",
       "unknown-error": "Ismeretlen hiba"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Jegyzetek és riasztások",
         "dashboard": "Irányítópult",
         "element": "Elem",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Hivatkozások",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
@@ -5650,8 +5653,10 @@
           "title": "Sorfejléc"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Változó hozzáadása",
         "title": "Változók"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Sorfejléc elrejtése",
           "title": "Cím"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Változók"
         },
@@ -6361,6 +6369,9 @@
             "description": "Ismételje meg ezt a lapot a kijelölt változó minden értékére.",
             "title": "Ismétlés változó szerint"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Változók"
@@ -7074,6 +7085,16 @@
       "sql-name": "Átalakítás SQL-lel",
       "sql-transformation-description": "Az adatok módosítása MySQL-szerű szintaxissal"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1> A panelt használó következő irányítópultokat érinti:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Mégse",
       "cannot-be-saved": "Ez az irányítópult nem menthető a Grafana kezelőfelületéből, mert egy másik forrásból van kiépítve. Másolja a JSON-t, vagy mentse fájlba az alábbiakban, majd frissítheti az irányítópultot a kiépítési forrásban.",
       "copy-json-to-clipboard": "JSON másolása a vágólapra",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Fájl útvonala:</strong> {{filePath}}",
       "form-loading-error": "Hiba történt az űrlap betöltésekor",
       "form-loading-error-unknown": "Váratlan hiba történt az űrlap betöltésekor.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Leírás",
       "label-target-folder": "Célmappa",
       "label-title": "Cím",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Mentse az irányítópultot a riasztási szabályok létrehozása előtt",
       "new-alert-rule": "Új riasztási szabály",
       "title-no-alerting-capable-query-found": "Nem található riasztásképes lekérdezés"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Lehetővé teszi több érték egyidejű kijelölését",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Beállítások"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7969,6 +8006,15 @@
     },
     "empty-state": {
       "message": "Nem található adatforrás"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8188,6 +8234,9 @@
       "current-value": "Jelenlegi érték: {{currentValue}} ",
       "label-state-name": "Állapot neve"
     }
+  },
+  "diff-viewer": {
+    "loading": ""
   },
   "dimensions": {
     "background-size-editor": {
@@ -11075,6 +11124,12 @@
       "update-all": "Összes frissítése",
       "num-affected_one": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>",
       "num-affected_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12944,9 +12999,7 @@
       "update-available": "Frissítés érhető el!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "A bővítmény használatakor az új keresési indexnek meg kell találnia a használatot az irányítópultokon. Engedélyezze a funkcióváltást",
       "num-usages": "A(z) {{pluginName}} <2>{{numUsages}}</2> alkalommal lett felhasználva.",
-      "title-missing-feature-toggle-panel-title-search": "Hiányzó funkcióváltó: {{toggle}}",
       "title-not-used-yet": "A(z) {{pluginName}} még egyik irányítópulton sincs használatban"
     },
     "plugins-errors-info": {
@@ -15418,6 +15471,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Szaggatott",
         "label-dots": "Pontozott",
         "label-solid": "Folytonos"

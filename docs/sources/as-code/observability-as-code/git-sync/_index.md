@@ -82,7 +82,7 @@ Additionally, having a detailed history of changes enhances compliance efforts, 
 
 ### Automated deployment and CI/CD integration
 
-Teams can streamline their workflow by integrating dashboard updates into their CI/CD pipelines. By pushing changes to GitHub, automated processes can trigger validation checks, test dashboard configurations, and deploy updates programmatically using the `grafanactl` CLI and Foundation SDK.
+Teams can streamline their workflow by integrating dashboard updates into their CI/CD pipelines. By pushing changes to GitHub, automated processes can trigger validation checks, test dashboard configurations, and deploy updates programmatically using the `gcx` CLI and Foundation SDK.
 
 This reduces the risk of human errors, ensures consistency across environments, and enables a faster, more reliable release cycle for dashboards used in production monitoring and analytics.
 
