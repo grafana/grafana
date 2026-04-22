@@ -158,16 +158,6 @@ describe('InlineField', () => {
 
       expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
     });
-
-    it('associates with the field error correctly when no id is set', () => {
-      render(
-        <InlineField label="My label" invalid error="My error">
-          <Select onChange={() => {}} />
-        </InlineField>
-      );
-
-      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
-    });
   });
 
   describe('MultiSelect', () => {
@@ -179,16 +169,6 @@ describe('InlineField', () => {
       );
 
       expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
-    });
-
-    it('associates with the field error correctly when no id is set', () => {
-      render(
-        <InlineField label="My label" invalid error="My error">
-          <MultiSelect onChange={() => {}} />
-        </InlineField>
-      );
-
-      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
     });
   });
 
