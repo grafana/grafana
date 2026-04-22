@@ -190,8 +190,19 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 // and returns the health result and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
+//
+// When a recent HealthFailureHook is recorded on status.health, the refresh is
+// skipped and the existing status is returned unchanged to avoid overriding it.
 func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error) {
 	cfg := repo.Config()
+
+	if hc.HasRecentFailure(cfg.Status.Health, provisioning.HealthFailureHook) {
+		logging.FromContext(ctx).Info("skipping health refresh while hook failure cooldown is active")
+		return HealthResultWithPatchOps{
+			HealthStatus:   cfg.Status.Health,
+			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, provisioning.ReasonInvalidSpec),
+		}, nil
+	}
 
 	// Use health checker to perform comprehensive health check with existing status
 	testResults, newHealthStatus, err := hc.refreshHealth(ctx, repo, cfg.Status.Health)

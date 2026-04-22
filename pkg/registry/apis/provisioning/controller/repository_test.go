@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1147,4 +1148,116 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The token patch must be present even though the repository is currently over quota.
 	_, found := patcher.findPatchOp("/status/token")
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
+}
+
+// hookRepoStub implements repository.Repository and repository.Hooks so we can
+// observe whether the reconcile path attempts to run webhook hooks.
+type hookRepoStub struct {
+	cfg           *provisioning.Repository
+	testCalls     atomic.Int32
+	onUpdateCalls atomic.Int32
+	onCreateCalls atomic.Int32
+}
+
+func (s *hookRepoStub) Config() *provisioning.Repository { return s.cfg }
+
+func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	s.testCalls.Add(1)
+	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
+}
+
+func (s *hookRepoStub) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+	s.onCreateCalls.Add(1)
+	return nil, assert.AnError
+}
+
+func (s *hookRepoStub) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
+	s.onUpdateCalls.Add(1)
+	return nil, assert.AnError
+}
+
+func (s *hookRepoStub) OnDelete(ctx context.Context) error { return nil }
+
+// TestRepositoryController_process_HookFailureCooldownSuppressesRetry verifies
+// that while the hook-failure cooldown is still active, the reconcile loop does
+// not re-run hooks and does not overwrite the recorded HealthFailureHook with
+// a fresh health refresh (which would otherwise re-arm the webhook creation
+// path on the very next reconcile).
+func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"failed to create webhook"},
+			},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	patcher := &capturePatcher{}
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		Maybe()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	stub := &hookRepoStub{cfg: repo}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	rc := &RepositoryController{
+		repoLister:    repoLister,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+		healthChecker: healthChecker,
+		statusPatcher: patcher,
+		repoFactory:   repoFactory,
+		jobs:          mockJobs,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	err := rc.process(&queueItem{key: namespace + "/" + repoName})
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
+		"hooks must not be re-run while the hook failure cooldown is active")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
+		"hooks must not be re-run while the hook failure cooldown is active")
+	assert.Equal(t, int32(0), stub.testCalls.Load(),
+		"health refresh must be skipped while the hook failure cooldown is active")
+
+	_, healthPatched := patcher.findPatchOp("/status/health")
+	assert.False(t, healthPatched,
+		"existing HealthFailureHook status must not be overwritten during cooldown")
 }
