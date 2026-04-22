@@ -72,6 +72,9 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    goBack: {
+      '12.4.0': 'data-testid Sidebar go back',
+    },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },

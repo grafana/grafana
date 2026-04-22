@@ -35,6 +35,7 @@ export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
           onClick={onGoBack}
           aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
           tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
+          data-testid={selectors.components.Sidebar.goBack}
         />
       )}
       {!onGoBack && sidebarContext.onClosePane && (
