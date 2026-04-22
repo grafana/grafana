@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -714,7 +715,8 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	userSvc, err := userimpl.ProvideService(
 		sql, orgSvc, cfg, teamSvc, nil, tracer,
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
 	)
 	require.NoError(t, err)
 
