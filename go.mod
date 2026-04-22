@@ -749,9 +749,6 @@ exclude (
 	// dependency.
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 
-	// testcontainers-go v0.38.0 is not compatible with docker v28.5.2, so we need to exclude it
-	github.com/testcontainers/testcontainers-go v0.38.0
-
 	// This was retracted, but seems to be known by the Go module proxy, and is
 	// otherwise pulled in as a transitive dependency.
 	k8s.io/client-go v12.0.0+incompatible
