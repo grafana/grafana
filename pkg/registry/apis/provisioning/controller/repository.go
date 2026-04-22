@@ -461,8 +461,9 @@ func (rc *RepositoryController) determineSyncStrategy(
 		}
 
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
-		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
-		// to do a full sync to see if the folder was deleted as well in git.
+		// However, we fall back to a full sync when incremental diffing cannot safely represent the change,
+		// such as .keep file deletions inside a folder with no other deletions (to detect whether the folder
+		// was deleted in git) or when the diff size reaches/exceeds max_incremental_changes.
 		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled, rc.maxIncrementalChanges)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
