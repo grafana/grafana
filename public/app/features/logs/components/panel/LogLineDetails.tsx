@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
@@ -34,8 +34,7 @@ export const LogLineDetails = memo(
   ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls, showFieldSelector }: Props) => {
     const { noInteractions, fontSize, logOptionsStorageKey } = useLogListContext();
     const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
-    const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
-    const styles = useStyles2(getStyles, 'sidebar', showControls, fontSize, inlineLogDetailsNoScrolls);
+    const styles = useStyles2(getStyles, 'sidebar', showControls, fontSize);
     const dragStyles = useStyles2(getDragStyles);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,9 +83,8 @@ const LogLineDetailsTabs = memo(
     const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
-    const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
 
-    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize, inlineLogDetailsNoScrolls);
+    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize);
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
@@ -169,14 +167,19 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
-  const { app, fontSize, noInteractions } = useLogListContext();
+  const { app, fontSize, logOptionsStorageKey, noInteractions } = useLogListContext();
   const { detailsWidth } = useLogDetailsContext();
-  const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
-  const styles = useStyles2(getStyles, 'inline', undefined, fontSize, inlineLogDetailsNoScrolls);
+  const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const [autoScrolled, setAutoScrolled] = useState(false);
+  const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
+  const [inlineNoScroll, setInlineNoScroll] = useState(
+    inlineLogDetailsNoScrolls && logOptionsStorageKey
+      ? store.getBool(`${logOptionsStorageKey}.inlineDetailsNoScrolls`, true)
+      : undefined
+  );
 
   useEffect(() => {
     if (!noInteractions) {
@@ -204,9 +207,8 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
   }, []);
 
   // Keep scroll position when adding filters or using displayed fields
-  // Remove after inlineLogDetailsNoScrolls is enabled by default
   useEffect(() => {
-    if (!scrollRef.current || inlineLogDetailsNoScrolls || autoScrolled) {
+    if (!scrollRef.current || inlineNoScroll || autoScrolled) {
       return;
     }
     if (scrollRef.current.scrollHeight === scrollRef.current.clientHeight) {
@@ -214,18 +216,24 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
     }
     scrollRef.current.scrollTo(0, getDetailsScrollPosition(log));
     setAutoScrolled(true);
-  }, [inlineLogDetailsNoScrolls, autoScrolled, log, scrollRef.current?.scrollHeight]);
+  }, [inlineNoScroll, autoScrolled, log, scrollRef.current?.scrollHeight]);
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.inlineContainer}>
-        <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
-        {inlineLogDetailsNoScrolls ? (
+        <LogLineDetailsHeader
+          log={log}
+          search={search}
+          inlineNoScroll={inlineNoScroll}
+          setInlineNoScroll={setInlineNoScroll}
+          onSearch={handleSearch}
+        />
+        {inlineNoScroll ? (
           <div>
             <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
           </div>
         ) : (
-          <ScrollContainer ref={scrollRef} onScroll={saveScroll}>
+          <ScrollContainer ref={scrollRef} onScroll={saveScroll} overflowY="auto" maxHeight={LOG_LINE_DETAILS_HEIGHT}>
             <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
           </ScrollContainer>
         )}
@@ -241,12 +249,10 @@ const getStyles = (
   theme: GrafanaTheme2,
   mode: LogLineDetailsMode,
   showControls: boolean | undefined,
-  fontSize: LogListFontSize,
-  inlineLogDetailsNoScrolls: boolean
+  fontSize: LogListFontSize
 ) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
-    height: inlineLogDetailsNoScrolls === false ? `${LOG_LINE_DETAILS_HEIGHT}vh` : undefined,
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
