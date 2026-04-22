@@ -95,6 +95,7 @@
   },
   "devDependencies": {
     "@grafana/scenes": "7.3.8",
+    "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/react": "16.3.0",

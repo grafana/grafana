@@ -12,5 +12,5 @@
     "resolveJsonModule": true
   },
   "exclude": ["dist/**/*"],
-  "include": ["src/**/*.ts*", "../grafana-ui/src/types/react-table-config.d.ts"]
+  "include": ["jest-setup.ts", "src/**/*.ts*"]
 }
