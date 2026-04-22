@@ -30,6 +30,10 @@ func (u *GrafanaAlertmanagerConfig) MarshalJSON() ([]byte, error) {
 
 type RuntimeConfig struct {
 	DispatchTimer string `json:"dispatch_timer"`
+	// NotificationRateLimits contains per-integration notification rate limits in notifications/sec.
+	// A value of 0 (or negative) blocks all notifications for that integration; omit the key
+	// to apply no override and fall through to the default limits.
+	NotificationRateLimits map[string]float64 `json:"notification_rate_limits,omitempty"`
 }
 
 type UserGrafanaConfig struct {

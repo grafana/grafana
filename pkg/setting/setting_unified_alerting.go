@@ -158,6 +158,12 @@ type UnifiedAlertingSettings struct {
 	BacktestingMaxEvaluations int
 
 	IgnorePendingForNoDataAndError bool
+
+	// NotificationRateLimits contains per-integration notification rate limits in notifications/sec.
+	// A value of 0 (or negative) blocks all notifications for that integration; omit the key to
+	// apply no override and fall through to the default limits.
+	// Forwarded to the remote Alertmanager via RuntimeConfig. Not yet applied to the built-in Alertmanager.
+	NotificationRateLimits map[string]float64
 }
 
 type RecordingRuleSettings struct {
@@ -485,6 +491,19 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
+
+	rateLimitsSection := iniFile.Section("unified_alerting.notification_rate_limits")
+	if keys := rateLimitsSection.Keys(); len(keys) > 0 {
+		limits := make(map[string]float64, len(keys))
+		for _, key := range keys {
+			v, err := key.Float64()
+			if err != nil {
+				return fmt.Errorf("invalid value for [unified_alerting.notification_rate_limits] %q: %w", key.Name(), err)
+			}
+			limits[key.Name()] = v
+		}
+		uaCfg.NotificationRateLimits = limits
+	}
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots

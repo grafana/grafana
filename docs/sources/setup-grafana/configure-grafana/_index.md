@@ -2133,6 +2133,22 @@ Set the default data source UID to use for query execution when importing Promet
 
 <hr>
 
+### `[unified_alerting.notification_rate_limits]`
+
+Per-integration notification rate limits, in notifications per second. Each key is an integration name (for example `email`, `slack`) and the value is the maximum rate. A value of `0` (or negative) blocks all notifications for that integration; omit the integration entirely to apply no override and fall through to the default limits.
+
+These limits are forwarded to the remote Alertmanager via `RuntimeConfig`. They are not yet applied to the built-in Grafana Alertmanager.
+
+Example:
+
+```ini
+[unified_alerting.notification_rate_limits]
+email = 0.5
+slack = 2.0
+```
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`
