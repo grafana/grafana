@@ -7,17 +7,19 @@
  *    getters (`getRulesPermissions`, `getInstancesPermissions`, `getNotificationsPermissions`).
  *    Safe to call at module load time or in non-React contexts.
  *
- * 2. **contextSrv-calling utilities**: functions that call `contextSrv.hasPermission` /
- *    `contextSrv.evaluatePermission` at call time (`evaluateAccess`, `getRulesAccess`,
- *    `getCreateAlertInMenuAvailability`). These are intentionally plain functions (not hooks)
- *    because they are also used in non-React contexts (route guards, panel menus).
- *    When used inside React components, wrap them in `useMemo` or call them via the
- *    `useRulesAccess()` hook in `accessControlHooks.ts`.
+ * 2. **Ability-calling utilities**: functions that delegate to the central ability system
+ *    (`evaluateAccess`, `getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    intentionally plain functions (not hooks) because they are also used in non-React
+ *    contexts (route guards, panel menus). When used inside React components, wrap them
+ *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
+import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 
@@ -147,11 +149,12 @@ export function getRulesPermissions(rulesSourceName: string) {
   };
 }
 
-// ── contextSrv-calling utilities ─────────────────────────────────────────────
-// These functions read permissions at call time via contextSrv. They are plain
-// functions (not hooks) because they are also used in non-React contexts
-// (route guards, panel menus). Inside React components prefer the wrappers in
-// accessControlHooks.ts.
+// ── Runtime utilities ─────────────────────────────────────────────────────────
+// Plain functions (not hooks) for non-React contexts (route guards, panel menus).
+// RBAC checks delegate to get*Ability() from the central ability system.
+// evaluateAccess uses contextSrv.evaluatePermission directly (route-guard API).
+// getRulesAccess retains direct contextSrv calls only for the auxiliary
+// FoldersRead / DataSourcesRead workflow-feasibility guards.
 
 /**
  * Returns a route-guard thunk for Grafana's route config.
@@ -168,17 +171,23 @@ export function evaluateAccess(actions: AccessControlAction[]) {
  * Returns an object describing what rule-creation actions the current user can
  * perform globally.  Inside React components use `useRulesAccess()` from
  * `accessControlHooks.ts` instead.
+ *
+ * Note: `canCreateGrafanaRules` and `canCreateCloudRules` add workflow-feasibility
+ * guards (FoldersRead, DataSourcesRead) on top of the RBAC check — callers need both
+ * the permission AND a folder/datasource to be visible. The RBAC portion is delegated
+ * to the central ability system; the auxiliary guards remain here.
  */
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasPermission(AccessControlAction.FoldersRead) &&
-      contextSrv.hasPermission(rulesPermissions.create.grafana),
+      contextSrv.hasPermission(AccessControlAction.FoldersRead) && getGlobalRuleAbility(RuleAction.Create).granted,
     canCreateCloudRules:
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
-      contextSrv.hasPermission(rulesPermissions.create.external),
+      getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted,
     canEditRules: (rulesSourceName: string) => {
-      return contextSrv.hasPermission(getRulesPermissions(rulesSourceName).update);
+      return isGrafanaRulesSource(rulesSourceName)
+        ? getGlobalRuleAbility(RuleAction.Update).granted
+        : getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule).granted;
     },
   };
 }
@@ -189,9 +198,8 @@ export function getRulesAccess() {
  */
 export function getCreateAlertInMenuAvailability() {
   const { unifiedAlertingEnabled } = getConfig();
-  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-  const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
-  const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
+  const canRead = getGlobalRuleAbility(RuleAction.View).granted;
+  const canUpdate = getGlobalRuleAbility(RuleAction.Update).granted;
 
-  return isAlertingAvailableForRead && hasRuleUpdatePermissions;
+  return unifiedAlertingEnabled && canRead && canUpdate;
 }

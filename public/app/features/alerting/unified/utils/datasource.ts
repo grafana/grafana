@@ -1,12 +1,10 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
 import {
   type DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
   type GrafanaRulesSourceIdentifier,
@@ -19,10 +17,13 @@ import {
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { makeAbility } from '../hooks/abilities/abilityUtils';
 import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/alertmanager/useContactPointAbility';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { PERMISSIONS_TIME_INTERVALS } from '../hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
+import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
@@ -60,9 +61,9 @@ export interface AlertManagerDataSource {
 }
 
 export function getRulesDataSources() {
-  const hasReadPermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
-  const hasWritePermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
-  if (!hasReadPermission && !hasWritePermission) {
+  const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
+  const canCreate = getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted;
+  if (!canView && !canCreate) {
     return [];
   }
 
@@ -185,15 +186,14 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
     ...PERMISSIONS_TIME_INTERVALS,
   ];
 
-  const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
-    contextSrv.hasPermission(permission)
-  );
+  // anyOf: can access the internal alertmanager if any one of the bundled permissions is held
+  const hasPermissionsForInternalAlertmanager = makeAbility(true, builtinAlertmanagerPermissions).granted;
 
   if (hasPermissionsForInternalAlertmanager) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
-  if (contextSrv.hasPermission(permissions[permission].external)) {
+  if (makeAbility(true, [permissions[permission].external]).granted) {
     const cloudSources = getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
       name: ds.name,
       displayName: ds.name,
@@ -211,7 +211,7 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
 export function getAllRulesSourceNames(): string[] {
   const availableRulesSources: string[] = getRulesDataSources().map((r) => r.name);
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+  if (getGlobalRuleAbility(RuleAction.View).granted) {
     availableRulesSources.push(GRAFANA_RULES_SOURCE_NAME);
   }
 
@@ -229,7 +229,7 @@ export function getExternalRulesSources(): DataSourceRulesSourceIdentifier[] {
 export function getAllRulesSources(): RulesSource[] {
   const availableRulesSources: RulesSource[] = getRulesDataSources();
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+  if (getGlobalRuleAbility(RuleAction.View).granted) {
     availableRulesSources.unshift(GRAFANA_RULES_SOURCE_NAME);
   }
 
