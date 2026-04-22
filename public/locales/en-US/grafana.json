@@ -11580,7 +11580,7 @@
     "category-table": "Logs Table",
     "description-show-controls": "Display table controls",
     "enable-log-details": {
-      "description": "When enabled, shows log details for each row. When disabled, shows the log line inspect button instead.",
+      "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
     },
     "show-copy-log": {
