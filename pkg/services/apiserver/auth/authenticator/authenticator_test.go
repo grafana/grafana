@@ -31,10 +31,11 @@ func TestAuthenticator(t *testing.T) {
 		require.NoError(t, err)
 
 		ident := &user.SignedInUser{
-			Name:    "admin",
-			UserID:  1,
-			UserUID: "xyz",
-			TeamIDs: []int64{1, 2},
+			Name:     "admin",
+			UserID:   1,
+			UserUID:  "xyz",
+			TeamIDs:  []int64{1, 2},
+			TeamUIDs: []string{"team1", "team2"},
 		}
 
 		req = req.WithContext(identity.WithRequester(context.Background(), ident))
@@ -47,7 +48,7 @@ func TestAuthenticator(t *testing.T) {
 
 		require.Equal(t, ident.GetName(), res.User.GetName())
 		require.Equal(t, ident.GetUID(), res.User.GetUID())
-		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
+		require.Equal(t, []string{"team1", "team2"}, res.User.GetGroups())
 		require.Empty(t, res.User.GetExtra()["id-token"])
 	})
 }
