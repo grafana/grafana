@@ -47,6 +47,8 @@ describe('InlineField', () => {
       </InlineField>
     );
 
+    // can't use getByRole here as type="password" inputs don't have an implicit role
+    // see https://github.com/testing-library/dom-testing-library/issues/567
     expect(screen.getByLabelText('My label')).toBeInTheDocument();
   });
 
