@@ -11,19 +11,25 @@ import (
 )
 
 // ProvideVectorBackend creates a pgvectorBackend from the [database_vector]
-// config section. It opens a connection to the separate pgvector database,
-// runs migrations, and returns a ready-to-use VectorBackend.
+// config section. It opens a connection to the separate pgvector database
+// and returns a ready-to-use VectorBackend. When runMigrations is true, the
+// schema migrations are applied before the backend is returned.
 //
-// Returns (nil, nil) if vector storage is not configured.
-func ProvideVectorBackend(ctx context.Context, cfg *setting.Cfg) (VectorBackend, error) {
-	if cfg.VectorDBHost == "" {
+// Returns (nil, nil) if vector search is disabled via the
+// [unified_storage] enable_vector_search flag. Returns an error if the flag
+// is enabled but VectorDBHost is unset, so silent misconfiguration fails loud.
+func ProvideVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
+	if !cfg.EnableVectorSearch {
 		return nil, nil
+	}
+	if cfg.VectorDBHost == "" {
+		return nil, fmt.Errorf("vector search is enabled but [database_vector] db_host is not set")
 	}
 
 	logger := log.New("vector-db")
 
-	connStr := fmt.Sprintf("host=%s dbname=%s user=%s password=%s sslmode=%s",
-		cfg.VectorDBHost, cfg.VectorDBName, cfg.VectorDBUser, cfg.VectorDBPassword, cfg.VectorDBSSLMode,
+	connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+		cfg.VectorDBHost, cfg.VectorDBPort, cfg.VectorDBName, cfg.VectorDBUser, cfg.VectorDBPassword, cfg.VectorDBSSLMode,
 	)
 
 	engine, err := xorm.NewEngine("postgres", connStr)
@@ -31,9 +37,13 @@ func ProvideVectorBackend(ctx context.Context, cfg *setting.Cfg) (VectorBackend,
 		return nil, fmt.Errorf("open vector database: %w", err)
 	}
 
-	logger.Info("Running vector database migrations")
-	if err := MigrateVectorStore(ctx, engine, cfg); err != nil {
-		return nil, fmt.Errorf("migrate vector database: %w", err)
+	if runMigrations {
+		logger.Info("Running vector database migrations")
+		if err := MigrateVectorStore(ctx, engine, cfg); err != nil {
+			return nil, fmt.Errorf("migrate vector database: %w", err)
+		}
+	} else {
+		logger.Info("Skipping vector database migrations (not eligible on this target)")
 	}
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())

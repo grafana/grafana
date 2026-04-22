@@ -681,11 +681,13 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	// Vector storage (separate pgvector database)
-	VectorDBHost     string
-	VectorDBName     string
-	VectorDBUser     string
-	VectorDBPassword string
-	VectorDBSSLMode  string
+	EnableVectorSearch bool
+	VectorDBHost       string
+	VectorDBPort       string
+	VectorDBName       string
+	VectorDBUser       string
+	VectorDBPassword   string
+	VectorDBSSLMode    string
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnforcedQuotaResources                     []string

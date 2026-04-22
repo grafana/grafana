@@ -167,7 +167,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, grpcService)
+			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, grpcService)
 		require.NoError(t, err)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)

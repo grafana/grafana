@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
 )
@@ -134,6 +135,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	vectorBackend    vector.VectorBackend
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -235,6 +237,21 @@ func (s *ModuleServer) Run() error {
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
 	})
 
+	// UnifiedVectorBackend opens the pgvector database connection (when the
+	// [unified_storage] enable_vector_search flag is on) and runs schema
+	// migrations on pods eligible to do so. Search-only pods skip migrations
+	// but still open the connection so they can serve vector queries.
+	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, func() (services.Service, error) {
+		if s.vectorBackend == nil {
+			var err error
+			s.vectorBackend, err = vector.ProvideVectorBackend(context.Background(), s.cfg, s.cfg.ShouldRunMigrations())
+			if err != nil {
+				return nil, err
+			}
+		}
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
+	})
+
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
@@ -278,7 +295,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -309,7 +326,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
