@@ -2,6 +2,7 @@ import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import * as React from 'react';
 
 import { eventsToCanvasScript } from '../canvasUtils.ts';
+import type { CanvasEventArray } from '../types.ts';
 
 export function useCanvasEventsEffect(
   ref: React.RefObject<HTMLCanvasElement | null>,
@@ -15,8 +16,10 @@ export function useCanvasEventsEffect(
     if (!canvas || !context) {
       return;
     }
-    // context.setTransform(1, 0, 0, 1, 0, 0);
-    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // identity transform and clearRect need to be called or toggling the uPlot canvas events doesn't work
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
     if (includeSetup) {
       eventsToCanvasScript(setupEvents, context);
     }

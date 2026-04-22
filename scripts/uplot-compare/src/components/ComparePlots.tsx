@@ -1,38 +1,15 @@
-import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import * as React from 'react';
-import type uPlot from 'uplot';
-import type { AlignedData } from 'uplot';
 
-import { type eventsToCanvasScript } from '../canvasUtils.ts';
 import { useCanvasEventsEffect } from '../hooks/useCanvasEventsEffect.ts';
 import { useDiffImageData } from '../hooks/useDiffImageData.ts';
+import type { ComparePlotsProps, OverlayBlendMode } from '../types.ts';
 
 import { DiffCanvas } from './DiffCanvas.tsx';
 
-type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
-
 const OVERLAY_BLEND_MODES = ['plus-lighter', 'color', 'difference', 'exclusion', 'luminosity', 'screen'] as const;
-type OverlayBlendMode = (typeof OVERLAY_BLEND_MODES)[number];
 
 function toOverlayBlendMode(value: string): OverlayBlendMode {
   return OVERLAY_BLEND_MODES.find((mode) => mode === value) ?? 'exclusion';
-}
-
-export type ResolvedPayload = {
-  testName: string;
-  expected: CanvasEventArray;
-  actual: CanvasEventArray;
-  uPlotData?: AlignedData;
-  uPlotSeries?: uPlot.Series[];
-  uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
-  width?: number;
-  height?: number;
-};
-
-interface ComparePlotsProps {
-  defaultWidth: number;
-  defaultHeight: number;
-  payload: ResolvedPayload;
 }
 
 interface OverlayBlendSelectProps {
@@ -56,11 +33,39 @@ function OverlayBlendSelect({ value, onChange }: OverlayBlendSelectProps) {
   );
 }
 
+function CanvasStack(props: {
+  uPlotRef: React.RefObject<HTMLCanvasElement | null>;
+  width: number;
+  height: number;
+  overlayRef: React.RefObject<HTMLCanvasElement | null>;
+  showOverlay: boolean;
+  hasDiff: boolean;
+  mixBlendMode: OverlayBlendMode;
+  onChangeBlendMode: (mode: OverlayBlendMode) => void;
+  id: string;
+}) {
+  return (
+    <div className="canvas-stack">
+      <canvas ref={props.uPlotRef} className="canvas" id={props.id} width={props.width} height={props.height}></canvas>
+      <canvas
+        ref={props.overlayRef}
+        className={`canvas diff-overlay-canvas${props.showOverlay && props.hasDiff ? ' is-visible' : ''}`}
+        width={props.width}
+        height={props.height}
+        style={{ mixBlendMode: props.mixBlendMode }}
+      ></canvas>
+      {props.showOverlay && props.hasDiff ? (
+        <OverlayBlendSelect value={props.mixBlendMode} onChange={props.onChangeBlendMode} />
+      ) : null}
+    </div>
+  );
+}
+
 export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePlotsProps) {
   const width = payload.width ?? defaultWidth;
   const height = payload.height ?? defaultHeight;
-  const actualUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
-  const expectedUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
+  const actualUPlotRef = React.useRef<HTMLCanvasElement | null>(null);
+  const expectedUPlotRef = React.useRef<HTMLCanvasElement | null>(null);
   const expectedOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
   const actualOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
   const [showOverlay, setShowOverlay] = React.useState(false);
@@ -70,8 +75,8 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const [renderActualSetupEvents, setRenderActualSetupEvents] = React.useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = React.useState(true);
 
-  useCanvasEventsEffect(actualUPlotInstance, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
-  useCanvasEventsEffect(expectedUPlotInstance, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
+  useCanvasEventsEffect(actualUPlotRef, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
+  useCanvasEventsEffect(expectedUPlotRef, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
 
   const { hasDiff, diffImageData } = useDiffImageData({
     expectedEvents: payload.expected,
@@ -116,19 +121,17 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
               {renderExpectedSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
             </button>
           </div>
-          <div className="canvas-stack">
-            <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
-            <canvas
-              ref={expectedOverlayRef}
-              className={`canvas diff-overlay-canvas${showOverlay && hasDiff ? ' is-visible' : ''}`}
-              width={width}
-              height={height}
-              style={{ mixBlendMode: expectedBlendMode }}
-            ></canvas>
-            {showOverlay && hasDiff ? (
-              <OverlayBlendSelect value={expectedBlendMode} onChange={setExpectedBlendMode} />
-            ) : null}
-          </div>
+          <CanvasStack
+            id={'expected'}
+            uPlotRef={expectedUPlotRef}
+            width={width}
+            height={height}
+            overlayRef={expectedOverlayRef}
+            showOverlay={showOverlay}
+            hasDiff={hasDiff}
+            mixBlendMode={expectedBlendMode}
+            onChangeBlendMode={setExpectedBlendMode}
+          />
         </div>
 
         <div className="plot-panel actual">
@@ -142,19 +145,17 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
               {renderActualSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
             </button>
           </div>
-          <div className="canvas-stack">
-            <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
-            <canvas
-              ref={actualOverlayRef}
-              className={`canvas diff-overlay-canvas${showOverlay && hasDiff ? ' is-visible' : ''}`}
-              width={width}
-              height={height}
-              style={{ mixBlendMode: actualBlendMode }}
-            ></canvas>
-            {showOverlay && hasDiff ? (
-              <OverlayBlendSelect value={actualBlendMode} onChange={setActualBlendMode} />
-            ) : null}
-          </div>
+          <CanvasStack
+            id={'actual'}
+            uPlotRef={actualUPlotRef}
+            width={width}
+            height={height}
+            overlayRef={actualOverlayRef}
+            showOverlay={showOverlay}
+            hasDiff={hasDiff}
+            mixBlendMode={actualBlendMode}
+            onChangeBlendMode={setActualBlendMode}
+          />
         </div>
         <div className="diff-panel-wrap">
           <DiffCanvas
