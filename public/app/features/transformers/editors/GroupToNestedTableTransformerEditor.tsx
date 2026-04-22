@@ -204,9 +204,7 @@ const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
               allowMultiple
               stats={rule.aggregations}
               onChange={(stats: string[]) => {
-                // StatsPicker should return ReducerID[] but it is typed as string[].
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                onChange({ ...rule, aggregations: stats as ReducerID[] });
+                onChange({ ...rule, aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID) });
               }}
             />
           </InlineField>
