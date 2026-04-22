@@ -6,7 +6,7 @@ import {
   type GrafanaTheme2,
   FieldMatcherID,
   PluginState,
-  type ReducerID,
+  ReducerID,
   type SelectableValue,
   standardTransformers,
   TransformerCategory,
@@ -100,7 +100,10 @@ export const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onCo
             allowMultiple
             stats={fieldConfig.aggregations}
             onChange={(stats) => {
-              onConfigChange({ ...fieldConfig, aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID) });
+              onConfigChange({
+                ...fieldConfig,
+                aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID),
+              });
             }}
           />
         )}
