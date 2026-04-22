@@ -58,7 +58,6 @@ interface FormDTO {
 
 const renderForm = (defaultValues?: FormDTO) => {
   const textId = useId();
-  const checkboxId = useId();
   const switchId = useId();
   const radioId = useId();
   const selectId = useId();
@@ -95,7 +94,7 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
-              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" id={checkboxId} />
+              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" />
             </Field>
 
             <Field label="Switch">

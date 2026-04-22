@@ -105,10 +105,8 @@ export const AllComponents: StoryFn = (args) => {
   const [checkBoxValue, setCheckBoxValue] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
   const [switchValue, setSwitchValue] = useState(false);
-  const textId = useId();
   const comboboxId = useId();
   const radioButtonId = useId();
-  const checkBoxId = useId();
   const textAreaId = useId();
   const switchId = useId();
 
@@ -117,7 +115,6 @@ export const AllComponents: StoryFn = (args) => {
       <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Text as a child" {...args}>
         {(onChange) => (
           <Input
-            id={textId}
             value={inputTextValue}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -164,7 +161,6 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <Checkbox
-            id={checkBoxId}
             label="Checkbox test"
             description="This is a checkbox input"
             name="checkbox-test"

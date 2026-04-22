@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
 
+import { Checkbox } from './Checkbox';
 import { Field } from './Field';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
@@ -35,6 +36,16 @@ describe('Field', () => {
     );
 
     expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with an Input when no id is set', () => {
+    render(
+      <Field label="My label">
+        <Checkbox />
+      </Field>
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
   });
 
   it('renders with the inputId of its children', () => {
