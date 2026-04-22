@@ -29361,9 +29361,9 @@ __metadata:
   linkType: hard
 
 "protocol-buffers-schema@npm:^3.3.1":
-  version: 3.6.0
-  resolution: "protocol-buffers-schema@npm:3.6.0"
-  checksum: 10/55a1caed123fb2385eae5ea4770dc36b3017d1fe2005ffb1ef20c97dadf43a91876238ebc23bc240ef1f8501d054bdd9d12992796e9abed18ddf958e4f942eea
+  version: 3.6.1
+  resolution: "protocol-buffers-schema@npm:3.6.1"
+  checksum: 10/a7ca74e71227932f903feab9df8ffde80703b656fd024179b3a9439edb3907eca4c78f0cd6f47ad7698e832ae565a8df7585d9cedcc4f043794e6ba8e480cdec
   languageName: node
   linkType: hard
 
