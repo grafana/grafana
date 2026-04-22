@@ -3,6 +3,7 @@ import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'rea
 import { useForm } from 'react-hook-form';
 
 import {
+  dateMath,
   type DateTime,
   dateTimeFormat,
   dateTimeParse,
@@ -100,9 +101,26 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     handleSubmit((data) => {
-      const raw: RawTimeRange = { from: data.from, to: data.to };
-      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
-      onApplyFromProps(timeRange);
+      /**
+       * ARCHITECTURAL NOTE:
+       * We bypass rangeUtil.convertRawToRange to utilize the upgraded dateMath.parse
+       * engine directly. This ensures that ISO 8601 week strings (YYYY-Www) are
+       * parsed correctly with proper boundary resolution (Monday-Sunday).
+       * * We pass 'fiscalYearStartMonth' and 'timeZone' to ensure no regression in
+       * existing fiscal or timezone-specific math logic.
+       */
+      const from = dateMath.parse(data.from, false, timeZone, fiscalYearStartMonth);
+      const to = dateMath.parse(data.to, true, timeZone, fiscalYearStartMonth);
+
+      if (from && to) {
+        onApplyFromProps({
+          from,
+          to,
+          // We pass back the raw input strings so the UI retains the 'YYYY-Www'
+          // format in the input fields instead of being replaced by timestamps.
+          raw: { from: data.from, to: data.to },
+        });
+      }
     })();
   }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps]);
 
@@ -272,12 +290,27 @@ export const TimeRangeContent = (props: Props) => {
   );
 };
 
+/**
+ * Validates that the 'from' date is chronologically before or equal to the 'to' date.
+ * We use dateMath.parse directly to ensure the 'to' field correctly respects
+ * the roundUp boundary (e.g., Sunday for ISO weeks), preventing false positives
+ * when the same week is entered in both fields.
+ */
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
-  const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone, undefined, commonFormat);
-  const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
+  // Parse both ends of the range.
+  // 'from' is parsed to the start of the period, 'to' is parsed to the end.
+  const fromDate = dateMath.parse(from, false, timezone);
+  const toDate = dateMath.parse(to, true, timezone);
 
-  return !valid;
+  // If either string is currently unparseable, we let the individual
+  // field validators handle the "Invalid Date" UI feedback.
+  if (!fromDate || !toDate || !fromDate.isValid() || !toDate.isValid()) {
+    return false;
+  }
+
+  // The range is invalid ONLY if 'from' is strictly after 'to'.
+  // Using .valueOf() is the safest way to compare timestamps in TS.
+  return fromDate.valueOf() > toDate.valueOf();
 }
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {

@@ -52,6 +52,27 @@ describe('DateMath', () => {
     expect(startOfDay).toBe(expected.getTime());
   });
 
+  describe('ISO Week parsing', () => {
+    it('should parse ISO week string 2026-W15 as start of week', () => {
+      const result = dateMath.parse('2026-W15', false);
+      expect(result?.isValid()).toBe(true);
+      // ISO Week 15 in 2026 starts on Monday, April 6th
+      expect(result?.format('YYYY-MM-DD')).toBe('2026-04-06');
+    });
+
+    it('should parse ISO week string 2026-W15 as end of week when roundUp is true', () => {
+      const result = dateMath.parse('2026-W15', true);
+      expect(result?.isValid()).toBe(true);
+      // Sunday of that week
+      expect(result?.format('YYYY-MM-DD')).toBe('2026-04-12');
+    });
+
+    it('should still parse standard ISO dates correctly', () => {
+      const result = dateMath.parse('2026-04-06', false);
+      expect(result?.format('YYYY-MM-DD')).toBe('2026-04-06');
+    });
+  });
+
   describe('with fiscal quarters', () => {
     beforeEach(() => {
       const fixedTime = dateTime('2023-07-05T06:06:06.666Z').valueOf();

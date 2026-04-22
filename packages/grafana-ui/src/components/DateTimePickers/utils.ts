@@ -7,9 +7,10 @@ export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): 
     return value.isValid();
   }
 
-  // handles `now` math
-  if (dateMath.isMathString(value)) {
-    return dateMath.isValid(value);
+  // handles `now` math AND ISO week logic
+  // dateMath.isValid calls dateMath.parse internally!
+  if (dateMath.isValid(value)) {
+    return true;
   }
 
   const parsed = dateTimeParse(value, { roundUp, timeZone, format: commonFormat });

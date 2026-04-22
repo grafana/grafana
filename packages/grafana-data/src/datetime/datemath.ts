@@ -11,10 +11,12 @@ import {
   type DurationUnit,
   isDateTime,
   ISO_8601,
+  ISO_8601_WEEK,
 } from './moment_wrapper';
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
 const MAX_MATH_TOKEN_DIGITS = 5;
+const ISO_WEEK_REGEXP = /^\d{4}-W\d{2}$/;
 
 export const isDurationUnit = (value: string): value is DurationUnit => {
   return units.includes(value);
@@ -110,8 +112,18 @@ export function toDateTime(dateTimeRep: string | DateTime | Date, options: Conve
         parseString = dateTimeRep.substring(0, index);
         mathString = dateTimeRep.substring(index + 2);
       }
-      // We're going to just require ISO8601 timestamps, k?
-      time = dateTime(parseString, ISO_8601);
+      // Handle ISO 8601 week strings (e.g. 2026-W15)
+      if (ISO_WEEK_REGEXP.test(parseString)) {
+        time = dateTime(parseString, ISO_8601_WEEK);
+
+        if (options.roundUp) {
+          time.endOf('isoWeek');
+        } else {
+          time.startOf('isoWeek');
+        }
+      } else {
+        time = dateTime(parseString, ISO_8601);
+      }
     }
 
     if (!mathString.length) {
