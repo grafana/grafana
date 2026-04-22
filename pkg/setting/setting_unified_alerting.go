@@ -160,7 +160,7 @@ type UnifiedAlertingSettings struct {
 	IgnorePendingForNoDataAndError bool
 
 	// LimitEmailToOrgMembers restricts email contact point recipients to users that are members of the organization.
-	// Applied only during contact point configuration (Create/Update), not at alert send time.
+	// Applied only during contact point configuration (Create/Update), not at notification send time.
 	LimitEmailToOrgMembers bool
 }
 
