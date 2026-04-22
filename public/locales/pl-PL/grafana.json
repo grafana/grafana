@@ -11250,6 +11250,12 @@
       "num-affected_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -13131,9 +13137,7 @@
       "update-available": "Dostępna aktualizacja!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Wtyczka wymaga nowego indeksu wyszukiwania, aby można było znaleźć informacje o jej wykorzystaniu na różnych pulpitach. Włącz przełącznik funkcji",
       "num-usages": "Wtyczka {{pluginName}} została użyta <2>{{numUsages}}</2> razy.",
-      "title-missing-feature-toggle-panel-title-search": "Brak przełącznika funkcji: {{toggle}}",
       "title-not-used-yet": "Wtyczka {{pluginName}} nie jest jeszcze używana w żadnych pulpitach"
     },
     "plugins-errors-info": {

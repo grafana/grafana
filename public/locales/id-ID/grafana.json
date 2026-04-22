@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
       "num-affected_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12924,9 +12930,7 @@
       "update-available": "Pembaruan tersedia!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Penggunaan plugin memerlukan indeks pencarian baru untuk menemukan penggunaan di seluruh dasbor. Aktifkan tombol fitur",
       "num-usages": "{{pluginName}} digunakan <2>{{numUsages}}</2> kali.",
-      "title-missing-feature-toggle-panel-title-search": "Tombol fitur tidak ada: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} belum digunakan di dasbor apa pun"
     },
     "plugins-errors-info": {
