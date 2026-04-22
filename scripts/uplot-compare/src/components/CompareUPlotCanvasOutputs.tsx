@@ -299,35 +299,26 @@ function ComparePlots({
 }) {
   const width = payload.width ?? defaultWidth;
   const height = payload.height ?? defaultHeight;
-  const expectedCanvasCalls = React.useMemo(
-    () => eventsToCanvasScript(payload.expected, 'expected'),
-    [payload.expected]
-  );
-  const actualCanvasCalls = React.useMemo(() => eventsToCanvasScript(payload.actual, 'actual'), [payload.actual]);
   const actualUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
   const expectedUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
 
   React.useEffect(() => {
-    if (actualCanvasCalls) {
-      // @ts-expect-error eval script expects variable named `actual`
-      const actual = actualUPlotInstance.current.getContext('2d');
-      // eslint-disable-next-line no-eval
-      eval(eventsToCanvasScript(payload.uPlotCanvasEvents, 'actual'));
-      // eslint-disable-next-line no-eval
-      eval(actualCanvasCalls);
+    const context = actualUPlotInstance.current?.getContext('2d');
+    if (!context) {
+      return;
     }
-  }, [actualCanvasCalls, payload.uPlotCanvasEvents]);
+    eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    eventsToCanvasScript(payload.actual, context);
+  }, [payload.actual, payload.uPlotCanvasEvents]);
 
   React.useEffect(() => {
-    if (expectedCanvasCalls) {
-      // @ts-expect-error eval script expects variable named `expected`
-      const expected = expectedUPlotInstance.current.getContext('2d');
-      // eslint-disable-next-line no-eval
-      eval(eventsToCanvasScript(payload.uPlotCanvasEvents, 'expected'));
-      // eslint-disable-next-line no-eval
-      eval(expectedCanvasCalls);
+    const context = expectedUPlotInstance.current?.getContext('2d');
+    if (!context) {
+      return;
     }
-  }, [expectedCanvasCalls, payload.uPlotCanvasEvents]);
+    eventsToCanvasScript(payload.uPlotCanvasEvents, context);
+    eventsToCanvasScript(payload.expected, context);
+  }, [payload.expected, payload.uPlotCanvasEvents]);
 
   return (
     <>

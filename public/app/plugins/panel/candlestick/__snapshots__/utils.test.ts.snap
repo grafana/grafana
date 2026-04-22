@@ -8,7 +8,7 @@ exports[`drawMarkers candle with volume events 1`] = `
   },
   {
     "props": {
-      "height": 333,
+      "height": 100,
       "width": 675,
       "x": 100,
       "y": 17,
@@ -116,7 +116,7 @@ exports[`drawMarkers candle with volume events 1`] = `
         },
         {
           "props": {
-            "height": 180,
+            "height": 200,
             "width": 45,
             "x": 528,
             "y": 170,
@@ -265,7 +265,7 @@ exports[`drawMarkers candle with volume events 1`] = `
         },
         {
           "props": {
-            "height": 0,
+            "height": 2,
             "width": 2,
             "x": 249,
             "y": 350,
@@ -436,7 +436,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "height": 333,
             "width": 675,
             "x": 100,
-            "y": 17,
+            "y": 10,
           },
           "type": "rect",
         },
@@ -722,7 +722,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
         },
         {
           "props": {
-            "height": 2,
+            "height": 20,
             "width": 22,
             "x": 753,
             "y": 244,
@@ -1041,7 +1041,7 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
   },
   {
     "props": {
-      "fillRule": "nonzero",
+      "fillRule": "zero",
       "path": [
         {
           "props": {
@@ -1327,7 +1327,7 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
   },
   {
     "props": {
-      "value": "#888888",
+      "value": "#ccc",
     },
     "type": "fillStyle",
   },

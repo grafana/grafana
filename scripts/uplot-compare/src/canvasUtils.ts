@@ -1,104 +1,94 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 
 /**
- * @todo Pass in the canvas and run the calls directly instead of using eval
  * @param data
- * @param canvasId
+ * @param ctx
  */
-export function eventsToCanvasScript(data: CanvasRenderingContext2DEvent[], canvasId: string) {
-  const lines: string[] = [];
+export function eventsToCanvasScript(data: CanvasRenderingContext2DEvent[], ctx: CanvasRenderingContext2D) {
   for (const ev of data) {
-    emitOne(ev, canvasId, lines);
+    emitOne(ev, ctx);
   }
-  return lines.join('\n');
 }
 
-function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: string[]) {
+function emitOne(event: CanvasRenderingContext2DEvent, ctx: CanvasRenderingContext2D) {
   const { type, props = {} } = event;
 
   switch (type) {
     case 'save':
-      lines.push(`${ctx}.save();`);
+      ctx.save();
       return;
     case 'restore':
-      lines.push(`${ctx}.restore();`);
+      ctx.restore();
       return;
     case 'beginPath':
-      lines.push(`${ctx}.beginPath();`);
+      ctx.beginPath();
       return;
     case 'closePath':
-      lines.push(`${ctx}.closePath();`);
+      ctx.closePath();
       return;
     case 'resetTransform':
-      lines.push(`${ctx}.resetTransform();`);
-      return;
-    case 'clearHitRegions':
-      lines.push(`${ctx}.clearHitRegions();`);
+      ctx.resetTransform();
       return;
     case 'clearRect':
-      lines.push(`${ctx}.clearRect(${props.x}, ${props.y}, ${props.width}, ${props.height});`);
+      ctx.clearRect(props.x, props.y, props.width, props.height);
       return;
     case 'fillRect':
-      lines.push(`${ctx}.fillRect(${props.x}, ${props.y}, ${props.width}, ${props.height});`);
+      ctx.fillRect(props.x, props.y, props.width, props.height);
       return;
     case 'strokeRect':
-      lines.push(`${ctx}.strokeRect(${props.x}, ${props.y}, ${props.width}, ${props.height});`);
+      ctx.strokeRect(props.x, props.y, props.width, props.height);
       return;
     case 'rect':
-      lines.push(`${ctx}.rect(${props.x}, ${props.y}, ${props.width}, ${props.height});`);
+      ctx.rect(props.x, props.y, props.width, props.height);
       return;
     case 'moveTo':
-      lines.push(`${ctx}.moveTo(${props.x}, ${props.y});`);
+      ctx.moveTo(props.x, props.y);
       return;
     case 'lineTo':
-      lines.push(`${ctx}.lineTo(${props.x}, ${props.y});`);
+      ctx.lineTo(props.x, props.y);
       return;
     case 'arc':
-      lines.push(
-        `${ctx}.arc(${props.x}, ${props.y}, ${props.radius}, ${props.startAngle}, ${
-          props.endAngle
-        }, ${props.anticlockwise});`
-      );
+      ctx.arc(props.x, props.y, props.radius, props.startAngle, props.endAngle, props.anticlockwise);
       return;
     case 'arcTo':
-      lines.push(`${ctx}.arcTo(${props.cpx1}, ${props.cpy1}, ${props.cpx2}, ${props.cpy2}, ${props.radius});`);
+      ctx.arcTo(props.cpx1, props.cpy1, props.cpx2, props.cpy2, props.radius);
       return;
     case 'ellipse':
-      lines.push(
-        `${ctx}.ellipse(${props.x}, ${props.y}, ${props.radiusX}, ${
-          props.radiusY
-        }, ${props.rotation}, ${props.startAngle}, ${props.endAngle}, ${props.anticlockwise});`
+      ctx.ellipse(
+        props.x,
+        props.y,
+        props.radiusX,
+        props.radiusY,
+        props.rotation,
+        props.startAngle,
+        props.endAngle,
+        props.anticlockwise
       );
       return;
     case 'bezierCurveTo':
-      lines.push(
-        `${ctx}.bezierCurveTo(${props.cpx1}, ${props.cpy1}, ${props.cpx2}, ${props.cpy2}, ${props.x}, ${props.y});`
-      );
+      ctx.bezierCurveTo(props.cpx1, props.cpy1, props.cpx2, props.cpy2, props.x, props.y);
       return;
     case 'quadraticCurveTo':
-      lines.push(`${ctx}.quadraticCurveTo(${props.cpx}, ${props.cpy}, ${props.x}, ${props.y});`);
+      ctx.quadraticCurveTo(props.cpx, props.cpy, props.x, props.y);
       return;
 
     case 'translate':
-      lines.push(`${ctx}.translate(${props.x}, ${props.y});`);
+      ctx.translate(props.x, props.y);
       return;
     case 'rotate':
-      lines.push(`${ctx}.rotate(${props.angle});`);
+      ctx.rotate(props.angle);
       return;
     case 'scale':
-      lines.push(`${ctx}.scale(${props.x}, ${props.y});`);
+      ctx.scale(props.x, props.y);
       return;
     case 'transform':
-      lines.push(`${ctx}.transform(${props.a}, ${props.b}, ${props.c}, ${props.d}, ${props.e}, ${props.f});`);
+      ctx.transform(props.a, props.b, props.c, props.d, props.e, props.f);
       return;
     case 'setTransform':
-      lines.push(`${ctx}.setTransform(${props.a}, ${props.b}, ${props.c}, ${props.d}, ${props.e}, ${props.f});`);
+      ctx.setTransform(props.a, props.b, props.c, props.d, props.e, props.f);
       return;
     case 'currentTransform':
-      lines.push(
-        `// ${ctx}.setTransform via currentTransform — use DOMMatrix or setTransform:\n` +
-          `${ctx}.setTransform(${props.a}, ${props.b}, ${props.c}, ${props.d}, ${props.e}, ${props.f});`
-      );
+      ctx.setTransform(props.a, props.b, props.c, props.d, props.e, props.f);
       return;
 
     case 'clip': {
@@ -107,12 +97,12 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
       if (!Array.isArray(p) || p.length === 0) {
         // Empty path: must not reuse the context's current path (jest-canvas-mock encodes
         // `ctx.clip(emptyPath)` this way; clipping to an empty subpath is a no-op in practice).
-        lines.push(`${ctx}.beginPath();`);
-        lines.push(`${ctx}.clip("${fillRule}");`);
+        ctx.beginPath();
+        ctx.clip(fillRule);
         return;
       }
-      emitSubpath(p, ctx, lines);
-      lines.push(`${ctx}.clip("${fillRule}");`);
+      emitSubpath(p, ctx);
+      ctx.clip(fillRule);
       return;
     }
     case 'fill': {
@@ -122,52 +112,52 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
         // `ctx.fill(emptyPath2D)` is a no-op. Replaying `fill()` without rebuilding the path
         // would incorrectly re-fill the *previous* path (see uplot-compare with candlestick
         // drawMarkers: flat + hollowPath empty segments).
-        lines.push(`${ctx}.beginPath();`);
-        lines.push(`${ctx}.fill("${fillRule}");`);
+        ctx.beginPath();
+        ctx.fill(fillRule);
         return;
       }
-      emitSubpath(p, ctx, lines);
-      lines.push(`${ctx}.fill("${fillRule}");`);
+      emitSubpath(p, ctx);
+      ctx.fill(fillRule);
       return;
     }
     case 'stroke': {
       const p = props.path;
       if (!Array.isArray(p) || p.length === 0) {
-        lines.push(`${ctx}.beginPath();`);
-        lines.push(`${ctx}.stroke();`);
+        ctx.beginPath();
+        ctx.stroke();
         return;
       }
-      emitSubpath(p, ctx, lines);
-      lines.push(`${ctx}.stroke();`);
+      emitSubpath(p, ctx);
+      ctx.stroke();
       return;
     }
 
     case 'fillText': {
       const mw = props.maxWidth;
       if (mw == null) {
-        lines.push(`${ctx}.fillText("${props.text}", ${props.x}, ${props.y});`);
+        ctx.fillText(props.text, props.x, props.y);
       } else {
-        lines.push(`${ctx}.fillText("${props.text}", ${props.x}, ${props.y}, ${mw});`);
+        ctx.fillText(props.text, props.x, props.y, mw);
       }
       return;
     }
     case 'strokeText': {
       const mw = props.maxWidth;
       if (mw == null) {
-        lines.push(`${ctx}.strokeText("${props.text}", ${props.x}, ${props.y});`);
+        ctx.strokeText(props.text, props.x, props.y);
       } else {
-        lines.push(`${ctx}.strokeText("${props.text}", ${props.x}, ${props.y}, ${mw});`);
+        ctx.strokeText(props.text, props.x, props.y, mw);
       }
       return;
     }
     case 'measureText':
-      lines.push(`${ctx}.measureText("${props.text}");`);
+      ctx.measureText(props.text);
       return;
 
     case 'setLineDash': {
       const segs = props.segments;
       if (segs && Array.isArray(segs) && segs.length) {
-        lines.push(`${ctx}.setLineDash(${segs});`);
+        ctx.setLineDash(segs);
       }
       return;
     }
@@ -186,39 +176,37 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'filter':
     case 'direction':
     case 'imageSmoothingEnabled':
-    case 'imageSmoothingQuay':
+    case 'imageSmoothingQuality':
     case 'shadowBlur':
     case 'shadowColor':
     case 'shadowOffsetX':
     case 'shadowOffsetY': {
-      const value = typeof props.value === 'number' ? props.value : `"${props.value.replaceAll('"', '\\"')}"`;
-      lines.push(`${ctx}.${type} = ${value};`);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      (ctx as unknown as Record<string, unknown>)[type] = props.value;
       return;
     }
     case 'createLinearGradient':
-      lines.push(`${ctx}.createLinearGradient(${props.x0}, ${props.y0}, ${props.x1}, ${props.y1});`);
+      ctx.createLinearGradient(props.x0, props.y0, props.x1, props.y1);
       return;
     case 'createRadialGradient':
-      lines.push(
-        `${ctx}.createRadialGradient(${props.x0}, ${props.y0}, ${props.r0}, ${props.x1}, ${props.y1}, ${props.r1});`
-      );
+      ctx.createRadialGradient(props.x0, props.y0, props.r0, props.x1, props.y1, props.r1);
       return;
     case 'createPattern':
-      lines.push(`// createPattern: image not in snapshot\n${ctx}.createPattern(image, ${props.type});`);
+      // Image source is not captured in the snapshot payload.
       return;
     case 'createImageData': {
-      lines.push(`${ctx}.createImageData(${props.width}, ${props.height});`);
+      ctx.createImageData(props.width, props.height);
       return;
     }
     case 'isPointInPath': {
       const p = props.path;
-      lines.push(`${ctx}.beginPath();`);
+      ctx.beginPath();
       if (Array.isArray(p)) {
         for (const seg of p) {
-          emitPathBuilding(seg, ctx, lines);
+          emitPathBuilding(seg, ctx);
         }
       }
-      lines.push(`${ctx}.isPointInPath(${props.x}, ${props.y}, "${props.fillRule ?? 'nonzero'}");`);
+      ctx.isPointInPath(props.x, props.y, props.fillRule ?? 'nonzero');
       return;
     }
 
@@ -226,7 +214,6 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
     case 'removeHitRegion':
     case 'drawFocusIfNeeded':
     case 'scrollPathIntoView':
-      lines.push(`// ${type}: ${props}`);
       return;
 
     default:
@@ -234,72 +221,71 @@ function emitOne(event: CanvasRenderingContext2DEvent, ctx: string, lines: strin
   }
 }
 
-function emitSubpath(pathEvents: CanvasRenderingContext2DEvent[], ctx: string, lines: string[]) {
+function emitSubpath(pathEvents: CanvasRenderingContext2DEvent[], ctx: CanvasRenderingContext2D) {
   if (!Array.isArray(pathEvents) || pathEvents.length === 0) {
     return;
   }
   const startsWithBegin = pathEvents[0]?.type === 'beginPath';
   if (!startsWithBegin) {
-    lines.push(`${ctx}.beginPath();`);
+    ctx.beginPath();
   }
   for (const seg of pathEvents) {
-    emitPathBuilding(seg, ctx, lines);
+    emitPathBuilding(seg, ctx);
   }
 }
 
-function emitPathBuilding(ev: CanvasRenderingContext2DEvent, ctx: string, lines: string[]) {
+function emitPathBuilding(ev: CanvasRenderingContext2DEvent, ctx: CanvasRenderingContext2D) {
   const { type, props = {} } = ev;
   switch (type) {
     case 'beginPath':
-      lines.push(`${ctx}.beginPath();`);
+      ctx.beginPath();
       break;
     case 'closePath':
-      lines.push(`${ctx}.closePath();`);
+      ctx.closePath();
       break;
     case 'moveTo':
-      lines.push(`${ctx}.moveTo(${props.x}, ${props.y});`);
+      ctx.moveTo(props.x, props.y);
       break;
     case 'lineTo':
-      lines.push(`${ctx}.lineTo(${props.x}, ${props.y});`);
+      ctx.lineTo(props.x, props.y);
       break;
     case 'rect':
-      lines.push(`${ctx}.rect(${props.x}, ${props.y}, ${props.width}, ${props.height});`);
+      ctx.rect(props.x, props.y, props.width, props.height);
       break;
     case 'arc':
-      lines.push(
-        `${ctx}.arc(${props.x}, ${props.y}, ${props.radius}, ${props.startAngle}, ${
-          props.endAngle
-        }, ${props.anticlockwise});`
-      );
+      ctx.arc(props.x, props.y, props.radius, props.startAngle, props.endAngle, props.anticlockwise);
       break;
     case 'arcTo':
-      lines.push(`${ctx}.arcTo(${props.cpx1}, ${props.cpy1}, ${props.cpx2}, ${props.cpy2}, ${props.radius});`);
+      ctx.arcTo(props.cpx1, props.cpy1, props.cpx2, props.cpy2, props.radius);
       break;
     case 'ellipse':
-      lines.push(
-        `${ctx}.ellipse(${props.x}, ${props.y}, ${props.radiusX}, ${
-          props.radiusY
-        }, ${props.rotation}, ${props.startAngle}, ${props.endAngle}, ${props.anticlockwise});`
+      ctx.ellipse(
+        props.x,
+        props.y,
+        props.radiusX,
+        props.radiusY,
+        props.rotation,
+        props.startAngle,
+        props.endAngle,
+        props.anticlockwise
       );
       break;
     case 'bezierCurveTo':
-      lines.push(
-        `${ctx}.bezierCurveTo(${props.cpx1}, ${props.cpy1}, ${props.cpx2}, ${props.cpy2}, ${props.x}, ${props.y});`
-      );
+      ctx.bezierCurveTo(props.cpx1, props.cpy1, props.cpx2, props.cpy2, props.x, props.y);
       break;
     case 'quadraticCurveTo':
-      lines.push(`${ctx}.quadraticCurveTo(${props.cpx}, ${props.cpy}, ${props.x}, ${props.y});`);
+      ctx.quadraticCurveTo(props.cpx, props.cpy, props.x, props.y);
       break;
     case 'clip': {
       const p = props.path;
       const fillRule = props.fillRule ?? 'nonzero';
-      lines.push(`${ctx}.beginPath();`);
+      ctx.beginPath();
       if (Array.isArray(p)) {
         for (const seg of p) {
-          emitPathBuilding(seg, ctx, lines);
+          emitPathBuilding(seg, ctx);
         }
       }
-      lines.push(`${ctx}.clip("${fillRule}");`);
+      ctx.clip(fillRule);
       break;
     }
     default:
