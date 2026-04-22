@@ -1,5 +1,6 @@
 import { type VirtualElement } from '@popperjs/core/lib/types';
 
+// istanbul ignore next: Slate editor selection helper
 export class SelectionReference implements VirtualElement {
   getBoundingClientRect() {
     const selection = window.getSelection();
