@@ -15,6 +15,10 @@ const FALLBACK_CANVAS_HEIGHT = 200;
 const OVERLAY_BLEND_MODES = ['plus-lighter', 'color', 'difference', 'exclusion', 'luminosity', 'screen'] as const;
 type OverlayBlendMode = (typeof OVERLAY_BLEND_MODES)[number];
 
+function toOverlayBlendMode(value: string): OverlayBlendMode {
+  return OVERLAY_BLEND_MODES.find((mode) => mode === value) ?? 'exclusion';
+}
+
 interface Props {
   /** Default canvas CSS px if payload does not include `width` / `height` */
   defaultWidth?: number;
@@ -369,7 +373,7 @@ function ComparePlots({
               <select
                 className="overlay-blend-select"
                 value={expectedBlendMode}
-                onChange={(e) => setExpectedBlendMode(e.target.value as OverlayBlendMode)}
+                onChange={(e) => setExpectedBlendMode(toOverlayBlendMode(e.target.value))}
               >
                 {OVERLAY_BLEND_MODES.map((mode) => (
                   <option key={mode} value={mode}>
@@ -396,7 +400,7 @@ function ComparePlots({
               <select
                 className="overlay-blend-select"
                 value={actualBlendMode}
-                onChange={(e) => setActualBlendMode(e.target.value as OverlayBlendMode)}
+                onChange={(e) => setActualBlendMode(toOverlayBlendMode(e.target.value))}
               >
                 {OVERLAY_BLEND_MODES.map((mode) => (
                   <option key={mode} value={mode}>
