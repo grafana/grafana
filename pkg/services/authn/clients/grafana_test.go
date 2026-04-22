@@ -204,6 +204,7 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AuthProxy.HeaderProperty = "username"
 		cfg.AuthProxy.AutoSignUp = true
+		cfg.AuthProxy.CacheTeamSync = true
 		return cfg
 	}
 
@@ -315,6 +316,25 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, identity.ClientParams.SyncTeams)
 
+		assert.Empty(t, rec.Result().Cookies())
+	})
+
+	t.Run("SyncTeams is true and no cookie is written when cache_team_sync is disabled", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.AuthProxy.CacheTeamSync = false
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		// Present a matching cookie that would otherwise cause team sync to be skipped.
+		groupsHash := hashGroups(cfg.SecretKey, []string{"grp1", "grp2"})
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: groupsHash})
+
+		reqCtx, rec := newTestReqContext(t)
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+		req := &authn.Request{HTTPRequest: httpReq}
+		identity, err := c.AuthenticateProxy(ctx, req, "user", additional)
+		require.NoError(t, err)
+		assert.True(t, identity.ClientParams.SyncTeams)
 		assert.Empty(t, rec.Result().Cookies())
 	})
 }

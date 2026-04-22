@@ -17,6 +17,7 @@ type AuthProxySettings struct {
 	Headers          map[string]string
 	HeadersEncoded   bool
 	SyncTTL          int
+	CacheTeamSync    bool
 }
 
 func (cfg *Cfg) readAuthProxySettings() {
@@ -40,6 +41,7 @@ func (cfg *Cfg) readAuthProxySettings() {
 	}
 
 	authProxySettings.HeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
+	authProxySettings.CacheTeamSync = authProxy.Key("cache_team_sync").MustBool(false)
 
 	cfg.AuthProxy = authProxySettings
 }
