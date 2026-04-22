@@ -228,7 +228,7 @@ Users with Viewer role have read-only access to Git Sync:
 
 ### RBAC for dashboards and folders
 
-Provisioned dashboards and folders use the Grafana standard permission model. If you modify provisioned resources, Git Sync automatically syncs changes to Git based on your dashboard and folder permissions.
+Provisioned dashboards and folders use the Grafana standard permission model. To modify provisioned resources, you will need permissions over your dashboard and folder.
 
 The following applies for Git Sync:
 
