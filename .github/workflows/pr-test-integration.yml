@@ -197,10 +197,15 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       # Enterprise must be cloned before setup-go so that enterprise
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
@@ -252,10 +257,15 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       # Enterprise must be cloned before setup-go so that enterprise
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
@@ -304,10 +314,15 @@ jobs:
       - name: Start Postgres via docker compose
         run: |
           make devenv sources=postgres_tests
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       # Enterprise must be cloned before setup-go so that enterprise
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
