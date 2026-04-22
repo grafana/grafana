@@ -1,7 +1,7 @@
 import { FieldMatcherID } from '@grafana/data';
 import { GroupByOperationID, type GroupToNestedTableTransformerOptionsV2 } from '@grafana/data/internal';
 
-import { DEFAULT_MATCHER_ID, appendNewRule, deleteRuleByIndex, updateRuleByIndex } from './utils';
+import { DEFAULT_MATCHER_ID, appendNewRule, deleteRuleByIndex, getRuleKey, updateRuleByIndex } from './utils';
 
 const baseOptions = (): GroupToNestedTableTransformerOptionsV2 => ({
   rules: [
@@ -63,6 +63,49 @@ describe('deleteRuleByIndex', () => {
     };
     const result = deleteRuleByIndex(options, 0);
     expect(result.rules).toHaveLength(0);
+  });
+});
+
+describe('getRuleKey', () => {
+  it('combines matcher id and options into a key', () => {
+    const rule = { matcher: { id: FieldMatcherID.byName, options: 'host' }, operation: null, aggregations: [] };
+    expect(getRuleKey(rule)).toBe('byName:"host"');
+  });
+
+  it('uses empty string when matcher options is undefined', () => {
+    const rule = { matcher: { id: FieldMatcherID.byName }, operation: null, aggregations: [] };
+    expect(getRuleKey(rule)).toBe('byName:""');
+  });
+
+  it('produces identical keys for rules with identical matcher id and options', () => {
+    const rule1 = { matcher: { id: FieldMatcherID.byName, options: 'dc' }, operation: null, aggregations: [] };
+    const rule2 = {
+      matcher: { id: FieldMatcherID.byName, options: 'dc' },
+      operation: GroupByOperationID.groupBy,
+      aggregations: [],
+    };
+    expect(getRuleKey(rule1)).toBe(getRuleKey(rule2));
+  });
+
+  it('produces different keys for rules with different matcher options', () => {
+    const rule1 = { matcher: { id: FieldMatcherID.byName, options: 'host' }, operation: null, aggregations: [] };
+    const rule2 = { matcher: { id: FieldMatcherID.byName, options: 'dc' }, operation: null, aggregations: [] };
+    expect(getRuleKey(rule1)).not.toBe(getRuleKey(rule2));
+  });
+
+  it('produces different keys for rules with different matcher ids', () => {
+    const rule1 = { matcher: { id: FieldMatcherID.byName, options: 'host' }, operation: null, aggregations: [] };
+    const rule2 = { matcher: { id: FieldMatcherID.byType, options: 'host' }, operation: null, aggregations: [] };
+    expect(getRuleKey(rule1)).not.toBe(getRuleKey(rule2));
+  });
+
+  it('serializes object matcher options as JSON', () => {
+    const rule = {
+      matcher: { id: FieldMatcherID.byName, options: { pattern: '^cpu' } },
+      operation: null,
+      aggregations: [],
+    };
+    expect(getRuleKey(rule)).toBe('byName:{"pattern":"^cpu"}');
   });
 });
 

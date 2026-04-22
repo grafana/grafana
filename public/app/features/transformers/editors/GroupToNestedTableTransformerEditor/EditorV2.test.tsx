@@ -117,12 +117,56 @@ describe('GroupToNestedTableTransformerEditorV2', () => {
     expect(screen.queryByPlaceholderText('Enter regular expression')).not.toBeInTheDocument();
   });
 
+  it('deletes the correct rule when the first of two identical rules is deleted', () => {
+    const onChange = jest.fn();
+    const identicalRule = {
+      matcher: { id: FieldMatcherID.byName, options: 'message' },
+      operation: GroupByOperationID.groupBy,
+      aggregations: [],
+      keepNestedField: false,
+    };
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [identicalRule, { ...identicalRule }],
+    };
+
+    render(<GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />);
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove rule' });
+    expect(removeButtons).toHaveLength(2);
+    fireEvent.click(removeButtons[0]);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    expect(updatedOptions.rules).toHaveLength(1);
+  });
+
+  it('edits the correct rule when the first of two identical rules is edited', () => {
+    const onChange = jest.fn();
+    const identicalRule = {
+      matcher: { id: FieldMatcherID.byName, options: 'message' },
+      operation: GroupByOperationID.aggregate,
+      aggregations: [],
+      keepNestedField: true,
+    };
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [identicalRule, { ...identicalRule }],
+    };
+
+    render(<GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />);
+
+    // Two "Keep nested field(s)" switches (one per rule) plus the "Show field names" switch at the bottom
+    const switches = screen.getAllByRole('switch');
+    fireEvent.click(switches[0]);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    expect(updatedOptions.rules[0].keepNestedField).toBe(false);
+    expect(updatedOptions.rules[1].keepNestedField).toBe(true);
+  });
+
+  // though similar to the tests above, this is more of a test of whether the `key` is working
+  // correctly as opposed to the `onChange` handlers.
   it('keeps the correct regex value displayed after the first of two byRegexp rules is deleted', () => {
-    // Regression: FieldNameByRegexMatcherEditor uses useState(options) — its internal
-    // state initialises from props once and never re-syncs. With key={index}, deleting
-    // rule[0] causes React to reuse that component instance for rule[1], so the input
-    // shows rule[0]'s regex instead of rule[1]'s. getRuleKeys() fixes this by giving
-    // each row a key derived from its matcher content.
     const onChange = jest.fn();
     const options: GroupToNestedTableTransformerOptionsV2 = {
       rules: [

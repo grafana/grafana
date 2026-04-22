@@ -43,3 +43,9 @@ export const appendNewRule = (
     rules: [...options.rules, newRule],
   };
 };
+
+// it is possible for this key to not be unique if there are two rules with identical shapes in the transform,
+// so we need to ensure uniqueness when generating the keys by also keeping track of the current list of keys
+// and disambiguating when hitting dupes.
+export const getRuleKey = (rule: GroupToNestedTableMatcherConfig): string =>
+  `${rule.matcher.id}:${JSON.stringify(rule.matcher.options ?? '')}`;
