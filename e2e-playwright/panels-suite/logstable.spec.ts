@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 const DASHBOARD_UID = 'adhjhtt';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
-test.describe.only('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () => {
+test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () => {
   test.describe('Defaults', () => {
     test('Should render logs table panel', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
