@@ -80,6 +80,64 @@ jobs:
                   triggering_github_handle: SENDER
                 }
             })
+      - name: "Wait for success"
+        # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
+        # since the security-patch-actions workflow output must not be exposed.
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const maxWaitMs = 10 * 60 * 1000;
+            const pollIntervalMs = 15 * 1000;
+            const startTime = Date.now();
+            // Include a 60s lookback buffer to cover the time spent in the dispatch step.
+            const createdAfter = new Date(startTime - 60 * 1000).toISOString();
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            let runId = null;
+
+            while (true) {
+              if (Date.now() - startTime >= maxWaitMs) {
+                core.setFailed('Timed out after 10 minutes waiting for patch check to complete');
+                return;
+              }
+
+              if (!runId) {
+                const { data } = await github.rest.actions.listWorkflowRuns({
+                  owner: 'grafana',
+                  repo: 'security-patch-actions',
+                  workflow_id: 'test-patches-event.yml',
+                  branch: 'main',
+                  created: `>${createdAfter}`,
+                  per_page: 5,
+                });
+
+                if (data.workflow_runs.length > 0) {
+                  runId = data.workflow_runs[0].id;
+                } else {
+                  await sleep(pollIntervalMs);
+                  continue;
+                }
+              }
+
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                run_id: runId,
+              });
+
+              if (run.status === 'completed') {
+                if (run.conclusion === 'success') {
+                  return;
+                }
+                core.setFailed(`Patch check failed (conclusion: ${run.conclusion})`);
+                return;
+              }
+
+              await sleep(pollIntervalMs);
+            }
+
   dispatch-job-fork:
     # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
     # mark it as a success.
@@ -88,12 +146,6 @@ jobs:
       statuses: write
     runs-on: ubuntu-latest
     steps:
-      - name: Create status
-        uses: myrotvorets/set-commit-status-action@6d6905c99cd24a4a2cbccc720b62dc6ca5587141
-        with:
-          token: ${{ github.token }}
-          sha: ${{ inputs.pr_commit_sha }}
-          repo: ${{ inputs.repo }}
-          status: success
-          context: "Test Patches (event)"
-          description: "Test Patches (event) on a fork"
+      - name: All good
+        run: |
+          echo "It is not possible to check patches of a fork, unfortunately. We're working on it :-)"
