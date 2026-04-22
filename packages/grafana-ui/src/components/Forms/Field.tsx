@@ -7,7 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
 
-import { FieldContext, type FieldContextType } from './FieldContext';
+import { FieldContext } from './FieldContext';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { Label, getLabelStyles } from './Label';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
@@ -99,14 +99,6 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       }
     }
 
-    const fieldContextValue: FieldContextType = {
-      id: inputId,
-      invalid,
-      disabled,
-      loading,
-      'aria-describedby': invalid && error ? errorId : undefined,
-    };
-
     // @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead
     const childProps: ChildProps = deleteUndefinedProps({ invalid, disabled, loading });
     if (invalid && error) {
@@ -115,7 +107,13 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     }
     const Wrapper = useFieldset ? 'fieldset' : 'div';
     return (
-      <FieldContext.Provider value={fieldContextValue}>
+      <FieldContext.Provider value={{
+        id: inputId,
+        invalid,
+        disabled,
+        loading,
+        'aria-describedby': invalid && error ? errorId : undefined,
+      }}>
         <Wrapper className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
           {labelElement}
           <div>
