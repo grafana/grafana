@@ -1189,7 +1189,7 @@ func verifyDirEntriesCount(t *testing.T, dir string, count int) {
 
 func indexTestDocs(ns resource.NamespacedResource, docs int, listRV int64) resource.BuildFn {
 	return func(index resource.ResourceIndex) (int64, error) {
-		var items []*resource.BulkIndexItem
+		items := make([]*resource.BulkIndexItem, 0, docs)
 		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -1216,7 +1216,7 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		cnt++
 
-		var items []*resource.BulkIndexItem
+		items := make([]*resource.BulkIndexItem, 0, docs)
 		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -1248,7 +1248,7 @@ func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs
 
 		cnt++
 
-		var items []*resource.BulkIndexItem
+		items := make([]*resource.BulkIndexItem, 0, docs)
 		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -1372,7 +1372,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	be, _ := setupBleveBackend(t)
 
 	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
-		var items []*resource.BulkIndexItem
+		items := make([]*resource.BulkIndexItem, 0, 5)
 		for i := range 5 {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
