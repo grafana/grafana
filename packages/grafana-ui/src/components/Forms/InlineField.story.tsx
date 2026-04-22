@@ -81,10 +81,9 @@ export const withCombobox: StoryFn<typeof InlineField> = (args) => {
     { value: 2, label: 'Two' },
   ];
   const [selected, setSelected] = useState(1);
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Combobox width={16} onChange={(v) => setSelected(v.value)} options={comboboxOptions} value={selected} id={id} />
+      <Combobox width={16} onChange={(v) => setSelected(v.value)} options={comboboxOptions} value={selected} />
     </InlineField>
   );
 };
