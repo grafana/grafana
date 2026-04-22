@@ -138,10 +138,6 @@
 }
 
 .overlay-blend-select {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 3;
   font-size: 11px;
   line-height: 1.2;
   padding: 0.25rem 0.4rem;
@@ -173,6 +169,11 @@
   background: #f8f9fc;
   color: #334155;
   cursor: pointer;
+}
+
+.plot-action-wrap{
+  display: flex;
+  gap: 8px
 }
 
 .plot-action-btn {

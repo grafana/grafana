@@ -16,8 +16,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const expectedOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const actualOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [expectedBlendMode, setExpectedBlendMode] = useState<OverlayBlendMode>('exclusion');
-  const [actualBlendMode, setActualBlendMode] = useState<OverlayBlendMode>('exclusion');
+  const [blendMode, setBlendMode] = useState<OverlayBlendMode>('exclusion');
   const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = useState(true);
   const [renderActualSetupEvents, setRenderActualSetupEvents] = useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = useState(true);
@@ -61,6 +60,9 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
           <PlotHeader
             onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
             renderActualSetupEvents={renderExpectedSetupEvents}
+            mixBlendMode={blendMode}
+            onChangeBlendMode={setBlendMode}
+            showBlend={showOverlay && hasDiff}
           />
           <CanvasStack
             uPlotRef={expectedUPlotRef}
@@ -69,8 +71,8 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             overlayRef={expectedOverlayRef}
             showOverlay={showOverlay}
             hasDiff={hasDiff}
-            mixBlendMode={expectedBlendMode}
-            onChangeBlendMode={setExpectedBlendMode}
+            mixBlendMode={blendMode}
+            onChangeBlendMode={setBlendMode}
           />
         </div>
 
@@ -78,6 +80,9 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
           <PlotHeader
             onClick={() => setRenderActualSetupEvents((prev) => !prev)}
             renderActualSetupEvents={renderActualSetupEvents}
+            mixBlendMode={blendMode}
+            onChangeBlendMode={setBlendMode}
+            showBlend={showOverlay && hasDiff}
           />
           <CanvasStack
             uPlotRef={actualUPlotRef}
@@ -86,8 +91,8 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             overlayRef={actualOverlayRef}
             showOverlay={showOverlay}
             hasDiff={hasDiff}
-            mixBlendMode={actualBlendMode}
-            onChangeBlendMode={setActualBlendMode}
+            mixBlendMode={blendMode}
+            onChangeBlendMode={setBlendMode}
           />
         </div>
         <div className="diff-panel-wrap">

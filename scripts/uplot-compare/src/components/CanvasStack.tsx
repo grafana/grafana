@@ -2,8 +2,6 @@ import type { RefObject } from 'react';
 
 import type { OverlayBlendMode } from '../types.ts';
 
-import { OverlayBlendSelect } from './OverlayBlendSelect.tsx';
-
 export function CanvasStack(props: {
   uPlotRef: RefObject<HTMLCanvasElement | null>;
   width: number;
@@ -24,9 +22,6 @@ export function CanvasStack(props: {
         height={props.height}
         style={{ mixBlendMode: props.mixBlendMode }}
       ></canvas>
-      {props.showOverlay && props.hasDiff ? (
-        <OverlayBlendSelect value={props.mixBlendMode} onChange={props.onChangeBlendMode} />
-      ) : null}
     </div>
   );
 }
