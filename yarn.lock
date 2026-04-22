@@ -3740,10 +3740,10 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^2.2.4"
     "@grafana/schema": "npm:13.1.0-pre"
     "@grafana/ui": "npm:13.1.0-pre"
-    "@openfeature/core": "npm:^1.9.2"
+    "@openfeature/core": "npm:^1.10.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.6"
-    "@openfeature/react-sdk": "npm:^1.2.1"
-    "@openfeature/web-sdk": "npm:^1.7.3"
+    "@openfeature/react-sdk": "npm:^1.3.0"
+    "@openfeature/web-sdk": "npm:^1.8.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
@@ -3936,7 +3936,7 @@ __metadata:
   dependencies:
     "@grafana/api-clients": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@openfeature/react-sdk": "npm:^1.2.0"
+    "@openfeature/react-sdk": "npm:^1.3.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
     "@types/chance": "npm:^1.1.7"
@@ -6365,10 +6365,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/core@npm:^1.9.2":
-  version: 1.9.2
-  resolution: "@openfeature/core@npm:1.9.2"
-  checksum: 10/935736b2a3d199fcf85068c40f87ea4db108a475982562851d016a36e00898a9ae37ba90fe4562c6952d1951c7dc9b0ee2d35dceaf3be489e0d27eff2c395663
+"@openfeature/core@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "@openfeature/core@npm:1.10.0"
+  checksum: 10/62e0289b9e9e86fcc56e6ee972ffb2e0de9511e58fdc6d01f4f9c2dc312b4c43a95ad266984f63b89f7faacfc5ece214e484c308edbd491be0053a94f60bd6b7
   languageName: node
   linkType: hard
 
@@ -6392,22 +6392,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/react-sdk@npm:^1.2.0, @openfeature/react-sdk@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@openfeature/react-sdk@npm:1.2.1"
+"@openfeature/react-sdk@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@openfeature/react-sdk@npm:1.3.0"
   peerDependencies:
-    "@openfeature/web-sdk": ^1.5.0
+    "@openfeature/web-sdk": ^1.8.0
     react: ">=16.8.0"
-  checksum: 10/a85242e8e57540b05bce91e8deaeccac5de8da3f2ff8246bdbfe03350397c614fc7248b6018264016644837d2b47c6e34695a8ac334880251ead03ec8428263c
+  checksum: 10/9beae4c8142adb6e505818e4bec8cf0a8679d98355d542ea2d7aac2739fb540fff90cfe91b8d6825485c680bb827818a371b65ee4efa1ee0e762f70ef3e14136
   languageName: node
   linkType: hard
 
-"@openfeature/web-sdk@npm:^1.6.1, @openfeature/web-sdk@npm:^1.7.3":
-  version: 1.7.3
-  resolution: "@openfeature/web-sdk@npm:1.7.3"
+"@openfeature/web-sdk@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@openfeature/web-sdk@npm:1.8.0"
   peerDependencies:
-    "@openfeature/core": ^1.9.2
-  checksum: 10/0789b251e2354d898ba5d1b4548ab10eee3474b508e756722431d2b3d66916e5da9e7996a78f02e7cbc9e5534e891931c6fed2dac07f6f60bb42c2c3f6a0487b
+    "@openfeature/core": ^1.10.0
+  checksum: 10/fc69cf51fc37a18aeef816d9d4d10594f59b5476f2b74216b7cc7604b109c3ac732b99607f0c6ecac4ec7ec66d179020e239d06511d92eb304fe1f90131edc98
   languageName: node
   linkType: hard
 
@@ -19895,8 +19895,8 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.3"
-    "@openfeature/react-sdk": "npm:^1.2.0"
-    "@openfeature/web-sdk": "npm:^1.6.1"
+    "@openfeature/react-sdk": "npm:^1.3.0"
+    "@openfeature/web-sdk": "npm:^1.8.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.38.0"
