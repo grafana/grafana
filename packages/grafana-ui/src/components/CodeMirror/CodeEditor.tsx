@@ -71,7 +71,7 @@ type LoadedLanguageState = {
 
 const emptyLanguageState: LoadedLanguageState = { extension: null };
 
-export const CodeEditor = memo(function CodeEditor({
+const CodeEditor = memo(function CodeEditor({
   value,
   language,
   height = '200px',
@@ -133,3 +133,5 @@ export const CodeEditor = memo(function CodeEditor({
     />
   );
 });
+
+export default CodeEditor;

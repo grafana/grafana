@@ -3,7 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { render, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 
-import { CodeEditor } from './CodeEditor';
+import CodeEditor from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 
 let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;

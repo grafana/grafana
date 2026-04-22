@@ -81,10 +81,10 @@ export { FilterPill } from './components/FilterPill/FilterPill';
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
-export {
-  CodeEditor as CodeMirrorEditor,
-  type CodeEditorProps as CodeMirrorEditorProps,
-  type CodeEditorCompletionMode as CodeMirrorCompletionMode,
+export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export type {
+  CodeEditorProps as CodeMirrorEditorProps,
+  CodeEditorCompletionMode as CodeMirrorCompletionMode,
 } from './components/CodeMirror/CodeEditor';
 export type {
   Completion as CodeMirrorCompletion,

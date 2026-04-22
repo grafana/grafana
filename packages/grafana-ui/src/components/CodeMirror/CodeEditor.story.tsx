@@ -3,7 +3,7 @@ import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
-import { CodeEditor, type CodeEditorProps } from './CodeEditor';
+import CodeEditor, { type CodeEditorProps } from './CodeEditor';
 
 const languageOptions: Array<NonNullable<CodeEditorProps['language']>> = ['sql', 'json'];
 
