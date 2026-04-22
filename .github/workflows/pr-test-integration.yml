@@ -10,6 +10,20 @@ on:
       - opened
       - synchronize
       - reopened
+    paths:
+      - Makefile
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**.go'
+      - pkg/**
+      - apps/**
+      - scripts/ci/backend-tests/**
+      - devenv/**
+      - .github/actions/setup-go/**
+      - .github/actions/setup-enterprise/**
+      - .github/workflows/pr-test-integration.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,8 +55,7 @@ jobs:
   #### OSS
   sqlite:
     # Run this workflow only for PRs from forks
-    needs: detect-changes
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
       matrix:
         # We don't need more than this since it has to wait for the other tests.
@@ -73,8 +86,7 @@ jobs:
 
   mysql:
     # Run this workflow only for PRs from forks
-    needs: detect-changes
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
       matrix:
         shard: [
@@ -125,8 +137,7 @@ jobs:
 
   postgres:
     # Run this workflow only for PRs from forks
-    needs: detect-changes
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
       matrix:
         shard: [
@@ -175,8 +186,7 @@ jobs:
   #### Enterprise
   sqlite-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    needs: detect-changes
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     strategy:
       matrix:
         shard: [
@@ -221,8 +231,7 @@ jobs:
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    needs: detect-changes
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     strategy:
       matrix:
         shard: [
@@ -285,8 +294,7 @@ jobs:
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    needs: detect-changes
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     strategy:
       matrix:
         shard: [
@@ -343,33 +351,3 @@ jobs:
         if: always()
         run: |
           make devenv-down sources=postgres_tests
-
-  # This is the job that is actually required by rulesets.
-  # We want to only require one job instead of all the individual tests and shards.
-  # Future work also allows us to start skipping some tests based on changed files.
-  required-backend-integration-tests:
-    needs:
-      - mysql
-      - postgres
-      - sqlite
-      - mysql-enterprise
-      - postgres-enterprise
-      - sqlite-enterprise
-    # always() is the best function here.
-    # success() || failure() will skip this function if any need is also skipped.
-    # That means conditional test suites will fail the entire requirement check.
-    if: always()
-
-    name: All backend integration tests complete
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check test suites
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        run: |
-          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
-          echo "$FAILURES"
-          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
-            exit 1
-          fi
-          echo "All OK!"
