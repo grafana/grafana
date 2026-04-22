@@ -136,7 +136,7 @@ export function QueryEditorFooter() {
         <Button
           fill="text"
           size="sm"
-          icon="brackets-curly"
+          icon="crosshair"
           variant="secondary"
           onClick={onOpenInspector}
           aria-label={t('query-editor-next.footer.query-inspector', 'Query inspector')}
