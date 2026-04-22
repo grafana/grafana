@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { EditReceiverView } from 'app/features/alerting/unified/components/receivers/EditReceiverView';
-import { AlertmanagerProvider, useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 export interface EditContactPointDrawerProps {
@@ -15,41 +15,17 @@ export interface EditContactPointDrawerProps {
 /**
  * Contact point edit form for use inside a stacked drawer (e.g. from Alert Activity instance flow).
  * Omits the in-form manage-permissions control; permissions remain available from the contact point view drawer.
+ * Alert Activity is Grafana-managed only; parent must wrap with `AlertmanagerProvider` (see `InstanceDetailsDrawer`).
  */
 export function EditContactPointDrawer({ contactPointName, onSaveSuccess }: EditContactPointDrawerProps) {
-  return (
-    <AlertmanagerProvider accessType="instance">
-      <EditContactPointDrawerBody contactPointName={contactPointName} onSaveSuccess={onSaveSuccess} />
-    </AlertmanagerProvider>
-  );
-}
-
-function EditContactPointDrawerBody({ contactPointName, onSaveSuccess }: EditContactPointDrawerProps) {
-  const { selectedAlertmanager } = useAlertmanager();
-
   const {
     isLoading,
     error,
     data: contactPoint,
   } = useGetContactPoint({
     name: contactPointName,
-    alertmanager: selectedAlertmanager ?? '',
-    skip: !selectedAlertmanager,
+    alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
-
-  if (!selectedAlertmanager) {
-    return (
-      <Alert
-        severity="warning"
-        title={t('alerting.triage.contact-point-drawer.no-alertmanager-title', 'No alert manager')}
-      >
-        {t(
-          'alerting.triage.contact-point-drawer.no-alertmanager-description',
-          'No alert manager is available for this session.'
-        )}
-      </Alert>
-    );
-  }
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.edit-contact-point.text-loading', 'Loading...')} />;
@@ -76,7 +52,7 @@ function EditContactPointDrawerBody({ contactPointName, onSaveSuccess }: EditCon
 
   return (
     <EditReceiverView
-      alertmanagerName={selectedAlertmanager}
+      alertmanagerName={GRAFANA_RULES_SOURCE_NAME}
       contactPoint={contactPoint}
       onSaveSuccess={onSaveSuccess}
       hidePermissionsAction

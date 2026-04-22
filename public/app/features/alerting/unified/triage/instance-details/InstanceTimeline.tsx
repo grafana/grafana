@@ -196,6 +196,7 @@ interface InstanceTimelineProps {
   notifications: NotificationEntry[];
   filter?: TimelineFilter;
   onOpenContactPoint?: (receiverName: string) => void;
+  contactPointPermissionText?: string;
 }
 
 export function InstanceTimeline({
@@ -203,6 +204,7 @@ export function InstanceTimeline({
   notifications,
   filter = 'all',
   onOpenContactPoint,
+  contactPointPermissionText,
 }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
 
@@ -247,7 +249,11 @@ export function InstanceTimeline({
               </div>
               <div className={styles.contentCell}>
                 {entry.type === 'notifications' && entry.notifications && (
-                  <NotificationSummary notifications={entry.notifications} onOpenContactPoint={onOpenContactPoint} />
+                  <NotificationSummary
+                    notifications={entry.notifications}
+                    onOpenContactPoint={onOpenContactPoint}
+                    contactPointPermissionText={contactPointPermissionText}
+                  />
                 )}
                 {entry.type === 'state-change' && entry.previous && entry.current && (
                   <div className={styles.stateChangeRow}>
@@ -274,15 +280,17 @@ export function InstanceTimeline({
   );
 }
 
-/** Opens the contact point in-app or links to notifications filtered by receiver (sibling to expand control — avoids nested interactive elements). */
+/** Opens the contact point in-app, or links out, or shows a disabled control when the user cannot access contact points in-app. */
 function ReceiverLinkOrButton({
   receiverName,
   label,
   onOpenContactPoint,
+  contactPointPermissionText,
 }: {
   receiverName: string;
   label: string;
   onOpenContactPoint?: (receiverName: string) => void;
+  contactPointPermissionText?: string;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -298,6 +306,16 @@ function ReceiverLinkOrButton({
       >
         {label}
       </Button>
+    );
+  }
+
+  if (contactPointPermissionText) {
+    return (
+      <Tooltip content={contactPointPermissionText}>
+        <Button type="button" variant="secondary" fill="text" size="sm" className={styles.receiverAsideButton} disabled>
+          {label}
+        </Button>
+      </Tooltip>
     );
   }
 
@@ -318,9 +336,11 @@ function ReceiverLinkOrButton({
 function NotificationSummary({
   notifications,
   onOpenContactPoint,
+  contactPointPermissionText,
 }: {
   notifications: NotificationEntry[];
   onOpenContactPoint?: (receiverName: string) => void;
+  contactPointPermissionText?: string;
 }) {
   const byStatus = useMemo(() => {
     const grouped: Record<CreateNotificationqueryNotificationStatus, NotificationEntry[]> = {
@@ -353,10 +373,12 @@ function NotificationStatusGroup({
   status,
   notifications,
   onOpenContactPoint,
+  contactPointPermissionText,
 }: {
   status: CreateNotificationqueryNotificationStatus;
   notifications: NotificationEntry[];
   onOpenContactPoint?: (receiverName: string) => void;
+  contactPointPermissionText?: string;
 }) {
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
@@ -441,6 +463,7 @@ function NotificationStatusGroup({
               receiverName={uniqueReceivers[0]}
               label={receiverLabel}
               onOpenContactPoint={onOpenContactPoint}
+              contactPointPermissionText={contactPointPermissionText}
             />
           </div>
         )}

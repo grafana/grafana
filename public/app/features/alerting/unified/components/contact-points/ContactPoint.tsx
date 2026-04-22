@@ -21,6 +21,15 @@ import { type ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/us
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
 import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
+/**
+ * Identifier for notifications API calls (`useGetContactPoint`, delete, etc.).
+ * Prefer K8s `metadata.name` (the `id` field); fall back to display `name` when `id`
+ * is absent so legacy/config-only shapes still resolve.
+ */
+function getReceiverResourceId(contactPoint: ContactPointWithMetadata): string {
+  return contactPoint.id ?? contactPoint.name;
+}
+
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
   /**
@@ -47,13 +56,13 @@ export const ContactPoint = ({ contactPoint, onEditContactPoint }: ContactPointP
           contactPoint={contactPoint}
           onDelete={(contactPointToDelete) =>
             showDeleteModal({
-              name: contactPointToDelete.id || contactPointToDelete.name,
+              name: getReceiverResourceId(contactPointToDelete),
               resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
           }
           onEditClick={
             onEditContactPoint
-              ? () => onEditContactPoint(contactPoint.id || contactPoint.name, contactPoint.name)
+              ? () => onEditContactPoint(getReceiverResourceId(contactPoint), contactPoint.name)
               : undefined
           }
         />

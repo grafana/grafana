@@ -5,8 +5,7 @@ import { Alert, EmptyState, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ContactPointsList } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { useCanViewContactPoints } from 'app/features/alerting/unified/hooks/useAbilities';
-import { AlertmanagerProvider, useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,68 +13,29 @@ import { AccessControlAction } from 'app/types/accessControl';
 const DEFAULT_PAGE_SIZE = 10;
 
 export interface ContactPointDrawerProps {
-  receiverName: string;
+  /**
+   * Search string for the embedded list (usually the contact point title shown in the timeline / rule).
+   * This filters rows; it is not necessarily the same string as `receiverResourceName` in `onEditContactPoint`.
+   */
+  listSearchQuery: string;
   /** When set, Edit on a contact point opens the stacked edit drawer instead of the full page. */
   onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
 /**
- * Contact point list filtered by receiver name, for use inside the instance details drawer.
- * Mirrors the data and list behavior of the contact points tab on the notifications page.
+ * Contact point list filtered by name, for use inside the instance details drawer.
+ * Alert Activity uses Grafana managed alert rules only, so this always loads Grafana-managed contact points.
+ * Callers should only open this when the user can view contact points (see `useCanViewContactPoints` in the parent).
  */
-export function ContactPointDrawer({ receiverName, onEditContactPoint }: ContactPointDrawerProps) {
-  const canViewContactPoints = useCanViewContactPoints();
-
-  if (!canViewContactPoints) {
-    return (
-      <Alert
-        severity="warning"
-        title={t('alerting.triage.contact-point-drawer.no-permission-title', 'No permission to view contact points')}
-      >
-        {t(
-          'alerting.triage.contact-point-drawer.no-permission-description',
-          'You do not have permission to view contact points.'
-        )}
-      </Alert>
-    );
-  }
-
-  return (
-    <AlertmanagerProvider accessType="instance">
-      <ContactPointDrawerBody receiverName={receiverName} onEditContactPoint={onEditContactPoint} />
-    </AlertmanagerProvider>
-  );
-}
-
-function ContactPointDrawerBody({ receiverName, onEditContactPoint }: ContactPointDrawerProps) {
-  const { selectedAlertmanager } = useAlertmanager();
-
-  const fetchPolicies = useMemo(
-    () => (selectedAlertmanager ? !shouldUseK8sApi(selectedAlertmanager) : false),
-    [selectedAlertmanager]
-  );
+export function ContactPointDrawer({ listSearchQuery, onEditContactPoint }: ContactPointDrawerProps) {
+  const fetchPolicies = useMemo(() => !shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME), []);
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
-    alertmanager: selectedAlertmanager ?? '',
+    alertmanager: GRAFANA_RULES_SOURCE_NAME,
     fetchPolicies,
     fetchStatuses,
-    skip: !selectedAlertmanager,
   });
-
-  if (!selectedAlertmanager) {
-    return (
-      <Alert
-        severity="warning"
-        title={t('alerting.triage.contact-point-drawer.no-alertmanager-title', 'No alert manager')}
-      >
-        {t(
-          'alerting.triage.contact-point-drawer.no-alertmanager-description',
-          'No alert manager is available for this session.'
-        )}
-      </Alert>
-    );
-  }
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.contact-points-tab.text-loading', 'Loading...')} />;
@@ -104,7 +64,7 @@ function ContactPointDrawerBody({ receiverName, onEditContactPoint }: ContactPoi
       ) : (
         <ContactPointsList
           contactPoints={contactPoints}
-          search={receiverName}
+          search={listSearchQuery}
           pageSize={DEFAULT_PAGE_SIZE}
           onEditContactPoint={onEditContactPoint}
         />

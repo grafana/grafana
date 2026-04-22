@@ -18,8 +18,13 @@ interface InstanceTimelineSectionProps {
   stateHistoryFetching: boolean;
   stateHistoryError: boolean;
   loadingBarRef: React.Ref<HTMLDivElement>;
-  /** When set, single-receiver rows open drawer instead of a new tab. */
+  /** When set, single-receiver rows open this drilldown instead of a new tab. */
   onOpenContactPoint?: (receiverName: string) => void;
+  /**
+   * When the user cannot open the in-app contact point flow, set to a short message (e.g. no view permission);
+   * the timeline shows a disabled control with this text in the tooltip.
+   */
+  contactPointPermissionText?: string;
 }
 
 export function InstanceTimelineSection({
@@ -31,6 +36,7 @@ export function InstanceTimelineSection({
   stateHistoryError,
   loadingBarRef,
   onOpenContactPoint,
+  contactPointPermissionText,
 }: InstanceTimelineSectionProps) {
   const [
     createNotificationQuery,
@@ -113,6 +119,7 @@ export function InstanceTimelineSection({
             notifications={notifications}
             filter={filter}
             onOpenContactPoint={onOpenContactPoint}
+            contactPointPermissionText={contactPointPermissionText}
           />
         )}
       </Stack>

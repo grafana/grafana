@@ -206,17 +206,8 @@ const useGetAlertmanagerContactPoint = (
 };
 
 /**
- * Fetch a single Grafana-managed contact point from the notifications K8s API.
- *
- * `GET /receivers/{name}` expects **metadata.name** (the receiver UID). Alert rules and much of the UI
- * use **spec.title** (human-readable name). The UID is often `base64UrlEncode(title)` (see ContactPointLink
- * and simplified routing). A direct GET with a title therefore 404s even when the receiver exists.
- *
- * We resolve by listing with `metadata.name` = `name` first (when `name` is already the UID), then with
- * `metadata.name` = `base64UrlEncode(name)` (when `name` is a stored title).
- *
- * Future: if the notifications API exposes a single "resolve receiver by title or UID" call, switch to that
- * to shrink client-side branching.
+ * Load one Grafana-managed receiver via `listReceiver` + `metadata.name` fieldSelector: callers may pass
+ * K8s name or display title (see dual query below). `queryOptions` are forwarded to both `useListReceiverQuery` calls.
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },

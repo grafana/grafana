@@ -17,7 +17,12 @@ const usedByRules = ['grafana-default-email'];
 const cannotBeEdited = ['grafana-default-email'];
 const cannotBeDeleted = ['grafana-default-email'];
 
-/** Parse `metadata.name=<value>` from a Kubernetes-style fieldSelector (single selector; value may be escaped). */
+/**
+ * MSW list handler must support the same `fieldSelector` filtering the real API applies: clients send
+ * `metadata.name` as either the plain K8s name or a base64url-encoded title (see `ContactPointSelector`).
+ * `parseMetadataNameFromFieldSelector` reads the query param; `receiverMetadataNameMatchesFieldSelector`
+ * matches list items to that value.
+ */
 function parseMetadataNameFromFieldSelector(fieldSelector: string | null): string | undefined {
   if (!fieldSelector) {
     return undefined;

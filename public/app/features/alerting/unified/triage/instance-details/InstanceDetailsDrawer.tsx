@@ -30,6 +30,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { useCanViewContactPoints } from '../../hooks/useAbilities';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -275,6 +276,14 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
             stateHistoryError={stateHistoryError}
             loadingBarRef={ref}
             onOpenContactPoint={canViewContactPoints ? handleOpenContactPoint : undefined}
+            contactPointPermissionText={
+              canViewContactPoints
+                ? undefined
+                : t(
+                    'alerting.instance-details.contact-point-no-permission-tooltip',
+                    'You do not have permission to open contact points from here.'
+                  )
+            }
           />
         ) : (
           <Box ref={ref}>
@@ -353,44 +362,26 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
         : (activeView.displayTitle ?? activeView.receiverResourceName);
 
     return (
-      <>
-        <Drawer
-          title={
-            <InstanceDetailsDrawerTitle
-              {...sharedTitleProps}
-              rule={rule.grafana_alert}
-              titleText={t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
-                name: receiverNameForList,
-              })}
-              hideActions
-              showAlertState={false}
-              titleSection={<DrawerBackButton onClick={handleBack} />}
-            />
-          }
+      <AlertmanagerProvider accessType="instance">
+        <StackedDrilldownDrawerPair
+          sharedTitleProps={sharedTitleProps}
+          rule={rule.grafana_alert}
           onClose={handleDrawerClose}
-          size="md"
-        >
-          <ContactPointDrawer receiverName={receiverNameForList} onEditContactPoint={handleOpenEditContactPoint} />
-        </Drawer>
-        <Drawer
-          title={
-            <InstanceDetailsDrawerTitle
-              {...sharedTitleProps}
-              rule={rule.grafana_alert}
-              titleText={t('alerting.triage.instance-details-drawer.edit-contact-point-title', 'Edit {{name}}', {
-                name: activeView.displayTitle ?? activeView.receiverResourceName,
-              })}
-              hideActions
-              showAlertState={false}
-              titleSection={<DrawerBackButton onClick={handleBack} />}
-            />
+          onBack={handleBack}
+          rearTitleText={t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
+            name: receiverNameForList,
+          })}
+          frontTitleText={t('alerting.triage.instance-details-drawer.edit-contact-point-title', 'Edit {{name}}', {
+            name: activeView.displayTitle ?? activeView.receiverResourceName,
+          })}
+          rearChildren={
+            <ContactPointDrawer listSearchQuery={receiverNameForList} onEditContactPoint={handleOpenEditContactPoint} />
           }
-          onClose={handleDrawerClose}
-          size="md"
-        >
-          <EditContactPointDrawer contactPointName={activeView.receiverResourceName} onSaveSuccess={popTopView} />
-        </Drawer>
-      </>
+          frontChildren={
+            <EditContactPointDrawer contactPointName={activeView.receiverResourceName} onSaveSuccess={popTopView} />
+          }
+        />
+      </AlertmanagerProvider>
     );
   }
 
@@ -412,11 +403,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
         onClose={handleDrawerClose}
         size="md"
       >
-        <ContactPointDrawer
-          receiverName={activeView.receiverName}
-          onEditContactPoint={canViewContactPoints ? handleOpenEditContactPoint : undefined}
-        />
-      </Drawer>
+        <AlertmanagerProvider accessType="instance">
+          <ContactPointDrawer
+            listSearchQuery={activeView.receiverName}
+            onEditContactPoint={canViewContactPoints ? handleOpenEditContactPoint : undefined}
+          />
+        </AlertmanagerProvider>
+      </InstanceDrilldownDrawer>
     );
   }
 
