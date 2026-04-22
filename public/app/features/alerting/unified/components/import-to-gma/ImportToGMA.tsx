@@ -8,8 +8,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -23,6 +21,10 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { NotificationPolicyAction, RuleAction } from '../../hooks/abilities/types';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
@@ -173,11 +175,12 @@ function ImportWizardContent() {
   const { watch, setValue, getValues } = formAPI;
   const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
-  // Permission checks aligned with backend authorization.go
-  const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
-  const canImportRules =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  // Permission checks via ability hooks — no direct contextSrv calls here.
+  // canImportRules: requires AlertingRuleCreate AND AlertingProvisioningSetStatus (see RuleAction.Import).
+  const canImportRules = isGranted(useGlobalRuleAbility(RuleAction.Import));
+  // canImportNotifications: requires write access to the notification subsystem.
+  // Uses NotificationPolicyAction.Create which maps to AlertingNotificationsWrite (and broader routing permissions).
+  const canImportNotifications = isGranted(useNotificationPolicyAbility({ action: NotificationPolicyAction.Create }));
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {

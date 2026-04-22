@@ -4,8 +4,6 @@ import { useToggle } from 'react-use';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
@@ -55,6 +53,8 @@ export function RuleListActions() {
   const { granted: canCreateCloudRuleBase } = useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule);
   const { granted: canExportRules } = useGlobalRuleAbility(RuleAction.ExportRules);
 
+  const { granted: canImport } = useGlobalRuleAbility(RuleAction.Import);
+
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
   const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
@@ -62,11 +62,9 @@ export function RuleListActions() {
   const canCreateCloudRules = canCreateCloudRuleBase && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
-  const canImportRulesToGMA =
-    config.featureToggles.alertingMigrationUI &&
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status.
+  // useGlobalRuleAbility(RuleAction.Import) enforces both permissions.
+  const canImportRulesToGMA = config.featureToggles.alertingMigrationUI && canImport;
 
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 

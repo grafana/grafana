@@ -6,13 +6,11 @@ import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
-import { useExternalGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
-import { ExternalRuleAction } from '../../hooks/abilities/types';
+import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { ExternalRuleAction, RuleAction } from '../../hooks/abilities/types';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -51,11 +49,8 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const canMigrateToGMA =
-    hasDataSourcesConfigured &&
-    config.featureToggles.alertingMigrationUI &&
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  const { granted: canImport } = useGlobalRuleAbility(RuleAction.Import);
+  const canMigrateToGMA = hasDataSourcesConfigured && config.featureToggles.alertingMigrationUI && canImport;
 
   return (
     <section className={styles.wrapper}>

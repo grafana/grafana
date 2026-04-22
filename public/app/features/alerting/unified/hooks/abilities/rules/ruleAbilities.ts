@@ -32,6 +32,9 @@ export function useGlobalRuleAbilities(): Abilities<RuleAction> {
   const canRead = ctx.hasPermission(AccessControlAction.AlertingRuleRead);
   const canUpdate = ctx.hasPermission(AccessControlAction.AlertingRuleUpdate);
   const canDelete = ctx.hasPermission(AccessControlAction.AlertingRuleDelete);
+  // Import requires BOTH create and provisioning-set-status (AND logic).
+  // anyOfPermissions lists both so the tooltip shows everything that's needed.
+  const canProvisioningSetStatus = ctx.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
   return useMemo<Abilities<RuleAction>>(
     () => ({
@@ -40,6 +43,13 @@ export function useGlobalRuleAbilities(): Abilities<RuleAction> {
       [RuleAction.Update]: canUpdate ? Granted : InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]),
       [RuleAction.Delete]: canDelete ? Granted : InsufficientPermissions([AccessControlAction.AlertingRuleDelete]),
       [RuleAction.ExportRules]: canRead ? Granted : InsufficientPermissions([AccessControlAction.AlertingRuleRead]),
+      [RuleAction.Import]:
+        canCreate && canProvisioningSetStatus
+          ? Granted
+          : InsufficientPermissions([
+              AccessControlAction.AlertingRuleCreate,
+              AccessControlAction.AlertingProvisioningSetStatus,
+            ]),
       // per-instance actions are not meaningful at list level
       [RuleAction.Duplicate]: NotSupported,
       [RuleAction.Explore]: NotSupported,
@@ -49,7 +59,7 @@ export function useGlobalRuleAbilities(): Abilities<RuleAction> {
       [RuleAction.Restore]: NotSupported,
       [RuleAction.DeletePermanently]: NotSupported,
     }),
-    [canCreate, canRead, canUpdate, canDelete]
+    [canCreate, canRead, canUpdate, canDelete, canProvisioningSetStatus]
   );
 }
 

@@ -5,7 +5,8 @@ import { makeAbility } from '../abilityUtils';
 import { type Ability, AlertGroupAction } from '../types';
 
 const PERMISSIONS: Record<AlertGroupAction, AccessControlAction[]> = {
-  [AlertGroupAction.View]: [instancesPermissions.read.grafana],
+  // anyOf: show the tab / link when the user can view alert instances from any source
+  [AlertGroupAction.View]: [instancesPermissions.read.grafana, instancesPermissions.read.external],
 };
 
 export function useAlertGroupAbility(action: AlertGroupAction): Ability {

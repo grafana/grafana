@@ -16,7 +16,7 @@ import { useAlertGroupAbility } from './useAlertGroupAbility';
 setupMswServer();
 
 describe('useAlertGroupAbility', () => {
-  it('should grant View when instance read permission is held', () => {
+  it('should grant View when grafana instance read permission is held', () => {
     const amSource = setupGrafanaAlertmanager();
     grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceRead]);
 
@@ -27,7 +27,18 @@ describe('useAlertGroupAbility', () => {
     expect(result.current.granted).toBe(true);
   });
 
-  it('should deny View when instance read permission is not held', () => {
+  it('should grant View when external instance read permission is held', () => {
+    const amSource = setupGrafanaAlertmanager();
+    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalRead]);
+
+    const { result } = renderHook(() => useAlertGroupAbility(AlertGroupAction.View), {
+      wrapper: createAlertmanagerWrapper(amSource),
+    });
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('should deny View when no instance read permission is held', () => {
     const amSource = setupGrafanaAlertmanager();
     grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
 

@@ -20,6 +20,11 @@ export enum RuleAction {
   Pause = 'pause-alert-rule',
   Restore = 'restore-alert-rule',
   DeletePermanently = 'delete-alert-rule-permanently',
+  /**
+   * Bulk-import external datasource-managed rules into Grafana-managed alerting.
+   * Requires BOTH AlertingRuleCreate AND AlertingProvisioningSetStatus.
+   */
+  Import = 'import-alert-rule',
 }
 
 // Actions for external datasource alert rules (global / list level checks)

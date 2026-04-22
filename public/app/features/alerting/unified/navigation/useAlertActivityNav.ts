@@ -4,10 +4,12 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
+import { isGranted } from '../hooks/abilities/abilityUtils';
+import { useAlertGroupAbility } from '../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
+import { AlertGroupAction, ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**
@@ -16,28 +18,6 @@ import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
  */
 export function getAlertActivityNavId(): string {
   return config.featureToggles.alertingNavigationV2 ? NAV_IDS.ALERT_ACTIVITY : 'alert-alerts';
-}
-
-/**
- * Check if user has permission to view alerts
- * Checks both internal and external permissions to match backend behavior
- */
-function canViewAlerts(): boolean {
-  return (
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
-  );
-}
-
-/**
- * Check if user has permission to view active notifications (alert groups)
- * Checks both internal and external permissions to match backend behavior
- */
-function canViewActiveNotifications(): boolean {
-  return (
-    contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingInstancesExternalRead)
-  );
 }
 
 /**
@@ -58,6 +38,16 @@ export function useAlertActivityNav() {
   // V2 Navigation: Get the alert activity nav item
   const alertActivityNav = navIndex[NAV_IDS.ALERT_ACTIVITY];
 
+  // Permission checks via ability hooks — no direct contextSrv calls here.
+  // A user can view alerts if they have read access to Grafana-managed OR external rules.
+  const canViewGrafanaRules = isGranted(useGlobalRuleAbility(RuleAction.View));
+  const canViewExternalRules = isGranted(useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule));
+  const canViewAlerts = canViewGrafanaRules || canViewExternalRules;
+
+  // A user can view active notifications if they have read access to instances from any source.
+  // useAlertGroupAbility(AlertGroupAction.View) checks both grafana and external instance read.
+  const canViewActiveNotifications = isGranted(useAlertGroupAbility(AlertGroupAction.View));
+
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {
     if (!useV2Nav || !alertActivityNav) {
@@ -66,7 +56,7 @@ export function useAlertActivityNav() {
 
     const tabItems: NavModelItem[] = [];
 
-    if (canViewAlerts()) {
+    if (canViewAlerts) {
       tabItems.push({
         id: 'alert-activity-alerts',
         text: t('alerting.navigation.alerts', 'Alerts'),
@@ -76,7 +66,7 @@ export function useAlertActivityNav() {
       });
     }
 
-    if (canViewActiveNotifications()) {
+    if (canViewActiveNotifications) {
       tabItems.push({
         id: 'alert-activity-notifications',
         text: t('alerting.navigation.active-notifications', 'Active notifications'),
@@ -87,7 +77,7 @@ export function useAlertActivityNav() {
     }
 
     return tabItems;
-  }, [location.pathname, alertActivityNav, useV2Nav]);
+  }, [location.pathname, alertActivityNav, useV2Nav, canViewAlerts, canViewActiveNotifications]);
 
   if (!useV2Nav) {
     // Legacy navigation: return simple navId (each page handles its own navId)
