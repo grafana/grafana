@@ -1,4 +1,4 @@
-package lock
+package search
 
 import (
 	"context"
@@ -28,9 +28,9 @@ import (
 // Uses conditionalBucket (fake ETag tracking) by default.
 // Set CDK_TEST_BUCKET_URL to run against a real provider:
 //
-//	CDK_TEST_BUCKET_URL=s3://bucket?region=us-east-1 go test ./pkg/storage/unified/search/lock/... -v
-//	CDK_TEST_BUCKET_URL=gs://bucket go test ./pkg/storage/unified/search/lock/... -v
-//	CDK_TEST_BUCKET_URL=azblob://container go test ./pkg/storage/unified/search/lock/... -v
+//	CDK_TEST_BUCKET_URL=s3://bucket?region=us-east-1 go test ./pkg/storage/unified/search/... -v
+//	CDK_TEST_BUCKET_URL=gs://bucket go test ./pkg/storage/unified/search/... -v
+//	CDK_TEST_BUCKET_URL=azblob://container go test ./pkg/storage/unified/search/... -v
 
 func testBackend(t *testing.T, opts ...func(*cdkLockBackendOptions)) *cdkLockBackend {
 	t.Helper()
