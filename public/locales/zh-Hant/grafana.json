@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "搜尋受影響的儀表板",
       "update-all": "全部更新",
       "num-affected_other": "此更新將影響 <1>{{count}} 個儀表板。</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12924,9 +12930,7 @@
       "update-available": "有可用更新！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "外掛程式使用需要新的搜尋索引，以便在儀表板中查找使用情況。請啟用功能切換",
       "num-usages": "「{{pluginName}}」已使用 <2>{{numUsages}} </2> 次。",
-      "title-missing-feature-toggle-panel-title-search": "缺少功能切換：{{toggle}}",
       "title-not-used-yet": "「{{pluginName}}」尚未用於任何儀表板"
     },
     "plugins-errors-info": {

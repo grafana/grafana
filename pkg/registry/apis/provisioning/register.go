@@ -1019,6 +1019,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				b.folderMetadataEnabled,
+				b.folderAPIVersion,
 			)
 			if err != nil {
 				return err

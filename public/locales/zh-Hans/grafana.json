@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "搜索受影响的数据面板",
       "update-all": "全部更新",
       "num-affected_other": "此更新将影响 <1>{{count}} 个数据面板。</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12924,9 +12930,7 @@
       "update-available": "有更新！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "插件使用需要新的搜索索引，以便在各个数据面板中查找使用情况信息。请启用功能切换",
       "num-usages": "使用了 {{pluginName}} <2>{{numUsages}}</2> 次。",
-      "title-missing-feature-toggle-panel-title-search": "缺少功能切换：{{toggle}}",
       "title-not-used-yet": "{{pluginName}} 尚未在任何数据面板中使用"
     },
     "plugins-errors-info": {

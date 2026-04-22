@@ -11124,6 +11124,12 @@
       "update-all": "Atualizar tudo",
       "num-affected_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>",
       "num-affected_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Atualização disponível!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "A utilização do plugin requer o novo índice de pesquisa para encontrar a utilização nos painéis. Ative a alternância de funcionalidades",
       "num-usages": " {{pluginName}} é utilizado <2>{{numUsages}}</2> vezes.",
-      "title-missing-feature-toggle-panel-title-search": "Alternância de funcionalidade em falta: {{toggle}}",
       "title-not-used-yet": "O plugin {{pluginName}} ainda não foi utilizado em nenhum painel de controlo"
     },
     "plugins-errors-info": {

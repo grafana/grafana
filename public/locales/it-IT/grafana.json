@@ -11124,6 +11124,12 @@
       "update-all": "Aggiorna tutto",
       "num-affected_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>",
       "num-affected_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Aggiornamento disponibile!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "L'utilizzo del componente aggiuntivo richiede il nuovo indice di ricerca per trovare l'utilizzo tra le dashboard. Abilita il toggle della funzionalità",
       "num-usages": "{{pluginName}} è utilizzato <2>{{numUsages}}</2> volte.",
-      "title-missing-feature-toggle-panel-title-search": "Toggle della funzionalità mancante: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} non è ancora utilizzato in nessuna dashboard"
     },
     "plugins-errors-info": {

@@ -107,6 +107,7 @@ func NewRepositoryController(
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
+	folderAPIVersion string,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -127,10 +128,11 @@ func NewRepositoryController(
 		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:        resourceLister,
-			clientFactory: clients,
-			metrics:       &finalizerMetrics,
-			maxWorkers:    parallelOperations,
+			lister:           resourceLister,
+			clientFactory:    clients,
+			metrics:          &finalizerMetrics,
+			maxWorkers:       parallelOperations,
+			folderAPIVersion: folderAPIVersion,
 		},
 		jobs:                  jobs,
 		logger:                logging.DefaultLogger.With("logger", loggerName),
