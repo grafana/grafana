@@ -108,7 +108,6 @@ export const AllComponents: StoryFn = (args) => {
   const comboboxId = useId();
   const radioButtonId = useId();
   const textAreaId = useId();
-  const switchId = useId();
 
   return (
     <div>
@@ -197,7 +196,6 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <Switch
-            id={switchId}
             label="Switch test"
             name="switch-test"
             value={switchValue}

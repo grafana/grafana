@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
+import { InlineSwitch, Switch } from '../Switch/Switch';
 
 import { Checkbox } from './Checkbox';
 import { InlineField } from './InlineField';
@@ -28,6 +29,16 @@ describe('InlineField', () => {
     expect(screen.getByLabelText('My label')).toBeInTheDocument();
   });
 
+  it('associates the label with an Input when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <Input />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
   it('associates the label with a Checkbox when no id is set', () => {
     render(
       <InlineField label="My label">
@@ -38,14 +49,24 @@ describe('InlineField', () => {
     expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
   });
 
-  it('associates the label with an Input when no id is set', () => {
+  it('associates the label with a Switch when no id is set', () => {
     render(
       <InlineField label="My label">
-        <Input />
+        <Switch />
       </InlineField>
     );
 
-    expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with an InlineSwitch when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <InlineSwitch />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
   });
 
   it('renders with the inputId of its children', () => {

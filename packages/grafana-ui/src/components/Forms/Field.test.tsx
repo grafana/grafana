@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
+import { Switch } from '../Switch/Switch';
 
 import { Checkbox } from './Checkbox';
 import { Field } from './Field';
@@ -46,6 +47,16 @@ describe('Field', () => {
     );
 
     expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with a Switch when no id is set', () => {
+    render(
+      <Field label="My label">
+        <Switch />
+      </Field>
+    );
+
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
   });
 
   it('renders with the inputId of its children', () => {

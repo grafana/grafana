@@ -58,7 +58,6 @@ interface FormDTO {
 
 const renderForm = (defaultValues?: FormDTO) => {
   const textId = useId();
-  const switchId = useId();
   const radioId = useId();
   const selectId = useId();
   return (
@@ -98,7 +97,7 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Switch">
-              <Switch name="switch" {...register} id={switchId} />
+              <Switch name="switch" {...register} />
             </Field>
 
             <Field label="RadioButton" htmlFor={radioId}>

@@ -5,6 +5,7 @@ import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -19,31 +20,46 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-switch--docs
  */
 export const Switch = forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
+  (
+    {
+      value,
+      checked,
+      onChange,
+      id: idProp,
+      label,
+      disabled: disabledProp,
+      invalid: invalidProp = false,
+      ...inputProps
+    },
+    ref
+  ) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
     const styles = useStyles2(getSwitchStyles);
     const generatedId = useId();
-    const switchId = id ? id : generatedId;
+    const fieldContext = useFieldContext();
+    const invalid = invalidProp ?? fieldContext.invalid;
+    const disabled = disabledProp ?? fieldContext.disabled;
+    const switchId = idProp ?? fieldContext.id ?? generatedId;
 
     return (
       <div className={cx(styles.switch, invalid && styles.invalid)}>
-        <input
-          type="checkbox"
-          role="switch"
-          disabled={disabled}
-          checked={value}
-          onChange={(event) => {
-            !disabled && onChange?.(event);
-          }}
-          id={switchId}
-          aria-invalid={!!invalid}
-          {...inputProps}
-          ref={ref}
-        />
-        <label htmlFor={switchId} aria-label={label}>
+        <label aria-label={label}>
+          <input
+            type="checkbox"
+            role="switch"
+            disabled={disabled}
+            checked={value}
+            onChange={(event) => {
+              !disabled && onChange?.(event);
+            }}
+            id={switchId}
+            aria-invalid={!!invalid}
+            {...inputProps}
+            ref={ref}
+          />
           <Icon name="check" size="xs" />
         </label>
       </div>
@@ -61,13 +77,29 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
+  (
+    {
+      transparent,
+      className,
+      showLabel,
+      label,
+      value,
+      disabled: disabledProp,
+      id: idProp,
+      invalid: invalidProp,
+      ...props
+    },
+    ref
+  ) => {
     const styles = useStyles2(getSwitchStyles, transparent);
+    const defaultId = useId();
+    const fieldContext = useFieldContext();
+    const invalid = invalidProp ?? fieldContext.invalid;
+    const disabled = disabledProp ?? fieldContext.disabled;
+    const id = idProp ?? fieldContext.id ?? defaultId;
 
     return (
-      <div
-        className={cx(styles.inlineContainer, className, props.disabled && styles.disabled, invalid && styles.invalid)}
-      >
+      <div className={cx(styles.inlineContainer, className, disabled && styles.disabled, invalid && styles.invalid)}>
         {showLabel && (
           <label
             htmlFor={id}
@@ -97,43 +129,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       opacity: 0,
       zIndex: -1000,
       position: 'absolute',
-
-      '&:checked + label': {
-        background: theme.colors.primary.main,
-        borderColor: theme.colors.primary.main,
-
-        '&:hover': {
-          background: theme.colors.primary.shade,
-        },
-
-        svg: {
-          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.primary.contrastText,
-          color: theme.colors.primary.main,
-        },
-      },
-
-      '&:disabled + label': {
-        background: theme.colors.action.disabledBackground,
-        borderColor: theme.colors.border.weak,
-        cursor: 'not-allowed',
-
-        svg: {
-          background: theme.colors.text.disabled,
-        },
-      },
-
-      '&:disabled:checked + label': {
-        background: theme.colors.primary.transparent,
-
-        svg: {
-          color: theme.colors.primary.contrastText,
-        },
-      },
-
-      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
-
-      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
     },
 
     label: {
@@ -171,6 +166,43 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
           border: `1px solid ${theme.colors.primary.contrastText}`,
         },
       },
+
+      ':has(:checked)': {
+        background: theme.colors.primary.main,
+        borderColor: theme.colors.primary.main,
+
+        '&:hover': {
+          background: theme.colors.primary.shade,
+        },
+
+        svg: {
+          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
+          background: theme.colors.primary.contrastText,
+          color: theme.colors.primary.main,
+        },
+      },
+
+      ':has(:disabled)': {
+        background: theme.colors.action.disabledBackground,
+        borderColor: theme.colors.border.weak,
+        cursor: 'not-allowed',
+
+        svg: {
+          background: theme.colors.text.disabled,
+        },
+      },
+
+      ':has(:disabled:checked)': {
+        background: theme.colors.primary.transparent,
+
+        svg: {
+          color: theme.colors.primary.contrastText,
+        },
+      },
+
+      ':has(:focus), :has(:focus-visible)': getFocusStyles(theme),
+
+      'has(:focus):not(:focus-visible)': getMouseFocusStyles(theme),
     },
   }),
   inlineContainer: css({
@@ -205,7 +237,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     color: theme.colors.text.primary,
   }),
   invalid: css({
-    'input + label, input:checked + label, input:hover + label': {
+    'label:has(input), label:has(input:checked), label:has(input:hover)': {
       border: `1px solid ${theme.colors.error.border}`,
     },
   }),
