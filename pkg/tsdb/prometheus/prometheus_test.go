@@ -29,7 +29,7 @@ func TestExtendClientOpts(t *testing.T) {
 			}`),
 			DecryptedSecureJSONData: map[string]string{},
 		}
-		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+		ctx := config.WithGrafanaConfig(context.Background(), cfg)
 		opts := &sdkhttpclient.Options{}
 		err := extendClientOpts(ctx, settings, opts, log.NewNullLogger())
 		require.NoError(t, err)

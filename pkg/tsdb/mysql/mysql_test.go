@@ -84,7 +84,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		backend.UserFacingDefaultError:           "",
 	})
 
-	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+	ctx := config.WithGrafanaConfig(context.Background(), cfg)
 
 	exe := &Service{
 		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),

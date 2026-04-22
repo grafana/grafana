@@ -268,5 +268,5 @@ func (f fakeSmithyError) ErrorFault() smithy.ErrorFault {
 func contextWithFeaturesEnabled(enabled ...string) context.Context {
 	featureString := strings.Join(enabled, ",")
 	cfg := config.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
-	return backend.WithGrafanaConfig(context.Background(), cfg)
+	return config.WithGrafanaConfig(context.Background(), cfg)
 }

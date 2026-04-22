@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -53,7 +52,7 @@ func TestNewInstanceSettings(t *testing.T) {
 					"secretKey": "secret",
 				},
 			},
-			settingCtx: backend.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+			settingCtx: config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 				awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 				awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 				awsds.SessionDurationEnvVarKeyName:       "10m",

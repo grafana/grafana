@@ -52,7 +52,7 @@ func TestSubscribeStream(t *testing.T) {
 		cfg := config.NewGrafanaCfg(map[string]string{
 			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
 		})
-		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+		ctx := config.WithGrafanaConfig(context.Background(), cfg)
 
 		resp, err := service.SubscribeStream(ctx, req)
 

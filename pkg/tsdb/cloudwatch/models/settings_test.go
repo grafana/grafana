@@ -17,7 +17,7 @@ import (
 )
 
 func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
-	settingCtx := backend.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+	settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 		awsds.AllowedAuthProvidersEnvVarKeyName: "default,keys,credentials",
 		awsds.AssumeRoleEnabledEnvVarKeyName:    "false",
 		awsds.SessionDurationEnvVarKeyName:      "10m",
@@ -230,7 +230,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 	})
 
 	t.Run("Should load settings from context", func(t *testing.T) {
-		settingCtx := backend.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+		settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 			awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 			awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 			awsds.SessionDurationEnvVarKeyName:       "10m",
