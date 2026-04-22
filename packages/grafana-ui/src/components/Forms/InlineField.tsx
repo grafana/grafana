@@ -8,7 +8,7 @@ import { getChildId } from '../../utils/reactUtils';
 import { type PopoverContent } from '../Tooltip/types';
 
 import { type FieldProps } from './Field';
-import { FieldContext, type FieldContextType } from './FieldContext';
+import { FieldContext } from './FieldContext';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { InlineLabel } from './InlineLabel';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
@@ -79,18 +79,16 @@ export const InlineField = ({
       label
     );
 
-  const fieldContextValue: FieldContextType = {
-    id: inputId,
-    invalid,
-    disabled,
-    loading,
-    'aria-labelledby': useFieldset ? labelId : undefined,
-  };
-
   const Wrapper = useFieldset ? 'fieldset' : 'div';
 
   return (
-    <FieldContext.Provider value={fieldContextValue}>
+    <FieldContext.Provider value={{
+      id: inputId,
+      invalid,
+      disabled,
+      loading,
+      'aria-labelledby': useFieldset ? labelId : undefined,
+    }}>
       <Wrapper className={cx(styles.container, className)} {...htmlProps}>
         {labelElement}
         <div className={styles.childContainer}>
