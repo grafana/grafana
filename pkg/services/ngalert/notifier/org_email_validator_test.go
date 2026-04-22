@@ -74,25 +74,25 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			orgSvc:  inOrg,
 		},
 		{
-			name:    "email not found returns not-member error",
+			name:    "email not found returns generic not-allowed error",
 			config:  emailConfig("outsider@org.com"),
 			userSvc: notFound,
 			orgSvc:  inOrg,
-			wantErr: "not allowed because it is not part of the organization",
+			wantErr: "is not an allowed recipient for this organization",
 		},
 		{
 			name:    "email belongs to user who is only a member of a different org is rejected",
 			config:  emailConfig("alice@org.com"),
 			userSvc: foundMember,
 			orgSvc:  onlyInAnotherOrg,
-			wantErr: "not allowed because it is not part of the organization",
+			wantErr: "is not an allowed recipient for this organization",
 		},
 		{
-			name:    "email belongs to disabled user is rejected",
+			name:    "email belongs to disabled user who is a member of this org is rejected",
 			config:  emailConfig("alice@org.com"),
 			userSvc: disabled,
 			orgSvc:  inOrg,
-			wantErr: "is not allowed because the user is disabled",
+			wantErr: "is not an allowed recipient for this organization",
 		},
 		{
 			name:    "template in address returns error",
@@ -109,11 +109,11 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			wantErr: "failed to parse email address",
 		},
 		{
-			name:    "user lookup error is returned",
+			name:    "user lookup infrastructure error is returned",
 			config:  emailConfig("alice@org.com"),
 			userSvc: lookupFails,
 			orgSvc:  inOrg,
-			wantErr: "failed to check if email address",
+			wantErr: "failed to validate email address",
 		},
 		{
 			name:    "multiple valid addresses all pass",
@@ -192,7 +192,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 		}
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
 		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com;outsider@evil.com"))
-		require.ErrorContains(t, err, "not allowed because it is not part of the organization")
+		require.ErrorContains(t, err, "is not an allowed recipient for this organization")
 	})
 }
 
@@ -220,7 +220,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
 		)()
-		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration), "not allowed because it is not part of the organization")
+		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration), "is not an allowed recipient for this organization")
 	})
 }
 

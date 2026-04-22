@@ -84,23 +84,23 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, o
 			continue
 		}
 
+		// All reject paths (unknown email, not a member of this org, disabled)
+		// surface the same generic message so callers can't distinguish them and
+		// probe for users/state across other orgs of the instance.
 		usr, err := v.userSvc.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: lowerAddr})
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
+				return fmt.Errorf("email address %q is not an allowed recipient for this organization", addr.Address)
 			}
-			return fmt.Errorf("failed to check if email address %q exists: %w", addr.Address, err)
+			return fmt.Errorf("failed to validate email address %q: %w", addr.Address, err)
 		}
 		if usr == nil {
-			return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
-		}
-		if usr.IsDisabled {
-			return fmt.Errorf("email address %q is not allowed because the user is disabled", addr.Address)
+			return fmt.Errorf("email address %q is not an allowed recipient for this organization", addr.Address)
 		}
 
 		orgs, err := v.orgSvc.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: usr.ID})
 		if err != nil {
-			return fmt.Errorf("failed to check organization membership for email address %q: %w", addr.Address, err)
+			return fmt.Errorf("failed to validate email address %q: %w", addr.Address, err)
 		}
 		isMember := false
 		for _, o := range orgs {
@@ -109,8 +109,8 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, o
 				break
 			}
 		}
-		if !isMember {
-			return fmt.Errorf("email address %q is not allowed because it is not part of the organization", addr.Address)
+		if !isMember || usr.IsDisabled {
+			return fmt.Errorf("email address %q is not an allowed recipient for this organization", addr.Address)
 		}
 		checked[lowerAddr] = struct{}{}
 	}
