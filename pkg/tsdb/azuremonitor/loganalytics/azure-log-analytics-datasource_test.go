@@ -803,7 +803,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("does not error if feature toggle enabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -823,7 +823,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("errors if feature toggle disabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",

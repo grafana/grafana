@@ -77,7 +77,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Contains(t, err.Error(), "current user authentication is not enabled for azure monitor")
 			},
 			setupContext: func(ctx context.Context) context.Context {
-				featureToggles := backend.NewGrafanaCfg(map[string]string{
+				featureToggles := config.NewGrafanaCfg(map[string]string{
 					featuretoggles.EnabledFeatures: "", // No enabled features
 				})
 				return config.WithGrafanaConfig(ctx, featureToggles)

@@ -23,7 +23,7 @@ func TestGetTeamHeaders_NoMetadata_ReturnsNil(t *testing.T) {
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 
@@ -48,7 +48,7 @@ func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 	ctx = metadata.AppendToOutgoingContext(ctx,
@@ -67,7 +67,7 @@ func TestGetTeamHeaders_FallsBackToIncomingMetadata(t *testing.T) {
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
@@ -123,7 +123,7 @@ func TestGetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 		},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 	ctx = metadata.AppendToOutgoingContext(ctx,
@@ -155,7 +155,7 @@ func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 		},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	ctx = config.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(

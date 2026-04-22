@@ -4,16 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
 func TestExtendClientOpts(t *testing.T) {
 	t.Run("add azure credentials if configured", func(t *testing.T) {
-		cfg := backend.NewGrafanaCfg(map[string]string{
+		cfg := config.NewGrafanaCfg(map[string]string{
 			azsettings.AzureCloud:       azsettings.AzurePublic,
 			azsettings.AzureAuthEnabled: "true",
 		})
