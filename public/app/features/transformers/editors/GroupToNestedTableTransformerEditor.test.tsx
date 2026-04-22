@@ -166,9 +166,7 @@ describe('GroupToNestedTableTransformerEditor', () => {
 
     const updatedOptions = onChange.mock.calls[0][0] as GroupToNestedTableTransformerOptionsV2;
 
-    rerender(
-      <GroupToNestedTableTransformerEditor input={input} options={updatedOptions} onChange={onChange} />
-    );
+    rerender(<GroupToNestedTableTransformerEditor input={input} options={updatedOptions} onChange={onChange} />);
 
     const remaining = screen.getAllByPlaceholderText('Enter regular expression');
     expect(remaining).toHaveLength(1);
