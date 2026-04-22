@@ -86,6 +86,7 @@ describe('migrateToIndexedDB', () => {
     store.delete(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly);
     store.delete(RICH_HISTORY_SETTING_KEYS.legacyActiveDatasourceOnly);
     store.delete(RICH_HISTORY_SETTING_KEYS.datasourceFilters);
+    store.delete('grafana.debug.resetQueryHistoryMigration');
 
     // Fresh IndexedDB storage and clear all stores
     indexedDBStorage = new RichHistoryIndexedDBStorage();
@@ -228,6 +229,49 @@ describe('migrateToIndexedDB', () => {
 
     // Should still only have the original entries, not duplicated
     expect(result.total).toBe(1);
+  });
+
+  describe('reset escape hatch', () => {
+    const RESET_KEY = 'grafana.debug.resetQueryHistoryMigration';
+
+    it('should re-run migration when reset key is present and clear the key', async () => {
+      store.setObject(RICH_HISTORY_KEY, [validEntry1]);
+
+      // First run completes migration
+      await migrateToIndexedDB(indexedDBStorage);
+      expect(await indexedDBStorage.getMetadata('migrationComplete')).toBe(true);
+      (reportInteraction as jest.Mock).mockReset();
+
+      // Trigger reset, then run again
+      store.set(RESET_KEY, '1');
+      await migrateToIndexedDB(indexedDBStorage);
+
+      // Reset telemetry emitted
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_query_history_migration_reset', {});
+
+      // Reset key consumed
+      expect(store.exists(RESET_KEY)).toBe(false);
+
+      // Markers reset and migration re-ran
+      expect(await indexedDBStorage.getMetadata('migrationComplete')).toBe(true);
+      expect(await indexedDBStorage.getMetadata('migrationAttempts')).toBe(1);
+      expect(await indexedDBStorage.getMetadata('localStorageCleanupDone')).toBe(false);
+
+      // Dedup prevents duplicates after re-run
+      const result = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result.total).toBe(1);
+    });
+
+    it('should be a no-op when reset key is absent', async () => {
+      store.setObject(RICH_HISTORY_KEY, [validEntry1]);
+      await migrateToIndexedDB(indexedDBStorage);
+      (reportInteraction as jest.Mock).mockReset();
+
+      // No reset key set → second run is the existing idempotent no-op
+      await migrateToIndexedDB(indexedDBStorage);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('grafana_query_history_migration_reset', expect.anything());
+    });
   });
 
   it('should emit failure telemetry and NOT set migrationComplete on error', async () => {
