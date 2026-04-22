@@ -1583,11 +1583,13 @@ describe('vizPanelToSchemaV2 time range fields', () => {
     return (result.spec as PanelSpec).data.spec.queryOptions;
   }
 
-  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>) {
-    expect(queryOptions.timeFrom).toBeUndefined();
-    expect(queryOptions.timeShift).toBeUndefined();
-    expect(queryOptions.hideTimeOverride).toBeUndefined();
-    expect(queryOptions.timeCompare).toBeUndefined();
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>, except?: string) {
+    const fields = ['timeFrom', 'timeShift', 'hideTimeOverride', 'timeCompare'] as const;
+    for (const f of fields) {
+      if (f !== except) {
+        expect(queryOptions[f]).toBeUndefined();
+      }
+    }
   }
 
   it('should omit time range fields when the panel has no $timeRange', () => {
@@ -1625,6 +1627,7 @@ describe('vizPanelToSchemaV2 time range fields', () => {
     const queryOptions = getQueryOptions(new PanelTimeRange(state));
 
     expect(queryOptions[field]).toBe(value);
+    expectNoTimeRangeFields(queryOptions, field);
   });
 });
 
