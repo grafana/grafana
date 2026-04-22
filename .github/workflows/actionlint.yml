@@ -6,11 +6,17 @@ on:
     branches:
       - main
       - release-*
+    paths:
+      - .github/workflows/**
+      - .github/actions/**
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
+    paths:
+      - .github/workflows/**
+      - .github/actions/**
 
 permissions: {}
 
