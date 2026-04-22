@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -331,8 +332,9 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	return tuples
 }
 
-// setupBenchmarkServer creates a server with the benchmark data loaded
-func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
+// setupBenchmarkServer creates a server with the benchmark data loaded.
+// features, if non-nil, is passed to [NewEmbeddedZanzanaServer] (e.g. for contextual-teams benches).
+func setupBenchmarkServer(b *testing.B, features featuremgmt.FeatureToggles) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
 		b.Skip("skipping benchmark in short mode")
@@ -353,7 +355,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, features)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -453,7 +455,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -488,7 +490,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 
 // BenchmarkCheck measures the performance of Check requests
 func BenchmarkCheck(b *testing.B) {
-	srv, data := setupBenchmarkServer(b)
+	srv, data := setupBenchmarkServer(b, nil)
 	ctx := newContextWithNamespace()
 
 	// Helper to create check requests
@@ -695,7 +697,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextuals(deniedUser)
+	base, team, err := srv.getContextualParts(ctx, deniedUser)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
@@ -719,13 +721,14 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 			b.Run("RelationResourceGet", func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					res, err := srv.openfgaCheck(
+					res, err := srv.openfgaCheckWithContextualTeamChunks(
 						ctx,
 						store,
 						deniedUser,
 						common.RelationSubresourceGet,
 						folderIdent,
-						contextuals,
+						base,
+						team,
 						resourceCtx,
 					)
 					if err != nil {
@@ -740,13 +743,14 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 			b.Run("RelationCanResourceGet", func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					res, err := srv.openfgaCheck(
+					res, err := srv.openfgaCheckWithContextualTeamChunks(
 						ctx,
 						store,
 						deniedUser,
 						common.RelationCanSubresourceGet,
 						folderIdent,
-						contextuals,
+						base,
+						team,
 						resourceCtx,
 					)
 					if err != nil {
@@ -763,7 +767,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 
 // BenchmarkList measures the performance of List requests (Compile equivalent)
 func BenchmarkList(b *testing.B) {
-	srv, data := setupBenchmarkServer(b)
+	srv, data := setupBenchmarkServer(b, nil)
 	baseCtx := newContextWithNamespace()
 
 	// Helper to create list requests
@@ -946,7 +950,7 @@ func BenchmarkList(b *testing.B) {
 
 // BenchmarkBatchCheck measures the performance of BatchCheck requests
 func BenchmarkBatchCheck(b *testing.B) {
-	srv, data := setupBenchmarkServer(b)
+	srv, data := setupBenchmarkServer(b, nil)
 	ctx := newContextWithNamespace()
 
 	// Helper to create batch check requests

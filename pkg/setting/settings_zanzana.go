@@ -99,6 +99,10 @@ type ZanzanaGRPCStoreSettings struct {
 	TLSKeyPath  string
 }
 
+// DefaultContextualTeamsChunkSize is the default for [ZanzanaServerSettings.ContextualTeamsChunkSize] when
+// the INI value is unset. The zanzana server also treats 0 as this value at runtime.
+const DefaultContextualTeamsChunkSize = 200
+
 type ZanzanaServerSettings struct {
 	StoreType ZanzanaStoreType
 	// OpenFGA http server address which allows to connect with fga cli.
@@ -121,6 +125,11 @@ type ZanzanaServerSettings struct {
 	// Max unique folder checks per batch-check phase before switching from OpenFGA BatchCheck
 	// to ListObjects. Reduces graph exploration when many distinct folders are checked. Default 20.
 	FolderCheckBatchThreshold int
+	// ContextualTeamsChunkSize is the number of team membership contextual tuples to send
+	// per OpenFGA Check/ListObjects/BatchCheck when contextual teams (from auth token / context) are used.
+	// 0 means use the default (DefaultContextualTeamsChunkSize). Splitting large IdP team lists into chunks avoids the OpenFGA
+	// contextual-tuple per-request cap and allows benchmarking latency vs. fan-out.
+	ContextualTeamsChunkSize int
 }
 
 type OpenFgaServerSettings struct {
@@ -321,6 +330,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
 	zs.FolderCheckBatchThreshold = serverSec.Key("folder_check_batch_threshold").MustInt(20)
+	zs.ContextualTeamsChunkSize = serverSec.Key("contextual_teams_chunk_size").MustInt(DefaultContextualTeamsChunkSize)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))

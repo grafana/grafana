@@ -92,7 +92,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	base, teamTuples, err := s.getContextualParts(ctx, r.GetSubject())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -113,25 +113,25 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 
 	// Phase 1: Check GroupResource access (broadest permissions)
 	// Example: user has "get" on "dashboards" group_resource → all dashboards allowed
-	if err := s.runPhase(ctx, "group_resource", namespace, store, subject, items, contextuals, s.runGroupResourcePhase); err != nil {
+	if err := s.runPhase(ctx, "group_resource", namespace, store, subject, items, base, teamTuples, s.runGroupResourcePhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 2: Check folder permission inheritance (can_get, can_create, etc. on parent folder)
 	// Example: user has "can_get" on folder-A → all dashboards in folder-A allowed
-	if err := s.runPhase(ctx, "folder_permission", namespace, store, subject, items, contextuals, s.runFolderPermissionPhase); err != nil {
+	if err := s.runPhase(ctx, "folder_permission", namespace, store, subject, items, base, teamTuples, s.runFolderPermissionPhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 3: Check folder subresource access (folder_get, folder_create, etc.)
 	// Example: user has "folder_get" on folder-A → dashboards in folder-A allowed via subresource
-	if err := s.runPhase(ctx, "folder_subresource", namespace, store, subject, items, contextuals, s.runFolderSubresourcePhase); err != nil {
+	if err := s.runPhase(ctx, "folder_subresource", namespace, store, subject, items, base, teamTuples, s.runFolderSubresourcePhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 4: Check direct resource access
 	// Example: user has "get" directly on dashboard-123
-	if err := s.runPhase(ctx, "direct_resource", namespace, store, subject, items, contextuals, s.runDirectResourcePhase); err != nil {
+	if err := s.runPhase(ctx, "direct_resource", namespace, store, subject, items, base, teamTuples, s.runDirectResourcePhase); err != nil {
 		return nil, err
 	}
 
@@ -149,15 +149,15 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 }
 
 // phaseFunc is a function type for batch check phases
-type phaseFunc func(ctx context.Context, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, contextuals *openfgav1.ContextualTupleKeys) (itemsChecked int, err error)
+type phaseFunc func(ctx context.Context, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey) (itemsChecked int, err error)
 
 // runPhase executes a batch check phase with tracing and metrics
-func (s *Server) runPhase(ctx context.Context, phaseName string, namespace string, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, contextuals *openfgav1.ContextualTupleKeys, phase phaseFunc) error {
+func (s *Server) runPhase(ctx context.Context, phaseName string, namespace string, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, phase phaseFunc) error {
 	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("server.BatchCheck.%s", phaseName))
 	defer span.End()
 
 	start := time.Now()
-	itemsChecked, err := phase(ctx, store, subject, items, contextuals)
+	itemsChecked, err := phase(ctx, store, subject, items, base, teamTuples)
 	duration := time.Since(start)
 
 	span.SetAttributes(
@@ -195,7 +195,8 @@ func (s *Server) runGroupResourcePhase(
 	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
 	checkIDToCorrelation := make(map[string]string, len(items))
@@ -218,8 +219,7 @@ func (s *Server) runGroupResourcePhase(
 				Relation: item.relation,
 				Object:   item.resource.GroupResourceIdent(),
 			},
-			ContextualTuples: contextuals,
-			CorrelationId:    checkID,
+			CorrelationId: checkID,
 		})
 	}
 
@@ -227,7 +227,7 @@ func (s *Server) runGroupResourcePhase(
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheck(ctx, store, checks)
+	results, err := s.doBatchCheckWithContextualTeamChunks(ctx, store, checks, base, teamTuples)
 	if err != nil {
 		return len(checks), err
 	}
@@ -336,15 +336,16 @@ func (s *Server) resolveFolderChecks(
 	subject string,
 	items map[string]*batchCheckItem,
 	entries []folderCheckEntry,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	if len(entries) == 0 {
 		return 0, nil
 	}
 	if uniqueFolderCheckCount(entries) > s.getFolderCheckBatchThreshold() {
-		return s.resolveFolderChecksByList(ctx, store, subject, items, entries, contextuals)
+		return s.resolveFolderChecksByList(ctx, store, subject, items, entries, base, teamTuples)
 	}
-	return s.resolveFolderChecksByBatch(ctx, store, subject, items, entries, contextuals)
+	return s.resolveFolderChecksByBatch(ctx, store, subject, items, entries, base, teamTuples)
 }
 
 func (s *Server) getFolderCheckBatchThreshold() int {
@@ -360,7 +361,8 @@ func (s *Server) resolveFolderChecksByList(
 	subject string,
 	items map[string]*batchCheckItem,
 	entries []folderCheckEntry,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	type listGroupKey struct {
 		relation      string
@@ -384,8 +386,7 @@ func (s *Server) resolveFolderChecksByList(
 			Relation:             key.relation,
 			User:                 subject,
 			Context:              sample.resource.Context(),
-			ContextualTuples:     contextuals,
-		}); err != nil {
+		}, base, teamTuples); err != nil {
 			return unique, err
 		}
 		for _, e := range groupEntries {
@@ -489,7 +490,8 @@ func (s *Server) resolveFolderChecksByBatch(
 	subject string,
 	items map[string]*batchCheckItem,
 	entries []folderCheckEntry,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	batcher := newDedupBatcher()
 	for _, e := range entries {
@@ -500,8 +502,7 @@ func (s *Server) resolveFolderChecksByBatch(
 				Relation: e.relation,
 				Object:   e.folderIdent,
 			},
-			ContextualTuples: contextuals,
-			Context:          e.resource.Context(),
+			Context: e.resource.Context(),
 		})
 	}
 
@@ -510,7 +511,7 @@ func (s *Server) resolveFolderChecksByBatch(
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheck(ctx, store, checks)
+	results, err := s.doBatchCheckWithContextualTeamChunks(ctx, store, checks, base, teamTuples)
 	if err != nil {
 		return len(checks), err
 	}
@@ -526,10 +527,11 @@ func (s *Server) runFolderPermissionPhase(
 	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	entries := collectFolderPermissionChecks(items)
-	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, base, teamTuples)
 }
 
 // runFolderSubresourcePhase checks folder subresource access (e.g. folder_get, folder_set_edit).
@@ -540,10 +542,11 @@ func (s *Server) runFolderSubresourcePhase(
 	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	entries := collectFolderSubresourceChecks(items)
-	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, base, teamTuples)
 }
 
 func expandedSubresourcePermissionRelations(relation string) []string {
@@ -597,7 +600,8 @@ func (s *Server) runDirectResourcePhase(
 	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) (int, error) {
 	// Collect unresolved items, grouped by type.
 	var genericItems, typedItems []*batchCheckItem
@@ -617,10 +621,10 @@ func (s *Server) runDirectResourcePhase(
 		return 0, nil
 	}
 
-	if err := s.resolveGenericItems(ctx, store, subject, genericItems, contextuals); err != nil {
+	if err := s.resolveGenericItems(ctx, store, subject, genericItems, base, teamTuples); err != nil {
 		return itemsChecked, err
 	}
-	if err := s.resolveTypedItems(ctx, store, subject, typedItems, contextuals); err != nil {
+	if err := s.resolveTypedItems(ctx, store, subject, typedItems, base, teamTuples); err != nil {
 		return itemsChecked, err
 	}
 
@@ -642,7 +646,8 @@ func (s *Server) resolveGenericItems(
 	store *zanzana.StoreInfo,
 	subject string,
 	items []*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) error {
 	type listKey struct {
 		relation      string
@@ -666,8 +671,7 @@ func (s *Server) resolveGenericItems(
 				Relation:             key.relation,
 				User:                 subject,
 				Context:              sample.resource.Context(),
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, base, teamTuples); err != nil {
 				return err
 			}
 		}
@@ -685,7 +689,8 @@ func (s *Server) resolveTypedItems(
 	store *zanzana.StoreInfo,
 	subject string,
 	items []*batchCheckItem,
-	contextuals *openfgav1.ContextualTupleKeys,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
 ) error {
 	type listKey struct {
 		relation string
@@ -710,8 +715,7 @@ func (s *Server) resolveTypedItems(
 				Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 				User:                 subject,
 				Context:              sample.resource.Context(),
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, base, teamTuples); err != nil {
 				return err
 			}
 		}
@@ -727,8 +731,7 @@ func (s *Server) resolveTypedItems(
 				Type:                 key.typ,
 				Relation:             listRelation,
 				User:                 subject,
-				ContextualTuples:     contextuals,
-			}); err != nil {
+			}, base, teamTuples); err != nil {
 				return err
 			}
 		}
@@ -740,8 +743,14 @@ func (s *Server) resolveTypedItems(
 }
 
 // collectAllowedObjects calls ListObjects and adds the results to the allowed set.
-func (s *Server) collectAllowedObjects(ctx context.Context, allowed map[string]bool, req *openfgav1.ListObjectsRequest) error {
-	res, err := s.listObjects(ctx, req)
+func (s *Server) collectAllowedObjects(
+	ctx context.Context,
+	allowed map[string]bool,
+	req *openfgav1.ListObjectsRequest,
+	base *openfgav1.ContextualTupleKeys,
+	teamTuples []*openfgav1.TupleKey,
+) error {
+	res, err := s.listObjectsWithContextualTeamChunks(ctx, req, base, teamTuples)
 	if err != nil {
 		return err
 	}

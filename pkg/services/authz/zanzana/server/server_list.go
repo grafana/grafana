@@ -50,7 +50,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	base, teamTuples, err := s.getContextualParts(ctx, r.GetSubject())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -58,7 +58,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	relation := common.VerbMapping[r.GetVerb()]
 	resource := common.NewResourceInfoFromList(r)
 
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check group resource: %w", err)
 	}
@@ -68,13 +68,13 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	if resource.IsGeneric() {
-		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 	}
 
-	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	return s.listTyped(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listTyped")
 	defer span.End()
 
@@ -96,15 +96,14 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	var items []string
 	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
 		// List requested subresources
-		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
 			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -114,14 +113,13 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}
 
 	// List all resources user has access too
-	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+	res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 resource.Type(),
 		Relation:             listRelation,
 		User:                 subject,
-		ContextualTuples:     contextuals,
-	})
+	}, base, teamTuples)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +130,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listGeneric")
 	defer span.End()
 
@@ -145,15 +143,14 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	// 1. List all folders subject has access to resource type in
 	var folders []string
 	if common.IsSubresourceRelation(folderRelation) {
-		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
 			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -164,15 +161,14 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 
 	// Special case for folder permission based resources (like dashboards in a folder)
 	if isFolderPermissionBasedResource(resource.GroupResource()) {
-		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
 			Relation:             folderListRelation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -184,15 +180,14 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	// 2. List all resource directly assigned to subject
 	var objects []string
 	if resource.IsValidRelation(relation) {
-		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeResource,
 			Relation:             relation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 		if err != nil {
 			return nil, err
 		}
