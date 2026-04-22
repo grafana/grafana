@@ -9,7 +9,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var alertQueryLogger = log.New("ngalert.models.alert_query")
 
 const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval
 const defaultIntervalMS float64 = 1000
@@ -335,7 +338,38 @@ func (aq *AlertQuery) PreSave() error {
 	if ok := isExpression || aq.RelativeTimeRange.isValid(); !ok {
 		return ErrInvalidRelativeTimeRange(aq.RefID, aq.RelativeTimeRange)
 	}
+
+	if isExpression {
+		aq.logInvalidExpressionModel()
+	}
 	return nil
+}
+
+// logInvalidExpressionModel performs a parse-only validation of the expression
+// model and emits a warning log + counter increment when it fails. It never
+// returns an error: the goal is observability, not rejection. Strict Ruler API
+// validation continues to run before PreSave via buildPipeline; this covers
+// provisioning, file, and legacy-migration write paths where that earlier
+// check does not run.
+func (aq *AlertQuery) logInvalidExpressionModel() {
+	commandType, err := expr.ValidateExpressionModel(aq.RefID, aq.Model)
+	if err == nil {
+		return
+	}
+
+	reason := "unmarshal"
+	if errors.Is(err, expr.ErrUnknownExpressionType) {
+		reason = "unknown_type"
+	}
+
+	invalidExpressionModelSaves.WithLabelValues(commandType.String(), reason).Inc()
+	alertQueryLogger.Warn(
+		"alert rule saved with invalid expression model",
+		"refId", aq.RefID,
+		"expressionType", commandType.String(),
+		"reason", reason,
+		"error", err,
+	)
 }
 
 // InitDefaults ensures all default parameters are set in the query model.

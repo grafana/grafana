@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -371,6 +372,66 @@ func TestAlertQuery_PreSave(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAlertQuery_PreSave_logsInvalidExpressionModel(t *testing.T) {
+	const (
+		malformedClassic = `{
+			"refId": "B",
+			"datasourceUid": "__expr__",
+			"model": {
+				"refId": "B",
+				"type": "classic_conditions",
+				"conditions": [
+					{
+						"type": "query",
+						"evaluator": {"params": [0], "type": "gt"},
+						"query": {}
+					}
+				]
+			}
+		}`
+		validClassic = `{
+			"refId": "B",
+			"datasourceUid": "__expr__",
+			"model": {
+				"refId": "B",
+				"type": "classic_conditions",
+				"conditions": [
+					{
+						"type": "query",
+						"evaluator": {"params": [0], "type": "gt"},
+						"query": {"params": ["A"]},
+						"reducer": {"type": "last", "params": []}
+					}
+				]
+			}
+		}`
+	)
+
+	t.Run("does not reject a malformed expression model", func(t *testing.T) {
+		invalidExpressionModelSaves.Reset()
+
+		var aq AlertQuery
+		require.NoError(t, json.Unmarshal([]byte(malformedClassic), &aq))
+
+		require.NoError(t, aq.PreSave())
+		require.Equal(t, 1.0, testutil.ToFloat64(
+			invalidExpressionModelSaves.WithLabelValues("classic_conditions", "unmarshal"),
+		))
+	})
+
+	t.Run("does not increment the counter for a valid expression model", func(t *testing.T) {
+		invalidExpressionModelSaves.Reset()
+
+		var aq AlertQuery
+		require.NoError(t, json.Unmarshal([]byte(validClassic), &aq))
+
+		require.NoError(t, aq.PreSave())
+		require.Equal(t, 0.0, testutil.ToFloat64(
+			invalidExpressionModelSaves.WithLabelValues("classic_conditions", "unmarshal"),
+		))
+	})
 }
 
 func TestAlertQuery_GetQuery(t *testing.T) {
