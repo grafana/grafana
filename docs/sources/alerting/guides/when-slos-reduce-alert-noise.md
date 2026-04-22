@@ -35,7 +35,7 @@ As your alerting setup grows in production, not every alert works as expected. S
 
 When this happens, your instinct may be to tune the query or threshold, or maybe just delete it. Sometimes the alert is telling you that you're measuring reliability wrong, and implementing [service level objectives (SLOs)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/) could be the right answer.
 
-This guide covers the three most common patterns where SLOs can help reduce alert noise, improve reliability coverage, and how to recognize the need for them in your own setup.
+This guide covers the three most common patterns where SLOs can help reduce alert noise and improve reliability coverage, and shows how to recognize the need for SLOs in your alerting setup.
 
 ## How SLOs differ from threshold alerts
 
@@ -73,7 +73,7 @@ This reliability metric could indicate service health over time. It's worth trac
 
 Ask the team: will we commit to an objective on the health of this service and act if performance degrades? If the answer is yes, an SLO is the right fit.
 
-In practice, this question often surfaces whether the metric is actually measurable as an [service level indicator (SLI)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/#service-level-indicators-slis).
+In practice, this question often surfaces whether the metric is actually measurable as a [service level indicator (SLI)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/#service-level-indicators-slis).
 
 {{< figure src="/media/docs/alerting/slo-guide-slo-performance.png" max-width="750px" alt="Service level indicator and error budget performance" >}}
 
