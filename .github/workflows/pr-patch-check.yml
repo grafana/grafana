@@ -87,6 +87,8 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
+            const {HEAD_REF, REPO} = process.env;
+
             const maxWaitMs = 10 * 60 * 1000;
             const pollIntervalMs = 15 * 1000;
             const startTime = Date.now();
@@ -113,8 +115,11 @@ jobs:
                   per_page: 5,
                 });
 
-                if (data.workflow_runs.length > 0) {
-                  runId = data.workflow_runs[0].id;
+                const matchingRun = data.workflow_runs.find(
+                  run => run.name && run.name.includes(REPO) && run.name.includes(HEAD_REF)
+                );
+                if (matchingRun) {
+                  runId = matchingRun.id;
                 } else {
                   await sleep(pollIntervalMs);
                   continue;
