@@ -271,8 +271,8 @@ export const LogLineDetailsHeader = ({
             name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
             tooltip={
               inlineNoScroll === true
-                ? t('logs.log-line-details.inline-with-scrolls', 'Switch to expanded view')
-                : t('logs.log-line-details.inline-no-scrolls', 'Switch to condensed view')
+                ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
+                : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
             }
             onClick={toggleDetailsScroll}
           />
