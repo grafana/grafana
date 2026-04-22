@@ -52,14 +52,9 @@ export const CompareUPlotCanvases = ({
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
   const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
 
-  const updateLocationForFile = React.useCallback((basename: string, mode: 'push' | 'replace') => {
+  const navigate = React.useCallback((basename: string, mode: 'push' | 'replace') => {
     const url = new URL(window.location.href);
     url.searchParams.set('file', basename);
-    url.searchParams.delete('expected');
-    url.searchParams.delete('actual');
-    url.searchParams.delete('testName');
-    url.searchParams.delete('uPlotData');
-    url.searchParams.delete('uPlotSeries');
     if (mode === 'push') {
       window.history.pushState({ file: basename }, '', url);
     } else {
@@ -115,7 +110,7 @@ export const CompareUPlotCanvases = ({
         const raw: unknown = await res.json();
         applyPayload(raw, basename);
         if (historyMode) {
-          updateLocationForFile(basename, historyMode);
+          navigate(basename, historyMode);
         }
       } catch (e) {
         setView({
@@ -125,59 +120,14 @@ export const CompareUPlotCanvases = ({
         });
       }
     },
-    [applyPayload, updateLocationForFile]
+    [applyPayload, navigate]
   );
 
   const loadFromLocation = React.useCallback(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
-      const expectedParam = params.get('expected');
-      const actualParam = params.get('actual');
-
-      if (expectedParam != null && actualParam != null) {
-        setSelectedFile(null);
-        const testName = params.get('testName') ?? '';
-        const dataRaw = params.get('uPlotData');
-        const seriesRaw = params.get('uPlotSeries');
-        let uPlotData: unknown;
-        let uPlotSeries: unknown;
-        try {
-          uPlotData = dataRaw != null && dataRaw !== '' ? JSON.parse(dataRaw) : undefined;
-          uPlotSeries = seriesRaw != null && seriesRaw !== '' ? JSON.parse(seriesRaw) : undefined;
-        } catch {
-          setView({
-            kind: 'blocked',
-            error: 'Invalid uPlotData or uPlotSeries JSON in URL.',
-            hint: 'Use a payload file from the list instead.',
-          });
-          return;
-        }
-        try {
-          const expected: unknown = JSON.parse(expectedParam);
-          const actual: unknown = JSON.parse(actualParam);
-          setView({
-            kind: 'ready',
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            payload: {
-              testName,
-              expected,
-              actual,
-              uPlotData,
-              uPlotSeries,
-              uPlotCanvasEvents: [],
-            } as ResolvedPayload,
-          });
-        } catch {
-          setView({
-            kind: 'blocked',
-            error: 'Invalid expected or actual JSON in URL.',
-            hint: 'Use a payload file from the list instead.',
-          });
-        }
-        return;
-      }
-
       const fileParam = params.get('file');
+
       if (!fileParam) {
         setSelectedFile(null);
         setView({
