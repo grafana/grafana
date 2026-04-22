@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 
 import { Combobox } from '../Combobox/Combobox';
+import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
 import { SecretInput } from '../SecretInput';
+import { MultiSelect, Select } from '../Select/Select';
 import { InlineSwitch, Switch } from '../Switch/Switch';
 
 import { Checkbox } from './Checkbox';
@@ -30,56 +32,208 @@ describe('InlineField', () => {
     expect(screen.getByLabelText('My label')).toBeInTheDocument();
   });
 
-  it('associates the label with an Input when no id is set', () => {
-    render(
-      <InlineField label="My label">
-        <Input />
-      </InlineField>
-    );
+  describe('Input', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Input />
+        </InlineField>
+      );
 
-    expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Input />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { description: 'My error' })).toBeInTheDocument();
+    });
   });
 
-  it('associates the label with a SecretInput when no id is set', () => {
-    render(
-      <InlineField label="My label">
-        <SecretInput isConfigured={false} onReset={() => {}} />
-      </InlineField>
-    );
+  describe('SecretInput', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <SecretInput isConfigured={false} onReset={() => {}} />
+        </InlineField>
+      );
 
-    // can't use getByRole here as type="password" inputs don't have an implicit role
-    // see https://github.com/testing-library/dom-testing-library/issues/567
-    expect(screen.getByLabelText('My label')).toBeInTheDocument();
+      // can't use getByRole here as type="password" inputs don't have an implicit role
+      // see https://github.com/testing-library/dom-testing-library/issues/567
+      expect(screen.getByLabelText('My label')).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <SecretInput isConfigured={false} onReset={() => {}} />
+        </InlineField>
+      );
+
+      // can't use getByRole here as type="password" inputs don't have an implicit role
+      // see https://github.com/testing-library/dom-testing-library/issues/567
+      const secretInput = screen.getByLabelText('My label');
+      expect(secretInput).toBeInTheDocument();
+      expect(secretInput).toHaveAccessibleDescription('My error');
+    });
   });
 
-  it('associates the label with a Checkbox when no id is set', () => {
-    render(
-      <InlineField label="My label">
-        <Checkbox />
-      </InlineField>
-    );
+  describe('Checkbox', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Checkbox />
+        </InlineField>
+      );
 
-    expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Checkbox />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('checkbox', { description: 'My error' })).toBeInTheDocument();
+    });
   });
 
-  it('associates the label with a Switch when no id is set', () => {
-    render(
-      <InlineField label="My label">
-        <Switch />
-      </InlineField>
-    );
+  describe('Switch', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Switch />
+        </InlineField>
+      );
 
-    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Switch />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('switch', { description: 'My error' })).toBeInTheDocument();
+    });
   });
 
-  it('associates the label with an InlineSwitch when no id is set', () => {
-    render(
-      <InlineField label="My label">
-        <InlineSwitch />
-      </InlineField>
-    );
+  describe('InlineSwitch', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <InlineSwitch />
+        </InlineField>
+      );
 
-    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <InlineSwitch />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('switch', { description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Select', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Select onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Select onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('MultiSelect', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <MultiSelect onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <MultiSelect onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Combobox', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Combobox onChange={() => {}} options={[]} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Combobox onChange={() => {}} options={[]} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('MultiCombobox', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <MultiCombobox onChange={() => {}} options={[]} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <MultiCombobox onChange={() => {}} options={[]} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('combobox', { description: 'My error' })).toBeInTheDocument();
+    });
   });
 
   it('renders with the inputId of its children', () => {
