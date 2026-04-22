@@ -263,7 +263,7 @@ export function GrafanaEvaluationBehaviorStep({
           <Stack direction="column" gap={1.5}>
             <Field
               noMargin
-              label={t('alerting.rule-form.evaluation.interval-no-group', 'Evaluation interval')}
+              label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
               className={styles.inlineField}
               error={errors.evaluateEvery?.message}
               invalid={Boolean(errors.evaluateEvery?.message)}
