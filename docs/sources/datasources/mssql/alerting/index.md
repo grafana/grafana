@@ -48,7 +48,7 @@ For more information on writing time series queries, refer to [Microsoft SQL Ser
 ### Query format requirements
 
 | Query format | Alerting support | Notes                                    |
-|--------------|------------------|------------------------------------------|
+| ------------ | ---------------- | ---------------------------------------- |
 | Time series  | Yes              | Required for alerting                    |
 | Table        | No               | Convert to time series format for alerts |
 
@@ -91,7 +91,7 @@ GROUP BY $__timeGroup(created_at, '1m')
 ORDER BY 1
 ```
 
-**Condition:** When error_count is above 100.
+**Condition:** When `error_count` is above 100.
 
 ### Alert on average response time
 
@@ -107,7 +107,7 @@ GROUP BY $__timeGroup(request_time, '5m')
 ORDER BY 1
 ```
 
-**Condition:** When avg_response_time is above 500 (milliseconds).
+**Condition:** When `avg_response_time` is above 500 (milliseconds).
 
 ### Alert on low order volume
 
@@ -123,7 +123,7 @@ GROUP BY $__timeGroup(order_date, '1h')
 ORDER BY 1
 ```
 
-**Condition:** When order_count is below 10.
+**Condition:** When `order_count` is below 10.
 
 ### Alert on high CPU utilization
 
@@ -139,7 +139,7 @@ GROUP BY $__timeGroup(recorded_at, '5m')
 ORDER BY 1
 ```
 
-**Condition:** When avg_cpu is above 85.
+**Condition:** When `avg_cpu` is above 85.
 
 ## Limitations
 

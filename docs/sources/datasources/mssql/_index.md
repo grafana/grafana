@@ -29,18 +29,18 @@ You can connect to Microsoft SQL Server 2012 or newer, Azure SQL Database, and A
 ## Supported features
 
 | Feature     | Supported |
-|-------------|-----------|
+| ----------- | --------- |
 | Metrics     | Yes       |
 | Alerting    | Yes       |
 | Annotations | Yes       |
 
 ## Supported versions
 
-| Version | Supported |
-|---------|-----------|
-| Microsoft SQL Server 2012+ | Yes |
-| Azure SQL Database | Yes |
-| Azure SQL Managed Instance | Yes |
+| Version                    | Supported |
+| -------------------------- | --------- |
+| Microsoft SQL Server 2012+ | Yes       |
+| Azure SQL Database         | Yes       |
+| Azure SQL Managed Instance | Yes       |
 
 Grafana recommends using the latest available service pack for optimal compatibility.
 
@@ -48,14 +48,14 @@ Grafana recommends using the latest available service pack for optimal compatibi
 
 The Microsoft SQL Server data source supports the following authentication methods:
 
-| Method | Best for | Grafana Cloud |
-|--------|----------|---------------|
-| SQL Server Authentication | Any deployment | Yes |
-| Windows Authentication (Integrated Security) | On-premise with Windows SSO | No |
-| Windows AD (Kerberos) | Enterprise Active Directory environments | No |
-| Azure Entra ID (App Registration) | Azure SQL with service principal | Yes |
-| Azure Entra ID (Managed Identity) | Grafana hosted in Azure | No |
-| Azure Entra ID (Current User) | User-level access control with Azure SQL | Yes |
+| Method                                       | Best for                                 | Grafana Cloud |
+| -------------------------------------------- | ---------------------------------------- | ------------- |
+| SQL Server Authentication                    | Any deployment                           | Yes           |
+| Windows Authentication (Integrated Security) | On-premise with Windows SSO              | No            |
+| Windows AD (`Kerberos`)                      | Enterprise Active Directory environments | No            |
+| Azure Entra ID (App Registration)            | Azure SQL with service principal         | Yes           |
+| Azure Entra ID (Managed Identity)            | Grafana hosted in Azure                  | No            |
+| Azure Entra ID (Current User)                | User-level access control with Azure SQL | Yes           |
 
 For configuration details, refer to [Configure the Microsoft SQL Server data source](configure/).
 
