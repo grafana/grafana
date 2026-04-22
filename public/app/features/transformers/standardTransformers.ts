@@ -12,7 +12,7 @@ import { getFilterFramesByRefIdTransformRegistryItem } from './editors/FilterByR
 import { getFormatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
 import { getFormatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { getGroupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
-import { getGroupToNestedTableTransformRegistryItem } from './editors/GroupToNestedTableTransformerEditor/Editor';
+import { getGroupToNestedTableTransformRegistryItem } from './editors/GroupToNestedTableTransformerEditor';
 import { getGroupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { getHistogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
 import { getJoinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
