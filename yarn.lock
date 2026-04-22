@@ -3776,13 +3776,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.4.1--canary.1430.24681505648.0":
-  version: 7.4.1--canary.1430.24681505648.0
-  resolution: "@grafana/scenes-react@npm:7.4.1--canary.1430.24681505648.0"
+"@grafana/scenes-react@npm:7.4.1":
+  version: 7.4.1
+  resolution: "@grafana/scenes-react@npm:7.4.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.4.1--canary.1430.24681505648.0"
+    "@grafana/scenes": "npm:7.4.1"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3796,7 +3796,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/d6e44135bb067069ad4f5a31b6b969541ba6c909458fd4b6125c78f5f300363723b2b7db4074b7058de6f5accb810b0f02b262982bfbb60bfc8989bcd6021f2d
+  checksum: 10/25f170f300eff78bb23b942f982294cfe63ff2a7d03c7eaf5abfa7a200dcfa9475edf9bddb21632c21e89b0022ff739ac410ac55c75cfeca1f468f208408ccc9
   languageName: node
   linkType: hard
 
@@ -3831,9 +3831,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.4.1--canary.1430.24681505648.0":
-  version: 7.4.1--canary.1430.24681505648.0
-  resolution: "@grafana/scenes@npm:7.4.1--canary.1430.24681505648.0"
+"@grafana/scenes@npm:7.4.1":
+  version: 7.4.1
+  resolution: "@grafana/scenes@npm:7.4.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3858,7 +3858,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/270908011dce3a1350a809b258bda0645edbe650fa8041f454a9c493f312dcaa8295d0a57a881f001428d5cf711787245107cb730645845fa9ec9daee2dd2531
+  checksum: 10/decad6ee4ad4f81a96f89d708b9d61ce03b875cc4cfbe65befe3d1319d85461760f1a7d05f11f140e3c4b305b157b908b8f2bcd2de31106c899971aaf5cfcc10
   languageName: node
   linkType: hard
 
@@ -19794,8 +19794,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.4.1--canary.1430.24681505648.0"
-    "@grafana/scenes-react": "npm:7.4.1--canary.1430.24681505648.0"
+    "@grafana/scenes": "npm:7.4.1"
+    "@grafana/scenes-react": "npm:7.4.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
