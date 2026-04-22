@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -52,7 +54,9 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 
 	s.queryMux = s.newQueryMux()
 	muxHandler := httpadapter.New(s.newResourceMux())
-	schemaProvider := newMetricsSchema(s, logger)
+	metricsProvider := newMetricsSchema(s, logger)
+	logsProvider := newLogAnalyticsSchema(s, logger)
+	schemaProvider := newCompositeSchema(metricsProvider, logsProvider)
 	s.resourceHandler = schemas.NewSchemaDatasource(
 		schemaProvider,
 		schemaProvider,
@@ -113,6 +117,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return s.resourceHandler.CallResource(azusercontext.WithUserFromResourceReq(ctx, req), req, sender)
 }
 
+type cacheEntry[T any] struct {
+	data    T
+	fetched time.Time
+}
+
+const azureCacheTTL = 5 * time.Minute
+
 type Service struct {
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
@@ -120,6 +131,38 @@ type Service struct {
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
 	logger          log.Logger
+
+	workspaceCache       sync.Map // azureCacheKey -> *cacheEntry[[]types.LogAnalyticsWorkspaceResponse]
+	metricNamespaceCache sync.Map // azureCacheKey -> *cacheEntry[[]schemas.Table]
+}
+
+func cachedFetch[T any](cache *sync.Map, key string, ttl time.Duration, fetch func() (T, error)) (T, error) {
+	if entry, ok := cache.Load(key); ok {
+		if e := entry.(*cacheEntry[T]); time.Since(e.fetched) < ttl {
+			return e.data, nil
+		}
+	}
+	data, err := fetch()
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	cache.Store(key, &cacheEntry[T]{data: data, fetched: time.Now()})
+	return data, nil
+}
+
+func (s *Service) getWorkspacesForSubscription(ctx context.Context, dsInfo types.DatasourceInfo, sub string) ([]types.LogAnalyticsWorkspaceResponse, error) {
+	key := utils.AzureCacheKey(ctx, dsInfo, sub)
+	return cachedFetch(&s.workspaceCache, key, azureCacheTTL, func() ([]types.LogAnalyticsWorkspaceResponse, error) {
+		return listWorkspacesForSubscription(ctx, dsInfo, sub)
+	})
+}
+
+func (s *Service) getMetricNamespacesForSubscription(ctx context.Context, dsInfo types.DatasourceInfo, sub string) ([]schemas.Table, error) {
+	key := utils.AzureCacheKey(ctx, dsInfo, sub)
+	return cachedFetch(&s.metricNamespaceCache, key, azureCacheTTL, func() ([]schemas.Table, error) {
+		return fetchSubscriptionMetricNamespaces(ctx, dsInfo, sub)
+	})
 }
 
 func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string, logger log.Logger) (types.DatasourceService, error) {
