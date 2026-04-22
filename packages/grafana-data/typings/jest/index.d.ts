@@ -28,7 +28,7 @@ declare global {
         data: uPlot.AlignedData,
         series: uPlot.Series[],
         uPlotEvents: CanvasRenderingContext2DEvent[],
-        size?: { width?: number; height?: number },
+        size: { width: number; height: number },
         snapshotHint?: string
       ): CustomMatcherResult;
     }

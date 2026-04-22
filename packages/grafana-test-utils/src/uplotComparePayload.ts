@@ -42,7 +42,7 @@ export function slugifyJestTestNameForFilename(testName: string): string {
 }
 
 /** Readable slug from the test name */
-export function createUplotComparePayloadBasename(testName: string): string {
+export function createUPlotComparePayloadBasename(testName: string): string {
   const slug = slugifyJestTestNameForFilename(testName);
   return `${UPLOT_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
 }

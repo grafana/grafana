@@ -6,7 +6,7 @@ import path from 'node:path';
 import type uPlot from 'uplot';
 
 import {
-  createUplotComparePayloadBasename,
+  createUPlotComparePayloadBasename,
   UPLOT_COMPARE_PAYLOAD_VERSION,
   type UPlotComparePayload,
 } from '../uplotComparePayload';
@@ -14,8 +14,8 @@ import {
 export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
 
 type UPlotSnapshotSize = {
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
 };
 
 type SnapshotMismatch = jest.CustomMatcherResult & {
@@ -92,6 +92,7 @@ export function toMatchUPlotSnapshot(
 
 /**
  * Snapshot is almost JSON, clean it up so it will parse
+ * Not meant to be used outside of the canvas snapshot use-case
  * @param text
  */
 function parseSnapshotJson(text: string) {
@@ -100,7 +101,7 @@ function parseSnapshotJson(text: string) {
 }
 
 /**
- * Resolve output
+ * Return public and filesystem paths
  * @param testName
  */
 function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: string; publicBasename: string } {
@@ -109,7 +110,7 @@ function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: st
     const fullPath = path.isAbsolute(fromEnv) ? fromEnv : path.resolve(process.cwd(), fromEnv);
     return { fullPath, publicBasename: path.basename(fullPath) };
   }
-  const basename = createUplotComparePayloadBasename(testName);
-  const fullPath = path.join(__dirname, '../../../../scripts/uplot-compare/public', basename);
+  const basename = createUPlotComparePayloadBasename(testName);
+  const fullPath = path.join(require.resolve('uplot-compare/package.json'), '../public', basename);
   return { fullPath, publicBasename: basename };
 }
