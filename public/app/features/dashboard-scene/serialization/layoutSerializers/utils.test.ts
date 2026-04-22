@@ -378,13 +378,14 @@ describe('ensureUniqueRefIds', () => {
 });
 
 describe('buildVizPanel', () => {
+  // Pass title='' to test hoverHeader behavior (no title); omit to use the defaultPanelSpec title.
   function buildPanelWithQueryOptions(queryOptions: Partial<QueryOptionsSpec>, title?: string): PanelKind {
     const base = defaultPanelSpec();
     return {
       kind: 'Panel',
       spec: {
         ...base,
-        ...(title !== undefined && { title }),
+        ...(title !== undefined ? { title } : {}),
         data: {
           kind: 'QueryGroup',
           spec: {
@@ -404,18 +405,14 @@ describe('buildVizPanel', () => {
     return viz.state.$timeRange;
   }
 
-  const singleFieldCases = [
-    { queryOptionsField: 'timeCompare', stateField: 'compareWith', value: '1d' },
-    { queryOptionsField: 'timeFrom', stateField: 'timeFrom', value: '2h' },
-    { queryOptionsField: 'timeShift', stateField: 'timeShift', value: '1h' },
-  ] as const;
+  it.each([
+    ['timeCompare', 'compareWith', '1d'],
+    ['timeFrom', 'timeFrom', '2h'],
+    ['timeShift', 'timeShift', '1h'],
+  ] as const)('maps queryOptions.%s to PanelTimeRange %s', (queryOptionsField, stateField, value) => {
+    const panelTime = getPanelTimeRange(buildPanelWithQueryOptions({ [queryOptionsField]: value }));
 
-  singleFieldCases.forEach(({ queryOptionsField, stateField, value }) => {
-    it(`maps queryOptions.${queryOptionsField} to PanelTimeRange ${stateField}`, () => {
-      const panelTime = getPanelTimeRange(buildPanelWithQueryOptions({ [queryOptionsField]: value }));
-
-      expect(panelTime.state[stateField]).toBe(value);
-    });
+    expect(panelTime.state[stateField]).toBe(value);
   });
 
   it('carries hideTimeOverride when another time field triggers PanelTimeRange creation', () => {
