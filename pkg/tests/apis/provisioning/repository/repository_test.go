@@ -2407,7 +2407,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	results := make(chan result, numRepos)
 
 	// Create repositories concurrently
-	for range numRepos {
+	for i := range numRepos {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

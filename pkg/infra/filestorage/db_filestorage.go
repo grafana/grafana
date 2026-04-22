@@ -369,7 +369,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		pathToHash := make(map[string]string)
 		hashes := make([]string, 0)
-		for i := 0; i < foundLength; i++ {
+		for i := range foundLength {
 			isFolder := strings.HasSuffix(foundFiles[i].Path, Delimiter)
 			if !isFolder {
 				hash, err := createPathHash(foundFiles[i].Path)
@@ -386,7 +386,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 		}
 
 		files := make([]*File, 0)
-		for i := 0; i < foundLength; i++ {
+		for i := range foundLength {
 			var props map[string]string
 			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
 

@@ -115,7 +115,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // @grafana/identity-access-team
-	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.8.0 // @grafana/grafana-backend-group
@@ -480,6 +479,7 @@ require (
 	github.com/hashicorp/consul/api v1.31.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect

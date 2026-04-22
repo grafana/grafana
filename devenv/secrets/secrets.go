@@ -373,7 +373,7 @@ func runSelfTests() {
 		}
 	}
 
-	fmt.Println("Running self-tests...\n")
+	fmt.Println("Running self-tests...")
 
 	// ── Config parsing ──────────────────────────────────────────────────
 	fmt.Println("Config parsing:")
