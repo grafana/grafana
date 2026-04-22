@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -19,6 +20,10 @@ import (
 )
 
 const testValidatorOrgID int64 = 7
+
+func requesterWithOrg(orgID int64) identity.Requester {
+	return &user.SignedInUser{OrgID: orgID}
+}
 
 // emailConfig builds a minimal email V1 IntegrationConfig with the given address string.
 func emailConfig(addresses string) alertingModels.IntegrationConfig {
@@ -126,7 +131,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			v := &OrgUserEmailValidator{userSvc: tc.userSvc, orgSvc: tc.orgSvc}
-			err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, tc.config)
+			err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), tc.config)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 			} else {
@@ -139,7 +144,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 		userSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Email: "alice@org.com"}}
 		orgSvc := memberOf(1, 2, testValidatorOrgID, 9)
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: orgSvc}
-		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com"))
+		err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), emailConfig("alice@org.com"))
 		require.NoError(t, err)
 	})
 
@@ -151,7 +156,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			return &user.User{ID: 1, Email: q.Email}, nil
 		}
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
-		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com;alice@org.com"))
+		err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), emailConfig("alice@org.com;alice@org.com"))
 		require.NoError(t, err)
 		require.Equal(t, 1, userCalls)
 	})
@@ -165,7 +170,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			return nil, user.ErrUserNotFound
 		}
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
-		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("Alice@Org.Com"))
+		err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), emailConfig("Alice@Org.Com"))
 		require.NoError(t, err)
 	})
 
@@ -178,7 +183,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			return nil, user.ErrUserNotFound
 		}
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
-		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("Alice <alice@org.com>"))
+		err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), emailConfig("Alice <alice@org.com>"))
 		require.NoError(t, err)
 	})
 
@@ -191,7 +196,7 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 			return nil, user.ErrUserNotFound
 		}
 		v := &OrgUserEmailValidator{userSvc: userSvc, orgSvc: memberOf(testValidatorOrgID)}
-		err := v.ValidateIntegrationConfig(context.Background(), testValidatorOrgID, emailConfig("alice@org.com;outsider@evil.com"))
+		err := v.ValidateIntegrationConfig(context.Background(), requesterWithOrg(testValidatorOrgID), emailConfig("alice@org.com;outsider@evil.com"))
 		require.ErrorContains(t, err, "is not an allowed recipient for this organization")
 	})
 }
@@ -200,7 +205,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 	t.Run("non-email integration type is skipped", func(t *testing.T) {
 		v := &OrgUserEmailValidator{userSvc: usertest.NewUserServiceFake(), orgSvc: memberOf(testValidatorOrgID)}
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(schema.SlackType))()
-		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration))
+		require.NoError(t, v.ValidateIntegration(context.Background(), requesterWithOrg(testValidatorOrgID), integration))
 	})
 
 	t.Run("email V1 with org member succeeds", func(t *testing.T) {
@@ -210,7 +215,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
 		)()
-		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration))
+		require.NoError(t, v.ValidateIntegration(context.Background(), requesterWithOrg(testValidatorOrgID), integration))
 	})
 
 	t.Run("email V1 with non-org address returns error", func(t *testing.T) {
@@ -220,7 +225,7 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 			models.IntegrationMuts.WithValidConfig(schema.EmailType),
 			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
 		)()
-		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration), "is not an allowed recipient for this organization")
+		require.ErrorContains(t, v.ValidateIntegration(context.Background(), requesterWithOrg(testValidatorOrgID), integration), "is not an allowed recipient for this organization")
 	})
 }
 

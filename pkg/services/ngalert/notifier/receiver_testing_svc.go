@@ -154,7 +154,7 @@ func (t *ReceiverTestingService) testIntegration(ctx context.Context, user ident
 	}
 	orgID := user.GetOrgID()
 	if integration.Config.Type() == schema.EmailType {
-		if err := t.emailValidator.ValidateIntegration(ctx, orgID, integration); err != nil {
+		if err := t.emailValidator.ValidateIntegration(ctx, user, integration); err != nil {
 			return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 		}
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
@@ -52,7 +51,7 @@ func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 		return ContactPoint{}, fmt.Errorf("no name is set")
 	}
 	for _, receiverV1 := range cpV1.Receivers {
-		embeddedCP, err := receiverV1.mapToModel(name, orgID)
+		embeddedCP, err := receiverV1.mapToModel(name)
 		if err != nil {
 			return ContactPoint{}, fmt.Errorf("%s: %w", name, err)
 		}
@@ -73,7 +72,7 @@ type ReceiverV1 struct {
 	DisableResolveMessage values.BoolValue   `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
-func (config *ReceiverV1) mapToModel(name string, orgID int64) (definitions.EmbeddedContactPoint, error) {
+func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPoint, error) {
 	uid := strings.TrimSpace(config.UID.Value())
 	if uid == "" {
 		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no uid is set")
@@ -96,9 +95,9 @@ func (config *ReceiverV1) mapToModel(name string, orgID int64) (definitions.Embe
 	}
 	// As the values are not encrypted when coming from disk files,
 	// we can simply return the fallback for validation.
-	err := provisioning.ValidateContactPoint(context.Background(), orgID, &cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+	err := provisioning.ValidateContactPoint(context.Background(), &cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
-	}, nil, &notifier.NoopOrgEmailValidator{}) // do not validate emails here. They will be validated later
+	}, nil)
 	if err != nil {
 		return definitions.EmbeddedContactPoint{}, err
 	}

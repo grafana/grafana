@@ -43,7 +43,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type emailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig) error
+	ValidateIntegrationConfig(ctx context.Context, user identity.Requester, integration alertingModels.IntegrationConfig) error
 }
 
 type ContactPointService struct {
@@ -177,7 +177,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, orgID, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
+	if err := ecp.validateContactPoint(ctx, user, &contactPoint); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -299,7 +299,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, orgID, &contactPoint, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations, ecp.emailValidator); err != nil {
+	if err := ecp.validateContactPoint(ctx, user, &contactPoint); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -652,7 +652,21 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, orgID int64, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}, emailValidator emailIntegrationValidator) error {
+func (ecp *ContactPointService) validateContactPoint(ctx context.Context, user identity.Requester, e *apimodels.EmbeddedContactPoint) error {
+	if err := ValidateContactPoint(ctx, e, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
+		return err
+	}
+	if e.Type != string(schema.EmailType) {
+		return nil
+	}
+	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
+	if err != nil {
+		return err
+	}
+	return ecp.emailValidator.ValidateIntegrationConfig(ctx, user, integration)
+}
+
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {
 	if e.Name == "" {
 		return errors.New("name is required")
 	}
@@ -670,13 +684,7 @@ func ValidateContactPoint(ctx context.Context, orgID int64, e *apimodels.Embedde
 	if err != nil {
 		return err
 	}
-	if err = models.ValidateIntegration(ctx, integration, decryptFunc); err != nil {
-		return err
-	}
-	if iType == schema.EmailType {
-		return emailValidator.ValidateIntegrationConfig(ctx, orgID, integration)
-	}
-	return nil
+	return models.ValidateIntegration(ctx, integration, decryptFunc)
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.

@@ -12,7 +12,7 @@ import (
 func TestReceivers(t *testing.T) {
 	t.Run("Valid config should not error on mapping", func(t *testing.T) {
 		cp := validReceiverV1(t)
-		_, err := cp.mapToModel("test", 1)
+		_, err := cp.mapToModel("test")
 		require.NoError(t, err)
 	})
 	t.Run("Invalid config should error on mapping", func(t *testing.T) {
@@ -21,7 +21,7 @@ func TestReceivers(t *testing.T) {
 		err := yaml.Unmarshal([]byte(`{"not-valid": "http://test-url"}`), &settings)
 		require.NoError(t, err)
 		cp.Settings = settings
-		_, err = cp.mapToModel("test", 1)
+		_, err = cp.mapToModel("test")
 		require.Error(t, err)
 	})
 	t.Run("Empty config should error on mapping", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestReceivers(t *testing.T) {
 		err := yaml.Unmarshal([]byte(`{}`), &settings)
 		require.NoError(t, err)
 		cp.Settings = settings
-		_, err = cp.mapToModel("test", 1)
+		_, err = cp.mapToModel("test")
 		require.Error(t, err)
 	})
 	t.Run("Missing UID should error on mapping", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestReceivers(t *testing.T) {
 		err := yaml.Unmarshal([]byte(""), &uid)
 		require.NoError(t, err)
 		cp.UID = uid
-		_, err = cp.mapToModel("test", 1)
+		_, err = cp.mapToModel("test")
 		require.Error(t, err)
 	})
 	t.Run("Missing type should error on mapping", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestReceivers(t *testing.T) {
 		err := yaml.Unmarshal([]byte(""), &_type)
 		require.NoError(t, err)
 		cp.Type = _type
-		_, err = cp.mapToModel("test", 1)
+		_, err = cp.mapToModel("test")
 		require.Error(t, err)
 	})
 	t.Run("Ivalid type should error on mapping", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestReceivers(t *testing.T) {
 		err := yaml.Unmarshal([]byte("some-type-that-does-not-exist"), &_type)
 		require.NoError(t, err)
 		cp.Type = _type
-		_, err = cp.mapToModel("test", 1)
+		_, err = cp.mapToModel("test")
 		require.Error(t, err)
 	})
 }
