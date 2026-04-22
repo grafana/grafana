@@ -47,6 +47,8 @@ export const FlagKeys = {
   NewLogContext: "newLogContext",
   /** Enables the new logs panel */
   NewLogsPanel: "newLogsPanel",
+  /** Enables the new Saved queries (query library) modal experience */
+  NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
   /** Allow setting folder metadata for provisioned folders */
@@ -250,6 +252,17 @@ export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): bool
  */
 export const useFlagNewLogsPanel = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("newLogsPanel", true, options).value;
+};
+
+/**
+ * Enables the new Saved queries (query library) modal experience
+ *
+ * **Details:**
+ * - flag key: `newSavedQueriesExperience`
+ * - default value: `false`
+ */
+export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("newSavedQueriesExperience", false, options).value;
 };
 
 /**

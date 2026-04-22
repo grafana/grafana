@@ -1064,7 +1064,7 @@ var (
 			Description: "Enables the new Saved queries (query library) modal experience",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
