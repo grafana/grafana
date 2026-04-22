@@ -6453,7 +6453,6 @@
         "save-library-panel": "Save library panel",
         "share": {
           "arrow": "Share",
-          "title": "Share",
           "tooltip": "Copy link"
         },
         "unlink-library-panel": "Unlink library panel"
