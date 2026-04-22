@@ -609,7 +609,7 @@ func (c *Client) generateResources(count int) {
 	fmt.Printf("Generating %d keepers and %d secure values...\n\n", count, count)
 
 	fmt.Println("Creating keepers...")
-	for i := 0; i < count; i++ {
+	for i := range count {
 		region := awsRegions[i%len(awsRegions)]
 		name := "gen-aws-" + randomName(i)
 		c.createKeeper(name, KeeperConfig{
@@ -624,7 +624,7 @@ func (c *Client) generateResources(count int) {
 	fmt.Println()
 
 	fmt.Println("Creating secure values...")
-	for i := 0; i < count; i++ {
+	for i := range count {
 		name := "gen-secret-" + randomName(i)
 		c.createSecureValue(name, SecureValueConfig{
 			Description: fmt.Sprintf("Secret for %s", randomName(i)),
