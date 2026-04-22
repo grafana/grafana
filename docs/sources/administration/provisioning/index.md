@@ -458,12 +458,21 @@ If you set `allowUiUpdates` to `false`, you can't save changes to a provisioned 
 When you try to save changes to a provisioned dashboard, Grafana brings up a _Cannot save provisioned dashboard_ dialog box.
 
 Grafana offers options to export the JSON definition of a dashboard.
-Use either **Copy JSON to Clipboard** or **Save JSON to file** to sync your dashboard changes back to the provisioning source.
-Grafana removes the `id` field from the dashboard JSON to help the provisioning workflow.
+To export the dashboard JSON definition, follow these steps:
+
+1. Upon save, click **Advanced options** to expand the section, and then make the following selections:
+
+   - **Model**: Choose from **Classic** or **V2 Resource**. Choose **Classic** if you plan to use the dashboard in Grafana v12.4 or older.
+   - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
+
+1. Click either **Copy JSON to Clipboard** or **Save JSON to file**.
 
 The following screenshot illustrates this behavior.
 
 {{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+
+Grafana removes the `id` field from the dashboard JSON to help the provisioning workflow.
+Now you sync your dashboard changes back to the provisioning source.
 
 ### Reusable dashboard URLs
 
