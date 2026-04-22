@@ -159,6 +159,7 @@ These built-in core data sources are also included in the Grafana documentation:
 - [Microsoft SQL Server (MSSQL)](mssql/)
 - [MySQL](mysql/)
 - [OpenTSDB](opentsdb/)
+- [Parca](parca/)
 - [PostgreSQL](postgres/)
 - [Prometheus](prometheus/)
 - [Pyroscope](pyroscope/)
