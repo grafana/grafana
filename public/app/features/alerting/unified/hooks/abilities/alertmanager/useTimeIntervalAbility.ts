@@ -1,9 +1,12 @@
+import { useMemo } from 'react';
+
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type MuteTiming } from '../../../components/mute-timings/useMuteTimings';
+import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
 import { makeAbility } from '../abilityUtils';
-import { type Ability, Provisioned, TimeIntervalAction } from '../types';
+import { type Ability, NotSupported, Provisioned, TimeIntervalAction } from '../types';
 
 export type TimeIntervalAbilityParam =
   | { action: TimeIntervalAction.View }
@@ -40,19 +43,36 @@ export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(P
   (permissions) => permissions
 );
 
-export function useTimeIntervalAbility(payload: TimeIntervalAbilityParam): Ability {
-  switch (payload.action) {
-    case TimeIntervalAction.View:
-    case TimeIntervalAction.Create:
-    case TimeIntervalAction.Export:
-      return makeAbility(true, PERMISSIONS[payload.action]);
+/**
+ * Global (unscoped) time interval ability check.
+ *
+ * Use this in navigation and any context outside AlertmanagerContext. Performs a pure
+ * RBAC check with no alertmanager-type gate. Scoped provenance checks are omitted.
+ */
+export function useGlobalTimeIntervalAbility(action: TimeIntervalAction): Ability {
+  return makeAbility(true, PERMISSIONS[action]);
+}
 
-    case TimeIntervalAction.Update:
-    case TimeIntervalAction.Delete: {
-      if (payload.context?.provisioned) {
-        return Provisioned;
+export function useTimeIntervalAbility(payload: TimeIntervalAbilityParam): Ability {
+  const { hasConfigurationAPI } = useAlertmanager();
+
+  return useMemo(() => {
+    switch (payload.action) {
+      case TimeIntervalAction.View:
+      case TimeIntervalAction.Create:
+      case TimeIntervalAction.Export:
+        return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
+
+      case TimeIntervalAction.Update:
+      case TimeIntervalAction.Delete: {
+        if (!hasConfigurationAPI) {
+          return NotSupported;
+        }
+        if (payload.context?.provisioned) {
+          return Provisioned;
+        }
+        return makeAbility(true, PERMISSIONS[payload.action]);
       }
-      return makeAbility(true, PERMISSIONS[payload.action]);
     }
-  }
+  }, [payload, hasConfigurationAPI]);
 }

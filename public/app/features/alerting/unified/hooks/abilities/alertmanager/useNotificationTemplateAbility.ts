@@ -1,10 +1,13 @@
+import { useMemo } from 'react';
+
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type NotificationTemplate } from '../../../components/contact-points/useNotificationTemplates';
+import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
 import { isProvisionedResource } from '../../../utils/k8s/utils';
 import { makeAbility } from '../abilityUtils';
-import { type Ability, NotificationTemplateAction, Provisioned } from '../types';
+import { type Ability, NotSupported, NotificationTemplateAction, Provisioned } from '../types';
 
 export type NotificationTemplateAbilityParam =
   | { action: NotificationTemplateAction.View }
@@ -30,21 +33,38 @@ const PERMISSIONS: Record<NotificationTemplateAction, AccessControlAction[]> = {
   ],
 };
 
-export function useNotificationTemplateAbility(payload: NotificationTemplateAbilityParam): Ability {
-  switch (payload.action) {
-    case NotificationTemplateAction.View:
-    case NotificationTemplateAction.Create:
-      return makeAbility(true, PERMISSIONS[payload.action]);
+/**
+ * Global (unscoped) notification template ability check.
+ *
+ * Use this in navigation and any context outside AlertmanagerContext. Performs a pure
+ * RBAC check with no alertmanager-type gate. Scoped provenance checks are omitted.
+ */
+export function useGlobalNotificationTemplateAbility(action: NotificationTemplateAction): Ability {
+  return makeAbility(true, PERMISSIONS[action]);
+}
 
-    case NotificationTemplateAction.Update:
-    case NotificationTemplateAction.Delete:
-    case NotificationTemplateAction.Test: {
-      if (payload.context && isProvisionedResource(payload.context.provenance)) {
-        return Provisioned;
+export function useNotificationTemplateAbility(payload: NotificationTemplateAbilityParam): Ability {
+  const { hasConfigurationAPI } = useAlertmanager();
+
+  return useMemo(() => {
+    switch (payload.action) {
+      case NotificationTemplateAction.View:
+      case NotificationTemplateAction.Create:
+        return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
+
+      case NotificationTemplateAction.Update:
+      case NotificationTemplateAction.Delete:
+      case NotificationTemplateAction.Test: {
+        if (!hasConfigurationAPI) {
+          return NotSupported;
+        }
+        if (payload.context && isProvisionedResource(payload.context.provenance)) {
+          return Provisioned;
+        }
+        return makeAbility(true, PERMISSIONS[payload.action]);
       }
-      return makeAbility(true, PERMISSIONS[payload.action]);
     }
-  }
+  }, [payload, hasConfigurationAPI]);
 }
 
 /** All permissions that gate template functionality — used by datasource access-control checks. */

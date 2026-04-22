@@ -6,7 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
 import { KnownProvenance } from '../../../types/knownProvenance';
-import { isProvisioned } from '../abilityUtils';
+import { isNotSupported, isProvisioned } from '../abilityUtils';
 import { NotificationTemplateAction } from '../types';
 
 import {
@@ -219,24 +219,26 @@ describe('useNotificationTemplateAbility', () => {
   });
 
   describe('vanilla Prometheus alertmanager', () => {
-    it('should deny Create / Update / Delete and list the expected required permissions', () => {
-      // The snapshot captures the anyOfPermissions list shown in the UI tooltip.
+    it('should return NotSupported for all actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
       grantUserPermissions([]);
 
       const { result } = renderHook(
         () => ({
+          view: useNotificationTemplateAbility({ action: NotificationTemplateAction.View }),
           create: useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }),
           update: useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }),
           delete: useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }),
+          test: useNotificationTemplateAbility({ action: NotificationTemplateAction.Test }),
         }),
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(result.current.create.granted).toBe(false);
-      expect(result.current.update.granted).toBe(false);
-      expect(result.current.delete.granted).toBe(false);
-      expect(result.current).toMatchSnapshot();
+      expect(isNotSupported(result.current.view)).toBe(true);
+      expect(isNotSupported(result.current.create)).toBe(true);
+      expect(isNotSupported(result.current.update)).toBe(true);
+      expect(isNotSupported(result.current.delete)).toBe(true);
+      expect(isNotSupported(result.current.test)).toBe(true);
     });
   });
 

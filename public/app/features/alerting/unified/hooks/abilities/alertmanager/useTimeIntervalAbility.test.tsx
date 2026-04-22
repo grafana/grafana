@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
-import { isProvisioned } from '../abilityUtils';
+import { isNotSupported, isProvisioned } from '../abilityUtils';
 import { TimeIntervalAction } from '../types';
 
 import {
@@ -113,24 +113,26 @@ describe('useTimeIntervalAbility', () => {
   });
 
   describe('vanilla Prometheus alertmanager', () => {
-    it('should deny Create / Update / Delete and list the expected required permissions', () => {
-      // The snapshot captures the anyOfPermissions list shown in the UI tooltip.
+    it('should return NotSupported for all actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
       grantUserPermissions([]);
 
       const { result } = renderHook(
         () => ({
+          view: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
           create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
+          export: useTimeIntervalAbility({ action: TimeIntervalAction.Export }),
           update: useTimeIntervalAbility({ action: TimeIntervalAction.Update }),
           delete: useTimeIntervalAbility({ action: TimeIntervalAction.Delete }),
         }),
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(result.current.create.granted).toBe(false);
-      expect(result.current.update.granted).toBe(false);
-      expect(result.current.delete.granted).toBe(false);
-      expect(result.current).toMatchSnapshot();
+      expect(isNotSupported(result.current.view)).toBe(true);
+      expect(isNotSupported(result.current.create)).toBe(true);
+      expect(isNotSupported(result.current.export)).toBe(true);
+      expect(isNotSupported(result.current.update)).toBe(true);
+      expect(isNotSupported(result.current.delete)).toBe(true);
     });
   });
 

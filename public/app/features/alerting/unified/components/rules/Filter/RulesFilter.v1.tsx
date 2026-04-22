@@ -11,7 +11,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useGlobalContactPointAbility } from '../../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../../hooks/abilities/types';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
@@ -46,7 +46,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
-  const canRenderContactPointSelector = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));

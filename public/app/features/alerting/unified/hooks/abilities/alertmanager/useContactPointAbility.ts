@@ -1,9 +1,12 @@
+import { useMemo } from 'react';
+
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
 import { type EntityToCheck, canDeleteEntity, canEditEntity, isK8sEntityProvisioned } from '../../../utils/k8s/utils';
 import { makeAbility } from '../abilityUtils';
-import { type Ability, ContactPointAction, InsufficientPermissions, Provisioned } from '../types';
+import { type Ability, ContactPointAction, InsufficientPermissions, NotSupported, Provisioned } from '../types';
 
 export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }
@@ -26,38 +29,61 @@ export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(P
   (permissions) => permissions
 );
 
+/**
+ * Global (unscoped) contact point ability check.
+ *
+ * Use this in navigation and any context outside AlertmanagerContext (e.g. nav hooks,
+ * rule-list filter). Performs a pure RBAC check with no alertmanager-type gate.
+ */
+export function useGlobalContactPointAbility(action: ContactPointAction): Ability {
+  return makeAbility(true, PERMISSIONS[action]);
+}
+
 export function useContactPointAbility(payload: ContactPointAbilityParam): Ability {
-  switch (payload.action) {
-    case ContactPointAction.View:
-    case ContactPointAction.Create:
-    case ContactPointAction.BulkExport:
-      return makeAbility(true, PERMISSIONS[payload.action]);
+  const { hasConfigurationAPI } = useAlertmanager();
 
-    case ContactPointAction.Update: {
-      if (isK8sEntityProvisioned(payload.context)) {
-        return Provisioned;
-      }
-      if (!canEditEntity(payload.context)) {
-        return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);
-      }
-      return makeAbility(true, PERMISSIONS[ContactPointAction.Update]);
-    }
+  return useMemo(() => {
+    switch (payload.action) {
+      case ContactPointAction.View:
+      case ContactPointAction.Create:
+      case ContactPointAction.BulkExport:
+        return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
 
-    case ContactPointAction.Delete: {
-      if (isK8sEntityProvisioned(payload.context)) {
-        return Provisioned;
+      case ContactPointAction.Update: {
+        if (!hasConfigurationAPI) {
+          return NotSupported;
+        }
+        if (isK8sEntityProvisioned(payload.context)) {
+          return Provisioned;
+        }
+        if (!canEditEntity(payload.context)) {
+          return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);
+        }
+        return makeAbility(true, PERMISSIONS[ContactPointAction.Update]);
       }
-      if (!canDeleteEntity(payload.context)) {
-        return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
-      }
-      return makeAbility(true, PERMISSIONS[ContactPointAction.Delete]);
-    }
 
-    case ContactPointAction.Export: {
-      if (isK8sEntityProvisioned(payload.context)) {
-        return Provisioned;
+      case ContactPointAction.Delete: {
+        if (!hasConfigurationAPI) {
+          return NotSupported;
+        }
+        if (isK8sEntityProvisioned(payload.context)) {
+          return Provisioned;
+        }
+        if (!canDeleteEntity(payload.context)) {
+          return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
+        }
+        return makeAbility(true, PERMISSIONS[ContactPointAction.Delete]);
       }
-      return makeAbility(true, PERMISSIONS[ContactPointAction.View]);
+
+      case ContactPointAction.Export: {
+        if (!hasConfigurationAPI) {
+          return NotSupported;
+        }
+        if (isK8sEntityProvisioned(payload.context)) {
+          return Provisioned;
+        }
+        return makeAbility(true, PERMISSIONS[ContactPointAction.View]);
+      }
     }
-  }
+  }, [payload, hasConfigurationAPI]);
 }

@@ -29,7 +29,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
@@ -78,7 +78,7 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   // Create portal container for combobox dropdowns
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);

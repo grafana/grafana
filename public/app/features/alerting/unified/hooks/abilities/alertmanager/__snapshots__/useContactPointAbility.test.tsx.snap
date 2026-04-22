@@ -28,32 +28,3 @@ exports[`useContactPointAbility external (Mimir) alertmanager should deny View /
   },
 }
 `;
-
-exports[`useContactPointAbility vanilla Prometheus alertmanager should deny Create / Update / Delete and list the expected required permissions 1`] = `
-{
-  "create": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:create",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "delete": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "update": {
-    "anyOfPermissions": [
-      "alert.notifications:write",
-      "alert.notifications.receivers:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-}
-`;

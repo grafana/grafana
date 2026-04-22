@@ -6,7 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
 import { K8sAnnotations } from '../../../utils/k8s/constants';
-import { isProvisioned } from '../abilityUtils';
+import { isNotSupported, isProvisioned } from '../abilityUtils';
 import { ContactPointAction, isInsufficientPermissions } from '../types';
 
 import {
@@ -79,8 +79,11 @@ describe('useContactPointAbility', () => {
           wrapper: createAlertmanagerWrapper(amSource),
         });
 
+        // Without any permissions the Grafana AM does not resolve in context (the visibility
+        // permission AlertingNotificationsRead is also a View permission), so the hook returns
+        // NotSupported rather than InsufficientPermissions.
         expect(result.current.granted).toBe(false);
-        expect(isInsufficientPermissions(result.current)).toBe(true);
+        expect(isNotSupported(result.current)).toBe(true);
       });
     });
 
@@ -213,27 +216,28 @@ describe('useContactPointAbility', () => {
   });
 
   describe('vanilla Prometheus alertmanager', () => {
-    it('should deny Create / Update / Delete and list the expected required permissions', () => {
-      // Vanilla Prometheus AM is set up but 'does-not-exist' is returned as the source name,
-      // so no AM resolves. The hooks are pure RBAC checks with no AM-type branching,
-      // so the result is INSUFFICIENT_PERMISSIONS (not NOT_SUPPORTED).
-      // The snapshot captures the anyOfPermissions list shown in the UI tooltip.
+    it('should return NotSupported for all actions — no configuration API available', () => {
       const amSource = setupVanillaPrometheusAlertmanager();
       grantUserPermissions([]);
 
       const { result } = renderHook(
         () => ({
+          view: useContactPointAbility({ action: ContactPointAction.View }),
           create: useContactPointAbility({ action: ContactPointAction.Create }),
+          bulkExport: useContactPointAbility({ action: ContactPointAction.BulkExport }),
           update: useContactPointAbility({ action: ContactPointAction.Update, context: editableEntity }),
           delete: useContactPointAbility({ action: ContactPointAction.Delete, context: editableEntity }),
+          export: useContactPointAbility({ action: ContactPointAction.Export, context: editableEntity }),
         }),
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(result.current.create.granted).toBe(false);
-      expect(result.current.update.granted).toBe(false);
-      expect(result.current.delete.granted).toBe(false);
-      expect(result.current).toMatchSnapshot();
+      expect(isNotSupported(result.current.view)).toBe(true);
+      expect(isNotSupported(result.current.create)).toBe(true);
+      expect(isNotSupported(result.current.bulkExport)).toBe(true);
+      expect(isNotSupported(result.current.update)).toBe(true);
+      expect(isNotSupported(result.current.delete)).toBe(true);
+      expect(isNotSupported(result.current.export)).toBe(true);
     });
   });
 

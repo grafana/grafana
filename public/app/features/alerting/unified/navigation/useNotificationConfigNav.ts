@@ -7,10 +7,10 @@ import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { isGranted } from '../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../hooks/abilities/alertmanager/useContactPointAbility';
-import { useNotificationPolicyAbility } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
-import { useNotificationTemplateAbility } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
-import { useTimeIntervalAbility } from '../hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { useGlobalContactPointAbility } from '../hooks/abilities/alertmanager/useContactPointAbility';
+import { useGlobalNotificationPolicyAbility } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useGlobalNotificationTemplateAbility } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { useGlobalTimeIntervalAbility } from '../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import {
   ContactPointAction,
   NotificationPolicyAction,
@@ -66,12 +66,10 @@ export function useNotificationConfigNav() {
   // V2 Navigation: Get the notification config nav item
   const notificationConfigNav = navIndex[NAV_IDS.NOTIFICATION_CONFIG];
 
-  const canViewContactPoints = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
-  const canViewNotificationPolicies = isGranted(
-    useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree })
-  );
-  const canViewTemplates = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.View }));
-  const canViewTimeIntervals = isGranted(useTimeIntervalAbility({ action: TimeIntervalAction.View }));
+  const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
+  const canViewNotificationPolicies = isGranted(useGlobalNotificationPolicyAbility(NotificationPolicyAction.ViewTree));
+  const canViewTemplates = isGranted(useGlobalNotificationTemplateAbility(NotificationTemplateAction.View));
+  const canViewTimeIntervals = isGranted(useGlobalTimeIntervalAbility(TimeIntervalAction.View));
 
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {
