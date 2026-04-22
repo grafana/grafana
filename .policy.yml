@@ -36,6 +36,7 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
+            - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
@@ -46,7 +47,6 @@ policy:
             - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
-        - require patches
         - override policies
     - policy bot config is valid when modified
 approval_rules:
@@ -666,19 +666,6 @@ approval_rules:
       conditions:
         has_successful_status:
           - Check .policy.yml is valid
-  - name: require patches
-    description: |
-      Ensure that all grafana security patches are still valid after this PR is merged.
-      If this is not the case, ask for help. We can regenerate the patch, or we can block this PR until ready.
-    if:
-      targets_branch:
-        pattern: ^(main|release-(?:[^/]*))$
-      from_branch:
-        pattern: ^[^:]+$
-    requires:
-      conditions:
-        has_successful_status:
-          - Test patches (event)
   - name: override policies
     description: |
       Policy-bot can be overridden in emergency situations.
