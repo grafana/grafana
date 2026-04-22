@@ -775,6 +775,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/openapi
 /packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
 
+# @types/grafana-globals
+/packages/grafana-global-types/ @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
