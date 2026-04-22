@@ -144,8 +144,11 @@ interface LogsPanelProps extends PanelProps<Options> {
 }
 const noCommonLabels: Labels = {};
 
+const dashboardApps = [CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer];
+
 export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
   const {
+    allowDownload,
     showControls,
     showFieldSelector,
     controlsStorageKey,
@@ -590,6 +593,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
+              allowDownload={allowDownload}
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
               dataFrames={panelData.series}

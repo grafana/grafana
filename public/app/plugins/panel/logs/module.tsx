@@ -188,6 +188,15 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           'Display controls to jump to the last or first log line, and filters by log level.'
         ),
         defaultValue: false,
+      }).addBooleanSwitch({
+        path: 'allowDownload',
+        name: t('logs.name-allow-download', 'Display download control'),
+        category,
+        description: t(
+          'logs.description-allow-download',
+          'When controls are enabled, show an option to download the logs on display.'
+        ),
+        showIf: (currentOptions) => Boolean(currentOptions.showControls),
       });
     }
 
