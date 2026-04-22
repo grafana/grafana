@@ -712,6 +712,7 @@ replace (
 	// and makes non-cgo the default for developer builds.
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-1
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-1
+	github.com/grafana/schemads => /home/kbrandt/go/src/github.com/grafana/schemads
 
 	// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap (used by cog)
 	github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
