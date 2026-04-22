@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
-import { Button, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
@@ -33,11 +33,38 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
 
+  const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
+
   useEffect(() => {
     if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
       model.setState({ currentTabSlug: currentTab.getSlug() });
     }
   }, [currentTab, model]);
+
+  // Ensure the active tab is visible on switch, reorder, and append.
+  // Append scrolls to the end (no measurement needed); all other cases measure the tab's position.
+  useEffect(() => {
+    if (!scrollEl) {
+      return;
+    }
+
+    let rafId: number;
+
+    const callback = () => {
+      const tabEl = currentTab?.containerRef.current;
+      if (tabEl) {
+        scrollTabIntoView(scrollEl, tabEl);
+      } else {
+        rafId = requestAnimationFrame(callback);
+      }
+    };
+
+    rafId = requestAnimationFrame(callback);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [currentTab, scrollEl, tabs]);
 
   if (soloPanelContext) {
     return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
@@ -72,15 +99,56 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       <TabsBar className={styles.tabsBar}>
         <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
           <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
-            <Droppable droppableId={key!} direction="horizontal">
-              {(dropProvided) => (
-                <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                  {children}
+            <div className={styles.tabsScrollArea}>
+              <Droppable droppableId={key!} direction="horizontal">
+                {(dropProvided) => (
+                  <div
+                    className={cx(styles.tabsContainer, {
+                      [styles.tabsContainerFadeLeft]: canScrollLeft && !canScrollRight,
+                      [styles.tabsContainerFadeRight]: !canScrollLeft && canScrollRight,
+                      [styles.tabsContainerFadeBoth]: canScrollLeft && canScrollRight,
+                    })}
+                    ref={(node) => {
+                      dropProvided.innerRef(node);
+                      scrollRef(node);
+                    }}
+                    {...dropProvided.droppableProps}
+                  >
+                    {children}
 
-                  {dropProvided.placeholder}
+                    {dropProvided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+              {canScrollLeft && (
+                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperLeft)}>
+                  <IconButton
+                    className={styles.scrollButton}
+                    name="angle-left"
+                    size="md"
+                    variant="secondary"
+                    aria-label={t('dashboard.tabs-layout.scroll-tabs-left', 'Scroll tabs left')}
+                    onClick={() => scrollBy('left')}
+                    onMouseDown={(evt) => evt.preventDefault()}
+                    onPointerDown={(evt) => evt.stopPropagation()}
+                  />
                 </div>
               )}
-            </Droppable>
+              {canScrollRight && (
+                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperRight)}>
+                  <IconButton
+                    className={styles.scrollButton}
+                    name="angle-right"
+                    size="md"
+                    variant="secondary"
+                    aria-label={t('dashboard.tabs-layout.scroll-tabs-right', 'Scroll tabs right')}
+                    onClick={() => scrollBy('right')}
+                    onMouseDown={(evt) => evt.preventDefault()}
+                    onPointerDown={(evt) => evt.stopPropagation()}
+                  />
+                </div>
+              )}
+            </div>
             {isEditing && !isClone && (
               <div className={cx(styles.tabControls, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
                 <Button
@@ -138,33 +206,168 @@ function TabWrapper({ tab, manager }: { tab: TabItem; manager: TabsLayoutManager
   return <tab.Component model={tab} key={tab.state.key!} />;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  tabLayoutContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: '1 1 auto',
-  }),
-  tabsBar: css({
-    ...dashboardCanvasAddButtonHoverStyles,
-  }),
-  tabsRow: css({
-    display: 'flex',
-    width: '100%',
-    alignItems: 'center',
-  }),
-  tabsContainer: css({
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    overflowX: 'auto',
-    overflowY: 'hidden',
-    paddingInline: theme.spacing(0.125),
-    paddingTop: '1px',
-  }),
-  tabControls: css({
-    marginLeft: theme.spacing(1),
-  }),
-  nestedTabsMargin: css({
-    marginLeft: theme.spacing(2),
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  // Single source of truth for the fade inset. Used in both scroll-padding
+  // (read back by scrollTabIntoView via getComputedStyle) and mask-image.
+  const fadeInset = theme.spacing(6);
+
+  return {
+    tabLayoutContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 auto',
+    }),
+    tabsBar: css({
+      ...dashboardCanvasAddButtonHoverStyles,
+    }),
+    tabsRow: css({
+      display: 'flex',
+      width: '100%',
+      alignItems: 'center',
+    }),
+    tabsScrollArea: css({
+      position: 'relative',
+      flex: '1 1 auto',
+      minWidth: 0,
+      display: 'flex',
+    }),
+    tabsContainer: css({
+      display: 'flex',
+      flex: '1 1 auto',
+      minWidth: 0,
+      justifyContent: 'flex-start',
+      alignItems: 'flex-end',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
+      scrollPaddingInline: fadeInset,
+      paddingInline: theme.spacing(0.125),
+      paddingTop: '1px',
+    }),
+    tabsContainerFadeLeft: css({
+      maskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${fadeInset})`,
+    }),
+    tabsContainerFadeRight: css({
+      maskImage: `linear-gradient(to left, transparent 0, transparent ${theme.spacing(4)}, black ${fadeInset})`,
+    }),
+    tabsContainerFadeBoth: css({
+      maskImage: `linear-gradient(to right, transparent 0, transparent ${theme.spacing(4)}, black ${fadeInset}, black calc(100% - ${fadeInset}), transparent calc(100% - ${theme.spacing(4)}), transparent 100%)`,
+    }),
+    scrollButtonWrapper: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      zIndex: 1,
+      pointerEvents: 'none',
+    }),
+    scrollButtonWrapperLeft: css({
+      left: 0,
+    }),
+    scrollButtonWrapperRight: css({
+      right: 0,
+    }),
+    scrollButton: css({
+      pointerEvents: 'auto',
+    }),
+    tabControls: css({
+      marginLeft: theme.spacing(1),
+    }),
+    nestedTabsMargin: css({
+      marginLeft: theme.spacing(2),
+    }),
+  };
+};
+
+const SCROLL_TOLERANCE_PX = 1;
+
+/**
+ * Tracks horizontal overflow state of an element, exposing whether scroll
+ * buttons should be shown and a callback to scroll by roughly one viewport.
+ *
+ * Uses MutationObserver on childList so it catches repeated tabs, DnD
+ * placeholders, and any other child DOM mutation — no manual dependency needed.
+ */
+function useHorizontalOverflow() {
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const scrollRef = useCallback((node: HTMLElement | null) => setScrollEl(node), []);
+
+  useEffect(() => {
+    if (!scrollEl) {
+      return;
+    }
+
+    const update = () => {
+      setCanScrollLeft(scrollEl.scrollLeft > SCROLL_TOLERANCE_PX);
+      setCanScrollRight(scrollEl.scrollLeft + scrollEl.clientWidth < scrollEl.scrollWidth - SCROLL_TOLERANCE_PX);
+    };
+
+    update();
+
+    scrollEl.addEventListener('scroll', update, { passive: true });
+
+    const ro = new ResizeObserver(update);
+    ro.observe(scrollEl);
+
+    const mo = new MutationObserver(update);
+    mo.observe(scrollEl, { childList: true });
+
+    return () => {
+      scrollEl.removeEventListener('scroll', update);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, [scrollEl]);
+
+  const scrollBy = useCallback(
+    (direction: 'left' | 'right') => {
+      if (!scrollEl) {
+        return;
+      }
+      const delta = scrollEl.clientWidth * 0.8;
+      scrollEl.scrollBy({ left: direction === 'left' ? -delta : delta, behavior: 'smooth' });
+    },
+    [scrollEl]
+  );
+
+  return { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy };
+}
+
+/**
+ * Scrolls `container` so `tab` is fully visible outside the fade region.
+ * Reads the fade inset from the element's own CSS `scroll-padding-inline`
+ * so there is no JS constant to keep in sync with the mask-image gradient.
+ */
+function scrollTabIntoView(container: HTMLElement, tab: HTMLElement) {
+  const cs = getComputedStyle(container);
+  const padStart = parseFloat(cs.scrollPaddingInlineStart) || 0;
+  const padEnd = parseFloat(cs.scrollPaddingInlineEnd) || 0;
+
+  const cRect = container.getBoundingClientRect();
+  const tRect = tab.getBoundingClientRect();
+
+  const tabL = tRect.left - cRect.left + container.scrollLeft;
+  const tabR = tabL + tRect.width;
+
+  const viewL = container.scrollLeft + padStart;
+  const viewR = container.scrollLeft + container.clientWidth - padEnd;
+
+  if (tabL >= viewL && tabR <= viewR) {
+    return;
+  }
+
+  let target = container.scrollLeft;
+  if (tabL < viewL) {
+    target = tabL - padStart;
+  } else {
+    target = tabR - container.clientWidth + padEnd;
+  }
+
+  const max = container.scrollWidth - container.clientWidth;
+  container.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: 'smooth' });
+}
