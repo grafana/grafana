@@ -103,7 +103,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{"status"}), // status: success, empty, download_error, validate_error
 		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_download_duration_seconds",
-			Help:                            "Duration of successful remote index snapshot downloads, including open and validation. Failures have no meaningful duration and are counted in index_server_snapshot_downloads_total instead.",
+			Help:                            "Duration of successful remote index snapshot downloads, including open and validation.",
 			Buckets:                         IndexCreationBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
