@@ -10082,6 +10082,10 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "code-mirror": {
+      "error-label": "CodeMirror editor failed to load",
+      "loading-placeholder": "Loading editor"
+    },
     "color-picker": {
       "input-label": "RGBA value"
     },
