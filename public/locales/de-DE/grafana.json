@@ -11124,6 +11124,12 @@
       "update-all": "Alles aktualisieren",
       "num-affected_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>",
       "num-affected_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Update verfügbar!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Die Plugin-Nutzung erfordert den neuen Suchindex, damit die Nutzung Dashboard-übergreifend festgestellt werden kann. Bitte aktivieren Sie den Funktionsschalter",
       "num-usages": " {{pluginName}} wird <2>{{numUsages}}</2> mal verwendet.",
-      "title-missing-feature-toggle-panel-title-search": "Fehlender Funktionsschalter: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wird bisher in keinen Dashboards verwendet"
     },
     "plugins-errors-info": {
