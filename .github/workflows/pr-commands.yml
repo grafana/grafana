@@ -5,12 +5,9 @@ on:
       - labeled
       - opened
       - synchronize
-
 concurrency:
   group: pr-commands-${{ github.event.number }}
-
 permissions: {}
-
 jobs:
   main:
     permissions:
@@ -20,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run PR Commands
-        uses: grafana/grafana-github-actions/commands@main
+        uses: grafana/grafana-github-actions/commands@6606a86307be7d0f4249bc38a19a5f5818d2cd55 # main
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-commands
