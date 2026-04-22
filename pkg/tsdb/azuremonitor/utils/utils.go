@@ -11,8 +11,10 @@ import (
 	"net/http"
 
 	"github.com/andybalholm/brotli"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -130,4 +132,20 @@ func Decode(encoding string, original io.ReadCloser) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+// azureCacheKey builds a cache key scoped to the Grafana tenant namespace,
+// datasource instance, current user (when per-user auth is active), and the
+// Azure subscription. The namespace (from the k8s request context) encodes
+// the stack/org identity and is the canonical multi-tenant boundary.
+func AzureCacheKey(ctx context.Context, dsInfo types.DatasourceInfo, sub string) string {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		ns = "_"
+	}
+	userPart := "_"
+	if u, ok := azusercontext.GetCurrentUser(ctx); ok && u.User != nil && u.User.Login != "" {
+		userPart = u.User.Login
+	}
+	return fmt.Sprintf("%s:%d:%s:%s", ns, dsInfo.DatasourceID, userPart, sub)
 }
