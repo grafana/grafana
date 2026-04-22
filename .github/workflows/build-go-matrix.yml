@@ -84,7 +84,7 @@ jobs:
         run: make build-go
 
   build-go-enterprise:
-    if: github.event.pull_request.head.repo.fork == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: ${{ matrix.name }} (enterprise)
     runs-on: ubuntu-x64-large-io
     permissions:
