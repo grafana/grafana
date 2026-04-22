@@ -3,9 +3,9 @@ import type { Extension } from '@uiw/react-codemirror';
 type LanguageLoader = () => Promise<Extension>;
 
 const loadJson: LanguageLoader = async () =>
-  (await import(/* webpackChunkName: "codemirror-json" */ '@codemirror/lang-json')).json();
+  (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 const loadSql: LanguageLoader = async () =>
-  (await import(/* webpackChunkName: "codemirror-sql" */ '@codemirror/lang-sql')).sql();
+  (await import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql')).sql();
 
 export type CodeEditorLanguage = 'json' | 'sql';
 
