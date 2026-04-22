@@ -251,6 +251,10 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
+	// FlagReportingPdfTablesFrontend
+	// Enables frontend-rendered table appendix pages in PDF reports
+	FlagReportingPdfTablesFrontend = "reporting.pdfTablesFrontend"
+
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
@@ -506,10 +510,6 @@ const (
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
-
-	// FlagUnifiedStorageSearchUI
-	// Enable unified storage search UI
-	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source

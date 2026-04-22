@@ -6453,7 +6453,6 @@
         "save-library-panel": "Save library panel",
         "share": {
           "arrow": "Share",
-          "title": "Share",
           "tooltip": "Copy link"
         },
         "unlink-library-panel": "Unlink library panel"
@@ -8655,6 +8654,7 @@
         "copy-link": "Copy link to log line",
         "copy-to-clipboard": "Copy to Clipboard",
         "inspect-value": "Inspect value",
+        "show-details": "Show details",
         "view-log-line": "View log line"
       }
     },
@@ -11124,6 +11124,12 @@
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
     }
   },
   "link": {
@@ -11323,6 +11329,8 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "inline-no-scrolls": "Switch to expanded view",
+      "inline-with-scrolls": "Switch to condensed view",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -11571,13 +11579,13 @@
   "logstable": {
     "category-table": "Logs Table",
     "description-show-controls": "Display table controls",
+    "enable-log-details": {
+      "description": "When enabled, shows log details for each row.",
+      "name": "Enable log details"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
-    },
-    "show-inspect-button": {
-      "description": "Enables/disables the log line inspect button in the first column of each row",
-      "name": "Show inspect button"
     }
   },
   "manage-dashbaords": {
@@ -12993,9 +13001,7 @@
       "update-available": "Update available!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
       "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
-      "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
     "plugins-errors-info": {

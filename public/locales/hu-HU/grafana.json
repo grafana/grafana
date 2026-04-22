@@ -11124,6 +11124,12 @@
       "update-all": "Összes frissítése",
       "num-affected_one": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>",
       "num-affected_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Frissítés érhető el!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "A bővítmény használatakor az új keresési indexnek meg kell találnia a használatot az irányítópultokon. Engedélyezze a funkcióváltást",
       "num-usages": "A(z) {{pluginName}} <2>{{numUsages}}</2> alkalommal lett felhasználva.",
-      "title-missing-feature-toggle-panel-title-search": "Hiányzó funkcióváltó: {{toggle}}",
       "title-not-used-yet": "A(z) {{pluginName}} még egyik irányítópulton sincs használatban"
     },
     "plugins-errors-info": {

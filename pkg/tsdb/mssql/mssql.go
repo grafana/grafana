@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	schemas "github.com/grafana/schemads"
 
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 )
 
@@ -65,7 +66,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		grafCfg := backend.GrafanaConfigFromContext(ctx)
+		grafCfg := config.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := grafCfg.SQL()
 		if err != nil {
 			return nil, err
