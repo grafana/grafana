@@ -7,6 +7,9 @@ policy:
   approval:
     - or:
         - MERGE_WITH_GENERATED
+        - or:
+          - has no-changelog label
+          - has add to changelog label
         - override policies
     - policy bot config is valid when modified
 
@@ -20,6 +23,23 @@ approval_rules:
       conditions:
         has_successful_status:
           - Check .policy.yml is valid
+
+  - name: has no-changelog label
+    description: |
+      Requires you to add a "no-changelog" OR "add to changelog" label on all PRs.
+    if:
+      has_labels:
+        - no-changelog
+    requires:
+      count: 0
+  - name: has add to changelog label
+    description: |
+      Requires you to add a "no-changelog" OR "add to changelog" label on all PRs.
+    if:
+      has_labels:
+        - add to changelog
+    requires:
+      count: 0
 
   - name: override policies
     description: |

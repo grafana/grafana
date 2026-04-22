@@ -47,6 +47,9 @@ policy:
             - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
+        - or:
+            - has no-changelog label
+            - has add to changelog label
         - override policies
     - policy bot config is valid when modified
 approval_rules:
@@ -666,6 +669,18 @@ approval_rules:
       conditions:
         has_successful_status:
           - Check .policy.yml is valid
+  - name: has no-changelog label
+    description: |
+      Requires you to add a "no-changelog" OR "add to changelog" label on all PRs.
+    if:
+      has_labels:
+        - no-changelog
+  - name: has add to changelog label
+    description: |
+      Requires you to add a "no-changelog" OR "add to changelog" label on all PRs.
+    if:
+      has_labels:
+        - add to changelog
   - name: override policies
     description: |
       Policy-bot can be overridden in emergency situations.
