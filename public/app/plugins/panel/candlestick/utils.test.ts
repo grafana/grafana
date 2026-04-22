@@ -98,7 +98,7 @@ describe('drawMarkers', () => {
     await waitFor(() => expect(u.status).toBe(1));
 
     // Clear out uPlot scaffolding canvas changes, we'll only assert on the changes introduced from invoking `drawMarkers`
-    // u.ctx.__clearDrawCalls();
+    u.ctx.__clearDrawCalls();
     u.ctx.__clearEvents();
     u.ctx.__clearPath();
 
