@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { isGranted } from '../hooks/abilities/abilityUtils';
-import { useAlertGroupAbility } from '../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useGlobalAlertGroupAbility } from '../hooks/abilities/alertmanager/useAlertGroupAbility';
 import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { AlertGroupAction, ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
@@ -45,8 +45,8 @@ export function useAlertActivityNav() {
   const canViewAlerts = canViewGrafanaRules || canViewExternalRules;
 
   // A user can view active notifications if they have read access to instances from any source.
-  // useAlertGroupAbility(AlertGroupAction.View) checks both grafana and external instance read.
-  const canViewActiveNotifications = isGranted(useAlertGroupAbility(AlertGroupAction.View));
+  // useGlobalAlertGroupAbility(AlertGroupAction.View) checks both grafana and external instance read.
+  const canViewActiveNotifications = isGranted(useGlobalAlertGroupAbility(AlertGroupAction.View));
 
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {
