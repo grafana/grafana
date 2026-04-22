@@ -6,15 +6,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
@@ -23,20 +25,37 @@ var (
 	ErrUnexpectedNumberOfRowsAffected = errors.New("unexpected number of rows modified by query")
 )
 
+const tableEncryptedValue = "secret_encrypted_value"
+
+var encryptedValueColumns = []string{
+	"namespace", "name", "version", "encrypted_data", "data_key_id", "created", "updated",
+}
+
+// allowedListAllOrderBy is the set of columns ListAll callers are permitted to
+// sort by. Anything outside this set is rejected to prevent the column name
+// from being interpolated unescaped into the ORDER BY clause.
+var allowedListAllOrderBy = map[string]struct{}{
+	"created":   {},
+	"namespace": {},
+}
+
 func ProvideEncryptedValueStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
 ) (contracts.EncryptedValueStorage, error) {
+	builder, ph := database.NewBuilder(db.DriverName())
 	return &encryptedValStorage{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
+		ph:      ph,
 		tracer:  tracer,
 	}, nil
 }
 
 type encryptedValStorage struct {
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
+	ph      sq.PlaceholderFormat
 	tracer  trace.Tracer
 }
 
@@ -68,16 +87,24 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace xkube.Namesp
 		Updated:       createdTime,
 	}
 
-	req := createEncryptedValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Row:         encryptedValue,
-	}
-	query, err := sqltemplate.Execute(sqlEncryptedValueCreate, req)
+	query, args, err := s.builder.
+		Insert(tableEncryptedValue).
+		Columns(encryptedValueColumns...).
+		Values(
+			encryptedValue.Namespace,
+			encryptedValue.Name,
+			encryptedValue.Version,
+			encryptedValue.EncryptedData,
+			encryptedValue.DataKeyID,
+			encryptedValue.Created,
+			encryptedValue.Updated,
+		).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueCreate.Name(), err)
+		return nil, fmt.Errorf("building insert: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		if sql.IsRowAlreadyExistsError(err) {
 			return nil, ErrEncryptedValueAlreadyExists
@@ -112,22 +139,22 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace xkube.Namesp
 	))
 	defer span.End()
 
-	req := updateEncryptedValue{
-		SQLTemplate:   sqltemplate.New(s.dialect),
-		Namespace:     namespace.String(),
-		Name:          name,
-		Version:       version,
-		EncryptedData: encryptedData.EncryptedData,
-		DataKeyID:     encryptedData.DataKeyID,
-		Updated:       time.Now().Unix(),
-	}
-
-	query, err := sqltemplate.Execute(sqlEncryptedValueUpdate, req)
+	query, args, err := s.builder.
+		Update(tableEncryptedValue).
+		Set("encrypted_data", encryptedData.EncryptedData).
+		Set("data_key_id", encryptedData.DataKeyID).
+		Set("updated", time.Now().Unix()).
+		Where(sq.Eq{
+			"namespace": namespace.String(),
+			"name":      name,
+			"version":   version,
+		}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdate.Name(), err)
+		return fmt.Errorf("building update: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("updating row: %w", err)
 	}
@@ -161,31 +188,15 @@ func (s *encryptedValStorage) UpdateBulk(ctx context.Context, namespace xkube.Na
 	nsStr := namespace.String()
 
 	for start := 0; start < len(updates); start += chunkSize {
-		end := start + chunkSize
-		if end > len(updates) {
-			end = len(updates)
-		}
+		end := min(start+chunkSize, len(updates))
 		chunk := updates[start:end]
-		rows := make([]bulkUpdateRow, len(chunk))
-		for i, u := range chunk {
-			rows[i] = bulkUpdateRow{
-				Name:          u.Name,
-				Version:       u.Version,
-				EncryptedData: u.Payload.EncryptedData,
-				DataKeyID:     u.Payload.DataKeyID,
-				Updated:       now,
-			}
-		}
-		req := updateBulkEncryptedValue{
-			SQLTemplate: sqltemplate.New(s.dialect),
-			Namespace:   nsStr,
-			Rows:        rows,
-		}
-		query, err := sqltemplate.Execute(sqlEncryptedValueUpdateBulk, req)
+
+		query, args, err := buildBulkUpdateSQL(s.ph, nsStr, chunk, now)
 		if err != nil {
-			return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdateBulk.Name(), err)
+			return fmt.Errorf("building bulk update: %w", err)
 		}
-		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+
+		res, err := s.db.ExecContext(ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("updating bulk chunk at %d: %w", start, err)
 		}
@@ -200,6 +211,76 @@ func (s *encryptedValStorage) UpdateBulk(ctx context.Context, namespace xkube.Na
 	return nil
 }
 
+// buildBulkUpdateSQL assembles a single UPDATE ... CASE WHEN ... statement for a
+// namespace-scoped chunk of rows. Squirrel's Update().Set() is single-value, so
+// the multi-row CASE is built by hand. The output uses `?` placeholders, then
+// is rewritten to the driver's placeholder format.
+//
+// Capacity math: 4 args per row per CASE block (namespace, name, version, value)
+// × 2 CASE blocks + 2 args per row for the OR branches + 1 standalone `updated`
+// + 1 standalone `namespace` in the WHERE.
+func buildBulkUpdateSQL(ph sq.PlaceholderFormat, namespace string, rows []contracts.BulkUpdateRow, updated int64) (string, []any, error) {
+	var sb strings.Builder
+	// Rough SQL-length estimate: ~100 bytes of fixed scaffolding per CASE block
+	// and per-row clause, times the row count. Undersizing costs reallocations;
+	// oversizing costs ~1 KiB for a 100-row chunk. Right-size to the common case.
+	sb.Grow(128 + len(rows)*220)
+	args := make([]any, 0, len(rows)*10+2)
+
+	// Postgres can't infer that a parameterized THEN value inside a CASE is
+	// bytea — it defaults to text and then rejects the UPDATE because the
+	// target column is bytea. An explicit ::bytea cast on the bytes branch
+	// resolves the inference. MySQL/SQLite don't need (and don't support
+	// identically) the cast, so it's emitted only on Postgres.
+	byteaCast := ""
+	if ph == sq.Dollar {
+		byteaCast = "::bytea"
+	}
+
+	writeCase := func(col string, cast string, valueFor func(contracts.BulkUpdateRow) any) {
+		sb.WriteString(col)
+		sb.WriteString(" = (CASE")
+		for _, r := range rows {
+			sb.WriteString(" WHEN namespace = ? AND name = ? AND version = ? THEN ?")
+			sb.WriteString(cast)
+			args = append(args, namespace, r.Name, r.Version, valueFor(r))
+		}
+		sb.WriteString(" END)")
+	}
+
+	sb.WriteString("UPDATE ")
+	sb.WriteString(tableEncryptedValue)
+	sb.WriteString(" SET ")
+	writeCase("encrypted_data", byteaCast, func(r contracts.BulkUpdateRow) any { return r.Payload.EncryptedData })
+	sb.WriteString(", ")
+	writeCase("data_key_id", "", func(r contracts.BulkUpdateRow) any { return r.Payload.DataKeyID })
+	sb.WriteString(", updated = ")
+	sb.WriteString("?")
+	args = append(args, updated)
+
+	// Row-constructor IN comparisons are too dialect-sensitive: Postgres needs
+	// row-value syntax, MySQL 8.0.19+ requires explicit ROW(...) inside VALUES,
+	// and SQLite accepts neither uniformly. Expanding to namespace = ? AND
+	// ((name = ? AND version = ?) OR ...) works identically on all three and
+	// hits the (namespace, name, version) unique index on each branch.
+	sb.WriteString(" WHERE namespace = ? AND (")
+	args = append(args, namespace)
+	for i, r := range rows {
+		if i > 0 {
+			sb.WriteString(" OR ")
+		}
+		sb.WriteString("(name = ? AND version = ?)")
+		args = append(args, r.Name, r.Version)
+	}
+	sb.WriteString(")")
+
+	query, err := ph.ReplacePlaceholders(sb.String())
+	if err != nil {
+		return "", nil, err
+	}
+	return query, args, nil
+}
+
 func (s *encryptedValStorage) Get(ctx context.Context, namespace xkube.Namespace, name string, version int64) (*contracts.EncryptedValue, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Get", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -208,18 +289,20 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace xkube.Namespace
 	))
 	defer span.End()
 
-	req := &readEncryptedValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-	}
-	query, err := sqltemplate.Execute(sqlEncryptedValueRead, req)
+	query, args, err := s.builder.
+		Select(encryptedValueColumns...).
+		From(tableEncryptedValue).
+		Where(sq.Eq{
+			"namespace": namespace.String(),
+			"name":      name,
+			"version":   version,
+		}).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueRead.Name(), err)
+		return nil, fmt.Errorf("building select: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
@@ -259,18 +342,19 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace xkube.Namesp
 	))
 	defer span.End()
 
-	req := deleteEncryptedValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-	}
-	query, err := sqltemplate.Execute(sqlEncryptedValueDelete, req)
+	query, args, err := s.builder.
+		Delete(tableEncryptedValue).
+		Where(sq.Eq{
+			"namespace": namespace.String(),
+			"name":      name,
+			"version":   version,
+		}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueDelete.Name(), err)
+		return fmt.Errorf("building delete: %w", err)
 	}
 
-	if _, err = s.db.ExecContext(ctx, query, req.GetArgs()...); err != nil {
+	if _, err = s.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
 
@@ -279,7 +363,7 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace xkube.Namesp
 
 type globalEncryptedValStorage struct {
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
 	tracer  trace.Tracer
 }
 
@@ -287,9 +371,10 @@ func ProvideGlobalEncryptedValueStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
 ) (contracts.GlobalEncryptedValueStorage, error) {
+	builder, _ := database.NewBuilder(db.DriverName())
 	return &globalEncryptedValStorage{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
 		tracer:  tracer,
 	}, nil
 }
@@ -298,8 +383,14 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 	if opts.OrderBy == "" {
 		opts.OrderBy = "created"
 	}
+	if _, ok := allowedListAllOrderBy[opts.OrderBy]; !ok {
+		return nil, fmt.Errorf("invalid OrderBy %q", opts.OrderBy)
+	}
 	if opts.OrderDirection == "" {
 		opts.OrderDirection = contracts.OrderDirectionAsc
+	}
+	if opts.OrderDirection != contracts.OrderDirectionAsc && opts.OrderDirection != contracts.OrderDirectionDesc {
+		return nil, fmt.Errorf("invalid OrderDirection %q", opts.OrderDirection)
 	}
 	attrs := []attribute.KeyValue{
 		attribute.Int64("limit", opts.Limit),
@@ -313,26 +404,25 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 	ctx, span := s.tracer.Start(ctx, "GlobalEncryptedValueStorage.CountAll", trace.WithAttributes(attrs...))
 	defer span.End()
 
-	req := listAllEncryptedValues{
-		SQLTemplate:    sqltemplate.New(s.dialect),
-		Limit:          opts.Limit,
-		Offset:         opts.Offset,
-		OrderBy:        opts.OrderBy,
-		OrderDirection: string(opts.OrderDirection),
-	}
+	q := s.builder.
+		Select(encryptedValueColumns...).
+		From(tableEncryptedValue).
+		OrderBy(fmt.Sprintf("%s %s", opts.OrderBy, opts.OrderDirection))
 	if untilTime != nil {
-		req.HasUntilTime = true
-		req.UntilTime = *untilTime
+		q = q.Where(sq.LtOrEq{"created": *untilTime})
+	}
+	if opts.Limit > 0 {
+		q = q.Limit(uint64(opts.Limit)).Offset(uint64(opts.Offset))
 	}
 
-	query, err := sqltemplate.Execute(sqlEncryptedValueListAll, req)
+	query, args, err := q.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlEncryptedValueListAll.Name(), err)
+		return nil, fmt.Errorf("building list: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("listing encrypted values %q: %w", sqlEncryptedValueListAll.Name(), err)
+		return nil, fmt.Errorf("listing encrypted values: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -379,20 +469,17 @@ func (s *globalEncryptedValStorage) CountAll(ctx context.Context, untilTime *int
 	ctx, span := s.tracer.Start(ctx, "GlobalEncryptedValueStorage.CountAll", trace.WithAttributes(attrs...))
 	defer span.End()
 
-	req := countAllEncryptedValues{
-		SQLTemplate: sqltemplate.New(s.dialect),
-	}
+	q := s.builder.Select("COUNT(*) AS count").From(tableEncryptedValue)
 	if untilTime != nil {
-		req.HasUntilTime = true
-		req.UntilTime = *untilTime
+		q = q.Where(sq.LtOrEq{"created": *untilTime})
 	}
 
-	query, err := sqltemplate.Execute(sqlEncryptedValueCountAll, req)
+	query, args, err := q.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("execute template %q: %w", sqlEncryptedValueCountAll.Name(), err)
+		return 0, fmt.Errorf("building count: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("getting row: %w", err)
 	}
@@ -416,7 +503,6 @@ func (s *globalEncryptedValStorage) CountAll(ctx context.Context, untilTime *int
 
 type encryptedValMigrationExecutor struct {
 	db                  contracts.Database
-	dialect             sqltemplate.Dialect
 	tracer              trace.Tracer
 	encryptedValueStore contracts.EncryptedValueStorage
 	globalStore         contracts.GlobalEncryptedValueStorage
@@ -430,7 +516,6 @@ func ProvideEncryptedValueMigrationExecutor(
 ) (contracts.EncryptedValueMigrationExecutor, error) {
 	return &encryptedValMigrationExecutor{
 		db:                  db,
-		dialect:             sqltemplate.DialectForDriver(db.DriverName()),
 		tracer:              tracer,
 		encryptedValueStore: encryptedValueStore,
 		globalStore:         globalStore,

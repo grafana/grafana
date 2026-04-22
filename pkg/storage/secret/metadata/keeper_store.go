@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -16,15 +17,24 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const tableKeeper = "secret_keeper"
+
+var keeperColumns = []string{
+	"guid", "name", "namespace", "annotations", "labels",
+	"created", "created_by", "updated", "updated_by",
+	"description", "type", "payload",
+}
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
 type keeperMetadataStorage struct {
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
+	driver  string
 	tracer  trace.Tracer
 	metrics *metrics.StorageMetrics
 }
@@ -36,9 +46,11 @@ func ProvideKeeperMetadataStorage(
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
 ) (contracts.KeeperMetadataStorage, error) {
+	builder, _ := database.NewBuilder(db.DriverName())
 	return &keeperMetadataStorage{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
+		driver:  db.DriverName(),
 		tracer:  tracer,
 		metrics: metrics.NewStorageMetrics(reg),
 	}, nil
@@ -78,13 +90,17 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta
 		return nil, fmt.Errorf("failed to create row: %w", err)
 	}
 
-	req := createKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Row:         row,
-	}
-	query, err := sqltemplate.Execute(sqlKeeperCreate, req)
+	query, args, err := s.builder.
+		Insert(tableKeeper).
+		Columns(keeperColumns...).
+		Values(
+			row.GUID, row.Name, row.Namespace, row.Annotations, row.Labels,
+			row.Created, row.CreatedBy, row.Updated, row.UpdatedBy,
+			row.Description, row.Type, row.Payload,
+		).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperCreate.Name(), err)
+		return nil, fmt.Errorf("building insert: %w", err)
 	}
 
 	err = s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -93,7 +109,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta
 			return err
 		}
 
-		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, args...)
 		if err != nil {
 			if sql.IsRowAlreadyExistsError(err) {
 				return fmt.Errorf("namespace=%s name=%s: %w", keeper.Namespace, keeper.Name, contracts.ErrKeeperAlreadyExists)
@@ -168,19 +184,20 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 }
 
 func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string, opts contracts.ReadOpts) (*keeperDB, error) {
-	req := &readKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace,
-		Name:        name,
-		IsForUpdate: opts.ForUpdate,
+	q := s.builder.
+		Select(keeperColumns...).
+		From(tableKeeper).
+		Where(sq.Eq{"namespace": namespace, "name": name})
+	if opts.ForUpdate {
+		q = database.ApplyForUpdate(q, s.driver)
 	}
 
-	query, err := sqltemplate.Execute(sqlKeeperRead, req)
+	query, args, err := q.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
+		return nil, fmt.Errorf("building select: %w", err)
 	}
 
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row for %s in namespace %s: %w", name, namespace, err)
 	}
@@ -258,18 +275,27 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv1b
 			return fmt.Errorf("failed to map into update row: %w", updateErr)
 		}
 
-		// Update query with new model.
-		req := &updateKeeper{
-			SQLTemplate: sqltemplate.New(s.dialect),
-			Row:         newRow,
-		}
-
-		query, err := sqltemplate.Execute(sqlKeeperUpdate, req)
+		query, args, err := s.builder.
+			Update(tableKeeper).
+			Set("guid", newRow.GUID).
+			Set("name", newRow.Name).
+			Set("namespace", newRow.Namespace).
+			Set("annotations", newRow.Annotations).
+			Set("labels", newRow.Labels).
+			Set("created", newRow.Created).
+			Set("created_by", newRow.CreatedBy).
+			Set("updated", newRow.Updated).
+			Set("updated_by", newRow.UpdatedBy).
+			Set("description", newRow.Description).
+			Set("type", newRow.Type).
+			Set("payload", newRow.Payload).
+			Where(sq.Eq{"namespace": newRow.Namespace, "name": newRow.Name}).
+			ToSql()
 		if err != nil {
-			return fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
+			return fmt.Errorf("building update: %w", err)
 		}
 
-		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("updating row: %w", err)
 		}
@@ -325,18 +351,15 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		s.metrics.KeeperMetadataDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := deleteKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	query, err := sqltemplate.Execute(sqlKeeperDelete, req)
+	query, args, err := s.builder.
+		Delete(tableKeeper).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
+		return fmt.Errorf("building delete: %w", err)
 	}
 
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
@@ -381,19 +404,19 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		s.metrics.KeeperMetadataListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := listKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
+	query, args, err := s.builder.
+		Select(keeperColumns...).
+		From(tableKeeper).
+		Where(sq.Eq{"namespace": namespace.String()}).
+		OrderBy("updated DESC").
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building list: %w", err)
 	}
 
-	query, err := sqltemplate.Execute(sqlKeeperList, req)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperList.Name(), err)
-	}
-
-	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
+		return nil, fmt.Errorf("listing keepers: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -451,30 +474,29 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return nil
 	}
 
-	// SQL templates do not support maps.
 	usedSecureValuesList := make([]string, 0, len(usedSecureValues))
 	for sv := range usedSecureValues {
 		usedSecureValuesList = append(usedSecureValuesList, sv)
 	}
 
-	reqSecureValue := listByNameSecureValue{
-		SQLTemplate:      sqltemplate.New(s.dialect),
-		Namespace:        keeper.Namespace,
-		UsedSecureValues: usedSecureValuesList,
-	}
-
-	querySecureValueList, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecureValue)
+	svQuery := database.ApplyForUpdate(s.builder.
+		Select("name", "keeper").
+		From(tableSecureValue).
+		Where(sq.Eq{"namespace": keeper.Namespace, "name": usedSecureValuesList, "active": true}),
+		s.driver,
+	)
+	querySecureValueList, argsSV, err := svQuery.ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
+		return fmt.Errorf("building secure value validation query: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, querySecureValueList, argsSV...)
 	if err != nil {
 		return fmt.Errorf("executing query: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
 
-	// DTO for `sqlSecureValueListByName` query result, only what we need.
+	// DTO for the query result, only what we need.
 	type listByNameResult struct {
 		Name   string
 		Keeper *string
@@ -530,18 +552,18 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return nil
 	}
 
-	reqKeeper := listByNameKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   keeper.Namespace,
-		KeeperNames: keeperNames,
-	}
-
-	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
+	kpQuery := database.ApplyForUpdate(s.builder.
+		Select("name").
+		From(tableKeeper).
+		Where(sq.Eq{"namespace": keeper.Namespace, "name": keeperNames}),
+		s.driver,
+	)
+	qKeeper, argsKp, err := kpQuery.ToSql()
 	if err != nil {
-		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
+		return fmt.Errorf("building keeper listByName query: %w", err)
 	}
 
-	keepersRows, err := s.db.QueryContext(ctx, qKeeper, reqKeeper.GetArgs()...)
+	keepersRows, err := s.db.QueryContext(ctx, qKeeper, argsKp...)
 	if err != nil {
 		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}
@@ -625,19 +647,16 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 }
 
 func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
-	req := setKeeperAsActive{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
+	query, args, err := s.builder.
+		Update(tableKeeper).
+		Set("active", sq.Expr("(name = ?)", name)).
+		Where(sq.Eq{"namespace": namespace.String()}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("building set-as-active: %w", err)
 	}
 
-	query, err := sqltemplate.Execute(sqlKeeperSetAsActive, req)
-	if err != nil {
-		return fmt.Errorf("template %q: %w", sqlKeeperSetAsActive.Name(), err)
-	}
-
-	_, err = s.db.ExecContext(ctx, query, req.GetArgs()...)
-	if err != nil {
+	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("setting keeper as active %q: %w", query, err)
 	}
 
@@ -670,17 +689,17 @@ func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace s
 		s.metrics.KeeperMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := &readActiveKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace,
-	}
-
-	query, err := sqltemplate.Execute(sqlKeeperReadActive, req)
+	query, args, err := s.builder.
+		Select(keeperColumns...).
+		From(tableKeeper).
+		Where(sq.Eq{"namespace": namespace, "active": true}).
+		Limit(1).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperReadActive.Name(), err)
+		return nil, fmt.Errorf("building get active: %w", err)
 	}
 
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing query to fetch active keeper in namespace %s: %w", namespace, err)
 	}

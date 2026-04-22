@@ -95,10 +95,10 @@ func (db *Database) ExecContext(ctx context.Context, query string, args ...any) 
 
 	// If another transaction is already open, we just use that one instead of nesting.
 	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
+		return tx.ExecContext(spanCtx, query, args...)
 	}
 
-	return db.sqlx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
+	return db.sqlx.ExecContext(spanCtx, query, args...)
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
@@ -107,8 +107,8 @@ func (db *Database) QueryContext(ctx context.Context, query string, args ...any)
 
 	// If another transaction is already open, we just use that one instead of nesting.
 	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
+		return tx.QueryContext(spanCtx, query, args...)
 	}
 
-	return db.sqlx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
+	return db.sqlx.QueryContext(spanCtx, query, args...)
 }

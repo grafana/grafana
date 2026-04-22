@@ -5,19 +5,26 @@ import (
 	"fmt"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 )
+
+const tableDataKey = "secret_data_key"
+
+var dataKeyColumns = []string{
+	"uid", "namespace", "label", "provider", "encrypted_data", "active", "created", "updated",
+}
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
 type encryptionStoreImpl struct {
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
 	tracer  trace.Tracer
 	metrics *DataKeyMetrics
 }
@@ -27,9 +34,10 @@ func ProvideDataKeyStorage(
 	tracer trace.Tracer,
 	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
+	builder, _ := database.NewBuilder(db.DriverName())
 	store := &encryptionStoreImpl{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
 		tracer:  tracer,
 		metrics: NewDataKeyMetrics(registerer),
 	}
@@ -49,18 +57,16 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 		ss.metrics.GetDataKeyDuration.Observe(float64(time.Since(start)))
 	}()
 
-	req := readDataKey{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Namespace:   namespace,
-		UID:         uid,
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyRead, req)
+	query, args, err := ss.builder.
+		Select(dataKeyColumns...).
+		From(tableDataKey).
+		Where(sq.Eq{"namespace": namespace, "uid": uid}).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlDataKeyRead.Name(), err)
+		return nil, fmt.Errorf("building select: %w", err)
 	}
 
-	res, err := ss.db.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := ss.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("getting data key row: %w", err)
 	}
@@ -70,34 +76,7 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 		return nil, contracts.ErrDataKeyNotFound
 	}
 
-	var dataKey SecretDataKey
-	err = res.Scan(
-		&dataKey.UID,
-		&dataKey.Namespace,
-		&dataKey.Label,
-		&dataKey.Provider,
-		&dataKey.EncryptedData,
-		&dataKey.Active,
-		&dataKey.Created,
-		&dataKey.Updated,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan data key row: %w", err)
-	}
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	return &contracts.SecretDataKey{
-		UID:           dataKey.UID,
-		Namespace:     dataKey.Namespace,
-		Label:         dataKey.Label,
-		Provider:      dataKey.Provider,
-		EncryptedData: dataKey.EncryptedData,
-		Active:        dataKey.Active,
-		Created:       dataKey.Created,
-		Updated:       dataKey.Updated,
-	}, nil
+	return scanDataKey(res)
 }
 
 func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*contracts.SecretDataKey, error) {
@@ -111,18 +90,16 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 		ss.metrics.GetCurrentDataKeyDuration.Observe(float64(time.Since(start)))
 	}()
 
-	req := readCurrentDataKey{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Namespace:   namespace,
-		Label:       label,
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyReadCurrent, req)
+	query, args, err := ss.builder.
+		Select(dataKeyColumns...).
+		From(tableDataKey).
+		Where(sq.Eq{"namespace": namespace, "label": label, "active": true}).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlDataKeyReadCurrent.Name(), err)
+		return nil, fmt.Errorf("building select: %w", err)
 	}
 
-	res, err := ss.db.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := ss.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("getting current data key row: %w", err)
 	}
@@ -132,34 +109,7 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 		return nil, contracts.ErrDataKeyNotFound
 	}
 
-	var dataKey SecretDataKey
-	err = res.Scan(
-		&dataKey.UID,
-		&dataKey.Namespace,
-		&dataKey.Label,
-		&dataKey.Provider,
-		&dataKey.EncryptedData,
-		&dataKey.Active,
-		&dataKey.Created,
-		&dataKey.Updated,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan data key row: %w", err)
-	}
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	return &contracts.SecretDataKey{
-		UID:           dataKey.UID,
-		Namespace:     dataKey.Namespace,
-		Label:         dataKey.Label,
-		Provider:      dataKey.Provider,
-		EncryptedData: dataKey.EncryptedData,
-		Active:        dataKey.Active,
-		Created:       dataKey.Created,
-		Updated:       dataKey.Updated,
-	}, nil
+	return scanDataKey(res)
 }
 
 func (ss *encryptionStoreImpl) ListDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
@@ -172,49 +122,28 @@ func (ss *encryptionStoreImpl) ListDataKeys(ctx context.Context, namespace strin
 		ss.metrics.ListDataKeysDuration.Observe(float64(time.Since(start)))
 	}()
 
-	req := listDataKeys{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Namespace:   namespace,
+	query, args, err := ss.builder.
+		Select(dataKeyColumns...).
+		From(tableDataKey).
+		Where(sq.Eq{"namespace": namespace}).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building select: %w", err)
 	}
 
-	query, err := sqltemplate.Execute(sqlDataKeyList, req)
+	rows, err := ss.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlDataKeyList.Name(), err)
-	}
-
-	rows, err := ss.db.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("listing data keys %q: %w", sqlDataKeyList.Name(), err)
+		return nil, fmt.Errorf("listing data keys: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	dataKeys := make([]*contracts.SecretDataKey, 0)
 	for rows.Next() {
-		var row SecretDataKey
-		err = rows.Scan(
-			&row.UID,
-			&row.Namespace,
-			&row.Label,
-			&row.Provider,
-			&row.EncryptedData,
-			&row.Active,
-			&row.Created,
-			&row.Updated,
-		)
+		dk, err := scanDataKey(rows)
 		if err != nil {
-			return nil, fmt.Errorf("error reading data key row: %w", err)
+			return nil, err
 		}
-
-		dataKeys = append(dataKeys, &contracts.SecretDataKey{
-			UID:           row.UID,
-			Namespace:     row.Namespace,
-			Label:         row.Label,
-			Provider:      row.Provider,
-			EncryptedData: row.EncryptedData,
-			Active:        row.Active,
-			Created:       row.Created,
-			Updated:       row.Updated,
-		})
+		dataKeys = append(dataKeys, dk)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
@@ -242,17 +171,25 @@ func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contr
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
-	req := createDataKey{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Row:         dataKey,
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyCreate, req)
+	query, args, err := ss.builder.
+		Insert(tableDataKey).
+		Columns(dataKeyColumns...).
+		Values(
+			dataKey.UID,
+			dataKey.Namespace,
+			dataKey.Label,
+			dataKey.Provider,
+			dataKey.EncryptedData,
+			dataKey.Active,
+			dataKey.Created,
+			dataKey.Updated,
+		).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlDataKeyCreate.Name(), err)
+		return fmt.Errorf("building insert: %w", err)
 	}
 
-	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := ss.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("inserting data key row: %w", err)
 	}
@@ -279,18 +216,17 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 		ss.metrics.DisableDataKeysDuration.Observe(float64(time.Since(start)))
 	}()
 
-	req := disableDataKeys{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Namespace:   namespace,
-		Updated:     time.Now(),
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyDisable, req)
+	query, args, err := ss.builder.
+		Update(tableDataKey).
+		Set("active", false).
+		Set("updated", time.Now()).
+		Where(sq.Eq{"namespace": namespace, "active": true}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlDataKeyDisable.Name(), err)
+		return fmt.Errorf("building update: %w", err)
 	}
 
-	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := ss.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("updating data key row: %w", err)
 	}
@@ -322,18 +258,15 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 		return fmt.Errorf("data key id is missing")
 	}
 
-	req := deleteDataKey{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Namespace:   namespace,
-		UID:         uid,
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyDelete, req)
+	query, args, err := ss.builder.
+		Delete(tableDataKey).
+		Where(sq.Eq{"namespace": namespace, "uid": uid}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlDataKeyDelete.Name(), err)
+		return fmt.Errorf("building delete: %w", err)
 	}
 
-	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := ss.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("deleting data key is %s in namespace %s: %w", uid, namespace, err)
 	}
@@ -352,7 +285,7 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 
 type globalEncryptionStoreImpl struct {
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
 	tracer  trace.Tracer
 	metrics *GlobalDataKeyMetrics
 }
@@ -362,9 +295,10 @@ func ProvideGlobalDataKeyStorage(
 	tracer trace.Tracer,
 	registerer prometheus.Registerer,
 ) (contracts.GlobalDataKeyStorage, error) {
+	builder, _ := database.NewBuilder(db.DriverName())
 	store := &globalEncryptionStoreImpl{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
 		tracer:  tracer,
 		metrics: NewGlobalDataKeyMetrics(registerer),
 	}
@@ -380,17 +314,17 @@ func (ss *globalEncryptionStoreImpl) DisableAllDataKeys(ctx context.Context) err
 		ss.metrics.DisableAllDataKeysDuration.Observe(float64(time.Since(start)))
 	}()
 
-	req := disableAllDataKeys{
-		SQLTemplate: sqltemplate.New(ss.dialect),
-		Updated:     time.Now(),
-	}
-
-	query, err := sqltemplate.Execute(sqlDataKeyDisableAll, req)
+	query, args, err := ss.builder.
+		Update(tableDataKey).
+		Set("active", false).
+		Set("updated", time.Now()).
+		Where(sq.Eq{"active": true}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlDataKeyDisableAll.Name(), err)
+		return fmt.Errorf("building update: %w", err)
 	}
 
-	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := ss.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("updating data keys: %w", err)
 	}
@@ -405,4 +339,35 @@ func (ss *globalEncryptionStoreImpl) DisableAllDataKeys(ctx context.Context) err
 	}
 
 	return nil
+}
+
+// scanDataKey reads a single row with the column order in dataKeyColumns and
+// returns a populated *contracts.SecretDataKey.
+func scanDataKey(rows contracts.Rows) (*contracts.SecretDataKey, error) {
+	var dk SecretDataKey
+	if err := rows.Scan(
+		&dk.UID,
+		&dk.Namespace,
+		&dk.Label,
+		&dk.Provider,
+		&dk.EncryptedData,
+		&dk.Active,
+		&dk.Created,
+		&dk.Updated,
+	); err != nil {
+		return nil, fmt.Errorf("failed to scan data key row: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+	return &contracts.SecretDataKey{
+		UID:           dk.UID,
+		Namespace:     dk.Namespace,
+		Label:         dk.Label,
+		Provider:      dk.Provider,
+		EncryptedData: dk.EncryptedData,
+		Active:        dk.Active,
+		Created:       dk.Created,
+		Updated:       dk.Updated,
+	}, nil
 }

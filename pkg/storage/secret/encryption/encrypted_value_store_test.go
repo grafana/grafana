@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"slices"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"pgregory.net/rapid"
@@ -628,44 +626,14 @@ func createLegacyEncryptedData(t *testing.T, sut testutils.Sut, enc cipher.Ciphe
 	copy(blob, prefix)
 	copy(blob[len(prefix):], encryptedData)
 
-	createdTime := time.Now().Unix()
-
-	encryptedValue := &encryption.EncryptedValue{
-		Namespace:     namespace,
-		Name:          name,
-		Version:       version,
-		EncryptedData: blob,
+	// Insert via the public Create API with an empty DataKeyID, matching the
+	// legacy on-disk shape where the data-key identifier was baked into the
+	// blob rather than stored in its own column.
+	if _, err := sut.EncryptedValueStorage.Create(t.Context(), xkube.Namespace(namespace), name, version, contracts.EncryptedPayload{
 		DataKeyID:     "",
-		Created:       createdTime,
-		Updated:       createdTime,
-	}
-
-	req := struct {
-		sqltemplate.SQLTemplate
-		Row *encryption.EncryptedValue
-	}{
-		SQLTemplate: sqltemplate.New(sqltemplate.DialectForDriver(sut.Database.DriverName())),
-		Row:         encryptedValue,
-	}
-	tmpl, err := template.ParseFiles("data/encrypted_value_create.sql")
-	if err != nil {
-		return fmt.Errorf("parsing template: %w", err)
-	}
-
-	query, err := sqltemplate.Execute(tmpl, req)
-	if err != nil {
-		return fmt.Errorf("executing template: %w", err)
-	}
-
-	res, err := sut.Database.ExecContext(t.Context(), query, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("inserting row: %w", err)
-	}
-
-	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("getting rows affected: %w", err)
-	} else if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, got %d", rowsAffected)
+		EncryptedData: blob,
+	}); err != nil {
+		return fmt.Errorf("inserting legacy row: %w", err)
 	}
 
 	return nil

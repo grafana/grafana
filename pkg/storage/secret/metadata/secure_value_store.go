@@ -6,20 +6,46 @@ import (
 	"strconv"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"go.opentelemetry.io/otel/codes"
 )
+
+const tableSecureValue = "secret_secure_value"
+
+// secureValueReadColumns is the read column set for Read / readActiveVersion.
+// Order matters: it must match the Scan arguments.
+var secureValueReadColumns = []string{
+	"guid", "name", "namespace", "annotations", "labels",
+	"created", "created_by", "updated", "updated_by",
+	"description", "keeper", "decrypters", "ref", "external_id",
+	"active", "version",
+	"owner_reference_api_group", "owner_reference_api_version",
+	"owner_reference_kind", "owner_reference_name",
+}
+
+// secureValueListColumns is the read column set for List / listByLeaseToken.
+// Version and active are intentionally swapped vs secureValueReadColumns to
+// match the Scan order the list callers rely on.
+var secureValueListColumns = []string{
+	"guid", "name", "namespace", "annotations", "labels",
+	"created", "created_by", "updated", "updated_by",
+	"description", "keeper", "decrypters", "ref", "external_id",
+	"version", "active",
+	"owner_reference_api_group", "owner_reference_api_version",
+	"owner_reference_kind", "owner_reference_name",
+}
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
@@ -29,10 +55,13 @@ func ProvideSecureValueMetadataStorage(
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
 ) (contracts.SecureValueMetadataStorage, error) {
+	builder, ph := database.NewBuilder(db.DriverName())
 	return &secureValueMetadataStorage{
 		clock:   clock,
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		builder: builder,
+		ph:      ph,
+		driver:  db.DriverName(),
 		metrics: metrics.NewStorageMetrics(reg),
 		tracer:  tracer,
 	}, nil
@@ -42,7 +71,9 @@ func ProvideSecureValueMetadataStorage(
 type secureValueMetadataStorage struct {
 	clock   contracts.Clock
 	db      contracts.Database
-	dialect sqltemplate.Dialect
+	builder sq.StatementBuilderType
+	ph      sq.PlaceholderFormat
+	driver  string
 	metrics *metrics.StorageMetrics
 	tracer  trace.Tracer
 }
@@ -117,17 +148,12 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 			return nil, fmt.Errorf("to create row: %w", err)
 		}
 
-		req := createSecureValue{
-			SQLTemplate: sqltemplate.New(s.dialect),
-			Row:         row,
-		}
-
-		query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
+		query, queryArgs, err := buildSecureValueInsert(s.builder, row)
 		if err != nil {
-			return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
+			return nil, fmt.Errorf("building insert: %w", err)
 		}
 
-		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		res, err := s.db.ExecContext(ctx, query, queryArgs...)
 		if err != nil {
 			if sql.IsRowAlreadyExistsError(err) {
 				if attempts < maxAttempts {
@@ -158,6 +184,56 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	}
 }
 
+// buildSecureValueInsert assembles an INSERT that omits nullable columns when
+// their sql.NullString is invalid, to keep NULL handling consistent across
+// backends (some dialects differ on how explicit NULLs interact with defaults).
+func buildSecureValueInsert(b sq.StatementBuilderType, row *secureValueDB) (string, []any, error) {
+	cols := []string{
+		"guid", "name", "namespace", "annotations", "labels",
+		"created", "created_by", "updated", "updated_by",
+		"active", "version", "description",
+	}
+	vals := []any{
+		row.GUID, row.Name, row.Namespace, row.Annotations, row.Labels,
+		row.Created, row.CreatedBy, row.Updated, row.UpdatedBy,
+		row.Active, row.Version, row.Description,
+	}
+
+	if row.Keeper.Valid {
+		cols = append(cols, "keeper")
+		vals = append(vals, row.Keeper.String)
+	}
+	if row.Decrypters.Valid {
+		cols = append(cols, "decrypters")
+		vals = append(vals, row.Decrypters.String)
+	}
+	if row.Ref.Valid {
+		cols = append(cols, "ref")
+		vals = append(vals, row.Ref.String)
+	}
+	if row.OwnerReferenceAPIGroup.Valid {
+		cols = append(cols, "owner_reference_api_group")
+		vals = append(vals, row.OwnerReferenceAPIGroup.String)
+	}
+	if row.OwnerReferenceAPIVersion.Valid {
+		cols = append(cols, "owner_reference_api_version")
+		vals = append(vals, row.OwnerReferenceAPIVersion.String)
+	}
+	if row.OwnerReferenceKind.Valid {
+		cols = append(cols, "owner_reference_kind")
+		vals = append(vals, row.OwnerReferenceKind.String)
+	}
+	if row.OwnerReferenceName.Valid {
+		cols = append(cols, "owner_reference_name")
+		vals = append(vals, row.OwnerReferenceName.String)
+	}
+
+	cols = append(cols, "external_id")
+	vals = append(vals, row.ExternalID)
+
+	return b.Insert(tableSecureValue).Columns(cols...).Values(vals...).ToSql()
+}
+
 type versionAndCreated struct {
 	createdAt int64
 	createdBy string
@@ -171,18 +247,18 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 	))
 	defer span.End()
 
-	req := getLatestSecureValueVersionAndCreatedAt{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
+	query, args, err := s.builder.
+		Select("created", "created_by", "version", "active", "namespace", "name").
+		From(tableSecureValue).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name}).
+		OrderBy("version DESC").
+		Limit(1).
+		ToSql()
 	if err != nil {
-		return versionAndCreated{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
+		return versionAndCreated{}, fmt.Errorf("building latest-version select: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return versionAndCreated{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
@@ -226,19 +302,20 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 }
 
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
-	req := readSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		IsForUpdate: opts.ForUpdate,
+	q := s.builder.
+		Select(secureValueReadColumns...).
+		From(tableSecureValue).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name, "active": true})
+	if opts.ForUpdate {
+		q = database.ApplyForUpdate(q, s.driver)
 	}
 
-	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
+	query, args, err := q.ToSql()
 	if err != nil {
-		return secureValueDB{}, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
+		return secureValueDB{}, fmt.Errorf("building select: %w", err)
 	}
 
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return secureValueDB{}, fmt.Errorf("reading row: %w", err)
 	}
@@ -339,17 +416,17 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		s.metrics.SecureValueMetadataListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := listSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueList, req)
+	query, args, err := s.builder.
+		Select(secureValueListColumns...).
+		From(tableSecureValue).
+		Where(sq.Eq{"namespace": namespace.String(), "active": true}).
+		OrderBy("updated DESC").
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueList.Name(), err)
+		return nil, fmt.Errorf("building list: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("listing secure values: %w", err)
 	}
@@ -403,19 +480,16 @@ func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, nam
 	))
 	defer span.End()
 
-	req := secureValueSetVersionToActive{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueSetVersionToActive, req)
+	query, args, err := s.builder.
+		Update(tableSecureValue).
+		Set("active", sq.Expr("(version = ?)", version)).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetVersionToActive.Name(), err)
+		return fmt.Errorf("building set-version-to-active: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("setting secure value version to active: namespace=%+v name=%+v version=%+v %w", namespace, name, version, err)
 	}
@@ -440,19 +514,16 @@ func (s *secureValueMetadataStorage) SetVersionToInactive(ctx context.Context, n
 	))
 	defer span.End()
 
-	req := secureValueSetVersionToInactive{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueSetVersionToInactive, req)
+	query, args, err := s.builder.
+		Update(tableSecureValue).
+		Set("active", false).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name, "version": version}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetVersionToInactive.Name(), err)
+		return fmt.Errorf("building set-version-to-inactive: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("setting secure value version to active: namespace=%+v name=%+v version=%+v %w", namespace, name, version, err)
 	}
@@ -499,25 +570,20 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 		s.metrics.SecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := updateExternalIdSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-		ExternalID:  externalID.String(),
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueUpdateExternalId, req)
+	query, args, err := s.builder.
+		Update(tableSecureValue).
+		Set("external_id", externalID.String()).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name, "version": version}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateExternalId.Name(), err)
+		return fmt.Errorf("building update external id: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
 	}
 
-	// validate modified cound
 	modifiedCount, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("getting updated rows update external id secure value: %w", err)
@@ -558,19 +624,15 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := deleteSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueDelete, req)
+	query, queryArgs, err := s.builder.
+		Delete(tableSecureValue).
+		Where(sq.Eq{"namespace": namespace.String(), "name": name, "version": version}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueDelete.Name(), err)
+		return fmt.Errorf("building delete: %w", err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, queryArgs...)
 	if err != nil {
 		return fmt.Errorf("deleting secure value: namespace=%+v name=%+v version=%+v %w", namespace, name, version, err)
 	}
@@ -614,18 +676,16 @@ func (s *secureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context
 		s.metrics.SecureValueSetInactiveAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := setInactiveAllFromGroupSecureValue{
-		SQLTemplate:            sqltemplate.New(s.dialect),
-		Namespace:              namespace.String(),
-		OwnerReferenceAPIGroup: apiGroup,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueSetInactiveAllFromGroup, req)
+	query, args, err := s.builder.
+		Update(tableSecureValue).
+		Set("active", false).
+		Where(sq.Eq{"namespace": namespace.String(), "owner_reference_api_group": apiGroup, "active": true}).
+		ToSql()
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetInactiveAllFromGroup.Name(), err)
+		return fmt.Errorf("building update: %w", err)
 	}
 
-	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("setting inactive all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
 	}
 
@@ -665,21 +725,31 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 }
 
 func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseToken string, maxBatchSize uint16) error {
-	req := leaseInactiveSecureValues{
-		SQLTemplate:  sqltemplate.New(s.dialect),
-		LeaseToken:   leaseToken,
-		MaxBatchSize: maxBatchSize,
-		MinAge:       int64((300 * time.Second).Seconds()),
-		LeaseTTL:     int64((30 * time.Second).Seconds()),
-		Now:          s.clock.Now().UTC().Unix(),
-	}
+	const minAge int64 = 300  // seconds; inactive rows younger than this are skipped.
+	const leaseTTL int64 = 30 // seconds; leases older than this can be re-acquired.
+	now := s.clock.Now().UTC().Unix()
 
-	q, err := sqltemplate.Execute(sqlSecureValueLeaseInactive, req)
+	// The lease query uses a ROW_NUMBER() window function in a subquery to cap
+	// the batch size. Squirrel does not model window functions, so the SQL is
+	// authored by hand with `?` placeholders and rewritten for the driver.
+	const rawSQL = `UPDATE secret_secure_value ` +
+		`SET lease_token = ?, lease_created = ? ` +
+		`WHERE guid IN (` +
+		`SELECT guid FROM (` +
+		`SELECT guid, ROW_NUMBER() OVER (ORDER BY created ASC) AS rn ` +
+		`FROM secret_secure_value ` +
+		`WHERE active = FALSE AND ? - updated > ? AND ? - lease_created > ?` +
+		`) AS sub ` +
+		`WHERE rn <= ?` +
+		`)`
+
+	query, err := s.ph.ReplacePlaceholders(rawSQL)
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactive.Name(), err)
+		return fmt.Errorf("rebinding lease query: %w", err)
 	}
 
-	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+	args := []any{leaseToken, now, now, minAge, now, leaseTTL, maxBatchSize}
+	if _, err := s.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("leasing inactive secure values: %w", err)
 	}
 
@@ -687,17 +757,19 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 }
 
 func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, leaseToken string) ([]secretv1beta1.SecureValue, error) {
-	req := listSecureValuesByLeaseToken{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		LeaseToken:  leaseToken,
-	}
+	cols := append([]string{}, secureValueListColumns...)
+	cols = append(cols, "lease_token")
 
-	q, err := sqltemplate.Execute(sqlSecureValueListByLeaseToken, req)
+	query, args, err := s.builder.
+		Select(cols...).
+		From(tableSecureValue).
+		Where(sq.Eq{"lease_token": leaseToken}).
+		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueListByLeaseToken.Name(), err)
+		return nil, fmt.Errorf("building list-by-lease-token: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("listing secure values: %w", err)
 	}
