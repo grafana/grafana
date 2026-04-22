@@ -264,7 +264,7 @@ sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) / sum(rate(http_
 | **Format** | Time series           |
 | **Type**   | Range                 |
 
-The regex label matcher `status=~"5.."` selects all 5xx status codes. This pattern is useful for SLO dashboards where you need to track error budgets. Pair with a [Threshold](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#thresholds) to visually highlight when the error ratio exceeds your target.
+The regular expression label matcher `status=~"5.."` selects all 5xx status codes. This pattern is useful for SLO dashboards where you need to track error budgets. Pair with a [Threshold](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#thresholds) to visually highlight when the error ratio exceeds your target.
 
 ## Incremental dashboard queries (beta)
 

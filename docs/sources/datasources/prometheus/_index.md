@@ -67,7 +67,7 @@ The Prometheus data source includes the following pre-built dashboards:
 
 - **Prometheus Stats:** Prometheus server metrics including scrape durations, target counts, and rule evaluations.
 - **Prometheus 2.0 Stats:** Updated Prometheus server metrics for Prometheus 2.x instances.
-- **Grafana Stats:** Grafana's own internal performance metrics exposed on the `/metrics` endpoint.
+- **Grafana Stats:** Internal performance metrics for Grafana, exposed on the `/metrics` endpoint.
 
 To import a pre-built dashboard:
 
@@ -75,7 +75,7 @@ To import a pre-built dashboard:
 1. Click the **Dashboards** tab.
 1. Click **Import** next to the dashboard you want to add.
 
-For details about Grafana's internal metrics, refer to [Internal Grafana metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/).
+For details about internal Grafana metrics, refer to [Internal Grafana metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/).
 
 ## Amazon Managed Service for Prometheus
 

@@ -34,9 +34,9 @@ Select a Prometheus data source query type and enter the required inputs:
 
 | Query Type      | Input(\* required)                   | Description                                                                                                                                                   | Used API endpoints                             |
 | --------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`   | `metric regex`                       | Returns a list of all label names, optionally filtered by the specified metric regex.                                                                         | /api/v1/labels                                 |
+| `Label names`   | `metric regex`                       | Returns a list of all label names, optionally filtered by the specified metric regular expression.                                                            | /api/v1/labels                                 |
 | `Label values`  | `label`\*, `metric`, `label filters` | Returns a list of label values for the `label` in all metrics, optionally filtered by metric and label filters.                                               | /api/v1/label/`label`/values or /api/v1/series |
-| `Metrics`       | `metric regex`                       | Returns a list of metrics matching the specified metric regex.                                                                                                | /api/v1/label/\_\_name\_\_/values              |
+| `Metrics`       | `metric regex`                       | Returns a list of metrics matching the specified metric regular expression.                                                                                   | /api/v1/label/\_\_name\_\_/values              |
 | `Query result`  | `query`                              | Returns a list of Prometheus query results for the `query`. Can include Prometheus functions such as `sum(go_goroutines)`.                                    | /api/v1/query                                  |
 | `Series query`  | series selector                      | Enter a metric with labels, only a metric, or only labels (for example, `go_goroutines{instance="localhost:9090"}`). Returns a list of matching time series.  | /api/v1/series                                 |
 | `Classic query` | classic query string                 | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
@@ -153,7 +153,7 @@ Here, `scrape_interval` refers to the `min step` setting (also known as `query_i
 
 The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape interval`.
 
-For details, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+For details, refer to the Grafana blog post [`$__rate_interval` for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## Choose a variable syntax
 
@@ -162,7 +162,7 @@ The Prometheus data source supports two variable syntaxes for use in the **Query
 - `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$__rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
 - `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])`
 
-If you've enabled the `Multi-value` or `Include all value` options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.
+If you've enabled the `Multi-value` or `Include all value` options, Grafana converts the labels from plain text to a regular-expression-compatible string, which requires you to use `=~` instead of `=`.
 
 ## Use the filters variable type
 

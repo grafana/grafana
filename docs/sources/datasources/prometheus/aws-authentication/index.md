@@ -34,7 +34,7 @@ SigV4 authentication in the core Prometheus data source is deprecated. Use the d
 - Have your Amazon Managed Service for Prometheus workspace endpoint URL ready. You can find this in the AWS Console under the Amazon Managed Service for Prometheus workspace summary.
 - Depending on your chosen authentication method, have one of the following ready:
   - AWS access key ID and secret access key
-  - A credentials file path
+  - A path to a credentials file
   - An IAM role ARN (if using assume role)
 
 ## Configure SigV4 authentication
@@ -139,7 +139,7 @@ To revert the migration:
 1. Disable the `prometheusTypeMigration` feature toggle. For more information on feature toggles, refer to [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#manage-feature-toggles).
 2. Obtain a bearer token that has `read` and `write` permissions for your Grafana data source API. For more information on the data source API, refer to [Data source API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/).
 3. Run the script below. Make sure to provide your Grafana URL and bearer token.
-4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with "datasource/migrate-prometheus-type".
+4. (Optional) Report the issue you were experiencing on the [Grafana repository](https://github.com/grafana/grafana/issues). Tag the issue with `datasource/migrate-prometheus-type`.
 
 ```bash
 #!/bin/bash
