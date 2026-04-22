@@ -102,6 +102,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
+| `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |

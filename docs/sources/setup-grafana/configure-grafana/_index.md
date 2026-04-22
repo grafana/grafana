@@ -21,7 +21,7 @@ Grafana has default and custom configuration files.
 
 You can customize your Grafana instance by modifying the custom configuration file or by using environment variables.
 
-- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
+- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
 - After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file and restart Grafana for your changes to take effect.
 
 {{< admonition type="note" >}}
@@ -877,6 +877,8 @@ This also limits the refresh interval options in Explore.
 #### `default_home_dashboard_path`
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+
+The file may contain either a classic dashboard JSON or a Kubernetes-format dashboard resource exported from the `dashboard.grafana.app` API (with top-level `apiVersion`, `kind`, `metadata` and `spec` fields). The Kubernetes-format is required for `v2` dashboard schemas.
 
 {{< admonition type="note" >}}
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
@@ -1774,6 +1776,20 @@ For more information about the Grafana alerts, refer to [Grafana Alerting](../..
 Enable or disable Grafana Alerting. The default value is `true`.
 
 Alerting rules migrated from dashboards and panels include a link back via the `annotations`.
+
+#### `allowed_integrations`
+
+Comma-separated list of contact point integration types to allow. If empty, all types are allowed.
+
+Valid types:
+
+```
+prometheus-alertmanager, dingding, discord, email, googlechat, jira, kafka,
+mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
+telegram, threema, victorops, webex, webhook, wecom
+```
+
+Changing this setting does not affect existing integrations of a now-disallowed type. They remain in the Alertmanager configuration and continue to deliver notifications. However, any attempt to create or modify such a contact point through the UI or API returns a validation error, so they become effectively read-only until the type is re-allowed or the contact point is deleted. As provisioning files are validated at startup, a disallowed type there prevents Grafana from starting.
 
 #### `disabled_orgs`
 

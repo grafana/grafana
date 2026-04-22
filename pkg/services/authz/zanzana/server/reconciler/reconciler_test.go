@@ -44,8 +44,11 @@ func (s *stubServer) ListAllStores(context.Context) ([]zanzana.StoreInfo, error)
 func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
 }
+func (s *stubServer) ReadTuples(context.Context, *zanzana.StoreInfo, *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	return &openfgav1.ReadResponse{}, nil
+}
 func (s *stubServer) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return &mockOpenFGAServer{}
+	return nil
 }
 func (s *stubServer) GetOrCreateStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
 	s.getOrCreateCalls.Add(1)

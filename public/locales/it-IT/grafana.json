@@ -4400,12 +4400,13 @@
       "button-label": "Seleziona la cartella",
       "clear-selection": "Cancella selezione",
       "empty-message": "Nessuna cartella trovata",
-      "error-title": "Errore durante il caricamento delle cartelle",
+      "error-title": "",
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
       "shared-with-me": "Condiviso con me",
       "team-folders": "Cartelle del team",
+      "team-folders-error-title": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotazioni e avvisi",
         "dashboard": "Dashboard",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Collegamenti",
         "local-variable": "Variabile locale",
         "multiple-elements": "Elementi multipli",
@@ -5650,8 +5653,10 @@
           "title": "Intestazione di riga"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Aggiungi variabile",
         "title": "Variabili"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Nascondi intestazione riga",
           "title": "Titolo"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabili"
         },
@@ -6361,6 +6369,9 @@
             "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
             "title": "Ripeti per variabile"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "Variabili"
@@ -7074,6 +7085,16 @@
       "sql-name": "Trasforma con SQL",
       "sql-transformation-description": "Manipola i tuoi dati utilizzando una sintassi simile a quella di MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Annulla",
       "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
       "copy-json-to-clipboard": "Copia JSON negli appunti",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Percorso file:</strong> {{filePath}}",
       "form-loading-error": "Errore durante il caricamento del modulo",
       "form-loading-error-unknown": "Si è verificato un errore inatteso durante il caricamento del modulo.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descrizione",
       "label-target-folder": "Cartella di destinazione",
       "label-title": "Titolo",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Salva la dashboard prima di creare regole di avviso",
       "new-alert-rule": "Nuova regola di avviso",
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Consente di selezionare più valori contemporaneamente",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Impostazioni"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -11087,6 +11124,12 @@
       "update-all": "Aggiorna tutto",
       "num-affected_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>",
       "num-affected_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12956,9 +12999,7 @@
       "update-available": "Aggiornamento disponibile!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "L'utilizzo del componente aggiuntivo richiede il nuovo indice di ricerca per trovare l'utilizzo tra le dashboard. Abilita il toggle della funzionalità",
       "num-usages": "{{pluginName}} è utilizzato <2>{{numUsages}}</2> volte.",
-      "title-missing-feature-toggle-panel-title-search": "Toggle della funzionalità mancante: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} non è ancora utilizzato in nessuna dashboard"
     },
     "plugins-errors-info": {

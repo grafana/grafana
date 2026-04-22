@@ -709,10 +709,10 @@ export interface FeatureToggles {
   */
   zanzanaNoLegacyClient?: boolean;
   /**
-  * Search users permissions using Zanzana.
+  * Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
   * @default false
   */
-  zanzanaSearchUsersPermissions?: boolean;
+  zanzanaMergeUserPermissions?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
@@ -899,11 +899,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingNotificationsStepMode?: boolean;
-  /**
-  * Enable unified storage search UI
-  * @default false
-  */
-  unifiedStorageSearchUI?: boolean;
   /**
   * Enables cross cluster search in the Elasticsearch data source
   * @default false
@@ -1701,11 +1696,6 @@ export interface FeatureToggles {
   * @default false
   */
   profilesHeatmap?: boolean;
-  /**
-  * Enables the query service to do query caching
-  * @default false
-  */
-  queryServiceQueryCaching?: boolean;
   /**
   * Enables the time seeker in traces drilldown
   * @default false
