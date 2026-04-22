@@ -40,7 +40,7 @@ export const navIndex: NavIndex = {
       {
         id: 'dashboards/snapshots',
         text: 'Snapshots',
-        subTitle: 'Interactive, publically available, point-in-time representations of dashboards',
+        subTitle: 'Interactive, publicly available, point-in-time representations of dashboards',
         icon: 'camera',
         url: '/dashboard/snapshots',
       },
@@ -70,7 +70,7 @@ export const navIndex: NavIndex = {
   'dashboards/snapshots': {
     id: 'dashboards/snapshots',
     text: 'Snapshots',
-    subTitle: 'Interactive, publically available, point-in-time representations of dashboards',
+    subTitle: 'Interactive, publicly available, point-in-time representations of dashboards',
     icon: 'camera',
     url: '/dashboard/snapshots',
   },

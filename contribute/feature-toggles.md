@@ -159,7 +159,7 @@ If using non-boolean flags (a unique feature of the new feature flag system), ex
 
 For advanced, non-React contexts (utilities, class methods, callbacks), you can use the OpenFeature client directly.
 
-However, because this is seperate from the React render loop there are important caveats you must be aware of:
+However, because this is separate from the React render loop there are important caveats you must be aware of:
 
 - Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialised until you call a flag otherwise you will only get the default value
 - Flag values can change over the lifetime of the session, so do not store or cache the result. Always evaluate flags just in time when you use them, preferably in the if statement, for example.
