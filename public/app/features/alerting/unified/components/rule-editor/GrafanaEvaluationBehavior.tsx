@@ -15,6 +15,7 @@ import {
   Input,
   Label,
   Modal,
+  RadioButtonGroup,
   Select,
   Stack,
   Switch,
@@ -49,6 +50,10 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+
+export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+export const MAX_GROUP_RESULTS = 1000;
+type EvaluationMode = 'new' | 'legacy';
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
@@ -164,11 +169,27 @@ export function GrafanaEvaluationBehaviorStep({
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
-  const [showGroupSelection, setShowGroupSelection] = useState(Boolean(group) && !isEditingUngroupedRule);
+  const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const [evaluationMode, setEvaluationMode] = useState<EvaluationMode>(
+    Boolean(group) && !isEditingUngroupedRule ? 'legacy' : 'new'
+  );
+  const showGroupSelection = evaluationMode === 'legacy';
+
+  const evaluationModeOptions: Array<SelectableValue<EvaluationMode>> = [
+    {
+      label: t('alerting.rule-form.evaluation.mode.new', 'Set interval'),
+      value: 'new',
+    },
+    {
+      label: t('alerting.rule-form.evaluation.mode.legacy', 'Use groups (Legacy)'),
+      value: 'legacy',
+    },
+  ];
 
   useEffect(() => {
     if (group && !isUngroupedRuleGroup(group)) {
-      setShowGroupSelection(true);
+      setLastSelectedGroup(group);
+      setEvaluationMode('legacy');
     }
   }, [group]);
 
@@ -194,10 +215,21 @@ export function GrafanaEvaluationBehaviorStep({
     : t('alerting.rule-form.evaluation.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
-  const onUseExplicitInterval = () => {
-    setShowGroupSelection(false);
-    setValue('group', '');
-    clearErrors('group');
+  const onEvaluationModeChange = (value: EvaluationMode) => {
+    setEvaluationMode(value);
+
+    if (value === 'new') {
+      if (group && !isUngroupedRuleGroup(group)) {
+        setLastSelectedGroup(group);
+      }
+      setValue('group', '');
+      clearErrors('group');
+      return;
+    }
+
+    if (!getValues('group') && lastSelectedGroup) {
+      setValue('group', lastSelectedGroup);
+    }
   };
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
@@ -217,43 +249,32 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+        {!isEditingUngroupedRule && (
+          <Field noMargin>
+            <RadioButtonGroup
+              value={evaluationMode}
+              options={evaluationModeOptions}
+              onChange={onEvaluationModeChange}
+              className={styles.modeField}
+            />
+          </Field>
+        )}
         {!showGroupSelection && (
           <Stack direction="column" gap={1.5}>
-            <Stack direction="row" alignItems="flex-end" gap={1}>
-              <Field
-                noMargin
-                label={t('alerting.rule-form.evaluation.interval-no-group', 'Evaluation interval')}
-                className={styles.inlineField}
-                error={errors.evaluateEvery?.message}
-                invalid={Boolean(errors.evaluateEvery?.message)}
-                htmlFor="evaluate-every-no-group"
-              >
-                <Input
-                  id="evaluate-every-no-group"
-                  width={8}
-                  {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
-                />
-              </Field>
-              {!isEditingUngroupedRule && (
-                <Box gap={1} display={'flex'} alignItems={'center'}>
-                  <Text color="secondary">
-                    <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-                  </Text>
-                  <Button
-                    type="button"
-                    icon="plus"
-                    variant="secondary"
-                    fill="outline"
-                    onClick={() => setShowGroupSelection(true)}
-                    disabled={!folder?.uid}
-                  >
-                    <Trans i18nKey="alerting.rule-form.evaluation.show-group-selection-legacy">
-                      Use Groups (Legacy)
-                    </Trans>
-                  </Button>
-                </Box>
-              )}
-            </Stack>
+            <Field
+              noMargin
+              label={t('alerting.rule-form.evaluation.interval-no-group', 'Evaluation interval')}
+              className={styles.inlineField}
+              error={errors.evaluateEvery?.message}
+              invalid={Boolean(errors.evaluateEvery?.message)}
+              htmlFor="evaluate-every-no-group"
+            >
+              <Input
+                id="evaluate-every-no-group"
+                width={8}
+                {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
+              />
+            </Field>
             <EvaluationGroupQuickPick
               currentInterval={evaluateEvery}
               onSelect={(interval) => setValue('evaluateEvery', interval)}
@@ -336,14 +357,6 @@ export function GrafanaEvaluationBehaviorStep({
                 data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
               >
                 <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-              </Button>
-            </Box>
-            <Box gap={1} display={'flex'} alignItems={'center'}>
-              <Text color="secondary">
-                <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-              </Text>
-              <Button type="button" variant="secondary" fill="outline" onClick={onUseExplicitInterval}>
-                <Trans i18nKey="alerting.rule-form.evaluation.use-explicit-interval">No group</Trans>
               </Button>
             </Box>
             {isCreatingEvaluationGroup && (
@@ -842,6 +855,9 @@ function getDescription(isGrafanaRecordingRule: boolean) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  modeField: css({
+    marginBottom: theme.spacing(1.5),
+  }),
   inlineField: css({
     marginBottom: 0,
   }),
