@@ -9,7 +9,6 @@ import type AzureResourceGraphDatasource from '../azure_resource_graph/azure_res
 import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
-  findRow,
   parseMultipleResourceDetails,
   parseResourceDetails,
   parseResourceURI,
@@ -62,32 +61,28 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
       const rgUriOf = (s: AzureMonitorResource) => `/subscriptions/${s.subscription}/resourceGroups/${s.resourceGroup}`;
 
-      const resUriOf = (s: AzureMonitorResource) => resourceToString(s);
-
       const hasSubAndRG = (
         s: AzureMonitorResource
       ): s is AzureMonitorResource & { subscription: string; resourceGroup: string } =>
         Boolean(s.subscription && s.resourceGroup);
 
-      const subsToFetch = uniq(
-        currentSelection
-          .filter(hasSubAndRG)
-          .filter((s) => !findRow(subscriptions, rgUriOf(s)))
-          .map(({ subscription }) => subscription)
-      );
+      const hasResource = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string; resourceName: string } =>
+        hasSubAndRG(s) && Boolean(s.resourceName);
 
-      const rgUrisToFetch = uniq(
-        currentSelection
-          .filter((s) => s.subscription && s.resourceGroup && s.resourceName && !findRow(subscriptions, resUriOf(s)))
-          .map((s) => rgUriOf(s))
-      );
+      const subsToFetch = uniq(currentSelection.filter(hasSubAndRG).map(({ subscription }) => subscription));
+
+      const rgUrisToFetch = uniq(currentSelection.filter(hasResource).map(rgUriOf));
 
       const [groupsResults, resourcesResults] = await Promise.all([
         Promise.all(
-          subsToFetch.map(async (sub) => [sub, await this.getResourceGroupsBySubscriptionId(sub, type)] as const)
+          subsToFetch.map((sub) => this.getResourceGroupsBySubscriptionId(sub, type).then((rgs) => [sub, rgs] as const))
         ),
         Promise.all(
-          rgUrisToFetch.map(async (rgUri) => [rgUri, await this.getResourcesForResourceGroup(rgUri, type)] as const)
+          rgUrisToFetch.map((rgUri) =>
+            this.getResourcesForResourceGroup(rgUri, type).then((res) => [rgUri, res] as const)
+          )
         ),
       ]);
 
@@ -262,7 +257,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     | project subscriptionName=name, subscriptionId
 
     | join kind=leftouter (
-      resourcecontainers
+      resourcecontainers            
             | where type == "microsoft.resources/subscriptions/resourcegroups"
             | where id =~ "${resourceGroupURI}"
             | project resourceGroupName=name, resourceGroup, subscriptionId
