@@ -322,28 +322,28 @@ function ComparePlots({
 
   return (
     <>
-      <h3>Test: {payload.testName}</h3>
+      <h3 className="compare-title">Test: {payload.testName}</h3>
       <div className="wrap">
-        <div className={'expected'}>
+        <div className="plot-panel expected">
           <div className={'plot-label'}>Expected</div>
           <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
         </div>
 
-        <div className={'actual'}>
+        <div className="plot-panel actual">
           <div className={'plot-label'}>Actual</div>
           <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
         </div>
-      </div>
-      <div>
-        <DiffCanvas
-          width={width}
-          height={height}
-          expectedCanvasRef={expectedUPlotInstance}
-          actualCanvasRef={actualUPlotInstance}
-          expectedEvents={payload.expected}
-          actualEvents={payload.actual}
-          setupEvents={payload.uPlotCanvasEvents}
-        />
+        <div>
+          <DiffCanvas
+            width={width}
+            height={height}
+            expectedCanvasRef={expectedUPlotInstance}
+            actualCanvasRef={actualUPlotInstance}
+            expectedEvents={payload.expected}
+            actualEvents={payload.actual}
+            setupEvents={payload.uPlotCanvasEvents}
+          />
+        </div>
       </div>
     </>
   );
@@ -421,11 +421,16 @@ function DiffCanvas({
   }, [diffImageData, hasDiff, height, width]);
 
   if (!hasDiff) {
-    return <div>No visual differences!</div>;
+    return (
+      <div className="plot-panel diff diff-empty">
+        <div className={'plot-label'}>Diff</div>
+        <div className="compare-empty-diff">No visual differences</div>
+      </div>
+    );
   }
 
   return (
-    <div className={'diff'}>
+    <div className="plot-panel diff">
       <div className={'plot-label'}>Diff</div>
       <canvas ref={diffCanvasRef} className="canvas" id="diff" width={width} height={height}></canvas>
     </div>

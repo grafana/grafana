@@ -12,9 +12,12 @@
   }
 }
 .wrap {
-  /*background: #eee;*/
+  --compare-gap: 12px;
   position: relative;
   display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--compare-gap);
+  row-gap: var(--compare-gap);
 }
 
 .uplot,
@@ -142,6 +145,9 @@
 .compare-blocked {
   max-width: 56rem;
   padding: 1rem;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #fbfcfe;
 }
 .compare-error {
   color: #c62828;
@@ -158,6 +164,10 @@
   font-size: 12px;
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  background: #fff;
 }
 .compare-actions {
   display: flex;
@@ -168,4 +178,41 @@
 }
 .compare-file-label input[type="file"] {
   margin-left: 0.35rem;
+}
+
+.compare-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.plot-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.plot-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #44546a;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.canvas {
+  border-radius: 4px;
+  background: #fff;
+}
+
+.compare-empty-diff {
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+  color: #5f6b7d;
+  font-size: 13px;
 }
