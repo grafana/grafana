@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../api/prometheusApi';
 import { useContinuousPagination } from '../hooks/usePagination';
@@ -25,6 +26,7 @@ export interface GrafanaGroupLoaderProps {
    * Ruler response might contain different number of rules, but in most cases what we get from Prometheus is fine
    */
   expectedRulesCount?: number;
+  ruleType?: PromRuleType;
 }
 
 /**
@@ -36,6 +38,7 @@ export function GrafanaGroupLoader({
   groupIdentifier,
   namespaceName,
   expectedRulesCount = 3, // 3 is a random number. Usually we get the number of rules from Prometheus response
+  ruleType,
 }: GrafanaGroupLoaderProps) {
   const styles = useStyles2(getStyles);
 
@@ -44,6 +47,7 @@ export function GrafanaGroupLoader({
       folderUid: groupIdentifier.namespace.uid,
       groupName: groupIdentifier.groupName,
       limitAlerts: 0,
+      type: ruleType,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );

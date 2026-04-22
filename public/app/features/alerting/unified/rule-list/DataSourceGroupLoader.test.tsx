@@ -5,7 +5,7 @@ import { type DataSourceInstanceSettings } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type DataSourceRuleGroupIdentifier, type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { type PromRuleGroupDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleGroupDTO, PromRuleType, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
@@ -63,6 +63,28 @@ describe('DataSourceGroupLoader', () => {
         const ruleLink = within(ruleListItems[index]).getByRole('link', { name: `prom-only-rule-${index + 1}` });
         expect(ruleLink).toHaveAttribute('href', expect.stringContaining(createViewLinkV2(groupIdentifier, rule)));
       });
+    });
+
+    it('should filter out recording rules when ruleType is PromRuleType.Alerting', async () => {
+      const mixedGroup: PromRuleGroupDTO = {
+        ...promGroup,
+        rules: [
+          alertingFactory.prometheus.rule.build({ name: 'an-alerting-rule' }),
+          {
+            name: 'a-recording-rule',
+            query: 'vector(1)',
+            type: PromRuleType.Recording,
+            health: 'ok',
+            labels: {},
+          },
+        ],
+      };
+      setPrometheusRules(vanillaPromDs, [mixedGroup]);
+
+      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} ruleType={PromRuleType.Alerting} />);
+
+      expect(await ui.ruleItem('an-alerting-rule').find()).toBeInTheDocument();
+      expect(ui.ruleItem('a-recording-rule').query()).not.toBeInTheDocument();
     });
 
     it('should not render rule action buttons', async () => {

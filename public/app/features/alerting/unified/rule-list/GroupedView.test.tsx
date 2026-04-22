@@ -3,6 +3,7 @@ import { byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
@@ -83,6 +84,49 @@ describe('RuleList - GroupedView', () => {
     expect(secondPageGroups[0]).toHaveTextContent('test-group-41');
     expect(secondPageGroups[24]).toHaveTextContent('test-group-65');
     expect(secondPageGroups[39]).toHaveTextContent('test-group-80');
+  });
+
+  describe('ruleType filtering (external data source)', () => {
+    it('should hide recording rules and hide groups that only contain recording rules when ruleType is Alerting', async () => {
+      const alertingGroup: PromRuleGroupDTO = {
+        name: 'alerting-group',
+        file: 'mixed-namespace',
+        interval: 10,
+        rules: [
+          alertingFactory.prometheus.rule.build({ name: 'alerting-rule-1' }),
+          {
+            name: 'mixed-recording-rule',
+            query: 'vector(1)',
+            type: PromRuleType.Recording,
+            health: 'ok',
+            labels: {},
+          },
+        ],
+      };
+      const recordingOnlyGroup: PromRuleGroupDTO = {
+        name: 'recording-only-group',
+        file: 'mixed-namespace',
+        interval: 10,
+        rules: [
+          {
+            name: 'recording-only-rule',
+            query: 'vector(2)',
+            type: PromRuleType.Recording,
+            health: 'ok',
+            labels: {},
+          },
+        ],
+      };
+      setPrometheusRules(prometheusDs, [alertingGroup, recordingOnlyGroup]);
+      setPrometheusRules(mimirDs, []);
+
+      render(<GroupedView ruleType={PromRuleType.Alerting} />);
+
+      const prometheusSection = await ui.dsSection(/Prometheus/).find();
+      expect(await ui.group('alerting-group').find(prometheusSection)).toBeInTheDocument();
+      // group whose only rule is a recording rule should be hidden
+      expect(ui.group('recording-only-group').query(prometheusSection)).not.toBeInTheDocument();
+    });
   });
 
   it('should disable next button when there is no more data', async () => {

@@ -10,6 +10,7 @@ import { type DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   type PromRuleDTO,
   type PromRuleGroupDTO,
+  PromRuleType,
   type RulerCloudRuleDTO,
   type RulerRuleGroupDTO,
   type RulesSourceApplication,
@@ -21,7 +22,7 @@ import { prometheusApi } from '../api/prometheusApi';
 import { useContinuousPagination } from '../hooks/usePagination';
 import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { hashRule } from '../utils/rule-id';
-import { getRuleName, isCloudRulerGroup } from '../utils/rules';
+import { getRuleName, isCloudRulerGroup, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
@@ -42,6 +43,25 @@ export interface DataSourceGroupLoaderProps {
    * Ruler response might contain different number of rules, but in most cases what we get from Prometheus is fine
    */
   expectedRulesCount?: number;
+  ruleType?: PromRuleType;
+}
+
+function filterPromRulesByType(rules: PromRuleDTO[], ruleType?: PromRuleType): PromRuleDTO[] {
+  if (!ruleType) {
+    return rules;
+  }
+  return ruleType === PromRuleType.Alerting
+    ? rules.filter(prometheusRuleType.alertingRule)
+    : rules.filter(prometheusRuleType.recordingRule);
+}
+
+function filterRulerRulesByType(rules: RulerCloudRuleDTO[], ruleType?: PromRuleType): RulerCloudRuleDTO[] {
+  if (!ruleType) {
+    return rules;
+  }
+  return ruleType === PromRuleType.Alerting
+    ? rules.filter(rulerRuleType.dataSource.alertingRule)
+    : rules.filter(rulerRuleType.dataSource.recordingRule);
 }
 
 /**
@@ -49,7 +69,11 @@ export interface DataSourceGroupLoaderProps {
  * Displays a loading skeleton while the data is being fetched.
  * Polls the Prometheus endpoint every 20 seconds to refresh the data.
  */
-export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 }: DataSourceGroupLoaderProps) {
+export function DataSourceGroupLoader({
+  groupIdentifier,
+  expectedRulesCount = 3,
+  ruleType,
+}: DataSourceGroupLoaderProps) {
   const { namespace, groupName } = groupIdentifier;
   const namespaceName = namespace.name;
 
@@ -123,22 +147,27 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
   // There should be always only one group in the response but some Prometheus-compatible data sources
   // implement different filter parameters
   const promGroup = promResponse?.data.groups.find((g) => g.file === namespaceName && g.name === groupName);
-  if (dsFeatures?.rulerConfig && rulerGroup && isCloudRulerGroup(rulerGroup) && promGroup) {
+  const filteredPromRules = promGroup ? filterPromRulesByType(promGroup.rules, ruleType) : [];
+  const filteredPromGroup = promGroup ? { ...promGroup, rules: filteredPromRules } : undefined;
+
+  if (dsFeatures?.rulerConfig && rulerGroup && isCloudRulerGroup(rulerGroup) && filteredPromGroup) {
+    const filteredRulerRules = filterRulerRulesByType(rulerGroup.rules, ruleType);
+    const filteredRulerGroup: RulerRuleGroupDTO<RulerCloudRuleDTO> = { ...rulerGroup, rules: filteredRulerRules };
     return (
       <RulerBasedGroupRules
         groupIdentifier={groupIdentifier}
-        promGroup={promGroup}
-        rulerGroup={rulerGroup}
+        promGroup={filteredPromGroup}
+        rulerGroup={filteredRulerGroup}
         application={dsFeatures.application}
       />
     );
   }
 
   // Data source without ruler
-  if (promGroup) {
+  if (filteredPromGroup) {
     return (
       <>
-        {promGroup.rules.map((rule) => (
+        {filteredPromGroup.rules.map((rule) => (
           <DataSourceRuleListItem
             key={hashRule(rule)}
             rule={rule}

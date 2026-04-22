@@ -32,6 +32,7 @@ export function RecordingRulesTab() {
             <GroupedView
               groupFilter={recordingFilterState.groupName}
               namespaceFilter={recordingFilterState.namespace}
+              ruleType={PromRuleType.Recording}
             />
           )}
         </Box>

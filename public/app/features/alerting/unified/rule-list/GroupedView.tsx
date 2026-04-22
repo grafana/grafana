@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { type PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
@@ -19,9 +20,10 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleType?: PromRuleType;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+export function GroupedView({ groupFilter, namespaceFilter, ruleType }: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 
@@ -34,8 +36,9 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
         <PaginatedGrafanaLoader
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          ruleType={ruleType}
           onLoadingStateChange={updateState}
-          key={`${groupFilter}-${namespaceFilter}`}
+          key={`${groupFilter}-${namespaceFilter}-${ruleType ?? ''}`}
         />
       </DataSourceErrorBoundary>
       {externalRuleSources.map((ruleSource) => {
@@ -45,6 +48,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
             rulesSourceIdentifier={ruleSource}
             groupFilter={groupFilter}
             namespaceFilter={namespaceFilter}
+            ruleType={ruleType}
             onLoadingStateChange={updateState}
           />
         );
@@ -58,6 +62,7 @@ interface DataSourceLoaderProps {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleType?: PromRuleType;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
@@ -69,6 +74,7 @@ function DataSourceLoader({
   rulesSourceIdentifier,
   groupFilter,
   namespaceFilter,
+  ruleType,
   onLoadingStateChange,
 }: DataSourceLoaderProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
@@ -95,6 +101,7 @@ function DataSourceLoader({
           application={dataSourceInfo.application}
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          ruleType={ruleType}
           onLoadingStateChange={onLoadingStateChange}
         />
       </DataSourceErrorBoundary>

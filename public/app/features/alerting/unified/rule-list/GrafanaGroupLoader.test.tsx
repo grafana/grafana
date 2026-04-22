@@ -261,6 +261,64 @@ describe('GrafanaGroupLoader', () => {
     expect(menuItems.length).toBe(7);
   });
 
+  it('should only render alerting rules when ruleType is PromRuleType.Alerting', async () => {
+    const recordingPromRule: GrafanaPromRuleDTO = {
+      name: 'my-recording-rule',
+      query: 'vector(1)',
+      uid: 'recording-rule-uid',
+      folderUid: grafanaRulerNamespace.uid,
+      isPaused: false,
+      health: 'ok',
+      type: PromRuleType.Recording,
+    };
+    const mixedGroup = rulerGroupToPromGroup(grafanaRulerGroup);
+    mixedGroup.rules = [...mixedGroup.rules, recordingPromRule];
+    setGrafanaPromRules([mixedGroup]);
+
+    const groupIdentifier = getGroupIdentifier(grafanaRulerGroup);
+
+    render(
+      <GrafanaGroupLoader
+        groupIdentifier={groupIdentifier}
+        namespaceName={grafanaRulerNamespace.name}
+        ruleType={PromRuleType.Alerting}
+      />
+    );
+
+    const alertingRule = grafanaRulerGroup.rules[0];
+    expect(await ui.ruleLink(alertingRule.grafana_alert.title).find()).toBeInTheDocument();
+    expect(ui.ruleLink(recordingPromRule.name).query()).not.toBeInTheDocument();
+  });
+
+  it('should only render recording rules when ruleType is PromRuleType.Recording', async () => {
+    const recordingPromRule: GrafanaPromRuleDTO = {
+      name: 'my-recording-rule',
+      query: 'vector(1)',
+      uid: 'recording-rule-uid',
+      folderUid: grafanaRulerNamespace.uid,
+      isPaused: false,
+      health: 'ok',
+      type: PromRuleType.Recording,
+    };
+    const mixedGroup = rulerGroupToPromGroup(grafanaRulerGroup);
+    mixedGroup.rules = [...mixedGroup.rules, recordingPromRule];
+    setGrafanaPromRules([mixedGroup]);
+
+    const groupIdentifier = getGroupIdentifier(grafanaRulerGroup);
+
+    render(
+      <GrafanaGroupLoader
+        groupIdentifier={groupIdentifier}
+        namespaceName={grafanaRulerNamespace.name}
+        ruleType={PromRuleType.Recording}
+      />
+    );
+
+    const alertingRule = grafanaRulerGroup.rules[0];
+    expect(await ui.ruleLink(recordingPromRule.name).find()).toBeInTheDocument();
+    expect(ui.ruleLink(alertingRule.grafana_alert.title).query()).not.toBeInTheDocument();
+  });
+
   it('should not render Analyze rule menu item when assistant is not available', async () => {
     mockUseAssistant.mockReturnValue({
       isLoading: false,

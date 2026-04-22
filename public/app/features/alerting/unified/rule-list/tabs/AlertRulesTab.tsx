@@ -29,7 +29,11 @@ export function AlertRulesTab() {
           {viewMode === 'list' ? (
             <FilterView filterState={alertFilterState} />
           ) : (
-            <GroupedView groupFilter={alertFilterState.groupName} namespaceFilter={alertFilterState.namespace} />
+            <GroupedView
+              groupFilter={alertFilterState.groupName}
+              namespaceFilter={alertFilterState.namespace}
+              ruleType={PromRuleType.Alerting}
+            />
           )}
         </Box>
       </Stack>

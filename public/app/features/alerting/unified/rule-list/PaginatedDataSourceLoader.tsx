@@ -8,11 +8,12 @@ import {
   type DataSourceRulesSourceIdentifier,
   type RuleGroup,
 } from 'app/types/unified-alerting';
-import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';
+import { prometheusRuleType } from '../utils/rules';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, type DataSourceSectionProps } from './components/DataSourceSection';
@@ -32,6 +33,7 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleType?: PromRuleType;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
@@ -40,9 +42,10 @@ export function PaginatedDataSourceLoader({
   application,
   groupFilter,
   namespaceFilter,
+  ruleType,
   onLoadingStateChange,
 }: LoaderProps) {
-  const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
+  const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}-${ruleType ?? ''}`;
 
   // Key is crucial. It resets the generator when filters change.
   return (
@@ -52,6 +55,7 @@ export function PaginatedDataSourceLoader({
       application={application}
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
+      ruleType={ruleType}
       onLoadingStateChange={onLoadingStateChange}
     />
   );
@@ -62,6 +66,7 @@ function PaginatedGroupsLoader({
   application,
   groupFilter,
   namespaceFilter,
+  ruleType,
   onLoadingStateChange,
 }: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
@@ -102,8 +107,16 @@ function PaginatedGroupsLoader({
       contactPoint: undefined,
       ruleSource: undefined,
     });
-    return (group: PromRuleGroupDTO) => groupMatches(group);
-  }, [namespaceFilter, groupFilter]);
+    const hasRuleOfType = (group: PromRuleGroupDTO) => {
+      if (!ruleType) {
+        return true;
+      }
+      const predicate =
+        ruleType === PromRuleType.Alerting ? prometheusRuleType.alertingRule : prometheusRuleType.recordingRule;
+      return group.rules.some(predicate);
+    };
+    return (group: PromRuleGroupDTO) => groupMatches(group) && hasRuleOfType(group);
+  }, [namespaceFilter, groupFilter, ruleType]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
@@ -145,6 +158,7 @@ function PaginatedGroupsLoader({
                 group={group}
                 rulesSourceIdentifier={rulesSourceIdentifier}
                 namespaceName={namespace}
+                ruleType={ruleType}
               />
             ))}
           </ListSection>
@@ -165,9 +179,10 @@ interface RuleGroupListItemProps {
   group: RuleGroup;
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   namespaceName: string;
+  ruleType?: PromRuleType;
 }
 
-function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: RuleGroupListItemProps) {
+function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName, ruleType }: RuleGroupListItemProps) {
   const groupIdentifier: DataSourceRuleGroupIdentifier = useMemo(
     () => ({
       rulesSource: rulesSourceIdentifier,
@@ -193,7 +208,11 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
         />
       }
     >
-      <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
+      <DataSourceGroupLoader
+        groupIdentifier={groupIdentifier}
+        expectedRulesCount={group.rules.length}
+        ruleType={ruleType}
+      />
     </ListGroup>
   );
 }

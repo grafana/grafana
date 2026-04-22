@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
 import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO, type PromRuleType } from 'app/types/unified-alerting-dto';
 
 import MoreButton from '../components/MoreButton';
 import { WithReturnButton } from '../components/WithReturnButton';
@@ -34,11 +34,12 @@ import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimi
 interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  ruleType?: PromRuleType;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
-  const key = `${groupFilter}-${namespaceFilter}`;
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, ruleType, onLoadingStateChange }: LoaderProps) {
+  const key = `${groupFilter}-${namespaceFilter}-${ruleType ?? ''}`;
 
   // Key is crucial. It resets the generator when filters change.
   return (
@@ -46,15 +47,19 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoading
       key={key}
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
+      ruleType={ruleType}
       onLoadingStateChange={onLoadingStateChange}
     />
   );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, ruleType, onLoadingStateChange }: LoaderProps) {
   // When backend filters are enabled, groupFilter is handled on the backend
-  const filterState = { namespace: namespaceFilter, groupName: groupFilter };
-  const { backendFilter } = getGrafanaFilter(filterState);
+  const filterState = { namespace: namespaceFilter, groupName: groupFilter, ruleType };
+  const { backendFilter: baseBackendFilter } = getGrafanaFilter(filterState);
+  // rule_type is always supported by the Grafana API and the client-side group filter does not
+  // examine it, so pass it unconditionally — avoids empty group headers when backend filters are off.
+  const backendFilter = { ...baseBackendFilter, type: ruleType };
 
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const needsClientSideFiltering = hasGrafanaClientSideFilters(filterState);
@@ -158,6 +163,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
                   key={`grafana-ns-${folderUid}-${group.name}`}
                   group={group}
                   namespaceName={folderName}
+                  ruleType={ruleType}
                 />
               ))}
             </ListSection>
@@ -180,9 +186,10 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
 interface GrafanaRuleGroupListItemProps {
   group: GrafanaPromRuleGroupDTO;
   namespaceName: string;
+  ruleType?: PromRuleType;
 }
 
-export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
+export function GrafanaRuleGroupListItem({ group, namespaceName, ruleType }: GrafanaRuleGroupListItemProps) {
   const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
     () => ({
       groupName: group.name,
@@ -210,7 +217,7 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       href={detailsLink}
       isOpen={false}
     >
-      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
+      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} ruleType={ruleType} />
     </ListGroup>
   );
 }
