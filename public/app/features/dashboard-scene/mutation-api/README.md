@@ -774,6 +774,52 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 }
 ```
 
+**Add an AdhocVariable with group-by enabled:**
+
+```json
+{
+  "type": "ADD_VARIABLE",
+  "payload": {
+    "variable": {
+      "kind": "AdhocVariable",
+      "group": "prometheus",
+      "datasource": { "name": "My Prometheus" },
+      "spec": {
+        "name": "filters",
+        "label": "Filters",
+        "enableGroupBy": true
+      }
+    }
+  }
+}
+```
+
+With `enableGroupBy: true`, users can add group-by dimensions to the filter bar. A group-by row uses `operator: "groupBy"` in the `filters` array:
+
+```json
+{
+  "type": "UPDATE_VARIABLE",
+  "payload": {
+    "name": "filters",
+    "variable": {
+      "kind": "AdhocVariable",
+      "group": "prometheus",
+      "datasource": { "name": "My Prometheus" },
+      "spec": {
+        "name": "filters",
+        "enableGroupBy": true,
+        "filters": [
+          { "key": "job", "operator": "=", "value": "api-server" },
+          { "key": "namespace", "operator": "groupBy", "value": "" }
+        ]
+      }
+    }
+  }
+}
+```
+
+The `"groupBy"` operator on a filter row tells Grafana to group query results by that dimension rather than filter by it.
+
 ### `UPDATE_VARIABLE`
 
 **Request:**

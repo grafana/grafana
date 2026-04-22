@@ -97,7 +97,11 @@ const variableSortSchema = z
 
 const adHocFilterSchema = z.object({
   key: z.string().describe('Filter key (dimension name)'),
-  operator: z.string().describe('Comparison operator (e.g., "=", "!=", "=~")'),
+  operator: z
+    .string()
+    .describe(
+      'Comparison operator (e.g., "=", "!=", "=~"). Use "groupBy" to add a group-by dimension (only valid when the parent AdhocVariable has enableGroupBy: true).'
+    ),
   value: z.string().describe('Filter value'),
   values: z.array(z.string()).optional().describe('Multiple filter values'),
   keyLabel: z.string().optional().describe('Display label for the key'),
@@ -373,6 +377,15 @@ export const adhocVariableKindSchema = z
         .optional()
         .default(true)
         .describe('Flag indicating if custom filter values can be entered'),
+      enableGroupBy: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe(
+          'When true, enables "Group by" functionality on this ad-hoc filter variable. ' +
+            'Requires the dashboardUnifiedDrilldownControls feature flag. ' +
+            'Users can then add group-by dimensions alongside regular filters using operator "groupBy".'
+        ),
     }),
   })
   .describe(
