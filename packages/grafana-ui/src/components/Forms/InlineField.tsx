@@ -94,7 +94,7 @@ export const InlineField = ({
     <Wrapper className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
       <div className={styles.childContainer}>
-        {/* @deprecated — use FieldContext instead */}
+        {/* @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead */}
         {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
         {invalid && error && (
           <div

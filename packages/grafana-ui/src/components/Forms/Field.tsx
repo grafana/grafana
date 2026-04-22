@@ -107,7 +107,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       'aria-describedby': invalid && error ? errorId : undefined,
     };
 
-    // @deprecated — use FieldContext instead
+    // @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead
     const childProps: ChildProps = deleteUndefinedProps({ invalid, disabled, loading });
     if (invalid && error) {
       // this should probably use aria-errormessage, but seems like voiceover still doesn't support that...

@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 export interface FieldContextType {
-  id: string;
+  id?: string;
   invalid?: boolean;
   disabled?: boolean;
   loading?: boolean;
@@ -9,7 +9,7 @@ export interface FieldContextType {
   'aria-labelledby'?: string;
 }
 
-export const FieldContext = createContext<FieldContextType>({ id: '' });
+export const FieldContext = createContext<FieldContextType>({});
 FieldContext.displayName = 'FieldContext';
 
 export const useFieldContext = (): FieldContextType => useContext(FieldContext);
