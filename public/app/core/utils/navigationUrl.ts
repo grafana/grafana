@@ -7,8 +7,14 @@ import { contextSrv } from '../services/context_srv';
  */
 export function appendOrgId(path: string): string {
   const orgId = contextSrv.user.orgId;
-  if (!orgId || path.includes('orgId=')) {
+  if (!orgId) {
     return path;
   }
-  return path + (path.includes('?') ? '&' : '?') + `orgId=${orgId}`;
+  const hashIndex = path.indexOf('#');
+  const pathAndQuery = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+  const fragment = hashIndex >= 0 ? path.slice(hashIndex) : '';
+  if (pathAndQuery.includes('orgId=')) {
+    return path;
+  }
+  return pathAndQuery + (pathAndQuery.includes('?') ? '&' : '?') + `orgId=${orgId}` + fragment;
 }

@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import { Link } from 'react-router-dom-v5-compat';
-
-import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 

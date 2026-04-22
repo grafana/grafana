@@ -30,13 +30,16 @@ function withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H
   }
 
   if (typeof location === 'string') {
-    if (location.includes('orgId=')) {
+    const hashIndex = location.indexOf('#');
+    const pathAndQuery = hashIndex >= 0 ? location.slice(0, hashIndex) : location;
+    const fragment = hashIndex >= 0 ? location.slice(hashIndex) : '';
+    if (pathAndQuery.includes('orgId=')) {
       return location;
     }
-    return location + (location.includes('?') ? '&' : '?') + `orgId=${orgId}`;
+    return pathAndQuery + (pathAndQuery.includes('?') ? '&' : '?') + `orgId=${orgId}` + fragment;
   }
 
-  // LocationDescriptorObject
+  // LocationDescriptorObject — search and hash are separate fields, no splitting needed
   const search = location.search ?? '';
   if (search.includes('orgId=')) {
     return location;

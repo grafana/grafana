@@ -1,6 +1,12 @@
 import { renderHook } from '@testing-library/react';
 
-import { locationService, HistoryWrapper, useLocationService, LocationServiceProvider } from './LocationService';
+import {
+  locationService,
+  HistoryWrapper,
+  useLocationService,
+  LocationServiceProvider,
+  setLocationServiceOrgIdGetter,
+} from './LocationService';
 
 describe('LocationService', () => {
   describe('getSearchObject', () => {
@@ -58,6 +64,67 @@ describe('LocationService', () => {
       expect(locationService.getLocation().state).toEqual({
         some: 'stateToPersist',
       });
+    });
+  });
+
+  describe('orgId injection on push/replace', () => {
+    beforeEach(() => {
+      setLocationServiceOrgIdGetter(() => 7);
+    });
+
+    afterAll(() => {
+      // disable the getter so other tests in this file aren't affected
+      setLocationServiceOrgIdGetter(() => 0);
+    });
+
+    it('does not append orgId when the getter returns 0', () => {
+      setLocationServiceOrgIdGetter(() => 0);
+      locationService.push('/test');
+      expect(locationService.getLocation().search).toBe('');
+    });
+
+    it('appends orgId to a string path without query', () => {
+      locationService.push('/test');
+      expect(locationService.getLocation().search).toBe('?orgId=7');
+    });
+
+    it('appends orgId with & to a string path that already has a query', () => {
+      locationService.push('/test?foo=1');
+      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+    });
+
+    it('places orgId before the fragment on a string path', () => {
+      locationService.push('/test#section');
+      expect(locationService.getLocation().search).toBe('?orgId=7');
+      expect(locationService.getLocation().hash).toBe('#section');
+    });
+
+    it('places orgId before the fragment when the string path has a query', () => {
+      locationService.push('/test?foo=1#section');
+      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+      expect(locationService.getLocation().hash).toBe('#section');
+    });
+
+    it('leaves a string path unchanged when orgId is already present', () => {
+      locationService.push('/test?orgId=3');
+      expect(locationService.getLocation().search).toBe('?orgId=3');
+    });
+
+    it('appends orgId to the search of a LocationDescriptor object', () => {
+      locationService.push({ pathname: '/test', search: '?foo=1', hash: '#section' });
+      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+      expect(locationService.getLocation().hash).toBe('#section');
+    });
+
+    it('leaves a LocationDescriptor object unchanged when orgId is already present', () => {
+      locationService.push({ pathname: '/test', search: '?orgId=3' });
+      expect(locationService.getLocation().search).toBe('?orgId=3');
+    });
+
+    it('also applies to replace()', () => {
+      locationService.replace('/test?foo=1#section');
+      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+      expect(locationService.getLocation().hash).toBe('#section');
     });
   });
 

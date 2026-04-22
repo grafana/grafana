@@ -2,12 +2,11 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 
-import { appendOrgId } from 'app/core/utils/navigationUrl';
-
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { type DataSourcePluginOptionsEditorProps, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 
 import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
