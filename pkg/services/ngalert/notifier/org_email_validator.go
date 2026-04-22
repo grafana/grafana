@@ -11,7 +11,6 @@ import (
 	emailv1 "github.com/grafana/alerting/receivers/email/v1"
 	"github.com/grafana/alerting/receivers/schema"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -25,8 +24,8 @@ type OrgMembershipLookup interface {
 }
 
 type EmailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig, logger log.Logger) error
-	ValidateIntegration(ctx context.Context, requester identity.Requester, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
 }
 
 // OrgUserEmailValidator gates email address validation against org membership.
@@ -42,7 +41,7 @@ func NewEmailValidator(orgSvc OrgMembershipLookup, enabled bool) EmailIntegratio
 	return &NoopOrgEmailValidator{}
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, requester identity.Requester, integration models.Integration, logger log.Logger) error {
+func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 	if integration.Config.Type() != schema.EmailType || integration.Config.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
@@ -50,10 +49,10 @@ func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, request
 	if err != nil {
 		return fmt.Errorf("failed to convert integration to integration config: %w", err)
 	}
-	return v.ValidateIntegrationConfig(ctx, requester, cfg, logger)
+	return v.ValidateIntegrationConfig(ctx, orgID, cfg, logger)
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
 	if integration.Type != schema.EmailType || integration.Version != schema.V1 { // TODO: support v0
 		return nil
 	}
@@ -90,7 +89,7 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, r
 	l := logger.New("component", "email-integration-validator")
 	l.Info("Validating email addresses against organization members", "emails", len(emails))
 	members, err := v.orgSvc.SearchOrgUsersByEmails(ctx, &org.SearchOrgUsersByEmailsQuery{
-		OrgID:              requester.GetOrgID(),
+		OrgID:              orgID,
 		Emails:             emails,
 		ExcludeHiddenUsers: true,
 	})
@@ -109,10 +108,10 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, r
 
 type NoopOrgEmailValidator struct{}
 
-func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ identity.Requester, _ alertingModels.IntegrationConfig, _ log.Logger) error {
+func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ int64, _ alertingModels.IntegrationConfig, _ log.Logger) error {
 	return nil
 }
 
-func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ identity.Requester, _ models.Integration, _ log.Logger) error {
+func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration, _ log.Logger) error {
 	return nil
 }

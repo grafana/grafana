@@ -43,7 +43,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type emailIntegrationValidator interface {
-	ValidateIntegrationConfig(ctx context.Context, user identity.Requester, integration alertingModels.IntegrationConfig, logger log.Logger) error
+	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
 
 type ContactPointService struct {
@@ -177,7 +177,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ecp.validateContactPoint(ctx, user, &contactPoint); err != nil {
+	if err := ecp.validateContactPoint(ctx, orgID, &contactPoint); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -299,7 +299,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ecp.validateContactPoint(ctx, user, &contactPoint); err != nil {
+	if err := ecp.validateContactPoint(ctx, orgID, &contactPoint); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -652,7 +652,7 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func (ecp *ContactPointService) validateContactPoint(ctx context.Context, user identity.Requester, e *apimodels.EmbeddedContactPoint) error {
+func (ecp *ContactPointService) validateContactPoint(ctx context.Context, orgID int64, e *apimodels.EmbeddedContactPoint) error {
 	if err := ValidateContactPoint(ctx, e, ecp.encryptionService.GetDecryptedValue, ecp.allowedIntegrations); err != nil {
 		return err
 	}
@@ -663,7 +663,7 @@ func (ecp *ContactPointService) validateContactPoint(ctx context.Context, user i
 	if err != nil {
 		return err
 	}
-	return ecp.emailValidator.ValidateIntegrationConfig(ctx, user, integration, ecp.log.FromContext(ctx))
+	return ecp.emailValidator.ValidateIntegrationConfig(ctx, orgID, integration, ecp.log.FromContext(ctx))
 }
 
 func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn, allowedIntegrations map[schema.IntegrationType]struct{}) error {

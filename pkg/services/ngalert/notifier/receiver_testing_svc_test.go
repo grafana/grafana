@@ -95,7 +95,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
 
-	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, requester identity.Requester, integration models.Integration, logger log.Logger) error {
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 		if integration.Name == validEmailIntegration.Name {
 			return nil
 		}
