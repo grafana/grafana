@@ -588,6 +588,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
 		require.NoError(t, err)
 	}
+	if opts.UnifiedAlertingEmailsToOrgOnly {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -877,6 +883,7 @@ type GrafanaOpts struct {
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	UnifiedAlertingAllowedIntegrations    []string
+	UnifiedAlertingEmailsToOrgOnly        bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int
