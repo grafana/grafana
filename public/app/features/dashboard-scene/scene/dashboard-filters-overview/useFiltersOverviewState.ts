@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { fuzzySearch, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   type AdHocFilterWithLabels,
   type AdHocFiltersVariable,
@@ -342,14 +342,17 @@ export function useFiltersOverviewState({
     },
 
     setSingleValue: (key, value) => {
+      reportInteraction('grafana_unified_drilldown_filters_overview_value_changed', { type: 'single' });
       setState((prev) => ({ ...prev, singleValuesByKey: { ...prev.singleValuesByKey, [key]: value } }));
     },
 
     setMultiValues: (key, values) => {
+      reportInteraction('grafana_unified_drilldown_filters_overview_value_changed', { type: 'multi' });
       setState((prev) => ({ ...prev, multiValuesByKey: { ...prev.multiValuesByKey, [key]: values } }));
     },
 
     toggleGroupBy: (key, nextValue) => {
+      reportInteraction('grafana_unified_drilldown_filters_overview_groupby_toggled', { checked: nextValue });
       setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
     },
 
