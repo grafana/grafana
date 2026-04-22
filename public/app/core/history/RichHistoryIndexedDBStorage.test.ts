@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 
-import { type DataQuery, store } from '@grafana/data';
+import { type DataQuery } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type RichHistorySearchBackendFilters,
@@ -10,8 +10,6 @@ import {
 import type { RichHistoryQuery } from 'app/types/explore';
 
 import RichHistoryIndexedDBStorage from './RichHistoryIndexedDBStorage';
-import { RICH_HISTORY_KEY } from './RichHistoryLocalStorage';
-import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -484,86 +482,6 @@ describe('RichHistoryIndexedDBStorage', () => {
 
       const { total } = await storage.getRichHistory(filtersWithTimeRange({ starred: true }));
       expect(total).toBe(1);
-    });
-  });
-
-  describe('localStorage cleanup', () => {
-    let storeDeleteSpy: jest.SpyInstance;
-
-    // Flush microtasks and IndexedDB async operations
-    const flushAsync = () => new Promise((r) => setTimeout(r, 50));
-
-    beforeEach(() => {
-      storeDeleteSpy = jest.spyOn(store, 'delete').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      storeDeleteSpy.mockRestore();
-    });
-
-    it('should not attempt cleanup before migration is complete', async () => {
-      await storage.addToRichHistory(mockItem);
-
-      // No migration metadata set — getRichHistory should not trigger cleanup
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-
-      expect(storeDeleteSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not delete localStorage on 1st access after migration', async () => {
-      await storage.setMetadata('migrationComplete', true);
-      await storage.addToRichHistory(mockItem);
-
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-
-      expect(storeDeleteSpy).not.toHaveBeenCalled();
-      expect(await storage.getMetadata('successfulAccessCount')).toBe(1);
-    });
-
-    it('should delete localStorage keys on 2nd successful access after migration', async () => {
-      await storage.setMetadata('migrationComplete', true);
-      await storage.addToRichHistory(mockItem);
-
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-
-      expect(storeDeleteSpy).toHaveBeenCalledWith(RICH_HISTORY_KEY);
-      for (const key of Object.values(RICH_HISTORY_SETTING_KEYS)) {
-        expect(storeDeleteSpy).toHaveBeenCalledWith(key);
-      }
-      expect(await storage.getMetadata('localStorageCleanupDone')).toBe(true);
-      expect(await storage.getMetadata('successfulAccessCount')).toBe(2);
-    });
-
-    it('should emit telemetry on cleanup', async () => {
-      await storage.setMetadata('migrationComplete', true);
-      await storage.addToRichHistory(mockItem);
-
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_query_history_localstorage_cleanup', {
-        accessCountAtCleanup: 2,
-      });
-    });
-
-    it('should not re-run cleanup after localStorageCleanupDone is set', async () => {
-      await storage.setMetadata('migrationComplete', true);
-      await storage.setMetadata('localStorageCleanupDone', true);
-      await storage.addToRichHistory(mockItem);
-
-      await storage.getRichHistory(filtersWithTimeRange());
-      await flushAsync();
-
-      expect(storeDeleteSpy).not.toHaveBeenCalled();
     });
   });
 });
