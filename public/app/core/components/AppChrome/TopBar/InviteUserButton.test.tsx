@@ -2,9 +2,9 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { config, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
 import { InviteUserButton } from './InviteUserButton';
@@ -23,6 +23,10 @@ jest.mock('app/api/clients/legacy', () => {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
   usePluginComponents: jest.fn(),
 }));
 

@@ -2,10 +2,11 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
 import { useGetCurrentOrgQuotaQuery } from 'app/api/clients/legacy';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
