@@ -24,12 +24,7 @@ declare global {
        * @param hint
        * @param debug
        */
-      toMatchUPlotSnapshot(
-        data: uPlot.AlignedData,
-        series?: uPlot.Series[],
-        hint?: string,
-        debug = false
-      ): CustomMatcherResult;
+      toMatchUPlotSnapshot(data: uPlot.AlignedData, series: uPlot.Series[], hint?: string): CustomMatcherResult;
     }
   }
 }

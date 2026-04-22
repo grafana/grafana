@@ -8,18 +8,9 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 833,
+            "height": 596,
             "width": 435,
             "x": -167,
-            "y": 322,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 1110,
-            "width": 435,
-            "x": 558,
             "y": 45,
           },
           "type": "rect",
@@ -31,7 +22,17 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 333,
+            "width": 435,
+            "x": 558,
+            "y": 308,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -48,37 +49,19 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 222,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 84,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 45,
+            "height": 188,
             "width": 435,
             "x": -167,
-            "y": 150,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 222,
-            "width": 2,
-            "x": 774,
-            "y": 61,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 44,
-            "width": 435,
-            "x": 558,
-            "y": 128,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -89,7 +72,26 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 208,
+            "width": 435,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -158,18 +160,9 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "path": [
         {
           "props": {
-            "height": 833,
+            "height": 596,
             "width": 435,
             "x": -167,
-            "y": 322,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 1110,
-            "width": 435,
-            "x": 558,
             "y": 45,
           },
           "type": "rect",
@@ -187,7 +180,17 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 333,
+            "width": 435,
+            "x": 558,
+            "y": 308,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -216,37 +219,19 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "path": [
         {
           "props": {
-            "height": 222,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 84,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 45,
+            "height": 188,
             "width": 435,
             "x": -167,
-            "y": 150,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 222,
-            "width": 2,
-            "x": 774,
-            "y": 61,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 44,
-            "width": 435,
-            "x": 558,
-            "y": 128,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -263,7 +248,26 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 208,
+            "width": 435,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -347,19 +351,10 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 227,
+            "height": 298,
             "width": 435,
             "x": -167,
-            "y": 123,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 303,
-            "width": 435,
-            "x": 558,
-            "y": 47,
+            "y": 52,
           },
           "type": "rect",
         },
@@ -370,7 +365,17 @@ exports[`drawMarkers candle with volume draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 166,
+            "width": 435,
+            "x": 558,
+            "y": 184,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -403,6 +408,14 @@ exports[`drawMarkers candle with volume draw 1`] = `
           },
           "type": "rect",
         },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
         {
           "props": {
             "height": 0,
@@ -422,13 +435,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
           "type": "rect",
         },
       ],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
     },
     "type": "fill",
   },
@@ -497,19 +503,10 @@ exports[`drawMarkers candle with volume events 1`] = `
       "path": [
         {
           "props": {
-            "height": 227,
+            "height": 298,
             "width": 435,
             "x": -167,
-            "y": 123,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 303,
-            "width": 435,
-            "x": 558,
-            "y": 47,
+            "y": 52,
           },
           "type": "rect",
         },
@@ -526,7 +523,17 @@ exports[`drawMarkers candle with volume events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 166,
+            "width": 435,
+            "x": 558,
+            "y": 184,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -571,6 +578,20 @@ exports[`drawMarkers candle with volume events 1`] = `
           },
           "type": "rect",
         },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff0000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
         {
           "props": {
             "height": 0,
@@ -590,19 +611,6 @@ exports[`drawMarkers candle with volume events 1`] = `
           "type": "rect",
         },
       ],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "value": "#ff0000",
-    },
-    "type": "fillStyle",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [],
     },
     "type": "fill",
   },
@@ -686,10 +694,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 199,
+            "y": 48,
           },
           "type": "rect",
         },
@@ -698,7 +706,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "height": 2,
             "width": 217,
             "x": -167,
-            "y": 335,
+            "y": 288,
           },
           "type": "rect",
         },
@@ -707,34 +715,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "height": 2,
             "width": 217,
             "x": 50,
-            "y": 305,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 2,
-            "width": 217,
-            "x": 558,
-            "y": 320,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 2,
-            "width": 217,
-            "x": 775,
-            "y": 259,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -745,7 +726,35 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 277,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -814,10 +823,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 199,
+            "y": 48,
           },
           "type": "rect",
         },
@@ -826,7 +835,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "height": 2,
             "width": 217,
             "x": -167,
-            "y": 335,
+            "y": 288,
           },
           "type": "rect",
         },
@@ -835,34 +844,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "height": 2,
             "width": 217,
             "x": 50,
-            "y": 305,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 2,
-            "width": 217,
-            "x": 558,
-            "y": 320,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 2,
-            "width": 217,
-            "x": 775,
-            "y": 259,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -879,7 +861,35 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 2,
+            "width": 217,
+            "x": 775,
+            "y": 277,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -960,32 +970,6 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 61,
-            "width": 435,
-            "x": 558,
-            "y": 259,
-          },
-          "type": "rect",
-        },
-      ],
-    },
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
       "path": [],
     },
     "type": "fill",
@@ -996,19 +980,19 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 208,
             "width": 2,
-            "x": 49,
-            "y": 199,
+            "x": 774,
+            "y": 69,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 30,
+            "height": 208,
             "width": 435,
-            "x": -167,
-            "y": 305,
+            "x": 558,
+            "y": 69,
           },
           "type": "rect",
         },
@@ -1022,19 +1006,36 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 26,
-            "width": 431,
-            "x": -165,
-            "y": 307,
+            "height": 271,
+            "width": 2,
+            "x": 49,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 57,
+            "height": 188,
+            "width": 435,
+            "x": -167,
+            "y": 100,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 184,
             "width": 431,
-            "x": 560,
-            "y": 261,
+            "x": -165,
+            "y": 102,
           },
           "type": "rect",
         },
@@ -1090,26 +1091,7 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 61,
-            "width": 435,
-            "x": 558,
-            "y": 259,
-          },
-          "type": "rect",
-        },
-      ],
+      "path": [],
     },
     "type": "fill",
   },
@@ -1122,7 +1104,26 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 208,
+            "width": 435,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -1138,19 +1139,19 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 199,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 30,
+            "height": 188,
             "width": 435,
             "x": -167,
-            "y": 305,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -1170,19 +1171,10 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "path": [
         {
           "props": {
-            "height": 26,
+            "height": 184,
             "width": 431,
             "x": -165,
-            "y": 307,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 57,
-            "width": 431,
-            "x": 560,
-            "y": 261,
+            "y": 102,
           },
           "type": "rect",
         },
@@ -1244,37 +1236,19 @@ exports[`drawMarkers options Color strategy: OpenClose draw 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 199,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 30,
+            "height": 188,
             "width": 435,
             "x": -167,
-            "y": 305,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 61,
-            "width": 435,
-            "x": 558,
-            "y": 259,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -1285,7 +1259,26 @@ exports[`drawMarkers options Color strategy: OpenClose draw 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 208,
+            "width": 435,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
@@ -1354,37 +1347,19 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
       "path": [
         {
           "props": {
-            "height": 139,
+            "height": 271,
             "width": 2,
             "x": 49,
-            "y": 199,
+            "y": 48,
           },
           "type": "rect",
         },
         {
           "props": {
-            "height": 30,
+            "height": 188,
             "width": 435,
             "x": -167,
-            "y": 305,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 279,
-            "width": 2,
-            "x": 774,
-            "y": 47,
-          },
-          "type": "rect",
-        },
-        {
-          "props": {
-            "height": 61,
-            "width": 435,
-            "x": 558,
-            "y": 259,
+            "y": 100,
           },
           "type": "rect",
         },
@@ -1401,7 +1376,26 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
   {
     "props": {
       "fillRule": "nonzero",
-      "path": [],
+      "path": [
+        {
+          "props": {
+            "height": 208,
+            "width": 2,
+            "x": 774,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 208,
+            "width": 435,
+            "x": 558,
+            "y": 69,
+          },
+          "type": "rect",
+        },
+      ],
     },
     "type": "fill",
   },
