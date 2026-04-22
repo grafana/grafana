@@ -1228,7 +1228,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		close(start)
 		wg.Wait()
 
-		var winner int = -1
+		winner := -1
 		losers := 0
 		for i, err := range errs {
 			if err == nil {
