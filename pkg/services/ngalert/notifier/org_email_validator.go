@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/mail"
 	"strings"
@@ -19,7 +20,7 @@ import (
 // table, which is the source of truth for membership (distinct from
 // user.OrgID, which only tracks the user's default/current org).
 type OrgMembershipLookup interface {
-	SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
 }
 
 type EmailIntegrationValidator interface {
@@ -59,7 +60,11 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, r
 	if err != nil {
 		return fmt.Errorf("failed to parse email settings: %w", err)
 	}
-	checked := make(map[string]struct{}, len(cfg.Addresses))
+
+	// pending maps lowercase email to its original display form.
+	// It doubles as a dedup set and tracks which addresses haven't been matched yet.
+	pending := make(map[string]string, len(cfg.Addresses))
+	emails := make([]string, 0, len(cfg.Addresses))
 	for _, address := range cfg.Addresses {
 		if address == "" {
 			continue
@@ -71,40 +76,31 @@ func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, r
 		if err != nil {
 			return fmt.Errorf("failed to parse email address %q: %w", address, err)
 		}
-		lowerAddr := strings.ToLower(addr.Address)
-		if _, ok := checked[lowerAddr]; ok {
-			continue
+		lower := strings.ToLower(addr.Address)
+		if _, ok := pending[lower]; !ok {
+			pending[lower] = addr.Address
+			emails = append(emails, lower)
 		}
-
-		exists, err := v.addressExistsInOrg(ctx, requester, lowerAddr)
-		if err != nil {
-			return fmt.Errorf("failed to validate email address %q: %w", addr.Address, err)
-		}
-		if !exists {
-			return fmt.Errorf("email address %q is not an allowed recipient for this organization", addr.Address)
-		}
-		checked[lowerAddr] = struct{}{}
 	}
-	return nil
-}
 
-func (v *OrgUserEmailValidator) addressExistsInOrg(ctx context.Context, requester identity.Requester, address string) (bool, error) {
-	result, err := v.orgSvc.SearchOrgUsers(ctx, &org.SearchOrgUsersQuery{
-		Query:                    address,
-		User:                     requester,
-		OrgID:                    requester.GetOrgID(),
-		DontEnforceAccessControl: true,
-		ExcludeHiddenUsers:       true,
+	if len(emails) == 0 {
+		return nil
+	}
+	members, err := v.orgSvc.SearchOrgUsersByEmails(ctx, &org.SearchOrgUsersByEmailsQuery{
+		OrgID:              requester.GetOrgID(),
+		Emails:             emails,
+		ExcludeHiddenUsers: true,
 	})
 	if err != nil {
-		return false, err
+		return fmt.Errorf("failed to get email addresses from organization members: %w", err)
 	}
-	for _, u := range result.OrgUsers {
-		if strings.EqualFold(u.Email, address) {
-			return true, nil
-		}
+	for _, m := range members {
+		delete(pending, strings.ToLower(m.Email))
 	}
-	return false, nil
+	if len(pending) > 0 {
+		return errors.New("one or many email addresses specified in the integration are not members of this organization")
+	}
+	return nil
 }
 
 type NoopOrgEmailValidator struct{}
