@@ -2,7 +2,9 @@ import * as React from 'react';
 
 import { isUPlotComparePayload, type UPlotComparePayload } from '@grafana/test-utils/uplot-compare-payload';
 
-import { ComparePlots, type ResolvedPayload } from './ComparePlots.tsx';
+import type { ResolvedPayload } from '../types.ts';
+
+import { ComparePlots } from './ComparePlots.tsx';
 
 /** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
 const FALLBACK_CANVAS_WIDTH = 400;
@@ -23,8 +25,8 @@ function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 
   const w = raw.width;
   const h = raw.height;
   return {
-    ...(typeof w === 'number' && Number.isFinite(w) ? { width: w } : {}),
-    ...(typeof h === 'number' && Number.isFinite(h) ? { height: h } : {}),
+    width: w,
+    height: h,
   };
 }
 
@@ -62,7 +64,7 @@ export const CompareUPlotCanvases = ({
     }
   }, []);
 
-  const applyPayload = React.useCallback((raw: unknown, sourceLabel: string) => {
+  const applyPayload = React.useCallback((raw: ResolvedPayload, sourceLabel: string) => {
     if (!isUPlotComparePayload(raw)) {
       setView({
         kind: 'blocked',
@@ -73,7 +75,7 @@ export const CompareUPlotCanvases = ({
     }
     setView({
       kind: 'ready',
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+
       payload: {
         testName: raw.testName,
         expected: raw.expected,
@@ -82,7 +84,7 @@ export const CompareUPlotCanvases = ({
         uPlotSeries: raw.uPlotSeries,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
         ...readPayloadDimensions(raw),
-      } as ResolvedPayload,
+      },
     });
   }, []);
 
@@ -107,7 +109,7 @@ export const CompareUPlotCanvases = ({
           });
           return;
         }
-        const raw: unknown = await res.json();
+        const raw: ResolvedPayload = await res.json();
         applyPayload(raw, basename);
         if (historyMode) {
           navigate(basename, historyMode);
