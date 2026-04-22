@@ -38,12 +38,26 @@ export interface SectionFiltersListProps {
 
 export function SectionFiltersList({ sectionOwner }: SectionFiltersListProps) {
   const variableSet = sectionOwner.state.$variables;
-  const filters =
-    variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet).filter(
-          sceneUtils.isAdHocVariable
-        )
-      : [];
+
+  if (!(variableSet instanceof SceneVariableSet)) {
+    return (
+      <Box display="flex" paddingBottom={2}>
+        <AddFilterButton sectionOwner={sectionOwner} />
+      </Box>
+    );
+  }
+
+  return <SectionFiltersListInner sectionOwner={sectionOwner} variableSet={variableSet} />;
+}
+
+interface SectionFiltersListInnerProps {
+  sectionOwner: SceneObject;
+  variableSet: SceneVariableSet;
+}
+
+function SectionFiltersListInner({ sectionOwner, variableSet }: SectionFiltersListInnerProps) {
+  const { variables: rawVariables } = variableSet.useState();
+  const filters = filterSectionRepeatLocalVariables(rawVariables, variableSet).filter(sceneUtils.isAdHocVariable);
   const dashboard = getDashboardSceneFor(sectionOwner);
 
   return (
@@ -61,19 +75,27 @@ export function SectionFiltersList({ sectionOwner }: SectionFiltersListProps) {
       ))}
 
       <Box display="flex" paddingTop={filters.length > 0 ? 1 : 0} paddingBottom={2}>
-        <Button
-          fullWidth
-          icon="plus"
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            openAddFilterForm(dashboard, sectionOwner);
-            DashboardInteractions.addSectionFilterButtonClicked({ source: 'edit_pane' });
-          }}
-        >
-          <Trans i18nKey="dashboard-scene.section-filters-list.add-filter">Add filter</Trans>
-        </Button>
+        <AddFilterButton sectionOwner={sectionOwner} />
       </Box>
     </Stack>
+  );
+}
+
+function AddFilterButton({ sectionOwner }: { sectionOwner: SceneObject }) {
+  const dashboard = getDashboardSceneFor(sectionOwner);
+
+  return (
+    <Button
+      fullWidth
+      icon="plus"
+      size="sm"
+      variant="secondary"
+      onClick={() => {
+        openAddFilterForm(dashboard, sectionOwner);
+        DashboardInteractions.addSectionFilterButtonClicked({ source: 'edit_pane' });
+      }}
+    >
+      <Trans i18nKey="dashboard-scene.section-filters-list.add-filter">Add filter</Trans>
+    </Button>
   );
 }

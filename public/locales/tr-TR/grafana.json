@@ -11124,6 +11124,12 @@
       "update-all": "Tümünü güncelle",
       "num-affected_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>",
       "num-affected_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12993,9 +12999,7 @@
       "update-available": "Güncelleme mevcut!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Eklenti kullanımı, panolar genelinde kullanım bulabilmek için yeni arama dizini gerektirir. Lütfen özellik anahtarını etkinleştirin",
       "num-usages": "{{pluginName}}, <2>{{numUsages}}</2> kez kullanılıyor.",
-      "title-missing-feature-toggle-panel-title-search": "Eksik özellik geçişi: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} henüz herhangi bir panoda kullanılmıyor"
     },
     "plugins-errors-info": {
