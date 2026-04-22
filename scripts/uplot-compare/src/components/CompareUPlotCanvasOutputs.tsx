@@ -12,6 +12,8 @@ type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
 /** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
 const FALLBACK_CANVAS_WIDTH = 400;
 const FALLBACK_CANVAS_HEIGHT = 200;
+const OVERLAY_BLEND_MODES = ['plus-lighter', 'color', 'difference', 'exclusion', 'luminosity', 'screen'] as const;
+type OverlayBlendMode = (typeof OVERLAY_BLEND_MODES)[number];
 
 interface Props {
   /** Default canvas CSS px if payload does not include `width` / `height` */
@@ -301,6 +303,13 @@ function ComparePlots({
   const height = payload.height ?? defaultHeight;
   const actualUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
   const expectedUPlotInstance = React.useRef<HTMLCanvasElement | null>(null);
+  const expectedOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
+  const actualOverlayRef = React.useRef<HTMLCanvasElement | null>(null);
+  const [hasDiff, setHasDiff] = React.useState(false);
+  const [diffImageData, setDiffImageData] = React.useState<ImageData | null>(null);
+  const [showOverlay, setShowOverlay] = React.useState(false);
+  const [expectedBlendMode, setExpectedBlendMode] = React.useState<OverlayBlendMode>('exclusion');
+  const [actualBlendMode, setActualBlendMode] = React.useState<OverlayBlendMode>('exclusion');
 
   React.useEffect(() => {
     const context = actualUPlotInstance.current?.getContext('2d');
@@ -320,20 +329,85 @@ function ComparePlots({
     eventsToCanvasScript(payload.expected, context);
   }, [payload.expected, payload.uPlotCanvasEvents]);
 
+  React.useEffect(() => {
+    for (const overlayCanvas of [expectedOverlayRef.current, actualOverlayRef.current]) {
+      const overlayContext = overlayCanvas?.getContext('2d');
+      if (!overlayContext) {
+        continue;
+      }
+      overlayContext.clearRect(0, 0, width, height);
+      if (showOverlay && diffImageData) {
+        overlayContext.putImageData(diffImageData, 0, 0);
+      }
+    }
+  }, [diffImageData, height, showOverlay, width]);
+
+  const onDiffComputed = React.useCallback((nextHasDiff: boolean, nextDiffImageData: ImageData | null) => {
+    setHasDiff(nextHasDiff);
+    setDiffImageData(nextDiffImageData);
+    if (!nextHasDiff) {
+      setShowOverlay(false);
+    }
+  }, []);
+
   return (
     <>
       <h3 className="compare-title">Test: {payload.testName}</h3>
       <div className="wrap">
         <div className="plot-panel expected">
           <div className={'plot-label'}>Expected</div>
-          <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
+          <div className="canvas-stack">
+            <canvas ref={expectedUPlotInstance} className="canvas" id="expected" width={width} height={height}></canvas>
+            <canvas
+              ref={expectedOverlayRef}
+              className={`canvas diff-overlay-canvas${showOverlay && hasDiff ? ' is-visible' : ''}`}
+              width={width}
+              height={height}
+              style={{ mixBlendMode: expectedBlendMode }}
+            ></canvas>
+            {showOverlay && hasDiff ? (
+              <select
+                className="overlay-blend-select"
+                value={expectedBlendMode}
+                onChange={(e) => setExpectedBlendMode(e.target.value as OverlayBlendMode)}
+              >
+                {OVERLAY_BLEND_MODES.map((mode) => (
+                  <option key={mode} value={mode}>
+                    Blend: {mode}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
         </div>
 
         <div className="plot-panel actual">
           <div className={'plot-label'}>Actual</div>
-          <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
+          <div className="canvas-stack">
+            <canvas ref={actualUPlotInstance} className="canvas" id="actual" width={width} height={height}></canvas>
+            <canvas
+              ref={actualOverlayRef}
+              className={`canvas diff-overlay-canvas${showOverlay && hasDiff ? ' is-visible' : ''}`}
+              width={width}
+              height={height}
+              style={{ mixBlendMode: actualBlendMode }}
+            ></canvas>
+            {showOverlay && hasDiff ? (
+              <select
+                className="overlay-blend-select"
+                value={actualBlendMode}
+                onChange={(e) => setActualBlendMode(e.target.value as OverlayBlendMode)}
+              >
+                {OVERLAY_BLEND_MODES.map((mode) => (
+                  <option key={mode} value={mode}>
+                    Blend: {mode}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
         </div>
-        <div>
+        <div className="diff-panel-wrap">
           <DiffCanvas
             width={width}
             height={height}
@@ -342,6 +416,9 @@ function ComparePlots({
             expectedEvents={payload.expected}
             actualEvents={payload.actual}
             setupEvents={payload.uPlotCanvasEvents}
+            showOverlay={showOverlay}
+            onToggleOverlay={() => setShowOverlay((prev) => !prev)}
+            onDiffComputed={onDiffComputed}
           />
         </div>
       </div>
@@ -357,6 +434,9 @@ function DiffCanvas({
   expectedEvents,
   actualEvents,
   setupEvents,
+  showOverlay,
+  onToggleOverlay,
+  onDiffComputed,
 }: {
   width: number;
   height: number;
@@ -365,6 +445,9 @@ function DiffCanvas({
   expectedEvents: CanvasEventArray;
   actualEvents: CanvasEventArray;
   setupEvents: CanvasRenderingContext2DEvent[];
+  showOverlay: boolean;
+  onToggleOverlay: () => void;
+  onDiffComputed: (hasDiff: boolean, diffImageData: ImageData | null) => void;
 }) {
   const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const [hasDiff, setHasDiff] = React.useState(false);
@@ -400,13 +483,15 @@ function DiffCanvas({
       }
 
       setHasDiff(hasDifferences);
-      setDiffImageData(hasDifferences ? diffPixels : null);
+      const nextDiffImageData = hasDifferences ? diffPixels : null;
+      setDiffImageData(nextDiffImageData);
+      onDiffComputed(hasDifferences, nextDiffImageData);
     });
 
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [actualCanvasRef, actualEvents, expectedCanvasRef, expectedEvents, height, setupEvents, width]);
+  }, [actualCanvasRef, actualEvents, expectedCanvasRef, expectedEvents, height, onDiffComputed, setupEvents, width]);
 
   React.useEffect(() => {
     if (!hasDiff || !diffImageData) {
@@ -423,7 +508,12 @@ function DiffCanvas({
   if (!hasDiff) {
     return (
       <div className="plot-panel diff diff-empty">
-        <div className={'plot-label'}>Diff</div>
+        <div className="plot-header">
+          <div className={'plot-label'}>Diff</div>
+          <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay} disabled>
+            Overlay on charts
+          </button>
+        </div>
         <div className="compare-empty-diff">No visual differences</div>
       </div>
     );
@@ -431,7 +521,12 @@ function DiffCanvas({
 
   return (
     <div className="plot-panel diff">
-      <div className={'plot-label'}>Diff</div>
+      <div className="plot-header">
+        <div className={'plot-label'}>Diff</div>
+        <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay}>
+          {showOverlay ? 'Hide overlay' : 'Overlay on charts'}
+        </button>
+      </div>
       <canvas ref={diffCanvasRef} className="canvas" id="diff" width={width} height={height}></canvas>
     </div>
   );

@@ -196,6 +196,13 @@
   background: #fff;
 }
 
+.plot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .plot-label {
   font-size: 12px;
   font-weight: 600;
@@ -207,6 +214,54 @@
 .canvas {
   border-radius: 4px;
   background: #fff;
+}
+
+.canvas-stack {
+  position: relative;
+  width: min-content;
+}
+
+.overlay-blend-select {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(200, 209, 223, 0.95);
+  border-radius: 6px;
+  background: rgba(248, 249, 252, 0.95);
+  color: #334155;
+  cursor: pointer;
+}
+
+.diff-overlay-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diff-overlay-canvas.is-visible {
+  opacity: 0.55;
+}
+
+.overlay-toggle-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #f8f9fc;
+  color: #334155;
+  cursor: pointer;
+}
+
+.overlay-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .compare-empty-diff {
