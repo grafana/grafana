@@ -16,12 +16,21 @@ import { type LogListModel } from './processing';
 
 interface Props {
   focusLogLine?: (log: LogListModel) => void;
+  inlineNoScroll?: boolean;
   log: LogListModel;
   search: string;
+  setInlineNoScroll?(inlineNoScroll: boolean): void;
   onSearch(newSearch: string): void;
 }
 
-export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
+export const LogLineDetailsHeader = ({
+  focusLogLine,
+  inlineNoScroll,
+  log,
+  search,
+  setInlineNoScroll,
+  onSearch,
+}: Props) => {
   const {
     displayedFields,
     getRowContextQuery,
@@ -107,6 +116,19 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
       newMode,
     });
   }, [detailsMode, logOptionsStorageKey, reportInteractionWrapper, setDetailsMode]);
+
+  const toggleDetailsScroll = useCallback(() => {
+    const newState = !inlineNoScroll;
+    if (logOptionsStorageKey) {
+      store.set(`${logOptionsStorageKey}.inlineDetailsNoScrolls`, newState);
+    }
+
+    setInlineNoScroll?.(newState);
+
+    reportInteractionWrapper('logs_log_line_details_header_toggle_inline_no_scroll', {
+      scroll: !newState,
+    });
+  }, [inlineNoScroll, logOptionsStorageKey, reportInteractionWrapper, setInlineNoScroll]);
 
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
@@ -244,6 +266,17 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           />
         )}
         <div className={`${styles.divider} ${styles.dividerMargin}`} />
+        {detailsMode === 'inline' && inlineNoScroll !== undefined && (
+          <IconButton
+            name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
+            tooltip={
+              inlineNoScroll === true
+                ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
+                : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
+            }
+            onClick={toggleDetailsScroll}
+          />
+        )}
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -295,8 +328,6 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     height: theme.spacing(5.5),
     marginBottom: theme.spacing(1),
     padding: theme.spacing(0.5, 1),
-    position: 'sticky',
-    top: 0,
   }),
   icons: css({
     display: 'flex',
