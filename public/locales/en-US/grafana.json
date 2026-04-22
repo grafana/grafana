@@ -5623,6 +5623,8 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "Filter",
+        "filters-set": "Filters",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -5651,8 +5653,10 @@
           "title": "Row header"
         }
       },
+      "section-filters": {
+        "title": "Filters"
+      },
       "section-variables": {
-        "add-tooltip": "Add variable",
         "title": "Variables"
       },
       "variable": {
@@ -6204,6 +6208,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-filters": {
+          "title": "Filters"
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6362,6 +6369,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-filters": {
+          "title": "Filters"
         },
         "section-variables": {
           "title": "Variables"
@@ -7075,6 +7085,16 @@
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
+    "filters-list": {
+      "add-filter": "Add filter",
+      "reorder-description": "Reorder filters list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7554,6 +7574,9 @@
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
+    "section-filters-list": {
+      "add-filter": "Add filter"
+    },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
@@ -7649,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
         }
       }
     },
@@ -11094,6 +11124,12 @@
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
     }
   },
   "link": {
@@ -12963,9 +12999,7 @@
       "update-available": "Update available!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
       "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
-      "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
     "plugins-errors-info": {

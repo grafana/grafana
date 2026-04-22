@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -37,6 +38,7 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
 }
 
 type routeService interface {
@@ -102,6 +104,7 @@ func NewReceiverService(
 	tracer tracing.Tracer,
 	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -116,7 +119,21 @@ func NewReceiverService(
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
@@ -359,6 +376,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
 		return nil, err
 	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
 
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
@@ -421,6 +441,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())

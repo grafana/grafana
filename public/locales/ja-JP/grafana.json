@@ -4373,12 +4373,13 @@
       "button-label": "フォルダを選択",
       "clear-selection": "選択をクリア",
       "empty-message": "フォルダが見つかりません",
-      "error-title": "フォルダの読み込み中にエラーが発生しました",
+      "error-title": "",
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
       "shared-with-me": "自分に共有されたもの",
       "team-folders": "チームフォルダ",
+      "team-folders-error-title": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -5592,6 +5593,8 @@
         "annotation-set": "注釈とアラート",
         "dashboard": "ダッシュボード",
         "element": "要素",
+        "filter": "",
+        "filters-set": "",
         "link-set": "リンク",
         "local-variable": "ローカル変数",
         "multiple-elements": "複数の要素",
@@ -5620,8 +5623,10 @@
           "title": "行ヘッダー"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "変数を追加",
         "title": "変数"
       },
       "variable": {
@@ -6172,6 +6177,9 @@
           "hide-header": "行ヘッダーを非表示",
           "title": "タイトル"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "変数"
         },
@@ -6330,6 +6338,9 @@
             "description": "選択した変数の値ごとにこのタブを繰り返します。",
             "title": "変数で繰り返す"
           }
+        },
+        "section-filters": {
+          "title": ""
         },
         "section-variables": {
           "title": "変数"
@@ -7039,6 +7050,13 @@
       "sql-name": "SQLで変換",
       "sql-transformation-description": "MySQLのような構文を使用してデータを操作します"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7483,6 +7501,7 @@
       "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
@@ -7490,6 +7509,11 @@
       "file-path": "<strong>ファイルパス：</strong>{{filePath}}",
       "form-loading-error": "フォームの読み込みエラー",
       "form-loading-error-unknown": "フォームの読み込み中に予期しないエラーが発生しました。",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "説明",
       "label-target-folder": "ターゲットフォルダ",
       "label-title": "タイトル",
@@ -7507,6 +7531,9 @@
       "disabled-tooltip": "アラートルールを作成する前にダッシュボードを保存する",
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "複数の値を同時に選択可能にします",
@@ -7603,6 +7630,13 @@
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -11027,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
       "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -12890,9 +12930,7 @@
       "update-available": "更新が利用可能です！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "プラグイン使用状況を確認するには、ダッシュボード全体を検索するための新しい検索インデックスが必要です。機能トグルを有効にしてください",
       "num-usages": "{{pluginName}}は<2>{{numUsages}}</2>回使用されています。",
-      "title-missing-feature-toggle-panel-title-search": "機能トグルがありません：{{toggle}}",
       "title-not-used-yet": "{{pluginName}}はまだどのダッシュボードでも使用されていません"
     },
     "plugins-errors-info": {

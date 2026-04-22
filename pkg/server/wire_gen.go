@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
@@ -912,7 +913,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
-	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
+	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	roleBindingApiInstaller := iam.ProvideNoopRoleBindingApiInstaller()
@@ -1613,7 +1614,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
-	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
+	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	roleBindingApiInstaller := iam.ProvideNoopRoleBindingApiInstaller()
