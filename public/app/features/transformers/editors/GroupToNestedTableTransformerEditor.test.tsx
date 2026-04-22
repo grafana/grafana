@@ -130,6 +130,50 @@ describe('GroupToNestedTableTransformerEditor', () => {
     // No regex input is present (which would indicate a byRegexp matcher instead)
     expect(screen.queryByPlaceholderText('Enter regular expression')).not.toBeInTheDocument();
   });
+
+  it('keeps the correct regex value displayed after the first of two byRegexp rules is deleted', () => {
+    // Regression: FieldNameByRegexMatcherEditor uses useState(options) — its internal
+    // state initialises from props once and never re-syncs. With key={index}, deleting
+    // rule[0] causes React to reuse that component instance for rule[1], so the input
+    // shows rule[0]'s regex instead of rule[1]'s. getRuleKeys() fixes this by giving
+    // each row a key derived from its matcher content, keeping component instances
+    // aligned with their rule regardless of deletion.
+    const onChange = jest.fn();
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byRegexp, options: '/foo/' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        {
+          matcher: { id: FieldMatcherID.byRegexp, options: '/bar/' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />
+    );
+
+    const inputs = screen.getAllByPlaceholderText('Enter regular expression');
+    expect(inputs[0]).toHaveValue('/foo/');
+    expect(inputs[1]).toHaveValue('/bar/');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove rule' })[0]);
+
+    const updatedOptions = onChange.mock.calls[0][0] as GroupToNestedTableTransformerOptionsV2;
+
+    rerender(
+      <GroupToNestedTableTransformerEditor input={input} options={updatedOptions} onChange={onChange} />
+    );
+
+    const remaining = screen.getAllByPlaceholderText('Enter regular expression');
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]).toHaveValue('/bar/');
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -115,6 +115,20 @@ export const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onCo
 
 const DEFAULT_MATCHER_ID = FieldMatcherID.byName;
 
+// Stable key derived from rule content so React doesn't confuse sibling RuleRows
+// when one is deleted. Uses the matcher identity rather than array position.
+// For the rare case of two rules with identical matcher configs the occurrence
+// count is appended so each key remains unique.
+const getRuleKeys = (rules: GroupToNestedTableMatcherConfig[]): string[] => {
+  const seen = new Map<string, number>();
+  return rules.map((rule) => {
+    const base = `${rule.matcher.id}:${JSON.stringify(rule.matcher.options ?? '')}`;
+    const count = seen.get(base) ?? 0;
+    seen.set(base, count + 1);
+    return count === 0 ? base : `${base}:${count}`;
+  });
+};
+
 interface RuleRowProps {
   rule: GroupToNestedTableMatcherConfig;
   data: Parameters<typeof GroupToNestedTableTransformerEditorV2>[0]['input'];
@@ -304,8 +318,8 @@ const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onC
       )}
 
       <Stack gap={1.5} direction="column">
-        {options.rules.map((rule, index) => (
-          <RuleRow key={index} rule={rule} data={input} onChange={onRuleChange(index)} onDelete={onRuleDelete(index)} />
+        {getRuleKeys(options.rules).map((key, index) => (
+          <RuleRow key={key} rule={options.rules[index]} data={input} onChange={onRuleChange(index)} onDelete={onRuleDelete(index)} />
         ))}
       </Stack>
 
