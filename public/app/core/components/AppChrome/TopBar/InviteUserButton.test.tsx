@@ -2,8 +2,9 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
 import { InviteUserButton } from './InviteUserButton';
@@ -22,6 +23,7 @@ jest.mock('app/api/clients/legacy', () => {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  usePluginComponents: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -39,9 +41,15 @@ jest.mock('app/features/users/utils', () => ({
   getExternalUserMngLinkUrl: jest.fn(),
 }));
 
+const mockUsePluginComponents = jest.mocked(usePluginComponents);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockReportInteraction = jest.mocked(reportInteraction);
 const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
+
+const MockPluginComponent = createComponentWithMeta(
+  { pluginId: 'grafana-setupguide-app', title: 'Invite', component: () => <div>plugin-invite-button</div> },
+  'grafana/topbar/invite-user/v1'
+);
 
 // Mock window.open
 const mockWindowOpen = jest.fn();
@@ -68,6 +76,7 @@ describe('InviteUserButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetExternalUserMngLinkUrl.mockReturnValue(mockInviteUrl);
+    mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
     config.externalUserMngLinkUrl = 'https://example.com/invite';
     config.externalUserUpgradeLinkUrl = '';
     config.namespace = 'org-1';
@@ -141,6 +150,28 @@ describe('InviteUserButton', () => {
       });
       expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith('invite-user-top-bar');
       expect(mockWindowOpen).toHaveBeenCalledWith(mockInviteUrl, '_blank');
+    });
+  });
+
+  describe('Extension point - grafana-setupguide-app override', () => {
+    it('should render the plugin component when grafana-setupguide-app registers one', () => {
+      mockUsePluginComponents.mockReturnValue({ components: [MockPluginComponent], isLoading: false });
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<InviteUserButton />);
+
+      expect(screen.getByText('plugin-invite-button')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /invite user/i })).not.toBeInTheDocument();
+    });
+
+    it('should fall back to the default button when no plugin component is registered', () => {
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<InviteUserButton />);
+
+      expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
     });
   });
 

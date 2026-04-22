@@ -3365,16 +3365,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 15
-    }
-  },
   "public/app/plugins/datasource/tempo/QueryField.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
