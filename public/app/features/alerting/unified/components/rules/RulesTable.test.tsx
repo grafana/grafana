@@ -27,9 +27,14 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
-jest.mock('../../hooks/abilities/promRuleAbilities');
-jest.mock('../../hooks/abilities/rulerRuleAbilities');
-jest.mock('../../hooks/abilities/ruleAbilities');
+jest.mock('../../hooks/abilities/rules/promRuleAbilities');
+jest.mock('../../hooks/abilities/rules/rulerRuleAbilities');
+// Keep real get* implementations — they are called by datasource.ts and access-control.ts
+// in non-React code paths triggered during these tests. Only mock the React hooks.
+jest.mock('../../hooks/abilities/rules/ruleAbilities', () => ({
+  ...jest.requireActual('../../hooks/abilities/rules/ruleAbilities'),
+  useRuleExploreAbility: jest.fn(),
+}));
 jest.mock('../../hooks/abilities/otherAbilities');
 
 /** Denied Ability for simple cases */

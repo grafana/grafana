@@ -36,12 +36,12 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
   GrafanaPoliciesExporter: () => null,
 }));
 
-jest.mock('../../hooks/abilities/useContactPointAbility', () => ({
-  ...jest.requireActual('../../hooks/abilities/useContactPointAbility'),
+jest.mock('../../hooks/abilities/alertmanager/useContactPointAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useContactPointAbility'),
   useContactPointAbility: jest.fn(),
 }));
-jest.mock('../../hooks/abilities/useNotificationPolicyAbility', () => ({
-  ...jest.requireActual('../../hooks/abilities/useNotificationPolicyAbility'),
+jest.mock('../../hooks/abilities/alertmanager/useNotificationPolicyAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useNotificationPolicyAbility'),
   useNotificationPolicyAbility: jest.fn(),
 }));
 

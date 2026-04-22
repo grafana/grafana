@@ -21,16 +21,19 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
-import { isGrafanaRulesSource } from './datasource';
-
 type RulesSourceType = 'grafana' | 'external';
 
 // ── Pure data: static permission maps ────────────────────────────────────────
 // Maps each CRUD operation to the correct AccessControlAction for Grafana-managed
 // vs. external datasource resources. No side effects; safe to import anywhere.
+//
+// Note: we deliberately do NOT import from './datasource' here to avoid the mutual
+// import cycle (datasource.ts ↔ access-control.ts). The only thing we needed from
+// datasource.ts was `isGrafanaRulesSource`, which is just `name === 'grafana'`.
+const GRAFANA_SOURCE_NAME = 'grafana' as const;
 
 function getRulesSourceType(alertManagerSourceName: string): RulesSourceType {
-  return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
+  return alertManagerSourceName === GRAFANA_SOURCE_NAME ? 'grafana' : 'external';
 }
 
 export const instancesPermissions = {
@@ -185,7 +188,7 @@ export function getRulesAccess() {
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
       getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted,
     canEditRules: (rulesSourceName: string) => {
-      return isGrafanaRulesSource(rulesSourceName)
+      return rulesSourceName === GRAFANA_SOURCE_NAME
         ? getGlobalRuleAbility(RuleAction.Update).granted
         : getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule).granted;
     },

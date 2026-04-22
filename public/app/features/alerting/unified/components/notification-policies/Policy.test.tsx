@@ -35,8 +35,8 @@ import {
   useCreateDropdownMenuActions,
 } from './Policy';
 
-jest.mock('../../hooks/abilities/useNotificationPolicyAbility', () => ({
-  ...jest.requireActual('../../hooks/abilities/useNotificationPolicyAbility'),
+jest.mock('../../hooks/abilities/alertmanager/useNotificationPolicyAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useNotificationPolicyAbility'),
   useNotificationPolicyAbility: jest.fn(),
 }));
 
