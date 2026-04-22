@@ -71,7 +71,7 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
   const onSelectFromQueryLibrary = useCallback(() => {
     openDrawer({
       options: {
-        context: CoreApp.Dashboard,
+        context: 'dashboard-annotations',
       },
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {
