@@ -14,6 +14,11 @@ const FALLBACK_CANVAS_WIDTH = 400;
 const FALLBACK_CANVAS_HEIGHT = 200;
 const OVERLAY_BLEND_MODES = ['plus-lighter', 'color', 'difference', 'exclusion', 'luminosity', 'screen'] as const;
 type OverlayBlendMode = (typeof OVERLAY_BLEND_MODES)[number];
+const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
+  .map((path) => path.split('/').pop())
+  .filter((name): name is string => Boolean(name))
+  // eslint-disable-next-line @grafana/no-locale-compare
+  .sort((a, b) => a.localeCompare(b));
 
 function toOverlayBlendMode(value: string): OverlayBlendMode {
   return OVERLAY_BLEND_MODES.find((mode) => mode === value) ?? 'exclusion';
@@ -61,10 +66,6 @@ function payloadFetchUrl(basename: string): string {
   return `${import.meta.env.BASE_URL}${basename}`;
 }
 
-function parsePayloadJson(text: string): unknown {
-  return JSON.parse(text);
-}
-
 /**
  * Static site component, DO NOT EVER USE THIS IN GRAFANA
  */
@@ -73,7 +74,23 @@ export const CompareUPlotCanvasOutputs = ({
   defaultHeight = FALLBACK_CANVAS_HEIGHT,
 }: Props = {}) => {
   const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
-  const [pasteText, setPasteText] = React.useState('');
+  const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
+  const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
+
+  const updateLocationForFile = React.useCallback((basename: string, mode: 'push' | 'replace') => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('file', basename);
+    url.searchParams.delete('expected');
+    url.searchParams.delete('actual');
+    url.searchParams.delete('testName');
+    url.searchParams.delete('uPlotData');
+    url.searchParams.delete('uPlotSeries');
+    if (mode === 'push') {
+      window.history.pushState({ file: basename }, '', url);
+    } else {
+      window.history.replaceState({ file: basename }, '', url);
+    }
+  }, []);
 
   const applyPayload = React.useCallback((raw: unknown, sourceLabel: string) => {
     if (!isUPlotComparePayloadV1(raw)) {
@@ -99,15 +116,51 @@ export const CompareUPlotCanvasOutputs = ({
     });
   }, []);
 
-  React.useEffect(() => {
-    let cancelled = false;
+  const loadPayloadFromPublicFile = React.useCallback(
+    async (basename: string, historyMode?: 'push' | 'replace') => {
+      if (!isSafePayloadBasename(basename)) {
+        setView({
+          kind: 'blocked',
+          error: `${basename}: invalid payload filename.`,
+          hint: 'Select one of the listed JSON files.',
+        });
+        return;
+      }
+      setSelectedFile(basename);
+      try {
+        const res = await fetch(payloadFetchUrl(basename));
+        if (!res.ok) {
+          setView({
+            kind: 'blocked',
+            error: `Could not load ${basename} (${res.status}).`,
+            hint: 'Select another payload file from the list.',
+          });
+          return;
+        }
+        const raw: unknown = await res.json();
+        applyPayload(raw, basename);
+        if (historyMode) {
+          updateLocationForFile(basename, historyMode);
+        }
+      } catch (e) {
+        setView({
+          kind: 'blocked',
+          error: `Failed to fetch ${basename}.`,
+          hint: e instanceof Error ? e.message : String(e),
+        });
+      }
+    },
+    [applyPayload, updateLocationForFile]
+  );
 
+  const loadFromLocation = React.useCallback(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
       const expectedParam = params.get('expected');
       const actualParam = params.get('actual');
 
       if (expectedParam != null && actualParam != null) {
+        setSelectedFile(null);
         const testName = params.get('testName') ?? '';
         const dataRaw = params.get('uPlotData');
         const seriesRaw = params.get('uPlotSeries');
@@ -117,143 +170,110 @@ export const CompareUPlotCanvasOutputs = ({
           uPlotData = dataRaw != null && dataRaw !== '' ? JSON.parse(dataRaw) : undefined;
           uPlotSeries = seriesRaw != null && seriesRaw !== '' ? JSON.parse(seriesRaw) : undefined;
         } catch {
-          if (!cancelled) {
-            setView({
-              kind: 'blocked',
-              error: 'Invalid uPlotData or uPlotSeries JSON in URL.',
-              hint: 'Use a payload file or paste JSON instead.',
-            });
-          }
+          setView({
+            kind: 'blocked',
+            error: 'Invalid uPlotData or uPlotSeries JSON in URL.',
+            hint: 'Use a payload file from the list instead.',
+          });
           return;
         }
         try {
           const expected: unknown = JSON.parse(expectedParam);
           const actual: unknown = JSON.parse(actualParam);
-          if (!cancelled) {
-            setView({
-              kind: 'ready',
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              payload: {
-                testName,
-                expected,
-                actual,
-                uPlotData,
-                uPlotSeries,
-                uPlotCanvasEvents: [],
-              } as ResolvedPayload,
-            });
-          }
+          setView({
+            kind: 'ready',
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            payload: {
+              testName,
+              expected,
+              actual,
+              uPlotData,
+              uPlotSeries,
+              uPlotCanvasEvents: [],
+            } as ResolvedPayload,
+          });
         } catch {
-          if (!cancelled) {
-            setView({
-              kind: 'blocked',
-              error: 'Invalid expected or actual JSON in URL.',
-              hint: 'Use a payload file or paste JSON instead.',
-            });
-          }
+          setView({
+            kind: 'blocked',
+            error: 'Invalid expected or actual JSON in URL.',
+            hint: 'Use a payload file from the list instead.',
+          });
         }
         return;
       }
 
       const fileParam = params.get('file');
-      if (!fileParam || !isSafePayloadBasename(fileParam)) {
-        if (!cancelled) {
-          setView({
-            kind: 'blocked',
-            hint: 'Add a ?file=… query parameter from the test output (each failure writes uplot-compare-payload-<uuid>.json), or paste JSON / choose a file. Example: http://localhost:5173/?file=uplot-compare-payload-….json',
-          });
-        }
+      if (!fileParam) {
+        setSelectedFile(null);
+        setView({
+          kind: 'blocked',
+          hint: 'Choose a payload file from the list.',
+        });
         return;
       }
-      const basename = fileParam;
 
-      try {
-        const res = await fetch(payloadFetchUrl(basename));
-        if (!res.ok) {
-          if (!cancelled) {
-            setView({
-              kind: 'blocked',
-              hint: `Could not load ${basename} (${res.status}). Re-run the test to refresh the file, or paste JSON / choose a file.`,
-            });
-          }
-          return;
-        }
-        const raw: unknown = await res.json();
-        if (cancelled) {
-          return;
-        }
-        if (!isUPlotComparePayloadV1(raw)) {
-          setView({
-            kind: 'blocked',
-            error: `${basename} is not a valid uplot compare payload.`,
-            hint: 'Paste JSON from the test output or pick another file.',
-          });
-          return;
-        }
+      if (!isSafePayloadBasename(fileParam) || !PUBLIC_PAYLOAD_FILES.includes(fileParam)) {
+        setSelectedFile(null);
         setView({
-          kind: 'ready',
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          payload: {
-            testName: raw.testName,
-            expected: raw.expected,
-            actual: raw.actual,
-            uPlotData: raw.uPlotData,
-            uPlotSeries: raw.uPlotSeries,
-            uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
-            ...readPayloadDimensions(raw),
-          } as ResolvedPayload,
+          kind: 'blocked',
+          error: `${fileParam} is not available in public payload files.`,
+          hint: 'Choose a payload file from the list.',
         });
-      } catch (e) {
-        if (!cancelled) {
-          setView({
-            kind: 'blocked',
-            hint: `Fetch failed (${e instanceof Error ? e.message : String(e)}). Paste JSON or choose a file.`,
-          });
-        }
+        return;
       }
+
+      void loadPayloadFromPublicFile(fileParam);
     };
 
     void run();
+  }, [loadPayloadFromPublicFile]);
+
+  React.useEffect(() => {
+    loadFromLocation();
+  }, [loadFromLocation]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const loadFileModifiedDates = async () => {
+      const entries = await Promise.all(
+        PUBLIC_PAYLOAD_FILES.map(async (basename): Promise<[string, string]> => {
+          try {
+            const res = await fetch(payloadFetchUrl(basename), { method: 'HEAD' });
+            if (!res.ok) {
+              return [basename, ''];
+            }
+            const lastModifiedHeader = res.headers.get('last-modified');
+            if (!lastModifiedHeader) {
+              return [basename, ''];
+            }
+            const dt = new Date(lastModifiedHeader);
+            return [basename, Number.isNaN(dt.getTime()) ? lastModifiedHeader : dt.toLocaleString()];
+          } catch {
+            return [basename, ''];
+          }
+        })
+      );
+      if (cancelled) {
+        return;
+      }
+      setFileModifiedLabels(Object.fromEntries(entries));
+    };
+
+    void loadFileModifiedDates();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const onLoadPaste = () => {
-    try {
-      const raw = parsePayloadJson(pasteText);
-      applyPayload(raw, 'Pasted JSON');
-    } catch {
-      setView({
-        kind: 'blocked',
-        error: 'Pasted text is not valid JSON.',
-        hint: 'Copy the full payload object from the test console output.',
-      });
-    }
-  };
-
-  const onPickFile: React.ChangeEventHandler<HTMLInputElement> = (ev) => {
-    const file = ev.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const text = typeof reader.result === 'string' ? reader.result : '';
-        const raw = parsePayloadJson(text);
-        applyPayload(raw, file.name);
-      } catch {
-        setView({
-          kind: 'blocked',
-          error: `Could not read ${file.name} as JSON.`,
-          hint: 'Choose a payload .json file written by toMatchUPlotSnapshot.',
-        });
-      }
+  React.useEffect(() => {
+    const onPopState = () => {
+      loadFromLocation();
     };
-    reader.readAsText(file);
-    ev.target.value = '';
-  };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [loadFromLocation]);
 
   if (view.kind === 'loading') {
     return <p>Loading…</p>;
@@ -268,24 +288,26 @@ export const CompareUPlotCanvasOutputs = ({
           </p>
         ) : null}
         {view.hint ? <p>{view.hint}</p> : null}
-        <label className="compare-paste-label">
-          Paste payload JSON
-          <textarea
-            className="compare-paste"
-            value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
-            rows={12}
-            spellCheck={false}
-          />
-        </label>
-        <div className="compare-actions">
-          <button type="button" onClick={onLoadPaste}>
-            Load pasted JSON
-          </button>
-          <label className="compare-file-label">
-            Or choose file
-            <input type="file" accept="application/json,.json" onChange={onPickFile} />
-          </label>
+        <div className="compare-file-list">
+          {PUBLIC_PAYLOAD_FILES.length === 0 ? (
+            <p>No JSON files found in the public directory.</p>
+          ) : (
+            PUBLIC_PAYLOAD_FILES.map((basename) => (
+              <button
+                key={basename}
+                type="button"
+                className={`compare-file-item${selectedFile === basename ? ' is-selected' : ''}`}
+                onClick={() => {
+                  void loadPayloadFromPublicFile(basename, 'push');
+                }}
+              >
+                <span>{basename}</span>
+                <span className="compare-file-modified">
+                  {fileModifiedLabels[basename] ? `Modified: ${fileModifiedLabels[basename]}` : 'Modified: unknown'}
+                </span>
+              </button>
+            ))
+          )}
         </div>
       </div>
     );
