@@ -15,7 +15,3 @@ interface Window {
   /** Indicates support for the render binding protocol. */
   __grafanaRenderBindingSupported?: boolean;
 }
-
-interface DOMParser {
-  parseFromString(string: string | TrustedType, type: DOMParserSupportedType): Document;
-}
