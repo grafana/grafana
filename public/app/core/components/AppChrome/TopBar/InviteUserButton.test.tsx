@@ -52,7 +52,7 @@ const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
 
 const MockPluginComponent = createComponentWithMeta(
   { pluginId: 'grafana-setupguide-app', title: 'Invite', component: () => <div>plugin-invite-button</div> },
-  'grafana/topbar/invite-user/v1'
+  'grafana/singletopbar/invite-user/v1'
 );
 
 // Mock window.open
