@@ -8,7 +8,7 @@ import type uPlot from 'uplot';
 import {
   createUplotComparePayloadBasename,
   UPLOT_COMPARE_PAYLOAD_VERSION,
-  type UPlotComparePayloadV1,
+  type UPlotComparePayload,
 } from '../uplotComparePayload';
 
 export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
@@ -28,28 +28,35 @@ export function toMatchUPlotSnapshot(
   data: uPlot.AlignedData,
   series: uPlot.Series[],
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
-  size?: UPlotSnapshotSize,
+  size: UPlotSnapshotSize,
   snapshotHint?: string,
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
-  const payloadWidth = size?.width;
-  const payloadHeight = size?.height;
+  const payloadWidth = size.width;
+  const payloadHeight = size.height;
+
   const [propertiesOrHint, hint] = rest;
   const snapshotName = snapshotHint ?? hint;
   const snapshotContext = this as Context;
   const result = (
-    propertiesOrHint !== undefined
+    propertiesOrHint
       ? toMatchSnapshot.call(snapshotContext, received, propertiesOrHint, snapshotName)
-      : snapshotName !== undefined
+      : snapshotName
         ? toMatchSnapshot.call(snapshotContext, received, snapshotName)
         : toMatchSnapshot.call(snapshotContext, received)
-  ) as SnapshotMismatch; // @todo how to properly get actual from jest?
+  ) as SnapshotMismatch;
 
-  if (!result.pass && result.expected != null) {
-    const parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
+  if (!process.env.CI && !result.pass && result.expected != null) {
+    let parsedExpected;
+    try {
+      parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
+    } catch (e) {
+      console.error('toMatchUPlotSnapshot: failed to parse expected snapshot JSON', e);
+      return result;
+    }
+
     const testName = this.currentTestName ?? '';
-
-    const payload: UPlotComparePayloadV1 = {
+    const payload: UPlotComparePayload = {
       version: UPLOT_COMPARE_PAYLOAD_VERSION,
       testName,
       expected: parsedExpected,
@@ -57,11 +64,11 @@ export function toMatchUPlotSnapshot(
       uPlotData: data,
       uPlotSeries: series,
       uPlotCanvasEvents: uPlotCanvasEvents,
-      ...(payloadWidth !== undefined && { width: payloadWidth }),
-      ...(payloadHeight !== undefined && { height: payloadHeight }),
+      width: payloadWidth,
+      height: payloadHeight,
     };
 
-    const { fullPath, publicBasename } = resolveUplotComparePayloadWriteTarget(testName);
+    const { fullPath, publicBasename } = resolveUPlotComparePayloadWriteTarget(testName);
     try {
       mkdirSync(path.dirname(fullPath), { recursive: true });
       writeFileSync(fullPath, `${JSON.stringify(payload)}\n`, 'utf8');
@@ -77,22 +84,26 @@ export function toMatchUPlotSnapshot(
         `[toMatchUPlotSnapshot] Could not write compare payload to ${fullPath}:`,
         e instanceof Error ? e.message : e
       );
-      console.log(
-        'Save this JSON manually and load it in uplot-compare (paste or file picker):',
-        JSON.stringify(payload)
-      );
     }
   }
 
   return result;
 }
 
+/**
+ * Snapshot is almost JSON, clean it up so it will parse
+ * @param text
+ */
 function parseSnapshotJson(text: string) {
   const withoutTrailingCommas = text.replace(/,(\s*[}\]])/g, '$1');
   return JSON.parse(withoutTrailingCommas);
 }
 
-function resolveUplotComparePayloadWriteTarget(testName: string): { fullPath: string; publicBasename: string } {
+/**
+ * Resolve output
+ * @param testName
+ */
+function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: string; publicBasename: string } {
   const fromEnv = process.env.UPLOT_COMPARE_PAYLOAD_FILE;
   if (fromEnv) {
     const fullPath = path.isAbsolute(fromEnv) ? fromEnv : path.resolve(process.cwd(), fromEnv);

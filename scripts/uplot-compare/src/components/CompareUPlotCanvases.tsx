@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { isUPlotComparePayloadV1, type UPlotComparePayloadV1 } from '@grafana/test-utils/uplot-compare-payload';
+import { isUPlotComparePayload, type UPlotComparePayload } from '@grafana/test-utils/uplot-compare-payload';
 
 import { ComparePlots, type ResolvedPayload } from './ComparePlots.tsx';
 
@@ -19,7 +19,7 @@ interface Props {
   defaultHeight?: number;
 }
 
-function readPayloadDimensions(raw: UPlotComparePayloadV1): Pick<ResolvedPayload, 'width' | 'height'> {
+function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
   const w = raw.width;
   const h = raw.height;
   return {
@@ -68,10 +68,10 @@ export const CompareUPlotCanvases = ({
   }, []);
 
   const applyPayload = React.useCallback((raw: unknown, sourceLabel: string) => {
-    if (!isUPlotComparePayloadV1(raw)) {
+    if (!isUPlotComparePayload(raw)) {
       setView({
         kind: 'blocked',
-        error: `${sourceLabel}: not a valid uplot compare payload (expected version 1 with testName, expected, actual).`,
+        error: `${sourceLabel}: not a valid uplot snapshot payload`,
         hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
       });
       return;

@@ -47,7 +47,7 @@ export function createUplotComparePayloadBasename(testName: string): string {
   return `${UPLOT_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
 }
 
-export interface UPlotComparePayloadV1 {
+export interface UPlotComparePayload {
   version: typeof UPLOT_COMPARE_PAYLOAD_VERSION;
   testName: string;
   expected: unknown;
@@ -60,12 +60,14 @@ export interface UPlotComparePayloadV1 {
   height?: number;
 }
 
-export function isUPlotComparePayloadV1(value: unknown): value is UPlotComparePayloadV1 {
+/**
+ * Narrow the payload type
+ * @param value
+ */
+export function isUPlotComparePayload(value: unknown): value is UPlotComparePayload {
   if (!value || typeof value !== 'object') {
     return false;
   }
   const o = value as Record<string, unknown>;
-  return (
-    o.version === UPLOT_COMPARE_PAYLOAD_VERSION && typeof o.testName === 'string' && 'expected' in o && 'actual' in o
-  );
+  return typeof o.testName === 'string' && 'expected' in o && 'actual' in o;
 }
