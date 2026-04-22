@@ -399,6 +399,7 @@ func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSign
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	usr.TeamIDs, usr.TeamUIDs, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
 		OrgID:  usr.OrgID,
 		UserID: usr.UserID,

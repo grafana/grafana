@@ -367,7 +367,9 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 		if err != nil {
 			return err
 		}
-		defer rows.Close()
+		defer func() {
+			_ = rows.Close()
+		}()
 		var id int64
 		var uid string
 		for rows.Next() {

@@ -60,7 +60,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.TeamIDs}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+		UserID: userID,
+		OrgID:  c.GetOrgID(),
+		Teams:  c.TeamIDs, // nolint:staticcheck
+	}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
