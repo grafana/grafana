@@ -274,7 +274,7 @@ export async function getPluginEntitlement(id: string): Promise<boolean> {
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;
-      if (error.status === 404 || error.status === 403) {
+      if (error.status === 401 || error.status === 403 || error.status === 404) {
         return false;
       }
       console.warn(`Failed to fetch entitlement for plugin "${id}" (status ${error.status})`);
