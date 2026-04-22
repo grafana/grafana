@@ -42,6 +42,7 @@ import {
   type RowsLayoutSpec,
   type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
