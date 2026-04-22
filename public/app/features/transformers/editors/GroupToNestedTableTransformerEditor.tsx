@@ -140,6 +140,7 @@ const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const matcherSelectId = useId();
+  const matcherOptionsId = useId();
   const matcherOptions = useFieldMatchersOptions(true);
 
   // Resolve the UI component for the current matcher type
@@ -171,7 +172,7 @@ const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
 
       {/* Row 1, Col 2: matcher sub-options (field name picker, type picker, regex input, etc.) */}
       <matcherUI.component
-        id={matcherUI.id}
+        id={matcherOptionsId}
         matcher={matcherUI.matcher}
         data={data}
         options={rule.matcher.options}
@@ -319,7 +320,13 @@ const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onC
 
       <Stack gap={1.5} direction="column">
         {getRuleKeys(options.rules).map((key, index) => (
-          <RuleRow key={key} rule={options.rules[index]} data={input} onChange={onRuleChange(index)} onDelete={onRuleDelete(index)} />
+          <RuleRow
+            key={key}
+            rule={options.rules[index]}
+            data={input}
+            onChange={onRuleChange(index)}
+            onDelete={onRuleDelete(index)}
+          />
         ))}
       </Stack>
 
