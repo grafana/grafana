@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -105,7 +106,6 @@ func NewStorageBackend(
 	db infraDB.DB,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
-	tracer trace.Tracer,
 	disableStorageServices bool,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
@@ -174,7 +174,6 @@ func NewStorageBackend(
 
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
-		Tracer:               tracer,
 		Reg:                  reg,
 		UseChannelNotifier:   !isHA,
 		Log:                  log.New("storage-backend"),
@@ -702,7 +701,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	}
 	event.PreviousRV = toMicrosecondRV(event.PreviousRV)
 
-	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
+	ctx, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
@@ -1370,15 +1369,37 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 // Don't run deletion of "last import times" more often than this duration.
 const limitLastImportTimesDeletion = 1 * time.Hour
 
+func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
+	if b.dialect.DialectName() != "sqlite" {
+		return b.db
+	}
+
+	// SQLite migrations rebuild indexes before the outer migration transaction commits,
+	// so these reads must reuse that transaction instead of opening a new connection.
+	if tx := resource.TransactionFromContext(ctx); tx != nil {
+		return dbimpl.NewTx(tx)
+	}
+
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+		if tx := resource.TransactionFromContext(clientCtx); tx != nil {
+			return dbimpl.NewTx(tx)
+		}
+	}
+
+	return b.db
+}
+
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")
 	defer span.End()
+
+	queryDB := b.lastImportTimeDB(ctx)
 
 	// Delete old entries, if configured, and if enough time has passed since last deletion.
 	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
 		now := time.Now()
 
-		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
+		res, err := dbutil.Exec(ctx, queryDB, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Threshold:   now.Add(-b.lastImportTimeMaxAge),
 		})
@@ -1397,7 +1418,7 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		b.lastImportTimeDeletionTime.Store(now)
 	}
 
-	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+	rows, err := dbutil.QueryRows(ctx, queryDB, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 	})
 	if err != nil {

@@ -231,7 +231,7 @@ LIMIT
   );
 
   return (
-    <div className={styles.mainContainer}>
+    <div className={styles.mainContainer} data-testid="sql-expression-editor">
       <Stack direction="column" gap={1}>
         {renderButtons()}
         {renderMainContent()}

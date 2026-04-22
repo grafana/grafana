@@ -320,28 +320,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
-			t.Run("When creating folder should return access denied error", func(t *testing.T) {
-				_, err := folderService.Create(ctx, &folder.CreateFolderCommand{
-					OrgID:        orgID,
-					Title:        f.Title,
-					UID:          f.UID,
-					SignedInUser: noPermUsr,
-				})
-				require.Error(t, err)
-			})
-
-			title := "Folder-TEST"
-			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				_, err := folderService.Update(ctx, &folder.UpdateFolderCommand{
-					UID:          f.UID,
-					OrgID:        orgID,
-					NewTitle:     &title,
-					SignedInUser: noPermUsr,
-				})
-				require.Error(t, err)
-				require.Equal(t, folder.ErrAccessDenied, err)
-			})
-
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              f.UID,
@@ -375,16 +353,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				})
 				require.NoError(t, err)
 				compareFoldersNormalizeTime(t, f, actualFolder)
-			})
-
-			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				_, err := folderService.Create(ctx, &folder.CreateFolderCommand{
-					OrgID:        orgID,
-					Title:        f.Title,
-					UID:          "general",
-					SignedInUser: usr,
-				})
-				require.ErrorIs(t, err, folder.ErrInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {

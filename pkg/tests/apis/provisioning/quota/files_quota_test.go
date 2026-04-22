@@ -21,10 +21,11 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-unlimited-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -80,10 +81,11 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-within-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -138,10 +140,11 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-reached-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -194,10 +197,11 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-exceeded-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 folder = 3 resources, exceeding limit of 1
 				"../testdata/all-panels.json":   "dashboard1.json",

@@ -1682,6 +1682,56 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 	test_common.UpdateDefaultRoute(t, user, amConfig.AlertmanagerConfig.Route)
 }
 
+func TestIntegrationAllowedIntegrations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingAllowedIntegrations: []string{"slack"},
+	})
+	client, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	newReceiver := func(title string, integrationType schema.IntegrationType) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        title,
+				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, integrationType)},
+			},
+		}
+	}
+
+	t.Run("create with disallowed integration type is rejected", func(t *testing.T) {
+		_, err := client.Create(ctx, newReceiver("disallowed-email", schema.EmailType), resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
+
+	t.Run("create with allowed integration type succeeds", func(t *testing.T) {
+		created, err := client.Create(ctx, newReceiver("allowed-slack", schema.SlackType), resource.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmpty(t, created.Name)
+		require.NoError(t, client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
+	t.Run("create with mixed integrations is rejected and names the disallowed one", func(t *testing.T) {
+		mixed := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title: "mixed-slack-and-email",
+				Integrations: []v1beta1.ReceiverIntegration{
+					createIntegration(t, schema.SlackType),
+					createIntegration(t, schema.EmailType),
+				},
+			},
+		}
+		_, err := client.Create(ctx, mixed, resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
+}
+
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {
 	cfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)

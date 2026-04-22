@@ -8,6 +8,16 @@ const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
 
+/** Color-background mode applies a gradient or image via the `background` shorthand (TableNG). */
+const assertCellHasBackground = (cell: Locator, expected: boolean) =>
+  expect(async () => {
+    const hasBackground = await cell.evaluate((el) => {
+      const s = window.getComputedStyle(el);
+      return s.background.includes('linear-gradient') || (s.backgroundImage !== 'none' && s.backgroundImage !== '');
+    });
+    expect(hasBackground, `cell ${expected ? 'has' : 'does not have'} background linear-gradient`).toBe(expected);
+  }).toPass();
+
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
   const wrapTextToggle = loc.getByLabel('Wrap text');
@@ -556,5 +566,54 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).not.toBeVisible();
+  });
+
+  test('Multi-frame table: frame selector combobox switches active frame', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '11' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Multi-frame table'))
+    ).toBeVisible();
+
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+    await waitForTableLoad(panelContent);
+
+    const table = panelContent.locator('.rdg');
+
+    const frameCombobox = panelContent.getByRole('combobox');
+    await expect(frameCombobox).toBeVisible();
+    await expect(frameCombobox, 'combobox starts with A').toHaveValue('A');
+    await expect(getCell(table, 0, 1), 'frame A header has correct text').toContainText('A');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'B', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to B').toHaveValue('B');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame B header has correct text').toContainText('B');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'C', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to C').toHaveValue('C');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame C header has correct text').toContainText('C');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
   });
 });

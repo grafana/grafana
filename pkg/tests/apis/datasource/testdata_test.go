@@ -45,7 +45,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
 			featuremgmt.FlagDatasourcesChunkedQueryStreaming,           // enable chunked streaming responses for queries
@@ -237,7 +237,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		  { "refId": "A",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
-			},{ 
+			},{
 			  "refId": "B",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"

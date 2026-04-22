@@ -466,10 +466,14 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// Get the folder tree filtered by user permissions (cached per user per request)
-		folderTree, err := l.treeCache.get(c, signedInUser)
-		if err != nil {
-			return err
+		needsFolderTree := !query.SkipFolderTreeForAdmin || !signedInUser.HasRole(org.RoleAdmin)
+		var folderTree *folder.FolderTree
+		if needsFolderTree {
+			// Get the folder tree filtered by user permissions (cached per user per request)
+			folderTree, err = l.treeCache.get(c, signedInUser)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Filter elements based on folder access using the tree
@@ -479,9 +483,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					continue
 				}
 			}
-			title := folderTree.GetTitle(element.FolderUID)
-			if title == "" {
-				title = dashboards.RootFolderName
+			var title string
+			if needsFolderTree {
+				title = folderTree.GetTitle(element.FolderUID)
+				if title == "" {
+					title = dashboards.RootFolderName
+				}
 			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
@@ -669,10 +676,28 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
 		}
+		// Keep folder_uid in sync with folder_id: getAllLibraryElements reads folder_uid
+		// directly from the table, so leaving it stale causes the list view to diverge.
+		// FolderID is authoritative here (set by handleFolderIDPatches); derive FolderUID
+		// from it so PATCHes that don't touch the folder still heal any prior drift.
+		folderID := libraryElement.FolderID // nolint:staticcheck
+		if folderID == 0 {
+			libraryElement.FolderUID = ""
+		} else {
+			f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+				OrgID:        signedInUser.GetOrgID(),
+				ID:           &folderID,
+				SignedInUser: signedInUser,
+			})
+			if err != nil {
+				return err
+			}
+			libraryElement.FolderUID = f.UID
+		}
 		if err := syncFieldsWithModel(&libraryElement); err != nil {
 			return err
 		}
-		if rowsAffected, err := session.ID(elementInDB.ID).Update(&libraryElement); err != nil {
+		if rowsAffected, err := session.ID(elementInDB.ID).MustCols("folder_id", "folder_uid").Update(&libraryElement); err != nil {
 			if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 				return model.ErrLibraryElementAlreadyExists
 			}

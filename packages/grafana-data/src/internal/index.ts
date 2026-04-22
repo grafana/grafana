@@ -40,6 +40,8 @@ export {
 } from '../transformations/transformers/groupBy';
 export {
   type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '../transformations/transformers/groupToNestedTable';
 export {

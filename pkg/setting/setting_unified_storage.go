@@ -60,6 +60,10 @@ var MigratedUnifiedResources = map[string]bool{
 // underscore in the resource portion of the env var name maps unambiguously
 // back to a dot. The key names are matched from a known list
 // ([knownUnifiedStorageKeys]) to preserve their original camelCase.
+//
+// Env vars that do not match a known camelCase resource suffix are treated
+// as keys on the bare [unified_storage] section (lowercased snake_case),
+// e.g. GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB → migration_cache_size_kb.
 func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	envPrefix := EnvSectionPrefix("unified_storage")
 
@@ -81,6 +85,7 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 
 		// Try to match a known key suffix. The key is always the last component
 		// after the final underscore that matches a known key name.
+		matched := false
 		for envKeySuffix, iniKeyName := range knownUnifiedStorageKeys {
 			suffix := "_" + envKeySuffix
 			if !strings.HasSuffix(remainder, suffix) {
@@ -96,8 +101,21 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 			cfg.Raw.Section(sectionName).Key(iniKeyName).SetValue(envValue)
 			cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
 				fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			matched = true
 			break
 		}
+		if matched {
+			continue
+		}
+
+		// Fallback: bare [unified_storage] section key (lowercased snake_case).
+		keyName := strings.ToLower(remainder)
+		if keyName == "" {
+			continue
+		}
+		cfg.Raw.Section("unified_storage").Key(keyName).SetValue(envValue)
+		cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+			fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 	}
 }
 

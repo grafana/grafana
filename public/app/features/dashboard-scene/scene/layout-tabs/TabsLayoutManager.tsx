@@ -18,7 +18,6 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
@@ -87,6 +86,10 @@ export class TabsLayoutManager
     const gen = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
     const newTabs = this.state.tabs.map((tab) => tab.duplicate(gen));
     return this.clone({ tabs: newTabs, key: undefined });
+  }
+
+  public getAllGridTypes(): string[] {
+    return this.state.tabs.flatMap((tab) => tab.getLayout().getAllGridTypes());
   }
 
   public duplicateTab(tab: TabItem) {
@@ -251,7 +254,7 @@ export class TabsLayoutManager
 
   public ungroupTabs() {
     const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
-    const gridTypes = new Set(findAllGridTypes(this));
+    const gridTypes = new Set(this.getAllGridTypes());
 
     showUngroupConfirmation({
       hasNonGridLayout,

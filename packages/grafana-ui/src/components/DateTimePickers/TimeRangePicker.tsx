@@ -8,19 +8,19 @@ import {
   rangeUtil,
   type GrafanaTheme2,
   dateTimeFormat,
-  timeZoneFormatUserFriendly,
   type TimeOption,
   type TimeRange,
-  type TimeZone,
   dateMath,
   getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
+import { Stack } from '../Layout/Stack/Stack';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
@@ -28,6 +28,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
+import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
@@ -272,7 +273,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   const timeZoneInfo = timeZone ? getTimeZoneInfo(timeZone, now) : undefined;
 
   return (
-    <>
+    <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
         {dateTimeFormat(timeRange.from, { timeZone })}
         <div className="text-center">
@@ -281,10 +282,10 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
         {dateTimeFormat(timeRange.to, { timeZone })}
       </div>
       <div className={styles.container}>
-        <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
+        <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
         <TimeZoneDescription info={timeZoneInfo} />
       </div>
-    </>
+    </Stack>
   );
 };
 
