@@ -658,4 +658,17 @@ module.exports = [
   //     '@grafana/no-plugin-external-import-paths': 'error',
   //   },
   // },
+
+  {
+    name: 'grafana/global-types-declarations',
+    files: ['packages/grafana-global-types/**/*.d.ts'],
+    rules: {
+      // Ambient declaration files must use /// <reference path> (not import) to stay
+      // script-style so TypeScript auto-applies global augmentations via @types/ discovery.
+      '@typescript-eslint/triple-slash-reference': 'off',
+      // Script-style .d.ts files cannot use top-level import type (that would make
+      // them modules), so inline import() expressions are required here.
+      '@typescript-eslint/consistent-type-imports': 'off',
+    },
+  },
 ];

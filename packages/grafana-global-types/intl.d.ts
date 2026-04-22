@@ -1,15 +1,5 @@
-import type {
-  DurationFormatConstructor,
-  DurationFormatOptions as _DurationFormatOptions,
-  DurationInput as _DurationInput,
-} from '@formatjs/intl-durationformat/src/types';
-
-declare global {
-  namespace Intl {
-    const DurationFormat: DurationFormatConstructor;
-    type DurationFormatOptions = _DurationFormatOptions;
-    type DurationInput = _DurationInput;
-  }
+declare namespace Intl {
+  const DurationFormat: import('@formatjs/intl-durationformat/src/types').DurationFormatConstructor;
+  type DurationFormatOptions = import('@formatjs/intl-durationformat/src/types').DurationFormatOptions;
+  type DurationInput = import('@formatjs/intl-durationformat/src/types').DurationInput;
 }
-
-export {};

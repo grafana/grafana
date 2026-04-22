@@ -5,8 +5,9 @@
   "types": "./index.d.ts",
   "license": "AGPL-3.0-only",
   "devDependencies": {
-    "@formatjs/intl-durationformat": "*",
+    "@formatjs/intl-durationformat": "^0.7.0",
     "@grafana/data": "workspace:*",
-    "@testing-library/jest-dom": "*"
+    "@testing-library/jest-dom": "6.6.4",
+    "react-table": "7.8.0"
   }
 }
