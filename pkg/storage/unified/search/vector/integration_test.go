@@ -24,6 +24,7 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, context.Context) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// TODO we'll need to get these working with CI
 	connStr := os.Getenv("PGVECTOR_TEST_DB")
 	if connStr == "" {
 		t.Skip("PGVECTOR_TEST_DB not set, skipping pgvector integration test")
@@ -297,4 +298,3 @@ func makeEmbedding(a, b float32) []float32 {
 	e[1] = b
 	return e
 }
-

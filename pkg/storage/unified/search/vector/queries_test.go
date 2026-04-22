@@ -5,6 +5,8 @@ import (
 	"testing"
 	"text/template"
 
+	pgvector "github.com/pgvector/pgvector-go"
+
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
@@ -33,6 +35,7 @@ func TestVectorQueries(t *testing.T) {
 							Embedding:       []float32{0.1, 0.2, 0.3},
 							Model:           "text-embedding-005",
 						},
+						Embedding: pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
 					},
 				},
 			},

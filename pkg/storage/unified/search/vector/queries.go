@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -36,7 +37,8 @@ var (
 
 type sqlEmbeddingsUpsertRequest struct {
 	sqltemplate.SQLTemplate
-	Vector *Vector
+	Vector    *Vector
+	Embedding any // pgvector.HalfVector
 }
 
 func (r *sqlEmbeddingsUpsertRequest) Validate() error {
@@ -113,7 +115,11 @@ func (r *sqlEmbeddingsSearchRequest) Validate() error {
 }
 
 func (r *sqlEmbeddingsSearchRequest) Results() (*sqlEmbeddingsSearchResponse, error) {
-	return r.Response, nil
+	// Set-returning query: return a copy because Response is reused for each
+	// Scan call. Scan allocates a fresh []byte for Metadata, so a shallow copy
+	// is safe.
+	cp := *r.Response
+	return &cp, nil
 }
 
 func (r *sqlEmbeddingsSearchRequest) NameFilter() bool {
@@ -168,4 +174,11 @@ func (r *sqlEmbeddingsCreatePartitionRequest) Validate() error {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
+}
+
+// NamespaceLiteral returns the namespace as a PostgreSQL string literal.
+// PostgreSQL does not accept bind parameters in CREATE TABLE ... FOR VALUES IN (...),
+// so the value must be inlined as a constant.
+func (r *sqlEmbeddingsCreatePartitionRequest) NamespaceLiteral() string {
+	return "'" + strings.ReplaceAll(r.Namespace, "'", "''") + "'"
 }

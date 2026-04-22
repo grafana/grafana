@@ -21,7 +21,7 @@ VALUES (
     {{ .Arg .Vector.Folder }},
     {{ .Arg .Vector.Content }},
     {{ .Arg .Vector.Metadata }},
-    {{ .Arg .Vector.Embedding }},
+    {{ .Arg .Embedding }},
     {{ .Arg .Vector.Model }}
 )
 ON CONFLICT ({{ .Ident "namespace" }}, {{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "name" }}, {{ .Ident "subresource" }})
@@ -30,6 +30,6 @@ DO UPDATE SET
     {{ .Ident "folder" }}           = {{ .Arg .Vector.Folder }},
     {{ .Ident "content" }}          = {{ .Arg .Vector.Content }},
     {{ .Ident "metadata" }}         = {{ .Arg .Vector.Metadata }},
-    {{ .Ident "embedding" }}        = {{ .Arg .Vector.Embedding }},
+    {{ .Ident "embedding" }}        = {{ .Arg .Embedding }},
     {{ .Ident "model" }}            = {{ .Arg .Vector.Model }}
 ;

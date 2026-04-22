@@ -58,6 +58,7 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 				req := &sqlEmbeddingsUpsertRequest{
 					SQLTemplate: sqltemplate.New(b.dialect),
 					Vector:      &vecs[i],
+					Embedding:   pgvector.NewHalfVector(vecs[i].Embedding),
 				}
 				if _, err := dbutil.Exec(ctx, tx, sqlEmbeddingsUpsert, req); err != nil {
 					return fmt.Errorf("upsert vector %s/%s: %w", vecs[i].Name, vecs[i].Subresource, err)
@@ -142,6 +143,13 @@ func (b *pgvectorBackend) GetLatestRV(ctx context.Context, namespace string) (in
 
 // ensurePartition creates a partition for the given namespace if it doesn't
 // already exist in the sync.Map cache. The DDL is idempotent.
+//
+// The template is rendered directly and executed without going through
+// dbutil.Exec's FormatSQL pass, because FormatSQL inserts spaces around
+// operator characters like `-` even when they appear inside the string literal
+// that names the partition value (e.g. 'stacks-123' would become
+// 'stacks - 123'). Partition values in CREATE TABLE ... FOR VALUES IN (...)
+// must be constant literals, so they can't be passed as bind parameters either.
 func (b *pgvectorBackend) ensurePartition(ctx context.Context, tx db.Tx, namespace string) error {
 	if _, ok := b.partitions.Load(namespace); ok {
 		return nil
@@ -153,8 +161,15 @@ func (b *pgvectorBackend) ensurePartition(ctx context.Context, tx db.Tx, namespa
 		Namespace:     namespace,
 		PartitionName: partitionName,
 	}
-	if _, err := dbutil.Exec(ctx, tx, sqlEmbeddingsCreatePartition, req); err != nil {
+	if err := req.Validate(); err != nil {
 		return err
+	}
+	query, err := sqltemplate.Execute(sqlEmbeddingsCreatePartition, req)
+	if err != nil {
+		return fmt.Errorf("render partition DDL: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, query); err != nil {
+		return fmt.Errorf("create partition: %w", err)
 	}
 
 	b.partitions.Store(namespace, struct{}{})
