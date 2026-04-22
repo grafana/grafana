@@ -44,10 +44,7 @@ function payloadFetchUrl(basename: string): string {
   return `${import.meta.env.BASE_URL}${basename}`;
 }
 
-/**
- * Static site component, DO NOT EVER USE THIS IN GRAFANA
- */
-export const CompareUPlotCanvasOutputs = ({
+export const CompareUPlotCanvases = ({
   defaultWidth = FALLBACK_CANVAS_WIDTH,
   defaultHeight = FALLBACK_CANVAS_HEIGHT,
 }: Props = {}) => {
