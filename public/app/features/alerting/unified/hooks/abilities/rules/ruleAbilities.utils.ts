@@ -12,7 +12,7 @@ import { getRulesPermissions } from '../../../utils/access-control';
 import { isAdmin } from '../../../utils/misc';
 import { getRulePluginOrigin } from '../../../utils/rules';
 import {
-  type Ability,
+  type AsyncAbility,
   Granted,
   InsufficientPermissions,
   IsPluginManaged,
@@ -34,31 +34,31 @@ export interface RuleEditAbilityResult {
    * Edit (update) the rule. Denied when: loading, ruler unavailable, provisioned
    * (`PROVISIONED`), plugin-managed (`IS_PLUGIN_MANAGED`), or no folder edit permission.
    */
-  update: Ability;
+  update: AsyncAbility;
   /** Delete the rule. Same conditions as `update` but checks delete permission. */
-  delete: Ability;
+  delete: AsyncAbility;
   /**
    * Restore the rule to a previous version. Same as `update` but additionally
    * returns `NOT_SUPPORTED` for non-Grafana-managed rules (cloud/recording rules
    * do not have version history).
    */
-  restore: Ability;
+  restore: AsyncAbility;
   /**
    * Pause / resume the rule. Same as `restore` — only applicable to Grafana-managed
    * alerting rules; returns `NOT_SUPPORTED` for recording rules and cloud rules.
    */
-  pause: Ability;
+  pause: AsyncAbility;
   /**
    * Duplicate the rule. Not blocked by provisioning (a provisioned rule can be
    * duplicated to create a new editable copy). Returns `IS_PLUGIN_MANAGED` when
    * the rule is plugin-owned, otherwise checks the create permission.
    */
-  duplicate: Ability;
+  duplicate: AsyncAbility;
   /**
    * Permanently delete the rule (purge from trash). Only applicable to Grafana-managed
    * alerting rules. Requires both delete permission and Grafana admin status.
    */
-  deletePermanently: Ability;
+  deletePermanently: AsyncAbility;
   /** True while async checks (ruler, plugin settings, folder) are still in flight. */
   loading: boolean;
 }
@@ -66,10 +66,10 @@ export interface RuleEditAbilityResult {
 // ── Pure ability builders ─────────────────────────────────────────────────────
 
 /**
- * Builds the Ability for a silence action.
+ * Builds the {@link AsyncAbility} for a silence action.
  * Extracted to avoid repeating the same if-chain in both the Ruler and Prom paths.
  */
-export function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: boolean): Ability {
+export function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: boolean): AsyncAbility {
   if (loading) {
     return Loading;
   }
@@ -86,26 +86,7 @@ export function buildSilenceAbility(loading: boolean, supported: boolean, canSil
 }
 
 /**
- * Builds an `Ability` from a supported flag, a loading flag, and an explicit list
- * of `AccessControlActions`. The user is considered allowed if they hold ANY of the
- * listed permissions.
- */
-export function buildAbility(supported: boolean, loading: boolean, anyOfPermissions: AccessControlAction[]): Ability {
-  if (loading) {
-    return Loading;
-  }
-  if (!supported) {
-    return NotSupported;
-  }
-  const hasAny = anyOfPermissions.some((p) => p && ctx.hasPermission(p));
-  if (!hasAny) {
-    return InsufficientPermissions(anyOfPermissions);
-  }
-  return Granted;
-}
-
-/**
- * Computes the edit (update or delete) ability for a rule.
+ * Computes the edit (update or delete) {@link AsyncAbility} for a rule.
  * Shared between the Ruler and Prom paths — the only difference is whether
  * `supported` reflects ruler availability (Ruler path) or is always `true` (Prom path).
  *
@@ -119,7 +100,7 @@ export function computeRuleEditAbility(
   isPluginManaged: boolean,
   hasPermission: boolean,
   permission: AccessControlAction
-): Ability {
+): AsyncAbility {
   if (loading) {
     return Loading;
   }
@@ -139,7 +120,7 @@ export function computeRuleEditAbility(
 }
 
 /**
- * Computes the duplicate ability for a rule.
+ * Computes the duplicate {@link AsyncAbility} for a rule.
  * Shared between the Ruler and Prom paths — duplicate is intentionally not blocked
  * by provisioning (a provisioned rule can be copied to create a new editable one).
  */
@@ -147,25 +128,26 @@ export function computeRuleDuplicateAbility(
   loading: boolean,
   isPluginManaged: boolean,
   createPermission: AccessControlAction
-): Ability {
+): AsyncAbility {
   if (loading) {
     return Loading;
   }
   if (isPluginManaged) {
     return IsPluginManaged;
   }
-  return buildAbility(true, false, [createPermission]);
+  const hasAny = ctx.hasPermission(createPermission);
+  return hasAny ? Granted : InsufficientPermissions([createPermission]);
 }
 
 /**
- * Computes the permanent-delete ability for a rule.
+ * Computes the permanent-delete {@link AsyncAbility} for a rule.
  * Shared between the Ruler and Prom paths.
  *
  * `isApplicable` should be `false` for non-Grafana-managed or recording rules
  * (caller decides based on rule type). When the underlying `deleteAbility` is
  * denied, its cause is propagated directly so the UI shows the right tooltip.
  */
-export function computeRuleDeletePermanentlyAbility(isApplicable: boolean, deleteAbility: Ability): Ability {
+export function computeRuleDeletePermanentlyAbility(isApplicable: boolean, deleteAbility: AsyncAbility): AsyncAbility {
   if (!isApplicable) {
     return NotSupported;
   }

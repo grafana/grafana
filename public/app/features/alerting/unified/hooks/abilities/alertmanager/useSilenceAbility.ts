@@ -6,7 +6,7 @@ import { type AccessControlAction } from 'app/types/accessControl';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { getInstancesPermissions, instancesPermissions } from '../../../utils/access-control';
 import { makeAbility } from '../abilityUtils';
-import { type Ability, InsufficientPermissions, Loading, SilenceAction } from '../types';
+import { type AsyncAbility, InsufficientPermissions, Loading, SilenceAction } from '../types';
 
 export type SilenceAbilityParam =
   | { action: SilenceAction.View }
@@ -21,7 +21,7 @@ const PERMISSIONS: Record<SilenceAction, AccessControlAction[]> = {
   [SilenceAction.Preview]: [instancesPermissions.read.grafana],
 };
 
-export function useSilenceAbility(payload: SilenceAbilityParam): Ability {
+export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
   const { selectedAlertmanager } = useAlertmanager();
 
   return useMemo(() => {

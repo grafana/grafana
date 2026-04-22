@@ -1,11 +1,13 @@
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { type AccessControlAction } from 'app/types/accessControl';
 
-import { type Ability, Granted, InsufficientPermissions, NotSupported } from './types';
+import { type Ability, type AsyncAbility, Granted, InsufficientPermissions, NotSupported } from './types';
 
 /**
- * Builds an `Ability` from a supported flag and an explicit list of `AccessControlActions`.
- * The user is considered allowed if they hold ANY of the listed permissions.
+ * Builds a synchronous {@link Ability} from a supported flag and an explicit list of
+ * `AccessControlActions`. The user is considered allowed if they hold ANY of the listed
+ * permissions. Never returns `LOADING` — use the async builder functions in
+ * `ruleAbilities.utils.ts` when a loading state is needed.
  */
 export function makeAbility(supported: boolean, anyOfPermissions: AccessControlAction[]): Ability {
   if (!supported) {
@@ -17,32 +19,36 @@ export function makeAbility(supported: boolean, anyOfPermissions: AccessControlA
 
 /**
  * True when the action is granted — both supported in context and permitted by RBAC.
+ * Accepts both {@link Ability} and {@link AsyncAbility}.
  *
  * @example
- * const exploreAbility = useRuleExploreAbility(rule.rulerRule, groupId);
+ * const exploreAbility = useRuleExploreAbility();
  * const canExplore = isGranted(exploreAbility);
  */
-export function isGranted(ability: Ability): boolean {
+export function isGranted(ability: AsyncAbility): boolean {
   return ability.granted === true;
 }
 
-/** True while async checks (folder metadata, plugin settings) are still resolving. */
-export function isLoading(ability: Ability): boolean {
+/**
+ * True while async checks (folder metadata, plugin settings) are still resolving.
+ * Only meaningful on {@link AsyncAbility} — sync {@link Ability} hooks never enter this state.
+ */
+export function isLoading(ability: AsyncAbility): boolean {
   return !ability.granted && ability.cause === 'LOADING';
 }
 
 /** True when the action doesn't exist in this context (wrong AM type, disabled feature flag). */
-export function isNotSupported(ability: Ability): boolean {
+export function isNotSupported(ability: AsyncAbility): boolean {
   return !ability.granted && ability.cause === 'NOT_SUPPORTED';
 }
 
 /** True when the resource is provisioned and read-only (Terraform, Ansible, provisioning API). */
-export function isProvisioned(ability: Ability): boolean {
+export function isProvisioned(ability: AsyncAbility): boolean {
   return !ability.granted && ability.cause === 'PROVISIONED';
 }
 
 /** True when the resource is owned by an installed plugin and cannot be mutated via the UI. */
-export function isPluginManaged(ability: Ability): boolean {
+export function isPluginManaged(ability: AsyncAbility): boolean {
   return !ability.granted && ability.cause === 'IS_PLUGIN_MANAGED';
 }
 
@@ -53,16 +59,16 @@ export function isPluginManaged(ability: Ability): boolean {
  * Use this for the **show-but-disable** pattern: render a button (possibly disabled) only
  * when `isAvailable`, and hide it entirely when `isNotSupported` or `isLoading`.
  *
- * Implemented as the inverse of the "hide entirely" causes (`LOADING`, `NOT_SUPPORTED`),
- * so any future cause is automatically included (shown disabled) unless explicitly added
- * to the exclusion list here.
+ * Accepts both {@link Ability} and {@link AsyncAbility}. The `LOADING` check is only
+ * meaningful for async abilities; for sync abilities it is always false and optimised away
+ * by TypeScript's control-flow analysis.
  *
  * @example
  * {isAvailable(exportAbility) && (
  *   <Button disabled={!isGranted(exportAbility)} onClick={handleExport}>Export</Button>
  * )}
  */
-export function isAvailable(ability: Ability): boolean {
+export function isAvailable(ability: AsyncAbility): boolean {
   if (ability.granted) {
     return true;
   }

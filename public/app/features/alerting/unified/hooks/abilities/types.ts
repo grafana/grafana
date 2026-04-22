@@ -124,12 +124,11 @@ export type Action =
 // ── Ability ─────────────────────────────────────────────────────────────
 
 /**
- * Discriminated union representing the outcome of an ability check.
+ * Discriminated union representing the **synchronous** outcome of an ability check.
  *
  * When `granted` is `true` the action can be performed — no `cause` is present.
  * When `granted` is `false` the `cause` explains why:
  *
- * - `LOADING`                   — async checks (folder metadata, plugin settings) are still in flight
  * - `NOT_SUPPORTED`             — the feature or action doesn't exist in this context
  *                                 (wrong alertmanager type, disabled feature flag, wrong rule type)
  * - `PROVISIONED`               — the resource is read-only because it is provisioned
@@ -140,9 +139,13 @@ export type Action =
  *                                 `anyOfPermissions` lists the permissions that would grant access
  *                                 (user needs **any one** of them)
  *
+ * Hooks that return `Ability` are **always resolved** — callers never need to handle a loading
+ * state. Use {@link AsyncAbility} for hooks that depend on async data (folder metadata, plugin
+ * settings, alertmanager configuration).
+ *
  * @example
- * // Common case — just check granted
- * const ability = useRulerRuleAbility(rule, groupId, RuleAction.Update);
+ * // Sync hook — check granted directly, no loading guard needed
+ * const ability = useGlobalRuleAbility(RuleAction.Create);
  * if (ability.granted) { ... }
  *
  * @example
@@ -156,11 +159,27 @@ export type Action =
  */
 export type Ability =
   | { granted: true }
-  | { granted: false; cause: 'LOADING' }
   | { granted: false; cause: 'NOT_SUPPORTED' }
   | { granted: false; cause: 'PROVISIONED' }
   | { granted: false; cause: 'IS_PLUGIN_MANAGED' }
   | { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] };
+
+/**
+ * Extends {@link Ability} with a `LOADING` variant for hooks that depend on async data
+ * (folder metadata, plugin settings, alertmanager configuration).
+ *
+ * Hooks returning `AsyncAbility` **may** be in a loading state — callers should guard with
+ * {@link isLoading} before acting on the result.
+ *
+ * - `LOADING` — async checks are still in flight; re-evaluate once loading is complete
+ *
+ * @example
+ * // Async hook — must handle loading before acting
+ * const silenceAbility = useRuleSilenceAbility(rule);
+ * if (isLoading(silenceAbility)) { return <Spinner />; }
+ * if (silenceAbility.granted) { ... }
+ */
+export type AsyncAbility = Ability | { granted: false; cause: 'LOADING' };
 
 /** Map of every action in domain T to its {@link Ability}. */
 export type Abilities<T extends Action> = Record<T, Ability>;
@@ -171,7 +190,7 @@ export type Abilities<T extends Action> = Record<T, Ability>;
 export const Granted: Ability = { granted: true };
 
 /** Async checks are still in flight — re-evaluate once loading is complete. */
-export const Loading: Ability = { granted: false, cause: 'LOADING' };
+export const Loading: AsyncAbility = { granted: false, cause: 'LOADING' };
 
 /**
  * The action is not applicable in the current context.
@@ -213,7 +232,7 @@ export function InsufficientPermissions(anyOfPermissions: AccessControlAction[])
  * }
  */
 export function isInsufficientPermissions(
-  ability: Ability
+  ability: AsyncAbility
 ): ability is { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] } {
   return !ability.granted && ability.cause === 'INSUFFICIENT_PERMISSIONS';
 }

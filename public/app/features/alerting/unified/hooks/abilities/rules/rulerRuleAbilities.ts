@@ -22,7 +22,7 @@ import { getRulesPermissions } from '../../../utils/access-control';
 import { getGroupOriginName } from '../../../utils/groupIdentifier';
 import { isProvisionedRule, rulerRuleType } from '../../../utils/rules';
 import { useIsRuleEditable } from '../../useIsRuleEditable';
-import { type Ability, NotSupported, RuleAction } from '../types';
+import { type Ability, type AsyncAbility, NotSupported, RuleAction } from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
@@ -114,7 +114,7 @@ export function useRuleAdministrationAbility(
  * Returns the silence `Ability` for a Ruler rule.
  * Checks alertmanager configuration and folder-level silence permissions.
  */
-export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): Ability {
+export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AsyncAbility {
   const { silenceSupported, canSilenceInFolder, silenceLoading } = useRulerSilenceState(rule);
   return useMemo(
     () => buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),

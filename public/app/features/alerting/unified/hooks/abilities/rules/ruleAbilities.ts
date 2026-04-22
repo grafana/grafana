@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { makeAbility } from '../abilityUtils';
 import {
   type Abilities,
   type Ability,
@@ -22,8 +23,6 @@ import {
   NotSupported,
   RuleAction,
 } from '../types';
-
-import { buildAbility } from './ruleAbilities.utils';
 
 // ── Grafana-managed rule abilities (global / list level) ──────────────────────
 
@@ -106,5 +105,5 @@ export function useExternalGlobalRuleAbility(action: ExternalRuleAction): Abilit
  * folder-scoped or async dependency, so no rule or group identifier is needed.
  */
 export function useRuleExploreAbility(): Ability {
-  return buildAbility(true, false, [AccessControlAction.DataSourcesExplore]);
+  return makeAbility(true, [AccessControlAction.DataSourcesExplore]);
 }

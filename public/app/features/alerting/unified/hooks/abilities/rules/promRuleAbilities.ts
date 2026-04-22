@@ -17,7 +17,7 @@ import { type GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { getRulesPermissions } from '../../../utils/access-control';
 import { isProvisionedPromRule, prometheusRuleType } from '../../../utils/rules';
-import { type Ability, NotSupported, RuleAction } from '../types';
+import { type Ability, type AsyncAbility, NotSupported, RuleAction } from '../types';
 
 import { useGlobalRuleAbility } from './ruleAbilities';
 import {
@@ -89,7 +89,7 @@ export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | Skip
       isRemovable ?? false,
       rulesPermissions.delete
     );
-    const alertingOnly = (base: Ability): Ability => (isAlertingRule ? base : NotSupported);
+    const alertingOnly = (base: AsyncAbility): AsyncAbility => (isAlertingRule ? base : NotSupported);
 
     return {
       update,
@@ -110,7 +110,7 @@ export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | Skip
  * Checks alertmanager configuration and folder-level silence permissions.
  * Pass `skipToken` when no prom rule is available.
  */
-export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken): Ability {
+export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken): AsyncAbility {
   const promRule = rule === skipToken ? undefined : rule;
   const isAlertingRule = promRule ? prometheusRuleType.grafana.alertingRule(promRule) : false;
   const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
