@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -151,7 +150,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		qs, supportbundlestest.NewFakeBundleService(), apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig))
+		qs, supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

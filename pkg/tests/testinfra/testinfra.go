@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -935,7 +934,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(),
-		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+		nil,
 	)
 	require.NoError(t, err)
 

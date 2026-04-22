@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -1121,7 +1120,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
-		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+		nil,
 	)
 	require.NoError(t, err)
 

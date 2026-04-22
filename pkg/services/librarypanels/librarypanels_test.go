@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -535,7 +534,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		usrSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(),
-			apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+			nil,
 		)
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)

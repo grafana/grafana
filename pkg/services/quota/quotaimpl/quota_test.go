@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
@@ -116,7 +115,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	userService, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
-		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+		nil,
 	)
 	require.NoError(t, err)
 	setupEnv(t, sqlStore, cfg, b, quotaService)

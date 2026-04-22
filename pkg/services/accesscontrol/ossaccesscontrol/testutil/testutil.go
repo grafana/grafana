@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -68,7 +67,7 @@ func ProvideFolderPermissions(
 		tracing.InitializeTracerForTest(),
 		quotaService,
 		bundleregistry.ProvideService(),
-		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+		nil,
 	)
 	if err != nil {
 		return nil, err

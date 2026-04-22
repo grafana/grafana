@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -92,7 +91,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+			nil,
 		)
 		require.NoError(t, err)
 		hs.userService = userSvc
@@ -168,7 +167,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+			nil,
 		)
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
@@ -201,7 +200,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+			nil,
 		)
 		require.NoError(t, err)
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
@@ -497,7 +496,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-		apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -729,7 +728,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
-			apiserver.ProvideClientGenerator(apiserver.WithoutRestConfig),
+			nil,
 		)
 		require.NoError(t, err)
 
