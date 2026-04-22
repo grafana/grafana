@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// OrgMemberLookup is the subset of org.Service needed to check email membership.
+// UserLookup is the subset of org.Service needed to check email membership.
 type UserLookup interface {
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 }
