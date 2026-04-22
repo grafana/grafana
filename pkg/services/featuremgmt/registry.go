@@ -1783,7 +1783,7 @@ var (
 			Name:        "azureMonitorBatchAPI",
 			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
