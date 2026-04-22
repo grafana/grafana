@@ -17,7 +17,7 @@ import {
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
 } from './abilityTestUtils';
-import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
+import { useGlobalNotificationTemplateAbility, useNotificationTemplateAbility } from './useNotificationTemplateAbility';
 
 setupMswServer();
 
@@ -36,6 +36,32 @@ const provisionedTemplate = {
   provenance: KnownProvenance.API,
   kind: 'grafana' as const,
 };
+
+describe('useGlobalNotificationTemplateAbility', () => {
+  it('grants View when read permission is held — no alertmanager context needed', () => {
+    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+
+    const { result } = renderHook(() => useGlobalNotificationTemplateAbility(NotificationTemplateAction.View));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('denies View when no read permission is held', () => {
+    grantUserPermissions([]);
+
+    const { result } = renderHook(() => useGlobalNotificationTemplateAbility(NotificationTemplateAction.View));
+
+    expect(result.current.granted).toBe(false);
+  });
+
+  it('grants Create when write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);
+
+    const { result } = renderHook(() => useGlobalNotificationTemplateAbility(NotificationTemplateAction.Create));
+
+    expect(result.current.granted).toBe(true);
+  });
+});
 
 describe('useNotificationTemplateAbility', () => {
   describe('Grafana alertmanager', () => {

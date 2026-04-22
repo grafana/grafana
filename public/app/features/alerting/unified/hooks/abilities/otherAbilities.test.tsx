@@ -8,12 +8,47 @@ import { grantPermissionsHelper } from '../../test/test-utils';
 import * as misc from '../../utils/misc';
 
 import { isNotSupported } from './abilityUtils';
-import { useEnrichmentAbilities, useEnrichmentAbility } from './otherAbilities';
-import { EnrichmentAction, isInsufficientPermissions } from './types';
+import {
+  useEnrichmentAbilities,
+  useEnrichmentAbility,
+  useFolderBulkActionAbilities,
+  useFolderBulkActionAbility,
+} from './otherAbilities';
+import { EnrichmentAction, FolderBulkAction, isInsufficientPermissions } from './types';
 
 setupMswServer();
 
 const wrapper = () => getWrapper({ renderWithRouter: true });
+
+describe('otherAbilities — folder bulk action', () => {
+  it('grants Pause and Delete to org admins', () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+
+    const { result } = renderHook(() => useFolderBulkActionAbilities(), { wrapper: wrapper() });
+
+    expect(result.current[FolderBulkAction.Pause].granted).toBe(true);
+    expect(result.current[FolderBulkAction.Delete].granted).toBe(true);
+  });
+
+  it('denies Pause and Delete to non-admins', () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+
+    const { result } = renderHook(() => useFolderBulkActionAbilities(), { wrapper: wrapper() });
+
+    expect(result.current[FolderBulkAction.Pause].granted).toBe(false);
+    expect(isInsufficientPermissions(result.current[FolderBulkAction.Pause])).toBe(true);
+    expect(result.current[FolderBulkAction.Delete].granted).toBe(false);
+    expect(isInsufficientPermissions(result.current[FolderBulkAction.Delete])).toBe(true);
+  });
+
+  it('returns the correct single-action slice via useFolderBulkActionAbility', () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+
+    const { result } = renderHook(() => useFolderBulkActionAbility(FolderBulkAction.Pause), { wrapper: wrapper() });
+
+    expect(result.current.granted).toBe(true);
+  });
+});
 
 describe('otherAbilities — enrichment', () => {
   const originalFeatureToggle = config.featureToggles.alertEnrichment;

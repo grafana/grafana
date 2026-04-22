@@ -17,7 +17,7 @@ import {
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
 } from './abilityTestUtils';
-import { useContactPointAbility } from './useContactPointAbility';
+import { useContactPointAbility, useGlobalContactPointAbility } from './useContactPointAbility';
 
 setupMswServer();
 
@@ -51,6 +51,33 @@ const readOnlyEntity = {
     },
   },
 };
+
+describe('useGlobalContactPointAbility', () => {
+  it('grants View when notifications read permission is held — no alertmanager context needed', () => {
+    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+
+    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('denies View when no read permission is held', () => {
+    grantUserPermissions([]);
+
+    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.View));
+
+    expect(result.current.granted).toBe(false);
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+  });
+
+  it('grants Create when write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+
+    const { result } = renderHook(() => useGlobalContactPointAbility(ContactPointAction.Create));
+
+    expect(result.current.granted).toBe(true);
+  });
+});
 
 describe('useContactPointAbility', () => {
   describe('Grafana alertmanager', () => {

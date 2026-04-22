@@ -10,11 +10,25 @@ import { setupDataSources } from '../../../testSetup/datasources';
 import { groupIdentifier } from '../../../utils/groupIdentifier';
 import * as misc from '../../../utils/misc';
 import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from '../abilityUtils';
-import { isInsufficientPermissions } from '../types';
+import { ExternalRuleAction, RuleAction, isInsufficientPermissions } from '../types';
 
-import { usePromRuleAdministrationAbility } from './promRuleAbilities';
-import { useRuleExploreAbility } from './ruleAbilities';
-import { skipToken } from './ruleAbilities.utils';
+import {
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
+} from './promRuleAbilities';
+import {
+  useExternalGlobalRuleAbilities,
+  useExternalGlobalRuleAbility,
+  useGlobalRuleAbilities,
+  useRuleExploreAbility,
+} from './ruleAbilities';
+import {
+  buildSilenceAbility,
+  computeRuleDuplicateAbility,
+  computeRuleEditAbility,
+  skipToken,
+} from './ruleAbilities.utils';
 import { useRuleAdministrationAbility, useRuleExportAbility, useRuleSilenceAbility } from './rulerRuleAbilities';
 
 setupMswServer();
@@ -457,5 +471,183 @@ describe('usePromRuleAdministrationAbility', () => {
 
     expect(isProvisioned(result.current.delete)).toBe(true);
     expect(isProvisioned(result.current.deletePermanently)).toBe(true);
+  });
+});
+
+// ── usePromRuleSilenceAbility ─────────────────────────────────────────────────
+
+describe('usePromRuleSilenceAbility', () => {
+  it('denies silence for skipToken — not an alerting rule', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
+    grantUserPermissions([]);
+
+    const { result } = renderHook(() => usePromRuleSilenceAbility(skipToken), { wrapper: wrapper() });
+
+    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+  });
+
+  it('denies silence for a recording rule — isAlertingRule is false', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    const promRule = makePromRule({ type: PromRuleType.Recording });
+
+    const { result } = renderHook(() => usePromRuleSilenceAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+  });
+
+  it('grants silence for an alerting rule when user has folder silence create permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    const promRule = makePromRule();
+
+    const { result } = renderHook(() => usePromRuleSilenceAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.granted).toBe(true));
+  });
+
+  it('denies silence for an alerting rule when folder lacks silence permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
+    grantUserPermissions([]);
+
+    const promRule = makePromRule();
+
+    const { result } = renderHook(() => usePromRuleSilenceAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+  });
+});
+
+// ── usePromRuleExportAbility ──────────────────────────────────────────────────
+
+describe('usePromRuleExportAbility', () => {
+  it('returns NOT_SUPPORTED for skipToken', () => {
+    const { result } = renderHook(() => usePromRuleExportAbility(skipToken), { wrapper: wrapper() });
+
+    expect(isNotSupported(result.current)).toBe(true);
+  });
+
+  it('returns NOT_SUPPORTED for a recording rule', () => {
+    const promRule = makePromRule({ type: PromRuleType.Recording });
+
+    const { result } = renderHook(() => usePromRuleExportAbility(promRule), { wrapper: wrapper() });
+
+    expect(isNotSupported(result.current)).toBe(true);
+  });
+
+  it('is available and granted for an alerting rule with read permission', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+    const promRule = makePromRule();
+
+    const { result } = renderHook(() => usePromRuleExportAbility(promRule), { wrapper: wrapper() });
+
+    expect(isAvailable(result.current)).toBe(true);
+    expect(result.current.granted).toBe(true);
+  });
+});
+
+// ── Global rule ability React hooks ──────────────────────────────────────────
+
+describe('useGlobalRuleAbilities (React hook)', () => {
+  it('returns granted abilities matching held permissions', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleCreate]);
+
+    const { result } = renderHook(() => useGlobalRuleAbilities(), { wrapper: wrapper() });
+
+    expect(result.current[RuleAction.View].granted).toBe(true);
+    expect(result.current[RuleAction.Create].granted).toBe(true);
+    expect(result.current[RuleAction.Update].granted).toBe(false);
+    // Per-instance actions are NOT_SUPPORTED at list level
+    expect(isNotSupported(result.current[RuleAction.Duplicate])).toBe(true);
+  });
+});
+
+describe('useExternalGlobalRuleAbilities (React hook)', () => {
+  it('returns granted abilities matching held permissions', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+
+    const { result } = renderHook(() => useExternalGlobalRuleAbilities(), { wrapper: wrapper() });
+
+    expect(result.current[ExternalRuleAction.ViewAlertRule].granted).toBe(true);
+    expect(result.current[ExternalRuleAction.CreateAlertRule].granted).toBe(false);
+  });
+});
+
+describe('useExternalGlobalRuleAbility (React hook)', () => {
+  it('grants view when external read permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+
+    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule), {
+      wrapper: wrapper(),
+    });
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('denies create when external write permission is not held', () => {
+    grantUserPermissions([]);
+
+    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule), {
+      wrapper: wrapper(),
+    });
+
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+    if (isInsufficientPermissions(result.current)) {
+      expect(result.current.anyOfPermissions).toContain(AccessControlAction.AlertingRuleExternalWrite);
+    }
+  });
+});
+
+// ── Pure utility function branches ────────────────────────────────────────────
+
+describe('buildSilenceAbility', () => {
+  it('returns NOT_SUPPORTED when silence is not supported by the alertmanager', () => {
+    expect(isNotSupported(buildSilenceAbility(false, false, true))).toBe(true);
+  });
+});
+
+describe('computeRuleEditAbility', () => {
+  it('returns NOT_SUPPORTED when the ruler endpoint is unavailable (supported=false)', () => {
+    const result = computeRuleEditAbility(
+      false,
+      false, // supported = false
+      false,
+      false,
+      false,
+      true,
+      AccessControlAction.AlertingRuleUpdate
+    );
+    expect(isNotSupported(result)).toBe(true);
+  });
+
+  it('returns IS_PLUGIN_MANAGED when the rule is owned by an installed plugin', () => {
+    const result = computeRuleEditAbility(
+      false,
+      true,
+      false, // not provisioned
+      false, // not federated
+      true, // isPluginManaged = true
+      true,
+      AccessControlAction.AlertingRuleUpdate
+    );
+    expect(isPluginManaged(result)).toBe(true);
+  });
+});
+
+describe('computeRuleDuplicateAbility', () => {
+  it('returns IS_PLUGIN_MANAGED when the rule is owned by an installed plugin', () => {
+    const result = computeRuleDuplicateAbility(
+      false,
+      true, // isPluginManaged = true
+      AccessControlAction.AlertingRuleCreate
+    );
+    expect(isPluginManaged(result)).toBe(true);
   });
 });

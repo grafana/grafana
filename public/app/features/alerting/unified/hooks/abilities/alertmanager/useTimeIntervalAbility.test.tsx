@@ -16,12 +16,46 @@ import {
   setupMimirAlertmanager,
   setupVanillaPrometheusAlertmanager,
 } from './abilityTestUtils';
-import { useTimeIntervalAbility } from './useTimeIntervalAbility';
+import { useGlobalTimeIntervalAbility, useTimeIntervalAbility } from './useTimeIntervalAbility';
 
 setupMswServer();
 
 const notProvisioned = { provisioned: false };
 const provisioned = { provisioned: true };
+
+describe('useGlobalTimeIntervalAbility', () => {
+  it('grants View when read permission is held — no alertmanager context needed', () => {
+    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.View));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('denies View when no read permission is held', () => {
+    grantUserPermissions([]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.View));
+
+    expect(result.current.granted).toBe(false);
+  });
+
+  it('grants Create when write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsWrite]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Create));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('grants Export when read permission is held', () => {
+    grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Export));
+
+    expect(result.current.granted).toBe(true);
+  });
+});
 
 describe('useTimeIntervalAbility', () => {
   describe('Grafana alertmanager', () => {
