@@ -114,7 +114,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // @grafana/identity-access-team
-	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-hclog v1.6.3 // indirect; @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.8.0 // @grafana/grafana-backend-group
@@ -124,7 +124,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/data-sources-plugins
 	github.com/influxdata/influxql v1.4.0 // @grafana/data-sources-plugins
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
-	github.com/jackc/pgx/v5 v5.9.1 // @grafana/grafana-search-and-storage
+	github.com/jackc/pgx/v5 v5.9.2 // @grafana/grafana-search-and-storage
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
