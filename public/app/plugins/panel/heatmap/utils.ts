@@ -691,7 +691,6 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         });
         u.ctx.restore();
 
-        // console.log('dense', u)
         return null;
       }
     );
@@ -761,7 +760,6 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
           u.ctx.fill(p);
         });
         u.ctx.restore();
-        // console.log(points, u);
       }
     );
 
@@ -881,7 +879,6 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         });
         u.ctx.restore();
 
-        console.log('sparse', u);
         //console.timeEnd('heatmapPathsSparse');
       }
     );

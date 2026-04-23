@@ -24,6 +24,7 @@ export function toMatchUPlotSnapshot(
   received: CanvasRenderingContext2DEvent[],
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
   size: UPlotSnapshotSize,
+  debug = false,
   snapshotHint?: string,
   ...rest: ToMatchSnapshotRest
 ): jest.CustomMatcherResult {
@@ -41,14 +42,15 @@ export function toMatchUPlotSnapshot(
         : toMatchSnapshot.call(snapshotContext, received)
   ) as SnapshotMismatch;
 
-  if (!process.env.CI && !result.pass && result.expected != null) {
+  // @todo fixy-hacky
+  if (debug && result.expected == null && result.pass) {
+    result.expected = JSON.stringify(received);
+  }
+
+  if (!process.env.CI && (!result.pass || debug) && result.expected != null) {
     let parsedExpected;
-    try {
-      parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
-    } catch (e) {
-      console.error('toMatchUPlotSnapshot: failed to parse expected snapshot JSON', e);
-      return result;
-    }
+
+    parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
 
     const testName = this.currentTestName ?? '';
     const payload: UPlotComparePayload = {
@@ -88,7 +90,11 @@ export function toMatchUPlotSnapshot(
  */
 function parseSnapshotJson(text: string) {
   const withoutTrailingCommas = text.replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(withoutTrailingCommas);
+  try {
+    return JSON.parse(withoutTrailingCommas);
+  } catch (e) {
+    console.error('toMatchUPlotSnapshot: failed to parse expected snapshot JSON', e);
+  }
 }
 
 /**

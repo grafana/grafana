@@ -15,6 +15,7 @@ export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
     received: CanvasRenderingContext2DEvent[],
     uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
     size: { width: number; height: number },
+    debug: boolean,
     snapshotHint?: string,
     ...rest: ToMatchSnapshotRest
   ): jest.CustomMatcherResult;

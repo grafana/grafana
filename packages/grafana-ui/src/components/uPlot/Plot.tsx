@@ -60,8 +60,6 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
     };
 
     pluginLog('UPlot', false, 'Reinitializing plot', config);
-    console.log('config', config);
-    console.log('data', this.props.data);
     const plot = new uPlot(config, this.props.data as AlignedData, this.plotContainer!.current!);
 
     if (plotRef) {
