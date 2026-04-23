@@ -811,8 +811,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
-	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
-	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {
+	// Suppress the hook retry while the hook-failure cooldown is active. If the
+	// spec no longer expects a webhook, the cooldown does not apply: we let the
+	// hook handler run (so it can clean up any previously-created webhook) and
+	// do not block recovery from a stale HealthFailureHook on the next
+	// reconcile.
+	if shouldRunHooks && rc.healthChecker.inHookFailureCooldown(obj) {
 		shouldRunHooks = false
 	}
 

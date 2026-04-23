@@ -74,13 +74,24 @@ func (hc *RepositoryHealthChecker) ShouldCheckHealth(repo *provisioning.Reposito
 		return true
 	}
 
-	// If the repository has a hook error, don't run the health check
-	if repo.Status.Health.Error == provisioning.HealthFailureHook {
+	// While the hook-failure cooldown is still active, skip the health check so health status is not overwritten.
+	if hc.inHookFailureCooldown(repo) {
 		return false
 	}
 
 	// Check general timing for health checks
 	return !hc.hasRecentHealthCheck(repo.Status.Health)
+}
+
+// inHookFailureCooldown reports whether hook-failure cooldown suppression
+// should currently apply to this repository.
+// No workflows implies no webhook is expected, thus no cooldown
+// (e.g. when deleting an existing webhook).
+func (hc *RepositoryHealthChecker) inHookFailureCooldown(repo *provisioning.Repository) bool {
+	if repo == nil || len(repo.Spec.Workflows) == 0 {
+		return false
+	}
+	return hc.HasRecentFailure(repo.Status.Health, provisioning.HealthFailureHook)
 }
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
@@ -191,12 +202,12 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
 //
-// When a recent HealthFailureHook is recorded on status.health, the refresh is
-// skipped and the existing status is returned unchanged to avoid overriding it.
+// When the hook-failure cooldown is active  the refresh is skipped to avoid
+// overwriting the recorded hook failure.
 func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error) {
 	cfg := repo.Config()
 
-	if hc.HasRecentFailure(cfg.Status.Health, provisioning.HealthFailureHook) {
+	if hc.inHookFailureCooldown(cfg) {
 		logging.FromContext(ctx).Info("skipping health refresh while hook failure cooldown is active")
 		return HealthResultWithPatchOps{
 			HealthStatus:   cfg.Status.Health,
