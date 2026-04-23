@@ -105,7 +105,7 @@ export const deletedDashboardsCache = new DeletedDashboardsCache();
  * Returns `undefined` when nothing to resolve or the lookup fails, in which case callers fall
  * back to rendering the raw annotation value.
  */
-async function resolveDeletedByDisplayMap(
+export async function resolveDeletedByDisplayMap(
   resourceList: ResourceList<DashboardDataDTO>
 ): Promise<Map<string, string> | undefined> {
   const uids = new Set<string>();
