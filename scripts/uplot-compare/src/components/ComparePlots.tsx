@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 
 import { useCanvasEventsEffect } from '../hooks/useCanvasEventsEffect.ts';
 import { useDiffImageData } from '../hooks/useDiffImageData.ts';
-import type { ComparePlotsProps, OverlayBlendMode } from '../types.ts';
+import type { ComparePlotsProps } from '../types.ts';
 
 import { CanvasStack } from './CanvasStack.tsx';
 import { DiffCanvas } from './DiffCanvas.tsx';
@@ -16,7 +16,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const expectedOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const actualOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [blendMode, setBlendMode] = useState<OverlayBlendMode>('exclusion');
+  const [blendMode, setBlendMode] = useState<CSSProperties['mixBlendMode']>('exclusion');
   const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = useState(true);
   const [renderActualSetupEvents, setRenderActualSetupEvents] = useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = useState(true);
@@ -73,7 +73,6 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             showOverlay={showOverlay}
             hasDiff={hasDiff}
             mixBlendMode={blendMode}
-            onChangeBlendMode={setBlendMode}
           />
         </div>
 
@@ -94,7 +93,6 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             showOverlay={showOverlay}
             hasDiff={hasDiff}
             mixBlendMode={blendMode}
-            onChangeBlendMode={setBlendMode}
           />
         </div>
         <div className="diff-panel-wrap">

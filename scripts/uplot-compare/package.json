@@ -9,7 +9,8 @@
       "types": "./src/exportedTypes.ts",
       "import": "./src/exportedTypes.ts",
       "default": "./src/exportedTypes.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "vite",

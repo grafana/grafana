@@ -1,6 +1,4 @@
-import type { RefObject } from 'react';
-
-import type { OverlayBlendMode } from '../types.ts';
+import type { CSSProperties, RefObject } from 'react';
 
 export function CanvasStack(props: {
   uPlotRef: RefObject<HTMLCanvasElement | null>;
@@ -9,8 +7,7 @@ export function CanvasStack(props: {
   overlayRef: RefObject<HTMLCanvasElement | null>;
   showOverlay: boolean;
   hasDiff: boolean;
-  mixBlendMode: OverlayBlendMode;
-  onChangeBlendMode: (mode: OverlayBlendMode) => void;
+  mixBlendMode: CSSProperties['mixBlendMode'];
 }) {
   return (
     <div className="canvas-stack">

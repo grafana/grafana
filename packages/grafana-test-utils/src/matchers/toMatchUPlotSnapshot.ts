@@ -102,7 +102,9 @@ function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: st
     return { fullPath, publicBasename: path.basename(fullPath) };
   }
   const basename = createUPlotComparePayloadBasename(testName);
-  const uplotCompareRoot = path.join(path.dirname(require.resolve('@grafana/uplot-compare')), '..');
+  // Resolve via `package.json` so this does not break if the workspace's main entry moves
+  // (e.g. to a built `dist/` folder). `./package.json` is explicitly listed in the workspace's `exports`.
+  const uplotCompareRoot = path.dirname(require.resolve('@grafana/uplot-compare/package.json'));
   const fullPath = path.join(uplotCompareRoot, 'public', basename);
   return { fullPath, publicBasename: basename };
 }
