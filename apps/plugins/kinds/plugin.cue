@@ -12,7 +12,7 @@ pluginV0Alpha1: {
 			parentId?: string
 		}
 		status: {
-			childAppliedChildren?:    [...string]
+			childAppliedChildren?: [...string]
 			childObservedGeneration?: int64
 		}
 	}
