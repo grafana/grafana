@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -195,7 +194,7 @@ func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp
 		switch v := val.(type) {
 		case mathexp.Series:
 			s := mathexp.NewSeries(tc.RefID, v.GetLabels(), v.Len())
-			for i := 0; i < v.Len(); i++ {
+			for i := range v.Len() {
 				t, value := v.GetPoint(i)
 				s.SetPoint(i, t, eval(value))
 			}

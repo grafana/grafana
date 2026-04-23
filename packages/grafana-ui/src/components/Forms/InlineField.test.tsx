@@ -216,6 +216,48 @@ describe('InlineField', () => {
     });
   });
 
+  it('associates the label with a SecretInput when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <SecretInput isConfigured={false} onReset={() => {}} />
+      </InlineField>
+    );
+
+    // can't use getByRole here as type="password" inputs don't have an implicit role
+    // see https://github.com/testing-library/dom-testing-library/issues/567
+    expect(screen.getByLabelText('My label')).toBeInTheDocument();
+  });
+
+  it('associates the label with a Checkbox when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <Checkbox />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with a Switch when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <Switch />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with an InlineSwitch when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <InlineSwitch />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+  });
+
   it('renders with the inputId of its children', () => {
     const comboboxOptions = [
       { label: 'Option 1', value: '1' },

@@ -83,6 +83,7 @@ type RepositoryController struct {
 	quotaGetter           quotas.QuotaGetter
 	tokenMetrics          *repositoryTokenMetrics
 	folderMetadataEnabled bool
+	maxIncrementalChanges int
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -108,6 +109,7 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
+	maxIncrementalChanges int,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -144,6 +146,7 @@ func NewRepositoryController(
 		quotaGetter:           quotaGetter,
 		tokenMetrics:          repoTokenMetrics,
 		folderMetadataEnabled: folderMetadataEnabled,
+		maxIncrementalChanges: maxIncrementalChanges,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -458,9 +461,10 @@ func (rc *RepositoryController) determineSyncStrategy(
 		}
 
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
-		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
-		// to do a full sync to see if the folder was deleted as well in git.
-		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled)
+		// However, we fall back to a full sync when incremental diffing cannot safely represent the change,
+		// such as .keep file deletions inside a folder with no other deletions (to detect whether the folder
+		// was deleted in git) or when the diff size reaches/exceeds max_incremental_changes.
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled, rc.maxIncrementalChanges)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
 			return &provisioning.SyncJobOptions{}
@@ -473,19 +477,20 @@ func (rc *RepositoryController) determineSyncStrategy(
 	}
 }
 
-func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string, folderMetadataEnabled bool) (bool, error) {
+func shouldUseIncrementalSync(
+	ctx context.Context,
+	versioned repository.Versioned,
+	obj *provisioning.Repository,
+	latestRef string,
+	folderMetadataEnabled bool,
+	maxIncrementalChanges int,
+) (bool, error) {
 	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
 	if err != nil {
 		return false, err
 	}
-	var deletedPaths []string
-	for _, change := range changes {
-		if change.Action == repository.FileActionDeleted {
-			deletedPaths = append(deletedPaths, change.Path)
-		}
-	}
 
-	return repository.CanUseIncrementalSync(deletedPaths, folderMetadataEnabled), nil
+	return repository.CanUseIncrementalSyncInController(changes, folderMetadataEnabled, maxIncrementalChanges), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
@@ -813,8 +818,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
-	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
-	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {
+	// Suppress the hook retry while the hook-failure cooldown is active. If the
+	// spec no longer expects a webhook, the cooldown does not apply: we let the
+	// hook handler run (so it can clean up any previously-created webhook) and
+	// do not block recovery from a stale HealthFailureHook on the next
+	// reconcile.
+	if shouldRunHooks && rc.healthChecker.inHookFailureCooldown(obj) {
 		shouldRunHooks = false
 	}
 
