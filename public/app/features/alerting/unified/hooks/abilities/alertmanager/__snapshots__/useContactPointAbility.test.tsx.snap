@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useContactPointAbility external (Mimir) alertmanager should deny View / Create / Export and list the expected required permissions 1`] = `
+{
+  "create": {
+    "anyOfPermissions": [
+      "alert.notifications:write",
+      "alert.notifications.receivers:create",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "export": {
+    "anyOfPermissions": [
+      "alert.notifications:read",
+      "alert.notifications.receivers:read",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "view": {
+    "anyOfPermissions": [
+      "alert.notifications:read",
+      "alert.notifications.receivers:read",
+    ],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+}
+`;
