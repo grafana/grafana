@@ -56,7 +56,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 		require.NotNil(t, fileObj)
 
 		// Trigger sync and verify dashboard is created
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -127,7 +127,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 
 	// Enable branch workflow since we test updating files on branches
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	t.Run("update file on default branch", func(t *testing.T) {
 		updatedContent := []byte(`{
@@ -154,7 +154,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 		require.NoError(t, result.Error(), "should update file on default branch")
 
 		// Sync and verify update
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "test-dash", metav1.GetOptions{})
@@ -237,7 +237,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 
 	// Enable branch workflow since we test deleting files on branches
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	t.Run("delete file on default branch", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -251,7 +251,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 		require.NoError(t, result.Error(), "should delete file on default branch")
 
 		// Sync and verify dashboard is deleted
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.DashboardsV1.Resource.Get(ctx, "dash-1", metav1.GetOptions{})
@@ -313,7 +313,7 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 	}
 
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent)
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	t.Run("move file on default branch", func(t *testing.T) {
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -353,7 +353,7 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 	}
 
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	t.Run("move directory on branch succeeds with correct response", func(t *testing.T) {
 		branchName := "move-dir-branch"

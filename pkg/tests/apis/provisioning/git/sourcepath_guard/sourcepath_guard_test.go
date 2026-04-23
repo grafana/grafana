@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *test
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.SyncAndWaitIncremental(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"takeover-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
@@ -97,7 +97,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.SyncAndWaitIncremental(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"swap-uid-a": {Title: "Dashboard B Swapped", SourcePath: "dashboard_b.json"},
@@ -152,7 +152,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 	// processing. Depending on goroutine scheduling, the UID takeover race
 	// may cause one dashboard to be lost. We intentionally do not assert
 	// dashboard state here because the outcome varies between runs.
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	// A second full sync compares the git tree against the current Grafana
 	// state and re-creates any resources that went missing in the first sync.
@@ -208,7 +208,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T
 	// FIXME: The first full sync is non-deterministic due to parallel
 	// processing. The symmetric swap race may cause one or both dashboards
 	// to be lost. We do not assert state here.
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	// A second full sync re-compares the git tree and recovers any missing
 	// resources, converging to the correct state.

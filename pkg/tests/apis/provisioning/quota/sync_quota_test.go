@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify both dashboards were created with no quota restriction
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -45,7 +45,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Now delete one file to test that deletions work even when over quota
@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.NoError(t, err, "should be able to delete file")
 
 		// Trigger full sync - deletion should proceed even though repo is over quota
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the deletion succeeded by checking that only 1 dashboard remains
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -79,7 +79,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify 1 dashboard was created
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.NoError(t, err, "should be able to write dashboard2.json")
 
 		// Should succeed since within quota
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify 2 dashboards exist
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -125,7 +125,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify 2 dashboards were created with no quota restriction
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -135,7 +135,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, testRepo.Name)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Verify the repo is over quota using the quotas package
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -275,7 +275,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -392,7 +392,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify 3 dashboards were created with no quota restriction
 		helper.RequireRepoDashboardCount(t, repo, 3)
@@ -402,7 +402,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 3)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Delete two dashboard files - deletion-only syncs are always allowed even when over quota
@@ -410,7 +410,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.NoError(t, err, "should be able to delete dashboard3.json")
 
 		// Trigger full sync - should succeed because it's a delete-only sync
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the deletion succeeded - only 2 dashboards should remain
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -440,7 +440,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify 3 dashboards were created with no quota restriction
 		helper.RequireRepoDashboardCount(t, repo, 3)
@@ -450,7 +450,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 1)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Delete two dashboard files - deletion-only syncs are always allowed even when over quota
@@ -458,7 +458,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.NoError(t, err, "should be able to delete dashboard3.json")
 
 		// Trigger full sync - should succeed because it's a delete-only sync
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the deletion succeeded - only 2 dashboards should remain
 		helper.RequireRepoDashboardCount(t, repo, 2)

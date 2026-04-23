@@ -191,43 +191,6 @@ func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
 	}
 }
 
-func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
-	t.Helper()
-
-	if options == nil {
-		options = &provisioning.SyncJobOptions{}
-	}
-	body := AsJSON(&provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   options,
-	})
-
-	result := h.AdminREST.Post().
-		Namespace(h.Namespace).
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context())
-
-	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
-		h.AwaitJobs(t, repo)
-		return
-	}
-
-	obj, err := result.Get()
-	require.NoError(t, err, "expecting to be able to sync repository")
-
-	unstruct, ok := obj.(*unstructured.Unstructured)
-	require.True(t, ok, "expecting unstructured object, but got %T", obj)
-
-	name := unstruct.GetName()
-	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobs(t, repo)
-}
-
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
 	t.Helper()
 
@@ -242,7 +205,6 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo 
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
 		h.AwaitJobs(t, repo)
 		return
 	}
@@ -255,7 +217,38 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), unstruct)
+
+	require.NotEmpty(t, unstruct.GetLabels()[jobs.LabelRepository])
+
+	var completedJob *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		r, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{},
+			"jobs", string(unstruct.GetUID()))
+
+		if !assert.False(collect, apierrors.IsNotFound(err)) {
+			collect.Errorf("job '%s' not found, still waiting for it to complete", name)
+			return
+		}
+
+		assert.NoError(collect, err, "failed to get job '%s' to be found", name)
+		if err != nil {
+			return
+		}
+
+		completedJob = r
+	}, WaitTimeoutDefault, WaitIntervalDefault)
+	require.NotNil(t, completedJob, "expected job result to be non-nil")
+
+	lastErrors := MustNestedStringSlice(completedJob.Object, "status", "errors")
+	lastState := MustNestedString(completedJob.Object, "status", "state")
+
+	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", completedJob.GetName()))
+	}
+
+	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", completedJob.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
+		"historic job '%s' was not successful", completedJob.GetName())
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo string, spec provisioning.JobSpec) *unstructured.Unstructured {
@@ -272,7 +265,6 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		// A job is already in-flight. Wait and return the latest historic job.
 		t.Logf("job already running for repo %q; waiting for it to complete", repo)
 		return h.AwaitLatestHistoricJob(t, repo)
 	}
@@ -286,7 +278,28 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
 
-	return h.AwaitJob(t, t.Context(), unstruct)
+	require.NotEmpty(t, unstruct.GetLabels()[jobs.LabelRepository])
+
+	var lastResult *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		r, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{},
+			"jobs", string(unstruct.GetUID()))
+
+		if !assert.False(collect, apierrors.IsNotFound(err)) {
+			collect.Errorf("job '%s' not found, still waiting for it to complete", name)
+			return
+		}
+
+		assert.NoError(collect, err, "failed to get job '%s' to be found", name)
+		if err != nil {
+			return
+		}
+
+		lastResult = r
+	}, WaitTimeoutDefault, WaitIntervalDefault)
+	require.NotNil(t, lastResult, "expected job result to be non-nil")
+
+	return lastResult
 }
 
 // AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
@@ -324,52 +337,6 @@ func (h *ProvisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo strin
 		}
 	}
 	return latest.DeepCopy()
-}
-
-func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
-	t.Helper()
-	job = h.AwaitJob(t, ctx, job)
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	lastState := MustNestedString(job.Object, "status", "state")
-
-	repo := job.GetLabels()[jobs.LabelRepository]
-
-	// Debug state if job failed
-	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
-		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
-	}
-
-	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
-}
-
-func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
-	t.Helper()
-
-	repo := job.GetLabels()[jobs.LabelRepository]
-	require.NotEmpty(t, repo)
-
-	var lastResult *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
-			"jobs", string(job.GetUID()))
-
-		if !assert.False(collect, apierrors.IsNotFound(err)) {
-			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
-			return
-		}
-
-		assert.NoError(collect, err, "failed to get job '%s' to be found", job.GetName())
-		if err != nil {
-			return
-		}
-
-		lastResult = result
-	}, WaitTimeoutDefault, WaitIntervalDefault)
-	require.NotNil(t, lastResult, "expected job result to be non-nil")
-
-	return lastResult
 }
 
 func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
@@ -550,20 +517,6 @@ func readTestFile(t *testing.T, fpath string) []byte {
 	require.NoError(t, err, "failed to read test file %s", fpath)
 	require.NotEmpty(t, raw, "test file %s is empty", fpath)
 	return raw
-}
-
-// CleanProvisioningDir removes all entries from the provisioning directory
-// so that leftover files from a previous test don't interfere.
-func (h *ProvisioningTestHelper) CleanProvisioningDir(t *testing.T) {
-	t.Helper()
-	entries, err := os.ReadDir(h.ProvisioningPath)
-	if err != nil {
-		return
-	}
-	for _, entry := range entries {
-		require.NoError(t, os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())),
-			"failed to clean provisioning dir entry %s", entry.Name())
-	}
 }
 
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
@@ -766,6 +719,14 @@ type TestRepo struct {
 	SkipSync               bool
 	SkipResourceAssertions bool
 	Template               string
+
+	// InitialSyncExpectation overrides the matcher applied to the automatic
+	// initial sync that CreateLocalRepo triggers (unless SkipSync is set).
+	// When nil, the initial sync must finish in state "success" with no errors.
+	// Use common.Warning() for repository states whose first sync is legitimately
+	// expected to produce warnings (e.g. legacy folders tracked only via .keep
+	// without _folder.json metadata).
+	InitialSyncExpectation SyncOption
 }
 
 type LocalRepositorySpec struct {
@@ -874,8 +835,11 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	}
 
 	if !repo.SkipSync {
-		// Trigger and wait for initial sync to populate resources
-		h.SyncAndWait(t, repo.Name, nil)
+		expect := repo.InitialSyncExpectation
+		if expect == nil {
+			expect = Succeeded()
+		}
+		SyncAndWait(t, h, Repo(repo.Name), expect)
 		h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
@@ -1035,7 +999,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
-		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		status, found := MustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.True(collect, status, "repository %s is not healthy yet", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become healthy", name)
@@ -1047,10 +1011,10 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 		if !assert.NoError(collect, err, "failed to get repository status") {
 			return
 		}
-		checked, found := mustNestedInt64(repoStatus.Object, "status", "health", "checked")
+		checked, found := MustNestedInt64(repoStatus.Object, "status", "health", "checked")
 		assert.True(collect, found, "repository %s does not have checked field", name)
 		assert.Greater(collect, checked, int64(0), "repository %s health check has not run yet", name)
-		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		status, found := MustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.False(collect, status, "repository %s should be unhealthy", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
@@ -1310,50 +1274,68 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
-	h.CleanProvisioningDir(t)
+	entries, err := os.ReadDir(h.ProvisioningPath)
+	if err == nil {
+		for _, entry := range entries {
+			require.NoError(t, os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())),
+				"failed to clean provisioning dir entry %s", entry.Name())
+		}
+	}
 }
 
 // SharedEnv manages a single shared Grafana server for a test package.
 // It encapsulates the sync.Once init, server shutdown, and TestMain lifecycle
 // so that individual packages only need to define their per-test cleanup.
-type SharedEnv struct {
-	Helper       *ProvisioningTestHelper
+//
+// H is typically *ProvisioningTestHelper or *GitTestHelper.
+type SharedEnv[H interface {
+	comparable
+	CleanupAllResources(*testing.T, context.Context)
+}] struct {
+	Helper       H
 	shutdownFunc func()
 	once         sync.Once
-	initErr      string // non-empty if initialization failed
+	initErr      string
+	label        string
+	initFn       func(*testing.T, ...GrafanaOption) (H, func())
 	options      []GrafanaOption
 }
 
 // NewSharedEnv creates a SharedEnv that will lazily start a Grafana server
 // with the given options on the first call to GetHelper.
-func NewSharedEnv(options ...GrafanaOption) *SharedEnv {
-	return &SharedEnv{options: options}
+func NewSharedEnv(options ...GrafanaOption) *SharedEnv[*ProvisioningTestHelper] {
+	return &SharedEnv[*ProvisioningTestHelper]{
+		label:   "shared server",
+		initFn:  runGrafanaShared,
+		options: options,
+	}
 }
 
-// GetHelper returns the shared ProvisioningTestHelper, starting the Grafana
-// server on the first call (via sync.Once). Subsequent calls reuse the same
-// server. The test is skipped automatically when running in short mode.
+// GetHelper returns the shared helper, starting the server on the first call
+// (via sync.Once). Subsequent calls reuse the same server. The test is skipped
+// automatically when running in short mode.
 //
 // If initialization fails (panic or t.FailNow/runtime.Goexit), the error is
 // persisted and every subsequent caller gets a clear t.Fatal rather than a
 // nil-pointer crash.
-func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
+func (e *SharedEnv[H]) GetHelper(t *testing.T) H {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e.once.Do(func() {
+		var zero H
 		defer func() {
 			if r := recover(); r != nil {
-				e.initErr = fmt.Sprintf("shared server init panicked: %v", r)
-			} else if e.Helper == nil && e.initErr == "" {
-				e.initErr = "shared server init failed (FailNow/Goexit called; see first test output)"
+				e.initErr = fmt.Sprintf("%s init panicked: %v", e.label, r)
+			} else if e.Helper == zero && e.initErr == "" {
+				e.initErr = fmt.Sprintf("%s init failed (FailNow/Goexit called; see first test output)", e.label)
 			}
 		}()
-		e.Helper, e.shutdownFunc = runGrafanaShared(t, e.options...)
+		e.Helper, e.shutdownFunc = e.initFn(t, e.options...)
 	})
 
 	if e.initErr != "" {
-		t.Fatalf("SharedEnv: %s", e.initErr)
+		t.Fatalf("%s: %s", e.label, e.initErr)
 	}
 
 	return e.Helper
@@ -1361,22 +1343,27 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 
 // GetCleanHelper returns the shared helper after cleaning up all resources
 // from the previous test. This is the standard per-test entry point.
-func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
+func (e *SharedEnv[H]) GetCleanHelper(t *testing.T) H {
 	t.Helper()
 	h := e.GetHelper(t)
 	h.CleanupAllResources(t, context.Background())
 	return h
 }
 
-// RunTestMain replaces testsuite.Run(m) for packages that share a Grafana
-// server. It handles DB setup, runs all tests, shuts down the shared server,
-// cleans up the DB, and exits.
-func (e *SharedEnv) RunTestMain(m *testing.M) {
-	db.SetupTestDB()
-	code := m.Run()
+// Shutdown stops the shared servers if they were started.
+func (e *SharedEnv[H]) Shutdown() {
 	if e.shutdownFunc != nil {
 		e.shutdownFunc()
 	}
+}
+
+// RunTestMain replaces testsuite.Run(m) for packages that share a Grafana
+// server. It handles DB setup, runs all tests, shuts down the shared server,
+// cleans up the DB, and exits.
+func (e *SharedEnv[H]) RunTestMain(m *testing.M) {
+	db.SetupTestDB()
+	code := m.Run()
+	e.Shutdown()
 	db.CleanupTestDB()
 	os.Exit(code)
 }
@@ -1389,7 +1376,7 @@ func MustNestedString(obj map[string]interface{}, fields ...string) string {
 	return v
 }
 
-func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+func MustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
 	v, found, err := unstructured.NestedBool(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1406,7 +1393,7 @@ func MustNestedStringSlice(obj map[string]interface{}, fields ...string) []strin
 	return v
 }
 
-func mustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
+func MustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
 	v, found, err := unstructured.NestedInt64(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1701,52 +1688,6 @@ func CountFilesInDir(rootPath string) (int, error) {
 		return nil
 	})
 	return count, err
-}
-
-// CleanupAllRepos deletes all repositories and waits for them to be fully removed
-func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
-	t.Helper()
-	ctx := context.Background()
-
-	// First, get all repositories that exist
-	list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
-	if err != nil || len(list.Items) == 0 {
-		return // Nothing to clean up
-	}
-
-	// Wait for any active jobs to complete before deleting repositories
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		activeJobs, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(collect, err, "failed to list active jobs") {
-			return
-		}
-		assert.Equal(collect, 0, len(activeJobs.Items), "all active jobs should complete before cleanup")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "active jobs should complete before cleanup")
-
-	// Now delete all repositories with retries
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-
-		for _, repo := range list.Items {
-			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
-			// Don't fail if already deleted (404 is OK)
-			if err != nil {
-				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
-			}
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "should be able to delete all repositories")
-
-	// Then wait for repositories to be fully deleted to ensure clean state
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
 }
 
 func (h *ProvisioningTestHelper) CreateGithubConnection(
@@ -2419,34 +2360,12 @@ func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
 }
 
-// SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
-// Tests still create fresh repositories and local clones; only the Grafana
-// server and gittest server are shared.
-type SharedGitEnv struct {
-	Helper       *GitTestHelper
-	shutdownFunc func()
-	once         sync.Once
-	initErr      string
-	options      []GrafanaOption
-}
-
 // NewSharedGitEnv creates a lazily initialized shared Git test environment.
-func NewSharedGitEnv(options ...GrafanaOption) *SharedGitEnv {
-	return &SharedGitEnv{options: options}
-}
-
-// RunGrafanaWithGitServer starts both a Grafana test instance and a git server.
-func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOption) *GitTestHelper {
-	t.Helper()
-
-	gitServer := startGitServer(t)
-	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
-	helper := RunGrafana(t, allOpts...)
-
-	return &GitTestHelper{
-		ProvisioningTestHelper: helper,
-		gitServer:              gitServer,
-		exportRepoInfos:        make(map[string]*exportRepoInfo),
+func NewSharedGitEnv(options ...GrafanaOption) *SharedEnv[*GitTestHelper] {
+	return &SharedEnv[*GitTestHelper]{
+		label:   "shared git server",
+		initFn:  runGrafanaWithGitServerShared,
+		options: options,
 	}
 }
 
@@ -2474,69 +2393,6 @@ func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*Git
 		gitServer:              gitServer,
 		exportRepoInfos:        make(map[string]*exportRepoInfo),
 	}, shutdown
-}
-
-func startGitServer(t *testing.T) *gittest.Server {
-	t.Helper()
-	ctx := context.Background()
-	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewTestLogger(t)))
-	require.NoError(t, err, "failed to start git server")
-	t.Cleanup(func() {
-		if err := gitServer.Cleanup(); err != nil {
-			t.Logf("failed to cleanup git server: %v", err)
-		}
-	})
-	return gitServer
-}
-
-// GetHelper returns the shared helper, starting it on first use.
-func (e *SharedGitEnv) GetHelper(t *testing.T) *GitTestHelper {
-	t.Helper()
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	e.once.Do(func() {
-		defer func() {
-			if r := recover(); r != nil {
-				e.initErr = fmt.Sprintf("shared git server init panicked: %v", r)
-			} else if e.Helper == nil && e.initErr == "" {
-				e.initErr = "shared git server init failed (FailNow/Goexit called; see first test output)"
-			}
-		}()
-		e.Helper, e.shutdownFunc = runGrafanaWithGitServerShared(t, e.options...)
-	})
-
-	if e.initErr != "" {
-		t.Fatalf("SharedGitEnv: %s", e.initErr)
-	}
-
-	return e.Helper
-}
-
-// GetCleanHelper returns the shared helper after removing resources left by a
-// previous test from Grafana. Git server state is intentionally not reset.
-func (e *SharedGitEnv) GetCleanHelper(t *testing.T) *GitTestHelper {
-	t.Helper()
-	h := e.GetHelper(t)
-	h.CleanupAllResources(t, context.Background())
-	return h
-}
-
-// Shutdown stops the shared servers if they were started.
-func (e *SharedGitEnv) Shutdown() {
-	if e.shutdownFunc != nil {
-		e.shutdownFunc()
-	}
-}
-
-// RunTestMain replaces testsuite.Run(m) for packages that share one Git test
-// environment. It handles DB setup, executes the package tests, shuts down the
-// shared servers, cleans the DB, and exits.
-func (e *SharedGitEnv) RunTestMain(m *testing.M) {
-	db.SetupTestDB()
-	code := m.Run()
-	e.Shutdown()
-	db.CleanupTestDB()
-	os.Exit(code)
 }
 
 // CleanupAllResources removes Grafana-managed resources left by a previous
@@ -2660,69 +2516,6 @@ func (h *GitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
 
 		assert.True(collect, ready, "repository not ready")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become ready", repoName)
-}
-
-// SyncAndWait triggers a full pull sync on the named repository and waits for
-// all active jobs to complete.
-func (h *GitTestHelper) SyncAndWait(t *testing.T, repoName string) {
-	t.Helper()
-
-	jobSpec := map[string]interface{}{
-		"action": "pull",
-		"pull":   map[string]interface{}{},
-	}
-
-	jobJSON, err := json.Marshal(jobSpec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repoName).
-		SubResource("jobs").
-		Body(jobJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
-
-	if apierrors.IsAlreadyExists(result.Error()) {
-		h.waitForJobsComplete(t, repoName)
-		return
-	}
-
-	require.NoError(t, result.Error(), "failed to trigger sync")
-	h.waitForJobsComplete(t, repoName)
-}
-
-// SyncAndWaitIncremental triggers an incremental pull sync on the named
-// repository and waits for all active jobs to complete.
-func (h *GitTestHelper) SyncAndWaitIncremental(t *testing.T, repoName string) {
-	t.Helper()
-	h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-}
-
-func (h *GitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
-	t.Helper()
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		jobs, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		if !assert.NoError(collect, err, "failed to list jobs") {
-			return
-		}
-
-		hasActiveJobs := false
-		for _, job := range jobs.Items {
-			labels := job.GetLabels()
-			if labels["provisioning.grafana.app/repository"] == repoName {
-				hasActiveJobs = true
-				break
-			}
-		}
-
-		assert.False(collect, hasActiveJobs, "jobs still active for repository %s", repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete for repository %s", repoName)
 }
 
 func (h *GitTestHelper) waitForNoActiveJobs(t *testing.T) {
@@ -2910,8 +2703,8 @@ func GetRepositoryClientV1Beta1(helper *apis.K8sTestHelper) *apis.K8sResourceCli
 	})
 }
 
-// NewDefaultSharedEnv creates a SharedEnv with default options for provisioning tests
-func NewDefaultSharedEnv() *SharedEnv {
+// NewDefaultSharedEnv creates a SharedEnv with default options for provisioning tests.
+func NewDefaultSharedEnv() *SharedEnv[*ProvisioningTestHelper] {
 	return NewSharedEnv(
 		func(opts *testinfra.GrafanaOpts) {
 			opts.SecretsManagerEnableDBMigrations = true
@@ -2921,7 +2714,7 @@ func NewDefaultSharedEnv() *SharedEnv {
 
 // SharedHelper returns a clean provisioning test helper with a mocked GitHub client.
 // This is the standard helper used across provisioning integration tests.
-func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
+func SharedHelper(t *testing.T, env *SharedEnv[*ProvisioningTestHelper]) *ProvisioningTestHelper {
 	t.Helper()
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()

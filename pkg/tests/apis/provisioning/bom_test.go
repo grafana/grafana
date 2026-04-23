@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -118,7 +118,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		})
 
 		// Trigger sync to provision the dashboard
-		helper.SyncAndWait(t, repoName, nil)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -198,7 +198,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
-		helper.SyncAndWait(t, repoName, nil)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -293,7 +293,7 @@ spec:
 		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
-		helper.SyncAndWait(t, repoName, nil)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured

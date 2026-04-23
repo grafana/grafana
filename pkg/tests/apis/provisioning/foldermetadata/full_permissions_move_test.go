@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	common.RequireFolderState(t, helper.Folders, "team-a-uid", "Team A", "teamA", repo)
 	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B", "teamB", repo)
@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 
 	// Move teamB inside teamA and trigger a sync.
 	moveInProvisioningPath(t, helper, "teamB", "teamA/teamB")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	// teamB should now live under teamA with the same stable UID.
 	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
@@ -121,7 +121,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	// Initial sync warns because "plain" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
@@ -147,7 +149,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 
 	// Move the legacy folder under the parent and sync.
 	moveInProvisioningPath(t, helper, "plain", "parent/plain")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	// The old folder object must be gone — without metadata the path change
 	// causes a delete-and-recreate rather than an in-place update.
@@ -194,7 +196,9 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	// Initial sync warns because "destination" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
 	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "root/child", "root-uid")
@@ -219,7 +223,7 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 
 	// Move the child subtree (carrying grandchild with it) under destination.
 	moveInProvisioningPath(t, helper, "root/child", "destination/child")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	destUID := findFolderUIDBySourcePath(t, helper, repo, "destination")
 	require.NotEmpty(t, destUID)
@@ -250,7 +254,7 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	common.RequireFolderState(t, helper.Folders, "top-uid", "Top", "top", repo)
 	common.RequireFolderState(t, helper.Folders, "container-uid", "Container", "container", repo)
@@ -275,7 +279,7 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 
 	// Move "top" under container/inner, making it a leaf three levels deep.
 	moveInProvisioningPath(t, helper, "top", "container/inner/top")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	common.RequireFolderState(t, helper.Folders, "top-uid", "Top", "container/inner/top", "inner-uid")
 
@@ -304,7 +308,7 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	common.RequireFolderState(t, helper.Folders, "deep-uid", "Deep", "parent/deep", "parent-uid")
@@ -329,7 +333,7 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 
 	// Promote the leaf to the repository root level.
 	moveInProvisioningPath(t, helper, "parent/deep/leaf", "leaf")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	common.RequireFolderState(t, helper.Folders, "leaf-uid", "Leaf", "leaf", repo)
 
@@ -359,7 +363,9 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 		SkipResourceAssertions: true,
 	})
 
-	helper.SyncAndWait(t, repo, nil)
+	// Initial sync warns because "legacy-parent" is a legacy folder (tracked via .keep)
+	// with no _folder.json metadata.
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 	common.RequireFolderState(t, helper.Folders, "child-meta-uid", "Child With Meta", "child-with-meta", repo)
 	legacyParentUID := findFolderUIDBySourcePath(t, helper, repo, "legacy-parent")
@@ -385,7 +391,7 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 	// Move the metadata child under the legacy (no _folder.json) parent.
 	// The legacy parent's path does not change so its UID remains stable.
 	moveInProvisioningPath(t, helper, "child-with-meta", "legacy-parent/child-with-meta")
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	// The legacy parent keeps its original hash-based UID.
 	common.RequireFolderState(t, helper.Folders, legacyParentUID, "legacy-parent", "legacy-parent", repo)

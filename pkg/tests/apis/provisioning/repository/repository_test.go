@@ -1360,7 +1360,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	// Now, we import it, such that it may exist
 	// The sync may not be necessary as the sync may have happened automatically at this point
-	helper.SyncAndWait(t, repo, nil)
+	common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 	// Make sure the repo can read and validate the file
 	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
@@ -2539,7 +2539,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should update repository title")
 
 	// Trigger a sync, which calls EnsureFolderExists for the root folder.
-	helper.SyncAndWait(t, repoName, nil)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	// Verify the root folder title was updated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {

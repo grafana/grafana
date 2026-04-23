@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be synced and check the Quota condition
@@ -88,13 +88,13 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -152,7 +152,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be synced and check the Quota condition
@@ -243,7 +243,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be reconciled and check the QuotaStatus
@@ -300,7 +300,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateLocalRepo(t, testRepo)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be reconciled and check the QuotaStatus

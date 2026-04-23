@@ -27,7 +27,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
 		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
 
-		helper.SyncAndWait(t, repo, nil)
+		// Initial sync warns because myfolder and myfolder/child have no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 		parentUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder")
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
@@ -103,7 +104,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
 		writeToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
 
-		helper.SyncAndWait(t, repo, nil)
+		// Initial sync warns because "broken" has no _folder.json metadata.
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 
 		brokenUID := findFolderUIDBySourcePath(t, helper, repo, "broken")
 		require.NotEmpty(t, brokenUID)
@@ -146,7 +148,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		})
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		moveInProvisioningPath(t, helper, "dashboard.json", "broken/dashboard.json")

@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
-	helper.SyncAndWait(t, repoName, nil)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	// After the initial sync the controller has observed the current spec, so
 	// Generation == ObservedGeneration.

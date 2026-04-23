@@ -133,7 +133,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		helper.CopyToProvisioningPath(t, tmpFile3, "nested/resource-test-3.json") // UID: resourceref3
 
 		// Trigger sync to populate the new resources
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the new resources are created
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -237,7 +237,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			helper.CopyToProvisioningPath(t, tmpMixed2, "mixed-test-2.json") // UID: resourceref2
 			helper.CopyToProvisioningPath(t, tmpMixed3, "mixed-test-3.json") // UID: resourceref3
 
-			helper.SyncAndWait(t, repo, nil)
+			common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
@@ -292,7 +292,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			helper.CopyToProvisioningPath(t, tmpFolderDash, "test-folder/dashboard-in-folder.json")
 
 			// Sync to create the folder and its contents
-			helper.SyncAndWait(t, repo, nil)
+			common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 			// Verify folder was created in Grafana as a Folder resource
 			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
@@ -382,7 +382,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 	t.Run("delete mixed existing and non-existent file is rejected", func(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "test-delete-mixed.json")
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,

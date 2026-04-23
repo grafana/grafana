@@ -212,7 +212,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderTitle(t, helper, repo, "my-team", "My Team Display Name")
 	})
@@ -234,7 +234,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderTitle(t, helper, repo, "reports", "reports")
 	})
@@ -253,7 +253,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderTitle(t, helper, repo, "analytics", "analytics")
 	})
@@ -275,7 +275,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderTitle(t, helper, repo, "parent", "Parent Display")
 		requireRepoFolderTitle(t, helper, repo, "parent/child", "Child Display")
@@ -298,7 +298,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		})
 
 		// First sync creates the folder with "My Team" title.
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "old-dir", "My Team")
 
 		// Rename directory: old-dir → new-dir (keep _folder.json with same UID and title).
@@ -307,7 +307,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		require.NoError(t, os.Rename(oldPath, newPath))
 
 		// Second sync — title must remain "My Team" (from _folder.json), not "new-dir".
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "new-dir", "My Team")
 	})
 
@@ -327,7 +327,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		})
 
 		// First sync: folder title should equal the directory name "old-name".
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "old-name", "old-name")
 
 		// Rename directory: old-name → new-name (no _folder.json is added).
@@ -336,7 +336,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		require.NoError(t, os.Rename(oldPath, newPath))
 
 		// Second sync — title must update to "new-name" since there is no metadata to override it.
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "new-name", "new-name")
 	})
 }
@@ -388,7 +388,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "Checksum Folder")
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
@@ -408,7 +408,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Folder should exist but without sourceChecksum
 		requireRepoFolderTitle(t, helper, repo, "plain-folder", "plain-folder")
@@ -453,7 +453,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		requireRepoFolderChecksum(t, helper, repo, "parent", sha1Hex(parentContent))
 		requireRepoFolderChecksum(t, helper, repo, "parent/child", sha1Hex(childContent))
@@ -481,7 +481,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "Old Title")
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(originalContent))
 
@@ -490,7 +490,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
 
 		// Second sync: title should be reconciled, checksum updated.
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "New Title")
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(updatedContent))
 	})
@@ -512,12 +512,12 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
 
 		// Second sync — nothing changed. Title and checksum should be identical.
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
 	})
@@ -544,7 +544,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
 
 		// Change UID in _folder.json, keep title the same.
@@ -552,7 +552,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
 
 		// Second sync: should replace folder (new UID) and re-parent the dashboard.
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// New folder should exist with correct title and checksum.
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
@@ -603,7 +603,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "parent-old-uid", "Parent", "parent", repo)
 		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-old-uid")
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -613,7 +613,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		// Change parent UID only.
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-new-uid", "Parent"))
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Old folder should be gone.
 		assertNoFolderByUID(t, helper, "parent-old-uid")
@@ -648,7 +648,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "p-old", "Parent", "parent", repo)
 		common.RequireFolderState(t, helper.Folders, "c-old", "Child", "parent/child", "p-old")
 
@@ -656,7 +656,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-new", "Child"))
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Both old UIDs should be gone.
 		assertNoFolderByUID(t, helper, "p-old")
@@ -690,7 +690,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			SkipResourceAssertions: true,
 		})
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "root-old-uid", "Root Folder", "root-folder", repo)
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"root-folder/dashboard.json": "root-old-uid",
@@ -699,7 +699,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		// Change UID in _folder.json.
 		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-new-uid", "Root Folder"))
 
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Old folder should be gone.
 		assertNoFolderByUID(t, helper, "root-old-uid")
@@ -733,7 +733,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "stable-uid", "Custom Title", "my-folder", repo)
 
 		// Delete _folder.json (keep the directory and dashboard).
@@ -789,7 +789,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-uid")
 
@@ -850,7 +850,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 		common.RequireFolderState(t, helper.Folders, "child-old-uid", "Child", "parent/child", "parent-uid")
 

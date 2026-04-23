@@ -62,7 +62,7 @@ func TestIntegrationProvisioning_FolderAPIVersionConfig(t *testing.T) {
 				SkipSync:               true,
 				SkipResourceAssertions: true,
 			})
-			helper.SyncAndWait(t, repoName, nil)
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 			// Query folders via a client targeting the configured version.
 			folderGVR := folderv1.FolderResourceInfo.GroupVersionResource()
