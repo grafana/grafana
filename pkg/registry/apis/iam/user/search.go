@@ -19,7 +19,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/kube-openapi/pkg/common"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,8 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
-
-const maxLimit = 100
 
 // accessControlCheck maps a legacy RBAC action name to a K8s-style check.
 // The RBAC authz server translates Group/Resource/Verb through the mapper
@@ -79,7 +78,7 @@ func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndex
 	}
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -257,7 +256,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := 30
+	limit := common.DefaultListLimit
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -271,6 +270,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 		offset = (page - 1) * limit
+	}
+
+	if limit > common.MaxListLimit {
+		http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+		return
+	}
+
+	if limit < 1 {
+		limit = common.DefaultListLimit
 	}
 
 	// Escape characters that are used by bleve wildcard search to be literal strings.

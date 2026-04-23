@@ -162,7 +162,7 @@ const organizeFields = async (
               : configAfterLevel.custom?.width,
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (

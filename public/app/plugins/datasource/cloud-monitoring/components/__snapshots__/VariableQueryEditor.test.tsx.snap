@@ -8,7 +8,9 @@ exports[`VariableQueryEditor renders correctly 1`] = `
     <div
       class="css-l4ykjo-Label"
     >
-      <label>
+      <label
+        for=":r0:"
+      >
         <div
           class="css-70qvj9"
         >

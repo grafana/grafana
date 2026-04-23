@@ -131,7 +131,7 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSync(deletedPaths, r.folderMetadataEnabled)
+	incremental := repository.CanUseIncrementalSyncInWebhook(deletedPaths, r.folderMetadataEnabled)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
