@@ -9,7 +9,6 @@ import (
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -64,9 +63,6 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	if err != nil {
 		return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesQuery.Name(), err)
 	}
-
-	// Debug the SQL query
-	logging.FromContext(ctx).Info("ListPreferences", "query", q, "args", req.GetArgs())
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
@@ -206,6 +202,6 @@ func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team strin
 
 	var id int64
 	sess := sql.DB.GetSqlxSession()
-	err = sess.Select(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	err = sess.Get(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
 	return id, err
 }

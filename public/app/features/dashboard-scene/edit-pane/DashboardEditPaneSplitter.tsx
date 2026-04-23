@@ -6,7 +6,14 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContext, useSidebar, useStyles2, useTheme2, Sidebar } from '@grafana/ui';
+import {
+  ElementSelectionContext,
+  useSidebar,
+  useStyles2,
+  useTheme2,
+  Sidebar,
+  type SidebarContextValue,
+} from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -26,7 +33,7 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { type DashboardSidebarPaneName } from './types';
+import { type DashboardSidebarPane } from './types';
 
 interface Props {
   dashboard: DashboardScene;
@@ -119,10 +126,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     []
   );
 
-  const CODE_PANE_MIN_WIDTH = 700;
-  const originalPaneWidthRef = useRef<number | null>(null);
-  const previousPaneRef = useRef<DashboardSidebarPaneName | undefined>(undefined);
-
   // Selection is only needed in edit mode — the assistant popover is triggered
   // exclusively via the sparkle button, not through the selection system.
   useEffect(() => {
@@ -145,25 +148,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     defaultIsHidden: isEditing ? false : isMobile,
   });
 
-  useEffect(() => {
-    const wasCodePane = previousPaneRef.current === 'code';
-    const isCodePane = openPane?.getId() === 'code';
-    previousPaneRef.current = openPane?.getId();
-
-    if (isCodePane && !wasCodePane) {
-      // Opening code pane - store original width and expand if needed
-      if (sidebarContext.paneWidth < CODE_PANE_MIN_WIDTH) {
-        originalPaneWidthRef.current = sidebarContext.paneWidth;
-        const diff = CODE_PANE_MIN_WIDTH - sidebarContext.paneWidth;
-        sidebarContext.onResize(diff);
-      }
-    } else if (wasCodePane && !isCodePane && originalPaneWidthRef.current !== null) {
-      // Leaving code pane - restore original width
-      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
-      sidebarContext.onResize(diff);
-      originalPaneWidthRef.current = null;
-    }
-  }, [openPane, sidebarContext]);
+  useSidebarPaneMinWidth(openPane, sidebarContext);
 
   /**
    * Sync docked state to editPane state
@@ -238,6 +223,28 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
       </div>
     </AssistantPopoverContext.Provider>
   );
+}
+
+function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, sidebarContext: SidebarContextValue) {
+  const originalPaneWidthRef = useRef<number | null>(null);
+  const previousPaneRef = useRef<DashboardSidebarPane | undefined>(undefined);
+
+  useEffect(() => {
+    previousPaneRef.current = openPane;
+
+    if (openPane?.minWidth && sidebarContext.paneWidth < openPane.minWidth) {
+      originalPaneWidthRef.current = sidebarContext.paneWidth;
+      const diff = openPane.minWidth - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+    }
+
+    // If we are switching to a different openPane without minWidth
+    if (openPane && !openPane.minWidth && originalPaneWidthRef.current !== null) {
+      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+      originalPaneWidthRef.current = null;
+    }
+  }, [openPane, sidebarContext]);
 }
 
 function useUpdateAppChromeActions(dashboard: DashboardScene) {

@@ -1148,6 +1148,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
 	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
 }
+
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
@@ -2406,7 +2407,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	results := make(chan result, numRepos)
 
 	// Create repositories concurrently
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -2481,7 +2482,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	require.Equal(t, numRepos, successCount, "All repositories should be created successfully")
 
 	// Verify all repositories exist and have their secure tokens
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		repoName := fmt.Sprintf("concurrent-repo-%d", i)
 		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 		require.NoError(t, err, "Repository %s should exist", repoName)

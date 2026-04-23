@@ -30,11 +30,10 @@ const meta: Meta<typeof Field> = {
 };
 
 export const Simple: StoryFn<typeof Field> = (args) => {
-  const id = useId();
   return (
     <div>
       <Field {...args}>
-        <Input id={id} />
+        <Input />
       </Field>
     </div>
   );

@@ -177,7 +177,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 	// We try to fetch the data key, either from cache or database
 	id, dataKey, err := s.dataKeyByLabel(ctx, namespace.String(), label, skipCache)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("getting current data key by label: %w", err)
 	}
 
 	// If no existing data key was found, create a new one
@@ -196,12 +196,15 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string, skipCache bool) (string, []byte, error) {
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetByLabel(ctx, namespace, label); exists && entry.Active {
-			// Decrypt the cached data key before returning.
-			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
-			if err != nil {
+		entry, exists, cacheErr := s.dataKeyCache.GetByLabel(ctx, namespace, label)
+		if cacheErr != nil {
+			if errors.Is(cacheErr, encryption.ErrDataKeyCacheUnexpectedNamespace) {
+				return "", nil, fmt.Errorf("fatal error getting data key by label from cache: %w", cacheErr)
+			}
+			s.log.Error("Data key cache get by label", "namespace", namespace, "label", label, "error", cacheErr)
+		} else if exists && entry.Active {
+			if decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey); err != nil {
 				s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
-				// Fall through to fetch from database
 			} else {
 				return entry.Id, decrypted, nil
 			}
@@ -231,7 +234,9 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 
 	// 3. Store the data key into the in-memory cache.
 	if !skipCache {
-		s.cacheDataKey(ctx, namespace, dataKey, decrypted)
+		if err := s.cacheDataKey(ctx, namespace, dataKey, decrypted); err != nil {
+			s.log.Error("Failed to cache data key", "namespace", namespace, "error", err)
+		}
 	}
 
 	return dataKey.UID, decrypted, nil
@@ -282,7 +287,9 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 
 	// 4. Store the decrypted data key into the in-memory cache.
 	if !skipCache {
-		s.cacheDataKey(ctx, namespace, &dbDataKey, dataKey)
+		if err := s.cacheDataKey(ctx, namespace, &dbDataKey, dataKey); err != nil {
+			s.log.Error("Failed to cache data key", "namespace", namespace, "error", err)
+		}
 	}
 
 	return id, dataKey, nil
@@ -350,12 +357,15 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetById(ctx, namespace, id); exists && entry.Active {
-			// Decrypt the cached data key before returning.
-			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
-			if err != nil {
+		entry, exists, cacheErr := s.dataKeyCache.GetById(ctx, namespace, id)
+		if cacheErr != nil {
+			if errors.Is(cacheErr, encryption.ErrDataKeyCacheUnexpectedNamespace) {
+				return nil, fmt.Errorf("fatal error getting data key by id from cache: %w", cacheErr)
+			}
+			s.log.Error("Data key cache get by id", "namespace", namespace, "id", id, "error", cacheErr)
+		} else if exists && entry.Active {
+			if decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey); err != nil {
 				s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
-				// Fall through to fetch from database
 			} else {
 				return decrypted, nil
 			}
@@ -382,7 +392,9 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 
 	// 3. Store the data key into the in-memory cache.
 	if !skipCache {
-		s.cacheDataKey(ctx, namespace, dataKey, decrypted)
+		if err := s.cacheDataKey(ctx, namespace, dataKey, decrypted); err != nil {
+			s.log.Error("Failed to cache data key", "namespace", namespace, "error", err)
+		}
 	}
 
 	return decrypted, nil
@@ -419,6 +431,9 @@ func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace 
 	for i, ev := range values {
 		oldKey, err := s.dataKeyById(ctx, ns, ev.DataKeyID, false)
 		if err != nil {
+			if errors.Is(err, encryption.ErrDataKeyCacheUnexpectedNamespace) {
+				return nil, fmt.Errorf("fatal namespace mismatch during consolidation: %w", err)
+			}
 			s.log.FromContext(ctx).Error("Failed to resolve data key during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			results[i] = nil
 			continue
@@ -466,12 +481,12 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 
 // cacheDataKey caches stores an encrypted data key in the cache.
 // Warning: It should not be called from within a database transaction, as we cannot guarantee that a newly created data key has actually been persisted when the key is retrieved.
-func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
+func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) error {
 	// Encrypt the decrypted data key with configured secret before storing in cache.
 	encryptedForCache, err := s.cipher.Encrypt(ctx, decrypted, s.cacheEncryptionKey)
 	if err != nil {
 		s.log.Error("Failed to encrypt data key for cache, skipping cache", "error", err)
-		return
+		return nil
 	}
 
 	// First, we cache the data key by id, because cache "by id" is
@@ -483,7 +498,10 @@ func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, 
 		EncryptedDataKey: encryptedForCache,
 		Active:           dataKey.Active,
 	}
-	s.dataKeyCache.Set(ctx, namespace, entry)
+	if err := s.dataKeyCache.Set(ctx, namespace, entry); err != nil {
+		return fmt.Errorf("set data key in cache: %w", err)
+	}
+	return nil
 }
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.

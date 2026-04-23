@@ -81,7 +81,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	})
 	if err != nil {
 		logger.Error("Failed to get plugin metadata", "error", err)
-		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action)).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{
 			RequeueAfter: &requeueAfter,
 		}, nil
@@ -91,7 +91,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	if len(result.Meta.Children) == 0 {
 		logger.Debug("Plugin has no children, skipping child plugin reconciliation")
-		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
@@ -118,7 +118,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	if reconcileErr != nil || reconcileResult.RequeueAfter != nil {
 		status = "error"
 	}
-	metrics.ChildReconciliationTotal.WithLabelValues(status, actionLabel(req.Action)).Inc()
+	metrics.ChildReconciliationTotal.WithLabelValues(status, actionLabel(req.Action), plugin.Spec.Id).Inc()
 
 	return reconcileResult, reconcileErr
 }

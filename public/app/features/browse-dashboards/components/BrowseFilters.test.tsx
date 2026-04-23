@@ -63,7 +63,7 @@ const createStateManager = () => ({
 });
 
 describe('BrowseFilters', () => {
-  testWithFeatureToggles({ enable: ['teamFolders', 'unifiedStorageSearchUI'] });
+  testWithFeatureToggles({ enable: ['teamFolders'] });
 
   beforeEach(() => {
     mockSearchTeamsQuery.mockReturnValue({

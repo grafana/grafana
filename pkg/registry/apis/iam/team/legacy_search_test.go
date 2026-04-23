@@ -3,6 +3,7 @@ package team
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -88,6 +90,21 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 		_, err := client.Search(ctx, req)
 		require.Error(t, err)
 		require.Equal(t, "invalid page number: 2147483648", err.Error())
+	})
+
+	t.Run("returns error if limit exceeds common.MaxListLimit", func(t *testing.T) {
+		mockTeamService := teamtest.NewFakeService()
+		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
+		req := &resourcepb.ResourceSearchRequest{
+			Limit: common.MaxListLimit + 1,
+			Page:  1,
+		}
+
+		resp, err := client.Search(ctx, req)
+		require.Error(t, err)
+		require.Nil(t, resp)
+		require.Equal(t, fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit), err.Error())
 	})
 
 	t.Run("returns error if search teams fails", func(t *testing.T) {

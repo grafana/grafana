@@ -456,7 +456,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
-	authz.WireSet,
+	authz.WireSetBase,
 	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,

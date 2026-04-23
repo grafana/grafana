@@ -26,7 +26,7 @@ func BenchmarkEvaluate(b *testing.B) {
 			Condition: "B",
 		},
 	}
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := evaluator.Evaluate(context.Background(), time.Now())
 		if err != nil {
 			b.Fatalf("Unexpected error: %s", err)
