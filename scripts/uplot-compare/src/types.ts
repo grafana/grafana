@@ -14,7 +14,6 @@ export type ResolvedPayload = {
   expected: CanvasEventArray;
   actual: CanvasEventArray;
   uPlotData?: AlignedData;
-  uPlotSeries?: uPlot.Series[];
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   width?: number;
   height?: number;

@@ -11,6 +11,7 @@ const FALLBACK_CANVAS_HEIGHT = 200;
 const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
   .map((path) => path.split('/').pop())
   .filter((name): name is string => Boolean(name))
+  // @todo sort by date instead
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
@@ -53,6 +54,9 @@ export const CompareUPlotCanvases = ({
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
   const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
 
+  /**
+   * @todo route with links instead so folks can open each in a new tab
+   */
   const navigate = React.useCallback((basename: string, mode: 'push' | 'replace') => {
     const url = new URL(window.location.href);
     url.searchParams.set('file', basename);
@@ -80,7 +84,6 @@ export const CompareUPlotCanvases = ({
         expected: raw.expected,
         actual: raw.actual,
         uPlotData: raw.uPlotData,
-        uPlotSeries: raw.uPlotSeries,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
         ...readPayloadDimensions(raw),
       },
@@ -223,9 +226,7 @@ export const CompareUPlotCanvases = ({
                 key={basename}
                 type="button"
                 className={`compare-file-item${selectedFile === basename ? ' is-selected' : ''}`}
-                onClick={() => {
-                  void loadPayloadFromPublicFile(basename, 'push');
-                }}
+                onClick={() => loadPayloadFromPublicFile(basename, 'push')}
               >
                 <span>{basename}</span>
                 <span className="compare-file-modified">
