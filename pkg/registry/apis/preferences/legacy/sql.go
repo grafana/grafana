@@ -99,6 +99,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 		}
 		results = append(results, asPreferencesResource(ns, &pref))
 	}
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
+	}
 
 	if needsRV {
 		req.Reset()

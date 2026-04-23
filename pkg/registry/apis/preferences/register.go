@@ -48,14 +48,9 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	clientGenerator resource.ClientGenerator,
 ) (*APIBuilder, error) {
-	client, err := preferences.NewPreferencesClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, err
-	}
-
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, client),
+		merger: newMerger(cfg, &clientGetter{clientGenerator: clientGenerator}),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team

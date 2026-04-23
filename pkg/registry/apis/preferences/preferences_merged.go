@@ -20,10 +20,10 @@ import (
 
 type merger struct {
 	defaults preferences.PreferencesSpec
-	client   *preferences.PreferencesClient
+	client   *clientGetter
 }
 
-func newMerger(cfg *setting.Cfg, client *preferences.PreferencesClient) *merger {
+func newMerger(cfg *setting.Cfg, client *clientGetter) *merger {
 	return &merger{
 		client: client,
 		defaults: preferences.PreferencesSpec{
@@ -96,7 +96,13 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 	}
 	ns := user.GetNamespace() // namespace not in context!
 
-	list, err := s.client.List(ctx, ns, resource.ListOptions{})
+	client, err := s.client.Get()
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	list, err := client.List(ctx, ns, resource.ListOptions{})
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
