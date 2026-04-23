@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -206,10 +205,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.NoError(t, err)
 
 		// Wait for repository to be fully deleted
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted before creating new one")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")
