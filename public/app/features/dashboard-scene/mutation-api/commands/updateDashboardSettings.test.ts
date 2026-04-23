@@ -187,7 +187,7 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
   it('warns when refresh is requested but refreshPicker is not present', async () => {
     const { scene } = buildTestScene();
     // Remove refreshPicker from scene controls
-    (scene.state as Record<string, unknown>).controls = undefined;
+    (scene.state as unknown as Record<string, unknown>).controls = undefined;
 
     const result = await updateDashboardSettingsCommand.handler({ refresh: '5m' }, { scene });
 

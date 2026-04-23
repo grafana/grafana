@@ -99,7 +99,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
       return {
         success: true,
         data: newValue,
-        changes: [{ previousValue, newValue }],
+        changes: [{ path: '', previousValue, newValue }],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
