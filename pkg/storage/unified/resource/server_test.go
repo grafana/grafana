@@ -1511,4 +1511,59 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 	})
+
+	t.Run("read is denied when user lacks get permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("read is allowed when user has get permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp.Value)
+	})
+
+	t.Run("read passes the resource folder to the access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "get" {
+				capturedFolder = folder
+			}
+			return allow()
+		}
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, folderA, capturedFolder)
+	})
+
+	t.Run("read returns error when access check fails", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{}, errors.New("authz service unavailable")
+		}
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+	})
 }

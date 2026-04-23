@@ -116,15 +116,6 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return dashFolder, nil
 	}
 
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
-	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, folder.ErrAccessDenied
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
 		q.ID = nil
