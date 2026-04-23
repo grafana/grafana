@@ -230,6 +230,13 @@ type ResourceRef struct {
 	Group string `json:"group,omitempty"`
 }
 
+// Mirrored here so apps/provisioning does not have to depend on apps/dashboard
+// (separate Go modules). Must stay in sync with dashboardV1.DashboardResourceInfo.
+const (
+	DashboardResourceKind  = "Dashboard"
+	DashboardResourceGroup = "dashboard.grafana.app"
+)
+
 func (ResourceRef) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceRef"
 }

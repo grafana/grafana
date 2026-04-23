@@ -113,8 +113,8 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 	}
 
-	// Validate resources if specified. Empty Resources is valid: the worker
-	// falls back to exporting every unmanaged resource (legacy behavior).
+	// Empty Resources is valid: the worker falls back to exporting every
+	// unmanaged resource (legacy behavior).
 	for i, r := range opts.Resources {
 		path := field.NewPath("spec", "push", "resources").Index(i)
 		if r.Name == "" {
@@ -122,13 +122,13 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 		if r.Kind == "" {
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
-		} else if r.Kind != "Dashboard" {
-			list = append(list, field.Invalid(path.Child("kind"), r.Kind, "only Dashboard is supported for export"))
+		} else if r.Kind != provisioning.DashboardResourceKind {
+			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
+				fmt.Sprintf("only %s is supported for export", provisioning.DashboardResourceKind)))
 		}
-		// Group is optional; when set it must match the dashboard group. The
-		// worker defaults it to dashboard.grafana.app when empty.
-		if r.Group != "" && r.Group != "dashboard.grafana.app" {
-			list = append(list, field.Invalid(path.Child("group"), r.Group, "only dashboard.grafana.app is supported for export"))
+		if r.Group != "" && r.Group != provisioning.DashboardResourceGroup {
+			list = append(list, field.Invalid(path.Child("group"), r.Group,
+				fmt.Sprintf("only %s is supported for export", provisioning.DashboardResourceGroup)))
 		}
 	}
 

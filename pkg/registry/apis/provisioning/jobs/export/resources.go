@@ -65,10 +65,10 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
+	// ForKind resolves the preferred version when Version is empty.
 	dashboardGVK := schema.GroupVersionKind{
-		Group: resources.DashboardResource.Group,
-		Kind:  "Dashboard",
-		// Version is left empty so ForKind will resolve the preferred version
+		Group: resources.DashboardKind.Group,
+		Kind:  resources.DashboardKind.Kind,
 	}
 	dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
 	if err != nil {
@@ -77,11 +77,11 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	shim := newDashboardConversionShim(dashGVR, clients)
 
 	for _, ref := range options.Resources {
-		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardResource.Group, "Dashboard").
+		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind).
 			WithAction(repository.FileActionIgnored)
 
-		if ref.Kind != "" && ref.Kind != "Dashboard" {
-			result.WithWarning(fmt.Errorf("resource %s/%s is not a Dashboard", ref.Kind, ref.Name))
+		if ref.Kind != "" && ref.Kind != resources.DashboardKind.Kind {
+			result.WithWarning(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
 				return err

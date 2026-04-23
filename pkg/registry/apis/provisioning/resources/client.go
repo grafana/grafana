@@ -24,6 +24,7 @@ var (
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
+	DashboardKind             = dashboardV1.DashboardResourceInfo.GroupVersionKind()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 
