@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66
-	github.com/grafana/grafana-app-sdk/logging v0.53.0
+	github.com/grafana/grafana-app-sdk/logging v0.53.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0
@@ -15,7 +15,7 @@ require (
 	k8s.io/apimachinery v0.35.3
 	k8s.io/apiserver v0.35.1
 	k8s.io/component-base v0.35.1
-	k8s.io/klog/v2 v2.130.1
+	k8s.io/klog/v2 v2.140.0
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2
 )
