@@ -2326,6 +2326,7 @@
     },
     "notification-route": {
       "no-labels": "No labels",
+      "notification-policies": "Notification policies",
       "notification-policy": "Notification policy"
     },
     "notification-route-header": {

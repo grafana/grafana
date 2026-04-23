@@ -29,8 +29,7 @@ export function NotificationPolicyDrawer({
 
       {isDrawerOpen && (
         <NotificationPolicySidebar
-          policyName={policyName}
-          journey={journey}
+          journeys={[{ journey, policyName }]}
           labels={labels}
           onClose={() => setIsDrawerOpen(false)}
         />

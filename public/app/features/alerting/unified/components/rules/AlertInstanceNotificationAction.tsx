@@ -39,17 +39,20 @@ export const AlertInstanceNotificationAction = ({
 
   if (isGrafanaManagedUsingNotificationPolicies) {
     const previewRoutingInstance = treeMatchingResults[0];
-    const previewRoutingJourney = previewRoutingInstance?.matchedRoutes[0]?.matchDetails?.matchingJourney;
+    const journeys =
+      previewRoutingInstance?.matchedRoutes.map(({ matchDetails }) => ({
+        journey: matchDetails.matchingJourney,
+        policyName,
+      })) ?? [];
 
     return (
       <>
         <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsPreviewRoutingOpen(true)}>
           <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
         </Button>
-        {isPreviewRoutingOpen && previewRoutingInstance && previewRoutingJourney && (
+        {isPreviewRoutingOpen && previewRoutingInstance && journeys.length > 0 && (
           <NotificationPolicySidebar
-            policyName={policyName}
-            journey={previewRoutingJourney}
+            journeys={journeys}
             labels={previewRoutingInstance.labels}
             onClose={() => setIsPreviewRoutingOpen(false)}
           />
