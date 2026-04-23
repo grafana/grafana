@@ -46,7 +46,7 @@ const TeamSettings = ({ team }: Props) => {
     });
   };
   const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const teamResourceUri = newPrefsEnabled ? `team-${team.uid}` : `teams/${team.uid}`;
+  const teamResourceUri = newPrefsEnabled ? `team-${team.uid}` : `teams/${team.id}`;
 
   return (
     <Stack direction={'column'} gap={3}>
