@@ -6453,7 +6453,6 @@
         "save-library-panel": "Könyvtárpanel mentése",
         "share": {
           "arrow": "Megosztás",
-          "title": "Megosztás",
           "tooltip": "Hivatkozás másolása"
         },
         "unlink-library-panel": "Könyvtárpanel leválasztása"
@@ -8655,6 +8654,7 @@
         "copy-link": "Hivatkozás másolása a naplósorba",
         "copy-to-clipboard": "Másolás a vágólapra",
         "inspect-value": "Érték ellenőrzése",
+        "show-details": "",
         "view-log-line": "Naplósor megtekintése"
       }
     },
@@ -11329,6 +11329,8 @@
       "fields-section": "Mezők",
       "hide-log-line": "Naplósor elrejtése",
       "inline-mode": "Megjelenítés sorban",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Hivatkozás értéke",
       "links-section": "Hivatkozások",
       "log-attributes-field": "Naplóattribútumok",
@@ -11577,13 +11579,13 @@
   "logstable": {
     "category-table": "Naplótáblázat",
     "description-show-controls": "Táblázatvezérlők megjelenítése",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Engedélyezi/letiltja a naplósor hivatkozására szolgáló gombot az egyes sorok első oszlopában",
       "name": "Naplóhivatkozás másolása gomb megjelenítése"
-    },
-    "show-inspect-button": {
-      "description": "Engedélyezi/letiltja a naplósor ellenőrzésére szolgáló gombot az egyes sorok első oszlopában",
-      "name": "Ellenőrzés gomb megjelenítése"
     }
   },
   "manage-dashbaords": {
@@ -15930,6 +15932,7 @@
           "group-by": "Csoportosítási szempont"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Mellőzve",
       "placeholder-select-stats": "Statisztikák kijelölése"
     },
@@ -15941,6 +15944,16 @@
         "group-by": "Csoportosítási szempont"
       },
       "title-calc-alert": "A számításoknak nem lesz hatásuk, ha nincsenek csoportosított mezők"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

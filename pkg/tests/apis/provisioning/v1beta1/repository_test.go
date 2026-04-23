@@ -40,9 +40,9 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 				},
 				"workflows": []string{"write"},
 				"sync": map[string]interface{}{
-					"enabled":         true,
+					"enabled":         false,
 					"target":          "folder",
-					"intervalSeconds": 10,
+					"intervalSeconds": 60,
 				},
 			},
 		}
