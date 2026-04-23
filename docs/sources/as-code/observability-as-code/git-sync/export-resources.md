@@ -13,7 +13,7 @@ labels:
     - cloud
 title: Add non-provisioned resources from Grafana
 menuTitle: Add non-provisioned resources
-weight: 300
+weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/export-resources/
 aliases:
   - ../provision-resources/export-resources/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
@@ -21,7 +21,7 @@ aliases:
 
 # Export non-provisioned resources from Grafana
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 

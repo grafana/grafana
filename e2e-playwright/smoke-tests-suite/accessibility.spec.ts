@@ -22,6 +22,7 @@ test.describe(
         // Misc
         { url: '/?orgId=1' },
         { url: '/dashboards', ignoredRules: ['label'] },
+        { url: '/explore' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge' },
         { url: '/alerting/list', ignoredRules: ['button-name', 'aria-required-parent'] },
 
