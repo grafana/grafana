@@ -2,4 +2,4 @@ module github.com/grafana/grafana/scripts/go-workspace
 
 go 1.25.9
 
-require golang.org/x/mod v0.24.0
+require golang.org/x/mod v0.27.0
