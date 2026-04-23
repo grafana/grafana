@@ -70,8 +70,20 @@ export function useRatioResize({
     }
   }, [containerRef, direction, getDefaultRatio]);
 
+  const cleanupRef = useRef<(() => void) | null>(null);
+
   const handleRef = useCallback(
     (handle: HTMLElement | null) => {
+      // Clean up previous handle
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+
+      if (!handle) {
+        return;
+      }
+
       let startPos = 0;
       let startRatio = 0;
       let totalSize = 0;
@@ -83,9 +95,9 @@ export function useRatioResize({
       };
 
       const onPointerUp = (e: PointerEvent) => {
-        handle?.releasePointerCapture(e.pointerId);
-        handle?.removeEventListener('pointermove', onPointerMove);
-        handle?.removeEventListener('pointerup', onPointerUp);
+        handle.releasePointerCapture(e.pointerId);
+        handle.removeEventListener('pointermove', onPointerMove);
+        handle.removeEventListener('pointerup', onPointerUp);
       };
 
       const onPointerDown = (e: PointerEvent) => {
@@ -96,19 +108,15 @@ export function useRatioResize({
         const rect = containerRef.current?.getBoundingClientRect();
         totalSize = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
         // Pointer capture keeps move/up events on this element regardless of where the pointer travels.
-        handle?.setPointerCapture(e.pointerId);
-        handle?.addEventListener('pointermove', onPointerMove);
-        handle?.addEventListener('pointerup', onPointerUp);
+        handle.setPointerCapture(e.pointerId);
+        handle.addEventListener('pointermove', onPointerMove);
+        handle.addEventListener('pointerup', onPointerUp);
       };
 
-      if (handle) {
-        handle.addEventListener('pointerdown', onPointerDown);
-      }
+      handle.addEventListener('pointerdown', onPointerDown);
 
-      return () => {
-        if (handle) {
-          handle.removeEventListener('pointerdown', onPointerDown);
-        }
+      cleanupRef.current = () => {
+        handle.removeEventListener('pointerdown', onPointerDown);
       };
     },
     [containerRef, direction]
