@@ -80,8 +80,16 @@ LogLineDetails.displayName = 'LogLineDetails';
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
-    const { currentLog, closeDetails, detailsMode, setCurrentLog, showDetails, setDetailsMode, toggleDetails } =
-      useLogDetailsContext();
+    const {
+      currentLog,
+      closeDetails,
+      detailsMode,
+      replaceDetails,
+      setCurrentLog,
+      showDetails,
+      setDetailsMode,
+      toggleDetails,
+    } = useLogDetailsContext();
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
 
@@ -102,6 +110,30 @@ const LogLineDetailsTabs = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+      function handleKeydown(e: KeyboardEvent) {
+        let delta: number;
+        if (e.key === 'ArrowDown') {
+          delta = 1;
+        } else if (e.key === 'ArrowUp') {
+          delta = -1;
+        } else {
+          return;
+        }
+        e.preventDefault();
+        if (!currentLog || logs.indexOf(currentLog) < 0) {
+          return;
+        }
+        const nextLog = logs[logs.indexOf(currentLog) + delta];
+        if (!nextLog) {
+          return;
+        }
+        replaceDetails(nextLog);
+      }
+      document.addEventListener('keydown', handleKeydown);
+      return () => document.removeEventListener('keydown', handleKeydown);
+    }, [currentLog, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {
       inputRef.current = newSearch;
