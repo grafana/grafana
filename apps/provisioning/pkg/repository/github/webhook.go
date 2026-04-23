@@ -397,9 +397,7 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 // webhook and updates it via the API. If the remote webhook no longer exists
 // (404), the Status.Webhook entry is cleared so the next reconcile re-creates
 // it via processHooks, and an error is returned so the failure is surfaced in
-// logs. Returns patch operations for the webhook status (including updated
-// LastRotated) and the encrypted secret, choosing "add" vs "replace" for the
-// secure patch based on whether /secure and /secure/webhookSecret already exist.
+// logs.
 func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
 	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
 		return nil, nil
@@ -411,9 +409,6 @@ func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]ma
 	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
-		// Webhook was removed remotely (e.g. user deleted it in GitHub). Clear
-		// Status.Webhook so the next reconcile sees webhookMissing and re-creates
-		// it through processHooks.
 		return []map[string]any{{
 			"op":    "replace",
 			"path":  "/status/webhook",
@@ -434,7 +429,7 @@ func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]ma
 	}
 
 	logger.Info("webhook secret rotated successfully")
-	patchOps := []map[string]any{
+	return []map[string]any{
 		{
 			"op":   "replace",
 			"path": "/status/webhook",
@@ -445,42 +440,14 @@ func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]ma
 				LastRotated:      time.Now().UnixMilli(),
 			},
 		},
-	}
-
-	// Choose the right JSON Patch op for the secure value: "add" fails if the
-	// target exists, "replace" fails if it does not. Mirror the token rotation
-	// logic in the repository controller so rotation stays valid whether or not
-	// /secure and /secure/webhookSecret already exist on the object.
-	switch {
-	case r.config.Secure.IsZero():
-		patchOps = append(patchOps, map[string]any{
-			"op":   "add",
-			"path": "/secure",
-			"value": map[string]any{
-				"webhookSecret": map[string]string{
-					"create": hook.Secret,
-				},
-			},
-		})
-	case r.config.Secure.WebhookSecret.IsZero():
-		patchOps = append(patchOps, map[string]any{
-			"op":   "add",
-			"path": "/secure/webhookSecret",
-			"value": map[string]string{
-				"create": hook.Secret,
-			},
-		})
-	default:
-		patchOps = append(patchOps, map[string]any{
+		{
 			"op":   "replace",
 			"path": "/secure/webhookSecret",
 			"value": map[string]string{
 				"create": hook.Secret,
 			},
-		})
-	}
-
-	return patchOps, nil
+		},
+	}, nil
 }
 
 func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
