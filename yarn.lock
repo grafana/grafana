@@ -19970,7 +19970,6 @@ __metadata:
     i18next-cli: "npm:^1.48.0"
     i18next-pseudo: "npm:^2.2.1"
     immer: "npm:10.2.0"
-    immutable: "npm:5.1.5"
     infinite-viewer: "npm:^0.29.1"
     ini: "npm:^5.0.0"
     ix: "npm:^7.0.0"
@@ -20904,13 +20903,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:5.1.5, immutable@npm:^5.0.2, immutable@npm:^5.1.5":
-  version: 5.1.5
-  resolution: "immutable@npm:5.1.5"
-  checksum: 10/7aec2740239772ec8e92e793c991bd809203a97694f4ff3a18e50e28f9a6b02393ad033d87b458037bdf8c0ea37d4446d640e825f6171df3405cf6cf300ce028
-  languageName: node
-  linkType: hard
-
 "immutable@npm:^3.8.2, immutable@npm:^3.x.x":
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
@@ -20922,6 +20914,13 @@ __metadata:
   version: 4.3.8
   resolution: "immutable@npm:4.3.8"
   checksum: 10/27a134cec0089ba60c5f50fdd08a0296533c9ce6d112188461c89a6bb3c720368e4363dc5f8d40440c6f9120400867e9cf86bd7463c7d3ee12d4ad44f797d4cc
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^5.0.2, immutable@npm:^5.1.5":
+  version: 5.1.5
+  resolution: "immutable@npm:5.1.5"
+  checksum: 10/7aec2740239772ec8e92e793c991bd809203a97694f4ff3a18e50e28f9a6b02393ad033d87b458037bdf8c0ea37d4446d640e825f6171df3405cf6cf300ce028
   languageName: node
   linkType: hard
 
