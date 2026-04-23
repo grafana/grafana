@@ -61,6 +61,26 @@ function makeDisplayList(display: Display[]): DisplayList {
   };
 }
 
+type MockResult = { data: DisplayList | undefined };
+
+// The dispatched RTK Query thunk returns a `QueryActionCreatorResult` — a thenable that also
+// exposes `.unsubscribe()`. The production code awaits the thenable and calls `.unsubscribe()`
+// in a `finally` block, so tests must return a shape that matches both.
+function mockSubscription(
+  result: MockResult | Error,
+  unsubscribe: jest.Mock = jest.fn()
+): PromiseLike<MockResult> & { unsubscribe: jest.Mock } {
+  return {
+    then(onFulfilled, onRejected) {
+      if (result instanceof Error) {
+        return Promise.reject(result).then(onFulfilled, onRejected);
+      }
+      return Promise.resolve(result).then(onFulfilled, onRejected);
+    },
+    unsubscribe,
+  };
+}
+
 describe('resolveDeletedByDisplayMap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,8 +103,8 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  it('dispatches getDisplayMapping with deduplicated UIDs', async () => {
-    mockDispatch.mockResolvedValue({ data: makeDisplayList([]) });
+  it('dispatches getDisplayMapping with deduplicated UIDs and subscribe:false', async () => {
+    mockDispatch.mockReturnValue(mockSubscription({ data: makeDisplayList([]) }));
 
     await resolveDeletedByDisplayMap(
       makeResourceList([
@@ -98,14 +118,40 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(mockInitiate).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledWith('initiate-thunk');
-    const keys = (mockInitiate.mock.calls[0][0] as { key: string[] }).key.slice().sort();
-    expect(keys).toEqual(['user:alice', 'user:bob']);
+    const [keyArg, optionsArg] = mockInitiate.mock.calls[0] as [{ key: string[] }, { subscribe: boolean }];
+    expect(keyArg.key.slice().sort()).toEqual(['user:alice', 'user:bob']);
+    expect(optionsArg).toEqual({ subscribe: false });
+  });
+
+  it('unsubscribes from the RTK Query cache entry after resolving', async () => {
+    const unsubscribe = jest.fn();
+    mockDispatch.mockReturnValue(
+      mockSubscription(
+        { data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) },
+        unsubscribe
+      )
+    );
+
+    await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribes from the RTK Query cache entry even when the thunk rejects', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unsubscribe = jest.fn();
+    mockDispatch.mockReturnValue(mockSubscription(new Error('boom'), unsubscribe));
+
+    await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
   });
 
   it('builds a map keyed by identity `type:name`', async () => {
-    mockDispatch.mockResolvedValue({
-      data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
-    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
+    );
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
@@ -114,9 +160,11 @@ describe('resolveDeletedByDisplayMap', () => {
   });
 
   it('additionally keys the map by String(internalId) when provided', async () => {
-    mockDispatch.mockResolvedValue({
-      data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice', internalId: 42 }]),
-    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice', internalId: 42 }]),
+      })
+    );
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
@@ -128,9 +176,13 @@ describe('resolveDeletedByDisplayMap', () => {
   it('aliases typed numeric annotations to the canonical entry via `<type>:<internalId>`', async () => {
     // Simulates the case where the annotation is `user:1` but the server
     // canonicalizes to `user:u000000001` plus `internalId: 1`.
-    mockDispatch.mockResolvedValue({
-      data: makeDisplayList([{ identity: { type: 'user', name: 'u000000001' }, displayName: 'Alice', internalId: 1 }]),
-    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'u000000001' }, displayName: 'Alice', internalId: 1 },
+        ]),
+      })
+    );
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:1')]));
 
@@ -140,12 +192,14 @@ describe('resolveDeletedByDisplayMap', () => {
   });
 
   it('preserves Unicode display names verbatim', async () => {
-    mockDispatch.mockResolvedValue({
-      data: makeDisplayList([
-        { identity: { type: 'user', name: 'tanaka' }, displayName: '田中太郎' },
-        { identity: { type: 'user', name: 'mohamed' }, displayName: 'محمد العربي' },
-      ]),
-    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'tanaka' }, displayName: '田中太郎' },
+          { identity: { type: 'user', name: 'mohamed' }, displayName: 'محمد العربي' },
+        ]),
+      })
+    );
 
     const map = await resolveDeletedByDisplayMap(
       makeResourceList([makeItem('a', 'user:tanaka'), makeItem('b', 'user:mohamed')])
@@ -156,9 +210,9 @@ describe('resolveDeletedByDisplayMap', () => {
   });
 
   it('omits entries for UIDs the server could not resolve', async () => {
-    mockDispatch.mockResolvedValue({
-      data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
-    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
+    );
 
     const map = await resolveDeletedByDisplayMap(
       makeResourceList([makeItem('a', 'user:alice'), makeItem('b', 'user:missing')])
@@ -169,7 +223,7 @@ describe('resolveDeletedByDisplayMap', () => {
   });
 
   it('returns undefined when the dispatch resolves with no data', async () => {
-    mockDispatch.mockResolvedValue({ data: undefined });
+    mockDispatch.mockReturnValue(mockSubscription({ data: undefined }));
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
@@ -178,7 +232,7 @@ describe('resolveDeletedByDisplayMap', () => {
 
   it('returns undefined and swallows errors when the dispatch rejects', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockDispatch.mockRejectedValue(new Error('boom'));
+    mockDispatch.mockReturnValue(mockSubscription(new Error('boom')));
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 

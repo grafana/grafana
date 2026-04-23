@@ -119,8 +119,13 @@ export async function resolveDeletedByDisplayMap(
     return undefined;
   }
 
+  // One-shot lookup: avoid registering an RTK Query subscription so the cache entry isn't
+  // kept alive across rebuilds (each rebuild passes a different `key` array).
+  const subscription = dispatch(
+    iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: Array.from(uids) }, { subscribe: false })
+  );
   try {
-    const response = await dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: Array.from(uids) }));
+    const response = await subscription;
     const displayList = response.data;
     if (!displayList) {
       return undefined;
@@ -137,5 +142,9 @@ export async function resolveDeletedByDisplayMap(
   } catch (error) {
     console.error('Failed to resolve deleted dashboard user displays:', error);
     return undefined;
+  } finally {
+    // Defense in depth: with `subscribe: false` and awaiting the thunk above, the request
+    // completes before this runs, so this is mostly a no-op. Matches the scopes client pattern.
+    subscription.unsubscribe();
   }
 }
