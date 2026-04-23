@@ -40,6 +40,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -1056,6 +1057,51 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForRepositoryDeleted polls until the named repository reports NotFound.
+// Repository deletion is finalizer-driven (cleanup → release/remove orphan
+// resources); on loaded CI runners the chain routinely exceeds short bounds.
+func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, ctx context.Context, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// WaitForResourcesReleased polls until every item returned by client no longer
+// carries provisioning-manager annotations — i.e. the release-orphan-resources
+// finalizer has finished handing the objects back to the user.
+func WaitForResourcesReleased(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		for _, v := range items.Items {
+			annotations := v.GetAnnotations()
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerKind, "%s %q still has manager kind annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerIdentity, "%s %q still has manager identity annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourcePath, "%s %q still has source path annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourceChecksum, "%s %q still has source checksum annotation", resourceKind, v.GetName())
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be released", resourceKind)
+}
+
+// WaitForResourcesDeleted polls until the given client lists zero items.
+// Use this after a repository delete when the remove-orphan-resources
+// finalizer should have swept the managed resources away.
+func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
@@ -1295,6 +1341,12 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
+//
+// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// eventually-consistent signal: repository finalizers draining orphan
+// resources, dashboards freeing their folder reference in the search index,
+// and folder admission rejecting deletion until that index catches up. Under
+// SQLite write contention these lags routinely exceed short timeouts.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
@@ -1306,7 +1358,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -2143,13 +2195,27 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
 
 // HasState returns a matcher that asserts the job finished in the given state.
+// On mismatch it dumps the full job (spec + status) so the top-level error
+// message, errors list, summary counts, and warnings are visible in CI logs.
 func HasState(expected provisioning.JobState) JobMatcher {
 	return func(t *testing.T, job *unstructured.Unstructured) {
 		t.Helper()
 		actual := MustNestedString(job.Object, "status", "state")
 		require.Equal(t, string(expected), actual,
-			"job %q should have state %s", job.GetName(), expected)
+			"job %q should have state %s; full job:\n%s",
+			job.GetName(), expected, jobDump(job))
 	}
+}
+
+// jobDump renders a job as indented JSON for failure messages. Falls back to
+// the default formatter if marshalling fails (which should not happen for a
+// server-returned object).
+func jobDump(job *unstructured.Unstructured) string {
+	b, err := json.MarshalIndent(job.Object, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v (marshal error: %v)", job.Object, err)
+	}
+	return string(b)
 }
 
 // HasNoErrors returns a matcher that asserts the job completed without errors.

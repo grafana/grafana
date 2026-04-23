@@ -14,6 +14,7 @@ import {
   isInstallControlsEnabled,
   isNonAngularVersion,
 } from '../helpers';
+import { usePluginEntitlement } from '../hooks/usePluginEntitlement';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
 import { type CatalogPlugin, PluginStatus, type Version } from '../types';
 
@@ -26,6 +27,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
+  const entitlement = usePluginEntitlement(plugin);
 
   if (!plugin || plugin.angularDetected) {
     return null;
@@ -45,6 +47,7 @@ export const PluginActions = ({ plugin }: Props) => {
             pluginStatus={pluginStatus}
             setNeedReload={setNeedReload}
             hasInstallWarning={hasInstallWarning}
+            entitlement={entitlement}
           />
         )}
         <GetStartedWithPlugin plugin={plugin} />
