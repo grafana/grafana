@@ -380,6 +380,10 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 			}
 			ids = append(ids, id)
 			uids = append(uids, uid)
+
+			if err = rows.Err(); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
