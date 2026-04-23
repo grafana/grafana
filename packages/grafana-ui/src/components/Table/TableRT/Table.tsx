@@ -22,7 +22,14 @@ import { TableCellInspector } from '../TableCellInspector';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { type CellRangeSelection, type FooterItem, type GrafanaTableColumn, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
+import {
+  type CellRangeSelection,
+  type FooterItem,
+  type GrafanaTableColumn,
+  type GrafanaTableState,
+  type InspectCell,
+  type TableRTProps as Props,
+} from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -85,13 +92,15 @@ export const Table = memo((props: Props) => {
 
   const onCellMouseDown = useCallback((rowIndex: number, colIndex: number, event: React.MouseEvent) => {
     if (event.shiftKey) {
-      setCellSelection((prev) =>
-        prev
-          ? { ...prev, focus: { row: rowIndex, col: colIndex } }
-          : { anchor: { row: rowIndex, col: colIndex }, focus: { row: rowIndex, col: colIndex } }
-      );
+      setCellSelection((prev) => ({
+        anchor: prev?.anchor ?? { row: rowIndex, col: colIndex },
+        focus: { row: rowIndex, col: colIndex },
+      }));
     } else {
-      setCellSelection({ anchor: { row: rowIndex, col: colIndex }, focus: { row: rowIndex, col: colIndex } });
+      setCellSelection({
+        anchor: { row: rowIndex, col: colIndex },
+        focus: { row: rowIndex, col: colIndex },
+      });
       isSelectingRef.current = true;
     }
     tableDivRef.current?.focus();
