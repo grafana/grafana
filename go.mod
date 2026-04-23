@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.25.9
+go 1.26.2
 
 // Direct requirements -- every entry needs an owner
 require (
