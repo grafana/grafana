@@ -6422,7 +6422,6 @@
         "save-library-panel": "儲存資料庫面板",
         "share": {
           "arrow": "分享",
-          "title": "分享",
           "tooltip": "複製網址"
         },
         "unlink-library-panel": "取消連結資料庫面板"
@@ -8609,6 +8608,7 @@
         "copy-link": "將連結複製到日誌行",
         "copy-to-clipboard": "複製到剪貼簿",
         "inspect-value": "檢查值",
+        "show-details": "",
         "view-log-line": "檢視記錄行"
       }
     },
@@ -11263,6 +11263,8 @@
       "fields-section": "欄位",
       "hide-log-line": "隱藏記錄行",
       "inline-mode": "顯示內嵌",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "連結值",
       "links-section": "連結",
       "log-attributes-field": "記錄屬性",
@@ -11511,13 +11513,13 @@
   "logstable": {
     "category-table": "記錄表格",
     "description-show-controls": "顯示表格控制項",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "啟用/停用每列第一欄中的記錄行連結按鈕",
       "name": "顯示「複製記錄連結」按鈕"
-    },
-    "show-inspect-button": {
-      "description": "啟用/停用每列第一欄中的記錄行檢查按鈕",
-      "name": "顯示檢查按鈕"
     }
   },
   "manage-dashbaords": {
@@ -15839,6 +15841,7 @@
           "group-by": "分組依據"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "已略過",
       "placeholder-select-stats": "選擇統計資料"
     },
@@ -15850,6 +15853,16 @@
         "group-by": "分組依據"
       },
       "title-calc-alert": "如未將任何欄位分組，則計算將無效"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
