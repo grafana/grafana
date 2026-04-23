@@ -20,7 +20,7 @@ const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
   [ContactPointAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
   [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
   [ContactPointAction.Update]: [notificationsPermissions.update.grafana, AccessControlAction.AlertingReceiversWrite],
-  [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversWrite],
+  [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversDelete],
   [ContactPointAction.Export]: [notificationsPermissions.read.grafana],
   [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana],
 };

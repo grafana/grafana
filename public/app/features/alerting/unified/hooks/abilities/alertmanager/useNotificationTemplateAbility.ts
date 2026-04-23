@@ -26,7 +26,10 @@ const PERMISSIONS: Record<NotificationTemplateAction, AccessControlAction[]> = {
     notificationsPermissions.update.grafana,
     AccessControlAction.AlertingTemplatesWrite,
   ],
-  [NotificationTemplateAction.Delete]: [notificationsPermissions.delete.grafana],
+  [NotificationTemplateAction.Delete]: [
+    notificationsPermissions.delete.grafana,
+    AccessControlAction.AlertingTemplatesDelete,
+  ],
   [NotificationTemplateAction.Test]: [
     AccessControlAction.AlertingNotificationsTemplatesTest,
     notificationsPermissions.update.grafana,
@@ -67,7 +70,6 @@ export function useNotificationTemplateAbility(payload: NotificationTemplateAbil
   }, [payload, hasConfigurationAPI]);
 }
 
-/** All permissions that gate template functionality — used by datasource access-control checks. */
 export const PERMISSIONS_TEMPLATES: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
   (permissions) => permissions
 );

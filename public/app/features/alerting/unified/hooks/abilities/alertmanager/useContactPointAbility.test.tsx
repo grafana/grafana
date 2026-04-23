@@ -178,9 +178,9 @@ describe('useContactPointAbility', () => {
     });
 
     describe('Delete', () => {
-      it('should grant Delete when write permission is held and entity is deletable', () => {
+      it('should grant Delete when delete permission is held and entity is deletable', () => {
         const amSource = setupGrafanaAlertmanager();
-        grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversWrite]);
+        grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversDelete]);
 
         const { result } = renderHook(
           () => useContactPointAbility({ action: ContactPointAction.Delete, context: editableEntity }),
@@ -190,9 +190,21 @@ describe('useContactPointAbility', () => {
         expect(result.current.granted).toBe(true);
       });
 
-      it('should return Provisioned for Delete when entity is provisioned', () => {
+      it('should NOT grant Delete when only write permission is held (backend separates :write from :delete)', () => {
         const amSource = setupGrafanaAlertmanager();
         grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversWrite]);
+
+        const { result } = renderHook(
+          () => useContactPointAbility({ action: ContactPointAction.Delete, context: editableEntity }),
+          { wrapper: createAlertmanagerWrapper(amSource) }
+        );
+
+        expect(isInsufficientPermissions(result.current)).toBe(true);
+      });
+
+      it('should return Provisioned for Delete when entity is provisioned', () => {
+        const amSource = setupGrafanaAlertmanager();
+        grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversDelete]);
 
         const { result } = renderHook(
           () => useContactPointAbility({ action: ContactPointAction.Delete, context: provisionedEntity }),
@@ -204,7 +216,7 @@ describe('useContactPointAbility', () => {
 
       it('should return InsufficientPermissions for Delete when canDelete annotation is false', () => {
         const amSource = setupGrafanaAlertmanager();
-        grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversWrite]);
+        grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingReceiversDelete]);
 
         const { result } = renderHook(
           () => useContactPointAbility({ action: ContactPointAction.Delete, context: readOnlyEntity }),

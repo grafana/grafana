@@ -27,18 +27,19 @@ const PERMISSIONS: Record<TimeIntervalAction, AccessControlAction[]> = {
   ],
   [TimeIntervalAction.Delete]: [
     notificationsPermissions.delete.grafana,
-    AccessControlAction.AlertingTimeIntervalsWrite,
+    AccessControlAction.AlertingTimeIntervalsDelete,
   ],
   [TimeIntervalAction.Export]: [notificationsPermissions.read.grafana],
 };
 
-/** Granular permissions that allow viewing time intervals. */
-export const PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
-
-/** Granular permissions that allow modifying time intervals. */
-export const PERMISSIONS_TIME_INTERVALS_MODIFY = [AccessControlAction.AlertingTimeIntervalsWrite];
-
-/** All permissions that gate time interval functionality — used by datasource access-control checks. */
+/**
+ * Flat "any-of" permission bundle consumed by `getAlertManagerDataSourcesByPermission`
+ * in `utils/datasource.ts` to decide whether to show the internal Grafana alertmanager.
+ *
+ * Derived from the per-action `PERMISSIONS` record above — a user with any permission
+ * listed against any time-interval action is considered capable of doing something
+ * meaningful with the Grafana alertmanager and will see it in the list.
+ */
 export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
   (permissions) => permissions
 );

@@ -97,9 +97,13 @@ describe('useTimeIntervalAbility', () => {
       expect(result.current.granted).toBe(true);
     });
 
-    it('should grant Update and Delete when write permission is held and interval is not provisioned', () => {
+    it('should grant Update and Delete when the matching fine-grained permissions are held and interval is not provisioned', () => {
       const amSource = setupGrafanaAlertmanager();
-      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsWrite]);
+      grantUserPermissions([
+        GRAFANA_AM_VISIBILITY_PERMISSION,
+        AccessControlAction.AlertingTimeIntervalsWrite,
+        AccessControlAction.AlertingTimeIntervalsDelete,
+      ]);
 
       const { result } = renderHook(
         () => ({
@@ -113,9 +117,25 @@ describe('useTimeIntervalAbility', () => {
       expect(result.current.delete.granted).toBe(true);
     });
 
-    it('should return Provisioned for Update and Delete when interval is provisioned', () => {
+    it('should NOT grant Delete when only write permission is held (backend separates :write from :delete)', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsWrite]);
+
+      const { result } = renderHook(
+        () => useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: notProvisioned as never }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(false);
+    });
+
+    it('should return Provisioned for Update and Delete when interval is provisioned', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([
+        GRAFANA_AM_VISIBILITY_PERMISSION,
+        AccessControlAction.AlertingTimeIntervalsWrite,
+        AccessControlAction.AlertingTimeIntervalsDelete,
+      ]);
 
       const { result } = renderHook(
         () => ({
@@ -131,7 +151,11 @@ describe('useTimeIntervalAbility', () => {
 
     it('should grant Update and Delete when context is undefined (no provenance to check)', () => {
       const amSource = setupGrafanaAlertmanager();
-      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsWrite]);
+      grantUserPermissions([
+        GRAFANA_AM_VISIBILITY_PERMISSION,
+        AccessControlAction.AlertingTimeIntervalsWrite,
+        AccessControlAction.AlertingTimeIntervalsDelete,
+      ]);
 
       const { result } = renderHook(
         () => ({
