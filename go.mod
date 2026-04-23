@@ -126,7 +126,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/partner-datasources
 	github.com/influxdata/influxql v1.4.0 // @grafana/partner-datasources
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
-	github.com/jackc/pgx/v5 v5.8.0 // @grafana/grafana-search-and-storage
+	github.com/jackc/pgx/v5 v5.9.2 // @grafana/grafana-search-and-storage
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group

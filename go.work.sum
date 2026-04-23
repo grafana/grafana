@@ -682,8 +682,6 @@ github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81/go.mod h1:
 github.com/dolthub/swiss v0.2.1 h1:gs2osYs5SJkAaH5/ggVJqXQxRXtWshF6uE0lgR/Y3Gw=
 github.com/dolthub/swiss v0.2.1/go.mod h1:8AhKZZ1HK7g18j7v7k6c5cYIGEZJcPn0ARsai8cUrh0=
 github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
-github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e h1:ZrRCF8F8Iq8RP0OBowkYpOwd/1NTFU34Ydp0MZ2qTq4=
-github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/drone/envsubst v1.0.3 h1:PCIBwNDYjs50AsLZPYdfhSATKaRg/FJmDc2D6+C2x8g=
 github.com/drone/envsubst v1.0.3/go.mod h1:N2jZmlMufstn1KEqvbHjw40h1KyTmnVzHcSc9bFiJ2g=
 github.com/dvyukov/go-fuzz v0.0.0-20210103155950-6a8e9d1f2415 h1:q1oJaUPdmpDm/VyXosjgPgr6wS7c5iV2p0PwJD73bUI=
@@ -901,8 +899,6 @@ github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnm
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
 github.com/grafana/go-mysql-server v0.20.1-0.20251027172658-317a8d46ffa4/go.mod h1:EeYR0apo+8j2Dyxmn2ghkPlirO2S5mT1xHBrA+Efys8=
-github.com/grafana/go-mysql-server v0.20.2-grafana h1:6ylD8V7MEqBQYSjI2Rt/2h+gOYeTkO5DLn8JmBm2x1A=
-github.com/grafana/go-mysql-server v0.20.2-grafana/go.mod h1:ZIk2bQ8apaxHVuvGOVcSe0hR/c5YJM5zk+CJVe19yrk=
 github.com/grafana/grafana-app-sdk v0.40.2/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
 github.com/grafana/grafana-app-sdk v0.40.3/go.mod h1:j0KzHo3Sa6kd+lnwSScBNoV9Vobkg/YY9HtEjxpyPrk=
 github.com/grafana/grafana-app-sdk v0.48.7/go.mod h1:DWsaaH39ZMHwSOSoUBaeW8paMrRaYsjRYlLwCJYd78k=
@@ -995,6 +991,7 @@ github.com/iris-contrib/schema v0.0.6 h1:CPSBLyx2e91H2yJzPuhGuifVRnZBBJ3pCOMbOvP
 github.com/iris-contrib/schema v0.0.6/go.mod h1:iYszG0IOsuIsfzjymw1kMzTL8YQcCWlm65f3wX8J5iA=
 github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 h1:vr3AYkKovP8uR8AvSGGUK1IDqRa5lAAvEkZG1LKaCRc=
 github.com/jackc/pgx/v5 v5.7.5/go.mod h1:aruU7o91Tc2q2cFp5h4uP3f6ztExVpyVv88Xl/8Vl8M=
+github.com/jackc/pgx/v5 v5.8.0/go.mod h1:QVeDInX2m9VyzvNeiCJVjCkNFqzsNb43204HshNSZKw=
 github.com/jedib0t/go-pretty/v6 v6.6.7 h1:m+LbHpm0aIAPLzLbMfn8dc3Ht8MW7lsSO4MPItz/Uuo=
 github.com/jedib0t/go-pretty/v6 v6.6.7/go.mod h1:YwC5CE4fJ1HFUDeivSV1r//AmANFHyqczZk+U6BDALU=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
