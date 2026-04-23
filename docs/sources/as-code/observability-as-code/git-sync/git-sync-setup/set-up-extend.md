@@ -70,7 +70,7 @@ The necessary paths required to be exposed are, in RegExp:
 
 ## Set up image rendering for dashboard previews
 
-{{< admonition type="note" >}}
+{{< admonition type="caution" >}}
 
 Only available in Grafana OSS and Grafana Enterprise.
 
