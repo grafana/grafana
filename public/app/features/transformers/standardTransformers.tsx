@@ -92,7 +92,10 @@ const emptyLazyEditor = lazy(async () => ({ default: () => <></> }));
 
 function makeRegistryItemFromTransformer<T>(
   transformer: DataTransformerInfo<T>,
-  metadata: Omit<TransformerRegistryItem<T>, 'transformation' | 'isApplicable' | 'isApplicableDescription' | 'defaultOptions'>
+  metadata: Omit<
+    TransformerRegistryItem<T>,
+    'transformation' | 'isApplicable' | 'isApplicableDescription' | 'defaultOptions'
+  >
 ): TransformerRegistryItem<T> {
   return {
     ...metadata,
