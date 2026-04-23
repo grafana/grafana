@@ -1,10 +1,22 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
-import { Badge, Field, IconButton, Input, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  type BadgeColor,
+  Button,
+  CodeEditor,
+  Combobox,
+  Field,
+  Input,
+  RadioButtonGroup,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 
 export type FeatureControlFlagProps = {
   flag?: {
@@ -13,32 +25,121 @@ export type FeatureControlFlagProps = {
   };
 };
 
-const getBadgeColor = (value: string) => {
-  if (value === 'true') {
-    return 'green';
+const types = ['boolean', 'number', 'string', 'object'] as const;
+type FeatureControlFlagType = (typeof types)[number];
+
+const getFlagType = (value: string): FeatureControlFlagType => {
+  if (value === 'true' || value === 'false') {
+    return 'boolean';
   }
-  if (value === 'false') {
-    return 'red';
+
+  const number = Number.parseFloat(value);
+  if (!Number.isNaN(number)) {
+    return 'number';
   }
-  return 'blue';
+
+  try {
+    JSON.parse(value);
+    return 'object';
+  } catch {}
+
+  return 'string';
+};
+
+const getBadgeText = (value: string): string => {
+  const type = getFlagType(value);
+
+  switch (type) {
+    case 'boolean':
+    case 'number':
+    case 'string':
+      return value;
+    case 'object':
+      return '{...}';
+  }
+};
+
+const getBadgeColor = (value: string): BadgeColor => {
+  const type = getFlagType(value);
+
+  switch (type) {
+    case 'boolean':
+      return value === 'true' ? 'green' : 'red';
+    case 'number':
+      return 'orange';
+    case 'string':
+      return 'purple';
+    case 'object':
+      return 'blue';
+  }
 };
 
 export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
   const styles = useStyles2(getStyles);
-  const [key, setKey] = useState(flag?.key ?? '');
-  const [value, setValue] = useState(flag?.value ?? '');
+  const ref = useRef<HTMLDetailsElement>(null);
+  const [key, setKey] = useState('');
+  const [value, setValue] = useState('true');
+  const [json, setJson] = useState('true');
+  const [type, setType] = useState<FeatureControlFlagType>('boolean');
+  const [error, setError] = useState<string>();
+  const id = useId();
+
+  const reset = useCallback(() => {
+    setKey(flag?.key ?? '');
+    setValue(flag?.value ?? 'true');
+    setJson(() => {
+      try {
+        return JSON.stringify(JSON.parse(flag?.value ?? 'true'), null, 2);
+      } catch {
+        return flag?.value ?? 'true';
+      }
+    });
+    setType(flag ? getFlagType(flag.value) : 'boolean');
+    setError(undefined);
+  }, [flag]);
 
   useEffect(() => {
-    setValue(flag?.key ?? '');
-  }, [flag?.key]);
+    reset();
+  }, [reset]);
 
-  useEffect(() => {
-    setValue(flag?.value ?? '');
-  }, [flag?.value]);
+  const changeType = (newType: FeatureControlFlagType) => {
+    setType(newType);
+
+    const newValue = (() => {
+      switch (newType) {
+        case 'boolean':
+          return ['false', '0', ''].includes(value) ? 'false' : 'true';
+        case 'number':
+          return !Number.isNaN(Number.parseFloat(value)) ? value : '0';
+        case 'string':
+          return value;
+        case 'object':
+          try {
+            return JSON.stringify(JSON.parse(value), null, 2);
+          } catch {
+            return JSON.stringify(value, null, 2);
+          }
+      }
+    })();
+
+    setValue(newValue);
+    setJson(newValue);
+  };
+
+  const changeJson = (newJson: string) => {
+    setJson(newJson);
+
+    try {
+      setValue(JSON.stringify(JSON.parse(newJson)));
+      setError(undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
 
   return (
-    <details className={styles.details}>
-      <summary>
+    <details ref={ref} className={styles.details}>
+      <summary onClick={reset}>
         <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
           {flag ? (
             <>
@@ -49,7 +150,7 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
                 color={getBadgeColor(flag.value)}
                 text={
                   <Text variant="code" truncate>
-                    {flag.value}
+                    {getBadgeText(flag.value)}
                   </Text>
                 }
               />
@@ -75,42 +176,96 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           />
         </Field>
 
-        <Field noMargin>
-          <Input
-            value={value}
-            aria-label={t('feature-control.flag-value', 'Flag value')}
-            placeholder={t('feature-control.flag-value-placeholder', 'true, false, a string, number, or JSON')}
-            onChange={(e) => setValue(e.currentTarget.value)}
-          />
-        </Field>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Field
+            label={
+              <label htmlFor={`${id}-type`} className="sr-only">
+                <Trans i18nKey="feature-control.flag-type">Flag type</Trans>
+              </label>
+            }
+            noMargin
+          >
+            <Combobox
+              id={`${id}-type`}
+              options={types.map((t) => ({ label: t, value: t }))}
+              value={type}
+              onChange={(v) => changeType(v.value)}
+            />
+          </Field>
 
-        <Stack direction="row" gap={1}>
-          <IconButton
-            name="save"
-            size="lg"
-            tooltip={t('feature-control.save-flag', 'Save override')}
+          <Button
+            icon="save"
             onClick={() => {
               getLocalStorageProvider().setFlags({ [key]: value });
               if (!flag) {
-                setKey('');
-                setValue('');
+                reset();
+                if (ref.current) {
+                  ref.current.open = false;
+                }
               }
             }}
-            disabled={value === flag?.value || !value.trim() || !key.trim()}
-            variant="primary"
-          />
+            disabled={flag?.value === value || !key.trim()}
+          >
+            <Trans i18nKey="feature-control.save-flag">Save</Trans>
+          </Button>
 
-          <IconButton
-            name="trash-alt"
-            size="lg"
-            tooltip={t('feature-control.delete-flag', 'Delete override')}
+          <Button
+            icon="trash-alt"
+            variant="destructive"
             onClick={() => {
               getLocalStorageProvider().setFlags({ [key]: undefined });
             }}
             disabled={!flag}
-            variant="destructive"
-          />
+          >
+            <Trans i18nKey="feature-control.delete-flag">Delete</Trans>
+          </Button>
         </Stack>
+
+        {type === 'boolean' && (
+          <Field
+            label={
+              <span className="sr-only">
+                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+              </span>
+            }
+            noMargin
+          >
+            <RadioButtonGroup
+              options={[
+                { label: 'true', value: 'true' },
+                { label: 'false', value: 'false' },
+              ]}
+              value={value}
+              onChange={setValue}
+              fullWidth
+            />
+          </Field>
+        )}
+
+        {(type === 'number' || type === 'string') && (
+          <Field
+            label={
+              <label htmlFor={`${id}-value`} className="sr-only">
+                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+              </label>
+            }
+            noMargin
+          >
+            <Input
+              id={`${id}-value`}
+              type={type === 'number' ? 'number' : 'text'}
+              value={value}
+              aria-label={t('feature-control.flag-value', 'Flag value')}
+              onChange={(e) => setValue(e.currentTarget.value)}
+            />
+          </Field>
+        )}
+
+        {type === 'object' && (
+          <Field noMargin error={error} invalid={!!error}>
+            <CodeEditor value={json} onChange={changeJson} language="json" height={80} />
+          </Field>
+        )}
       </div>
     </details>
   );
