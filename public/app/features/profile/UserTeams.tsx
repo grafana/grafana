@@ -47,7 +47,7 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
               return (
                 <tr key={index}>
                   <td className="width-4 text-center">
-                    <img className="filter-table__avatar" src={team.avatarUrl} alt="" />
+                    <img className="filter-table__avatar met-image-avatar-user" src={team.avatarUrl} alt="" />
                   </td>
                   <td>{team.name}</td>
                   <td>{team.email}</td>

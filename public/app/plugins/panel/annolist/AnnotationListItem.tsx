@@ -89,7 +89,7 @@ const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
 
   return (
     <Tooltip content={tooltipContent} theme="info" placement="top">
-      <button onClick={onAvatarClick} className={styles.avatar}>
+      <button onClick={onAvatarClick} className={`${styles.avatar} met-image-avatar-user`}>
         <img src={avatarUrl} alt="avatar icon" />
       </button>
     </Tooltip>

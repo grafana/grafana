@@ -29,6 +29,14 @@
     <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
+    [[ if .EnableMeticulousRecorder ]]
+    <script
+      src="https://snippet.meticulous.ai/v1/meticulous.js"
+      data-recording-token="<METICULOUS-RECORDER-TOKEN>"
+      nonce="[[.Nonce]]"
+    ></script>
+    [[ end ]]
+
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
     </script>
@@ -325,6 +333,18 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
     </script>
+
+    [[ if .EnableMeticulousRecorder ]]
+    <script nonce="[[.Nonce]]">
+      // Capture bootdata so the Meticulous frontend-only image can restore it
+      // at replay time without a committed snapshot. See
+      // scripts/meticulous/render-index.mjs for the replay side.
+      window.Meticulous?.record?.recordCustomData(
+        'grafanaBootData',
+        JSON.stringify(window.grafanaBootData)
+      );
+    </script>
+    [[ end ]]
 
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->

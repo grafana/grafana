@@ -193,6 +193,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Nonce:                               c.RequestNonce,
 		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+		EnableMeticulousRecorder:            hs.Cfg.Env != setting.Prod,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 	}

@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7-labs
+#
+# Frontend-only image for the Meticulous GitHub Action.
+#
+# Meticulous mocks every backend network call during replay, so the live
+# Grafana backend is not needed. We skip the Go build entirely and ship an
+# nginx image containing only the built frontend assets plus a pre-rendered
+# index.html that mirrors the FEMT (frontend-server) boot flow.
+
+ARG JS_PLATFORM=linux/amd64
+FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder
+
+ENV NODE_OPTIONS=--max_old_space_size=8000
+ENV NODE_ENV=production
+
+WORKDIR /tmp/grafana
+
+RUN apk add --no-cache make build-base python3
+
+COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
+COPY .yarn .yarn
+COPY packages packages
+COPY e2e-playwright e2e-playwright
+COPY public public
+COPY LICENSE ./
+COPY conf/defaults.ini ./conf/defaults.ini
+
+RUN yarn install --immutable
+
+COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
+COPY scripts scripts
+COPY emails emails
+
+RUN yarn build
+
+# Render the static index.html from the built assets manifest. Bootdata is
+# retrieved at replay time via window.Meticulous.replay.retrieveCustomData —
+# see scripts/meticulous/render-index.mjs and public/views/index.html.
+RUN node scripts/meticulous/render-index.mjs \
+      public/build/assets-manifest.json \
+      /out/index.html
+
+# Final stage: nginx serving the built assets.
+FROM nginx:1.27-alpine
+
+COPY scripts/meticulous/nginx.conf /etc/nginx/nginx.conf
+
+WORKDIR /var/www/grafana
+
+COPY --from=js-builder /out/index.html ./index.html
+COPY --from=js-builder /tmp/grafana/public/build ./public/build
+COPY --from=js-builder /tmp/grafana/public/img ./public/img
+COPY --from=js-builder /tmp/grafana/public/fonts ./public/fonts
+COPY --from=js-builder /tmp/grafana/public/gazetteer ./public/gazetteer
+COPY --from=js-builder /tmp/grafana/public/maps ./public/maps
+COPY --from=js-builder /tmp/grafana/public/app/plugins ./public/app/plugins
+
+EXPOSE 3000
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -30,6 +30,7 @@ type IndexViewData struct {
 	CSPContent                          string               `json:"-"`
 	CSPEnabled                          bool                 `json:"-"`
 	IsDevelopmentEnv                    bool                 `json:"-"`
+	EnableMeticulousRecorder            bool                 `json:"-"`
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce                  string            `json:"-"`
 	NewsFeedEnabled        bool              `json:"-"`

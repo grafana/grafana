@@ -63,12 +63,14 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   return (
     <>
       <Dropdown overlay={renderMenu} placement="bottom-end">
-        <ToolbarButton
-          className={styles.profileButton}
-          imgSrc={contextSrv.user.gravatarUrl}
-          imgAlt="User avatar"
-          aria-label={t('navigation.profile.aria-label', 'Profile')}
-        />
+        <div className="met-image-avatar-user" style={{ display: 'contents' }}>
+          <ToolbarButton
+            className={styles.profileButton}
+            imgSrc={contextSrv.user.gravatarUrl}
+            imgAlt="User avatar"
+            aria-label={t('navigation.profile.aria-label', 'Profile')}
+          />
+        </div>
       </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
       {showThemeDrawer && <ThemeSelectorDrawer onClose={onToggleThemeDrawer} />}

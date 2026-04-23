@@ -19,6 +19,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alwaysmeticulous/api@npm:2.275.0":
+  version: 2.275.0
+  resolution: "@alwaysmeticulous/api@npm:2.275.0"
+  checksum: 10/832242aa7ba8e5de8960446a772343c43315d4987bb5ea1eebdad363c769d9bb706c0b8767c7a17fa46e3a40c6770e862987faa9ef547a6cfff1c179a865b804
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/sdk-bundles-api@npm:latest":
+  version: 2.275.0
+  resolution: "@alwaysmeticulous/sdk-bundles-api@npm:2.275.0"
+  dependencies:
+    "@alwaysmeticulous/api": "npm:2.275.0"
+  checksum: 10/53f38ddef92c965ca973a21f30f2c6fd2fba934285e4699b8fd679a3a2fd351ea271bacc47c8e75bb1dfb3a2d6af6db65c7f2d72700a3f2829d25599169f8e79
+  languageName: node
+  linkType: hard
+
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.2.0
   resolution: "@ampproject/remapping@npm:2.2.0"
@@ -19774,6 +19790,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "grafana@workspace:."
   dependencies:
+    "@alwaysmeticulous/sdk-bundles-api": "npm:latest"
     "@arethetypeswrong/cli": "npm:^0.18.2"
     "@axe-core/playwright": "npm:^4.11.1"
     "@babel/core": "npm:7.28.0"

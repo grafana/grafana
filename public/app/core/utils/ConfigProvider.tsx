@@ -16,6 +16,7 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
       config.theme2 = event.payload;
       setTheme(event.payload);
+      window.Meticulous?.context.recordCustomContext('theme', event.payload.colors.mode);
     });
 
     return () => sub.unsubscribe();
