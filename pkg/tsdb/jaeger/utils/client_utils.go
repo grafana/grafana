@@ -150,9 +150,14 @@ func TransformTraceResponse(trace types.TraceResponse, refID string) *data.Frame
 			}
 		}
 
-		// Convert logs
+		// Convert logs — timestamps from microseconds to milliseconds
 		logs := json.RawMessage{}
-		logsMarshaled, err := json.Marshal(span.Logs)
+		convertedLogs := make([]types.TraceLog, len(span.Logs))
+		for i, l := range span.Logs {
+			convertedLogs[i] = l
+			convertedLogs[i].Timestamp = l.Timestamp / 1000
+		}
+		logsMarshaled, err := json.Marshal(convertedLogs)
 		if err == nil {
 			logs = json.RawMessage(logsMarshaled)
 		}
