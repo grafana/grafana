@@ -21,6 +21,7 @@ import {
 } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
+  getPluginIdFromDatasourceInstanceType,
   getDatasourcePluginMeta,
   logPluginMetaError,
   logPluginMetaWarning,
@@ -225,14 +226,14 @@ export class DatasourceSrv implements DataSourceService {
 
     try {
       // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
-      const type = getTypeFromInstanceSetting(instanceSettings);
+      const pluginId = getPluginIdFromDatasourceInstanceType(instanceSettings.type, instanceSettings.name);
 
       // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
       // runtime-registered datasources (which aren't in the plugin meta map) still load.
-      let meta = await getDatasourcePluginMeta(type);
+      let meta = await getDatasourcePluginMeta(pluginId);
       if (!meta) {
         logPluginMetaWarning(
-          `Plugin meta for datasource ${key} (type: ${type}) was not found, falling back to instanceSettings.meta`,
+          `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
           PluginType.datasource
         );
         meta = instanceSettings.meta;
@@ -256,7 +257,7 @@ export class DatasourceSrv implements DataSourceService {
         const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
-        anyInstance.type = type;
+        anyInstance.type = pluginId;
         anyInstance.meta = meta;
         anyInstance.uid = instanceSettings.uid;
         anyInstance.getRef = DataSourceApi.prototype.getRef;
@@ -428,23 +429,3 @@ const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-function getTypeFromInstanceSetting(instanceSettings: DataSourceInstanceSettings): string {
-  if (instanceSettings.type !== 'datasource') {
-    return instanceSettings.type;
-  }
-
-  if (instanceSettings.name === '-- Dashboard --') {
-    return 'dashboard';
-  }
-
-  if (instanceSettings.name === '-- Grafana --') {
-    return 'grafana';
-  }
-
-  if (instanceSettings.name === '-- Mixed --') {
-    return 'mixed';
-  }
-
-  return '';
-}

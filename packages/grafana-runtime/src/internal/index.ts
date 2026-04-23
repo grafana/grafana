@@ -37,6 +37,7 @@ export {
   getDatasourcePluginMetas,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
+  getPluginIdFromDatasourceInstanceType,
 } from '../services/pluginMeta/datasources';
 export {
   useAppPluginMeta,

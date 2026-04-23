@@ -44,13 +44,34 @@ function setDatasourcesAndAliases(input: DatasourcePluginMetas) {
   datasourcesByAliasIDs = resolveAliasIDs(input);
 }
 
+export function getPluginIdFromDatasourceInstanceType(type: string, name: string) {
+  if (type !== 'datasource') {
+    return type;
+  }
+
+  if (name === '-- Dashboard --') {
+    return 'dashboard';
+  }
+
+  if (name === '-- Grafana --') {
+    return 'grafana';
+  }
+
+  if (name === '-- Mixed --') {
+    return 'mixed';
+  }
+
+  return '';
+}
+
 function extractFromConfig(
   configDatasources: Record<string, { type: string; meta: DataSourcePluginMeta }>
 ): DatasourcePluginMetas {
   const seen: DatasourcePluginMetas = {};
   for (const ds of Object.values(configDatasources)) {
-    if (!seen[ds.meta.id]) {
-      seen[ds.meta.id] = ds.meta;
+    const type = getPluginIdFromDatasourceInstanceType(ds.type, ds.meta.name);
+    if (!seen[type]) {
+      seen[type] = ds.meta;
     }
   }
   return seen;
