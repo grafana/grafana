@@ -39,8 +39,9 @@ const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string
 };
 
 const getReferencedIdsForClassicCondition = (model: ExpressionQuery) => {
-  return model.conditions?.map((condition) => {
-    return condition.query.params[0];
+  return model.conditions?.flatMap((condition) => {
+    const refId = condition.query.params?.[0];
+    return refId ? [refId] : [];
   });
 };
 

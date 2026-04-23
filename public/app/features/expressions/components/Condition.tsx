@@ -104,7 +104,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
             onChange={onRefIdChange}
             options={refIds}
             width={'auto'}
-            value={refIds.find((r) => r.value === condition.query.params[0])}
+            value={refIds.find((r) => r.value === condition.query.params?.[0])}
           />
         </InlineFieldRow>
         <InlineFieldRow>

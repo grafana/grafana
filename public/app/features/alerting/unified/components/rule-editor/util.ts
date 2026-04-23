@@ -64,7 +64,7 @@ export function queriesWithUpdatedReferences(
         ...condition,
         query: {
           ...condition.query,
-          params: condition.query.params.map((param: string) => (param === previousRefId ? newRefId : param)),
+          params: (condition.query.params ?? []).map((param: string) => (param === previousRefId ? newRefId : param)),
         },
       }));
 
@@ -166,7 +166,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query?.params[0] ?? query.model.expression;
+      const refId = condition.query?.params?.[0] ?? query.model.expression;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {

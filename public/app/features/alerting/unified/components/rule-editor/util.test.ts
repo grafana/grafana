@@ -1,4 +1,5 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -185,6 +186,26 @@ describe('rule-editor', () => {
       expect(rewiredQueries[0]).toEqual(queries[0]);
       expect(rewiredQueries[1]).toEqual(queries[1]);
       expect(rewiredQueries[2]).toEqual(queries[2]);
+    });
+
+    it('should not crash on classic conditions with missing query.params', () => {
+      const malformedClassicCondition: ClassicCondition = {
+        type: 'query',
+        evaluator: { params: [3], type: EvalFunction.IsAbove },
+        operator: { type: 'and' },
+        query: {},
+        reducer: { params: [], type: 'last' },
+      };
+      const malformedCondition: AlertQuery = {
+        ...classicCondition,
+        model: {
+          ...classicCondition.model,
+          conditions: [malformedClassicCondition],
+        },
+      };
+
+      const queries: AlertQuery[] = [dataSource, malformedCondition];
+      expect(() => queriesWithUpdatedReferences(queries, 'A', 'C')).not.toThrow();
     });
 
     it('should not rewire non-referencing expressions', () => {
