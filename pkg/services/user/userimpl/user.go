@@ -85,16 +85,16 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		if hasOrgID(ctx) {
-			result, err := s.k8sService.GetByID(ctx, cmd)
-			if err == nil {
-				span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-				return result, nil
-			}
-			ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
-		} else {
-			ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByID")
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
 		}
+		result, err := s.k8sService.GetByID(k8sCtx, cmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
