@@ -1341,6 +1341,12 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
+//
+// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// eventually-consistent signal: repository finalizers draining orphan
+// resources, dashboards freeing their folder reference in the search index,
+// and folder admission rejecting deletion until that index catches up. Under
+// SQLite write contention these lags routinely exceed short timeouts.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
@@ -1352,7 +1358,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
