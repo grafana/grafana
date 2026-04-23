@@ -80,22 +80,3 @@ func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64) pr
 		TeamTable:        sql.Table("team"),
 	}
 }
-
-type teamQuery struct {
-	sqltemplate.SQLTemplate
-
-	OrgID   int64
-	UserUID string
-	IsAdmin bool
-
-	TeamMemberTable string
-	TeamTable       string
-	UserTable       string
-}
-
-func (r teamQuery) Validate() error {
-	if r.UserUID != "" && r.OrgID < 1 {
-		return fmt.Errorf("requests with a userid, must include an orgID")
-	}
-	return nil
-}

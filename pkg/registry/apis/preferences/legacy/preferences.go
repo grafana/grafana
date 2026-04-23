@@ -84,6 +84,9 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 	if user.GetIdentityType() != authlib.TypeUser {
 		return nil, fmt.Errorf("only users may list preferences")
 	}
+	if user.GetIdentifier() == "" {
+		return nil, fmt.Errorf("user identifier is required")
+	}
 	if options.Continue != "" {
 		return nil, fmt.Errorf("continue token not supported")
 	}

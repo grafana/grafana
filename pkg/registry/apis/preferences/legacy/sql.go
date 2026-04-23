@@ -65,6 +65,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -140,6 +143,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
+				req.UserUID = user.GetIdentifier()
 				req.UserTeams = user.GetGroups()
 			} else {
 				req.All = true
