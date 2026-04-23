@@ -4,6 +4,7 @@ import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
 import { SecretInput } from '../SecretInput';
+import { SecretTextArea } from '../SecretTextArea';
 import { MultiSelect, Select } from '../Select/Select';
 import { Slider } from '../Slider/Slider';
 import { Switch } from '../Switch/Switch';
@@ -233,6 +234,28 @@ describe('Field', () => {
       render(
         <Field label="My label" invalid error="My error">
           <TextArea />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('SecretTextArea', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <SecretTextArea isConfigured={false} onReset={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <SecretTextArea isConfigured={true} onReset={() => {}} />
         </Field>
       );
 

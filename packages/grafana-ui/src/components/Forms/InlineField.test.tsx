@@ -4,6 +4,7 @@ import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
 import { SecretInput } from '../SecretInput';
+import { SecretTextArea } from '../SecretTextArea';
 import { MultiSelect, Select } from '../Select/Select';
 import { Slider } from '../Slider/Slider';
 import { InlineSwitch, Switch } from '../Switch/Switch';
@@ -255,6 +256,28 @@ describe('InlineField', () => {
       render(
         <InlineField label="My label" invalid error="My error">
           <TextArea />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('SecretTextArea', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <SecretTextArea isConfigured={false} onReset={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <SecretTextArea isConfigured={true} onReset={() => {}} />
         </InlineField>
       );
 
