@@ -18,7 +18,7 @@ interface Props {
   instances: Alert[];
   pagination?: PaginationProps;
   footerRow?: React.ReactNode;
-  showRouting?: boolean;
+  showNotificationColumn?: boolean;
 }
 
 interface RuleAndAlert {
@@ -29,7 +29,7 @@ interface RuleAndAlert {
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showRouting }: Props) => {
+export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -72,13 +72,13 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
       size: '150px',
     },
-    ...(showRouting
+    ...(showNotificationColumn
       ? [
           {
             id: 'actions',
             label: t('alerting.alert-instances-table.notification', 'Notification'),
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
-              <AlertInstanceNotificationAction rule={rule} instance={alert} showRouting />
+              <AlertInstanceNotificationAction rule={rule} instance={alert} />
             ),
             size: '120px',
           } satisfies AlertTableColumnProps,

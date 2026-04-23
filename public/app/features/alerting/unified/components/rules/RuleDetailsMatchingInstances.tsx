@@ -181,7 +181,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
         instances={visibleInstances}
         pagination={pagination}
         footerRow={footerRow}
-        showRouting={rulerRuleType.grafana.alertingRule(rule.rulerRule)}
+        showNotificationColumn={rulerRuleType.grafana.alertingRule(rule.rulerRule)}
       />
     </>
   );

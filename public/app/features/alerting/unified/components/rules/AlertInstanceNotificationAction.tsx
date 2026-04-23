@@ -13,20 +13,17 @@ import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notifi
 interface AlertInstanceNotificationActionProps {
   rule?: CombinedRule;
   instance: Alert;
-  showRouting?: boolean;
 }
 
 export const AlertInstanceNotificationAction = ({
   rule,
   instance,
-  showRouting,
 }: AlertInstanceNotificationActionProps): ReactElement | null => {
   const [isPreviewRoutingOpen, setIsPreviewRoutingOpen] = useState(false);
 
   const rulerRule = rule?.rulerRule;
   const alertmanager = rule ? getRulesSourceName(rule.namespace.rulesSource) : GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManagedUsingNotificationPolicies =
-    showRouting &&
     rulerRuleType.grafana.alertingRule(rulerRule) &&
     !rulerRule.grafana_alert.notification_settings?.receiver;
 
@@ -39,10 +36,6 @@ export const AlertInstanceNotificationAction = ({
     isGrafanaManagedUsingNotificationPolicies ? [instance.labels] : [],
     policyName
   );
-
-  if (!showRouting) {
-    return null;
-  }
 
   if (isGrafanaManagedUsingNotificationPolicies) {
     const previewRoutingInstance = treeMatchingResults[0];
