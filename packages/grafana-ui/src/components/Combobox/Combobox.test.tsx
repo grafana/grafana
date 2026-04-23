@@ -721,6 +721,45 @@ describe('Combobox', () => {
     });
   });
 
+  describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
+      const { rerender } = render(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+
+      rerender(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen onIsOpenChange={jest.fn()} />
+      );
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('calls onIsOpenChange when the dropdown opens and closes', async () => {
+      const onIsOpenChange = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onIsOpenChange={onIsOpenChange} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('supports controlled isOpen with onIsOpenChange', async () => {
+      function Controlled() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={open} onIsOpenChange={setOpen} />
+        );
+      }
+      render(<Controlled />);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Escape key behavior in overlays', () => {
     it('should not close a Modal when pressing Escape while the menu is open', async () => {
       const onDismiss = jest.fn();

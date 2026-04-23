@@ -1,19 +1,4 @@
 {
-  "e2e/cypress/support/commands.js": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 1
-    }
-  },
-  "e2e/utils/support/localStorage.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "e2e/utils/support/types.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/CircularDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -483,12 +468,12 @@
   },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 9
+      "count": 5
     }
   },
   "packages/grafana-ui/src/components/Forms/InlineField.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 9
+      "count": 2
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx": {

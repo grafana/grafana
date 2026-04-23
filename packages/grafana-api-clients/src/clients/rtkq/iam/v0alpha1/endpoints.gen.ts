@@ -314,8 +314,42 @@ const injectedRtkApi = api
         invalidatesTags: ['ServiceAccount'],
       }),
       getServiceAccountTokens: build.query<GetServiceAccountTokensApiResponse, GetServiceAccountTokensApiArg>({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens` }),
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['ServiceAccount'],
+      }),
+      createServiceAccountTokens: build.mutation<
+        CreateServiceAccountTokensApiResponse,
+        CreateServiceAccountTokensApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          method: 'POST',
+          body: queryArg.createServiceAccountTokenRequestBody,
+        }),
+        invalidatesTags: ['ServiceAccount'],
+      }),
+      getServiceAccountTokensWithPath: build.query<
+        GetServiceAccountTokensWithPathApiResponse,
+        GetServiceAccountTokensWithPathApiArg
+      >({
+        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
+        providesTags: ['ServiceAccount'],
+      }),
+      deleteServiceAccountTokensWithPath: build.mutation<
+        DeleteServiceAccountTokensWithPathApiResponse,
+        DeleteServiceAccountTokensWithPathApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: ['ServiceAccount'],
       }),
       listTeamBinding: build.query<ListTeamBindingApiResponse, ListTeamBindingApiArg>({
         query: (queryArg) => ({
@@ -1118,11 +1152,34 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList;
+export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListServiceAccountTokensBody;
 export type GetServiceAccountTokensApiArg = {
-  /** name of the ServiceAccountTokenList */
+  /** name of the ServiceAccount */
   name: string;
+  /** maximum number of tokens to return in a single page */
+  limit?: number;
+  /** continue token returned by a previous list response to fetch the next page */
+  continue?: string;
+};
+export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateServiceAccountTokenBody;
+export type CreateServiceAccountTokensApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  createServiceAccountTokenRequestBody: CreateServiceAccountTokenRequestBody;
+};
+export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ GetServiceAccountTokenBody;
+export type GetServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  /** name of the token to operate on */
+  tokenName: string;
+};
+export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteServiceAccountTokenBody;
+export type DeleteServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  /** name of the token to operate on */
+  tokenName: string;
 };
 export type ListTeamBindingApiResponse = /** status 200 OK */ TeamBindingList;
 export type ListTeamBindingApiArg = {
@@ -1935,20 +1992,24 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken = {
-  created: Time;
-  expires?: Time;
-  lastUsed?: Time;
-  name?: string;
-  revoked?: boolean;
+export type ListServiceAccountTokensBody = {
+  continue: string;
+  items: any[];
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
+export type CreateServiceAccountTokenBody = {
+  expires: number;
+  serviceAccountTokenName: string;
+  token: string;
+};
+export type CreateServiceAccountTokenRequestBody = {
+  expiresInSeconds?: number;
+  tokenName: string;
+};
+export type GetServiceAccountTokenBody = {
+  body: any;
+};
+export type DeleteServiceAccountTokenBody = {
+  message: string;
 };
 export type TeamBindingspecSubject = {
   /** kind of the identity */
@@ -2135,6 +2196,10 @@ export const {
   useUpdateServiceAccountMutation,
   useGetServiceAccountTokensQuery,
   useLazyGetServiceAccountTokensQuery,
+  useCreateServiceAccountTokensMutation,
+  useGetServiceAccountTokensWithPathQuery,
+  useLazyGetServiceAccountTokensWithPathQuery,
+  useDeleteServiceAccountTokensWithPathMutation,
   useListTeamBindingQuery,
   useLazyListTeamBindingQuery,
   useCreateTeamBindingMutation,
