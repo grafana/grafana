@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/grafana/gomemcache/memcache"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
