@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -296,7 +297,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	counts := map[data.Fingerprint]int{}
 	labelMap := map[data.Fingerprint]string{}
 
-	for i := 0; i < frame.Rows(); i++ {
+	for i := range frame.Rows() {
 		val, err := numericField.FloatAt(i)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read numeric value at row %d: %w", i, err)
