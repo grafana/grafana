@@ -296,6 +296,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         import('./editors/GroupByTransformerEditor').then((m) => ({ default: m.GroupByTransformerEditor }))
       ),
       transformation: () => Promise.resolve(standardTransformers.groupByTransformer),
+      defaultOptions: standardTransformers.groupByTransformer.defaultOptions,
+      isApplicable: standardTransformers.groupByTransformer.isApplicable,
+      isApplicableDescription: standardTransformers.groupByTransformer.isApplicableDescription,
       name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
       description: t(
         'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
@@ -327,6 +330,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         import('./editors/MergeTransformerEditor').then((m) => ({ default: m.MergeTransformerEditor }))
       ),
       transformation: () => Promise.resolve(standardTransformers.mergeTransformer),
+      isApplicable: standardTransformers.mergeTransformer.isApplicable,
+      isApplicableDescription: standardTransformers.mergeTransformer.isApplicableDescription,
       name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
       description: t(
         'transformers.merge-transformer-editor.description.merge-multiple-series',
@@ -416,6 +421,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => Promise.resolve(standardTransformers.convertFieldTypeTransformer),
+      defaultOptions: standardTransformers.convertFieldTypeTransformer.defaultOptions,
       name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
       description: t(
         'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
@@ -662,6 +668,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         import('./editors/FormatTimeTransformerEditor').then((m) => ({ default: m.FormatTimeTransfomerEditor }))
       ),
       transformation: () => Promise.resolve(standardTransformers.formatTimeTransformer),
+      isApplicable: standardTransformers.formatTimeTransformer.isApplicable,
+      isApplicableDescription: standardTransformers.formatTimeTransformer.isApplicableDescription,
       name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
       state: PluginState.alpha,
       description: t(
