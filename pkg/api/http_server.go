@@ -732,7 +732,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.HandleNoCacheHeaders)
 
-	if hs.Cfg.CSPEnabled || hs.Cfg.CSPReportOnlyEnabled {
+	if hs.Cfg.CSPEnabled || hs.Cfg.CSPMinimalEnabled || hs.Cfg.CSPReportOnlyEnabled {
 		m.UseMiddleware(middleware.ContentSecurityPolicy(hs.Cfg, hs.log))
 	}
 
