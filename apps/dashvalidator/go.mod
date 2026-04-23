@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.53.1
 	github.com/grafana/grafana-app-sdk/logging v0.53.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/prometheus/prometheus v0.303.1
+	github.com/prometheus/prometheus v0.305.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.20.0
 	k8s.io/apimachinery v0.35.3
@@ -278,7 +278,6 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
-	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect

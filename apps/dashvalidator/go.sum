@@ -609,8 +609,8 @@ github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFb
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 h1:HWRh5R2+9EifMyIHV7ZV+MIZqgz+PMpZ14Jynv3O2Zs=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0/go.mod h1:JfhWUomR1baixubs02l85lZYYOm7LV6om4ceouMv45c=
 github.com/hashicorp/consul/api v1.12.0/go.mod h1:6pVBMo0ebnYdt2S3H87XhekM/HHrUoTD2XXb/VrZVy0=
-github.com/hashicorp/consul/api v1.31.2 h1:NicObVJHcCmyOIl7Z9iHPvvFrocgTYo9cITSGg0/7pw=
-github.com/hashicorp/consul/api v1.31.2/go.mod h1:Z8YgY0eVPukT/17ejW+l+C7zJmKwgPHtjU1q16v/Y40=
+github.com/hashicorp/consul/api v1.32.0 h1:5wp5u780Gri7c4OedGEPzmlUEzi0g2KyiPphSr6zjVg=
+github.com/hashicorp/consul/api v1.32.0/go.mod h1:Z8YgY0eVPukT/17ejW+l+C7zJmKwgPHtjU1q16v/Y40=
 github.com/hashicorp/consul/sdk v0.8.0/go.mod h1:GBvyrGALthsZObzUGsfgHZQDXjg4lOjagTIwIR1vPms=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
@@ -941,10 +941,10 @@ github.com/prometheus/procfs v0.1.3/go.mod h1:lV6e/gmhEcM9IjHGsFOCxxuZ+z1YqCvr4O
 github.com/prometheus/procfs v0.6.0/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1xBZuNvfVA=
 github.com/prometheus/procfs v0.19.2 h1:zUMhqEW66Ex7OXIiDkll3tl9a1ZdilUOd/F6ZXw4Vws=
 github.com/prometheus/procfs v0.19.2/go.mod h1:M0aotyiemPhBCM0z5w87kL22CxfcH05ZpYlu+b4J7mw=
-github.com/prometheus/prometheus v0.303.1 h1:He/2jRE6sB23Ew38AIoR1WRR3fCMgPlJA2E0obD2WSY=
-github.com/prometheus/prometheus v0.303.1/go.mod h1:WEq2ogBPZoLjj9x5K67VEk7ECR0nRD9XCjaOt1lsYck=
-github.com/prometheus/sigv4 v0.1.2 h1:R7570f8AoM5YnTUPFm3mjZH5q2k4D+I/phCWvZ4PXG8=
-github.com/prometheus/sigv4 v0.1.2/go.mod h1:GF9fwrvLgkQwDdQ5BXeV9XUSCH/IPNqzvAoaohfjqMU=
+github.com/prometheus/prometheus v0.305.2 h1:wk1qMEQheZta0wyln9svD0yjRMRkkmvOiV+KUPbrVsQ=
+github.com/prometheus/prometheus v0.305.2/go.mod h1:Ys8JihI93h10WYlbLRBeU3WP4OhN0yHQUabGN886kfk=
+github.com/prometheus/sigv4 v0.2.0 h1:qDFKnHYFswJxdzGeRP63c4HlH3Vbn1Yf/Ao2zabtVXk=
+github.com/prometheus/sigv4 v0.2.0/go.mod h1:D04rqmAaPPEUkjRQxGqjoxdyJuyCh6E0M18fZr0zBiE=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b h1:fPVI9E6QNFYI0Ph3XpKUDrcAvbCifHvqYJcntFLPog8=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
 github.com/puzpuzpuz/xsync/v2 v2.5.1 h1:mVGYAvzDSu52+zaGyNjC+24Xw2bQi3kTr4QJ6N9pIIU=

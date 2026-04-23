@@ -1057,8 +1057,7 @@ github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cu
 github.com/dgryski/go-sip13 v0.0.0-20190329191031-25c5027a8c7b/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/diegoholiveira/jsonlogic/v3 v3.7.4 h1:92HSmB9bwM/o0ZvrCpcvTP2EsPXSkKtAniIr2W/dcIM=
 github.com/diegoholiveira/jsonlogic/v3 v3.7.4/go.mod h1:OYRb6FSTVmMM+MNQ7ElmMsczyNSepw+OU4Z8emDSi4w=
-github.com/digitalocean/godo v1.136.0 h1:DTxugljFJSMBPfEGq4KeXpnKeAHicggNqogcrw/YdZw=
-github.com/digitalocean/godo v1.136.0/go.mod h1:PU8JB6I1XYkQIdHFop8lLAY9ojp6M0XcU0TWaQSxbrc=
+github.com/digitalocean/godo v1.152.0 h1:WRgkPMogZSXEJK70IkZKTB/PsMn16hMQ+NI3wCIQdzA=
 github.com/distribution/reference v0.6.0 h1:0IXCQ5g4/QMHHkarYzh5l+u8T3t73zM5QvfrDyIgxBk=
 github.com/distribution/reference v0.6.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
 github.com/dlmiddlecote/sqlstats v1.0.2 h1:gSU11YN23D/iY50A2zVYwgXgy072khatTsIW6UPjUtI=
@@ -1327,8 +1326,7 @@ github.com/go-redis/redis/v8 v8.11.5 h1:AcZZR7igkdvfVmQTPnu9WE37LRrO/YrBH5zWyjDC
 github.com/go-redis/redis/v8 v8.11.5/go.mod h1:gREzHqY1hg6oD9ngVRbLStwAWKhA0FEgq8Jd4h5lpwo=
 github.com/go-redsync/redsync/v4 v4.13.0 h1:49X6GJfnbLGaIpBBREM/zA4uIMDXKAh1NDkvQ1EkZKA=
 github.com/go-redsync/redsync/v4 v4.13.0/go.mod h1:HMW4Q224GZQz6x1Xc7040Yfgacukdzu7ifTDAKiyErQ=
-github.com/go-resty/resty/v2 v2.16.3 h1:zacNT7lt4b8M/io2Ahj6yPypL7bqx9n1iprfQuodV+E=
-github.com/go-resty/resty/v2 v2.16.3/go.mod h1:hkJtXbA2iKHzJheXYvQ8snQES5ZLGKMwQ07xAwp/fiA=
+github.com/go-resty/resty/v2 v2.16.5 h1:hBKqmWrr7uRc3euHVqmh1HTHcKn99Smr7o5spptdhTM=
 github.com/go-sourcemap/sourcemap v2.1.4+incompatible h1:a+iTbH5auLKxaNwQFg0B+TCYl6lbukKPc7b5x0n1s6Q=
 github.com/go-sourcemap/sourcemap v2.1.4+incompatible/go.mod h1:F8jJfvm2KbVjc5NqelyYJmf/v5J0dwNLS2mL4sNA1Jg=
 github.com/go-sql-driver/mysql v1.7.1 h1:lUIinVbN1DY0xBg0eMOzmmtGoHwWBbvnWubQUrtU8EI=
@@ -1642,8 +1640,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 h1:HWRh5R2+9EifMyIHV7ZV+MIZqgz
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0/go.mod h1:JfhWUomR1baixubs02l85lZYYOm7LV6om4ceouMv45c=
 github.com/hashicorp/consul/api v1.1.0/go.mod h1:VmuI/Lkw1nC05EYQWNKwWGbkg+FbDBtguAZLlVdkD9Q=
 github.com/hashicorp/consul/api v1.12.0/go.mod h1:6pVBMo0ebnYdt2S3H87XhekM/HHrUoTD2XXb/VrZVy0=
-github.com/hashicorp/consul/api v1.31.2 h1:NicObVJHcCmyOIl7Z9iHPvvFrocgTYo9cITSGg0/7pw=
-github.com/hashicorp/consul/api v1.31.2/go.mod h1:Z8YgY0eVPukT/17ejW+l+C7zJmKwgPHtjU1q16v/Y40=
+github.com/hashicorp/consul/api v1.32.0 h1:5wp5u780Gri7c4OedGEPzmlUEzi0g2KyiPphSr6zjVg=
+github.com/hashicorp/consul/api v1.32.0/go.mod h1:Z8YgY0eVPukT/17ejW+l+C7zJmKwgPHtjU1q16v/Y40=
 github.com/hashicorp/consul/sdk v0.1.1/go.mod h1:VKf9jXwCTEY1QZP2MOLRhb5i/I/ssyNV1vwHyQBF0x8=
 github.com/hashicorp/consul/sdk v0.8.0/go.mod h1:GBvyrGALthsZObzUGsfgHZQDXjg4lOjagTIwIR1vPms=
 github.com/hashicorp/consul/sdk v0.16.1 h1:V8TxTnImoPD5cj0U9Spl0TUxcytjcbbJeADFF07KdHg=
@@ -1732,8 +1730,7 @@ github.com/hashicorp/vault/api v1.20.0 h1:KQMHElgudOsr+IbJgmbjHnCTxEpKs9LnozA1D3
 github.com/hashicorp/vault/api v1.20.0/go.mod h1:GZ4pcjfzoOWpkJ3ijHNpEoAxKEsBJnVljyTe3jM2Sms=
 github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
-github.com/hetznercloud/hcloud-go/v2 v2.19.1 h1:UU/7h3uc/rdgspM8xkQF7wokmwZXePWDXcLqrQRRzzY=
-github.com/hetznercloud/hcloud-go/v2 v2.19.1/go.mod h1:r5RTzv+qi8IbLcDIskTzxkFIji7Ovc8yNgepQR9M+UA=
+github.com/hetznercloud/hcloud-go/v2 v2.21.1 h1:IH3liW8/cCRjfJ4cyqYvw3s1ek+KWP8dl1roa0lD8JM=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/huandu/go-assert v1.1.5/go.mod h1:yOLvuqZwmcHIC5rIzrBhT7D3Q9c3GFnd0JrPVhn/06U=
 github.com/huandu/go-assert v1.1.6 h1:oaAfYxq9KNDi9qswn/6aE0EydfxSa+tWZC1KabNitYs=
@@ -1761,8 +1758,7 @@ github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf h1:7JTmne
 github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/invopop/jsonschema v0.13.0 h1:KvpoAJWEjR3uD9Kbm2HWJmqsEaHt8lBUpd0qHcIi21E=
 github.com/invopop/jsonschema v0.13.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
-github.com/ionos-cloud/sdk-go/v6 v6.3.2 h1:2mUmrZZz6cPyT9IRX0T8fBLc/7XU/eTxP2Y5tS7/09k=
-github.com/ionos-cloud/sdk-go/v6 v6.3.2/go.mod h1:SXrO9OGyWjd2rZhAhEpdYN6VUAODzzqRdqA9BCviQtI=
+github.com/ionos-cloud/sdk-go/v6 v6.3.4 h1:jTvGl4LOF8v8OYoEIBNVwbFoqSGAFqn6vGE7sp7/BqQ=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
@@ -1887,8 +1883,7 @@ github.com/lestrrat-go/strftime v1.0.4/go.mod h1:E1nN3pCbtMSu1yjSVeyuRFVm/U0xoR7
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/linode/linodego v1.47.0 h1:6MFNCyzWbr8Rhl4r7d5DwZLwxvFIsM4ARH6W0KS/R0U=
-github.com/linode/linodego v1.47.0/go.mod h1:vyklQRzZUWhFVBZdYx4dcYJU/gG9yKB9VUcUs6ub0Lk=
+github.com/linode/linodego v1.52.1 h1:HJ1cz1n9n3chRP9UrtqmP91+xTi0Q5l+H/4z4tpkwgQ=
 github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 h1:7UMa6KCCMjZEMDtTVdcGu0B1GmmC7QJKiCCjyTAWQy0=
 github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683/go.mod h1:ilwx/Dta8jXAgpFYFvSWEMwxmbWXyiUHkd5FwyKhb5k=
 github.com/lyft/protoc-gen-star v0.6.0/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuzJYeZuUPFPNwA=
@@ -2130,8 +2125,7 @@ github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b h1:Ff
 github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b/go.mod h1:AC62GU6hc0BrNm+9RK9VSiwa/EUe1bkIeFORAMcHvJU=
 github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
 github.com/openzipkin/zipkin-go v0.4.3/go.mod h1:M9wCJZFWCo2RiY+o1eBCEMe0Dp2S5LDHcMZmk3RmK7c=
-github.com/ovh/go-ovh v1.7.0 h1:V14nF7FwDjQrZt9g7jzcvAAQ3HN6DNShRFRMC3jLoPw=
-github.com/ovh/go-ovh v1.7.0/go.mod h1:cTVDnl94z4tl8pP1uZ/8jlVxntjSIf09bNcQ5TJSC7c=
+github.com/ovh/go-ovh v1.8.0 h1:eQ5TAAFZvZAVarQir62oaTL+8a503pIBuOWVn72iGtY=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0 h1:cBOtyMzM9HTpWjXfbbunk26uA6nG3a8n06Wieeh0MwY=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
@@ -2250,10 +2244,10 @@ github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoG
 github.com/prometheus/procfs v0.19.2 h1:zUMhqEW66Ex7OXIiDkll3tl9a1ZdilUOd/F6ZXw4Vws=
 github.com/prometheus/procfs v0.19.2/go.mod h1:M0aotyiemPhBCM0z5w87kL22CxfcH05ZpYlu+b4J7mw=
 github.com/prometheus/prometheus v0.0.0-20190818123050-43acd0e2e93f/go.mod h1:rMTlmxGCvukf2KMu3fClMDKLLoJ5hl61MhcJ7xKakf0=
-github.com/prometheus/prometheus v0.303.1 h1:He/2jRE6sB23Ew38AIoR1WRR3fCMgPlJA2E0obD2WSY=
-github.com/prometheus/prometheus v0.303.1/go.mod h1:WEq2ogBPZoLjj9x5K67VEk7ECR0nRD9XCjaOt1lsYck=
-github.com/prometheus/sigv4 v0.1.2 h1:R7570f8AoM5YnTUPFm3mjZH5q2k4D+I/phCWvZ4PXG8=
-github.com/prometheus/sigv4 v0.1.2/go.mod h1:GF9fwrvLgkQwDdQ5BXeV9XUSCH/IPNqzvAoaohfjqMU=
+github.com/prometheus/prometheus v0.305.2 h1:wk1qMEQheZta0wyln9svD0yjRMRkkmvOiV+KUPbrVsQ=
+github.com/prometheus/prometheus v0.305.2/go.mod h1:Ys8JihI93h10WYlbLRBeU3WP4OhN0yHQUabGN886kfk=
+github.com/prometheus/sigv4 v0.2.0 h1:qDFKnHYFswJxdzGeRP63c4HlH3Vbn1Yf/Ao2zabtVXk=
+github.com/prometheus/sigv4 v0.2.0/go.mod h1:D04rqmAaPPEUkjRQxGqjoxdyJuyCh6E0M18fZr0zBiE=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b h1:fPVI9E6QNFYI0Ph3XpKUDrcAvbCifHvqYJcntFLPog8=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
 github.com/puzpuzpuz/xsync/v2 v2.5.1 h1:mVGYAvzDSu52+zaGyNjC+24Xw2bQi3kTr4QJ6N9pIIU=
@@ -2302,8 +2296,7 @@ github.com/sagikazarmark/crypt v0.6.0/go.mod h1:U8+INwJo3nBv1m6A/8OBXAq7Jnpspk5A
 github.com/sagikazarmark/locafero v0.11.0 h1:1iurJgmM9G3PA/I+wWYIOw/5SyBtxapeHDcg+AAIFXc=
 github.com/sagikazarmark/locafero v0.11.0/go.mod h1:nVIGvgyzw595SUSUE6tvCp3YYTeHs15MvlmU87WwIik=
 github.com/samuel/go-zookeeper v0.0.0-20190810000440-0ceca61e4d75/go.mod h1:gi+0XIa01GRL2eRQVjQkKGqKF3SF9vZR/HnPullcV2E=
-github.com/scaleway/scaleway-sdk-go v1.0.0-beta.32 h1:4+LP7qmsLSGbmc66m1s5dKRMBwztRppfxFKlYqYte/c=
-github.com/scaleway/scaleway-sdk-go v1.0.0-beta.32/go.mod h1:kzh+BSAvpoyHHdHBCDhmSWtBc1NbLMZ2lWHqnBoxFks=
+github.com/scaleway/scaleway-sdk-go v1.0.0-beta.33 h1:KhF0WejiUTDbL5X55nXowP7zNopwpowa6qaMAWyIE+0=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/segmentio/asm v1.2.1 h1:DTNbBqs57ioxAD4PrArqftgypG4/qNpXoJx8TVXxPR0=
@@ -2377,6 +2370,7 @@ github.com/spiffe/go-spiffe/v2 v2.6.0/go.mod h1:gm2SeUoMZEtpnzPNs2Csc0D/gX33k1xI
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad/go.mod h1:qLr4V1qq6nMqFKkMo8ZTx3f+BZEkzsRUY10Xsm2mwU0=
 github.com/spyzhov/ajson v0.9.6 h1:iJRDaLa+GjhCDAt1yFtU/LKMtLtsNVKkxqlpvrHHlpQ=
 github.com/spyzhov/ajson v0.9.6/go.mod h1:a6oSw0MMb7Z5aD2tPoPO+jq11ETKgXUr2XktHdT8Wt8=
+github.com/stackitcloud/stackit-sdk-go/core v0.17.2 h1:jPyn+i8rkp2hM80+hOg0B/1EVRbMt778Tr5RWyK1m2E=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=
@@ -2543,8 +2537,8 @@ go.opentelemetry.io/collector/pdata v1.55.0 h1:WBgye8bo8koUyV9Vmp/r2Q3lgDezdsgfK
 go.opentelemetry.io/collector/pdata v1.55.0/go.mod h1:6jPrbM4tuliCPACDznjFtxnnHisfKfzwrBVoeuESYuk=
 go.opentelemetry.io/collector/pdata/pprofile v0.145.0 h1:ASMKpoqokf8HhzjoeMKZf0K6UXLhufVwNXH0sSuUn5w=
 go.opentelemetry.io/collector/pdata/pprofile v0.145.0/go.mod h1:a60GC7wQPhLAixWzKbbP51QLwwc+J0Cmp4SurOlhGUk=
-go.opentelemetry.io/collector/semconv v0.124.0 h1:YTdo3UFwNyDQCh9DiSm2rbzAgBuwn/9dNZ0rv454goA=
-go.opentelemetry.io/collector/semconv v0.124.0/go.mod h1:te6VQ4zZJO5Lp8dM2XIhDxDiL45mwX0YAQQWRQ0Qr9U=
+go.opentelemetry.io/collector/semconv v0.128.0 h1:MzYOz7Vgb3Kf5D7b49pqqgeUhEmOCuT10bIXb/Cc+k4=
+go.opentelemetry.io/collector/semconv v0.128.0/go.mod h1:OPXer4l43X23cnjLXIZnRj/qQOjSuq4TgBLI76P9hns=
 go.opentelemetry.io/contrib/bridges/prometheus v0.64.0 h1:7TYhBCu6Xz6vDJGNtEslWZLuuX2IJ/aH50hBY4MVeUg=
 go.opentelemetry.io/contrib/bridges/prometheus v0.64.0/go.mod h1:tHQctZfAe7e4PBPGyt3kae6mQFXNpj+iiDJa3ithM50=
 go.opentelemetry.io/contrib/detectors/gcp v1.39.0 h1:kWRNZMsfBHZ+uHjiH4y7Etn2FK26LAGkNFw7RHv1DhE=

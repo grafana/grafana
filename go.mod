@@ -157,8 +157,8 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.67.5 // @grafana/alerting-backend
-	github.com/prometheus/prometheus v0.303.1 // @grafana/alerting-backend
-	github.com/prometheus/sigv4 v0.1.2 // @grafana/alerting-backend
+	github.com/prometheus/prometheus v0.305.2 // @grafana/alerting-backend
+	github.com/prometheus/sigv4 v0.2.0 // @grafana/alerting-backend
 	github.com/puzpuzpuz/xsync/v4 v4.4.0 // @grafana/grafana-backend-group
 	github.com/redis/go-redis/v9 v9.14.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
@@ -475,7 +475,7 @@ require (
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
-	github.com/hashicorp/consul/api v1.31.2 // indirect
+	github.com/hashicorp/consul/api v1.32.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -650,7 +650,7 @@ require (
 	go.opentelemetry.io/collector/featuregate v1.55.0 // indirect
 	go.opentelemetry.io/collector/internal/testutil v0.149.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.145.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.124.0 // indirect
+	go.opentelemetry.io/collector/semconv v0.128.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.64.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.64.0 // indirect
@@ -741,11 +741,6 @@ exclude (
 
 	// gomemcache 20250828162811 contains breaking changes, so it needs to be excluded unless loki package is updated
 	github.com/grafana/gomemcache v0.0.0-20250828162811-a96f6acee2fe
-
-	// v1.* versions were retracted, we need to stick with v0.*. This should work
-	// without the exclude, but this otherwise gets pulled in as a transitive
-	// dependency.
-	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 
 	// This was retracted, but seems to be known by the Go module proxy, and is
 	// otherwise pulled in as a transitive dependency.
