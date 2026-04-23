@@ -224,16 +224,14 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 
-	//TODO - this will need to be tweaked as well when we get the service to work for write mode 5
-
-	// there will only ever be one label selector / datasource at a time for this
 	labelSelectors, _ := listOptions.LabelSelector.Requirements()
-	datasourceUIDs := labelSelectors[0].Values().List()
+	datasourceRef := labelSelectors[0].Values().List()[0]
+	datasourceData := strings.Split(datasourceRef, ".") // the selector is type.uid
 	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDS-ref" {
-		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceUIDs[0], OrgId: orgID, OnlyProvisioned: true})
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceData[1], SourceType: datasourceData[0], OrgId: orgID, OnlyProvisioned: true})
 	}
 	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
-		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceUIDs[0], OrgId: orgID})
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceData[1], TargetType: datasourceData[0], OrgId: orgID})
 	}
 	return nil, fmt.Errorf("DeleteCollection key not implemented for passthrough to legacy")
 }

@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -95,7 +96,7 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
 			TargetUID:  event.UID,
 			OrgId:      event.OrgID,
-			SourceType: event.Type,
+			TargetType: event.Type,
 		}); err != nil {
 			return err
 		}
@@ -150,7 +151,9 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		UID:         util.GenerateShortUID(),
 		OrgID:       cmd.OrgId,
 		SourceUID:   cmd.SourceUID,
+		SourceType:  &cmd.SourceType,
 		TargetUID:   cmd.TargetUID,
+		TargetType:  cmd.TargetType,
 		Label:       cmd.Label,
 		Description: cmd.Description,
 		Config:      cmd.Config,
@@ -268,22 +271,24 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	}, nil
 }
 
+// correlations.grafana.app/sourceDS-ref in (${labelStr})
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
+	dsLabel := fmt.Sprintf("correlations.grafana.app/sourceDS-ref in (%s.%s)", cmd.SourceType, cmd.SourceUID)
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
-	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/targetDS-ref=" + cmd.TargetUID})
+	dsLabel := fmt.Sprintf("correlations.grafana.app/targetDS-ref in (%s.%s)", cmd.TargetType, cmd.TargetUID)
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
 }
 
-// TODO this is onl
 // this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
 	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID, SourceType: event.Type})
 	if err != nil {
 		return err
 	}
-	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID})
+	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID, TargetType: event.Type})
 }
 
 // what's the best way to return just a count of records
