@@ -6,22 +6,34 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 ## Page Objects Reference
 
-All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`.
+All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                   | UI Region                                 | Key Methods / Getters                         |
-| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------- |
-| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                             |
-| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                      |
-| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions` sub-object                |
-| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()` |
+| Class              | File                   | UI Region                                 | Key Methods / Getters                                     |
+| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`) |
+| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                         |
+| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                  |
+| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions` sub-object                            |
+| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`             |
 
 > This table grows as specs are migrated — only methods needed by migrated specs exist.
 
-### Constructor signature (same for all)
+### Base class & constructor
+
+All page objects inherit from `PageObject`, which provides the shared constructor:
 
 ```typescript
-new Controls(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups)
+// page-objects/PageObject.ts
+export abstract class PageObject {
+  constructor(
+    protected page: Page,
+    protected dashboardPage: DashboardPage,
+    protected selectors: E2ESelectorGroups
+  ) {}
+}
 ```
+
+Simple page objects (e.g. `Controls`, `Toolbar`) inherit the constructor directly — no override needed. Page objects that compose sub-objects (e.g. `Sidebar`) call `super(page, dashboardPage, selectors)` and initialize their children.
 
 All three dependencies come from the Playwright test arguments:
 
@@ -95,7 +107,7 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 ### Adding a method to a page object
 
 1. Find the raw selector chain in the spec you're migrating.
-2. Copy it into the appropriate page object class — mechanical extraction, no rewrites.
+2. Copy it into the appropriate page object class — mechanical extraction, no rewrites. New page objects must extend `PageObject` from `PageObject.ts`.
 3. For multi-step interactions, wrap in `test.step('Human-readable name', async () => { ... })`.
 4. For single-element access, return a `Locator` (getter pattern, no `test.step` needed).
 5. Run `--repeat-each=3` on the migrated spec.
