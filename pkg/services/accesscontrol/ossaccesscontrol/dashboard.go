@@ -39,7 +39,11 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 	if !cfg.RBAC.PermissionsWildcardSeed("dashboard") {
 		return nil
 	}
+	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations()...)
+}
 
+// DashboardFixedRoleRegistrations returns the wildcard seed role registrations for dashboards.
+func DashboardFixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	viewer := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:dashboards:viewer",
@@ -76,7 +80,7 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 		Grants: []string{"Admin"},
 	}
 
-	return service.DeclareFixedRoles(viewer, editor, admin)
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
 }
 
 func ProvideDashboardPermissions(

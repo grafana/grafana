@@ -39,6 +39,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		return err
 	}
 
+	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+	return hs.accesscontrolService.DeclareFixedRoles(
+		FixedRoleRegistrations(hs.Cfg.ViewersCanEdit, hs.License.FeatureEnabled("dspermissions.enforcement"))...,
+	)
+}
+
+// FixedRoleRegistrations returns all HTTP API fixed role registrations.
+func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.RoleRegistration {
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -70,8 +78,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Cfg.ViewersCanEdit {
+	if viewersCanEdit {
 		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
@@ -117,7 +124,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
-	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
+	if !dsPermissionsEnforced {
 		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 
@@ -617,7 +624,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
 
-	return hs.accesscontrolService.DeclareFixedRoles(roles...)
+	return roles
 }
 
 // Metadata helpers
