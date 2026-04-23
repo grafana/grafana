@@ -203,19 +203,27 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Pull:   options,
 	})
 
-	result := h.AdminREST.Post().
-		Namespace(h.Namespace).
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context())
+	post := func() rest.Result {
+		return h.AdminREST.Post().
+			Namespace(h.Namespace).
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+	}
 
-	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
+	// A controller-triggered sync (e.g. the auto-resync when a repo first
+	// becomes healthy) may already be in flight when the caller invokes us.
+	// That sync may not observe state changes the caller just made (e.g.
+	// files copied to the provisioning path), so we drain any in-flight
+	// jobs and retry the POST to guarantee a sync runs against current state.
+	result := post()
+	const maxRetries = 3
+	for i := 0; apierrors.IsAlreadyExists(result.Error()) && i < maxRetries; i++ {
 		h.AwaitJobs(t, repo)
-		return
+		result = post()
 	}
 
 	obj, err := result.Get()
