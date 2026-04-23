@@ -24,9 +24,7 @@ describe('ColorValueEditor', () => {
   });
 
   it('shows custom placeholder from settings when value is empty', () => {
-    render(
-      <ColorValueEditor value={undefined} onChange={jest.fn()} details settings={{ placeholder: 'Pick one' }} />
-    );
+    render(<ColorValueEditor value={undefined} onChange={jest.fn()} details settings={{ placeholder: 'Pick one' }} />);
 
     expect(screen.getByText('Pick one')).toBeVisible();
   });

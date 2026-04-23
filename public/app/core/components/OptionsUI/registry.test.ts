@@ -1,9 +1,4 @@
-import {
-  FieldType,
-  standardEditorsRegistry,
-  type Field,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { FieldType, standardEditorsRegistry, type Field, type StandardEditorsRegistryItem } from '@grafana/data';
 
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './registry';
 

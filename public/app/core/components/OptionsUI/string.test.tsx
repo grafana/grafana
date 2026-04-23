@@ -9,9 +9,7 @@ describe('StringValueEditor', () => {
 
   it('trims on blur and calls onChange', () => {
     const onChange = jest.fn();
-    render(
-      <StringValueEditor value="hello" onChange={onChange} item={defaultItem} context={emptyContext} id="s1" />
-    );
+    render(<StringValueEditor value="hello" onChange={onChange} item={defaultItem} context={emptyContext} id="s1" />);
 
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '  spaced  ' } });
@@ -21,9 +19,7 @@ describe('StringValueEditor', () => {
 
   it('sets undefined when trimmed value is empty', () => {
     const onChange = jest.fn();
-    render(
-      <StringValueEditor value="x" onChange={onChange} item={defaultItem} context={emptyContext} id="s2" />
-    );
+    render(<StringValueEditor value="x" onChange={onChange} item={defaultItem} context={emptyContext} id="s2" />);
 
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '   ' } });
@@ -33,9 +29,7 @@ describe('StringValueEditor', () => {
 
   it('does not call onChange when value is unchanged after trim', () => {
     const onChange = jest.fn();
-    render(
-      <StringValueEditor value="same" onChange={onChange} item={defaultItem} context={emptyContext} id="s3" />
-    );
+    render(<StringValueEditor value="same" onChange={onChange} item={defaultItem} context={emptyContext} id="s3" />);
 
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: 'same' } });
@@ -46,9 +40,7 @@ describe('StringValueEditor', () => {
   it('on Enter trims and commits for single-line input', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(
-      <StringValueEditor value="" onChange={onChange} item={defaultItem} context={emptyContext} id="s4" />
-    );
+    render(<StringValueEditor value="" onChange={onChange} item={defaultItem} context={emptyContext} id="s4" />);
 
     const input = screen.getByRole('textbox');
     await user.type(input, 'hello{Enter}');

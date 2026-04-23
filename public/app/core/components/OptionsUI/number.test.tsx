@@ -27,15 +27,7 @@ describe('NumberValueEditor', () => {
 
   it('passes through fractional values when integer is not set', () => {
     const onChange = jest.fn();
-    render(
-      <NumberValueEditor
-        value={1}
-        onChange={onChange}
-        item={baseItem}
-        context={{ data: [] }}
-        id="n2"
-      />
-    );
+    render(<NumberValueEditor value={1} onChange={onChange} item={baseItem} context={{ data: [] }} id="n2" />);
 
     const input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
     fireEvent.blur(input, { target: { value: '3.25' } });

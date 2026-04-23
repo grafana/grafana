@@ -1,12 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  ActionType,
-  HttpRequestMethod,
-  VariableOrigin,
-  VariableSuggestionsScope,
-  type Action,
-} from '@grafana/data';
+import { ActionType, HttpRequestMethod, VariableOrigin, VariableSuggestionsScope, type Action } from '@grafana/data';
 
 jest.mock('app/features/actions/ActionsInlineEditor', () => ({
   ActionsInlineEditor: jest.fn(() => <div data-testid="actions-inline" />),
