@@ -9125,16 +9125,15 @@
       "close-tooltip": "Close feature control",
       "open-tooltip": "Open feature control"
     },
-    "delete-flag": "Delete override",
+    "delete-flag": "Delete",
     "description": "Override frontend feature flags locally for testing and development purposes.",
     "dismiss": "Dismiss feature control",
     "dismiss-tooltip": "Removes the feature control UI and toolbar button. Use <1>{{ param }}</1> in the URL to enable it again. Any overrides defined will remain active.",
     "flag-key": "Flag key",
     "flag-key-placeholder": "my-component.my-flag",
     "flag-value": "Flag value",
-    "flag-value-placeholder": "true, false, a string, number, or JSON",
     "new-flag": "new-flag-override",
-    "save-flag": "Save override",
+    "save-flag": "Save",
     "title": "Feature control"
   },
   "folder-filter": {

@@ -33,7 +33,7 @@ const expandFlag = async (flagName: string) => {
   fireEvent.click(screen.getByText(flagName));
 
   await waitFor(() => {
-    expect(screen.getAllByLabelText('Flag value')[0]).toBeVisible();
+    expect(screen.getAllByRole('button', { name: 'Save' })[0]).toBeVisible();
   });
 };
 
@@ -55,21 +55,21 @@ describe('FeatureControlFlags', () => {
   });
 
   it('updates an existing flag', async () => {
-    getLocalStorageProvider().setFlags({ alpha: true });
+    getLocalStorageProvider().setFlags({ alpha: 'hello' });
 
     renderComponent();
     await expandFlag('alpha');
 
-    fireEvent.change(screen.getAllByLabelText('Flag value')[0], { target: { value: 'false' } });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Save override' })[0]);
+    fireEvent.change(screen.getAllByLabelText('Flag value')[0], { target: { value: 'world' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
 
     await waitFor(() => {
-      expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('false');
+      expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('world');
     });
 
     const summary = screen.getByText('alpha').closest('summary');
     expect(summary).not.toBeNull();
-    expect(within(summary as HTMLElement).getByText('false')).toBeInTheDocument();
+    expect(within(summary as HTMLElement).getByText('world')).toBeInTheDocument();
   });
 
   it('removes an existing flag', async () => {
@@ -78,7 +78,7 @@ describe('FeatureControlFlags', () => {
     renderComponent();
     await expandFlag('alpha');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete override' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
     await waitFor(() => {
       expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
