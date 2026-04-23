@@ -49,7 +49,7 @@ export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
           data-testid={selectors.components.Sidebar.closePane}
         />
       )}
-      <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
+      <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
         {title}
       </Text>
       {children}

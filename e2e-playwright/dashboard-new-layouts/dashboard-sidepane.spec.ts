@@ -1,21 +1,4 @@
-import { type Page } from 'playwright-core';
-
-import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
-
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
-
-import {
-  flows,
-  groupIntoRow,
-  groupIntoTab,
-  saveDashboard,
-  selectRow,
-  stripMetadataNameFromImportJson,
-  toggleRow,
-} from './utils';
-
-const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
-const DASHBOARD_NAME = 'Test variable output';
+import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
@@ -41,7 +24,49 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 
-      await flows.changePanelTitle(dashboardPage, selectors, 'New panel', 'A panel with a title');
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
+        .fill('Panel 1');
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+
+      // Add another panel
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
+        .fill('Panel 2');
+
+      // go back to add pane
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+        .filter({ hasText: 'Panel 2' })
+        .click();
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
+      // When deleting the selected item it shoudl move to previous selection
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
+      ).toHaveValue('New panel');
+
+      // Switch to outline
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
+      // Select panel 1
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel 1')).click();
+
+      // Go back to outline
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.goBack).click();
+
+      await expect(dashboardPage.getByGrafanaSelector('data-testid sidebar-pane-header-title')).toHaveText(
+        'Content outline'
+      );
     });
   }
 );
