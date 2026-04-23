@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS vec_42 (
     folder VARCHAR(256),
     content TEXT NOT NULL,
     metadata JSONB,
-    embedding halfvec(768) NOT NULL,
+    embedding halfvec(1024) NOT NULL,
     UNIQUE (name, subresource)
 );
 CREATE INDEX IF NOT EXISTS vec_42_hnsw

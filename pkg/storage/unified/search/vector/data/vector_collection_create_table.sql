@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS {{ .Table }} (
     folder VARCHAR(256),
     content TEXT NOT NULL,
     metadata JSONB,
-    embedding halfvec(768) NOT NULL,
+    embedding halfvec(1024) NOT NULL,
     UNIQUE (name, subresource)
 );
 

@@ -14,8 +14,7 @@ import (
 //
 // The migrator only creates the pgvector extension and the vector_collections
 // catalog table. Per-collection vec_<id> tables (which hold the embeddings
-// themselves) are created lazily at runtime by pgvectorBackend, because
-// halfvec(768) and HNSW indexes aren't expressible through the xorm migrator.
+// themselves) are created lazily at runtime by the VectorBackend.
 func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "vector")
 	mg.AddCreateMigration()

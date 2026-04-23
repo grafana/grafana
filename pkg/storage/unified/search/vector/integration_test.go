@@ -373,9 +373,10 @@ func TestIntegrationVectorConcurrentUpsert(t *testing.T) {
 	}
 }
 
-// makeEmbedding creates a 768-dim embedding with the first two values set and the rest zero.
+// makeEmbedding creates a 1024-dim embedding with the first two values set and the rest zero.
+// 1024 matches grafana-assistant-app's halfvec(1024) so schemas line up if data ever moves between them.
 func makeEmbedding(a, b float32) []float32 {
-	e := make([]float32, 768)
+	e := make([]float32, 1024)
 	e[0] = a
 	e[1] = b
 	return e
