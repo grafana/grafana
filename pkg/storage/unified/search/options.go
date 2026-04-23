@@ -59,6 +59,16 @@ func NewSearchOptions(
 			}
 		}
 
+		var buildVersion *semver.Version
+		if cfg.BuildVersion != "" {
+			v, err := semver.NewVersion(cfg.BuildVersion)
+			if err != nil {
+				cfg.Logger.Error("Failed to parse build_version, ignoring it.", "version", cfg.BuildVersion, "err", err)
+			} else {
+				buildVersion = v
+			}
+		}
+
 		snapshot, err := buildSnapshotOptions(cfg, minVersion)
 		if err != nil {
 			return resource.SearchOptions{}, err
@@ -88,6 +98,7 @@ func NewSearchOptions(
 			DashboardIndexMaxAge:      cfg.IndexRebuildInterval,
 			MaxIndexAge:               cfg.MaxFileIndexAge,
 			MinBuildVersion:           minVersion,
+			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
