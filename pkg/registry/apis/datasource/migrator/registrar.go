@@ -25,6 +25,7 @@ func DataSourceMigration(dsMigrator DataSourceMigrator) migrations.MigrationDefi
 			DataSourceCountValidation(),
 		},
 		// data_source table is still used by other code paths
-		RenameTables: []string{},
+		RenameTables:       []string{},
+		ResourceGroupsFunc: dsMigrator.PluginGroups,
 	}
 }
