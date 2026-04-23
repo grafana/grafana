@@ -354,3 +354,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-04-17,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
+2026-04-14,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false
