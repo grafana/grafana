@@ -2,12 +2,14 @@ package search
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -135,8 +137,34 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
 	}
 
+	lockOpts, err := cdkLockOptionsFromBucket(bucket, cfg.IndexSnapshotBucketURL)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("snapshot lock backend options: %w", err)
+	}
+	lockBackend := newCDKLockBackend(bucket, lockOpts)
+
+	ownerBase := cfg.InstanceID
+	if ownerBase == "" {
+		ownerBase = cfg.InstanceName
+	}
+	if ownerBase == "" {
+		ownerBase = "unknown-instance"
+	}
+	// Include a per-process ULID suffix to avoid owner collisions across instances
+	// that share the same configured instance_id/instance_name.
+	owner := fmt.Sprintf("%s/%s", ownerBase, ulid.MustNew(ulid.Now(), rand.Reader).String())
+
+	lockTTL := DefaultSnapshotLockTTL
+	lockHeartbeat := lockTTL / 3
+	if lockHeartbeat <= 0 || lockHeartbeat*2 > lockTTL {
+		lockHeartbeat = lockTTL / 2
+	}
+	if lockHeartbeat <= 0 {
+		lockHeartbeat = time.Second
+	}
+
 	return SnapshotOptions{
-		Store:           NewBucketRemoteIndexStore(bucket),
+		Store:           NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
 		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
 		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
 		MinBuildVersion: minBuildVersion,
