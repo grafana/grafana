@@ -215,43 +215,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       '@media (forced-colors: active)': {
         border: `1px solid ${theme.colors.primary.contrastText}`,
       },
-
-      ':has(:checked)': {
-        background: theme.colors.primary.main,
-        borderColor: theme.colors.primary.main,
-
-        '&:hover': {
-          background: theme.colors.primary.shade,
-        },
-
-        svg: {
-          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.primary.contrastText,
-          color: theme.colors.primary.main,
-        },
-      },
-
-      ':has(:disabled)': {
-        background: theme.colors.action.disabledBackground,
-        borderColor: theme.colors.border.weak,
-        cursor: 'not-allowed',
-
-        svg: {
-          background: theme.colors.text.disabled,
-        },
-      },
-
-      ':has(:disabled:checked)': {
-        background: theme.colors.primary.transparent,
-
-        svg: {
-          color: theme.colors.primary.contrastText,
-        },
-      },
-
-      ':has(:focus), :has(:focus-visible)': getFocusStyles(theme),
-
-      'has(:focus):not(:focus-visible)': getMouseFocusStyles(theme),
     },
   }),
   inlineContainer: css({
