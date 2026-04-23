@@ -4400,12 +4400,13 @@
       "button-label": "Ordner auswählen",
       "clear-selection": "Auswahl löschen",
       "empty-message": "Keine Ordner gefunden",
-      "error-title": "Fehler beim Laden der Ordner",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} nicht im Ordner enthalten",
       "root-title": "Dashboards",
       "search-placeholder": "Ordner suchen",
       "shared-with-me": "Mit mir geteilt",
       "team-folders": "Teamordner",
+      "team-folders-error-title": "",
       "unknown-error": "Unbekannter Fehler"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anmerkungen und Warnungen",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Lokale Variable",
         "multiple-elements": "Mehrere Elemente",
@@ -5650,8 +5653,10 @@
           "title": "Kopfzeile"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Variable hinzufügen",
         "title": "Variablen"
       },
       "variable": {
@@ -6203,6 +6208,9 @@
           "hide-header": "Kopfzeile ausblenden",
           "title": "Titel"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variablen"
         },
@@ -6362,6 +6370,9 @@
             "title": "Nach Variable wiederholen"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variablen"
         },
@@ -6442,7 +6453,6 @@
         "save-library-panel": "Bibliotheks-Panel speichern",
         "share": {
           "arrow": "Teilen",
-          "title": "Teilen",
           "tooltip": "Link kopieren"
         },
         "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
@@ -7074,6 +7084,16 @@
       "sql-name": "Mit SQL transformieren",
       "sql-transformation-description": "Bearbeiten Sie Ihre Daten mit MySQL-ähnlicher Syntax"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7542,7 @@
       "affected-dashboards_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1> Die folgenden Dashboards, die das Panel nutzen, sind betroffen:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Abbrechen",
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
@@ -7529,6 +7550,11 @@
       "file-path": "<strong>Dateipfad:</strong> {{filePath}}",
       "form-loading-error": "Fehler beim Laden des Formulars",
       "form-loading-error-unknown": "Beim Laden des Formulars ist ein unerwarteter Fehler aufgetreten.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Beschreibung",
       "label-target-folder": "Zielordner",
       "label-title": "Titel",
@@ -7546,6 +7572,9 @@
       "disabled-tooltip": "Speichern Sie das Dashboard, bevor Sie Warnregeln erstellen",
       "new-alert-rule": "Neue Warnregel",
       "title-no-alerting-capable-query-found": "Keine für Benachrichtigungen geeignete Abfrage gefunden"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Ermöglicht die gleichzeitige Auswahl mehrerer Werte",
@@ -7642,6 +7671,13 @@
       "page-nav": {
         "text": {
           "settings": "Einstellungen"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7969,6 +8005,15 @@
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8609,6 +8654,7 @@
         "copy-link": "Link zur Logzeile kopieren",
         "copy-to-clipboard": "In die Zwischenablage kopieren",
         "inspect-value": "Wert prüfen",
+        "show-details": "",
         "view-log-line": "Logzeile anzeigen"
       }
     },
@@ -11078,6 +11124,12 @@
       "update-all": "Alles aktualisieren",
       "num-affected_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>",
       "num-affected_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11277,6 +11329,8 @@
       "fields-section": "Felder",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -11525,13 +11579,13 @@
   "logstable": {
     "category-table": "Logs-Tabelle",
     "description-show-controls": "Tabellen-Steuerelemente anzeigen",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeilen-Link“ in der ersten Spalte jeder Zeile",
       "name": "Schaltfläche „Log-Link kopieren“ anzeigen"
-    },
-    "show-inspect-button": {
-      "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeile prüfen“ in der ersten Spalte jeder Zeile",
-      "name": "Schaltfläche „Prüfen“ anzeigen"
     }
   },
   "manage-dashbaords": {
@@ -12947,9 +13001,7 @@
       "update-available": "Update verfügbar!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Die Plugin-Nutzung erfordert den neuen Suchindex, damit die Nutzung Dashboard-übergreifend festgestellt werden kann. Bitte aktivieren Sie den Funktionsschalter",
       "num-usages": " {{pluginName}} wird <2>{{numUsages}}</2> mal verwendet.",
-      "title-missing-feature-toggle-panel-title-search": "Fehlender Funktionsschalter: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wird bisher in keinen Dashboards verwendet"
     },
     "plugins-errors-info": {
@@ -15421,6 +15473,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Strich",
         "label-dots": "Punkte",
         "label-solid": "Durchgezogen"
@@ -15879,6 +15932,7 @@
           "group-by": "Gruppieren nach"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoriert",
       "placeholder-select-stats": "Statistiken auswählen"
     },
@@ -15890,6 +15944,16 @@
         "group-by": "Gruppieren nach"
       },
       "title-calc-alert": "Berechnungen haben keine Auswirkung, wenn keine Felder gruppiert werden"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

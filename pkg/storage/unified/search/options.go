@@ -1,11 +1,14 @@
 package search
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Masterminds/semver"
+	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,6 +59,21 @@ func NewSearchOptions(
 			}
 		}
 
+		var buildVersion *semver.Version
+		if cfg.BuildVersion != "" {
+			v, err := semver.NewVersion(cfg.BuildVersion)
+			if err != nil {
+				cfg.Logger.Error("Failed to parse build_version, ignoring it.", "version", cfg.BuildVersion, "err", err)
+			} else {
+				buildVersion = v
+			}
+		}
+
+		snapshot, err := buildSnapshotOptions(cfg, minVersion)
+		if err != nil {
+			return resource.SearchOptions{}, err
+		}
+
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                     root,
 			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -64,6 +82,7 @@ func NewSearchOptions(
 			OwnsIndex:                ownsIndexFn,
 			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
 			SelectableFieldsForKinds: resource.SelectableFields(),
+			Snapshot:                 snapshot,
 		}, indexMetrics)
 
 		if err != nil {
@@ -79,6 +98,7 @@ func NewSearchOptions(
 			DashboardIndexMaxAge:      cfg.IndexRebuildInterval,
 			MaxIndexAge:               cfg.MaxFileIndexAge,
 			MinBuildVersion:           minVersion,
+			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
@@ -99,5 +119,26 @@ func NewSearchOptions(
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 		MaxIndexAge:               cfg.MaxFileIndexAge,
+	}, nil
+}
+
+// buildSnapshotOptions opens the configured object-storage bucket and wraps it
+// as a RemoteIndexStore. Returns a zero SnapshotOptions (Store==nil) when the
+// feature is not enabled, so the backend short-circuits all new paths.
+func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (SnapshotOptions, error) {
+	if !cfg.IndexSnapshotEnabled || cfg.IndexSnapshotBucketURL == "" {
+		return SnapshotOptions{}, nil
+	}
+
+	bucket, err := blob.OpenBucket(context.Background(), cfg.IndexSnapshotBucketURL)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
+	}
+
+	return SnapshotOptions{
+		Store:           NewBucketRemoteIndexStore(bucket),
+		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
+		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
+		MinBuildVersion: minBuildVersion,
 	}, nil
 }

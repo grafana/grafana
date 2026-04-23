@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const folderSearchLimit = 100000
@@ -484,34 +483,12 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if !util.IsValidShortUID(cmd.UID) {
-		return nil, dashboards.ErrDashboardInvalidUid
-	} else if util.IsShortUIDTooLong(cmd.UID) {
-		return nil, dashboards.ErrDashboardUidTooLong
-	}
-
-	cmd.UID = strings.TrimSpace(cmd.UID)
-
-	if cmd.NewTitle != nil && *cmd.NewTitle == "" {
-		return nil, dashboards.ErrDashboardTitleEmpty
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return nil, err
-		}
-		return nil, toFolderError(dashboards.ErrDashboardUpdateAccessDenied)
-	}
-
-	user := cmd.SignedInUser
-
 	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:                  cmd.UID,
 		OrgID:                cmd.OrgID,
 		NewTitle:             cmd.NewTitle,
 		NewDescription:       cmd.NewDescription,
-		SignedInUser:         user,
+		SignedInUser:         cmd.SignedInUser,
 		Overwrite:            cmd.Overwrite,
 		Version:              cmd.Version,
 		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck

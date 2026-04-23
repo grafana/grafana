@@ -1542,19 +1542,12 @@ ${buildImageContent(
   imageRenderType,
   'A select box showing available statistics that can be calculated.'
 )}
-
-
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
   `;
     },
     links: [
       {
         title: 'sparkline cell type',
         url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
-      },
-      {
-        title: 'configuration file',
-        url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
       },
     ],
   },
