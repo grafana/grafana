@@ -7,6 +7,7 @@ import { SecretInput } from '../SecretInput';
 import { MultiSelect, Select } from '../Select/Select';
 import { Slider } from '../Slider/Slider';
 import { InlineSwitch, Switch } from '../Switch/Switch';
+import { TextArea } from '../TextArea/TextArea';
 
 import { Checkbox } from './Checkbox';
 import { InlineField } from './InlineField';
@@ -232,6 +233,28 @@ describe('InlineField', () => {
       render(
         <InlineField label="My label" invalid error="My error">
           <Slider min={0} max={10} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('TextArea', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <TextArea />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <TextArea />
         </InlineField>
       );
 

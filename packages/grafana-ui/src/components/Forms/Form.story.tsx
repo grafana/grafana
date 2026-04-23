@@ -57,7 +57,6 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const textId = useId();
   const radioId = useId();
   return (
     <Form
@@ -88,7 +87,7 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-              <TextArea {...register('text', { required: true })} placeholder="Long text" id={textId} />
+              <TextArea {...register('text', { required: true })} placeholder="Long text" />
             </Field>
 
             <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">

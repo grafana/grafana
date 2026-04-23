@@ -106,7 +106,6 @@ export const AllComponents: StoryFn = (args) => {
   const [textAreaValue, setTextAreaValue] = useState('');
   const [switchValue, setSwitchValue] = useState(false);
   const radioButtonId = useId();
-  const textAreaId = useId();
 
   return (
     <div>
@@ -177,7 +176,6 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <TextArea
-            id={textAreaId}
             value={textAreaValue}
             onChange={(e) => {
               const value = e.currentTarget.value;
