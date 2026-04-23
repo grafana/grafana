@@ -45,6 +45,14 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 		return nil
 	}
 
+	// Validate before any DB work so a single bad vector fails the whole
+	// batch loud, not silently in SQL.
+	for i := range vectors {
+		if err := vectors[i].Validate(); err != nil {
+			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+	}
+
 	// Group vectors by collection so each group lands in a single table, and
 	// compute the batch-wide max RV to bump the global checkpoint with a
 	// single UPDATE at the end of the tx.
@@ -354,3 +362,4 @@ func (b *pgvectorBackend) lookupCollection(ctx context.Context, key collectionKe
 	b.collections.Store(key, table)
 	return table, true, nil
 }
+

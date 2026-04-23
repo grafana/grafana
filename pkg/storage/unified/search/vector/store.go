@@ -3,6 +3,7 @@ package vector
 import (
 	"context"
 	"encoding/json"
+	"errors"
 )
 
 // VectorBackend abstracts vector storage operations. The pgvector implementation
@@ -64,6 +65,20 @@ type Vector struct {
 	Metadata        json.RawMessage // structured fields for filtering (JSONB)
 	Embedding       []float32       // vector embedding
 	Model           string          // embedding model name, e.g. "text-embedding-005"
+}
+
+func (v *Vector) Validate() error {
+	switch {
+	case v.Namespace == "":
+		return errors.New("namespace must not be empty")
+	case v.Model == "":
+		return errors.New("model must not be empty")
+	case v.CollectionID == "":
+		return errors.New("collectionID must not be empty")
+	case v.Name == "":
+		return errors.New("name must not be empty")
+	}
+	return nil
 }
 
 // VectorSearchResult is a single result from a vector similarity search.

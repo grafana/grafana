@@ -28,6 +28,45 @@ func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestVector_Validate(t *testing.T) {
+	ok := Vector{Namespace: "ns", Model: "m", CollectionID: "c", Name: "n"}
+	require.NoError(t, ok.Validate())
+
+	cases := []struct {
+		name    string
+		mutate  func(*Vector)
+		wantErr string
+	}{
+		{"empty namespace", func(v *Vector) { v.Namespace = "" }, "namespace must not be empty"},
+		{"empty model", func(v *Vector) { v.Model = "" }, "model must not be empty"},
+		{"empty collectionID", func(v *Vector) { v.CollectionID = "" }, "collectionID must not be empty"},
+		{"empty name", func(v *Vector) { v.Name = "" }, "name must not be empty"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			v := ok
+			tc.mutate(&v)
+			err := v.Validate()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
+	// One bad vector fails the whole batch before any DB work happens.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(rdb.DB)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	err := backend.Upsert(ctx, []Vector{
+		{Namespace: "ns", Model: "m", CollectionID: "c", Name: "", Content: "x", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "name must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(rdb.DB)
