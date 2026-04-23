@@ -34,6 +34,7 @@ const (
 type Registrar interface {
 	Register(ctx context.Context, namespace string, install *PluginInstall) error
 	Unregister(ctx context.Context, namespace string, name string, source Source) error
+	Get(ctx context.Context, namespace string, name string) (*pluginsv0alpha1.Plugin, error)
 	UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, newStatus pluginsv0alpha1.PluginStatus) error
 }
 
@@ -295,6 +296,18 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	logger.Error("Failed to patch existing plugin", "error", err)
 	metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
 	return err
+}
+
+func (r *InstallRegistrar) Get(ctx context.Context, namespace string, name string) (*pluginsv0alpha1.Plugin, error) {
+	client, err := r.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Get(ctx, resource.Identifier{
+		Namespace: namespace,
+		Name:      name,
+	})
 }
 
 // Unregister removes a plugin install from the registry.

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -23,6 +24,10 @@ const (
 	childStatusObservedGeneration = "observedGeneration"
 	childStatusAppliedChildren    = "appliedChildren"
 )
+
+func ShouldHandlePlugin(plugin *pluginsv0alpha1.Plugin) bool {
+	return plugin != nil && strings.HasSuffix(plugin.Spec.Id, "-app")
+}
 
 func actionLabel(action operator.ReconcileAction) string {
 	switch action {
@@ -152,6 +157,10 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	plugin := req.Object
 	baseLogger := r.logger.WithContext(ctx)
 
+	if !ShouldHandlePlugin(plugin) {
+		return operator.ReconcileResult{}, nil
+	}
+
 	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
 		return operator.ReconcileResult{}, nil
 	}
@@ -215,19 +224,11 @@ func (r *ChildPluginReconciler) reconcileAction(
 		if len(stored.appliedChildren) == 0 && stored.observedGeneration == 0 {
 			return r.reconcileDesiredChildren(ctx, plugin, nil)
 		}
-
-		outcome, err := r.applyChildren(ctx, plugin, stored.appliedChildren, stored.appliedChildren)
-		if err != nil {
-			msg := err.Error()
-			outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateFailed
-			outcome.description = &msg
-		} else {
-			outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateSuccess
+		if stored.state != pluginsv0alpha1.PluginStatusOperatorStateStateSuccess ||
+			stored.observedGeneration != plugin.Generation {
+			return r.reconcileDesiredChildren(ctx, plugin, stored.appliedChildren)
 		}
-		if outcome.observedGeneration == 0 {
-			outcome.observedGeneration = stored.observedGeneration
-		}
-		return outcome, true, err
+		return r.repairStoredChildren(ctx, plugin, stored)
 	case operator.ReconcileActionDeleted:
 		_, err := r.cleanupChildren(ctx, plugin.Namespace, stored.appliedChildren)
 		if err != nil {
@@ -248,6 +249,10 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 ) (childReconcileResult, bool, error) {
 	desiredChildren, err := r.getDesiredChildren(ctx, plugin)
 	if err != nil {
+		if errors.Is(err, meta.ErrMetaNotFound) {
+			return childReconcileResult{}, false, nil
+		}
+
 		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceMetadataLookup, plugin, err)
 		msg := err.Error()
 		return childReconcileResult{
@@ -307,6 +312,57 @@ func (r *ChildPluginReconciler) cleanupChildren(ctx context.Context, namespace s
 	return mapKeys(applied), errors.Join(errs...)
 }
 
+func (r *ChildPluginReconciler) repairStoredChildren(
+	ctx context.Context,
+	parent *pluginsv0alpha1.Plugin,
+	stored childStoredState,
+) (childReconcileResult, bool, error) {
+	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
+	appliedChildren := normalizeChildren(stored.appliedChildren)
+
+	var errs []error
+	for _, childID := range appliedChildren {
+		if err := ctx.Err(); err != nil {
+			errs = append(errs, err)
+			break
+		}
+
+		expected := r.childInstall(parent, childID)
+		existing, err := r.registrar.Get(ctx, parent.Namespace, childID)
+		switch {
+		case errorsK8s.IsNotFound(err):
+			err = r.registrar.Register(ctx, parent.Namespace, expected)
+		case err != nil:
+			logger.Error("Failed to get child plugin during resync repair", "error", err, "pluginId", childID)
+			errs = append(errs, err)
+			continue
+		case !expected.MatchesSpec(existing) || existing.Annotations[PluginInstallSourceAnnotation] != SourceChildPluginReconciler:
+			err = r.registrar.Register(ctx, parent.Namespace, expected)
+		default:
+			continue
+		}
+
+		if err != nil {
+			logger.Error("Failed to repair child plugin during resync", "error", err, "pluginId", childID)
+			errs = append(errs, err)
+		}
+	}
+
+	outcome := childReconcileResult{
+		appliedChildren:    appliedChildren,
+		observedGeneration: parent.Generation,
+	}
+	if err := errors.Join(errs...); err != nil {
+		msg := err.Error()
+		outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateFailed
+		outcome.description = &msg
+		return outcome, true, err
+	}
+
+	outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateSuccess
+	return outcome, true, nil
+}
+
 func (r *ChildPluginReconciler) applyChildren(
 	ctx context.Context,
 	parent *pluginsv0alpha1.Plugin,
@@ -344,12 +400,7 @@ func (r *ChildPluginReconciler) applyChildren(
 			break
 		}
 
-		childInstall := &PluginInstall{
-			ID:       childID,
-			Version:  parent.Spec.Version,
-			ParentID: parent.Spec.Id,
-			Source:   SourceChildPluginReconciler,
-		}
+		childInstall := r.childInstall(parent, childID)
 		err := r.registrar.Register(ctx, parent.Namespace, childInstall)
 		if err != nil {
 			logger.Error("Failed to register child plugin", "error", err, "pluginId", childID)
@@ -362,6 +413,15 @@ func (r *ChildPluginReconciler) applyChildren(
 	return childReconcileResult{
 		appliedChildren: normalizeChildren(mapKeys(applied)),
 	}, errors.Join(errs...)
+}
+
+func (r *ChildPluginReconciler) childInstall(parent *pluginsv0alpha1.Plugin, childID string) *PluginInstall {
+	return &PluginInstall{
+		ID:       childID,
+		Version:  parent.Spec.Version,
+		ParentID: parent.Spec.Id,
+		Source:   SourceChildPluginReconciler,
+	}
 }
 
 func buildChildReconcilerStatus(plugin *pluginsv0alpha1.Plugin, result childReconcileResult) pluginsv0alpha1.PluginStatus {

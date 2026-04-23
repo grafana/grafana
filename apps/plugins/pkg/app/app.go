@@ -192,6 +192,18 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 		gate = readyFilter
 	}
 
+	wrapPluginInformer := func(inf operator.Informer, kind resource.Kind) operator.Informer {
+		if kind.GroupVersionKind() != pluginsv0alpha1.PluginKind().GroupVersionKind() {
+			return inf
+		}
+
+		filtered := &filteredPluginInformer{Informer: inf}
+		if gate != nil {
+			return &gatedInformer{Informer: filtered, gate: gate}
+		}
+		return filtered
+	}
+
 	baseSupplier := simple.OptimizedInformerSupplier
 	if selector == nil {
 		return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
@@ -199,10 +211,7 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 			if err != nil {
 				return nil, err
 			}
-			if gate != nil && kind.GroupVersionKind() == pluginsv0alpha1.PluginKind().GroupVersionKind() {
-				return &gatedInformer{Informer: inf, gate: gate}, nil
-			}
-			return inf, nil
+			return wrapPluginInformer(inf, kind), nil
 		}
 	}
 
@@ -242,11 +251,38 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 		if err != nil {
 			return nil, err
 		}
-		if gate != nil && kind.GroupVersionKind() == pluginsv0alpha1.PluginKind().GroupVersionKind() {
-			return &gatedInformer{Informer: inf, gate: gate}, nil
-		}
-		return inf, nil
+		return wrapPluginInformer(inf, kind), nil
 	}
+}
+
+type filteredPluginInformer struct {
+	operator.Informer
+}
+
+func (f *filteredPluginInformer) AddEventHandler(handler operator.ResourceWatcher) error {
+	return f.Informer.AddEventHandler(&operator.SimpleWatcher{
+		AddFunc: func(ctx context.Context, object resource.Object) error {
+			plugin, ok := object.(*pluginsv0alpha1.Plugin)
+			if !ok || !install.ShouldHandlePlugin(plugin) {
+				return nil
+			}
+			return handler.Add(ctx, object)
+		},
+		UpdateFunc: func(ctx context.Context, src, tgt resource.Object) error {
+			plugin, ok := tgt.(*pluginsv0alpha1.Plugin)
+			if !ok || !install.ShouldHandlePlugin(plugin) {
+				return nil
+			}
+			return handler.Update(ctx, src, tgt)
+		},
+		DeleteFunc: func(ctx context.Context, object resource.Object) error {
+			plugin, ok := object.(*pluginsv0alpha1.Plugin)
+			if !ok || !install.ShouldHandlePlugin(plugin) {
+				return nil
+			}
+			return handler.Delete(ctx, object)
+		},
+	})
 }
 
 func childReconcilerRetryPolicy(cfg ChildReconcilerConfig) operator.RetryPolicy {

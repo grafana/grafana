@@ -28,6 +28,7 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 			operator.InformerOptions{},
 		)
 		require.NoError(t, err)
+		require.Equal(t, "*app.filteredPluginInformer", reflect.TypeOf(inf).String())
 		require.Equal(t, "*cache.cache", nestedInformerStoreType(t, inf))
 	})
 
@@ -41,6 +42,7 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 			operator.InformerOptions{},
 		)
 		require.NoError(t, err)
+		require.Equal(t, "*app.filteredPluginInformer", reflect.TypeOf(inf).String())
 		require.Equal(t, "*operator.MemcachedStore", nestedInformerStoreType(t, inf))
 		require.False(t, nestedMemcachedTrackKeys(t, inf))
 	})
@@ -189,7 +191,7 @@ func TestChildReconcilerErrorHandlerFallsBackToInformerError(t *testing.T) {
 func nestedInformerStoreType(t *testing.T, inf operator.Informer) string {
 	t.Helper()
 
-	concurrent, ok := inf.(*operator.ConcurrentInformer)
+	concurrent, ok := unwrapConcurrentInformer(t, inf)
 	require.True(t, ok)
 
 	concurrentValue := reflect.ValueOf(concurrent).Elem()
@@ -211,7 +213,7 @@ func nestedInformerStoreType(t *testing.T, inf operator.Informer) string {
 func nestedMemcachedTrackKeys(t *testing.T, inf operator.Informer) bool {
 	t.Helper()
 
-	concurrent, ok := inf.(*operator.ConcurrentInformer)
+	concurrent, ok := unwrapConcurrentInformer(t, inf)
 	require.True(t, ok)
 
 	concurrentValue := reflect.ValueOf(concurrent).Elem()
@@ -235,6 +237,89 @@ func nestedMemcachedTrackKeys(t *testing.T, inf operator.Informer) bool {
 	trackKeys := memcachedStore.FieldByName("trackKeys")
 	require.True(t, trackKeys.IsValid())
 	return trackKeys.Bool()
+}
+
+func unwrapConcurrentInformer(t *testing.T, inf operator.Informer) (*operator.ConcurrentInformer, bool) {
+	t.Helper()
+
+	current := reflect.ValueOf(inf)
+	for {
+		if !current.IsValid() {
+			return nil, false
+		}
+		if current.Kind() == reflect.Interface || current.Kind() == reflect.Pointer {
+			if current.IsNil() {
+				return nil, false
+			}
+			if concurrent, ok := current.Interface().(*operator.ConcurrentInformer); ok {
+				return concurrent, true
+			}
+			elem := current.Elem()
+			if elem.Kind() != reflect.Struct {
+				current = elem
+				continue
+			}
+			informerField := elem.FieldByName("Informer")
+			if informerField.IsValid() {
+				current = informerField
+				continue
+			}
+			return nil, false
+		}
+		return nil, false
+	}
+}
+
+func TestFilteredPluginInformerSkipsNonAppPlugins(t *testing.T) {
+	var wrapped operator.ResourceWatcher
+	inf := &filteredPluginInformer{
+		Informer: watcherCapturingInformer{
+			addEventHandlerFunc: func(handler operator.ResourceWatcher) error {
+				wrapped = handler
+				return nil
+			},
+		},
+	}
+
+	appPlugin := &pluginsv0alpha1.Plugin{
+		Spec: pluginsv0alpha1.PluginSpec{Id: "example-app"},
+	}
+	nonAppPlugin := &pluginsv0alpha1.Plugin{
+		Spec: pluginsv0alpha1.PluginSpec{Id: "example-panel"},
+	}
+
+	var added []string
+	err := inf.AddEventHandler(&operator.SimpleWatcher{
+		AddFunc: func(ctx context.Context, object resource.Object) error {
+			added = append(added, object.(*pluginsv0alpha1.Plugin).Spec.Id)
+			return nil
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, wrapped)
+
+	require.NoError(t, wrapped.Add(context.Background(), nonAppPlugin))
+	require.NoError(t, wrapped.Add(context.Background(), appPlugin))
+	require.Equal(t, []string{"example-app"}, added)
+}
+
+type watcherCapturingInformer struct {
+	addEventHandlerFunc func(operator.ResourceWatcher) error
+}
+
+func (w watcherCapturingInformer) Run(context.Context) error {
+	return nil
+}
+
+func (w watcherCapturingInformer) WaitForSync(context.Context) error {
+	return nil
+}
+
+func (w watcherCapturingInformer) AddEventHandler(handler operator.ResourceWatcher) error {
+	if w.addEventHandlerFunc != nil {
+		return w.addEventHandlerFunc(handler)
+	}
+	return nil
 }
 
 type mockReadinessGate struct {
