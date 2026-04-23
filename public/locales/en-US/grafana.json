@@ -12819,6 +12819,7 @@
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
+      "contact-us": "Contact us",
       "install": "Install",
       "installing": "Installing",
       "update": "Update",
