@@ -6453,7 +6453,6 @@
         "save-library-panel": "Bibliotheks-Panel speichern",
         "share": {
           "arrow": "Teilen",
-          "title": "Teilen",
           "tooltip": "Link kopieren"
         },
         "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
@@ -8655,6 +8654,7 @@
         "copy-link": "Link zur Logzeile kopieren",
         "copy-to-clipboard": "In die Zwischenablage kopieren",
         "inspect-value": "Wert prüfen",
+        "show-details": "",
         "view-log-line": "Logzeile anzeigen"
       }
     },
@@ -11124,6 +11124,12 @@
       "update-all": "Alles aktualisieren",
       "num-affected_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>",
       "num-affected_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11323,6 +11329,8 @@
       "fields-section": "Felder",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -11571,13 +11579,13 @@
   "logstable": {
     "category-table": "Logs-Tabelle",
     "description-show-controls": "Tabellen-Steuerelemente anzeigen",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeilen-Link“ in der ersten Spalte jeder Zeile",
       "name": "Schaltfläche „Log-Link kopieren“ anzeigen"
-    },
-    "show-inspect-button": {
-      "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeile prüfen“ in der ersten Spalte jeder Zeile",
-      "name": "Schaltfläche „Prüfen“ anzeigen"
     }
   },
   "manage-dashbaords": {
@@ -12993,9 +13001,7 @@
       "update-available": "Update verfügbar!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Die Plugin-Nutzung erfordert den neuen Suchindex, damit die Nutzung Dashboard-übergreifend festgestellt werden kann. Bitte aktivieren Sie den Funktionsschalter",
       "num-usages": " {{pluginName}} wird <2>{{numUsages}}</2> mal verwendet.",
-      "title-missing-feature-toggle-panel-title-search": "Fehlender Funktionsschalter: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wird bisher in keinen Dashboards verwendet"
     },
     "plugins-errors-info": {
@@ -15926,6 +15932,7 @@
           "group-by": "Gruppieren nach"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoriert",
       "placeholder-select-stats": "Statistiken auswählen"
     },
@@ -15937,6 +15944,16 @@
         "group-by": "Gruppieren nach"
       },
       "title-calc-alert": "Berechnungen haben keine Auswirkung, wenn keine Felder gruppiert werden"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

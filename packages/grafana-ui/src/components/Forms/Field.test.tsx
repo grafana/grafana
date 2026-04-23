@@ -2,7 +2,10 @@ import { render, screen } from '@testing-library/react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
+import { SecretInput } from '../SecretInput';
+import { Switch } from '../Switch/Switch';
 
+import { Checkbox } from './Checkbox';
 import { Field } from './Field';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
@@ -25,6 +28,48 @@ describe('Field', () => {
     );
 
     expect(screen.getByLabelText('My label')).toBeInTheDocument();
+  });
+
+  it('associates the label with an Input when no id is set', () => {
+    render(
+      <Field label="My label">
+        <Input />
+      </Field>
+    );
+
+    expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with a SecretInput when no id is set', () => {
+    render(
+      <Field label="My label">
+        <SecretInput isConfigured={false} onReset={() => {}} />
+      </Field>
+    );
+
+    // can't use getByRole here as type="password" inputs don't have an implicit role
+    // see https://github.com/testing-library/dom-testing-library/issues/567
+    expect(screen.getByLabelText('My label')).toBeInTheDocument();
+  });
+
+  it('associates the label with a Checkbox when no id is set', () => {
+    render(
+      <Field label="My label">
+        <Checkbox />
+      </Field>
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
+  it('associates the label with a Switch when no id is set', () => {
+    render(
+      <Field label="My label">
+        <Switch />
+      </Field>
+    );
+
+    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
   });
 
   it('renders with the inputId of its children', () => {

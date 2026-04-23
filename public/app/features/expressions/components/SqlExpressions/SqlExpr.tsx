@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocalStorage, useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -197,6 +197,22 @@ LIMIT
                 </div>
               )}
             </SQLEditor>
+          {({ width, height }: Size) => (
+            <Suspense fallback={null}>
+              <SQLEditor
+                query={query.expression || initialQuery}
+                onChange={onEditorChange}
+                language={EDITOR_LANGUAGE_DEFINITION}
+                width={width}
+                height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+              >
+                {({ formatQuery }) => (
+                  <div ref={toolboxRef}>
+                    <QueryToolbox query={query} onFormatCode={formatQuery} />
+                  </div>
+                )}
+              </SQLEditor>
+            </Suspense>
           )}
         </AutoSizer>
       </div>

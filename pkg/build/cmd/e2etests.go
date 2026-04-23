@@ -29,7 +29,7 @@ func EndToEndTests(c *cli.Context) error {
 	grafanaServer.Wait()
 
 	var err error
-	for i := 0; i < tries; i++ {
+	for i := range tries {
 		log.Printf("Running e2e test suite attempt #%d", i+1)
 		//nolint:gosec
 		cmd := exec.Command("./e2e/run-suite", suite, video)
