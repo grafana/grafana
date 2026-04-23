@@ -224,9 +224,11 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
+      // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
+      const type = instanceSettings.type === 'datasource' ? instanceSettings.uid : instanceSettings.type;
+
       // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
       // runtime-registered datasources (which aren't in the plugin meta map) still load.
-      const type = instanceSettings.type === 'datasource' ? instanceSettings.uid : instanceSettings.type;
       let meta = await getDatasourcePluginMeta(type);
       if (!meta) {
         logPluginMetaWarning(
