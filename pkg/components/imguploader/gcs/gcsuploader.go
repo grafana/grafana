@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
+
+	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // NewUploader returns a new Uploader.
@@ -85,6 +86,7 @@ func (u *Uploader) Upload(ctx context.Context, imageDiskPath string) (string, er
 	var client gcsifaces.StorageClient
 	if u.KeyFile != "" {
 		u.log.Debug("Creating Google credentials from JSON")
+		//nolint:staticcheck // SA1019: google.CredentialsFromJSON is deprecated: This function is deprecated because of a potential security risk
 		creds, err := google.CredentialsFromJSON(ctx, keyData, scope)
 		if err != nil {
 			return "", err
