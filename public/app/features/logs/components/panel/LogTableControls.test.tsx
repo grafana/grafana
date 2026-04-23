@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogsSortOrder } from '@grafana/data';
+import { PanelContextProvider } from '@grafana/ui';
 
 import { DownloadFormat, downloadLogs } from '../../utils';
 
 import { LogTableControls } from './LogTableControls';
-import { PanelContextProvider } from '@grafana/ui';
 
 const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
 
