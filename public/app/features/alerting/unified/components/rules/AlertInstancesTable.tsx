@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { PluginExtensionPoints, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
@@ -72,20 +72,18 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
       size: '150px',
     },
-    {
-      id: 'actions',
-      label: '',
-      renderCell: ({ data: { alert, rule } }) => (
-        <AlertInstanceExtensionPoint
-          rule={rule}
-          instance={alert}
-          extensionPointId={PluginExtensionPoints.AlertInstanceAction}
-          showRouting={showRouting}
-          key="alert-instance-extension-point"
-        />
-      ),
-      size: '40px',
-    },
+    ...(showRouting
+      ? [
+          {
+            id: 'actions',
+            label: t('alerting.alert-instances-table.notification', 'Notification'),
+            renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
+              <AlertInstanceExtensionPoint rule={rule} instance={alert} showRouting />
+            ),
+            size: '120px',
+          } satisfies AlertTableColumnProps,
+        ]
+      : []),
   ];
 
   return (

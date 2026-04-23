@@ -440,8 +440,7 @@
       "label-value": "Value"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Actions",
-      "preview-routing": "Preview routing"
+      "view-route": "View route"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -458,6 +457,7 @@
     "alert-instances-table": {
       "created": "Created",
       "labels": "Labels",
+      "notification": "Notification",
       "state": "State"
     },
     "alert-label": {

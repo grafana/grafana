@@ -1,45 +1,27 @@
-import { type ReactElement, useMemo, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 
-import { type PluginExtensionLink, type PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { usePluginLinks } from '@grafana/runtime';
-import { Dropdown, IconButton } from '@grafana/ui';
-import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
-// We might want to customise this in future but right now the toolbar menu from the Explore view is fine.
-import { ToolbarExtensionPointMenu as AlertExtensionPointMenu } from 'app/features/explore/extensions/ToolbarExtensionPointMenu';
+import { Trans } from '@grafana/i18n';
+import { Button } from '@grafana/ui';
 import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
+import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
 
 interface AlertInstanceExtensionPointProps {
   rule?: CombinedRule;
   instance: Alert;
-  extensionPointId: PluginExtensionPoints;
   showRouting?: boolean;
 }
-
-const PREVIEW_ROUTING_EXTENSION_BASE = {
-  type: PluginExtensionTypes.link,
-  id: 'preview-routing',
-  pluginId: 'grafana',
-  description: '',
-  icon: 'sitemap',
-} satisfies Omit<PluginExtensionLink, 'title' | 'onClick'>;
 
 export const AlertInstanceExtensionPoint = ({
   rule,
   instance,
-  extensionPointId,
   showRouting,
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
-  const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isPreviewRoutingOpen, setIsPreviewRoutingOpen] = useState(false);
-
-  const context = useMemo(() => ({ instance, rule }), [instance, rule]);
-  const { links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
 
   const rulerRule = rule?.rulerRule;
   const alertmanager = rule ? getRulesSourceName(rule.namespace.rulesSource) : GRAFANA_RULES_SOURCE_NAME;
@@ -58,57 +40,38 @@ export const AlertInstanceExtensionPoint = ({
     policyName
   );
 
-  const previewRoutingExtension: PluginExtensionLink = useMemo(
-    () => ({
-      ...PREVIEW_ROUTING_EXTENSION_BASE,
-      title: t('alerting.alert-instance-extension-point.preview-routing', 'Preview routing'),
-      onClick: () => setIsPreviewRoutingOpen(true),
-    }),
-    []
-  );
-
-  const allLinks = useMemo(
-    () => (isGrafanaManagedUsingNotificationPolicies ? [...links, previewRoutingExtension] : links),
-    [links, isGrafanaManagedUsingNotificationPolicies, previewRoutingExtension]
-  );
-
-  if (allLinks.length === 0) {
+  if (!showRouting) {
     return null;
   }
 
-  const previewRoutingInstance = treeMatchingResults[0];
-  const previewRoutingJourney = previewRoutingInstance?.matchedRoutes[0]?.matchDetails?.matchingJourney;
+  if (isGrafanaManagedUsingNotificationPolicies) {
+    const previewRoutingInstance = treeMatchingResults[0];
+    const previewRoutingJourney = previewRoutingInstance?.matchedRoutes[0]?.matchDetails?.matchingJourney;
 
-  const menu = <AlertExtensionPointMenu extensions={allLinks} onSelect={setSelectedExtension} />;
-  return (
-    <>
-      <Dropdown placement="bottom-start" overlay={menu}>
-        <IconButton
-          name="ellipsis-v"
-          aria-label={t('alerting.alert-instance-extension-point.aria-label-actions', 'Actions')}
-          variant="secondary"
-        />
-      </Dropdown>
-      {!!selectedExtension && !!selectedExtension.path && (
-        <ConfirmNavigationModal
-          path={selectedExtension.path}
-          title={selectedExtension.title}
-          onDismiss={() => setSelectedExtension(undefined)}
-        />
-      )}
-      {isPreviewRoutingOpen && showRouting && previewRoutingInstance && previewRoutingJourney && (
-        <NotificationPolicySidebar
-          policyName={policyName}
-          journey={previewRoutingJourney}
-          labels={previewRoutingInstance.labels}
-          onClose={() => setIsPreviewRoutingOpen(false)}
-        />
-      )}
-    </>
-  );
-};
+    return (
+      <>
+        <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsPreviewRoutingOpen(true)}>
+          <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
+        </Button>
+        {isPreviewRoutingOpen && previewRoutingInstance && previewRoutingJourney && (
+          <NotificationPolicySidebar
+            policyName={policyName}
+            journey={previewRoutingJourney}
+            labels={previewRoutingInstance.labels}
+            onClose={() => setIsPreviewRoutingOpen(false)}
+          />
+        )}
+      </>
+    );
+  }
 
-export type PluginExtensionAlertInstanceContext = {
-  rule?: CombinedRule;
-  instance: Alert;
+  const receiverName = rulerRuleType.grafana.alertingRule(rulerRule)
+    ? rulerRule.grafana_alert.notification_settings?.receiver
+    : undefined;
+
+  if (receiverName) {
+    return <ContactPointLink name={receiverName} />;
+  }
+
+  return null;
 };
