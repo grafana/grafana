@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -62,11 +63,11 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 1
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {

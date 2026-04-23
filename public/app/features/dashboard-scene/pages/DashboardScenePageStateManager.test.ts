@@ -2414,17 +2414,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           }
           return Promise.reject(new Error('Not found'));
         }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'AWS ElastiCache Redis',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
       } as unknown as BackendSrv);
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2457,17 +2446,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
                 panels: [],
                 schemaVersion: 40,
               },
-            });
-          }
-          return Promise.reject(new Error('Not found'));
-        }),
-        post: jest.fn((url: string) => {
-          if (url === '/api/dashboards/interpolate') {
-            return Promise.resolve({
-              title: 'Template Dashboard',
-              uid: '',
-              panels: [],
-              schemaVersion: 40,
             });
           }
           return Promise.reject(new Error('Not found'));

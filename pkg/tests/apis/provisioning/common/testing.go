@@ -1080,6 +1080,17 @@ func WithFolderAPIVersion(version string) GrafanaOption {
 	}
 }
 
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
+	}
+}
+
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.
 func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	// Remove provisioningExport from the enabled feature toggles

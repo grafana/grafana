@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -254,7 +253,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// Search upwards in directory tree for project root
 	var rootDir string
 	found := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		rootDir = filepath.Join(rootDir, "..")
 
 		dir, err := filepath.Abs(rootDir)
@@ -582,6 +581,18 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 		require.NoError(t, err)
 	}
+	if len(opts.UnifiedAlertingAllowedIntegrations) > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
+		require.NoError(t, err)
+	}
+	if opts.UnifiedAlertingEmailsToOrgOnly {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -754,6 +765,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
 		require.NoError(t, err)
 	}
+	// nil means "use the ini default" (100). Non-nil writes the value, including
+	// 0 which disables the size check.
+	if opts.ProvisioningMaxIncrementalChanges != nil {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_incremental_changes", fmt.Sprintf("%d", *opts.ProvisioningMaxIncrementalChanges))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -862,6 +881,8 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	UnifiedAlertingAllowedIntegrations    []string
+	UnifiedAlertingEmailsToOrgOnly        bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int
@@ -877,6 +898,7 @@ type GrafanaOpts struct {
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningFolderAPIVersion          string
+	ProvisioningMaxIncrementalChanges     *int
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
