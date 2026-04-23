@@ -146,6 +146,7 @@
   "dev-dashboards-output/transforms/regression-analysis.v42.json": "e91acc1f6ac61ac21b9405c6db6a1de75f0a1232f6aa75e7e535c048be11dc2f",
   "dev-dashboards-output/transforms/reuse.v42.json": "596dc084f29bdbffdf85d17061f4d832da2c3e567d144241da2f0aa3b3779047",
   "dev-dashboards-output/transforms/rows-to-fields.v42.json": "c75bdb93aef097345930bb9ddde41debffaa7279843437bffbc02eb3497cf298",
+  "dev-dashboards-output/transforms/smoke.v42.json": "6f78e8c47a3bdf0be65f7a08011a6b211dcc3330c94f42a1df9cea2731003499",
   "output/latest_version/v10.table_thresholds.v42.json": "7f4448ea616bfdc3c64cccb8c679273432d0a5440dd1ed6f4192cd8280dae464",
   "output/latest_version/v11.no-op-migration.v42.json": "183e5bf1b794e533d990f3059d889d0d3083b639320fbbb1c489ecb27fafa6da",
   "output/latest_version/v12.template-variables.v42.json": "7a038ac84ca3e2d9830b542f6aa4870cd271ee1a94422af55913eb454ed400cb",
