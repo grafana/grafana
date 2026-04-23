@@ -184,6 +184,17 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
     expect(refreshPicker.setState).toHaveBeenCalledWith({ refresh: '5m' });
   });
 
+  it('warns when refresh is requested but refreshPicker is not present', async () => {
+    const { scene } = buildTestScene();
+    // Remove refreshPicker from scene controls
+    (scene.state as Record<string, unknown>).controls = undefined;
+
+    const result = await updateDashboardSettingsCommand.handler({ refresh: '5m' }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toContain('refresh interval could not be set: refresh picker not found in scene controls');
+  });
+
   it('empty payload is a no-op', async () => {
     const { scene, timeRange, refreshPicker } = buildTestScene();
     const result = await updateDashboardSettingsCommand.handler({}, { scene });

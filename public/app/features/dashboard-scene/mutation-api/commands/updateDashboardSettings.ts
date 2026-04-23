@@ -51,6 +51,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
 
     try {
       const previousValue = readCurrentSettings(scene);
+      const warnings: string[] = [];
 
       const sceneUpdates: Record<string, unknown> = {};
       if (payload.title !== undefined) {
@@ -88,6 +89,8 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         const refreshPicker = scene.state.controls?.state.refreshPicker;
         if (refreshPicker) {
           refreshPicker.setState({ refresh: payload.refresh });
+        } else {
+          warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
         }
       }
 
@@ -97,6 +100,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         success: true,
         data: newValue,
         changes: [{ previousValue, newValue }],
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {
