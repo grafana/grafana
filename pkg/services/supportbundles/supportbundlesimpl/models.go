@@ -43,10 +43,16 @@ func FixedRoleRegistrations(serverAdminOnly bool) []accesscontrol.RoleRegistrati
 		grants = []string{accesscontrol.RoleGrafanaAdmin}
 	}
 
-	return []accesscontrol.RoleRegistration{
-		{Role: bundleWriterRole, Grants: grants},
-		{Role: bundleReaderRole, Grants: grants},
+	bundleReader := accesscontrol.RoleRegistration{
+		Role:   bundleReaderRole,
+		Grants: grants,
 	}
+	bundleWriter := accesscontrol.RoleRegistration{
+		Role:   bundleWriterRole,
+		Grants: grants,
+	}
+
+	return []accesscontrol.RoleRegistration{bundleWriter, bundleReader}
 }
 
 func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {

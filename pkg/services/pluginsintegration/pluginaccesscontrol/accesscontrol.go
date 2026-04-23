@@ -47,11 +47,6 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 // FixedRoleRegistrations returns the plugin integration role registrations.
 // When pluginAdminEnabled is false the maintainer role gets empty grants.
 func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
-	maintainerGrants := []string{ac.RoleGrafanaAdmin}
-	if !pluginAdminEnabled {
-		maintainerGrants = []string{}
-	}
-
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -86,7 +81,11 @@ func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 				{Action: ActionInstall},
 			},
 		},
-		Grants: maintainerGrants,
+		Grants: []string{ac.RoleGrafanaAdmin},
+	}
+
+	if !pluginAdminEnabled {
+		PluginsMaintainer.Grants = []string{}
 	}
 
 	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
