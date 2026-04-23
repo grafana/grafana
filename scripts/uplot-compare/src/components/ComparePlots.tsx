@@ -60,7 +60,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
           <PlotHeader
             title={'Expected'}
             onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
-            renderActualSetupEvents={renderExpectedSetupEvents}
+            renderSetupEvents={renderExpectedSetupEvents}
             mixBlendMode={blendMode}
             onChangeBlendMode={setBlendMode}
             showBlend={showOverlay && hasDiff}
@@ -79,9 +79,9 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
 
         <div className="plot-panel actual">
           <PlotHeader
-            title={'actual'}
+            title={'Actual'}
             onClick={() => setRenderActualSetupEvents((prev) => !prev)}
-            renderActualSetupEvents={renderActualSetupEvents}
+            renderSetupEvents={renderActualSetupEvents}
             mixBlendMode={blendMode}
             onChangeBlendMode={setBlendMode}
             showBlend={showOverlay && hasDiff}

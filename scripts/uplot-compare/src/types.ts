@@ -1,5 +1,4 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import type { AlignedData } from 'uplot';
 
 import type { eventsToCanvasScript } from './canvasUtils.ts';
 import type { OVERLAY_BLEND_MODES } from './constants.ts';
@@ -13,7 +12,6 @@ export type ResolvedPayload = {
   testName: string;
   expected: CanvasEventArray;
   actual: CanvasEventArray;
-  uPlotData?: AlignedData;
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   width?: number;
   height?: number;
