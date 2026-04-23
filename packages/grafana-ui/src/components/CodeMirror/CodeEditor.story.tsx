@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import { CodeEditorLanguage } from './languageLoader';
+import { type CodeEditorLanguage } from './languageLoader';
 
 const languageOptions: CodeEditorLanguage[] = ['sql', 'json'];
 
