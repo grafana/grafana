@@ -95,7 +95,7 @@ require (
 	github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.53.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.53.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.53.2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.4.4 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.10.0 // @grafana/grafana-operator-experience-squad
@@ -218,7 +218,7 @@ require (
 	k8s.io/apiserver v0.35.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.35.3 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.35.1 // @grafana/grafana-app-platform-squad
-	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.140.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.35.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // @grafana/data-sources-plugins
