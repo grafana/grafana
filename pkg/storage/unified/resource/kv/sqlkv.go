@@ -544,6 +544,12 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
+	// DataSection maps to resource_history, which has only a non-unique index
+	// on key_path, so Create/Update semantics can't be enforced atomically here.
+	// This may be lifted once key_path becomes unique on resource_history.
+	if section == DataSection {
+		return ErrBatchNotSupportedOnDataSection
+	}
 
 	if len(ops) == 0 {
 		return nil
@@ -568,9 +574,6 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	if txErr != nil {
 		return fmt.Errorf("failed to begin batch transaction: %w", txErr)
 	}
-
-	isDataSection := section == DataSection
-
 	rollback := func() {
 		if tx != nil {
 			_ = tx.Rollback()
@@ -583,11 +586,11 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		var opErr error
 		switch op.Mode {
 		case BatchOpCreate:
-			opErr = k.batchCreate(ctx, tx, qb, keyPath, op.Value, isDataSection)
+			opErr = k.batchInsert(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpUpdate:
-			opErr = k.batchUpdateOp(ctx, tx, qb, keyPath, op.Value)
+			opErr = k.batchUpdate(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpPut:
-			opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value, isDataSection)
+			opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpDelete:
 			opErr = k.batchDeleteOp(ctx, tx, qb, keyPath)
 		default:
@@ -606,47 +609,7 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	return nil
 }
 
-func (k *SqlKV) batchCreate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
-	// resource_history has only a non-unique index on key_path, so the INSERT
-	// won't fail on a duplicate — check first. The other sections have key_path
-	// as PRIMARY KEY and rely on the duplicate-key error mapped inside batchInsert.
-	if isDataSection {
-		exists, err := k.keyExists(ctx, conn, qb, keyPath)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return ErrKeyAlreadyExists
-		}
-	}
-	return k.batchInsert(ctx, conn, qb, keyPath, value, isDataSection)
-}
-
-func (k *SqlKV) batchUpdateOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
-	exists, err := k.keyExists(ctx, conn, qb, keyPath)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return ErrNotFound
-	}
-	return k.batchUpdate(ctx, conn, qb, keyPath, value)
-}
-
-func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
-	if isDataSection {
-		// DataSection: check exists → insert or update (resource_history has extra NOT NULL columns)
-		// TODO: clean up after compatibility mode is not needed anymore
-		exists, err := k.keyExists(ctx, conn, qb, keyPath)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return k.batchUpdate(ctx, conn, qb, keyPath, value)
-		}
-		return k.batchInsert(ctx, conn, qb, keyPath, value, true)
-	}
-	// Events/PendingDelete: simple upsert
+func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
 	query, args := qb.buildUpsertQuery(keyPath, value)
 	_, err := conn.ExecContext(ctx, query, args...)
 	return err
@@ -658,31 +621,10 @@ func (k *SqlKV) batchDeleteOp(ctx context.Context, conn dbtx, qb *queryBuilder, 
 	return err
 }
 
-// keyExists checks whether a key_path exists in the table.
-func (k *SqlKV) keyExists(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string) (bool, error) {
-	query, args := qb.buildCheckKeyExistsQuery(keyPath)
-	row := conn.QueryRowContext(ctx, query, args...)
-	var one int
-	if err := row.Scan(&one); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-// batchInsert inserts a new row. For DataSection it includes the extra NOT NULL columns with defaults.
-// Uses plain INSERT (no upsert) so the DB's unique constraint rejects concurrent duplicates.
-// If a concurrent insert wins the race, the duplicate-key DB error is mapped to ErrKeyAlreadyExists.
-func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
-	var query string
-	var args []interface{}
-	if isDataSection {
-		query, args = qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-	} else {
-		query, args = qb.buildInsertQuery(keyPath, value)
-	}
+// batchInsert inserts a new row. Relies on the DB's unique constraint on key_path
+// to reject duplicates; the driver error is mapped to ErrKeyAlreadyExists.
+func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	query, args := qb.buildInsertQuery(keyPath, value)
 	if _, err := conn.ExecContext(ctx, query, args...); err != nil {
 		if isDuplicateKeyError(err) {
 			return ErrKeyAlreadyExists
@@ -718,7 +660,7 @@ func isDuplicateKeyError(err error) bool {
 }
 
 // batchUpdate updates the value for an existing key_path.
-// Checks RowsAffected to detect concurrent deletes between the existence check and the UPDATE.
+// Returns ErrNotFound when the key does not exist (RowsAffected == 0).
 func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
 	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
 	result, err := conn.ExecContext(ctx, query, args...)
