@@ -349,6 +349,42 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+			// Keep proxy blocked until plugin route-level auth mapping is fully specified.
+			// Empty verb mapping means all verbs are treated as unsupported and denied.
+			"datasources/proxy": {
+				resource:      "datasources",
+				attribute:     "uid",
+				verbMapping:   map[string]string{},
+				folderSupport: false,
+			},
+			"datasources/resources": {
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    "datasources:query",
+					utils.VerbCreate: "datasources:query",
+					utils.VerbUpdate: "datasources:query",
+					utils.VerbPatch:  "datasources:query",
+					utils.VerbDelete: "datasources:query",
+				},
+				folderSupport: false,
+			},
+			"datasources/query": {
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport: false,
+			},
+			"datasources/health": {
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet: "datasources:query",
+				},
+				folderSupport: false,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),

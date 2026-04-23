@@ -15,6 +15,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -51,6 +52,7 @@ type DataSourceAPIBuilder struct {
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
 	accessControl          accesscontrol.AccessControl
+	accessClient           authtypes.AccessClient
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
@@ -158,6 +160,13 @@ func NewDataSourceAPIBuilder(
 		builder.queryTypes, err = getHardcodedQueryTypes(plugin.ID)
 	}
 	return builder, err
+}
+
+// WithAccessClient sets the authlib AccessClient for MT authorization and returns the builder.
+// When set, GetAuthorizer delegates to authlib instead of the legacy accessControl.
+func (b *DataSourceAPIBuilder) WithAccessClient(c authtypes.AccessClient) *DataSourceAPIBuilder {
+	b.accessClient = c
+	return b
 }
 
 // TODO -- somehow get the list from the plugin -- not hardcoded

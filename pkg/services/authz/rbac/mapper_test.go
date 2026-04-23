@@ -24,7 +24,20 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 5)
+
+		healthMapping, ok := reg.Get(group, "datasources", "health")
+		require.True(t, ok, "Get(%q, \"datasources\", \"health\") should find mapping", group)
+		require.NotNil(t, healthMapping)
+		action, ok := healthMapping.Action(utils.VerbGet)
+		require.True(t, ok)
+		assert.Equal(t, "datasources:query", action)
+
+		proxyMapping, ok := reg.Get(group, "datasources", "proxy")
+		require.True(t, ok, "Get(%q, \"datasources\", \"proxy\") should find mapping", group)
+		require.NotNil(t, proxyMapping)
+		_, ok = proxyMapping.Action(utils.VerbGet)
+		assert.False(t, ok, "proxy subresource should be denied by mapping")
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
