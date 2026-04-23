@@ -44,8 +44,8 @@ import { type SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
-import { isPluginProvidedGroup, isProvisionedRuleGroup } from '../utils/rules';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
+import { isPluginProvidedGroup, isProvisionedRuleGroup } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 import { evaluateEveryValidationOptions } from './validation';
@@ -165,13 +165,9 @@ function GroupEditPage() {
         </Alert>
       )}
       {rulerGroup && !isPluginProvidedGroup(rulerGroup) && isProvisionedRuleGroup(rulerGroup) && (
-        <Alert
-          title={t('alerting.group-edit.group-provisioned', 'This rule group is provisioned')}
-          severity="info"
-        >
+        <Alert title={t('alerting.group-edit.group-provisioned', 'This rule group is provisioned')} severity="info">
           <Trans i18nKey="alerting.group-edit.group-provisioned-description">
-            Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration
-            instead.
+            Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.
           </Trans>
         </Alert>
       )}

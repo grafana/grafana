@@ -34,7 +34,6 @@ import {
   type PostableRuleDTO,
   PromAlertingRuleState,
   type PromRuleDTO,
-  type PromRuleGroupDTO,
   PromRuleType,
   type RulerAlertingRuleDTO,
   type RulerCloudRuleDTO,
@@ -186,7 +185,9 @@ export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
   return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
-export function isProvisionedRuleGroup(group: RulerRuleGroupDTO | PromRuleGroupDTO): boolean {
+type AnyRuleGroup = { rules: Array<Rule | PromRuleDTO | RulerRuleDTO> };
+
+export function isProvisionedRuleGroup(group: AnyRuleGroup): boolean {
   return group.rules.some((rule) => {
     if ('grafana_alert' in rule) {
       return Boolean(rule.grafana_alert.provenance);
@@ -292,7 +293,7 @@ export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): 
   return Boolean(getRulePluginOrigin(rule));
 }
 
-export function isPluginProvidedGroup(group: RulerRuleGroupDTO | PromRuleGroupDTO): boolean {
+export function isPluginProvidedGroup(group: AnyRuleGroup): boolean {
   return group.rules.some((rule) => isPluginProvidedRule(rule));
 }
 
