@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [opened]
     paths:
+      - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/cloud-monitoring/**"
       - "public/app/plugins/datasource/graphite/**"

@@ -474,7 +474,7 @@ func (h *testHealthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream 
 
 // BenchmarkGracefulShutdown benchmarks the graceful shutdown process
 func BenchmarkGracefulShutdown(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		cfg := &setting.GRPCServerSettings{
 			Network:                 "tcp",
 			Address:                 "127.0.0.1:0",

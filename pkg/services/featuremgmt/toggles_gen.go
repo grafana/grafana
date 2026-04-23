@@ -27,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagGrpcServer
-	// Run the GRPC server
-	FlagGrpcServer = "grpcServer"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -255,6 +251,10 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
+	// FlagReportingPdfTablesFrontend
+	// Enables frontend-rendered table appendix pages in PDF reports
+	FlagReportingPdfTablesFrontend = "reporting.pdfTablesFrontend"
+
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
@@ -403,9 +403,9 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
-	// FlagZanzanaSearchUsersPermissions
-	// Search users permissions using Zanzana.
-	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+	// FlagZanzanaMergeUserPermissions
+	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
+	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -510,10 +510,6 @@ const (
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
-
-	// FlagUnifiedStorageSearchUI
-	// Enable unified storage search UI
-	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
@@ -746,6 +742,10 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
+	// FlagOnlyStoreServiceAccountActionSets
+	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
+	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
@@ -866,6 +866,10 @@ const (
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
 
+	// FlagFrontendServiceSettingsSourceFilter
+	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
+	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
+
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -918,10 +922,6 @@ const (
 	// Enables heatmap visualization support for Pyroscope profiles
 	FlagProfilesHeatmap = "profilesHeatmap"
 
-	// FlagQueryServiceQueryCaching
-	// Enables the query service to do query caching
-	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
-
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
@@ -933,6 +933,10 @@ const (
 	// FlagQuerycachingEnableConnectionsClient
 	// Use connections client instead of storage to resolve datasource plugin ID in query caching
 	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
+
+	// FlagQuerycachingUseInQueryService
+	// Enables the query service to do query caching
+	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
@@ -949,4 +953,12 @@ const (
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
+
+	// FlagReportingAnyPageReporting
+	// Enables reporting for any page in Grafana
+	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagAlertingRulesAPIV2
+	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
 )
