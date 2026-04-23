@@ -215,6 +215,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
 	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
+	cfg.TenantWatcherUsePolling = section.Key("tenant_watcher_use_polling").MustBool(false)
+	cfg.TenantWatcherPollInterval = section.Key("tenant_watcher_poll_interval").MustDuration(1 * time.Hour)
 
 	// tenant deleter
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)

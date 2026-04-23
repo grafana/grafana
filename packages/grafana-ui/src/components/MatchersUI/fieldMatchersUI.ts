@@ -1,4 +1,9 @@
-import { Registry } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { Registry, type SelectableValue } from '@grafana/data';
+
+import { type ComboboxOption } from '../Combobox/types';
+import { selectableValueToComboboxOption } from '../Combobox/utils';
 
 import { getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
 import { getFieldNameMatcherItem } from './FieldNameMatcherEditor';
@@ -16,3 +21,19 @@ export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() 
   getFieldNamesMatcherItem(),
   getFieldValueMatcherItem(),
 ]);
+
+export function useFieldMatchersOptions(asComboboxOptions: true): Array<ComboboxOption<string>>;
+export function useFieldMatchersOptions(asComboboxOptions: false): Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(asComboboxOptions?: undefined): Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(
+  asComboboxOptions: boolean
+): Array<ComboboxOption<string>> | Array<SelectableValue<string>>;
+export function useFieldMatchersOptions(asComboboxOptions?: boolean) {
+  return useMemo(() => {
+    const selectableValues = fieldMatchersUI.selectOptions().options;
+    if (asComboboxOptions) {
+      return selectableValues.map(selectableValueToComboboxOption).filter((v) => !!v);
+    }
+    return selectableValues;
+  }, [asComboboxOptions]);
+}

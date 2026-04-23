@@ -6453,7 +6453,6 @@
         "save-library-panel": "Guardar panel de librería",
         "share": {
           "arrow": "Compartir",
-          "title": "Compartir",
           "tooltip": "Copiar enlace"
         },
         "unlink-library-panel": "Desvincular panel de librería"
@@ -8655,6 +8654,7 @@
         "copy-link": "Copiar enlace a línea de log",
         "copy-to-clipboard": "Copiar al portapapeles",
         "inspect-value": "Inspeccionar valor",
+        "show-details": "",
         "view-log-line": "Ver línea de log"
       }
     },
@@ -11329,6 +11329,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar línea de log",
       "inline-mode": "Mostrar en línea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor del enlace",
       "links-section": "Enlaces",
       "log-attributes-field": "Atributos del log",
@@ -11577,13 +11579,13 @@
   "logstable": {
     "category-table": "Tabla de logs",
     "description-show-controls": "Mostrar controles de la tabla",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Habilita/deshabilita el botón de enlace a la línea de log en la primera columna de cada fila.",
       "name": "Mostrar botón para copiar enlace del log"
-    },
-    "show-inspect-button": {
-      "description": "Habilita/deshabilita el botón de inspección de la línea de log en la primera columna de cada fila.",
-      "name": "Mostrar botón de inspección"
     }
   },
   "manage-dashbaords": {
@@ -15930,6 +15932,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Seleccionar estadísticas"
     },
@@ -15941,6 +15944,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Los cálculos no tendrán efecto si no se agrupan campos"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

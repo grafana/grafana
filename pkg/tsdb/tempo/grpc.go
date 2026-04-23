@@ -10,12 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc/metadata"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/tempo/pkg/tempopb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -25,7 +19,14 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/tempo/pkg/tempopb"
 )
 
 var (
@@ -157,7 +158,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	const defaultMaxCallRecvMsgSizeBytes = 4 * 1024 * 1024
 	maxCallRecvMsgSizeBytes := defaultMaxCallRecvMsgSizeBytes
 
-	if v := backend.GrafanaConfigFromContext(ctx).Get(backend.LiveClientQueueMaxSize); v != "" {
+	if v := config.GrafanaConfigFromContext(ctx).Get(backend.LiveClientQueueMaxSize); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed <= 0 {
 			logger.Debug("Invalid GF_LIVE_CLIENT_QUEUE_MAX_SIZE; using default gRPC max receive size", "value", v, "default", defaultMaxCallRecvMsgSizeBytes, "error", err)
