@@ -10,12 +10,10 @@ export function PageHeader() {
     <div className={styles.wrapper}>
       <div>
         <h1 className={styles.title}>
-          <Trans i18nKey="alerting.rule-list-v2.title">Alert rules</Trans>
+          <Trans i18nKey="alerting.rule-list-v2.title">Rules</Trans>
         </h1>
         <p className={styles.subtitle}>
-          <Trans i18nKey="alerting.rule-list-v2.subtitle">
-            Organized by folder and evaluation group — the way rules actually evaluate
-          </Trans>
+          <Trans i18nKey="alerting.rule-list-v2.subtitle">Rules that determine whether an alert will fire</Trans>
         </p>
       </div>
       <Stack direction="row" gap={1}>
