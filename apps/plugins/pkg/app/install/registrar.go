@@ -35,8 +35,10 @@ type Registrar interface {
 	Register(ctx context.Context, namespace string, install *PluginInstall) error
 	Unregister(ctx context.Context, namespace string, name string, source Source) error
 	Get(ctx context.Context, namespace string, name string) (*pluginsv0alpha1.Plugin, error)
-	UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, newStatus pluginsv0alpha1.PluginStatus) error
+	UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) error
 }
+
+type StatusUpdateFunc func(*pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool)
 
 type PluginInstall struct {
 	ID       string
@@ -355,7 +357,7 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	return err
 }
 
-func (r *InstallRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, newStatus pluginsv0alpha1.PluginStatus) error {
+func (r *InstallRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) error {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", plugin.Namespace, "pluginId", plugin.Name)
 
 	client, err := r.GetClient()
@@ -380,6 +382,11 @@ func (r *InstallRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0al
 
 	var lastErr error
 	for attempt := 0; attempt < maxStatusUpdateAttempts; attempt++ {
+		newStatus, shouldUpdate := update(current)
+		if !shouldUpdate {
+			return nil
+		}
+
 		_, err = client.UpdateStatus(ctx, identifier, newStatus, resource.UpdateOptions{ResourceVersion: current.ResourceVersion})
 		if err == nil {
 			return nil

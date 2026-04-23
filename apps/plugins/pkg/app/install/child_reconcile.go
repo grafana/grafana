@@ -203,11 +203,11 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	}
 
 	if shouldUpdateStatus {
-		status := buildChildReconcilerStatus(plugin, outcome)
-		if childReconcilerStatusChanged(plugin.Status, status) {
-			if statusErr := r.registrar.UpdateStatus(ctx, plugin, status); statusErr != nil {
-				err = errors.Join(err, statusErr)
-			}
+		if statusErr := r.registrar.UpdateStatus(ctx, plugin, func(current *pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool) {
+			status := buildChildReconcilerStatus(current, outcome)
+			return status, childReconcilerStatusChanged(current.Status, status)
+		}); statusErr != nil {
+			err = errors.Join(err, statusErr)
 		}
 	}
 

@@ -290,6 +290,118 @@ func TestInstallRegistrar_Register(t *testing.T) {
 	}
 }
 
+func TestInstallRegistrar_UpdateStatus_RebuildsFromLatestPluginAfterConflict(t *testing.T) {
+	ctx := context.Background()
+
+	stale := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "org-1",
+			Name:            "plugin-1",
+			ResourceVersion: "1",
+		},
+	}
+	refreshed := stale.DeepCopy()
+	refreshed.ResourceVersion = "2"
+	refreshed.Status = pluginsv0alpha1.PluginStatus{
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			"other-reconciler": {State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess},
+		},
+	}
+
+	updateCalls := 0
+	fakeClient := &fakePluginInstallClient{
+		getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			return refreshed.DeepCopy(), nil
+		},
+		updateFunc: func(_ context.Context, plugin *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+			updateCalls++
+			switch updateCalls {
+			case 1:
+				require.Equal(t, "1", opts.ResourceVersion)
+				require.Equal(t, "status", opts.Subresource)
+				require.NotContains(t, plugin.Status.OperatorStates, "other-reconciler")
+				return nil, errorsK8s.NewConflict(pluginGroupResource(), "plugin-1", errors.New("conflict"))
+			case 2:
+				require.Equal(t, "2", opts.ResourceVersion)
+				require.Equal(t, "status", opts.Subresource)
+				require.Contains(t, plugin.Status.OperatorStates, "other-reconciler")
+				require.Equal(t, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, plugin.Status.OperatorStates["other-reconciler"].State)
+				require.Contains(t, plugin.Status.OperatorStates, childReconcilerStatusKey)
+				return refreshed.DeepCopy(), nil
+			default:
+				t.Fatalf("unexpected update call %d", updateCalls)
+				return nil, nil
+			}
+		},
+	}
+
+	registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+	err := registrar.UpdateStatus(ctx, stale, func(current *pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool) {
+		status := current.Status
+		if status.OperatorStates == nil {
+			status.OperatorStates = make(map[string]pluginsv0alpha1.PluginstatusOperatorState)
+		} else {
+			status.OperatorStates = cloneOperatorStates(status.OperatorStates)
+		}
+		status.OperatorStates[childReconcilerStatusKey] = pluginsv0alpha1.PluginstatusOperatorState{
+			State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess,
+		}
+		return status, true
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 2, updateCalls)
+}
+
+func TestInstallRegistrar_UpdateStatus_SkipsRetryWhenRefreshedPluginAlreadyMatches(t *testing.T) {
+	ctx := context.Background()
+
+	stale := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "org-1",
+			Name:            "plugin-1",
+			ResourceVersion: "1",
+		},
+	}
+	refreshed := stale.DeepCopy()
+	refreshed.ResourceVersion = "2"
+	refreshed.Status = pluginsv0alpha1.PluginStatus{
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			childReconcilerStatusKey: {State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess},
+		},
+	}
+
+	updateCalls := 0
+	fakeClient := &fakePluginInstallClient{
+		getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			return refreshed.DeepCopy(), nil
+		},
+		updateFunc: func(_ context.Context, _ *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+			updateCalls++
+			require.Equal(t, "1", opts.ResourceVersion)
+			require.Equal(t, "status", opts.Subresource)
+			return nil, errorsK8s.NewConflict(pluginGroupResource(), "plugin-1", errors.New("conflict"))
+		},
+	}
+
+	registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+	err := registrar.UpdateStatus(ctx, stale, func(current *pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool) {
+		status := current.Status
+		if status.OperatorStates == nil {
+			status.OperatorStates = make(map[string]pluginsv0alpha1.PluginstatusOperatorState)
+		} else {
+			status.OperatorStates = cloneOperatorStates(status.OperatorStates)
+		}
+		status.OperatorStates[childReconcilerStatusKey] = pluginsv0alpha1.PluginstatusOperatorState{
+			State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess,
+		}
+		return status, current.Status.OperatorStates[childReconcilerStatusKey].State != pluginsv0alpha1.PluginStatusOperatorStateStateSuccess
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, updateCalls)
+}
+
 func pluginGroupResource() schema.GroupResource {
 	return schema.GroupResource{Group: pluginsv0alpha1.APIGroup, Resource: "plugininstalls"}
 }

@@ -782,7 +782,7 @@ type mockPluginRegistrar struct {
 	registerFunc     func(ctx context.Context, namespace string, install *PluginInstall) error
 	unregisterFunc   func(ctx context.Context, namespace string, name string, source Source) error
 	getFunc          func(ctx context.Context, namespace string, name string) (*pluginsv0alpha1.Plugin, error)
-	updateStatusFunc func(ctx context.Context, plugin *pluginsv0alpha1.Plugin, status pluginsv0alpha1.PluginStatus) error
+	updateStatusFunc func(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) error
 	registered       map[string]*PluginInstall
 	unregistered     map[string]bool
 	existing         map[string]*pluginsv0alpha1.Plugin
@@ -851,9 +851,14 @@ func (m *mockPluginRegistrar) Get(ctx context.Context, namespace string, name st
 	return existing, nil
 }
 
-func (m *mockPluginRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, status pluginsv0alpha1.PluginStatus) error {
+func (m *mockPluginRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) error {
 	if m.updateStatusFunc != nil {
-		return m.updateStatusFunc(ctx, plugin, status)
+		return m.updateStatusFunc(ctx, plugin, update)
+	}
+
+	status, shouldUpdate := update(plugin)
+	if !shouldUpdate {
+		return nil
 	}
 	m.updatedStatuses = append(m.updatedStatuses, status)
 	return nil
