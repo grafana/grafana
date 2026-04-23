@@ -362,4 +362,3 @@ func (b *pgvectorBackend) lookupCollection(ctx context.Context, key collectionKe
 	b.collections.Store(key, table)
 	return table, true, nil
 }
-
