@@ -1341,25 +1341,24 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
+//
+// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// eventually-consistent signal: repository finalizers draining orphan
+// resources, dashboards freeing their folder reference in the search index,
+// and folder admission rejecting deletion until that index catches up. Under
+// SQLite write contention these lags routinely exceed short timeouts.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
-		name    string
-		client  dynamic.ResourceInterface
-		timeout time.Duration
+		name   string
+		client dynamic.ResourceInterface
 	}{
-		{"repositories", h.Repositories.Resource, 10 * time.Second},
-		{"connections", h.Connections.Resource, 10 * time.Second},
-		{"dashboards", h.DashboardsV1.Resource, 10 * time.Second},
-		// Folder deletion is validated against the resource search index, which
-		// is eventually consistent with the dashboard storage. Under SQLite write
-		// contention the index can lag several seconds behind a dashboard delete,
-		// so a dangling folder from a prior test (e.g. TestIntegrationProvisioning_
-		// AdminCanReleaseManagedResourceViaPatch) reports "folder is not empty"
-		// until the index catches up. Give folder cleanup extra headroom.
-		{"folders", h.Folders.Resource, WaitTimeoutDefault},
+		{"repositories", h.Repositories.Resource},
+		{"connections", h.Connections.Resource},
+		{"dashboards", h.DashboardsV1.Resource},
+		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, c.timeout); err != nil {
+		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
