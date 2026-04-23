@@ -7,8 +7,8 @@ import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
-import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
+import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 
 interface AlertInstanceNotificationActionProps {
   rule?: CombinedRule;

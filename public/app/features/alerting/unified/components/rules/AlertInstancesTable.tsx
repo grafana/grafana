@@ -8,9 +8,9 @@ import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/u
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
-import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
+import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
