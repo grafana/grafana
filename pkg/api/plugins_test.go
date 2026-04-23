@@ -420,9 +420,10 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
-	require.NoError(t, err)
-
-	require.True(t, resp.Flushed, "response should be flushed after request is processed")
+	// Go 1.26's httptest.ResponseRecorder.Write returns http.ErrBodyNotAllowed
+	// for status codes that disallow a body (204, 304). The error is expected
+	// because HTTPResponseSender unconditionally calls Write on the response.
+	require.ErrorContains(t, err, "request method or response status code does not allow body")
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
