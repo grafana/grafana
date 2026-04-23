@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -157,6 +158,35 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusForbidden, resp.StatusCode)
 		})
+	})
+
+	t.Run("Import service returns a library panel permission error", func(t *testing.T) {
+		service := &serviceMock{
+			importDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+				return nil, libraryelementsmodel.ErrLibraryElementInsufficientPermissions.Errorf("insufficient permissions for creating library panel in folder with UID: 'abc'")
+			},
+		}
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
+		routeRegister := routing.NewRouteRegister()
+		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+		s := webtest.NewServer(t, routeRegister)
+
+		cmd := &dashboardimport.ImportDashboardRequest{
+			Dashboard: simplejson.New(),
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+			UserID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsCreate: {}},
+			},
+		})
+		resp, err := s.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 }
 

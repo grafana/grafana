@@ -182,7 +182,7 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
 		if !allowed {
-			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID: '%s'", folderUID)
+			return model.ErrLibraryElementInsufficientPermissions.Errorf("insufficient permissions for creating library panel in folder with UID: '%s'", folderUID)
 		}
 		if err != nil {
 			return err
