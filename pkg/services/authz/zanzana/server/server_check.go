@@ -17,6 +17,12 @@ import (
 )
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	release, err := s.acquireSlot("Check", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
