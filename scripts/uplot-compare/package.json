@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "types": "./src/uplotComparePayloadType.ts",
+  "types": "./src/exportedTypes.ts",
   "exports": {
     ".": {
-      "types": "./src/uplotComparePayloadType.ts",
-      "import": "./src/uplotComparePayloadType.ts",
-      "default": "./src/uplotComparePayloadType.ts"
+      "types": "./src/exportedTypes.ts",
+      "import": "./src/exportedTypes.ts",
+      "default": "./src/exportedTypes.ts"
     }
   },
   "scripts": {

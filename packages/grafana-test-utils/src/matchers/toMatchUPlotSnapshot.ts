@@ -71,10 +71,9 @@ export function toMatchUPlotSnapshot(
       writeFileSync(fullPath, `${JSON.stringify(payload)}\n`, 'utf8');
       const compareUrl = new URL('http://localhost:5173/');
       compareUrl.searchParams.set('file', publicBasename);
-      console.log(
-        'To debug this diff visually, run `yarn workspace uplot-compare dev`, then open:',
-        `\n\n${compareUrl.toString()}`,
-        `\n\n(Payload written to ${fullPath})`
+      // Use stderr so jest-fail-on-console (console.* hooks) does not treat this as a test failure
+      process.stderr.write(
+        `To debug this diff visually, run \`yarn workspace uplot-compare dev\`, then open:\n\n${compareUrl.toString()}\n\n(Payload written to ${fullPath})\n`
       );
     } catch (e) {
       console.warn(
@@ -108,6 +107,7 @@ function resolveUPlotComparePayloadWriteTarget(testName: string): { fullPath: st
     return { fullPath, publicBasename: path.basename(fullPath) };
   }
   const basename = createUPlotComparePayloadBasename(testName);
-  const fullPath = path.join(require.resolve('uplot-compare/package.json'), '../public', basename);
+  const uplotCompareRoot = path.join(path.dirname(require.resolve('@grafana/uplot-compare')), '..');
+  const fullPath = path.join(uplotCompareRoot, 'public', basename);
   return { fullPath, publicBasename: basename };
 }
