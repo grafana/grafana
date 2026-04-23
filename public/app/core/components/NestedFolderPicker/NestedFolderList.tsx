@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
@@ -174,8 +175,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const handleSelect = useCallback(() => {
     if (item.kind === 'folder' && !disabled) {
       onFolderSelect(item);
+      const folderType = teamFolderOwnersByUid?.[item.uid]
+        ? 'team folder'
+        : item.parentUID === 'sharedwithme'
+          ? 'shared folder'
+          : 'regular folder';
+      reportInteraction('grafana_folder_picker folder_selected', { folderType: folderType });
     }
-  }, [item, onFolderSelect, disabled]);
+  }, [item, onFolderSelect, disabled, teamFolderOwnersByUid]);
 
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (

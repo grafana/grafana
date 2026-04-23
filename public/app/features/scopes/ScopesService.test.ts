@@ -172,6 +172,65 @@ describe('ScopesService', () => {
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
 
+    it('should catch and log errors when scope_node preload fails', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      selectorService.resolvePathToRoot = jest.fn().mockRejectedValue(new Error('fetch failed'));
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&scope_node=node1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      await Promise.resolve();
+
+      expect(consoleError).toHaveBeenCalledWith('Failed to pre-load node path', expect.any(Error));
+      consoleError.mockRestore();
+    });
+
+    it('should catch and log errors when defaultPath preload fails', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      let rejectPathToRoot: (err: Error) => void = () => {};
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: { title: 'Scope 1', defaultPath: ['', 'parent', 'node1'], filters: [] },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+      selectorService.resolvePathToRoot = jest
+        .fn()
+        .mockImplementation(() => new Promise<void>((_, reject) => (rejectPathToRoot = reject)));
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      // Wait for changeScopes to complete and resolvePathToRoot to be called
+      await changeScopesPromise;
+
+      // Trigger the rejection now that .catch() is attached, then drain it
+      rejectPathToRoot(new Error('fetch failed'));
+      await Promise.resolve();
+
+      expect(consoleError).toHaveBeenCalledWith('Failed to pre-load node path from defaultPath', expect.any(Error));
+      consoleError.mockRestore();
+    });
+
     // TODO: remove when parentNodeId is removed
     it('should not preload when only scope_parent is in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
@@ -182,6 +241,78 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       // Should not preload since we don't read scope_parent from URL
+      expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
+    });
+
+    it('should derive scope_node from defaultPath when scope_node is absent from URL', async () => {
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: {
+              title: 'Scope 1',
+              defaultPath: ['', 'automon-team', 'washington', 'washington-nav-test'],
+              filters: [],
+            },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      // Await the actual promise that the constructor chains .then() on
+      await changeScopesPromise;
+
+      expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith(
+        'washington-nav-test',
+        expect.anything(),
+        'scope1'
+      );
+    });
+
+    it('should not call resolvePathToRoot when scope_node is absent and no defaultPath exists', async () => {
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: {
+              title: 'Scope 1',
+              filters: [],
+            },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      await changeScopesPromise;
+
       expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
     });
 
@@ -403,7 +534,7 @@ describe('ScopesService', () => {
     });
 
     describe('defaultPath support', () => {
-      it('should extract scope_node from defaultPath when available', () => {
+      it('should not write scope_node to URL when defaultPath is available', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
@@ -428,11 +559,12 @@ describe('ScopesService', () => {
           }
         );
 
-        // Should use 'correct-node' from defaultPath, not 'old-node' from appliedScopes
+        // When defaultPath is available, scope_node is redundant (it is re-derived
+        // from defaultPath on load), so the URL param is cleared.
         expect(locationService.partial).toHaveBeenCalledWith(
           {
             scopes: ['scope1'],
-            scope_node: 'correct-node',
+            scope_node: null,
             scope_parent: null,
           },
           true
@@ -510,10 +642,12 @@ describe('ScopesService', () => {
         );
       });
 
-      it('should detect changes in defaultPath-derived scopeNodeId', () => {
+      it('should not update URL when only defaultPath changes and scopes are unchanged', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
+
+        jest.clearAllMocks();
 
         selectorStateSubscription(
           {
@@ -544,15 +678,9 @@ describe('ScopesService', () => {
           }
         );
 
-        // Should detect the change in defaultPath-derived scopeNodeId
-        expect(locationService.partial).toHaveBeenCalledWith(
-          {
-            scopes: ['scope1'],
-            scope_node: 'new-node',
-            scope_parent: null,
-          },
-          true
-        );
+        // scope_node is no longer synced when defaultPath is present, so a
+        // defaultPath-only change does not trigger a URL update.
+        expect(locationService.partial).not.toHaveBeenCalled();
       });
     });
 
@@ -800,7 +928,7 @@ describe('ScopesService', () => {
       );
     });
 
-    it('should use defaultPath for scope_node when enabling scopes', () => {
+    it('should clear scope_node when enabling scopes for a scope with defaultPath', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'old-node' }];
       selectorService.state.scopes = {
         scope1: {
@@ -815,10 +943,11 @@ describe('ScopesService', () => {
 
       service.setEnabled(true);
 
-      // Should use defaultPath instead of scopeNodeId from appliedScopes
+      // When defaultPath is available, scope_node is redundant and should be
+      // cleared from the URL (passing null removes any stale value).
       expect(locationService.partial).toHaveBeenCalledWith(
         expect.objectContaining({
-          scope_node: 'correct-node-from-defaultPath',
+          scope_node: null,
         }),
         true
       );

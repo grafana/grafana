@@ -304,10 +304,10 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 		return
 	}
 	sub.overflow = nil
-	close(sub.ch)
 	delete(b.subs, recv)
 	b.metrics.Subscribers.Dec()
 	b.metrics.UnsubscriptionsTotal.WithLabelValues(reason).Inc()
+	close(sub.ch)
 }
 
 // ringBuffer is a fixed-size circular buffer. It is not safe for concurrent

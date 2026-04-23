@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -1997,6 +1998,58 @@ func TestCleanUpDashboard(t *testing.T) {
 		err := service.CleanUpDashboard(context.Background(), "dash-uid", int64(1), int64(1))
 		require.Error(t, err)
 		require.Equal(t, "deletion error", err.Error())
+		fakePublicDashboardService.AssertExpectations(t)
+	})
+
+	t.Run("Should return error if dashboard UID is empty", func(t *testing.T) {
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		service := &DashboardServiceImpl{
+			cfg:                    setting.NewCfg(),
+			publicDashboardService: fakePublicDashboardService,
+		}
+
+		err := service.CleanUpDashboard(context.Background(), "", int64(1), int64(1))
+		require.Error(t, err)
+		require.Equal(t, dashboards.ErrDashboardIdentifierNotSet, err)
+		fakePublicDashboardService.AssertNotCalled(t, "DeleteByDashboardUIDs")
+	})
+
+	t.Run("Should not delete org-scope annotations when dashboard ID is zero", func(t *testing.T) {
+		sqlStore, _ := sqlstore.InitTestDB(t)
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		service := &DashboardServiceImpl{
+			cfg:                    setting.NewCfg(),
+			sqlStore:               sqlStore,
+			publicDashboardService: fakePublicDashboardService,
+		}
+
+		const orgID int64 = 1
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			item := annotations.Item{
+				OrgID:       orgID,
+				DashboardID: 0,
+				Text:        "org annotation",
+				Epoch:       1,
+				Created:     1,
+				Updated:     1,
+			}
+			_, err := sess.Table("annotation").Insert(&item)
+			return err
+		})
+		require.NoError(t, err)
+
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, orgID, []string{"dash-uid"}).Return(nil)
+
+		err = service.CleanUpDashboard(context.Background(), "dash-uid", 0, orgID)
+		require.NoError(t, err)
+
+		var count int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err := sess.SQL("SELECT COUNT(*) FROM annotation WHERE org_id = ? AND dashboard_id = 0", orgID).Get(&count)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
 		fakePublicDashboardService.AssertExpectations(t)
 	})
 }

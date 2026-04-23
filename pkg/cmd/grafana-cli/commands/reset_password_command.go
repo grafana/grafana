@@ -110,7 +110,8 @@ type adminFilter struct{}
 
 func (f *adminFilter) WhereCondition() *user.WhereCondition {
 	return &user.WhereCondition{
-		Condition: "is_admin = 1",
+		Condition: "is_admin = ?",
+		Params:    true,
 	}
 }
 

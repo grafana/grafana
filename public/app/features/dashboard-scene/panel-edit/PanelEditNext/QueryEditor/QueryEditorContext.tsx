@@ -12,7 +12,7 @@ import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
-import { type QueryEditorType } from '../constants';
+import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
@@ -128,12 +128,15 @@ export interface QueryEditorActions {
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
 }
 
+export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;
+
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
 const PanelContext = createContext<PanelState | null>(null);
 const AlertingContext = createContext<AlertingState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
+const QueryEditorTypeConfigContext = createContext<QueryEditorTypeConfigState | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
   const context = useContext(DatasourceContext);
@@ -183,6 +186,14 @@ export function useQueryEditorUIContext(): QueryEditorUIState {
   return context;
 }
 
+export function useQueryEditorTypeConfig(): QueryEditorTypeConfigState {
+  const context = useContext(QueryEditorTypeConfigContext);
+  if (!context) {
+    throw new Error('useQueryEditorTypeConfig must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
@@ -191,6 +202,7 @@ interface QueryEditorProviderProps {
   alertingState: AlertingState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
+  typeConfig: QueryEditorTypeConfigState;
 }
 
 export function QueryEditorProvider({
@@ -201,6 +213,7 @@ export function QueryEditorProvider({
   alertingState,
   uiState,
   actions,
+  typeConfig,
 }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
@@ -208,7 +221,11 @@ export function QueryEditorProvider({
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
             <AlertingContext.Provider value={alertingState}>
-              <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+              <QueryEditorUIContext.Provider value={uiState}>
+                <QueryEditorTypeConfigContext.Provider value={typeConfig}>
+                  {children}
+                </QueryEditorTypeConfigContext.Provider>
+              </QueryEditorUIContext.Provider>
             </AlertingContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>

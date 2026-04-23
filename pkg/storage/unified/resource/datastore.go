@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -54,16 +57,18 @@ type dataStore struct {
 	kv            KV
 	cache         *gocache.Cache
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
+	metrics       *kvBackendMetrics
 }
 
 type dataImportBatchWriter interface {
 	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
 }
 
-func newDataStore(kv KV) *dataStore {
+func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
 	ds := &dataStore{
-		kv:    kv,
-		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
+		kv:      kv,
+		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
+		metrics: metrics,
 	}
 
 	if sqlkv, ok := kv.(*kvpkg.SqlKV); ok {
@@ -213,8 +218,10 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 			yield(DataKey{}, err)
 		}
 	}
+	ctx, span := tracer.Start(ctx, "resource.dataStore.Keys")
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
+		defer span.End()
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
@@ -244,6 +251,10 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	if key.Group == "" || key.Resource == "" || key.Name == "" {
 		return DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
+
+	ctx, span := tracer.Start(ctx, "resource.dataStore.LastResourceVersion")
+	defer span.End()
+
 	prefix := key.Prefix()
 	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 		StartKey: prefix,
@@ -269,6 +280,10 @@ func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequest
 	if key.Group == "" || key.Resource == "" || key.Name == "" {
 		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
+
+	ctx, span := tracer.Start(ctx, "resource.dataStore.GetLatestAndPredecessor")
+	defer span.End()
+
 	prefix := key.Prefix()
 	var latest, predecessor DataKey
 	count := 0
@@ -314,6 +329,11 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
+
+	ctx, span := tracer.Start(ctx, "resource.dataStore.GetResourceKeyAtRevision", trace.WithAttributes(
+		attribute.Int64("resourceVersion", rv),
+	))
+	defer span.End()
 
 	listKey := ListRequestKey(key)
 
@@ -396,10 +416,15 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		rv = math.MaxInt64
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.ListResourceKeysAtRevision", trace.WithAttributes(
+		attribute.Int64("resourceVersion", rv),
+	))
+
 	// List all keys in the prefix.
 	iter := d.kv.Keys(ctx, dataSection, listOptions)
 
 	return func(yield func(DataKey, error) bool) {
+		defer span.End()
 		var candidateKey *DataKey // The current candidate key we are iterating over
 
 		// yieldCandidate is a helper function to yield results.
@@ -465,6 +490,9 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 		return nil, fmt.Errorf("invalid data key: %w", err)
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.Get")
+	defer span.End()
+
 	return d.kv.Get(ctx, dataSection, key.String())
 }
 
@@ -473,7 +501,11 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 // Keys are processed in batches (default 50).
 // Non-existent entries will not appear in the result.
 func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.BatchGet", trace.WithAttributes(
+		attribute.Int("batchSize", len(keys)),
+	))
 	return func(yield func(DataObj, error) bool) {
+		defer span.End()
 		// Validate all keys first
 		for _, key := range keys {
 			if err := validateDataKey(key); err != nil {
@@ -530,6 +562,11 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.Save", trace.WithAttributes(
+		attribute.String("action", string(key.Action)),
+	))
+	defer span.End()
+
 	var writer io.WriteCloser
 	var err error
 	if key.GUID != "" {
@@ -550,6 +587,11 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 }
 
 func (d *dataStore) insertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) (bool, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.insertDataImportBatch", trace.WithAttributes(
+		attribute.Int("batchSize", len(rows)),
+	))
+	defer span.End()
+
 	writer, ok := d.kv.(dataImportBatchWriter)
 	if !ok {
 		return false, nil
@@ -563,10 +605,18 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.Delete")
+	defer span.End()
+
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
 func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.batchDelete", trace.WithAttributes(
+		attribute.Int("batchSize", len(keys)),
+	))
+	defer span.End()
+
 	for len(keys) > 0 {
 		batch := keys
 		if len(batch) > dataBatchSize {
@@ -601,6 +651,11 @@ func ParseKey(key string) (DataKey, error) {
 // all group/resource combinations, then issuing targeted list operations for each one.
 // If namespace is provided, only keys matching that namespace are considered.
 func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.GetResourceStats", trace.WithAttributes(
+		attribute.Int("minCount", minCount),
+	))
+	defer span.End()
+
 	// First, get all unique group/resource combinations in the store
 	groupResources, err := d.getGroupResources(ctx)
 	if err != nil {
@@ -629,6 +684,9 @@ func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource
 
 // processGroupResourceStats processes stats for a specific group/resource combination
 func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource GroupResource, namespace string, minCount int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.processGroupResourceStats")
+	defer span.End()
+
 	// Use ListRequestKey to construct the appropriate prefix
 	listKey := ListRequestKey{
 		Group:     groupResource.Group,
@@ -713,9 +771,13 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource
 // between different group/resource prefixes without iterating through all keys.
 // Results are cached to improve performance.
 func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.getGroupResources")
+	defer span.End()
+
 	// Check cache first
 	if cached, found := d.cache.Get(groupResourcesCacheKey); found {
 		if cachedResults, ok := cached.([]GroupResource); ok {
+			span.SetAttributes(attribute.Bool("cacheHit", true))
 			return cachedResults, nil
 		}
 	}
@@ -850,6 +912,11 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		return nil
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.applyBackwardsCompatibleChanges", trace.WithAttributes(
+		attribute.String("action", string(key.Action)),
+	))
+	defer span.End()
+
 	generation := event.Object.GetGeneration()
 	if key.Action == DataActionDeleted {
 		generation = 0
@@ -858,7 +925,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	// In compatibility mode, the previous RV, when available, is saved as a microsecond
 	// timestamp, as is done in the SQL backend.
 	previousRV := event.PreviousRV
-	if event.PreviousRV > 0 && isSnowflake(event.PreviousRV) {
+	if event.PreviousRV > 0 && IsSnowflake(event.PreviousRV) {
 		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
 	}
 
@@ -898,6 +965,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 				// This can only happen if a concurrent write was attempted: the validation in
 				// WriteEvent guarantees that we return early when the resource already exists
 				// before entering the transaction.
+				d.metrics.recordConflict(event)
 				return conflictError(event, "concurrent create attempts detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
@@ -918,7 +986,10 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, event, key); err != nil {
+		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
+			if isConflict {
+				d.metrics.recordConflict(event)
+			}
 			return err
 		}
 	case DataActionDeleted:
@@ -934,7 +1005,10 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, event, key); err != nil {
+		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
+			if isConflict {
+				d.metrics.recordConflict(event)
+			}
 			return err
 		}
 	}
@@ -942,19 +1016,19 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	return nil
 }
 
-func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) error {
+func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+		return false, fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
 	}
 	if rows == 1 {
-		return nil
+		return false, nil
 	}
 	if rows > 1 {
-		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
+		return false, fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	return conflictError(event, "requested RV does not match current RV")
+	return true, conflictError(event, "requested RV does not match current RV")
 }
 
 func isRowAlreadyExistsError(err error) bool {
@@ -989,6 +1063,9 @@ func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer d
 		return nil
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.deleteLegacyResourceCollection")
+	defer span.End()
+
 	_, err := dbutil.Exec(ctx, execer, sqlKVDeleteLegacyResourceCollection, sqlKVLegacyCollectionRequest{
 		SQLTemplate: sqltemplate.New(d.legacyDialect),
 		Namespace:   namespace,
@@ -1010,6 +1087,9 @@ func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db
 		return nil
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.dataStore.syncLegacyResourceFromHistory")
+	defer span.End()
+
 	_, err := dbutil.Exec(ctx, execer, sqlKVInsertLegacyResourceFromHistory, sqlKVLegacyCollectionRequest{
 		SQLTemplate: sqltemplate.New(d.legacyDialect),
 		Namespace:   namespace,
@@ -1022,9 +1102,9 @@ func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db
 	return nil
 }
 
-// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// IsSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
 // Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
 // to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
-func isSnowflake(rv int64) bool {
+func IsSnowflake(rv int64) bool {
 	return rv >= 1e18
 }

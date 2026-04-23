@@ -131,6 +131,7 @@ type SilencesEditorProps = {
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
   ruleUid?: string;
+  showCancelButton?: boolean;
 };
 
 /**
@@ -143,6 +144,7 @@ export const SilencesEditor = ({
   onSilenceCreated,
   onCancel,
   ruleUid,
+  showCancelButton = true,
 }: SilencesEditorProps) => {
   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.PreviewSilencedInstances
@@ -150,7 +152,7 @@ export const SilencesEditor = ({
   const canPreview = previewAlertsSupported && previewAlertsAllowed;
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
-  const formAPI = useForm({ defaultValues: formValues });
+  const formAPI = useForm<SilenceFormFields>({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
@@ -298,9 +300,11 @@ export const SilencesEditor = ({
               <Trans i18nKey="alerting.silences-editor.save-silence">Save silence</Trans>
             </Button>
           )}
-          <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
+          {showCancelButton && (
+            <LinkButton onClick={onCancelHandler} variant={'secondary'}>
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </LinkButton>
+          )}
         </Stack>
       </form>
     </FormProvider>

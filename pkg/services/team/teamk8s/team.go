@@ -723,7 +723,7 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 	return searchResult.Teams, nil
 }
 
-func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
 	ctx, span := s.tracer.Start(ctx, "team.getTeamIDsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
@@ -736,22 +736,22 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return []int64{}, nil
+			return []int64{}, []string{}, nil
 		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(bindings) == 0 {
-		return []int64{}, nil
+		return []int64{}, []string{}, nil
 	}
 
 	teamUIDs := make([]string, 0, len(bindings))
@@ -763,17 +763,19 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	ids := make([]int64, 0, len(teamsMap))
-	for _, t := range teamsMap {
+	uids := make([]string, 0, len(teamsMap))
+	for uid, t := range teamsMap {
 		if id := deprecatedInternalID(t); id != 0 {
 			ids = append(ids, id)
+			uids = append(uids, uid)
 		}
 	}
 
-	return ids, nil
+	return ids, uids, nil
 }
 
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {

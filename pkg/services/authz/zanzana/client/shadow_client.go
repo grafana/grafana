@@ -187,13 +187,13 @@ func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchC
 
 		if !ok {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
-			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID(), "namespace", req.Namespace)
+			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 			continue
 		}
 
 		if acResult.Allowed != zanzanaResult.Allowed {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
-			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID(), "namespace", req.Namespace)
+			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 		} else {
 			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 		}

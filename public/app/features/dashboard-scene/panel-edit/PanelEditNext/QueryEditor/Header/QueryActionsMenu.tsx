@@ -6,9 +6,14 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { QueryEditorType } from '../../constants';
 import { trackQueryMenuAction } from '../../tracking';
-import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryEditorTypeConfig,
+} from '../QueryEditorContext';
 
 export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
@@ -21,6 +26,7 @@ export function QueryActionsMenu() {
     toggleDatasourceHelp,
     cardType,
   } = useQueryEditorUIContext();
+  const typeConfig = useQueryEditorTypeConfig();
 
   const onOpenInspector = useCallback(() => {
     const dashboard = getDashboardSceneFor(panel);
@@ -31,7 +37,7 @@ export function QueryActionsMenu() {
     return null;
   }
 
-  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
+  const typeLabel = typeConfig[cardType].getLabel();
   const isExpression = cardType === QueryEditorType.Expression;
   const hasEditorHelp = !selectedQueryDsLoading && selectedQueryDsData?.datasource?.components?.QueryEditorHelp;
 

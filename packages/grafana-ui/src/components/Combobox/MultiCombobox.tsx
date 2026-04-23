@@ -30,7 +30,6 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
-  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -56,7 +55,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     customValueDescription,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
-    portalContainer,
     prefixIcon,
     id,
   } = props;
@@ -318,6 +316,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               }),
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+                // so that only the dropdown menu closes, not the parent.
+                if (event.key === 'Escape' && isOpen) {
+                  event.stopPropagation();
+                }
+              },
             })}
           />
 
@@ -344,7 +349,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal root={portalContainer}>
+      <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{
@@ -380,7 +385,17 @@ function getSelectedItemsFromValue<T extends string | number>(
   if (isComboboxOptions(value)) {
     return value;
   }
-  const valueMap = new Map(value.map((val, index) => [val, index]));
+  // Deduplicate values before building the map. Without dedup, duplicate keys
+  // cause Map to keep the last index, leaving earlier indices as undefined holes
+  // in resultingItems (sparse array), which crashes when label is accessed.
+  const valueMap = new Map<T, number>();
+  let index = 0;
+  for (const val of value) {
+    if (!valueMap.has(val)) {
+      valueMap.set(val, index);
+      index++;
+    }
+  }
   const resultingItems: Array<ComboboxOption<T>> = [];
 
   for (const option of options) {

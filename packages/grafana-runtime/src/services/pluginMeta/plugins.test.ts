@@ -106,7 +106,8 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`Something failed while resolving a cached promise`),
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
         {
           message: 'Failed to load plugin metas 500:Internal Server Error',
           stack: expect.any(String),
@@ -133,7 +134,8 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`Something failed while resolving a cached promise`),
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
         {
           message: 'Network Error',
           stack: expect.any(String),

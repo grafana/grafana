@@ -119,8 +119,8 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
-          start: request.range.from.valueOf(),
-          end: request.range.to.valueOf(),
+          start: request.range.from.toISOString(),
+          end: request.range.to.toISOString(),
           profile_type_id: 'cpu',
           label_selector: '{service="test"}',
           operation: 'execute',
@@ -326,8 +326,65 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
-          start: fromTime.valueOf(),
-          end: toTime.valueOf(),
+          start: fromTime.toISOString(),
+          end: toTime.toISOString(),
+          profile_type_id: 'cpu',
+          label_selector: '{service="test"}',
+          operation: 'execute',
+        },
+      });
+    });
+
+    it('should include profile_id when profileIdSelector is set', () => {
+      const request = createMockRequest([
+        {
+          refId: 'A0',
+          profileTypeId: 'cpu',
+          labelSelector: '{service="test"}',
+          profileIdSelector: ['7c9e6679-7425-40de-944b-e07fc1f90ae7'],
+        },
+      ]);
+
+      const dataFrame = createMockDataFrame('A0', 'flamegraph');
+      const response = createMockResponse([dataFrame]);
+
+      const mapper = enrichDataFrameWithAssistantContentMapper(request, 'TestDatasource');
+      mapper(response);
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        title: 'Analyze Flame Graph',
+        data: {
+          start: request.range.from.toISOString(),
+          end: request.range.to.toISOString(),
+          profile_type_id: 'cpu',
+          label_selector: '{service="test"}',
+          operation: 'execute',
+          profile_id: ['7c9e6679-7425-40de-944b-e07fc1f90ae7'],
+        },
+      });
+    });
+
+    it('should not include profile_id when profileIdSelector is empty', () => {
+      const request = createMockRequest([
+        {
+          refId: 'A0',
+          profileTypeId: 'cpu',
+          labelSelector: '{service="test"}',
+          profileIdSelector: [],
+        },
+      ]);
+
+      const dataFrame = createMockDataFrame('A0', 'flamegraph');
+      const response = createMockResponse([dataFrame]);
+
+      const mapper = enrichDataFrameWithAssistantContentMapper(request, 'TestDatasource');
+      mapper(response);
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        title: 'Analyze Flame Graph',
+        data: {
+          start: request.range.from.toISOString(),
+          end: request.range.to.toISOString(),
           profile_type_id: 'cpu',
           label_selector: '{service="test"}',
           operation: 'execute',

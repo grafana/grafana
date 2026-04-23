@@ -1272,6 +1272,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 		noReqContext   bool
 		expectErr      bool
 		expectIDs      []int64
+		expectUIDs     []string
 	}{
 		{
 			name:           "returns team IDs for user",
@@ -1279,6 +1280,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
 			serverResponse: membershipServerHandler(t),
 			expectIDs:      []int64{10},
+			expectUIDs:     []string{"team-uid-1"},
 		},
 		{
 			name:           "returns all team IDs when user is in multiple teams",
@@ -1286,6 +1288,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
 			serverResponse: multiMembershipServerHandler(t),
 			expectIDs:      []int64{10, 20},
+			expectUIDs:     []string{"team-uid-1", "team-uid-2"},
 		},
 		{
 			name:           "returns empty list when user has no bindings",
@@ -1293,6 +1296,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
 			serverResponse: membershipServerHandlerWithEmptyBindings(t),
 			expectIDs:      []int64{},
+			expectUIDs:     []string{},
 		},
 		{
 			name:           "returns empty list when user not found (matches legacy)",
@@ -1300,6 +1304,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 999},
 			serverResponse: userNotFoundHandler(t),
 			expectIDs:      []int64{},
+			expectUIDs:     []string{},
 		},
 		{
 			name:        "returns error when config provider not initialized",
@@ -1337,13 +1342,14 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
 			}
 
-			result, err := svc.GetTeamIDsByUser(ctx, tt.query)
+			ids, uids, err := svc.GetTeamIDsByUser(ctx, tt.query)
 			if tt.expectErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.ElementsMatch(t, tt.expectIDs, result)
+			assert.ElementsMatch(t, tt.expectIDs, ids)
+			assert.ElementsMatch(t, tt.expectUIDs, uids)
 		})
 	}
 }

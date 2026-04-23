@@ -127,7 +127,8 @@ export function useSidebar({
           return prevWidth;
         }
 
-        return clamp(prevWidth + diff, 100, 500);
+        const maxWidth = Math.max(window.innerWidth * 0.5, 500);
+        return clamp(prevWidth + diff, 100, maxWidth);
       });
     },
     [hasOpenPane, setCompact, setPaneWidth, compact]

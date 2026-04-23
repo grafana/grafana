@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
@@ -130,10 +131,8 @@ const organizeFields = async (
 
     for (const [fieldIndex, field] of frame.fields.entries()) {
       const isFirstField = (!isLevelFirstField && fieldIndex === 0) || (isLevelFirstField && fieldIndex === 1);
-      const baseConfig = {
-        ...fieldConfig.defaults,
-        ...field.config,
-      };
+      // Deep-merge so panel defaults (e.g. custom.filterable) survive when the field already has custom.* from applyFieldOverrides.
+      const baseConfig = merge({}, fieldConfig.defaults, field.config);
 
       const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig);
 
@@ -163,7 +162,7 @@ const organizeFields = async (
               : configAfterLevel.custom?.width,
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (

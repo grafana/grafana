@@ -15,6 +15,7 @@ import {
   type PanelState,
   type QueryEditorActions,
   QueryEditorProvider,
+  type QueryEditorTypeConfigState,
   type QueryEditorUIState,
   type QueryOptionsState,
   type QueryRunnerState,
@@ -144,6 +145,36 @@ export const mockTransformToggles = {
   toggleDebug: jest.fn(),
 };
 
+/**
+ * Mock typeConfig for tests - uses placeholder colors since tests don't need real theme values
+ */
+export const mockTypeConfig: QueryEditorTypeConfigState = {
+  [QueryEditorType.Query]: {
+    icon: 'database',
+    color: '#ff9800',
+    getLabel: () => 'Query',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Expression]: {
+    icon: 'calculator-alt',
+    color: '#9c27b0',
+    getLabel: () => 'Expression',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Transformation]: {
+    icon: 'process',
+    color: '#4caf50',
+    getLabel: () => 'Transformation',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    color: '#666',
+    getLabel: () => 'Alert',
+    deleteConfirmation: false,
+  },
+};
+
 interface CreateQueryEditorProviderOptions {
   queries?: DataQuery[];
   transformations?: Transformation[];
@@ -258,6 +289,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
         uiState={defaultUiState}
         actions={defaultActions}
         alertingState={defaultAlertingState}
+        typeConfig={mockTypeConfig}
       >
         {children}
       </QueryEditorProvider>
