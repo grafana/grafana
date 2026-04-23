@@ -10,6 +10,7 @@ import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyl
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
 import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
+import { SectionFiltersSet } from '../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -76,7 +77,8 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       if (
         sceneObject instanceof LinkEdit ||
         sceneObject instanceof DashboardLinksSet ||
-        sceneObject instanceof DashboardFiltersSet
+        sceneObject instanceof DashboardFiltersSet ||
+        sceneObject instanceof SectionFiltersSet
       ) {
         // Select directly via editPane.selectObject because these objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
