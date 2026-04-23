@@ -230,7 +230,7 @@ func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn fu
 
 	for {
 		list, err := client.List(ctx, metav1.ListOptions{
-			Limit:    10000, // Page size
+			Limit:    1000,
 			Continue: continueToken,
 		})
 		if err != nil {
