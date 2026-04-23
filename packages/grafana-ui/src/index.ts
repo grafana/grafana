@@ -81,17 +81,6 @@ export { FilterPill } from './components/FilterPill/FilterPill';
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
-export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export type {
-  CodeEditorProps as CodeMirrorEditorProps,
-  CodeEditorCompletionMode as CodeMirrorCompletionMode,
-} from './components/CodeMirror/CodeEditor';
-export type {
-  Completion as CodeMirrorCompletion,
-  CompletionContext as CodeMirrorCompletionContext,
-  CompletionResult as CodeMirrorCompletionResult,
-  CompletionSource as CodeMirrorCompletionSource,
-} from '@codemirror/autocomplete';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export {
   type Monaco,
