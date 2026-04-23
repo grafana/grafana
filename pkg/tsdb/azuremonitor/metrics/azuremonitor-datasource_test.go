@@ -602,100 +602,28 @@ func TestAzureMonitorParseResponseGrafanaSqlMultiResource(t *testing.T) {
 	avg2 := 5.0
 
 	azData := types.AzureMonitorResponse{
-		Value: []struct {
-			ID   string `json:"id"`
-			Type string `json:"type"`
-			Name struct {
-				Value          string `json:"value"`
-				LocalizedValue string `json:"localizedValue"`
-			} `json:"name"`
-			Unit       string `json:"unit"`
-			Timeseries []struct {
-				Metadatavalues []struct {
-					Name struct {
-						Value          string `json:"value"`
-						LocalizedValue string `json:"localizedValue"`
-					} `json:"name"`
-					Value string `json:"value"`
-				} `json:"metadatavalues"`
-				Data []struct {
-					TimeStamp time.Time `json:"timeStamp"`
-					Average   *float64  `json:"average,omitempty"`
-					Total     *float64  `json:"total,omitempty"`
-					Count     *float64  `json:"count,omitempty"`
-					Maximum   *float64  `json:"maximum,omitempty"`
-					Minimum   *float64  `json:"minimum,omitempty"`
-				} `json:"data"`
-			} `json:"timeseries"`
-		}{
+		Value: []types.AzureMetricValue{
 			{
-				Name: struct {
-					Value          string `json:"value"`
-					LocalizedValue string `json:"localizedValue"`
-				}{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+				Name: types.AzureMetricName{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
 				Unit: "Percent",
-				Timeseries: []struct {
-					Metadatavalues []struct {
-						Name struct {
-							Value          string `json:"value"`
-							LocalizedValue string `json:"localizedValue"`
-						} `json:"name"`
-						Value string `json:"value"`
-					} `json:"metadatavalues"`
-					Data []struct {
-						TimeStamp time.Time `json:"timeStamp"`
-						Average   *float64  `json:"average,omitempty"`
-						Total     *float64  `json:"total,omitempty"`
-						Count     *float64  `json:"count,omitempty"`
-						Maximum   *float64  `json:"maximum,omitempty"`
-						Minimum   *float64  `json:"minimum,omitempty"`
-					} `json:"data"`
-				}{
+				Timeseries: []types.AzureMetricTimeseries{
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg1}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg1}},
 					},
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg2}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg2}},
 					},
 				},
 			},
