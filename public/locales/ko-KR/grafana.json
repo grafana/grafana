@@ -6422,7 +6422,6 @@
         "save-library-panel": "라이브러리 패널 저장",
         "share": {
           "arrow": "공유",
-          "title": "공유",
           "tooltip": "링크 복사"
         },
         "unlink-library-panel": "라이브러리 패널 연결 해제"
@@ -8609,6 +8608,7 @@
         "copy-link": "링크를 로그 라인에 복사",
         "copy-to-clipboard": "클립보드로 복사",
         "inspect-value": "값 검사",
+        "show-details": "",
         "view-log-line": "로그 라인 보기"
       }
     },
@@ -11263,6 +11263,8 @@
       "fields-section": "필드",
       "hide-log-line": "로그 라인 숨기기",
       "inline-mode": "인라인 표시",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "링크 값",
       "links-section": "링크",
       "log-attributes-field": "로그 속성",
@@ -11511,13 +11513,13 @@
   "logstable": {
     "category-table": "로그 테이블",
     "description-show-controls": "테이블 제어 표시",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "각 행의 첫 번째 열에 있는 로그 라인 링크 버튼을 활성화/비활성화합니다.",
       "name": "로그 링크 복사 버튼 표시"
-    },
-    "show-inspect-button": {
-      "description": "각 행의 첫 번째 열에 있는 로그 라인 검사 버튼을 활성화/비활성화합니다.",
-      "name": "점검 버튼 표시"
     }
   },
   "manage-dashbaords": {
@@ -15839,6 +15841,7 @@
           "group-by": "그룹화 기준"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "무시됨",
       "placeholder-select-stats": "통계 선택"
     },
@@ -15850,6 +15853,16 @@
         "group-by": "그룹화 기준"
       },
       "title-calc-alert": "그룹화된 필드가 없는 경우 계산이 영향을 미치지 않습니다"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

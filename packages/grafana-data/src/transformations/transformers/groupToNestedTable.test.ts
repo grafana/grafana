@@ -585,6 +585,145 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
+  it('should include a field in the nested table when its rule has operation=aggregate but no reducers', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            // Aggregate rule with no reducers — unconfigured, so falls into nested table
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: GroupByOperationID.aggregate,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      // 'values' must NOT appear as an outer aggregated column
+      const outerValuesField = result[0].fields.find((f: Field) => f.name.includes('values'));
+      expect(outerValuesField).toBeUndefined();
+
+      // 'values' must appear as a raw field inside the nested table
+      const nestedField = result[0].fields.find((f: Field) => f.type === FieldType.nestedFrames);
+      expect(nestedField).toBeDefined();
+
+      const firstSubframe = nestedField!.values[0][0];
+      const valuesInSubframe = firstSubframe.fields.find((f: Field) => f.name === 'values');
+      expect(valuesInSubframe).toBeDefined();
+      expect(valuesInSubframe!.values).toEqual([1]);
+    });
+  });
+
+  it('should include a field in the nested table when its rule has a null operation', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            // Null operation — unconfigured, so falls into nested table
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: null,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      const nestedField = result[0].fields.find((f: Field) => f.type === FieldType.nestedFrames);
+      expect(nestedField).toBeDefined();
+
+      const firstSubframe = nestedField!.values[0][0];
+      const valuesInSubframe = firstSubframe.fields.find((f: Field) => f.name === 'values');
+      expect(valuesInSubframe).toBeDefined();
+      expect(valuesInSubframe!.values).toEqual([1]);
+    });
+  });
+
+  it('should include raw values in the nested table when keepNestedField is true on an aggregated field', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+            keepNestedField: true,
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      // 'values (sum)' must appear as an aggregated column in the outer frame
+      const sumField = result[0].fields.find((f: Field) => f.name === 'values (sum)');
+      expect(sumField).toBeDefined();
+      expect(sumField!.values).toEqual([1, 4]);
+
+      // 'values' raw data must also appear in every nested subframe
+      const nestedField = result[0].fields.find((f: Field) => f.type === FieldType.nestedFrames);
+      expect(nestedField).toBeDefined();
+
+      const firstSubframe = nestedField!.values[0][0];
+      const valuesInFirst = firstSubframe.fields.find((f: Field) => f.name === 'values');
+      expect(valuesInFirst).toBeDefined();
+      expect(valuesInFirst!.values).toEqual([1]);
+
+      const secondSubframe = nestedField!.values[1][0];
+      const valuesInSecond = secondSubframe.fields.find((f: Field) => f.name === 'values');
+      expect(valuesInSecond).toBeDefined();
+      expect(valuesInSecond!.values).toEqual([2, 2]);
+    });
+  });
+
   it('should not process frames when no group-by rule exists in V2 config', async () => {
     const testSeries = toDataFrame({
       name: 'A',

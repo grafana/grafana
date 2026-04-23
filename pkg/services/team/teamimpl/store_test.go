@@ -69,7 +69,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			var err error
 
 			setup := func() {
-				for i := 0; i < 5; i++ {
+				for i := range 5 {
 					userCmd = user.CreateUserCommand{
 						Email: fmt.Sprint("user", i, "@test.com"),
 						Name:  fmt.Sprint("user", i),
@@ -165,6 +165,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 				require.Equal(t, len(getIDResult), 1)
 				require.Equal(t, getIDResult[0], team1.ID)
+
 				require.Equal(t, len(getUIDResult), 1)
 				require.Equal(t, getUIDResult[0], team1.UID)
 			})

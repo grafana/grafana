@@ -377,7 +377,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.TeamIDs = nil
+		usr.TeamIDs = nil // nolint:staticcheck
 		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
@@ -754,7 +754,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.TeamIDs = usr.TeamIDs
+	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.Groups = usr.TeamUIDs
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled

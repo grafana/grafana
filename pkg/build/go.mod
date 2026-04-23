@@ -2,12 +2,6 @@ module github.com/grafana/grafana/pkg/build
 
 go 1.25.9
 
-// Override docker/docker to avoid:
-// go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
-// github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-// Updated to v28.5.2 to fix compatibility with testcontainers-go v0.40.0
-replace github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
-
 replace (
 	// TODO: remove these - the build system should not depend on Grafana code.
 	github.com/grafana/grafana/pkg/apimachinery => ../apimachinery
@@ -35,7 +29,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 )

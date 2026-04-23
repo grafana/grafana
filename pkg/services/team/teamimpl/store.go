@@ -361,13 +361,17 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	uids := make([]string, 0)
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.QueryRows(`SELECT tm.team_id, t.uid
+		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
 			FROM team_member as tm
-			WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID)
+			JOIN team ON team.id = tm.team_id
+			WHERE tm.user_id=? AND tm.org_id=?
+			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
 		if err != nil {
 			return err
 		}
-		defer rows.Close()
+		defer func() {
+			_ = rows.Close()
+		}()
 		var id int64
 		var uid string
 		for rows.Next() {
@@ -378,7 +382,7 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 			ids = append(ids, id)
 			uids = append(uids, uid)
 		}
-		return nil
+		return rows.Err()
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get team IDs by user: %w", err)

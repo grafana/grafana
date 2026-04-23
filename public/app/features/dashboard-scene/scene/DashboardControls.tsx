@@ -264,20 +264,23 @@ function DashboardControlActions({
   const canEditDashboard = dashboard.canEditDashboard();
   const canSave = Boolean(meta.canSave);
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
-  const hasUid = Boolean(uid);
+
+  const hasUid = Boolean(uid); // isNew
   const isSnapshot = Boolean(meta.isSnapshot);
   const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
+
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
+  const showSaveButton = isEditing && (canSave || canSaveAs);
+  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
 
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
-      {isEditing && (canSave || canSaveAs) && <SaveDashboard dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
-        <MakeDashboardEditableButton dashboard={dashboard} />
-      )}
+      {showSaveButton && <SaveDashboard dashboard={dashboard} />}
+      {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
+      {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
       {isPlaying && (
         <ButtonGroup>
           {!hidePlaylistNav && (

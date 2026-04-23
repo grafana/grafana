@@ -8,22 +8,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/heatmap"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/heatmap"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
-
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
@@ -89,7 +89,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 
 			// Heatmap handling
-			if qm.IncludeHeatmap && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
+			if qm.IncludeHeatmap && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
 				const maxHeatmapPoints = 64
 				timeRangeSec := query.TimeRange.To.Sub(query.TimeRange.From).Seconds()
 				minStepFromRange := timeRangeSec / maxHeatmapPoints
@@ -105,7 +105,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 
 			exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
-			if qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
+			if qm.IncludeExemplars && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
 				exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
 			}
 			seriesResp, err := d.client.GetSeries(
@@ -228,7 +228,7 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 		heatmapType = querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN
 	}
 
-	includeExemplars := qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle)
+	includeExemplars := qm.IncludeExemplars && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle)
 
 	heatmapResp, err := d.client.GetHeatmap(
 		ctx,
