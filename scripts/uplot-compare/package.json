@@ -1,8 +1,16 @@
 {
-  "name": "uplot-compare",
+  "name": "@grafana/uplot-compare",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "types": "./src/uplotComparePayloadType.ts",
+  "exports": {
+    ".": {
+      "types": "./src/uplotComparePayloadType.ts",
+      "import": "./src/uplotComparePayloadType.ts",
+      "default": "./src/uplotComparePayloadType.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,7 +19,6 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@grafana/test-utils": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -19,6 +26,7 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "jest-canvas-mock": "^2.5.2",
     "typescript": "~5.8.3",
     "vite": "^6.3.4"
   }

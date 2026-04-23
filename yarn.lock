@@ -4220,6 +4220,7 @@ __metadata:
   dependencies:
     "@grafana/api-clients": "workspace:*"
     "@grafana/runtime": "workspace:*"
+    "@grafana/uplot-compare": "workspace:*"
     "@openfeature/react-sdk": "npm:^1.2.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
@@ -4394,6 +4395,21 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
+  languageName: unknown
+  linkType: soft
+
+"@grafana/uplot-compare@workspace:*, @grafana/uplot-compare@workspace:^, @grafana/uplot-compare@workspace:scripts/uplot-compare":
+  version: 0.0.0-use.local
+  resolution: "@grafana/uplot-compare@workspace:scripts/uplot-compare"
+  dependencies:
+    "@types/react": "npm:^19.1.2"
+    "@types/react-dom": "npm:^19.1.2"
+    "@vitejs/plugin-react": "npm:^4.4.1"
+    jest-canvas-mock: "npm:^2.5.2"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    typescript: "npm:~5.8.3"
+    vite: "npm:^6.3.4"
   languageName: unknown
   linkType: soft
 
@@ -20789,6 +20805,7 @@ __metadata:
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "workspace:*"
+    "@grafana/uplot-compare": "workspace:^"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"
@@ -35233,21 +35250,6 @@ __metadata:
   checksum: 10/059f774300efb4b084a49293143c511f3ae946d40397b5c30914e900cd5691a12b8e61b41dd54ed73d3b56c8204165a0333107dd784ccf8f8c81790bcc423175
   languageName: node
   linkType: hard
-
-"uplot-compare@workspace:scripts/uplot-compare":
-  version: 0.0.0-use.local
-  resolution: "uplot-compare@workspace:scripts/uplot-compare"
-  dependencies:
-    "@grafana/test-utils": "workspace:*"
-    "@types/react": "npm:^19.1.2"
-    "@types/react-dom": "npm:^19.1.2"
-    "@vitejs/plugin-react": "npm:^4.4.1"
-    react: "npm:^19.1.0"
-    react-dom: "npm:^19.1.0"
-    typescript: "npm:~5.8.3"
-    vite: "npm:^6.3.4"
-  languageName: unknown
-  linkType: soft
 
 "uplot@npm:1.6.32":
   version: 1.6.32

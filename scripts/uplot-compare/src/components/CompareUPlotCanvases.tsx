@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { isUPlotComparePayload, type UPlotComparePayload } from '@grafana/test-utils/uplot-compare-payload';
-
-import type { ResolvedPayload } from '../types.ts';
+import { isUPlotComparePayload } from '../testUtils.ts';
+import type { ResolvedPayload, UPlotComparePayload } from '../types.ts';
 
 import { ComparePlots } from './ComparePlots.tsx';
 

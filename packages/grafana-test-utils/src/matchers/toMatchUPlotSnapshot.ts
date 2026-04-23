@@ -5,7 +5,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type uPlot from 'uplot';
 
-import { createUPlotComparePayloadBasename, type UPlotComparePayload } from '../uplotComparePayload';
+import { type UPlotComparePayload } from '@grafana/uplot-compare';
+
+import { createUPlotComparePayloadBasename } from '../uplotComparePayload';
 
 export type ToMatchSnapshotRest = Parameters<typeof toMatchSnapshot> extends [unknown, ...infer R] ? R : never;
 

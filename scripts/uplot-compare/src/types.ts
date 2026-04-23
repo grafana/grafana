@@ -4,6 +4,8 @@ import type { AlignedData } from 'uplot';
 import type { eventsToCanvasScript } from './canvasUtils.ts';
 import type { OVERLAY_BLEND_MODES } from './constants.ts';
 
+export type { UPlotComparePayload } from './exportedTypes.ts';
+
 export type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
 export type OverlayBlendMode = (typeof OVERLAY_BLEND_MODES)[number];
 

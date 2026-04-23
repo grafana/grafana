@@ -45,11 +45,6 @@
       "types": "./src/matchers/index.ts",
       "import": "./src/matchers/index.ts",
       "require": "./src/matchers/index.ts"
-    },
-    "./uplot-compare-payload": {
-      "types": "./src/uplotComparePayload.ts",
-      "import": "./src/uplotComparePayload.ts",
-      "require": "./src/uplotComparePayload.ts"
     }
   },
   "scripts": {
@@ -68,6 +63,7 @@
   },
   "devDependencies": {
     "@grafana/runtime": "workspace:*",
+    "@grafana/uplot-compare": "workspace:*",
     "@swc/core": "1.13.3",
     "@swc/jest": "^0.2.26",
     "@types/chance": "^1.1.7",

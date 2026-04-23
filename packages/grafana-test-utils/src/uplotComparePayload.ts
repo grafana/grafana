@@ -1,4 +1,3 @@
-import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 /** Stable prefix for payload files: `uplot-compare-payload-<slug>.json`. */
 export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload';
 
@@ -41,28 +40,4 @@ export function slugifyJestTestNameForFilename(testName: string): string {
 export function createUPlotComparePayloadBasename(testName: string): string {
   const slug = slugifyJestTestNameForFilename(testName);
   return `${UPLOT_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
-}
-
-export interface UPlotComparePayload {
-  testName: string;
-  expected: unknown;
-  actual: unknown;
-  uPlotData?: unknown;
-  uPlotSeries?: unknown;
-  uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
-  /** uPlot `width` / `height` (CSS px) for the test canvas; used by uplot-compare to size replay canvases */
-  width?: number;
-  height?: number;
-}
-
-/**
- * Narrow the payload type
- * @param value
- */
-export function isUPlotComparePayload(value: unknown): value is UPlotComparePayload {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-  const o = value as Record<string, unknown>;
-  return typeof o.testName === 'string' && 'expected' in o && 'actual' in o;
 }
