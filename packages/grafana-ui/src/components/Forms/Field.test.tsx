@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
+import { FieldNamePicker } from '../MatchersUI/FieldNamePicker';
 import { SecretInput } from '../SecretInput';
 import { SecretTextArea } from '../SecretTextArea';
 import { MultiSelect, Select } from '../Select/Select';
@@ -283,6 +284,28 @@ describe('Field', () => {
       );
 
       expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FieldNamePicker', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <FieldNamePicker value="foo" onChange={() => {}} item={{ id: 'foo', name: 'Foo' }} context={{ data: [] }} />
+        </Field>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <FieldNamePicker value="foo" onChange={() => {}} item={{ id: 'foo', name: 'Foo' }} context={{ data: [] }} />
+        </Field>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
