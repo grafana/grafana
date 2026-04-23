@@ -365,7 +365,7 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 			FROM team_member as tm
 			JOIN team ON team.id = tm.team_id
 			WHERE tm.user_id=? AND tm.org_id=?
-			ORDER BY tm.team_id`, query.UserID, query.OrgID)
+			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
 		if err != nil {
 			return err
 		}
