@@ -59,7 +59,7 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 | GitLab       | Cloud, Enterprise      | Personal Access Token               |
 | Bitbucket    | Cloud, Enterprise      | API token with scopes               |
 
-Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
+Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
 ### The Pure Git repository type
 
@@ -67,7 +67,9 @@ The Pure Git repository type uses the [Smart HTTP protocol v2](https://git-scm.c
 
 {{< admonition type="note" >}}
 
-Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported. Make sure your Git server supports protocol v2 over HTTPS.
+Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported.
+
+Make sure your Git server supports protocol v2 over HTTPS. Some providers, like Azure DevOps, only use v1 and are therefore not compatible with Git Sync.
 
 {{< /admonition >}}
 
@@ -116,7 +118,7 @@ When migrating existing dashboards, the folder structure will be replicated in t
 
 ### Use existing resources
 
-If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
+If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `gcx`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
 
 ### Restore resources
 

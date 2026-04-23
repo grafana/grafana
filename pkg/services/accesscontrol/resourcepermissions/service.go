@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -407,6 +410,17 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		}
 	}
 
+	// Write action set token for service accounts. Granular actions are also written until
+	// FlagOnlyStoreServiceAccountActionSets is enabled (after the backfill migration has run).
+	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
+		actions = append(actions, s.options.GetActionSetName(permission))
+
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.EvaluationContext{})
+		if onlyActionSets {
+			return actions, nil
+		}
+	}
+
 	// New resources with no legacy granular data go straight to action-set-only.
 	if s.options.Resource == accesscontrol.AlertingRoutesResource {
 		return []string{s.options.GetActionSetName(permission)}, nil
@@ -643,7 +657,8 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
-		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
+		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

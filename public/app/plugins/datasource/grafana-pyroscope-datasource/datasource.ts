@@ -130,6 +130,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       profileTypeId: '',
       groupBy: [],
       includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     };
   }
 

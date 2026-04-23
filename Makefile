@@ -150,12 +150,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -787,3 +783,5 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# Trivy was disabled in March, 2026. We'll unrequire it while we wait for it to be reenabled at org-level.
+	sed -i.bak '/- Workflow \.github\/workflows\/trivy-scan/d' .policy.yml; rm -f .policy.yml.bak

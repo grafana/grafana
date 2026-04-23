@@ -83,7 +83,7 @@ CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
 exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
 +4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
 u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
------END RSA PRIVATE KEY-----`
+-----END RSA PRIVATE KEY-----` // trufflehog:ignore
 
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
@@ -1077,6 +1077,17 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 func WithFolderAPIVersion(version string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
 	}
 }
 
@@ -2869,6 +2880,8 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 }
 
 // TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key
+//
+//nolint:gosec // Test RSA private key (base64-encoded, generated for testing purposes only, never used in production)
 func TestGithubPrivateKeyBase64() string {
 	return "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb1FJQkFBS0NBUUJuMU11TTVoSWZINmQzVE5TdEkxb2ZXdi9nY2pRNGpvaTljRmlqRXdWTHVQWWtGMW5ECktrU2JhTUdGVVdpT1RhQi9IOWZ4bWQvVjJ1MDRObEJZM2F2Nm01VC9zSGZWU2lFV0FFVWJsaDNjQTM0SFZDbUQKY3F5eVZ0eTVITEdKSmxTczJDN1cyeDd5VWM5SW16eURCc3lqcEtPWHVvako5d045YTE3RDJjWVU1V2tYam9EQwo0QkhpZDYxam45V0JUdFBaWFNnT2RpcndhaE56eFpRU0lQN0RBOVQ4eWlad0lXUHA1WWVzZ3NBUHlRTENGUGdNCnM3N3h6L0NFVW5FWVEzNXpJL2svbVFyd0tkUS9aUDh4THdRb2hVSUQwQkl4RTdHNXF1TDA2OVJ1dUNaV1prb0YKb1BpWmJwN0hTcnl6MSsxOWpEM3JGVDdlSEdVWXZBeUNuWG1YQWdNQkFBRUNnZ0VBRFNzNEJjN0lUWm8rS3l0YgpiZm9sM0FRMm44amNSckFOTjdtZ0JFN05SU1ZZVW91RG52VWxibkNDMnQzUVhQd0xkeFFhMTFHa3lnTFNRMmJnCkdlVkRncTFvNEdVSlRjdnhGbEZDY3BVL2hFQU5JL0RRc3hOQVEvNHdVR29MT2xIYU8zSFB2d0JibEhBNzBnR2UKVXgveHBHK2xNQUZBaUIwRUhFd1o0TTBtQ2xCRU9RdjNOemFGVFd1Qkh0SU1TOGVpZDdNMXE1cXo5K3JDZ1pTTApLQkJIbzBPdlViYWpHNENXbDhTTTZMVVlhcEFTR2crVTE3RSs0eEEzbnB3cElkc2srQ2J0WCt2dlgzMjRuNGtuCjBFa3JKcUNqdjhNMUtpQ0tBUCtVeHdQMDB5d3hPZzRQTit4K2RISS9JN3hCdkVLZS94NkJsdFZTZEdBK1BsVUsKMDJ3YWdRS0JnUURGN2dkUUxGSWFnUEg3WDdkQlA2cUVHeGovQ2s5UWR6M1MxZ290UGtWZXErMS9VdFFpallaMQpqNDR1cC8weUIyQjlQNGtXMDkxbitpV2N5Zm9VNVV3QnVhOWRIdkNaUDNRSDA1TFIxWnNjVUh4TEdqRFBCQVN0CmwyeFNxMGhxcU5XQnNwYjFNMGVDWTBZeGk2NWlEa2ozeHNJMmlOMzVCRWIxRmxXZFI1S0d2d0tCZ1FDR1MwY2UKd0FTV2JaSVBVMlVvS0dPUWtJSlU2UW1MeTBLWmJmWWtweWZFOEl4R3R0WVZFUThwdU52REROWldITmYrTFA4NQpjOGlWNlNmbldpTG11MVhrRzJZbUpGQkNDQVdnSjhNcTJYUUQ4RSthL3hjYVczTnFsY0M1K0kyY3pYMzY3ajNyCjY5d1pTeFJielIrRENmT2lJa3Jla0pJbXdOMTgzWll5MmNCYktRS0JnRmo4NklyU01tTzZINUZ0K2owNnU1WkQKZkp5RjdSejNUM053U2drSFd6YnlRNGdnSEVJZ3NSZy8zNlA0WVN6U0JqNnBoeUFkUndrTmZVV2R4WE1KbUgrYQpGVTdmcnpxblBhcWJKQUoxY0JSdDEwUUkxWEx0a3BEZGFKVk9idk9OVHRqT0MzTFlpRWtHQ3pRUlllaXlGWHBaCkFVNTFnSjhKbmtGb3RqdE5SNEtQQW9HQWVoVlJFRGxMY2wwbG5OMFpac3BneVBrMkltNi9pT0E5S1RIM3hCWloKWndXdTRGSXlpSEE3c3BnazRFcDVSMHR0WjlvTUkzU0ljdy9FZ09OR095OHV3L0hNaVB3V0loRWMzQjJKcFJpTwpDVTZiYjdKYWxGRnl1UUJ1ZGlIb3l4VmNZNVBWb3ZXRjMxQ0xyM0RvSnI0VFI5K1k1SC9VL1huellDSW8rdzFOCmV4RUNnWUJGQUdLWVRJZUdBdmhJdkQ1VHBoTHBiQ3llVkxCSXE1aFJ5cmRSWSs2SXdxZHI1UEd2TFBLd2luNSsKKzRDRGhXUFc0c3BxOE1ZUENSaU1ydlJTY3RLdC83RmhWR0wydkUvMFZZM1RjTGsxNHFMQysyKzBsblBWZ25Zbgp1NS93T3l1SHAxY0lCbmplTjQxL3BsdU9XRkJISTl4TFczRXhMdG1ZTWllY0o4VmRSQT09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==" // trufflehog:ignore
 }
@@ -2915,6 +2928,42 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	return helper
 }
 
+// RESTDo performs a REST request against the provisioning API and returns the
+// response as an unstructured map. The subpath is appended to
+// /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
+func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]interface{}) (map[string]interface{}, error) {
+	ns := h.Namespace
+	if ns == "" {
+		ns = "default"
+	}
+	absPath := fmt.Sprintf("/apis/provisioning.grafana.app/%s/namespaces/%s/%s", version, ns, subpath)
+
+	req := h.AdminREST.Verb(method).AbsPath(absPath)
+	if len(body) > 0 && body[0] != nil {
+		bodyBytes, err := json.Marshal(body[0])
+		if err != nil {
+			return nil, err
+		}
+		req = req.Body(bodyBytes).SetHeader("Content-Type", "application/json")
+	}
+
+	result := req.Do(context.Background())
+	if err := result.Error(); err != nil {
+		return nil, err
+	}
+
+	raw, err := result.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
 // LabelPendingDelete is the label key written by the tenant watcher to mark
 // resources whose namespace is pending deletion.
 const LabelPendingDelete = "cloud.grafana.com/pending-delete"
@@ -2923,7 +2972,7 @@ const LabelPendingDelete = "cloud.grafana.com/pending-delete"
 // It retries on 409 Conflict to handle concurrent status updates from the controller.
 func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
 	t.Helper()
-	err := RetryOnConflict(func() error {
+	err := RetryOnConflict(t, func() error {
 		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -2940,15 +2989,16 @@ func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, nam
 	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
 }
 
-// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
-// error (or nil on success).
-func RetryOnConflict(fn func() error) error {
-	var err error
-	for range 10 {
-		err = fn()
-		if !apierrors.IsConflict(err) {
-			return err
+// RetryOnConflict retries fn while it returns a 409 Conflict, using
+// EventuallyWithT so the retry window is time-bounded.
+func RetryOnConflict(t *testing.T, fn func() error) error {
+	t.Helper()
+	var lastErr error
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		lastErr = fn()
+		if apierrors.IsConflict(lastErr) {
+			c.Errorf("conflict error, retrying: %v", lastErr)
 		}
-	}
-	return err
+	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
+	return lastErr
 }

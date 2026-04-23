@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@types/react": "18.3.18",
-    "rollup": "^4.22.4",
+    "rollup": "^4.60.1",
     "rollup-plugin-copy": "3.5.0",
     "typescript": "6.0.2"
   },

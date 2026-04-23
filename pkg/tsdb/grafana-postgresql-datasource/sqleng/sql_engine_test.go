@@ -568,8 +568,8 @@ func TestConvertResultsToFrame(t *testing.T) {
 		require.Equal(t, 1, frame.Rows())
 	})
 
-	t.Run("convertResultsToFrame with no SELECT results", func(t *testing.T) {
-		// Create only non-SELECT results
+	t.Run("convertResultsToFrame with no row-returning results", func(t *testing.T) {
+		// UPDATE and INSERT have no FieldDescriptions, so should return an empty frame
 		result1 := &pgconn.Result{}
 		result1.CommandTag = pgconn.NewCommandTag("UPDATE 1")
 
@@ -583,6 +583,31 @@ func TestConvertResultsToFrame(t *testing.T) {
 		require.NotNil(t, frame)
 		require.Equal(t, 0, len(frame.Fields))
 		require.Equal(t, 0, frame.Rows())
+	})
+
+	t.Run("convertResultsToFrame with EXPLAIN ANALYZE result", func(t *testing.T) {
+		// EXPLAIN ANALYZE returns rows with a non-SELECT command tag ("EXPLAIN"),
+		// but has FieldDescriptions and should not be filtered out.
+		fieldDescs := []pgconn.FieldDescription{
+			{Name: "QUERY PLAN", DataTypeOID: pgtype.TextOID},
+		}
+		mockRows := [][][]byte{
+			{[]byte("Seq Scan on t  (cost=0.00..1.01 rows=1 width=4) (actual time=0.010..0.011 rows=1 loops=1)")},
+			{[]byte("Planning Time: 0.1 ms")},
+			{[]byte("Execution Time: 0.2 ms")},
+		}
+		result := &pgconn.Result{
+			FieldDescriptions: fieldDescs,
+			Rows:              mockRows,
+		}
+		result.CommandTag = pgconn.NewCommandTag("EXPLAIN")
+
+		frame, err := convertResultsToFrame([]*pgconn.Result{result}, 1000)
+		require.NoError(t, err)
+		require.NotNil(t, frame)
+		require.Equal(t, 1, len(frame.Fields))
+		require.Equal(t, "QUERY PLAN", frame.Fields[0].Name)
+		require.Equal(t, 3, frame.Rows())
 	})
 
 	t.Run("convertResultsToFrame with multiple results and row limit per result", func(t *testing.T) {
