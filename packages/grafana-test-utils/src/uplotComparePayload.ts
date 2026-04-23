@@ -1,7 +1,7 @@
 /** Stable prefix for payload files: `uplot-compare-payload-<slug>.json`. */
 export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload';
 
-const SLUG_MAX_LENGTH = 96;
+export const SLUG_MAX_LENGTH = 96;
 
 /**
  * Turn a Jest `currentTestName` into a short, filesystem-safe slug (ASCII, no path chars).
