@@ -100,6 +100,17 @@ describe('VariableControls', () => {
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
 
+  it('should render override variables instead of dashboard variable set when provided', async () => {
+    const dashboard = buildScene([new TextBoxVariable({ name: 'DashboardVar', hide: VariableHide.dontHide })]);
+    dashboard.activate();
+
+    const sectionVariable = new TextBoxVariable({ name: 'SectionAncestorVar', hide: VariableHide.dontHide });
+    render(<VariableControls dashboard={dashboard} variablesOverride={[sectionVariable]} />);
+
+    expect(await screen.findByText('SectionAncestorVar')).toBeInTheDocument();
+    expect(screen.queryByText('DashboardVar')).not.toBeInTheDocument();
+  });
+
   it('should hide local repeat variables in section controls', () => {
     const variableSet = new SceneVariableSet({
       variables: [

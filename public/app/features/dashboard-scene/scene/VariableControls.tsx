@@ -25,10 +25,17 @@ import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
-export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
-  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+export function VariableControls({
+  dashboard,
+  variablesOverride,
+}: {
+  dashboard: DashboardScene;
+  variablesOverride?: SceneVariable[];
+}) {
+  const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
