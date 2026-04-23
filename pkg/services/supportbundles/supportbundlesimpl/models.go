@@ -35,20 +35,23 @@ var (
 	}
 )
 
-func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
+// FixedRoleRegistrations returns the support bundle role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	grants := []string{string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}
+	return []accesscontrol.RoleRegistration{
+		{Role: bundleWriterRole, Grants: grants},
+		{Role: bundleReaderRole, Grants: grants},
+	}
+}
+
+func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
+	regs := FixedRoleRegistrations()
+
 	if s.serverAdminOnly {
-		grants = []string{accesscontrol.RoleGrafanaAdmin}
+		for i := range regs {
+			regs[i].Grants = []string{accesscontrol.RoleGrafanaAdmin}
+		}
 	}
 
-	bundleReader := accesscontrol.RoleRegistration{
-		Role:   bundleReaderRole,
-		Grants: grants,
-	}
-	bundleWriter := accesscontrol.RoleRegistration{
-		Role:   bundleWriterRole,
-		Grants: grants,
-	}
-
-	return ac.DeclareFixedRoles(bundleWriter, bundleReader)
+	return ac.DeclareFixedRoles(regs...)
 }

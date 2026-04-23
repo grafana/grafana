@@ -44,7 +44,10 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+// FixedRoleRegistrations returns the plugin integration role registrations.
+// The seeder seeds all roles unconditionally; the legacy DeclareRBACRoles
+// gates the maintainer grants on PluginAdminEnabled.
+func FixedRoleRegistrations() []ac.RoleRegistration {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -82,11 +85,21 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
+	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
+}
+
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+	regs := FixedRoleRegistrations()
+
 	if !cfg.PluginAdminEnabled {
-		PluginsMaintainer.Grants = []string{}
+		for i := range regs {
+			if regs[i].Role.Name == ac.FixedRolePrefix+"plugins:maintainer" {
+				regs[i].Grants = []string{}
+			}
+		}
 	}
 
-	return service.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
+	return service.DeclareFixedRoles(regs...)
 }
 
 var datasourcesActions = map[string]bool{

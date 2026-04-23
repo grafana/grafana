@@ -493,8 +493,9 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
-	fixedRoles := []accesscontrol.RoleRegistration{
+// FixedRoleRegistrations returns all alerting role registrations declared by this package.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
+	return []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
@@ -507,6 +508,8 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 	}
+}
 
-	return service.DeclareFixedRoles(fixedRoles...)
+func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
