@@ -49,8 +49,8 @@ function extractFromConfig(
 ): DatasourcePluginMetas {
   const seen: DatasourcePluginMetas = {};
   for (const ds of Object.values(configDatasources)) {
-    if (!seen[ds.type]) {
-      seen[ds.type] = ds.meta;
+    if (!seen[ds.meta.id]) {
+      seen[ds.meta.id] = ds.meta;
     }
   }
   return seen;

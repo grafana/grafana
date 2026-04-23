@@ -35,6 +35,9 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import dashboardPluginJson from 'app/plugins/datasource/dashboard/plugin.json';
+import grafanaPluginJson from 'app/plugins/datasource/grafana/plugin.json';
+import mixedPluginJson from 'app/plugins/datasource/mixed/plugin.json';
 
 import { pluginImporter } from './importer/pluginImporter';
 
@@ -225,7 +228,7 @@ export class DatasourceSrv implements DataSourceService {
 
     try {
       // check if we're dealing with a builtin default frontend data sources as // -- Grafana --, -- Mixed etc
-      const type = instanceSettings.type === 'datasource' ? instanceSettings.uid : instanceSettings.type;
+      const type = getTypeFromInstanceSetting(instanceSettings);
 
       // Fall back to instanceSettings.meta when the plugin meta lookup misses so that
       // runtime-registered datasources (which aren't in the plugin meta map) still load.
@@ -428,3 +431,23 @@ const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
+
+function getTypeFromInstanceSetting(instanceSettings: DataSourceInstanceSettings): string {
+  if (instanceSettings.type !== 'datasource') {
+    return instanceSettings.type;
+  }
+
+  if (instanceSettings.name === dashboardPluginJson.name) {
+    return dashboardPluginJson.id;
+  }
+
+  if (instanceSettings.name === grafanaPluginJson.name) {
+    return grafanaPluginJson.id;
+  }
+
+  if (instanceSettings.name === mixedPluginJson.name) {
+    return mixedPluginJson.id;
+  }
+
+  return '';
+}
