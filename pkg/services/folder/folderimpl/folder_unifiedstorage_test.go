@@ -160,6 +160,18 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/forbidden", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(`{
+										"kind": "Status",
+										"apiVersion": "v1",
+										"metadata": {},
+										"status": "Failure",
+										"code": 403
+										}`)
+	})
+
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/not-foo", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
@@ -300,7 +312,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			ctx = identity.WithRequester(context.Background(), noPermUsr)
 
 			f := folder.NewFolder("Folder", "")
-			f.UID = "foo"
+			f.UID = "forbidden"
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := folderService.Get(ctx, &folder.GetFolderQuery{
