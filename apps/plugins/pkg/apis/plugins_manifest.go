@@ -6,10 +6,10 @@
 package apis
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"

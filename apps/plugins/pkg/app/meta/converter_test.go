@@ -1,9 +1,9 @@
 package meta
 
 import (
-	"encoding/json"
 	"testing"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
