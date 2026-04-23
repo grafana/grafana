@@ -255,6 +255,12 @@ approval_rules:
             - .github/workflows/documentation-ci.yml
   - name: Workflow .github/workflows/feature-toggles-ci.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^pkg\/services\/featuremgmt\/(?:(?:[^/]*(?:/|$))*)$
+          - ^docs\/sources\/setup-grafana\/configure-grafana\/feature-toggles\/index\.md$
+          - ^packages\/grafana-data\/src\/types\/featureToggles\.gen\.ts$
+          - ^\.github\/workflows\/feature-toggles-ci\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/feature-toggles-ci\.yml$
@@ -268,6 +274,39 @@ approval_rules:
             - .github/workflows/feature-toggles-ci.yml
   - name: Workflow .github/workflows/frontend-lint.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^public\/(?:(?:[^/]*(?:/|$))*)$
+          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/dashboard\/pkg\/migration\/(?:(?:[^/]*(?:/|$))*)$
+          - ^(?:[^/]*)\.js$
+          - ^(?:[^/]*)\.jsx$
+          - ^(?:[^/]*)\.ts$
+          - ^(?:[^/]*)\.tsx$
+          - ^(?:[^/]*)\.css$
+          - ^(?:[^/]*)\.mjs$
+          - ^(?:[^/]*)\.cue$
+          - ^yarn\.lock$
+          - ^package\.json$
+          - ^\.prettier(?:[^/]*)$
+          - ^\.yarnrc\.yml$
+          - ^eslint\.config\.js$
+          - ^jest\.config\.js$
+          - ^nx\.json$
+          - ^tsconfig\.json$
+          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
+          - ^contribute\/(?:(?:[^/]*(?:/|$))*)$
+          - ^docs\/(?:(?:[^/]*(?:/|$))*)$
+          - ^(?:[^/]*)\.md$
+          - ^LICENSE$
+          - ^\.vale\.ini$
+          - ^pkg\/tests\/apis\/openapi_snapshots\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/validate-npm-packages\.sh$
+          - ^\.github\/actions\/change-detection\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-node\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/yarn-install\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/frontend-lint\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/frontend-lint\.yml$
@@ -294,6 +333,18 @@ approval_rules:
             - .github/workflows/go-lint.yml
   - name: Workflow .github/workflows/i18n-verify.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^public\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
+          - ^public\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
+          - ^packages\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
+          - ^packages\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
+          - ^(?:(?:[^/]*(?:/|$))*)locales\/(?:(?:[^/]*(?:/|$))*)$
+          - ^(?:(?:[^/]*(?:/|$))*)i18next\.config\.ts$
+          - ^\.nvmrc$
+          - ^package\.json$
+          - ^yarn\.lock$
+          - ^\.github\/workflows\/i18n-verify\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/i18n-verify\.yml$
@@ -657,6 +708,10 @@ approval_rules:
             - .github/workflows/run-schema-v2-e2e.yml
   - name: Workflow .github/workflows/shellcheck.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/shellcheck\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/shellcheck\.yml$
