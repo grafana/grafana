@@ -20,6 +20,8 @@ declare global {
        * Failed tests will generate a link to view the diff between canvas outputs
        * See public/app/plugins/panel/candlestick/utils.test.ts for an example
        *
+       * @param data
+       * @param series
        * @param uPlotEvents
        * @param size - optional canvas dimensions for the uplot-compare JSON payload
        * @param snapshotHint - optional Jest snapshot name passed to toMatchSnapshot
