@@ -14,7 +14,7 @@ const mockCodeEditor = jest.fn(({ value }: { value: string }) => {
 
 jest.mock('./CodeEditor', () => ({
   __esModule: true,
-  default: (props: { value: string }) => mockCodeEditor(props),
+  CodeEditor: (props: { value: string }) => mockCodeEditor(props),
 }));
 
 describe('CodeMirrorEditor lazy wrapper', () => {

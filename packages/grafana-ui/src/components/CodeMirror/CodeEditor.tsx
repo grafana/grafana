@@ -116,5 +116,3 @@ export const CodeEditor = memo(function CodeEditor({
     />
   );
 });
-
-export default CodeEditor;

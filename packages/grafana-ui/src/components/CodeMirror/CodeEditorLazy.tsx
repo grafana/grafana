@@ -7,7 +7,11 @@ import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
 import { type CodeEditorProps } from './CodeEditor';
 
-const CodeEditor = lazy(() => import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor'));
+const CodeEditor = lazy(() =>
+  import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor').then((module) => ({
+    default: module.CodeEditor,
+  }))
+);
 
 export function CodeMirrorEditor(props: CodeEditorProps) {
   return (

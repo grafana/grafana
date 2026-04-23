@@ -3,7 +3,7 @@ import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
-import CodeEditor from './CodeEditor';
+import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 import { CodeEditorLanguage } from './languageLoader';
 
