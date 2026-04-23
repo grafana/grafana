@@ -131,8 +131,8 @@ const LogLineDetailsTabs = memo(
         }
         replaceDetails(nextLog);
       }
-      document.addEventListener('keydown', handleKeydown);
-      return () => document.removeEventListener('keydown', handleKeydown);
+      document.addEventListener('keyup', handleKeydown);
+      return () => document.removeEventListener('keyup', handleKeydown);
     }, [currentLog, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {

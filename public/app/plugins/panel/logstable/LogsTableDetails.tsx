@@ -29,8 +29,16 @@ interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
 }
 
 export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone }: Props) => {
-  const { currentLog, closeDetails, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } =
-    useLogDetailsContext();
+  const {
+    currentLog,
+    closeDetails,
+    enableLogDetails,
+    logs,
+    replaceDetails,
+    setCurrentLog,
+    showDetails,
+    toggleDetails,
+  } = useLogDetailsContext();
   const [search, setSearch] = useState('');
   const [detailsWidth, setDetailsWidth] = useState(options.logDetailsWidth ?? getDefaultLogDetailsWidth());
   const { onAddAdHocFilter, app } = usePanelContext();
@@ -49,6 +57,30 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       document.removeEventListener('keyup', handleClose);
     };
   }, [closeDetails, showDetails.length]);
+
+  useEffect(() => {
+    function handleKeydown(e: KeyboardEvent) {
+      let delta: number;
+      if (e.key === 'ArrowDown') {
+        delta = 1;
+      } else if (e.key === 'ArrowUp') {
+        delta = -1;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      if (!currentLog || logs.indexOf(currentLog) < 0) {
+        return;
+      }
+      const nextLog = logs[logs.indexOf(currentLog) + delta];
+      if (!nextLog) {
+        return;
+      }
+      replaceDetails(nextLog);
+    }
+    document.addEventListener('keyup', handleKeydown);
+    return () => document.removeEventListener('keyup', handleKeydown);
+  }, [currentLog, logs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
