@@ -13150,6 +13150,7 @@
       "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -14103,7 +14104,6 @@
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
-      "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
       "remove-transformation-filter": "Remove filter",
@@ -14173,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max data points",
@@ -14183,6 +14184,7 @@
       "placeholder": {
         "no-limit": "No limit"
       },
+      "query-inspector": "Query inspector",
       "query-options": "Query Options"
     },
     "header": {
