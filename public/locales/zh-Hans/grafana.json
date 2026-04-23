@@ -6422,7 +6422,6 @@
         "save-library-panel": "保存库面板",
         "share": {
           "arrow": "分享",
-          "title": "分享",
           "tooltip": "复制链接"
         },
         "unlink-library-panel": "取消链接库面板"
@@ -8609,6 +8608,7 @@
         "copy-link": "将链接复制到日志行",
         "copy-to-clipboard": "复制到剪贴板",
         "inspect-value": "检查值",
+        "show-details": "",
         "view-log-line": "查看日志行"
       }
     },
@@ -11061,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "搜索受影响的数据面板",
       "update-all": "全部更新",
       "num-affected_other": "此更新将影响 <1>{{count}} 个数据面板。</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11257,6 +11263,8 @@
       "fields-section": "字段",
       "hide-log-line": "隐藏日志行",
       "inline-mode": "内联显示",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "链接值",
       "links-section": "关联",
       "log-attributes-field": "日志属性",
@@ -11505,13 +11513,13 @@
   "logstable": {
     "category-table": "日志表格",
     "description-show-controls": "显示表格控件",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "启用/禁用每一行第一列中的日志行链接按钮",
       "name": "显示“复制日志链接”按钮"
-    },
-    "show-inspect-button": {
-      "description": "启用/禁用每一行第一列中的日志行检查按钮",
-      "name": "显示“检查”按钮"
     }
   },
   "manage-dashbaords": {
@@ -12924,9 +12932,7 @@
       "update-available": "有更新！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "插件使用需要新的搜索索引，以便在各个数据面板中查找使用情况信息。请启用功能切换",
       "num-usages": "使用了 {{pluginName}} <2>{{numUsages}}</2> 次。",
-      "title-missing-feature-toggle-panel-title-search": "缺少功能切换：{{toggle}}",
       "title-not-used-yet": "{{pluginName}} 尚未在任何数据面板中使用"
     },
     "plugins-errors-info": {
@@ -15835,6 +15841,7 @@
           "group-by": "分组方式"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "已忽略",
       "placeholder-select-stats": "选择统计"
     },
@@ -15846,6 +15853,16 @@
         "group-by": "分组方式"
       },
       "title-calc-alert": "如果没有对字段进行分组，则计算不会产生效果"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

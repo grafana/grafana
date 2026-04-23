@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"google.golang.org/grpc/metadata"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
 const (
@@ -37,7 +39,7 @@ func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 // maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
 // x-prom-label-policy is exposed as X-Prom-Label-Policy.
 func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
-	cfg := backend.GrafanaConfigFromContext(ctx)
+	cfg := config.GrafanaConfigFromContext(ctx)
 	if cfg == nil || !cfg.FeatureToggles().IsEnabled("streamingForwardTeamHeadersTempo") {
 		return nil
 	}

@@ -131,6 +131,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.rulesAPIV2",
+        "resourceVersion": "1776193652999",
+        "creationTimestamp": "2026-04-14T19:07:32Z"
+      },
+      "spec": {
+        "description": "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-16T16:42:42Z"
@@ -716,6 +730,21 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRulesAPIV2",
+        "resourceVersion": "1776190542259",
+        "creationTimestamp": "2026-04-14T18:15:42Z",
+        "deletionTimestamp": "2026-04-14T19:07:32Z"
+      },
+      "spec": {
+        "description": "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4978,6 +5007,19 @@
     },
     {
       "metadata": {
+        "name": "reporting.pdfTablesFrontend",
+        "resourceVersion": "1775986360314",
+        "creationTimestamp": "2026-04-12T09:32:40Z"
+      },
+      "spec": {
+        "description": "Enables frontend-rendered table appendix pages in PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
@@ -5427,13 +5469,16 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1776767556250",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-21 10:32:36.250731 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
