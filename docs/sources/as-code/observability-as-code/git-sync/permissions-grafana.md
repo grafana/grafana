@@ -41,7 +41,7 @@ refs:
 
 # Git Sync permissions and access control
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
@@ -62,7 +62,7 @@ Git Sync integrates with the Grafana standard role-based permission model, which
 2. **Folder-level:** They also apply to all dashboards within it. Refer to [Folder permissions](ref:manage-folder-permissions) for more details.
 3. **Dashboard-level:** Refer to [Dashboard permissions](ref:manage-dashboard-permissions) for more details.
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 Dashboard-level permissions override folder-level permissions, which override organization-level roles.
 
@@ -164,7 +164,7 @@ When Git Sync creates a provisioned folder, it assigns these default permissions
 
 ### Modify folder-level permissions
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 To safely modify permissions, each provisioned folder should include a `.folder.json` metadata file with the folder's UID. Without this file, folder permissions may be lost if the folder is moved to a different path in the Git repository.
 
 For folders created from the Grafana UI, the metadata file is added automatically. If your folder is missing the metadata file, the UI shows a warning with instructions on how to add it.

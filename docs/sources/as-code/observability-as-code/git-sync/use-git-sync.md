@@ -29,7 +29,7 @@ refs:
 
 # Work with provisioned repositories in Git Sync
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
@@ -55,7 +55,7 @@ Use the **View** section to see detailed information about the current status of
 
 ### Troubleshoot synchronization
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 Before you proceed to troubleshoot, understand the [Usage and performance known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits/).
 
@@ -111,7 +111,7 @@ Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSIO
 
 ### Modify folder permissions
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID, which defines a stable folder ID used to set folder permissions. Without it, the folder's permissions will be lost if you move that folder to a different path in the Git repository.
 
 For new provisioned folders managed with Git Sync, the metadata file is added automatically if you created the folder from the Grafana UI. If your folder is missing the metadata file, you'll see a warning in the UI with instructions on how to add the missing metadata.
