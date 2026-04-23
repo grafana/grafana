@@ -346,6 +346,14 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch when dashboard has no uid (new dashboard)', async () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -441,6 +449,7 @@ describe('DashboardControls', () => {
 });
 
 function buildTestSceneWithEditable(options: {
+  hasUid?: boolean;
   editable?: boolean;
   isEditing?: boolean;
   canEdit?: boolean;
@@ -448,10 +457,18 @@ function buildTestSceneWithEditable(options: {
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
 }): DashboardControls {
-  const { editable = true, isEditing, canEdit = true, canSave, canMakeEditable = false, isSnapshot = false } = options;
+  const {
+    editable = true,
+    isEditing,
+    canEdit = true,
+    canSave,
+    canMakeEditable = false,
+    isSnapshot = false,
+    hasUid = true,
+  } = options;
 
   const dashboard = new DashboardScene({
-    uid: 'test-uid',
+    uid: hasUid ? 'test-uid' : undefined,
     editable,
     isEditing,
     meta: {

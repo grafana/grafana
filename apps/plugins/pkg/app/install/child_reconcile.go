@@ -139,7 +139,6 @@ type childReconcileResult struct {
 	observedGeneration int64
 	state              pluginsv0alpha1.PluginStatusOperatorStateState
 	description        *string
-	metricStatus       string
 }
 
 type childStoredState struct {
@@ -198,6 +197,11 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	}
 
 	outcome, shouldUpdateStatus, err := r.reconcileAction(ctx, req, plugin, stored)
+	if errors.Is(err, meta.ErrMetaNotFound) {
+		metrics.ChildReconciliationTotal.WithLabelValues(childReconciliationStatusSkippedMetaNotFound, actionLabel(req.Action), plugin.Spec.Id).Inc()
+		return operator.ReconcileResult{}, nil
+	}
+
 	if shouldUpdateStatus {
 		status := buildChildReconcilerStatus(plugin, outcome)
 		if childReconcilerStatusChanged(plugin.Status, status) {
@@ -207,12 +211,9 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		}
 	}
 
-	resultLabel := outcome.metricStatus
-	if resultLabel == "" {
-		resultLabel = childReconciliationStatusSuccess
-		if err != nil {
-			resultLabel = childReconciliationStatusError
-		}
+	resultLabel := childReconciliationStatusSuccess
+	if err != nil {
+		resultLabel = childReconciliationStatusError
 	}
 	metrics.ChildReconciliationTotal.WithLabelValues(resultLabel, actionLabel(req.Action), plugin.Spec.Id).Inc()
 
@@ -260,7 +261,7 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 	desiredChildren, err := r.getDesiredChildren(ctx, plugin)
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
-			return childReconcileResult{metricStatus: childReconciliationStatusSkippedMetaNotFound}, false, nil
+			return childReconcileResult{}, false, err
 		}
 
 		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceMetadataLookup, plugin, err)

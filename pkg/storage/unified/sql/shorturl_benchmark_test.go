@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/dskit/services"
 	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -74,7 +74,7 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			resp, err := runShortURLBulkProcessBenchmark(ctx, client, settings, requests)
 			require.NoError(b, err)
 			require.NotNil(b, resp)
@@ -158,7 +158,7 @@ func runShortURLBulkProcessBenchmark(
 
 func buildShortURLBulkRequests(count int) []*resourcepb.BulkRequest {
 	requests := make([]*resourcepb.BulkRequest, 0, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		name := fmt.Sprintf("bench-shorturl-%05d", i)
 		requests = append(requests, &resourcepb.BulkRequest{
 			Key: &resourcepb.ResourceKey{
