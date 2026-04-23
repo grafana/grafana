@@ -229,13 +229,21 @@ func TestPickBestSnapshot(t *testing.T) {
 		b := makeULID(t, now.Add(-20*time.Second))
 		c := makeULID(t, now.Add(-10*time.Second))
 		d := makeULID(t, now)
+
+		// Without d: c wins — same version as b but higher RV (200 > 50) despite an older
+		// upload timestamp, proving RV-desc beats upload-desc.
 		all := map[ulid.ULID]*IndexMeta{
 			a: snap("11.4.0", 200, 10*time.Minute), // lower version
-			b: snap("11.5.0", 50, time.Minute),     // best version, lowest RV
+			b: snap("11.5.0", 50, time.Minute),     // best version, lowest RV, newer upload
 			c: snap("11.5.0", 200, 30*time.Minute), // best version, high RV, older upload
-			d: snap("11.5.0", 200, time.Minute),    // best version, high RV, newest upload
 		}
 		got, ok := newBackend(24*time.Hour, minV).pickBestSnapshot(all, now)
+		require.True(t, ok)
+		assert.Equal(t, c, got.key)
+
+		// Adding d (same version + RV as c, newer upload): d wins via upload-desc tiebreaker.
+		all[d] = snap("11.5.0", 200, time.Minute)
+		got, ok = newBackend(24*time.Hour, minV).pickBestSnapshot(all, now)
 		require.True(t, ok)
 		assert.Equal(t, d, got.key)
 	})
