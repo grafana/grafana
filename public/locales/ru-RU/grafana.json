@@ -6515,7 +6515,6 @@
         "save-library-panel": "Сохранить панель библиотеки",
         "share": {
           "arrow": "Общий доступ",
-          "title": "Общий доступ",
           "tooltip": "Копировать ссылку"
         },
         "unlink-library-panel": "Отсоединить панель библиотеки"
@@ -8747,6 +8746,7 @@
         "copy-link": "Копировать ссылку в строку журнала",
         "copy-to-clipboard": "Копировать в буфер обмена",
         "inspect-value": "Проверить значение",
+        "show-details": "",
         "view-log-line": "Просмотр строки журнала"
       }
     },
@@ -11250,6 +11250,12 @@
       "num-affected_few": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_many": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_other": "Обновление затронет <1>{{count}} дашбордов.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11455,6 +11461,8 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -11703,13 +11711,13 @@
   "logstable": {
     "category-table": "Таблица журналов",
     "description-show-controls": "Отображение элементов управления таблицами",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
       "name": "Отображение кнопки копирования ссылки на журнал"
-    },
-    "show-inspect-button": {
-      "description": "Включает/отключает кнопку проверки строки журнала в первом столбце каждой строки",
-      "name": "Отображение кнопки проверки"
     }
   },
   "manage-dashbaords": {
@@ -13131,9 +13139,7 @@
       "update-available": "Доступно обновление"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Для использования плагина требуется новый индекс поиска, чтобы найти варианты использования на дашбордах. Включите переключатель функциональности",
       "num-usages": "Количество использований {{pluginName}}: <2>{{numUsages}}</2>.",
-      "title-missing-feature-toggle-panel-title-search": "Отсутствует переключатель функциональности: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} еще не используется ни на одном дашборде"
     },
     "plugins-errors-info": {
@@ -16108,6 +16114,7 @@
           "group-by": "Группировать по"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Пропущено",
       "placeholder-select-stats": "Выбрать статистику"
     },
@@ -16119,6 +16126,16 @@
         "group-by": "Группировать по"
       },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

@@ -819,7 +819,9 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should rename all references if name changes", func(t *testing.T) {
 			renamed := interval.Copy().(*v1beta1.TimeInterval)
-			renamed.Spec.Name += "-new"
+			// Use a unique suffix so the target name cannot collide with any
+			// leftover state in the stored Alertmanager configuration.
+			renamed.Spec.Name += "-" + util.GenerateShortUID()
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)

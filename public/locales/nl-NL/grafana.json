@@ -6453,7 +6453,6 @@
         "save-library-panel": "Bibliotheekpaneel",
         "share": {
           "arrow": "Delen",
-          "title": "Delen",
           "tooltip": "Link kopiëren"
         },
         "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
@@ -8655,6 +8654,7 @@
         "copy-link": "Link naar logboekregel kopiëren",
         "copy-to-clipboard": "Naar klembord kopiëren",
         "inspect-value": "Waarde inspecteren",
+        "show-details": "",
         "view-log-line": "Logregel bekijken"
       }
     },
@@ -11124,6 +11124,12 @@
       "update-all": "Alles bijwerken",
       "num-affected_one": "Deze update is van invloed op <1>{{count}} dashboards.</1>",
       "num-affected_other": "Deze update is van invloed op <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11323,6 +11329,8 @@
       "fields-section": "Velden",
       "hide-log-line": "Logregel verbergen",
       "inline-mode": "Inline weergave",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Linkwaarde",
       "links-section": "Links",
       "log-attributes-field": "Logattributen",
@@ -11571,13 +11579,13 @@
   "logstable": {
     "category-table": "Logtabel",
     "description-show-controls": "Besturingselementen van tabel weergeven",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Schakelt de knop voor de logregellink in de eerste kolom van elke rij in/uit",
       "name": "Knop voor kopiëren van loglink weergeven"
-    },
-    "show-inspect-button": {
-      "description": "Schakelt de knop 'Logregel inspecteren' in de eerste kolom van elke rij in/uit",
-      "name": "Knop Inspecteren weergeven"
     }
   },
   "manage-dashbaords": {
@@ -12993,9 +13001,7 @@
       "update-available": "Er is een update beschikbaar."
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Gebruik van plug-ins vereist de nieuwe zoekindex om gebruik over dashboards te vinden. Schakel de functieschakelaar in",
       "num-usages": "{{pluginName}} wordt <2>{{numUsages}}</2> keer gebruikt.",
-      "title-missing-feature-toggle-panel-title-search": "Ontbrekende functieschakelaar: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wordt nog niet gebruikt in een dashboard"
     },
     "plugins-errors-info": {
@@ -15926,6 +15932,7 @@
           "group-by": "Groeperen op"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Genegeerd",
       "placeholder-select-stats": "Selecteer statistieken"
     },
@@ -15937,6 +15944,16 @@
         "group-by": "Groeperen op"
       },
       "title-calc-alert": "Berekeningen hebben geen effect als er geen velden worden gegroepeerd"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

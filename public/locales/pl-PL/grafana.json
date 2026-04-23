@@ -6515,7 +6515,6 @@
         "save-library-panel": "Zapisz panel biblioteki",
         "share": {
           "arrow": "Udostępnij",
-          "title": "Udostępnij",
           "tooltip": "Kopiuj link"
         },
         "unlink-library-panel": "Rozłącz panel biblioteki"
@@ -8747,6 +8746,7 @@
         "copy-link": "Kopiuj link do wiersza logu",
         "copy-to-clipboard": "Kopiuj do schowka",
         "inspect-value": "Sprawdź wartość",
+        "show-details": "",
         "view-log-line": "Wyświetl wiersz logu"
       }
     },
@@ -11250,6 +11250,12 @@
       "num-affected_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11455,6 +11461,8 @@
       "fields-section": "Pola",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Wartość linku",
       "links-section": "Linki",
       "log-attributes-field": "Atrybuty logów",
@@ -11703,13 +11711,13 @@
   "logstable": {
     "category-table": "Tabela logów",
     "description-show-controls": "Wyświetl opcje tabeli",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Włącza/wyłącza przycisk linku do wiersza logu w pierwszej kolumnie każdego wiersza",
       "name": "Pokaż przycisk kopiowania linku do logu"
-    },
-    "show-inspect-button": {
-      "description": "Włącza/wyłącza przycisk sprawdzania wiersza logu w pierwszej kolumnie każdego wiersza",
-      "name": "Pokaż przycisk sprawdzania"
     }
   },
   "manage-dashbaords": {
@@ -13131,9 +13139,7 @@
       "update-available": "Dostępna aktualizacja!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Wtyczka wymaga nowego indeksu wyszukiwania, aby można było znaleźć informacje o jej wykorzystaniu na różnych pulpitach. Włącz przełącznik funkcji",
       "num-usages": "Wtyczka {{pluginName}} została użyta <2>{{numUsages}}</2> razy.",
-      "title-missing-feature-toggle-panel-title-search": "Brak przełącznika funkcji: {{toggle}}",
       "title-not-used-yet": "Wtyczka {{pluginName}} nie jest jeszcze używana w żadnych pulpitach"
     },
     "plugins-errors-info": {
@@ -16108,6 +16114,7 @@
           "group-by": "Grupuj według"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorowane",
       "placeholder-select-stats": "Wybierz statystyki"
     },
@@ -16119,6 +16126,16 @@
         "group-by": "Grupuj według"
       },
       "title-calc-alert": "Obliczenia nie będą miały żadnego wpływu, jeśli nie zostaną pogrupowane żadne pola"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

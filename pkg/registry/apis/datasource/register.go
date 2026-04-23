@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
 var (
@@ -166,8 +165,8 @@ func getHardcodedQueryTypes(pluginId string) (*datasourceV0.QueryTypeDefinitionL
 	var err error
 	var raw json.RawMessage
 	switch pluginId {
-	case "grafana-testdata-datasource":
-		raw, err = kinds.QueryTypeDefinitionListJSON()
+	// case "grafana-testdata-datasource":
+	// 	raw, err = kinds.QueryTypeDefinitionListJSON()
 	case "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
 	}

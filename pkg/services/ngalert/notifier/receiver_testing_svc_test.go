@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -51,11 +52,13 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}
 	encryptionServiceFake := secrets_fakes.NewFakeSecretsService()
 	authz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false)
+	emailValidator := &FakeEmailValidator{}
 	svc := &ReceiverTestingService{
 		receiverSvc:       receiverSvcFake,
 		amProvider:        amProviderFake,
 		encryptionService: encryptionServiceFake,
 		authz:             authz,
+		emailValidator:    emailValidator,
 	}
 
 	userAuthorizedToCreate := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleNone, Permissions: map[int64]map[string][]string{
@@ -76,10 +79,27 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 
 	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
+	validEmailIntegration := models.IntegrationGen(
+		models.IntegrationMuts.WithUID(""),
+		models.IntegrationMuts.WithValidConfig(schema.EmailType),
+		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
+		models.IntegrationMuts.WithName("valid"),
+	)()
+	invalidEmailIntegration := models.IntegrationGen(
+		models.IntegrationMuts.WithUID(""),
+		models.IntegrationMuts.WithValidConfig(schema.EmailType),
+		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@org.com"}),
+	)()
 
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
-	// endregion setup
+
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+		if integration.Name == validEmailIntegration.Name {
+			return nil
+		}
+		return fmt.Errorf("email address is not allowed")
+	}
 
 	testCases := []struct {
 		name                string
@@ -116,6 +136,17 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			allowedIntegrations: map[schema.IntegrationType]struct{}{schema.EmailType: {}},
 			expectedErr:         models.ErrReceiverTestingInvalidIntegrationBase,
 		},
+		{
+			name:        "email validation passes",
+			integration: &validEmailIntegration,
+			user:        userAuthorizedToCreate,
+		},
+		{
+			name:        "email validation fails",
+			integration: &invalidEmailIntegration,
+			user:        userAuthorizedToCreate,
+			expectedErr: models.ErrReceiverInvalidBase,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -139,7 +170,6 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 }
 
 func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
-	// region setup
 	alert := Alert{
 		Labels: map[string]string{
 			"alertName": "test",
@@ -185,6 +215,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		amProvider:        amProviderFake,
 		encryptionService: encryptionServiceFake,
 		authz:             authz,
+		emailValidator:    &NoopOrgEmailValidator{},
 	}
 
 	expectedAlert, err := convertToAlertParam(alert)
@@ -197,7 +228,6 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 			accesscontrol.ActionAlertingReceiversUpdate:     []string{models.ScopeReceiversAll},
 		},
 	}}
-	// endregion setup
 
 	testCases := []struct {
 		name           string
