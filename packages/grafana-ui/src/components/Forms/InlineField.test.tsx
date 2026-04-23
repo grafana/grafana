@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
+import { Cascader } from '../Cascader/Cascader';
 import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
@@ -328,6 +329,28 @@ describe('InlineField', () => {
       );
 
       expect(screen.getByRole('combobox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Cascader', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <Cascader options={[]} onSelect={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <Cascader options={[]} onSelect={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
