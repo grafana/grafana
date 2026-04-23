@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { Cascader } from '../Cascader/Cascader';
 import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
+import { FileDropzone } from '../FileDropzone/FileDropzone';
 import { FilterInput } from '../FilterInput/FilterInput';
 import { Input } from '../Input/Input';
 import { FieldNamePicker } from '../MatchersUI/FieldNamePicker';
@@ -352,6 +353,18 @@ describe('Field', () => {
       );
 
       expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FileDropzone', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <FileDropzone />
+        </Field>
+      );
+
+      expect(screen.getByLabelText('My label')).toBeInTheDocument();
     });
   });
 
