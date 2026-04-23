@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -871,6 +872,79 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
+}
+
+func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	var webhookCreateCalls atomic.Int32
+
+	repoFactory := helper.GetEnv().GithubRepoFactory
+	repoFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "Branch not protected",
+				}))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("[]"))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostReposHooksByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				webhookCreateCalls.Add(1)
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "failed to create webhook",
+				}))
+			}),
+		),
+	)
+	helper.SetGithubRepositoryFactory(repoFactory)
+
+	repoName := "webhook-create-failure-cooldown"
+	input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"SyncEnabled":   false,
+		"WorkflowsJSON": `["write"]`,
+		"Token":         "test-token",
+	})
+	input.Object["spec"].(map[string]any)["webhook"] = map[string]any{
+		"baseUrl": "https://grafana.example.com",
+	}
+
+	_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	t.Cleanup(func() {
+		_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+	})
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
+		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
+	}, 30*time.Second, 200*time.Millisecond, "repository should record the initial webhook failure")
+
+	require.Never(t, func() bool {
+		return webhookCreateCalls.Load() > 1
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
 }
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
