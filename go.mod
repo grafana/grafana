@@ -34,7 +34,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.5 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.51.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.65.0 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.225.2 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/data-sources-plugins
@@ -347,7 +347,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.3 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.15 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.3 // indirect
