@@ -401,7 +401,7 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend;
+    const useNewApi = getFeatureFlagClient().getBooleanValue('datasourcesApiServerEnableHealthEndpointFrontend', false);
     const healthCheckURL = useNewApi
       ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

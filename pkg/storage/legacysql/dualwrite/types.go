@@ -36,8 +36,6 @@ type StorageStatus struct {
 //
 //go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
-	ShouldManage(gr schema.GroupResource) bool
-
 	// Create a managed k8s storage instance
 	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)
 
@@ -46,9 +44,6 @@ type Service interface {
 
 	// Get status details for a Group/Resource
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)
-
-	// Start a migration process (writes will be locked)
-	StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error)
 
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)

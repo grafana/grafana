@@ -80,7 +80,7 @@ func (f *failOnceBatchDeleteKV) Batch(ctx context.Context, section string, ops [
 func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore, *PendingDeleteStore) {
 	t.Helper()
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	cfg := TenantDeleterConfig{
 		DryRun:   dryRun,
@@ -105,6 +105,34 @@ func pastTime() string {
 
 func futureTime() string {
 	return time.Now().UTC().Add(1 * time.Hour).Format(time.RFC3339)
+}
+
+// TestRunDeletionPass_SkipsAlreadyDeleted verifies that a tenant with DeletedAt
+// set is not processed again.
+func TestRunDeletionPass_SkipsAlreadyDeleted(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, false)
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
+		DeleteAfter: pastTime(),
+		DeletedAt:   pastTime(),
+	}))
+
+	td.runDeletionPass(t.Context())
+
+	// Data should still be present because the record was already marked deleted.
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 1, count, "resource should still exist for already-deleted record")
 }
 
 // TestRunDeletionPass_SkipsNotExpired verifies that a tenant with a future
@@ -139,7 +167,7 @@ func TestRunDeletionPass_SkipsNotExpired(t *testing.T) {
 }
 
 // TestRunDeletionPass_DeletesExpired verifies that all resource keys for an
-// expired tenant are removed, and the pending-delete record is also removed.
+// expired tenant are removed, and the pending-delete record is marked with DeletedAt.
 func TestRunDeletionPass_DeletesExpired(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
@@ -165,9 +193,10 @@ func TestRunDeletionPass_DeletesExpired(t *testing.T) {
 	}
 	assert.Equal(t, 0, count, "resources should have been deleted for expired tenant")
 
-	// Pending delete record should be gone.
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	// Pending delete record should have DeletedAt set.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
 // TestRunDeletionPass_PreservesOtherTenants verifies that only the expired
@@ -214,12 +243,14 @@ func TestRunDeletionPass_PreservesOtherTenants(t *testing.T) {
 	}
 	assert.Equal(t, 1, count2, "second tenant resources should remain")
 
-	// First tenant's pending delete record gone; second tenant's record still exists.
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	// First tenant's pending delete record should have DeletedAt set; second tenant's record should not.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set for deleted tenant")
 
-	_, err = pds.Get(t.Context(), testStacksNS2)
-	assert.NoError(t, err)
+	record2, err := pds.Get(t.Context(), testStacksNS2)
+	require.NoError(t, err)
+	assert.Empty(t, record2.DeletedAt, "DeletedAt should not be set for non-expired tenant")
 }
 
 // TestRunDeletionPass_DryRun verifies that dry-run mode does not delete any
@@ -248,14 +279,15 @@ func TestRunDeletionPass_DryRun(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "data should not be deleted in dry-run mode")
 
-	// Pending delete record should still exist.
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.NoError(t, err)
+	// Pending delete record should still exist without DeletedAt.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.Empty(t, record.DeletedAt, "DeletedAt should not be set in dry-run mode")
 }
 
-// TestRunDeletionPass_NoDataCleansUpRecord verifies that an expired tenant
-// with no resource data still has its pending-delete record removed.
-func TestRunDeletionPass_NoDataCleansUpRecord(t *testing.T) {
+// TestRunDeletionPass_NoDataSetsDeletedAt verifies that an expired tenant
+// with no resource data still has its pending-delete record marked with DeletedAt.
+func TestRunDeletionPass_NoDataSetsDeletedAt(t *testing.T) {
 	td, _, pds := newTestTenantDeleter(t, false)
 
 	// No resources saved — only a pending-delete record.
@@ -265,13 +297,14 @@ func TestRunDeletionPass_NoDataCleansUpRecord(t *testing.T) {
 
 	td.runDeletionPass(t.Context())
 
-	// Pending delete record should be removed.
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	// Pending delete record should have DeletedAt set.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
 // TestRunDeletionPass_IdempotentRerun verifies that running a deletion pass
-// twice is safe — the second pass is a no-op.
+// twice is safe — the second pass skips the already-deleted tenant.
 func TestRunDeletionPass_IdempotentRerun(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
@@ -282,13 +315,14 @@ func TestRunDeletionPass_IdempotentRerun(t *testing.T) {
 		DeleteAfter: pastTime(),
 	}))
 
-	// First pass deletes everything.
+	// First pass deletes everything and sets DeletedAt.
 	td.runDeletionPass(t.Context())
 
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	require.ErrorIs(t, err, ErrNotFound)
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.NotEmpty(t, record.DeletedAt)
 
-	// Second pass should be a no-op (no record, no data).
+	// Second pass should be a no-op (record has DeletedAt).
 	td.runDeletionPass(t.Context())
 
 	// Verify data is still gone.
@@ -314,7 +348,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	realKV := setupBadgerKV(t)
 	faultyKV := &failOnceBatchDeleteKV{KV: realKV, failOnCall: 2}
 
-	ds := newDataStore(faultyKV)
+	ds := newDataStore(faultyKV, nil)
 	pds := newPendingDeleteStore(realKV)
 	cfg := TenantDeleterConfig{
 		DryRun:   false,
@@ -364,9 +398,10 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	}
 	assert.Equal(t, 1, podCount, "pods should survive the failed first pass")
 
-	// Pending-delete record must still exist (deleteTenant returned an error).
-	_, err := pds.Get(t.Context(), testStacksNS1)
+	// Pending-delete record must still exist without DeletedAt (deleteTenant returned an error).
+	record, err := pds.Get(t.Context(), testStacksNS1)
 	require.NoError(t, err, "pending-delete record should survive after partial failure")
+	assert.Empty(t, record.DeletedAt, "DeletedAt should not be set after partial failure")
 
 	// Second pass: no more injected failures — should finish the job.
 	td.runDeletionPass(t.Context())
@@ -380,8 +415,9 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	}
 	assert.Equal(t, 0, podCount, "pods should be deleted after retry pass")
 
-	_, err = pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound, "pending-delete record should be removed after retry")
+	record, err = pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err, "pending-delete record should still exist after retry")
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful retry")
 }
 
 // TestRunDeletionPass_DataWithoutPendingRecord verifies that tenant data is
@@ -444,14 +480,15 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 		assert.Equal(t, 0, count, "resources for %s/%s should have been deleted", gr.group, gr.resource)
 	}
 
-	// Pending delete record should also be removed.
-	_, err = pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	// Pending delete record should have DeletedAt set.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
-// TestRunDeletionPass_DeletesExpiredForceRecord verifies that the deleter can
-// delete tenant data and remove the pending-delete record even when Force=true.
-func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
+// TestRunDeletionPass_DeletesExpiredOrphanedRecord verifies that the deleter
+// removes both tenant data and the pending-delete record for orphaned tenants.
+func TestRunDeletionPass_DeletesExpiredOrphanedRecord(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
@@ -459,7 +496,7 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter:      pastTime(),
 		LabelingComplete: true,
-		Force:            true,
+		Orphaned:         true,
 	}))
 
 	td.runDeletionPass(t.Context())
@@ -474,17 +511,18 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 		require.NoError(t, err)
 		count++
 	}
-	assert.Equal(t, 0, count, "force record resources should be deleted when expired")
+	assert.Equal(t, 0, count, "orphaned record resources should be deleted when expired")
 
+	// Orphaned records are removed entirely after cleanup.
 	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	assert.Error(t, err, "orphaned pending-delete record should be removed after cleanup")
 }
 
 // TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus verifies local deletion when
 // GCOM returns HTTP 200 with status "deleted".
 func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -515,15 +553,16 @@ func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 	}
 	assert.Equal(t, 0, count)
 
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.ErrorIs(t, err, ErrNotFound)
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
 // TestRunDeletionPass_SkipsWhenGcomInstanceStillExists verifies that local data is
 // not removed while GCOM still returns the stack instance.
 func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -562,7 +601,7 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 // does not delete local data (fail-safe on outage or permission errors).
 func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -601,7 +640,7 @@ func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 // do not call GCOM and do not delete local data.
 func TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	called := false
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{

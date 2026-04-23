@@ -24,6 +24,10 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource permission name: %s", err))
 	}
 
+	if grn.Name == "*" {
+		return apierrors.NewBadRequest(`resource name "*" is not valid: resource permissions must target a specific resource`)
+	}
+
 	// Validate that the group/resource/name in the name matches the spec
 	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
 		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
@@ -57,6 +61,10 @@ func ValidateDeleteInput(ctx context.Context, name string, mappers *MappersRegis
 	grn, err := splitResourceName(name)
 	if err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource permission name: %s", err))
+	}
+
+	if grn.Name == "*" {
+		return apierrors.NewBadRequest(`resource name "*" is not valid: resource permissions must target a specific resource`)
 	}
 
 	// Check that the group/resource is registered and enabled

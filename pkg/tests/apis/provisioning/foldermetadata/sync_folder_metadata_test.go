@@ -34,9 +34,9 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	t.Run("single folder", func(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "missing-folder-meta-single"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Dashboard inside a folder that intentionally has no _folder.json
 				"../testdata/all-panels.json": "myfolder/dashboard.json",
@@ -74,9 +74,9 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	t.Run("multiple folders", func(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "missing-folder-meta-multi"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Two dashboards in separate folders, neither has a _folder.json
 				"../testdata/all-panels.json":    "folderA/dashboard1.json",
@@ -120,9 +120,9 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	t.Run("completed with warnings", func(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "folder-meta-with-warnings"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Dashboard in folder without _folder.json → MissingFolderMetadata
 				"../testdata/all-panels.json": "myfolder/dashboard.json",
@@ -202,9 +202,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		// Write _folder.json with a custom title different from the directory name.
 		writeToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-1", "My Team Display Name"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-team/dashboard.json",
 			},
@@ -224,9 +224,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		// Write _folder.json with an empty title — should fall back to directory name.
 		writeToProvisioningPath(t, helper, "reports/_folder.json", folderMetadataJSON("stable-uid-2", ""))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "reports/dashboard.json",
 			},
@@ -243,9 +243,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-absent"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "analytics/dashboard.json",
 			},
@@ -265,9 +265,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent Display"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child Display"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -287,9 +287,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		writeToProvisioningPath(t, helper, "old-dir/_folder.json", folderMetadataJSON("stable-uid-rename", "My Team"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "old-dir/dashboard.json",
 			},
@@ -315,9 +315,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "full-sync-no-meta-rename"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Folder has no _folder.json — title defaults to directory name.
 				"../testdata/all-panels.json": "old-name/dashboard.json",
@@ -378,9 +378,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		metadataContent := folderMetadataJSON("checksum-uid-1", "Checksum Folder")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -398,9 +398,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "full-sync-no-meta-checksum"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "plain-folder/dashboard.json",
 			},
@@ -443,9 +443,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		writeToProvisioningPath(t, helper, "parent/_folder.json", parentContent)
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", childContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -471,9 +471,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 		originalContent := folderMetadataJSON("title-update-uid", "Old Title")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -502,9 +502,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 		metadataContent := folderMetadataJSON("no-change-uid", "Stable Title")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -534,9 +534,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		originalContent := folderMetadataJSON("original-uid", "My Folder")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -593,9 +593,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-old-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -638,9 +638,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-old", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-old", "Child"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -680,9 +680,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		// The folder's parent is the repository folder (Target: "folder").
 		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-old-uid", "Root Folder"))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "root-folder/dashboard.json",
 			},
@@ -724,9 +724,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 
 		// First sync: folder with _folder.json (stable UID + custom title).
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", folderMetadataJSON("stable-uid", "Custom Title"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
@@ -780,9 +780,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
@@ -841,9 +841,9 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-old-uid", "Child"))
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},

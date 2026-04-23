@@ -63,7 +63,7 @@ export function VariableEditorListRow({
                 propsOnEdit(identifier);
               }}
               className={styles.nameLink}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
             </Button>
@@ -75,7 +75,7 @@ export function VariableEditorListRow({
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
           >
             {definition}
           </td>
@@ -92,7 +92,7 @@ export function VariableEditorListRow({
                 }}
                 name="copy"
                 tooltip={t('variables.variable-editor-list-row.tooltip-duplicate-variable', 'Duplicate variable')}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
               />
               <IconButton
                 onClick={(event) => {
@@ -102,7 +102,7 @@ export function VariableEditorListRow({
                 }}
                 name="trash-alt"
                 tooltip={t('variables.variable-editor-list-row.tooltip-remove-variable', 'Remove variable')}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
                 <Icon

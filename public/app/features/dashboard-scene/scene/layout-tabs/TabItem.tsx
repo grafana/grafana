@@ -125,6 +125,11 @@ export class TabItem
     return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
   }
 
+  public isCurrentTab() {
+    const parentLayout = this.getParentLayout();
+    return parentLayout.state.currentTabSlug === this.getSlug();
+  }
+
   public switchLayout(layout: DashboardLayoutManager) {
     const currentLayout = this.state.layout;
 

@@ -68,6 +68,9 @@ func ParseDataKeyParts(parts []string) (DataKey, []string, error) {
 		return DataKey{}, nil, fmt.Errorf("invalid key: expected 4 or 5 parts, got %d", len(parts))
 	}
 	rvParts := strings.Split(rvMeta, "~")
+	if len(rvParts) < 3 {
+		return DataKey{}, nil, fmt.Errorf("invalid resource version metadata: expected at least 3 parts, got %d", len(rvParts))
+	}
 	rv, err := strconv.ParseInt(rvParts[0], 10, 64)
 	if err != nil {
 		return DataKey{}, nil, fmt.Errorf("invalid resource version '%s': %w", rvParts[0], err)

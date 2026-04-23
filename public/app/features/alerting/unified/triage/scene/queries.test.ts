@@ -75,3 +75,60 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain(' or ');
   });
 });
+
+describe('alertRuleInstancesQuery group scoping', () => {
+  it('produces an unscoped query when no groupLabels are provided', () => {
+    const query = alertRuleInstancesQuery('rule-1', '').expr;
+
+    expect(query).toContain('grafana_rule_uid="rule-1"');
+    expect(query).not.toContain('cluster=');
+    expect(query).not.toContain('environment=');
+  });
+
+  it('includes group label matchers in the PromQL expression', () => {
+    const query = alertRuleInstancesQuery('rule-1', '', {
+      environment: 'stg',
+    }).expr;
+
+    expect(query).toContain('grafana_rule_uid="rule-1"');
+    expect(query).toContain('environment="stg"');
+  });
+
+  it('expands combined label keys (cluster) from groupLabels the same way as from filters', () => {
+    const query = alertRuleInstancesQuery('rule-1', '', {
+      cluster: 'use2-cermak-ice-beeks',
+      environment: 'stg',
+    }).expr;
+
+    expect(query).toContain('grafana_rule_uid="rule-1"');
+    // cluster is a combined key -> expanded to cluster OR cluster_name branches
+    expect(query).toContain('cluster="use2-cermak-ice-beeks"');
+    expect(query).toContain('cluster_name="use2-cermak-ice-beeks"');
+    expect(query).toContain(' or ');
+    expect(query).toContain('environment="stg"');
+  });
+
+  it('handles empty-value group labels (EmptyLabelValue groups)', () => {
+    const query = alertRuleInstancesQuery('rule-1', '', { team: '' }).expr;
+
+    expect(query).toContain('team=""');
+  });
+
+  it('combines group labels with ad-hoc filters', () => {
+    const query = alertRuleInstancesQuery('rule-1', 'severity="critical"', {
+      environment: 'stg',
+    }).expr;
+
+    expect(query).toContain('grafana_rule_uid="rule-1"');
+    expect(query).toContain('severity="critical"');
+    expect(query).toContain('environment="stg"');
+  });
+
+  it('produces unscoped query when groupLabels is an empty object', () => {
+    const query = alertRuleInstancesQuery('rule-1', '', {}).expr;
+
+    expect(query).toContain('grafana_rule_uid="rule-1"');
+    expect(query).not.toContain('cluster=');
+    expect(query).not.toContain('environment=');
+  });
+});

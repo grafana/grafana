@@ -50,12 +50,13 @@ If you've already set up a data source that you know how to query, refer to [Cre
 To create your first dashboard using the built-in `-- Grafana --` data source:
 
 1. Click **Dashboards** in the main menu.
-1. On the **Dashboards** page, click **New** and select **New Dashboard** from the drop-down menu.
-1. Under **Add** in edit pane, click or drag a panel onto the dashboard.
+1. On the **Dashboards** page, click **New** and select **New dashboard** from the drop-down menu.
+1. Click the **Add new element** icon.
+1. Click or drag a panel onto the dashboard.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.4.png" max-width="750px" alt="New dashboard" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png" max-width="750px" alt="New dashboard" >}}
 
-1. On the new panel, click **Configure**.
+1. On the panel, click **Configure visualization**.
 
    The **Edit panel** view opens with the default data source for your instance preselected.
 
@@ -65,9 +66,9 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 
 1. In the panel edit pane, select the **Time series** visualization.
 1. Click **Refresh** to query the data source.
-1. When you've finished editing your panel, click **Save dashboard**.
+1. When you've finished editing your panel, click **Save**.
 
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
 1. Add a descriptive title for the dashboard, or have Grafana create one using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards), and then click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.

@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -16,8 +15,6 @@ import (
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -27,14 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -46,7 +39,6 @@ var (
 
 type Service struct {
 	unifiedStore           folder.Store
-	db                     db.DB
 	log                    *slog.Logger
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
@@ -54,21 +46,15 @@ type Service struct {
 	maxNestedFolderDepth   int
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
-	// bus is currently used to publish event in case of folder full path change.
-	// For example when a folder is moved to another folder or when a folder is renamed.
-	bus bus.Bus
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
-	metrics  *foldersMetrics
 	tracer   trace.Tracer
 }
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
-	bus bus.Bus,
 	userService user.Service,
-	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
@@ -76,7 +62,6 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
-	dual dualwrite.Service,
 	sorter sort.Service,
 	restConfig apiserver.RestConfigProvider,
 ) *Service {
@@ -84,20 +69,16 @@ func ProvideService(
 		log:                    slog.Default().With("logger", "folder-service"),
 		features:               features,
 		accessControl:          ac,
-		bus:                    bus,
-		db:                     db,
 		registry:               make(map[string]folder.RegistryService),
-		metrics:                newFoldersMetrics(r),
 		tracer:                 tracer,
 		publicDashboardService: publicDashboardService,
 		maxNestedFolderDepth:   cfg.MaxNestedFolderDepth,
 	}
-	srv.DBMigration(db)
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
+	ac.RegisterScopeAttributeResolver(folder.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(srv))
 
 	k8sHandler := client.NewK8sHandler(
 		request.GetNamespaceMapper(cfg),
@@ -124,57 +105,8 @@ func ProvideService(
 	return srv
 }
 
-func (s *Service) DBMigration(db db.DB) {
-	s.log.Debug("syncing dashboard and folder tables started")
-
-	ctx := context.Background()
-	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
-		deleteOldFolders := true
-		if db.GetDialect().DriverName() == migrator.SQLite {
-			// covered by UQE_folder_org_id_uid
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
-				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
-			`)
-		} else if db.GetDialect().DriverName() == migrator.Postgres {
-			// covered by UQE_folder_org_id_uid
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
-				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
-			`)
-		} else {
-			// covered by UQE_folder_org_id_uid
-			_, err = sess.Exec(`
-				INSERT INTO folder (uid, org_id, title, created, updated)
-				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
-				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
-			`)
-		}
-		if err != nil {
-			return err
-		}
-
-		if deleteOldFolders {
-			// covered by UQE_folder_org_id_uid
-			_, err = sess.Exec(`
-			DELETE FROM folder WHERE NOT EXISTS
-				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
-		`)
-		}
-		return err
-	})
-	if err != nil {
-		s.log.Error("DB migration on folder service start failed.", "err", err)
-	}
-
-	s.log.Debug("syncing dashboard and folder tables finished")
-}
-
 func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID int64, id int64) (string, error) {
-	f, err := s.getFolderByIDFromApiServer(ctx, id, orgID)
+	f, err := s.getFolderByID(ctx, id, orgID)
 	if err != nil {
 		return "", err
 	}
@@ -185,27 +117,6 @@ func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, er
 	ctx, span := s.tracer.Start(ctx, "folder.CountFoldersInOrg")
 	defer span.End()
 	return s.unifiedStore.CountInOrg(ctx, orgID)
-}
-
-func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.SearchFolders")
-	defer span.End()
-	// TODO:
-	// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
-	// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
-	return s.searchFoldersFromApiServer(ctx, q)
-}
-
-func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
-	defer span.End()
-	return s.getFoldersFromApiServer(ctx, q)
-}
-
-func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Get")
-	defer span.End()
-	return s.getFromApiServer(ctx, q)
 }
 
 func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy bool) (*folder.Folder, error) {
@@ -231,30 +142,20 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy
 	return f, nil
 }
 
-func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetChildren")
-	defer span.End()
-	return s.getChildrenFromApiServer(ctx, q)
-}
-
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
 func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetSharedWithMe")
 	defer span.End()
-	start := time.Now()
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, q, forceLegacy)
 	if err != nil {
-		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
 	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
 	if err != nil {
-		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
 	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
-	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return dedupAvailableNonRootFolders, nil
 }
 
@@ -264,10 +165,10 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		folderPermissions = permissions[dashboards.ActionFoldersWrite]
+		folderPermissions = permissions[folder.ActionFoldersWrite]
 		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsWrite]...)
 	} else {
-		folderPermissions = permissions[dashboards.ActionFoldersRead]
+		folderPermissions = permissions[folder.ActionFoldersRead]
 		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	}
 
@@ -278,7 +179,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(p, folder.ScopeFoldersPrefix); found {
 			if !slices.Contains(folderUids, folderUid) {
 				folderUids = append(folderUids, folderUid)
 			}
@@ -353,28 +254,6 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 	return foldersDedup
 }
 
-func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetParents")
-	defer span.End()
-	return s.getParentsFromApiServer(ctx, q)
-}
-
-func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	return s.createOnApiServer(ctx, cmd)
-}
-
-func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Update")
-	defer span.End()
-	return s.updateOnApiServer(ctx, cmd)
-}
-
-func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	ctx, span := s.tracer.Start(ctx, "folder.Delete")
-	defer span.End()
-	return s.deleteFromApiServer(ctx, cmd)
-}
-
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	ctx, span := s.tracer.Start(ctx, "folder.deleteChildrenInFolder")
 	defer span.End()
@@ -384,18 +263,6 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 		}
 	}
 	return nil
-}
-
-func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Move")
-	defer span.End()
-	return s.moveOnApiServer(ctx, cmd)
-}
-
-func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetDescendantCounts")
-	defer span.End()
-	return s.getDescendantCountsFromApiServer(ctx, q)
 }
 
 // SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
@@ -430,19 +297,19 @@ func SplitFullpath(s string) []string {
 
 func toFolderError(err error) error {
 	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
-		return dashboards.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
-		return dashboards.ErrFolderWithSameUIDExists
+		return folder.ErrSameUIDExists
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
-		return dashboards.ErrFolderVersionMismatch
+		return folder.ErrVersionMismatch
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -477,7 +344,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 					OrgRole:          "Admin",
 					IsGrafanaAdmin:   true,
 					IsServiceAccount: true,
-					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
+					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}}},
 				},
 			})
 			if err != nil {

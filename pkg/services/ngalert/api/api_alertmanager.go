@@ -192,7 +192,7 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 	}
 	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
 	if err != nil {
-		response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
 	}
 	return response.JSON(http.StatusOK, statuses)
 }

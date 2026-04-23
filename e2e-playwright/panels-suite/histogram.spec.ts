@@ -38,8 +38,7 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
 
       const panelOptionsLegendGroup = page.getByTestId(selectors.components.OptionsGroup.group('Legend'));
       const legendVisibilityClickableLabel = panelOptionsLegendGroup.getByText('Visibility');
-      const legendVisibilityLabel = page.getByLabel(/Legend.+Visibility/);
-      const legendVisibilitySwitch = legendVisibilityLabel.getByRole('switch');
+      const legendVisibilitySwitch = panelOptionsLegendGroup.getByLabel('Visibility');
 
       await expect(legendVisibilitySwitch, 'legend is enabled by default').toBeChecked();
 

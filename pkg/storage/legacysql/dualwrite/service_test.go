@@ -256,14 +256,6 @@ func TestProvideService(t *testing.T) {
 		_, isStorageService := svc.(*storageService)
 		require.True(t, isStorageService)
 	})
-
-	t.Run("ShouldManage always returns false", func(t *testing.T) {
-		svc, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
-		require.NoError(t, err)
-		require.False(t, svc.ShouldManage(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}))
-		require.False(t, svc.ShouldManage(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}))
-		require.False(t, svc.ShouldManage(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}))
-	})
 }
 
 // failingMigrator returns an error from Run.

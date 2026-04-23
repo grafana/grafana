@@ -38,8 +38,8 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, bus *bus.InPr
 	searchMock := resource.NewMockResourceClient(tb)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
-	return folderimpl.ProvideService(ac, bus, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	return folderimpl.ProvideService(ac, nil,
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *dashboardservice.DashboardServiceImpl {

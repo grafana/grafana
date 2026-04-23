@@ -75,6 +75,7 @@ export function StoredNotifications() {
       <div className={styles.topRow}>
         <Checkbox
           value={allNotificationsSelected}
+          aria-label={t('notifications.select-all', 'Select all notifications')}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
         <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>

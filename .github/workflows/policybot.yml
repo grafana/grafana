@@ -33,6 +33,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - run: make check-policy.yml
+      - run: make .policy.yml
+      - run: git diff --exit-code
       - name: Check valid against API
         run: curl --silent --fail-with-body -XPUT --upload-file .policy.yml https://github-policy-bot.grafana-ops.net/api/validate

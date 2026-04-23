@@ -61,8 +61,8 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   }, [layer]);
 
   const editActions = useMemo(
-    () => <ControlEditActions onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
-    [onClickEditLayer, onClickDeleteLayer]
+    () => <ControlEditActions element={layer} onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
+    [layer, onClickEditLayer, onClickDeleteLayer]
   );
 
   return (

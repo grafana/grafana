@@ -115,7 +115,7 @@ describe('OptionsPaneOptions', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
 
-    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+    expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
   });
 
   it('should render all categories', async () => {
@@ -133,14 +133,14 @@ describe('OptionsPaneOptions', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
 
-    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
+    expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
   });
 
   it('should not render options that are marked as hidden from defaults', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
 
-    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
+    expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
   });
 
   it('should render options that are specifically not marked as hidden from defaults', () => {
@@ -163,7 +163,7 @@ describe('OptionsPaneOptions', () => {
     });
 
     scenario.setup();
-    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
+    expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
   });
 
   it('should create categories for field options with category', () => {
@@ -227,8 +227,8 @@ describe('OptionsPaneOptions', () => {
     fireEvent.change(input, { target: { value: 'TextPropWithCategory' } });
     fireEvent.blur(input);
 
-    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).not.toBeInTheDocument();
-    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
+    expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).not.toBeInTheDocument();
+    expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
   });
 
   it('should not render field override options non data panel', async () => {
@@ -263,7 +263,7 @@ describe('OptionsPaneOptions', () => {
 
     const thresholdsSection = screen.getByTestId(selectors.components.OptionsGroup.group('Thresholds'));
     expect(
-      within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
+      within(thresholdsSection).getByTestId(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
     ).toBeInTheDocument();
   });
 

@@ -433,6 +433,132 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("sanitizes query expressions from v2 dashboard", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		v2Data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"expr":       "go_goroutines{job=\"grafana\"}",
+													"refId":      "A",
+													"datasource": "prometheus",
+												},
+											},
+										},
+									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawSql": "SELECT * FROM metrics",
+													"query":  "buckets()",
+													"refId":  "B",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		now := time.Now()
+		v2Dash := &dashboards.Dashboard{
+			UID:        "v2dashboard",
+			OrgID:      0,
+			Data:       v2Data,
+			Slug:       "v2dashboardSlug",
+			Created:    now,
+			Updated:    now,
+			Version:    1,
+			FolderUID:  "myFolder",
+			APIVersion: "v2beta1",
+		}
+
+		fakeStore := &FakePublicDashboardStore{}
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(
+			&PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: true}, nil,
+		)
+		fakeDashboardService := &dashboards.FakeDashboardService{}
+		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(v2Dash, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
+
+		result, err := service.GetPublicDashboardForView(t.Context(), accessToken)
+		require.NoError(t, err)
+
+		elements := result.Dashboard.Get("elements").MustMap()
+		panel1Queries := simplejson.NewFromAny(elements["panel-1"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, panel1Queries, 2)
+
+		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q1spec.Get("expr").MustString(), "expr should be removed")
+		assert.Equal(t, "A", q1spec.Get("refId").MustString(), "refId should be preserved")
+		assert.Equal(t, "prometheus", q1spec.Get("datasource").MustString(), "datasource should be preserved")
+
+		q2spec := simplejson.NewFromAny(panel1Queries[1]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q2spec.Get("rawSql").MustString(), "rawSql should be removed")
+		assert.Empty(t, q2spec.Get("query").MustString(), "query should be removed")
+		assert.Equal(t, "B", q2spec.Get("refId").MustString(), "refId should be preserved")
+	})
+
+	for _, apiVersion := range []string{"v0alpha1", "v1alpha1"} {
+		t.Run(fmt.Sprintf("uses v1 path for APIVersion %s", apiVersion), func(t *testing.T) {
+			testutil.SkipIntegrationTestInShortMode(t)
+
+			v1Data, err := simplejson.NewJson([]byte(dashboardWithRowsAndHiddenQueries))
+			require.NoError(t, err)
+			v1Dash := &dashboards.Dashboard{
+				UID:        "v1dashboard",
+				Data:       v1Data,
+				Slug:       "v1dashboardSlug",
+				Created:    time.Now(),
+				Updated:    time.Now(),
+				Version:    1,
+				APIVersion: apiVersion,
+			}
+
+			fakeStore := &FakePublicDashboardStore{}
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(
+				&PublicDashboard{AccessToken: accessToken, IsEnabled: true, TimeSelectionEnabled: false}, nil,
+			)
+			fakeDashboardService := &dashboards.FakeDashboardService{}
+			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(v1Dash, nil)
+			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
+
+			result, err := service.GetPublicDashboardForView(t.Context(), accessToken)
+			require.NoError(t, err)
+
+			// v1 path: timepicker should be hidden when TimeSelectionEnabled is false
+			assert.True(t, result.Dashboard.Get("timepicker").Get("hidden").MustBool())
+
+			// v1 path: panel targets should be sanitized
+			for _, panelObj := range result.Dashboard.Get("panels").MustArray() {
+				panel := simplejson.NewFromAny(panelObj)
+				if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+					continue
+				}
+				for _, targetObj := range panel.Get("targets").MustArray() {
+					target := simplejson.NewFromAny(targetObj)
+					assert.Empty(t, target.Get("expr").MustString())
+					assert.Empty(t, target.Get("query").MustString())
+					assert.Empty(t, target.Get("rawSql").MustString())
+				}
+			}
+		})
+	}
 }
 
 func TestIntegrationGetPublicDashboard(t *testing.T) {

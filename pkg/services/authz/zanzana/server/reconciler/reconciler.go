@@ -7,16 +7,15 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/singleflight"
-
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -42,9 +41,15 @@ type Reconciler struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	metrics       *reconcilerMetrics
-	leaderElector LeaderElector
+	leaderElector leaderelection.Elector
 
 	workQueue chan string
+
+	// queuedNamespaces tracks namespaces that are currently either sitting in
+	// workQueue or being processed by a worker. It is used to deduplicate
+	// enqueues so a slow reconciliation cycle can't cause the same namespace to
+	// pile up multiple times in the queue across ticks.
+	queuedNamespaces sync.Map
 
 	// ensuredNamespaces caches namespaces that have been fully reconciled - the store for this namespace exists with up to date permissions - in this
 	// process lifetime so EnsureNamespace can short-circuit on subsequent calls
@@ -61,9 +66,10 @@ type Reconciler struct {
 type Config struct {
 	Workers             int
 	Interval            time.Duration
-	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
-	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
+	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
 func (c Config) queueSize() int {
@@ -80,14 +86,13 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
-var reconcileGVRs = []schema.GroupVersionResource{
+// defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
+var DefaultCRDs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
-	iamv0.RoleInfo.GroupVersionResource(),
-	iamv0.RoleBindingInfo.GroupVersionResource(),
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
+	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
 }
 
 // NewReconciler creates a new reconciler instance.
@@ -98,7 +103,7 @@ func NewReconciler(
 	logger log.Logger,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	leaderElector LeaderElector,
+	leaderElector leaderelection.Elector,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -131,7 +136,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 }
 
 // runLoop contains the main reconciliation loop, started when this instance
-// acquires leadership (or immediately for NoopLeaderElector).
+// acquires leadership (or immediately for NoopElector).
 func (r *Reconciler) runLoop(ctx context.Context) {
 	r.metrics.isLeader.Set(1)
 	defer r.metrics.isLeader.Set(0)
@@ -143,7 +148,7 @@ func (r *Reconciler) runLoop(ctx context.Context) {
 
 	// Start worker goroutines
 	var wg sync.WaitGroup
-	for i := 0; i < r.cfg.Workers; i++ {
+	for i := range r.cfg.Workers {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
@@ -202,15 +207,30 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 
 	r.logger.Info("Queuing namespaces for reconciliation", "count", len(stores), "duration", time.Since(start))
 
+	skipped := 0
 	for _, store := range stores {
 		namespace := store.Name
+
+		// Deduplicate: skip if this namespace is already queued.
+		if _, loaded := r.queuedNamespaces.LoadOrStore(namespace, struct{}{}); loaded {
+			skipped++
+			r.logger.Debug("Skipping namespace already in queue", "namespace", namespace)
+			continue
+		}
+
 		select {
 		case r.workQueue <- namespace:
 			r.metrics.workQueueDepth.Inc()
 			r.logger.Debug("Queued namespace for reconciliation", "namespace", namespace)
 		case <-ctx.Done():
+			// Release namespace so a future cycle can enqueue this namespace again.
+			r.queuedNamespaces.Delete(namespace)
 			return
 		}
+	}
+
+	if skipped > 0 {
+		r.logger.Info("Skipped namespaces already queued or in-flight", "skipped", skipped, "total", len(stores))
 	}
 }
 
@@ -229,53 +249,58 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 			}
 
 			r.metrics.workQueueDepth.Dec()
-			start := time.Now()
-
-			result, err := r.reconcileNamespace(ctx, namespace)
-			elapsed := time.Since(start)
-			status := "success"
-			if err != nil {
-				status = "error"
-				if ctx.Err() != nil {
-					r.logger.Warn("Reconciler shutdown during namespace reconciliation",
-						"namespace", namespace,
-						"workerID", workerID,
-					)
-				} else {
-					logFields := []any{
-						"namespace", namespace,
-						"workerID", workerID,
-						"error", err,
-						"duration", elapsed,
-					}
-					if result != nil {
-						logFields = append(logFields,
-							"expectedTuples", result.ExpectedTuples,
-							"tuplesToAdd", result.TuplesToAdd,
-							"tuplesToDelete", result.TuplesToDelete,
-						)
-					}
-					r.logger.Error("Failed to reconcile namespace", logFields...)
-				}
-			} else {
-				logFields := []any{
-					"namespace", namespace,
-					"workerID", workerID,
-					"duration", elapsed,
-				}
-				if result != nil {
-					logFields = append(logFields,
-						"expectedTuples", result.ExpectedTuples,
-						"tuplesToAdd", result.TuplesToAdd,
-						"tuplesToDelete", result.TuplesToDelete,
-						"inSync", result.InSync,
-					)
-				}
-				r.logger.Info("Reconciled namespace", logFields...)
-			}
-			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
+			r.runNamespaceReconciliation(ctx, namespace, workerID)
 		}
 	}
+}
+
+func (r *Reconciler) runNamespaceReconciliation(ctx context.Context, namespace string, workerID int) {
+	defer r.queuedNamespaces.Delete(namespace)
+
+	start := time.Now()
+	result, err := r.reconcileNamespace(ctx, namespace)
+	elapsed := time.Since(start)
+	status := "success"
+	if err != nil {
+		status = "error"
+		if ctx.Err() != nil {
+			r.logger.Warn("Reconciler shutdown during namespace reconciliation",
+				"namespace", namespace,
+				"workerID", workerID,
+			)
+		} else {
+			logFields := []any{
+				"namespace", namespace,
+				"workerID", workerID,
+				"error", err,
+				"duration", elapsed,
+			}
+			if result != nil {
+				logFields = append(logFields,
+					"expectedTuples", result.ExpectedTuples,
+					"tuplesToAdd", result.TuplesToAdd,
+					"tuplesToDelete", result.TuplesToDelete,
+				)
+			}
+			r.logger.Error("Failed to reconcile namespace", logFields...)
+		}
+	} else {
+		logFields := []any{
+			"namespace", namespace,
+			"workerID", workerID,
+			"duration", elapsed,
+		}
+		if result != nil {
+			logFields = append(logFields,
+				"expectedTuples", result.ExpectedTuples,
+				"tuplesToAdd", result.TuplesToAdd,
+				"tuplesToDelete", result.TuplesToDelete,
+				"inSync", result.InSync,
+			)
+		}
+		r.logger.Info("Reconciled namespace", logFields...)
+	}
+	r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 }
 
 // reconcileNamespace performs reconciliation for a single namespace.

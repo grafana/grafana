@@ -25,14 +25,6 @@ import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEdit
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import {
-  SectionVariableAdd,
-  SectionVariableAddEditableElement,
-  VariableAdd,
-  VariableAddEditableElement,
-  VariableTypeChange,
-  VariableTypeChangeEditableElement,
-} from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
@@ -41,19 +33,16 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementForSelection(
   editPane: DashboardEditPane,
-  selected: ElementSelectionContextItem[],
-  openPaneTempHack?: SceneObject
+  selected: ElementSelectionContextItem[]
 ): EditableDashboardElement | undefined {
-  if (openPaneTempHack) {
-    return getEditableElementFor(openPaneTempHack);
-  }
-
   if (selected.length === 1) {
     const obj = editPane.getSelectedObject(selected[0].id);
     if (obj) {
@@ -115,18 +104,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableAdd) {
-    return new VariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof SectionVariableAdd) {
-    return new SectionVariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableTypeChange) {
-    return new VariableTypeChangeEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {

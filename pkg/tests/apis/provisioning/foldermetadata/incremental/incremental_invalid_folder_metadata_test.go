@@ -33,7 +33,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"team/dashboard.json": common.DashboardJSON("team-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"root.json": common.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
 		require.NoError(t, local.CreateFile("team/dashboard.json", string(common.DashboardJSON("team-dash", "Team Dashboard", 1))))
@@ -117,7 +117,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"team/dashboard.json": common.DashboardJSON("team-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
 		require.NoError(t, local.CreateFile("team/dashboard.json", string(common.DashboardJSON("team-dash", "Team Dashboard Updated", 1))))
@@ -159,7 +159,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"team/dashboard.json": common.DashboardJSON("team-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
 		_, err := local.Git("add", ".")
@@ -220,7 +220,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"parent/child/second-dash.json": common.DashboardJSON("child-dash-2", "Child Dashboard Two", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		oldBrokenUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "broken")
 		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "parent")
@@ -310,7 +310,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"root.json": common.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
 		_, err := local.Git("mv", "root.json", "team/")
@@ -353,7 +353,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"team/dashboard.json": common.DashboardJSON("team-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		_, err := local.Git("mv", "team", "moved")
 		require.NoError(t, err)
@@ -404,7 +404,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"old-parent/child/dashboard.json": common.DashboardJSON("child-dash", "Child Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		common.RequireFolderState(t, helper.Folders, parentStableUID, "Parent", "old-parent", "")
 		common.RequireFolderState(t, helper.Folders, childUID, "Child", "old-parent/child", parentStableUID)

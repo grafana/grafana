@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -138,6 +139,7 @@ type APIBuilder struct {
 	registry              prometheus.Registerer
 	quotaGetter           quotas.QuotaGetter
 	folderMetadataEnabled bool
+	maxIncrementalChanges int
 	folderAPIVersion      string
 }
 
@@ -185,6 +187,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
+	maxIncrementalChanges int,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -236,6 +239,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
@@ -310,6 +314,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -341,6 +346,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -377,6 +383,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -703,7 +710,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.repoStore = repositoryStorage
 	b.repoLister = repository.NewStorageLister(repositoryStorage)
 
 	// Create admission handler and register mutators/validators
@@ -756,13 +762,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
-	b.connectionStore = connectionsStore
 
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
+	// so that List re-stamps each item's apiVersion to match the served version.
+	// See grafanaregistry.VersionedStore for details on why this is necessary.
+	if b.gv.Version != provisioning.VERSION {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+	} else {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		b.repoStore = repositoryStorage
+		b.connectionStore = connectionsStore
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
@@ -1007,6 +1025,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				b.folderMetadataEnabled,
+				b.folderAPIVersion,
+				b.maxIncrementalChanges,
 			)
 			if err != nil {
 				return err
@@ -1511,6 +1531,11 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	}
 
 	return repo, err
+}
+
+// GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
+func (b *APIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
+	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
 }
 
 func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old runtime.Object) (repository.Repository, error) {

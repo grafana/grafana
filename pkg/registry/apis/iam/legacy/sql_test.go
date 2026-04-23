@@ -145,6 +145,42 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getTeamUIDByID := func(q *GetTeamUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetTeamUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateUserLastSeenAt := func(cmd *UpdateUserLastSeenAtCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUserLastSeenAt(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getUserUIDByID := func(q *GetUserUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetUserUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getServiceAccountToken := func(q *GetServiceAccountTokenQuery) sqltemplate.SQLTemplate {
+		v := newGetServiceAccountToken(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createServiceAccountToken := func(cmd *CreateServiceAccountTokenCommand) sqltemplate.SQLTemplate {
+		v := newCreateServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteServiceAccountToken := func(cmd *DeleteServiceAccountTokenCommand) sqltemplate.SQLTemplate {
+		v := newDeleteServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -170,6 +206,13 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+				{
+					Name: "teams_id",
+					Data: listTeams(&ListTeamQuery{
+						ID:         42,
+						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
 			},
@@ -438,6 +481,7 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "service_account_tokens_page_1",
 					Data: listServiceAccountTokens(&ListServiceAccountTokenQuery{
+						UID:        "sa-1",
 						OrgID:      1,
 						Pagination: common.Pagination{Limit: 5},
 					}),
@@ -445,6 +489,7 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "service_accounts_tokens_page_2",
 					Data: listServiceAccountTokens(&ListServiceAccountTokenQuery{
+						UID:   "sa-1",
 						OrgID: 1,
 						Pagination: common.Pagination{
 							Limit:    1,
@@ -643,6 +688,94 @@ func TestIdentityQueries(t *testing.T) {
 						UserID:  123,
 						Role:    "Admin",
 						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateUserLastSeenAtTemplate: {
+				{
+					Name: "update_user_last_seen_at_basic",
+					Data: updateUserLastSeenAt(&UpdateUserLastSeenAtCommand{
+						UID:        "user-1",
+						LastSeenAt: legacysql.NewDBTime(time.Date(2023, 6, 15, 10, 30, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlQueryTeamUIDByIDTemplate: {
+				{
+					Name: "team_uid_by_id",
+					Data: getTeamUIDByID(&GetTeamUIDByIDQuery{
+						OrgID: 1,
+						ID:    42,
+					}),
+				},
+			},
+			sqlQueryUserUIDByIDTemplate: {
+				{
+					Name: "user_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               99,
+						IsServiceAccount: false,
+					}),
+				},
+				{
+					Name: "service_account_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               55,
+						IsServiceAccount: true,
+					}),
+				},
+			},
+			sqlQueryServiceAccountTokenGetTemplate: {
+				{
+					Name: "get_token_by_name_and_sa",
+					Data: getServiceAccountToken(&GetServiceAccountTokenQuery{
+						Name:              "my-token",
+						ServiceAccountUID: "sa-1",
+						OrgID:             1,
+					}),
+				},
+			},
+			sqlCreateServiceAccountTokenTemplate: {
+				{
+					Name: "create_token_basic",
+					Data: createServiceAccountToken(&CreateServiceAccountTokenCommand{
+						Name:             "my-token",
+						HashedKey:        "hashed123",
+						Role:             "Viewer",
+						OrgID:            1,
+						ServiceAccountID: 42,
+						IsRevoked:        false,
+						Created:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+				{
+					Name: "create_token_with_expires",
+					Data: func() sqltemplate.SQLTemplate {
+						exp := int64(1704110400) // 2024-01-01 12:00:00 UTC
+						return createServiceAccountToken(&CreateServiceAccountTokenCommand{
+							Name:             "my-token",
+							HashedKey:        "hashed123",
+							Role:             "Viewer",
+							OrgID:            1,
+							ServiceAccountID: 42,
+							Expires:          &exp,
+							IsRevoked:        false,
+							Created:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+							Updated:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						})
+					}(),
+				},
+			},
+			sqlDeleteServiceAccountTokenTemplate: {
+				{
+					Name: "delete_token_basic",
+					Data: deleteServiceAccountToken(&DeleteServiceAccountTokenCommand{
+						Name:             "my-token",
+						OrgID:            1,
+						ServiceAccountID: 42,
 					}),
 				},
 			},

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -76,37 +77,178 @@ func TestGetHomeDashboard(t *testing.T) {
 		tracer:                  tracing.InitializeTracerForTest(),
 	}
 
+	// Build Kubernetes-format dashboard resources that wrap default.json as
+	// their spec, so we can verify that default_home_dashboard_path returns
+	// k8s-style dashboards verbatim to the client for both legacy (V1) and
+	// V2 schemas.
+	defaultDashJSON, err := os.ReadFile("../../public/dashboards/default.json")
+	require.NoError(t, err)
+	writeK8sDashboard := func(t *testing.T, apiVersion, name string, spec map[string]any) (string, map[string]any) {
+		t.Helper()
+		doc := map[string]any{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": name},
+			"spec":       spec,
+		}
+		b, err := json.Marshal(doc)
+		require.NoError(t, err)
+		path := filepath.Join(t.TempDir(), "k8s-home.json")
+		require.NoError(t, os.WriteFile(path, b, 0o600))
+		return path, doc
+	}
+
+	defaultDashMap := map[string]any{}
+	require.NoError(t, json.Unmarshal(defaultDashJSON, &defaultDashMap))
+
+	k8sV1Path, k8sV1Doc := writeK8sDashboard(t, "dashboard.grafana.app/v1beta1", "home-dash-v1", defaultDashMap)
+
+	// V2 spec has a fundamentally different shape (no panels/schemaVersion;
+	// uses elements/layout/variables). The resource is returned verbatim so
+	// the frontend can render it natively as v2.
+	v2Spec := map[string]any{
+		"title":    "v2 home",
+		"tags":     []string{"home", "v2"},
+		"elements": map[string]any{},
+		"layout": map[string]any{
+			"kind": "GridLayout",
+			"spec": map[string]any{"items": []any{}},
+		},
+		"variables":   []any{},
+		"annotations": []any{},
+		"cursorSync":  "Off",
+		"preload":     false,
+		"links":       []any{},
+		"timeSettings": map[string]any{
+			"from":           "now-6h",
+			"to":             "now",
+			"timezone":       "browser",
+			"autoRefresh":    "",
+			"hideTimepicker": true,
+		},
+	}
+	k8sV2Path, k8sV2Doc := writeK8sDashboard(t, "dashboard.grafana.app/v2beta1", "home-dash-v2", v2Spec)
+
+	// Unknown k8s group should be treated as a classic dashboard body and
+	// passed through inside the legacy DashboardFullWithMeta envelope.
+	unknownGroupPath := filepath.Join(t.TempDir(), "non-dashboard.json")
+	unknownDoc := map[string]any{
+		"apiVersion": "other.grafana.app/v1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "should-not-unwrap"},
+		"spec":       map[string]any{"title": "unused"},
+	}
+	unknownBytes, err := json.Marshal(unknownDoc)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(unknownGroupPath, unknownBytes, 0o600))
+
+	readOnlyAccess := map[string]any{
+		"canSave":   false,
+		"canShare":  false,
+		"canStar":   false,
+		"canEdit":   false,
+		"canDelete": false,
+		"canAdmin":  false,
+	}
+
 	tests := []struct {
-		name                  string
-		defaultSetting        string
-		expectedDashboardPath string
+		name             string
+		defaultSetting   string
+		expectedResponse func(t *testing.T) []byte
 	}{
-		{name: "using default config", defaultSetting: "", expectedDashboardPath: "../../public/dashboards/home.json"},
-		{name: "custom path", defaultSetting: "../../public/dashboards/default.json", expectedDashboardPath: "../../public/dashboards/default.json"},
+		{
+			name:           "using default config",
+			defaultSetting: "",
+			expectedResponse: func(t *testing.T) []byte {
+				t.Helper()
+				b, err := os.ReadFile("../../public/dashboards/home.json")
+				require.NoError(t, err)
+				j, err := simplejson.NewJson(b)
+				require.NoError(t, err)
+				wrapper := dtos.DashboardFullWithMeta{}
+				wrapper.Meta.FolderTitle = "General"
+				wrapper.Dashboard = j
+				out, err := json.Marshal(wrapper)
+				require.NoError(t, err)
+				return out
+			},
+		},
+		{
+			name:           "custom path with classic dashboard",
+			defaultSetting: "../../public/dashboards/default.json",
+			expectedResponse: func(t *testing.T) []byte {
+				t.Helper()
+				b, err := os.ReadFile("../../public/dashboards/default.json")
+				require.NoError(t, err)
+				j, err := simplejson.NewJson(b)
+				require.NoError(t, err)
+				wrapper := dtos.DashboardFullWithMeta{}
+				wrapper.Meta.FolderTitle = "General"
+				wrapper.Dashboard = j
+				out, err := json.Marshal(wrapper)
+				require.NoError(t, err)
+				return out
+			},
+		},
+		{
+			name:           "custom path with v1 k8s-format dashboard is returned verbatim with access block",
+			defaultSetting: k8sV1Path,
+			expectedResponse: func(t *testing.T) []byte {
+				t.Helper()
+				// Copy so we don't mutate the shared doc.
+				resp := map[string]any{}
+				for k, v := range k8sV1Doc {
+					resp[k] = v
+				}
+				resp["access"] = readOnlyAccess
+				out, err := json.Marshal(resp)
+				require.NoError(t, err)
+				return out
+			},
+		},
+		{
+			name:           "custom path with v2 k8s-format dashboard is returned verbatim with access block",
+			defaultSetting: k8sV2Path,
+			expectedResponse: func(t *testing.T) []byte {
+				t.Helper()
+				resp := map[string]any{}
+				for k, v := range k8sV2Doc {
+					resp[k] = v
+				}
+				resp["access"] = readOnlyAccess
+				out, err := json.Marshal(resp)
+				require.NoError(t, err)
+				return out
+			},
+		},
+		{
+			name:           "unknown k8s group is wrapped in the legacy response",
+			defaultSetting: unknownGroupPath,
+			expectedResponse: func(t *testing.T) []byte {
+				t.Helper()
+				j, err := simplejson.NewJson(unknownBytes)
+				require.NoError(t, err)
+				wrapper := dtos.DashboardFullWithMeta{}
+				wrapper.Meta.FolderTitle = "General"
+				wrapper.Dashboard = j
+				out, err := json.Marshal(wrapper)
+				require.NoError(t, err)
+				return out
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			dash := dtos.DashboardFullWithMeta{}
-			dash.Meta.FolderTitle = "General"
-
-			homeDashJSON, err := os.ReadFile(tc.expectedDashboardPath)
-			require.NoError(t, err, "must be able to read expected dashboard file")
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
-			bytes, err := simplejson.NewJson(homeDashJSON)
-			require.NoError(t, err, "must be able to encode file as JSON")
-
 			prefService.ExpectedPreference = &pref.Preference{}
 
-			dash.Dashboard = bytes
-
-			b, err := json.Marshal(dash)
-			require.NoError(t, err, "must be able to marshal object to JSON")
+			expectedBytes := tc.expectedResponse(t)
 
 			res := hs.GetHomeDashboard(req)
 			nr, ok := res.(*response.NormalResponse)
 			require.True(t, ok, "should return *NormalResponse")
-			require.Equal(t, b, nr.Body(), "default home dashboard should equal content on disk")
+			require.JSONEq(t, string(expectedBytes), string(nr.Body()), "home dashboard response should match expected body")
 		})
 	}
 }
@@ -465,7 +607,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: folder.ErrNameExists, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
 				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},

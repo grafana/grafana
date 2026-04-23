@@ -28,6 +28,7 @@ export enum FieldColorModeId {
   ContinuousCividis = 'continuous-cividis',
   Fixed = 'fixed',
   Shades = 'shades',
+  Gradient = 'gradient',
 }
 
 /**
@@ -36,8 +37,10 @@ export enum FieldColorModeId {
 export interface FieldColor {
   /** The main color scheme mode */
   mode: FieldColorModeId | string;
-  /** Stores the fixed color value if mode is fixed */
+  /** Stores the fixed color value if mode is fixed, shades, or gradient (start color) */
   fixedColor?: string;
+  /** End color for gradient mode (smallest value). Only used when mode is "gradient". */
+  gradientColorTo?: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes */
   seriesBy?: FieldColorSeriesByMode;
 }

@@ -92,6 +92,7 @@ type K8sTestHelper struct {
 	listenerAddress string
 	env             server.TestEnv
 	Namespacer      request.NamespaceMapper
+	httpClient      *http.Client
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -109,6 +110,9 @@ type K8sTestHelperOpts struct {
 	// If provided, these users will be used instead of creating new ones
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
+	// CustomHTTPClient replaces the shared HTTP client for this helper only.
+	// When nil, the shared default client is used.
+	CustomHTTPClient *http.Client
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -199,11 +203,16 @@ func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T
 func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
 	t.Helper()
 
+	httpClient := sharedHTTPClient
+	if opts.CustomHTTPClient != nil {
+		httpClient = opts.CustomHTTPClient
+	}
 	c := &K8sTestHelper{
 		env:             *env,
 		listenerAddress: listenerAddress,
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
+		httpClient:      httpClient,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -644,7 +653,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 		req.Header.Set(k, v)
 	}
 
-	rsp, err := sharedHTTPClient.Do(req)
+	rsp, err := c.httpClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -778,6 +787,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
+		Email:          fmt.Sprintf("%s@example.com", login),
 	})
 	require.NoError(c.t, err)
 
@@ -826,6 +836,19 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	}
 
 	return usr
+}
+
+func (c *K8sTestHelper) AddUserToOrg(u User, orgName string, role org.RoleType) {
+	c.t.Helper()
+	orgID := c.CreateOrg(orgName)
+	userID, err := identity.UserIdentifier(u.Identity.GetID())
+	require.NoError(c.t, err)
+	err = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+		OrgID:  orgID,
+		UserID: userID,
+		Role:   role,
+	})
+	require.NoError(c.t, err)
 }
 
 func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {

@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.8
+GO_VERSION = 1.25.9
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -44,7 +44,7 @@ GO_BUILD_ARGS = \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
 	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
+	-o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) \
 	./pkg/cmd/grafana
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
@@ -150,12 +150,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -263,12 +259,13 @@ gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
 	@echo "generate feature toggles"
-	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	go test ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
 	else \
-		go test -v ./pkg/services/featuremgmt/...; \
+		go test ./pkg/services/featuremgmt/...; \
 	fi
+
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
@@ -772,27 +769,19 @@ check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
 GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
-define generate-policy-yml
+.PHONY: .policy.yml
+.policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \
 	--quiet \
 	--rm \
 	--volume "$(shell git rev-parse --show-toplevel)":/work \
 	--workdir /work \
 	ghcr.io/grafana/generate-policy-bot-config@${GENERATE_POLICY_BOT_CONFIG_SHA} \
-		--output $(1) \
+		--output .policy.yml \
 		--log-level=debug \
 		--merge-with=.policy.yml.tmpl \
 		.
-endef
-
-.PHONY: .policy.yml
-.policy.yml:
-	@$(call generate-policy-yml,$@)
-
-check-policy.yml:
-	# We redirect stderr to stdout because the tool logs to stderr using proper
-	# Actions log levels (to avoid interfering with `diff`), but those log
-	# commands only work on stdout.
-	@bash -c 'diff -u .policy.yml <($(call generate-policy-yml,-))' 2>&1 && \
-		( echo "No drift detected: .policy.yml is up-to-date." >&2; exit 0 ) || \
-		( echo "Drift detected: .policy.yml is out-of-date. Run \`make .policy.yml\` to update it, and then commit the result." >&2; exit 1 )
+# We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
+	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# Trivy was disabled in March, 2026. We'll unrequire it while we wait for it to be reenabled at org-level.
+	sed -i.bak '/- Workflow \.github\/workflows\/trivy-scan/d' .policy.yml; rm -f .policy.yml.bak
