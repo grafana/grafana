@@ -33,20 +33,26 @@ func NewReceiverTestingService(
 	amProvider AlertmanagerProvider,
 	encryptionService secretService,
 	authz receiverTestingAccessControlService,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverTestingService {
 	return &ReceiverTestingService{
-		receiverSvc:       receiverSvc,
-		amProvider:        amProvider,
-		encryptionService: encryptionService,
-		authz:             authz,
+		receiverSvc:         receiverSvc,
+		amProvider:          amProvider,
+		encryptionService:   encryptionService,
+		authz:               authz,
+		allowedIntegrations: allowedIntegrations,
+		emailValidator:      emailValidator,
 	}
 }
 
 type ReceiverTestingService struct {
-	receiverSvc       ReceiverGetter
-	amProvider        AlertmanagerProvider
-	encryptionService secretService
-	authz             receiverTestingAccessControlService
+	receiverSvc         ReceiverGetter
+	amProvider          AlertmanagerProvider
+	encryptionService   secretService
+	authz               receiverTestingAccessControlService
+	allowedIntegrations map[schema.IntegrationType]struct{}
+	emailValidator      EmailIntegrationValidator
 }
 
 type Alert struct {
@@ -130,6 +136,14 @@ func (t *ReceiverTestingService) authorizeEdits(ctx context.Context, user identi
 }
 
 func (t *ReceiverTestingService) testIntegration(ctx context.Context, user identity.Requester, alert Alert, receiver *models.Receiver, integration models.Integration) (IntegrationTestResult, error) {
+	if t.allowedIntegrations != nil {
+		iType := integration.Config.Type()
+		if _, allowed := t.allowedIntegrations[iType]; !allowed {
+			return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(
+				fmt.Sprintf("integration type %s is not allowed", iType),
+			)
+		}
+	}
 	alertParam, err := convertToAlertParam(alert)
 	if err != nil {
 		return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(err.Error())
@@ -138,7 +152,13 @@ func (t *ReceiverTestingService) testIntegration(ctx context.Context, user ident
 	if err != nil {
 		return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 	}
-	am, err := t.amProvider.AlertmanagerFor(user.GetOrgID())
+	orgID := user.GetOrgID()
+	if integration.Config.Type() == schema.EmailType {
+		if err := t.emailValidator.ValidateIntegration(ctx, user, integration); err != nil {
+			return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
+		}
+	}
+	am, err := t.amProvider.AlertmanagerFor(orgID)
 	if err != nil {
 		return IntegrationTestResult{}, err
 	}

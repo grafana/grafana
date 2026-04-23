@@ -20,8 +20,10 @@ import {
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { convertSpecToWireFormat } from '../serialization/transformationCompat';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
@@ -40,7 +42,8 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
   );
   const uid = dashboard.state.uid;
 
-  const classicJson = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
+  const { changedSaveModel } = changeInfo;
+  const classicJson = useMemo(() => JSON.stringify(changedSaveModel, null, 2), [changedSaveModel]);
 
   const k8sResource = useAsync(async () => {
     if (exportFormat !== ExportFormat.V2Resource || !uid) {
@@ -48,17 +51,21 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
     }
     const api = await getDashboardAPI('v2');
     const resource = await api.getDashboardDTO(uid);
+
+    // if the local edits are already in v2 form, reflect them in the displayed resource
+    const spec = isDashboardV2Spec(changedSaveModel) ? convertSpecToWireFormat(changedSaveModel) : resource.spec;
+
     return JSON.stringify(
       {
         apiVersion: resource.apiVersion,
         kind: 'Dashboard',
         metadata: omit(resource.metadata, 'managedFields'),
-        spec: resource.spec,
+        spec,
       },
       null,
       2
     );
-  }, [exportFormat, uid]);
+  }, [exportFormat, uid, changedSaveModel]);
 
   const isK8sMode = exportFormat === ExportFormat.V2Resource && hasK8sMeta;
   const displayJson = isK8sMode ? (k8sResource.value ?? '') : classicJson;

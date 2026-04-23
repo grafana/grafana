@@ -41,7 +41,6 @@ export const AsInputFieldAddon: StoryFn<StoryProps> = (args) => {
     <div style={{ width: '100%', maxWidth: 500 }}>
       <Field label="Link URL">
         <Input
-          id="link-url-input"
           value={shareUrl}
           readOnly
           addonAfter={

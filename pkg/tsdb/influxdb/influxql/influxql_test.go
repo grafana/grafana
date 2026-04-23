@@ -10,12 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 func TestExecutor_createRequest(t *testing.T) {
-	logger := log.New("tsdb.influx_influxql_test")
+	logger := backend.NewLoggerWith("logger", "tsdb.influx_influxql_test")
 	datasource := &models.DatasourceInfo{
 		URL:      "http://awesome-influxdb:1337",
 		DbName:   "awesome-db",

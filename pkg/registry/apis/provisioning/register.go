@@ -139,6 +139,7 @@ type APIBuilder struct {
 	registry              prometheus.Registerer
 	quotaGetter           quotas.QuotaGetter
 	folderMetadataEnabled bool
+	maxIncrementalChanges int
 	folderAPIVersion      string
 }
 
@@ -186,6 +187,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
+	maxIncrementalChanges int,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -237,6 +239,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
@@ -311,6 +314,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -342,6 +346,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -378,6 +383,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
@@ -1019,6 +1025,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				b.folderMetadataEnabled,
+				b.folderAPIVersion,
+				b.maxIncrementalChanges,
 			)
 			if err != nil {
 				return err
