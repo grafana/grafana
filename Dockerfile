@@ -37,7 +37,7 @@ COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
 # Yarn workspaces include scripts/uplot-compare; it must exist before install (scripts/ is copied later for cache layering).
-COPY scripts/uplot-compare scripts/uplot-compare/package.json
+COPY scripts/uplot-compare scripts/uplot-compare
 
 #
 # Set the node env according to defaults or argument passed
