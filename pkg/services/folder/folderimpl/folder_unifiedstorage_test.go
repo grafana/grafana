@@ -163,14 +163,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/forbidden", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"kind":       "Status",
-			"apiVersion": "v1",
-			"status":     "Failure",
-			"message":    `folders "forbidden" is forbidden: access denied`,
-			"reason":     "Forbidden",
-			"code":       403,
-		})
+		_ = json.NewEncoder(w).Encode(`{
+										"kind": "Status",
+										"apiVersion": "v1",
+										"metadata": {},
+										"status": "Failure",
+										"code": 403
+										}`)
 	})
 
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/not-foo", func(w http.ResponseWriter, req *http.Request) {
