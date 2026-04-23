@@ -93,7 +93,10 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
 
     // panel 16 uses textMode: value with 45 series (values only, no series name titles)
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
     await expect(errorInfo, 'no errors with textMode: value and 45 series').toBeHidden();
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
+    await expect(panelContent, 'panel has does not have "no data"').not.toHaveText('No data');
   });
 
   test('text mode: none with 200 series renders without errors', async ({ gotoDashboardPage, selectors }) => {
@@ -104,7 +107,11 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
 
     // panel 17 uses textMode: none with 200 series (colored cells, no visible text)
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
     await expect(errorInfo, 'no errors with textMode: none and 200 series').toBeHidden();
+    // if you do an "empty" check on this one, since there's no text, it actually says it's empty.
+    // await expect(panelContent, 'panel has content').not.toBeEmpty();
+    await expect(panelContent, 'panel has does not have "no data"').not.toHaveText('No data');
   });
 
   test('color mode: background renders without errors', async ({ gotoDashboardPage, selectors }) => {
