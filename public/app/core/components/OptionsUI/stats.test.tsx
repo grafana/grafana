@@ -1,5 +1,7 @@
 import { render } from '@testing-library/react';
 
+import { StatsPicker } from '@grafana/ui';
+
 import { StatsPickerEditor } from './stats';
 
 jest.mock('@grafana/ui', () => {
@@ -9,9 +11,6 @@ jest.mock('@grafana/ui', () => {
     StatsPicker: jest.fn(() => null),
   };
 });
-
-// eslint-disable-next-line import/order -- mock must run before importing StatsPicker from ui
-const { StatsPicker } = jest.requireMock('@grafana/ui');
 
 describe('StatsPickerEditor', () => {
   beforeEach(() => {
