@@ -104,9 +104,7 @@ describe('getAllOptionEditors', () => {
       const editorItem = { ...item, settings } as unknown as StandardEditorsRegistryItem;
 
       await act(async () => {
-        render(
-          <Editor value={defaultValue} onChange={() => {}} item={editorItem} context={{ data: [] }} />
-        );
+        render(<Editor value={defaultValue} onChange={() => {}} item={editorItem} context={{ data: [] }} />);
       });
     });
   });
