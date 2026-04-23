@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -210,7 +209,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*5, time.Millisecond*50, "repository should be deleted before creating new one")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted before creating new one")
 
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")

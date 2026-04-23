@@ -818,13 +818,16 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		assert.NoError(t, err, "can list values")
 		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Expected dashboards to be deleted")
 
-	// Wait for repository to be fully deleted before subtests run
+	// Wait for repository to be fully deleted before subtests run.
+	// Use the package-wide default timeout: finalizer processing (webhook
+	// cleanup, releasing and removing orphan resources) runs asynchronously
+	// and can exceed a shorter bound on loaded CI runners.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted before subtests")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted before subtests")
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -1449,7 +1452,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -1460,7 +1463,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 		}
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be released")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Expected dashboards to be released")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
@@ -1471,7 +1474,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 		}
-	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Expected folders to be released")
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
@@ -1513,7 +1516,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
 		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
@@ -1560,7 +1563,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 
 		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should still exist after release")
