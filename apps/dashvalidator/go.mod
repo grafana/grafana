@@ -132,7 +132,6 @@ require (
 	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
-	github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // indirect

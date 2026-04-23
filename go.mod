@@ -46,6 +46,7 @@ require (
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
 	github.com/blevesearch/bleve_index_api v1.3.0 // @grafana/grafana-search-and-storage
+	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 	github.com/centrifugal/centrifuge v0.38.0 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
@@ -382,7 +383,6 @@ require (
 	github.com/blevesearch/zapx/v14 v14.4.2 // indirect
 	github.com/blevesearch/zapx/v15 v15.4.2 // indirect
 	github.com/blevesearch/zapx/v16 v16.2.8 // indirect
-	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
