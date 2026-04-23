@@ -115,8 +115,10 @@ func TestTransformInstantMetricsResponse(t *testing.T) {
 	resp := tempopb.QueryInstantResponse{
 		Series: []*tempopb.InstantSeries{
 			{
-				Value:      123.45,
-				PromLabels: "label=\"value\"",
+				Value: 123.45,
+				Labels: []v1.KeyValue{
+					{Key: "label", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "value"}}},
+				},
 			},
 		},
 	}
