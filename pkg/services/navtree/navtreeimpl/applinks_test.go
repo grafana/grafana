@@ -376,6 +376,104 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestBuildDataConnectionsNavLink(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+
+	t.Run("core items (add-new-connection, datasources) are added when user has ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: datasources.ActionCreate, Scope: "*"}}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section)
+		require.Len(t, section.Children, 2)
+		require.Equal(t, "connections-add-new-connection", section.Children[0].Id)
+		require.Equal(t, "connections-datasources", section.Children[1].Id)
+	})
+
+	t.Run("section is returned with no core children when user lacks ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section, "section must always be returned so plugins can attach children")
+		require.Empty(t, section.Children)
+	})
+
+	t.Run("plugin pages under the connections section are visible to users without ConfigurationPageAccess", func(t *testing.T) {
+		pluginApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-collector-app",
+				Name: "Collector",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:     "Collector",
+						Path:     "/a/grafana-collector-app",
+						Type:     "page",
+						AddToNav: false,
+					},
+				},
+			},
+		}
+		pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			pluginApp.ID: {ID: 0, OrgID: 1, PluginID: pluginApp.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+		service := ServiceImpl{
+			cfg: setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+			}),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{pluginApp},
+			},
+		}
+		service.navigationAppPathConfig = map[string]NavigationAppConfig{
+			"/a/grafana-collector-app": {SectionID: "connections"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		connectionsNode := treeRoot.FindById("connections")
+		require.NotNil(t, connectionsNode)
+		require.Len(t, connectionsNode.Children, 1)
+		require.Equal(t, "standalone-plugin-page-/a/grafana-collector-app", connectionsNode.Children[0].Id)
+	})
+
+	t.Run("RemoveEmptyConnectionsSection removes the section when it has no children", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+			pluginStore:   &pluginstore.FakePluginStore{},
+			pluginSettings: &pluginsettings.FakePluginSettings{
+				Plugins: map[string]*pluginsettings.DTO{},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		require.NotNil(t, treeRoot.FindById("connections"), "section should exist before app links are applied")
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		treeRoot.RemoveEmptyConnectionsSection()
+		require.Nil(t, treeRoot.FindById("connections"), "empty section should be pruned")
+	})
+}
+
 func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{

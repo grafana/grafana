@@ -15,6 +15,9 @@ import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimez
 import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
+// `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
+// in `describeTextRange`; `datemath.parse` itself recognizes the base unit
+// (`Q` / `y`) with a separate fiscal flag, so these keys are local to display.
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
   m: { display: 'minute' },
@@ -22,7 +25,10 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   d: { display: 'day' },
   w: { display: 'week' },
   M: { display: 'month' },
+  Q: { display: 'quarter' },
   y: { display: 'year' },
+  fQ: { display: 'fiscal quarter' },
+  fy: { display: 'fiscal year' },
 };
 
 const getLastNMinutesDisplay = (count: number) => {
@@ -396,7 +402,7 @@ export function describeTextRange(expr: string): TimeOption {
     opt = { from: 'now', to: expr, display: '' };
   }
 
-  const parts = /^now([-+])(\d+)(\w)/.exec(expr);
+  const parts = /^now([-+])(\d+)(f[Qy]|[yMwdhmsQ])/.exec(expr);
   if (parts) {
     const unit = parts[3];
     const amount = parseInt(parts[2], 10);

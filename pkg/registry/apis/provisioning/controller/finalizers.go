@@ -22,10 +22,11 @@ import (
 )
 
 type finalizer struct {
-	lister        resources.ResourceLister
-	clientFactory resources.ClientFactory
-	metrics       *finalizerMetrics
-	maxWorkers    int
+	lister           resources.ResourceLister
+	clientFactory    resources.ClientFactory
+	metrics          *finalizerMetrics
+	maxWorkers       int
+	folderAPIVersion string
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -103,9 +104,17 @@ func (f *finalizer) newItemProcessor(
 ) itemProcessor {
 	logger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		// If the item is a folder, use the configured folder API version.
+		var version string
+		if item.Group == resources.FolderResource.Group && item.Resource == resources.FolderResource.Resource {
+			version = f.folderAPIVersion
+			logger = logger.With("version", version)
+		}
+
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
+			Version:  version,
 		})
 		if err != nil {
 			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)

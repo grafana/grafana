@@ -177,15 +177,49 @@ describe('cached promises', () => {
         expect(promise).toHaveBeenCalledTimes(1);
       });
 
-      test('should not invalidate cache on errors', async () => {
+      test('should invalidate cache on errors', async () => {
         const promise = jest.fn(simulateErrorRequest);
         const promise2 = jest.fn(simulateOkRequest);
 
         await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
-        await expect(getCachedPromise(promise2)).rejects.toThrow('Network Error');
 
+        const actual = await getCachedPromise(promise2);
+
+        expect(actual).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(0);
+        expect(promise2).toHaveBeenCalledTimes(1);
+      });
+
+      test('should log errors', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+          {
+            stack: expect.any(String),
+            message: 'Network Error',
+            key: 'mockConstructor',
+          }
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+      });
+
+      test('should log non-Error thrown values', async () => {
+        const promise = jest.fn(() => Promise.reject('string error'));
+
+        await expect(getCachedPromise(promise)).rejects.toBe('string error');
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          expect.any(Error),
+          expect.objectContaining({ message: 'string error', key: 'mockConstructor' })
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toBe('string error');
       });
     });
 
@@ -229,8 +263,9 @@ describe('cached promises', () => {
 
         expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
           new Error(`getCachedPromise: Something failed while resolving a cached promise`),
           {
             stack: expect.any(String),
@@ -238,6 +273,7 @@ describe('cached promises', () => {
             key: 'mockConstructor',
           }
         );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
       });
 
       test('should invalidate cache when something errors', async () => {
@@ -297,30 +333,10 @@ describe('cached promises', () => {
         expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
         expect(promise).toHaveBeenCalledTimes(1);
         expect(onError).toHaveBeenCalledTimes(1);
-        expect(onError).toHaveBeenCalledWith({ error: new Error('Network Error'), invalidate: expect.any(Function) });
+        expect(onError).toHaveBeenCalledWith({ error: new Error('Network Error') });
       });
 
-      test('should invalidate cache when calling invalidate function', async () => {
-        const promise = jest.fn(simulateErrorRequest);
-        const promise2 = jest.fn(simulateOkRequest);
-
-        const actual1 = await getCachedPromise(promise, {
-          onError: async ({ error, invalidate }) => {
-            expect(error).toStrictEqual(new Error('Network Error'));
-            invalidate();
-            return { ok: false, status: 500, statusText: 'Network Error' };
-          },
-        });
-
-        const actual2 = await getCachedPromise(promise2);
-
-        expect(actual1).toStrictEqual({ ok: false, status: 500, statusText: 'Network Error' });
-        expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
-        expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(1); // because the cache is invalidated on error then promise2 is called
-      });
-
-      test('should not invalidate cache if invalidate function is not called', async () => {
+      test('should always invalidate cache on error', async () => {
         const promise = jest.fn(simulateErrorRequest);
         const promise2 = jest.fn(simulateOkRequest);
 
@@ -334,9 +350,51 @@ describe('cached promises', () => {
         const actual2 = await getCachedPromise(promise2);
 
         expect(actual1).toStrictEqual({ ok: false, status: 500, statusText: 'Network Error' });
-        expect(actual2).toBe(actual1);
+        expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(promise2).toHaveBeenCalledTimes(0); // because the cache is not invalidated on error
+        expect(promise2).toHaveBeenCalledTimes(1); // cache is always invalidated on error
+      });
+
+      test('should log errors', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await getCachedPromise(promise, {
+          onError: async () => ({ ok: false, status: 500, statusText: 'Internal Server Error' }),
+        });
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+        expect(logErrorMock).toHaveBeenCalledWith(
+          new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+          {
+            stack: expect.any(String),
+            message: 'Network Error',
+            key: 'mockConstructor',
+          }
+        );
+        expect(logErrorMock.mock.calls[0][0].cause).toStrictEqual(new Error('Network Error'));
+      });
+
+      test('should propagate error when onError callback throws', async () => {
+        const promise = jest.fn(simulateErrorRequest);
+
+        await expect(
+          getCachedPromise(promise, {
+            onError: async () => {
+              throw new Error('onError failed');
+            },
+          })
+        ).rejects.toThrow('onError failed');
+
+        // Error should still be logged
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        expect(logErrorMock).toHaveBeenCalledTimes(1);
+
+        // Cache should still be invalidated
+        const promise2 = jest.fn(simulateOkRequest);
+        const actual = await getCachedPromise(promise2);
+        expect(actual).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+        expect(promise2).toHaveBeenCalledTimes(1);
       });
     });
   });
@@ -436,7 +494,7 @@ describe('cached promises', () => {
 
       expect(actual).toBe('recovered');
       expect(onError).toHaveBeenCalledTimes(1);
-      expect(onError).toHaveBeenCalledWith({ error: new Error('fail'), invalidate: expect.any(Function) });
+      expect(onError).toHaveBeenCalledWith({ error: new Error('fail') });
     });
 
     test('should support invalidate option', async () => {
@@ -616,19 +674,16 @@ describe('cached promises', () => {
         const fn = jest.fn(async (_id: string): Promise<string> => {
           throw new Error('fail');
         });
-        const onError = jest.fn(async ({ invalidate }: { invalidate: () => void }) => {
-          invalidate();
-          return 'recovered';
-        });
+        const onError = jest.fn(async () => 'recovered');
         const cached = getCachedPromiseWithArgs(fn, { onError }, (id) => `custom:${id}`);
 
         const actual = await cached('a');
 
         expect(actual).toBe('recovered');
         expect(onError).toHaveBeenCalledTimes(1);
-        expect(onError).toHaveBeenCalledWith({ error: new Error('fail'), invalidate: expect.any(Function) });
+        expect(onError).toHaveBeenCalledWith({ error: new Error('fail') });
 
-        // After invalidation via onError, a new call should re-fetch
+        // Cache is always invalidated on error, so a new call should re-fetch
         fn.mockResolvedValueOnce('fresh');
         const actual2 = await cached('a');
         expect(actual2).toBe('fresh');

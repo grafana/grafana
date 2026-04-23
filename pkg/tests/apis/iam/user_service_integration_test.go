@@ -294,8 +294,8 @@ func TestIntegrationUserService(t *testing.T) {
 			require.Equal(t, 200, createRsp.Response.StatusCode, "body: %s", string(createRsp.Body))
 			require.NotEmpty(t, createRsp.Result.UID)
 
-			if mode <= rest.Mode2 {
-				// Modes 0–2 write to the legacy SQL database, so the legacy API can verify the user.
+			if mode <= rest.Mode3 {
+				// Modes 0–3 write to the legacy SQL database, so the legacy API can verify the user.
 				// UserID is only populated in these modes because SetDeprecatedInternalID is only set
 				// by the LegacyStore on the returned k8s object.
 				t.Run("should create user via k8s service and verify it using the legacy API", func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestIntegrationUserService(t *testing.T) {
 					require.Equal(t, 200, deleteRsp.Response.StatusCode)
 				})
 			} else {
-				// Modes 3–5 use the kubernetes API as the primary (or only) storage, so the k8s
+				// Modes 4–5 use the kubernetes API as the primary (or only) storage, so the k8s
 				// client is used for verification and cleanup.
 				t.Run("should create user via k8s service and verify it using the kubernetes API", func(t *testing.T) {
 					ctx := context.Background()

@@ -40,6 +40,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -83,7 +84,7 @@ CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
 exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
 +4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
 u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
------END RSA PRIVATE KEY-----`
+-----END RSA PRIVATE KEY-----` // trufflehog:ignore
 
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
@@ -202,19 +203,27 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Pull:   options,
 	})
 
-	result := h.AdminREST.Post().
-		Namespace(h.Namespace).
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context())
+	post := func() rest.Result {
+		return h.AdminREST.Post().
+			Namespace(h.Namespace).
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+	}
 
-	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
+	// A controller-triggered sync (e.g. the auto-resync when a repo first
+	// becomes healthy) may already be in flight when the caller invokes us.
+	// That sync may not observe state changes the caller just made (e.g.
+	// files copied to the provisioning path), so we drain any in-flight
+	// jobs and retry the POST to guarantee a sync runs against current state.
+	result := post()
+	const maxRetries = 3
+	for i := 0; apierrors.IsAlreadyExists(result.Error()) && i < maxRetries; i++ {
 		h.AwaitJobs(t, repo)
-		return
+		result = post()
 	}
 
 	obj, err := result.Get()
@@ -755,6 +764,7 @@ type TestRepo struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -1056,6 +1066,51 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForRepositoryDeleted polls until the named repository reports NotFound.
+// Repository deletion is finalizer-driven (cleanup → release/remove orphan
+// resources); on loaded CI runners the chain routinely exceeds short bounds.
+func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, ctx context.Context, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// WaitForResourcesReleased polls until every item returned by client no longer
+// carries provisioning-manager annotations — i.e. the release-orphan-resources
+// finalizer has finished handing the objects back to the user.
+func WaitForResourcesReleased(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		for _, v := range items.Items {
+			annotations := v.GetAnnotations()
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerKind, "%s %q still has manager kind annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerIdentity, "%s %q still has manager identity annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourcePath, "%s %q still has source path annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourceChecksum, "%s %q still has source checksum annotation", resourceKind, v.GetName())
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be released", resourceKind)
+}
+
+// WaitForResourcesDeleted polls until the given client lists zero items.
+// Use this after a repository delete when the remove-orphan-resources
+// finalizer should have swept the managed resources away.
+func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
@@ -1077,6 +1132,17 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 func WithFolderAPIVersion(version string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
 	}
 }
 
@@ -1111,7 +1177,9 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 				EnableMigration: true,
 			},
 		},
-		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Longer batched RV WithTx deadline via [unified_storage] resource_version_batch_transaction_timeout.
+		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
+		PermittedProvisioningPaths:                           ".|" + provisioningPath,
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
@@ -1284,6 +1352,12 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
+//
+// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// eventually-consistent signal: repository finalizers draining orphan
+// resources, dashboards freeing their folder reference in the search index,
+// and folder admission rejecting deletion until that index catches up. Under
+// SQLite write contention these lags routinely exceed short timeouts.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
@@ -1295,7 +1369,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -2132,13 +2206,27 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
 
 // HasState returns a matcher that asserts the job finished in the given state.
+// On mismatch it dumps the full job (spec + status) so the top-level error
+// message, errors list, summary counts, and warnings are visible in CI logs.
 func HasState(expected provisioning.JobState) JobMatcher {
 	return func(t *testing.T, job *unstructured.Unstructured) {
 		t.Helper()
 		actual := MustNestedString(job.Object, "status", "state")
 		require.Equal(t, string(expected), actual,
-			"job %q should have state %s", job.GetName(), expected)
+			"job %q should have state %s; full job:\n%s",
+			job.GetName(), expected, jobDump(job))
 	}
+}
+
+// jobDump renders a job as indented JSON for failure messages. Falls back to
+// the default formatter if marshalling fails (which should not happen for a
+// server-returned object).
+func jobDump(job *unstructured.Unstructured) string {
+	b, err := json.MarshalIndent(job.Object, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v (marshal error: %v)", job.Object, err)
+	}
+	return string(b)
 }
 
 // HasNoErrors returns a matcher that asserts the job completed without errors.
@@ -2550,7 +2638,37 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
 }
 
+// CreateGithubRepo creates a github-type repository backed by the gittest server.
+// The repo will NOT become healthy (git auth uses default "git" user which doesn't
+// exist on gittest), but webhooks are created before the health check runs, so
+// Status.Webhook will be populated if the GitHub API mock is configured.
+// workflows is optional; defaults to ["write"].
+// webhookBaseURL is optional; pass it to enable webhook creation on the repo.
+func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", false, initialFiles, extraValues, workflows...)
+}
+
 func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "git", syncTarget, true, initialFiles, nil, workflows...)
+}
+
+// createRepo is the shared implementation for creating git-backed repositories.
+// repoType is "git" or "github", which determines the template used.
+// waitForReady controls whether to wait for the repo to become healthy.
+func (h *GitTestHelper) createRepo(
+	t *testing.T,
+	repoName string,
+	repoType string,
+	syncTarget string,
+	waitForReady bool,
+	initialFiles map[string][]byte,
+	extraTemplateValues map[string]any,
+	workflows ...string,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -2592,7 +2710,7 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+	templateValues := map[string]any{
 		"Name":          repoName,
 		"Title":         fmt.Sprintf("Test Repository %s", repoName),
 		"URL":           remote.URL,
@@ -2601,12 +2719,20 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 		"SyncTarget":    syncTarget,
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
-	})
+	}
+	for k, v := range extraTemplateValues {
+		templateValues[k] = v
+	}
+
+	tmpl := TestdataPath(repoType + ".json.tmpl")
+	repoObj := h.RenderObject(t, tmpl, templateValues)
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
-	h.waitForReadyRepository(t, repoName)
+	if waitForReady {
+		h.waitForReadyRepository(t, repoName)
+	}
 
 	return remote, local
 }
@@ -2869,6 +2995,8 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 }
 
 // TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key
+//
+//nolint:gosec // Test RSA private key (base64-encoded, generated for testing purposes only, never used in production)
 func TestGithubPrivateKeyBase64() string {
 	return "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb1FJQkFBS0NBUUJuMU11TTVoSWZINmQzVE5TdEkxb2ZXdi9nY2pRNGpvaTljRmlqRXdWTHVQWWtGMW5ECktrU2JhTUdGVVdpT1RhQi9IOWZ4bWQvVjJ1MDRObEJZM2F2Nm01VC9zSGZWU2lFV0FFVWJsaDNjQTM0SFZDbUQKY3F5eVZ0eTVITEdKSmxTczJDN1cyeDd5VWM5SW16eURCc3lqcEtPWHVvako5d045YTE3RDJjWVU1V2tYam9EQwo0QkhpZDYxam45V0JUdFBaWFNnT2RpcndhaE56eFpRU0lQN0RBOVQ4eWlad0lXUHA1WWVzZ3NBUHlRTENGUGdNCnM3N3h6L0NFVW5FWVEzNXpJL2svbVFyd0tkUS9aUDh4THdRb2hVSUQwQkl4RTdHNXF1TDA2OVJ1dUNaV1prb0YKb1BpWmJwN0hTcnl6MSsxOWpEM3JGVDdlSEdVWXZBeUNuWG1YQWdNQkFBRUNnZ0VBRFNzNEJjN0lUWm8rS3l0YgpiZm9sM0FRMm44amNSckFOTjdtZ0JFN05SU1ZZVW91RG52VWxibkNDMnQzUVhQd0xkeFFhMTFHa3lnTFNRMmJnCkdlVkRncTFvNEdVSlRjdnhGbEZDY3BVL2hFQU5JL0RRc3hOQVEvNHdVR29MT2xIYU8zSFB2d0JibEhBNzBnR2UKVXgveHBHK2xNQUZBaUIwRUhFd1o0TTBtQ2xCRU9RdjNOemFGVFd1Qkh0SU1TOGVpZDdNMXE1cXo5K3JDZ1pTTApLQkJIbzBPdlViYWpHNENXbDhTTTZMVVlhcEFTR2crVTE3RSs0eEEzbnB3cElkc2srQ2J0WCt2dlgzMjRuNGtuCjBFa3JKcUNqdjhNMUtpQ0tBUCtVeHdQMDB5d3hPZzRQTit4K2RISS9JN3hCdkVLZS94NkJsdFZTZEdBK1BsVUsKMDJ3YWdRS0JnUURGN2dkUUxGSWFnUEg3WDdkQlA2cUVHeGovQ2s5UWR6M1MxZ290UGtWZXErMS9VdFFpallaMQpqNDR1cC8weUIyQjlQNGtXMDkxbitpV2N5Zm9VNVV3QnVhOWRIdkNaUDNRSDA1TFIxWnNjVUh4TEdqRFBCQVN0CmwyeFNxMGhxcU5XQnNwYjFNMGVDWTBZeGk2NWlEa2ozeHNJMmlOMzVCRWIxRmxXZFI1S0d2d0tCZ1FDR1MwY2UKd0FTV2JaSVBVMlVvS0dPUWtJSlU2UW1MeTBLWmJmWWtweWZFOEl4R3R0WVZFUThwdU52REROWldITmYrTFA4NQpjOGlWNlNmbldpTG11MVhrRzJZbUpGQkNDQVdnSjhNcTJYUUQ4RSthL3hjYVczTnFsY0M1K0kyY3pYMzY3ajNyCjY5d1pTeFJielIrRENmT2lJa3Jla0pJbXdOMTgzWll5MmNCYktRS0JnRmo4NklyU01tTzZINUZ0K2owNnU1WkQKZkp5RjdSejNUM053U2drSFd6YnlRNGdnSEVJZ3NSZy8zNlA0WVN6U0JqNnBoeUFkUndrTmZVV2R4WE1KbUgrYQpGVTdmcnpxblBhcWJKQUoxY0JSdDEwUUkxWEx0a3BEZGFKVk9idk9OVHRqT0MzTFlpRWtHQ3pRUlllaXlGWHBaCkFVNTFnSjhKbmtGb3RqdE5SNEtQQW9HQWVoVlJFRGxMY2wwbG5OMFpac3BneVBrMkltNi9pT0E5S1RIM3hCWloKWndXdTRGSXlpSEE3c3BnazRFcDVSMHR0WjlvTUkzU0ljdy9FZ09OR095OHV3L0hNaVB3V0loRWMzQjJKcFJpTwpDVTZiYjdKYWxGRnl1UUJ1ZGlIb3l4VmNZNVBWb3ZXRjMxQ0xyM0RvSnI0VFI5K1k1SC9VL1huellDSW8rdzFOCmV4RUNnWUJGQUdLWVRJZUdBdmhJdkQ1VHBoTHBiQ3llVkxCSXE1aFJ5cmRSWSs2SXdxZHI1UEd2TFBLd2luNSsKKzRDRGhXUFc0c3BxOE1ZUENSaU1ydlJTY3RLdC83RmhWR0wydkUvMFZZM1RjTGsxNHFMQysyKzBsblBWZ25Zbgp1NS93T3l1SHAxY0lCbmplTjQxL3BsdU9XRkJISTl4TFczRXhMdG1ZTWllY0o4VmRSQT09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==" // trufflehog:ignore
 }
@@ -2918,8 +3046,7 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 // RESTDo performs a REST request against the provisioning API and returns the
 // response as an unstructured map. The subpath is appended to
 // /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
-func (h *ProvisioningTestHelper) RESTDo(t *testing.T, method, version, subpath string, body ...map[string]interface{}) map[string]interface{} {
-	t.Helper()
+func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]interface{}) (map[string]interface{}, error) {
 	ns := h.Namespace
 	if ns == "" {
 		ns = "default"
@@ -2929,19 +3056,27 @@ func (h *ProvisioningTestHelper) RESTDo(t *testing.T, method, version, subpath s
 	req := h.AdminREST.Verb(method).AbsPath(absPath)
 	if len(body) > 0 && body[0] != nil {
 		bodyBytes, err := json.Marshal(body[0])
-		require.NoError(t, err)
+		if err != nil {
+			return nil, err
+		}
 		req = req.Body(bodyBytes).SetHeader("Content-Type", "application/json")
 	}
 
 	result := req.Do(context.Background())
-	require.NoError(t, result.Error())
+	if err := result.Error(); err != nil {
+		return nil, err
+	}
 
 	raw, err := result.Raw()
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	var obj map[string]interface{}
-	require.NoError(t, json.Unmarshal(raw, &obj))
-	return obj
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 // LabelPendingDelete is the label key written by the tenant watcher to mark
@@ -2952,7 +3087,7 @@ const LabelPendingDelete = "cloud.grafana.com/pending-delete"
 // It retries on 409 Conflict to handle concurrent status updates from the controller.
 func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
 	t.Helper()
-	err := RetryOnConflict(func() error {
+	err := RetryOnConflict(t, func() error {
 		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -2969,15 +3104,16 @@ func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, nam
 	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
 }
 
-// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
-// error (or nil on success).
-func RetryOnConflict(fn func() error) error {
-	var err error
-	for range 10 {
-		err = fn()
-		if !apierrors.IsConflict(err) {
-			return err
+// RetryOnConflict retries fn while it returns a 409 Conflict, using
+// EventuallyWithT so the retry window is time-bounded.
+func RetryOnConflict(t *testing.T, fn func() error) error {
+	t.Helper()
+	var lastErr error
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		lastErr = fn()
+		if apierrors.IsConflict(lastErr) {
+			c.Errorf("conflict error, retrying: %v", lastErr)
 		}
-	}
-	return err
+	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
+	return lastErr
 }

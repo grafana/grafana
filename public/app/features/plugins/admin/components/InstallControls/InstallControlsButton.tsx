@@ -12,6 +12,7 @@ import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuth
 import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
+import { type EntitlementState } from '../../hooks/usePluginEntitlement';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -31,6 +32,7 @@ type InstallControlsButtonProps = {
   latestCompatibleVersion?: Version;
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
+  entitlement?: EntitlementState;
 };
 
 export function InstallControlsButton({
@@ -39,6 +41,7 @@ export function InstallControlsButton({
   latestCompatibleVersion,
   hasInstallWarning,
   setNeedReload,
+  entitlement,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -205,16 +208,26 @@ export function InstallControlsButton({
   }
 
   if (isMarketplacePlugin(plugin)) {
-    return (
-      <LinkButton
-        href={`${getExternalManageLink(plugin.id)}?tab=installation`}
-        target="_blank"
-        rel="noopener noreferrer"
-        icon="external-link-alt"
-      >
-        <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
-      </LinkButton>
-    );
+    if (entitlement?.isLoading) {
+      return (
+        <Button disabled icon="spinner">
+          <Trans i18nKey="plugins.install-controls.install">Install</Trans>
+        </Button>
+      );
+    }
+
+    if (!entitlement?.entitled) {
+      return (
+        <LinkButton
+          href={`${getExternalManageLink(plugin.id)}?tab=installation`}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="external-link-alt"
+        >
+          <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
+        </LinkButton>
+      );
+    }
   }
 
   const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
