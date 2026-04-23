@@ -83,7 +83,6 @@ export const CompareUPlotCanvases = ({
         testName: raw.testName,
         expected: raw.expected,
         actual: raw.actual,
-        uPlotData: raw.uPlotData,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
         ...readPayloadDimensions(raw),
       },

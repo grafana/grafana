@@ -3559,6 +3559,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Fuplot-compare%40workspace%3Ascripts%2Fuplot-compare":
+  version: 0.0.0-use.local
+  resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Fuplot-compare%40workspace%3Ascripts%2Fuplot-compare"
+  languageName: node
+  linkType: soft
+
 "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
@@ -4328,13 +4334,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/uplot-compare@workspace:scripts/uplot-compare"
   dependencies:
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.2"
     "@vitejs/plugin-react": "npm:^4.4.1"
+    eslint: "npm:9.32.0"
     jest-canvas-mock: "npm:^2.5.2"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
-    typescript: "npm:~5.8.3"
+    typescript: "npm:6.0.2"
     vite: "npm:^6.3.4"
   languageName: unknown
   linkType: soft
@@ -34237,16 +34245,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:~5.8.3":
-  version: 5.8.3
-  resolution: "typescript@npm:5.8.3"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/65c40944c51b513b0172c6710ee62e951b70af6f75d5a5da745cb7fab132c09ae27ffdf7838996e3ed603bb015dadd099006658046941bd0ba30340cc563ae92
-  languageName: node
-  linkType: hard
-
 "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>":
   version: 5.6.1-rc
   resolution: "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>::version=5.6.1-rc&hash=8c6c40"
@@ -34274,16 +34272,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/696e1b017bc2635f4e0c94eb4435357701008e2f272f553d06e35b494b8ddc60aa221145e286c28ace0c89ee32827a28c2040e3a69bdc108b1a5dc8fb40b72e3
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A~5.8.3#optional!builtin<compat/typescript>":
-  version: 5.8.3
-  resolution: "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=5786d5"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10/b9b1e73dabac5dc730c041325dbd9c99467c1b0d239f1b74ec3b90d831384af3e2ba973946232df670519147eb51a2c20f6f96163cea2b359f03de1e2091cc4f
   languageName: node
   linkType: hard
 

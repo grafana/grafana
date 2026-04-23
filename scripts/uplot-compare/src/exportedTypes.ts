@@ -5,7 +5,6 @@ export interface UPlotComparePayload {
   testName: string;
   expected: unknown;
   actual: unknown;
-  uPlotData?: unknown;
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   /** uPlot `width` / `height` (CSS px) for the test canvas; used by uplot-compare to size replay canvases */
   width: number;

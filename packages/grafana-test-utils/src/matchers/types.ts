@@ -12,8 +12,6 @@ export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
   ): Promise<jest.CustomMatcherResult>;
   toMatchUPlotSnapshot(
     received: unknown,
-    data: unknown,
-    series: unknown[],
     uPlotCanvasEvents: unknown[],
     size?: { width?: number; height?: number },
     snapshotHint?: string,

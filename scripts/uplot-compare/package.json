@@ -23,11 +23,13 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "9.32.0",
     "jest-canvas-mock": "^2.5.2",
-    "typescript": "~5.8.3",
+    "typescript": "6.0.2",
     "vite": "^6.3.4"
   }
 }

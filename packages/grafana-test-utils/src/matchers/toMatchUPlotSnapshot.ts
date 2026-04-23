@@ -3,7 +3,6 @@ import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Context, toMatchSnapshot } from 'jest-snapshot';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type uPlot from 'uplot';
 
 import { type UPlotComparePayload } from '@grafana/uplot-compare';
 
@@ -23,7 +22,6 @@ type SnapshotMismatch = jest.CustomMatcherResult & {
 export function toMatchUPlotSnapshot(
   this: MatcherContext,
   received: CanvasRenderingContext2DEvent[],
-  data: uPlot.AlignedData,
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[],
   size: UPlotSnapshotSize,
   snapshotHint?: string,
@@ -57,7 +55,6 @@ export function toMatchUPlotSnapshot(
       testName,
       expected: parsedExpected,
       actual: received,
-      uPlotData: data,
       uPlotCanvasEvents: uPlotCanvasEvents,
       width: payloadWidth,
       height: payloadHeight,
