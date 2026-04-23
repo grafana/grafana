@@ -37,33 +37,42 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     await expect(panelContent, 'that the empty text has changed').toHaveText('My empty value');
   });
 
-  test('sparkline: area mode renders a chart per series', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('sparkline: area mode renders a chart per series', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '6' }),
     });
 
     // panel 6 has 6 series with graphMode: area — each BigValue renders a uplot sparkline
-    await expect(page.locator('.uplot'), 'area sparkline renders for each of 6 series').toHaveCount(6);
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot'),
+      'area sparkline renders for each of 6 series'
+    ).toHaveCount(6);
   });
 
-  test('sparkline: line mode renders a chart per series', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('sparkline: line mode renders a chart per series', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '8' }),
     });
 
     // panel 8 has 7 series with graphMode: line — each BigValue renders a uplot sparkline
-    await expect(page.locator('.uplot'), 'line sparkline renders for each of 7 series').toHaveCount(7);
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot'),
+      'line sparkline renders for each of 7 series'
+    ).toHaveCount(7);
   });
 
-  test('sparkline: no chart when graphMode is none', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('sparkline: no chart when graphMode is none', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '15' }),
     });
 
-    await expect(page.locator('.uplot'), 'no sparkline chart when graphMode is none').toBeHidden();
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot'),
+      'no sparkline chart when graphMode is none'
+    ).toBeHidden();
   });
 
   test('text mode: name displays series names', async ({ gotoDashboardPage, page }) => {
