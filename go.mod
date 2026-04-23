@@ -656,17 +656,17 @@ require (
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.64.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.15.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.19.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.39.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.39.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.61.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.15.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.39.0 // indirect
-	go.opentelemetry.io/otel/log v0.15.0 // indirect
+	go.opentelemetry.io/otel/log v0.19.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	go.opentelemetry.io/otel/sdk/log v0.15.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v0.19.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
