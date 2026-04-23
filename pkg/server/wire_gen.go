@@ -442,7 +442,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -768,7 +769,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
 		return nil, err
@@ -1141,7 +1141,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1469,7 +1470,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
 		return nil, err
@@ -1761,7 +1761,8 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	cacheService := localcache.ProvideService()
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, clientGenerator)
 	if err != nil {
 		return Runner{}, err
 	}
