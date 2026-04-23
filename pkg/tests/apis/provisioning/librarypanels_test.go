@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -147,7 +146,7 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 			require.NoError(t, err, "can list values")
@@ -157,7 +156,7 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
 				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Expected folders to be released")
 
 		libraryElement := map[string]interface{}{
 			"kind":      1,

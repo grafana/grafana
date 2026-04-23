@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -91,7 +90,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 			require.Eventually(t, func() bool {
 				_, err := helper.Repositories.Resource.Get(ctx, obj.GetName(), metav1.GetOptions{})
 				return apierrors.IsNotFound(err)
-			}, time.Second*15, time.Millisecond*300, "should be removed")
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should be removed")
 
 			// now check that we can no longer decrypt the requested values
 			results, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", obj.GetNamespace(), created...)
