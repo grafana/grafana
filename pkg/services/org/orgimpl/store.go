@@ -649,7 +649,7 @@ func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.Searc
 	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		emailArgs := make([]any, len(query.Emails))
 		for i, e := range query.Emails {
-			emailArgs[i] = e
+			emailArgs[i] = strings.ToLower(e)
 		}
 		placeholders := strings.Repeat("?,", len(query.Emails))
 		placeholders = placeholders[:len(placeholders)-1]

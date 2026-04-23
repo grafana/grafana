@@ -562,6 +562,17 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.Equal(t, ac1.Email, result[0].Email)
 		})
 
+		t.Run("matches emails case-insensitively", func(t *testing.T) {
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{"AC1@TEST.COM", "AC2@TEST.COM"},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+			emails := []string{result[0].Email, result[1].Email}
+			require.ElementsMatch(t, emails, []string{ac1.Email, ac2.Email})
+		})
+
 		t.Run("returns hidden users when ExcludeHiddenUsers is false", func(t *testing.T) {
 			storeWithHidden := sqlStore{
 				db:      ss,
