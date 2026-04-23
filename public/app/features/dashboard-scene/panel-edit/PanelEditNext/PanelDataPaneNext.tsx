@@ -360,6 +360,89 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
+  public bulkDeleteQueries = (refIds: readonly string[]) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+    const refIdSet = new Set(refIds);
+    const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
+    queryRunner.setState({ queries });
+    this.resolveUniformDatasource();
+    this.runQueries();
+  };
+
+  public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+    const refIdSet = new Set(refIds);
+    const queries = queryRunner.state.queries.map((q) => (refIdSet.has(q.refId) ? { ...q, hide } : q));
+    queryRunner.setState({ queries });
+    this.runQueries();
+  };
+
+  public bulkChangeDataSource = async (refIds: readonly string[], dsRef: DataSourceRef) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
+    if (!newDataSource) {
+      this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
+      return;
+    }
+
+    let defaultQuery: Partial<DataQuery> | undefined;
+    try {
+      const ds = await getDataSourceSrv().get(dsRef);
+      defaultQuery = ds.getDefaultQuery?.(CoreApp.PanelEditor);
+    } catch {
+      this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
+      return;
+    }
+
+    const refIdSet = new Set(refIds);
+    const requiresMixedMode = queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME;
+
+    const remapQuery = (query: DataQuery, fallbackDsRef?: DataSourceRef): DataQuery => {
+      if (refIdSet.has(query.refId)) {
+        const previousDataSource = query.datasource
+          ? getDataSourceSrv().getInstanceSettings(query.datasource)
+          : undefined;
+        const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
+        if (shouldUseDefaultQuery && defaultQuery) {
+          return { ...defaultQuery, ...query, datasource: dsRef };
+        }
+        return { ...query, datasource: dsRef };
+      }
+      if (fallbackDsRef && !query.datasource) {
+        return { ...query, datasource: fallbackDsRef };
+      }
+      return query;
+    };
+
+    if (requiresMixedMode) {
+      const currentPanelDsRef = queryRunner.state.datasource;
+      const defaultDsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+      const fallbackDsRef = currentPanelDsRef ?? (defaultDsSettings ? getDataSourceRef(defaultDsSettings) : undefined);
+
+      queryRunner.setState({
+        queries: queryRunner.state.queries.map((query) => remapQuery(query, fallbackDsRef)),
+        datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
+      });
+    } else {
+      queryRunner.setState({
+        queries: queryRunner.state.queries.map((query) => remapQuery(query)),
+      });
+    }
+
+    this.resolveUniformDatasource();
+    queryRunner.runQueries();
+  };
+
   // Transformation Operations
   private getSceneDataTransformer(): SceneDataTransformer | undefined {
     const panel = this.state.panelRef.resolve();
@@ -444,6 +527,32 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const transformation = transformations[index];
     transformations[index] = { ...transformation, disabled: !transformation.disabled };
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public bulkDeleteTransformations = (indices: number[]) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+    const indexSet = new Set(indices);
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).filter(
+      (_, i) => !indexSet.has(i)
+    );
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public bulkToggleTransformationsDisabled = (indices: number[], disabled: boolean) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+    const indexSet = new Set(indices);
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).map((t, i) =>
+      indexSet.has(i) ? { ...t, disabled } : t
+    );
     transformer.setState({ transformations });
     this.runQueries();
   };

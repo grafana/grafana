@@ -822,12 +822,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if k.rvManager != nil {
 		dataKey.GUID = uuid.New().String()
 		var err error
-		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			if err := k.dataStore.Save(kv.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			if err := k.dataStore.Save(kv.ContextWithTx(txnCtx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
 
-			if err := k.dataStore.applyBackwardsCompatibleChanges(ctx, tx, event, dataKey); err != nil {
+			if err := k.dataStore.applyBackwardsCompatibleChanges(txnCtx, tx, event, dataKey); err != nil {
 				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
 			}
 
@@ -2268,7 +2268,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					}
 				}
 			} else {
-				_, err := b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+				_, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 					return "", nil
 				})
 				if err != nil {
