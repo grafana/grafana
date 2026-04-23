@@ -18,7 +18,7 @@ interface AlertInstanceExtensionPointProps {
   rule?: CombinedRule;
   instance: Alert;
   extensionPointId: PluginExtensionPoints;
-  showPreviewRouting?: boolean;
+  showRouting?: boolean;
 }
 
 const PREVIEW_ROUTING_EXTENSION_BASE = {
@@ -33,7 +33,7 @@ export const AlertInstanceExtensionPoint = ({
   rule,
   instance,
   extensionPointId,
-  showPreviewRouting,
+  showRouting,
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isPreviewRoutingOpen, setIsPreviewRoutingOpen] = useState(false);
@@ -43,14 +43,18 @@ export const AlertInstanceExtensionPoint = ({
 
   const rulerRule = rule?.rulerRule;
   const alertmanager = rule ? getRulesSourceName(rule.namespace.rulesSource) : GRAFANA_RULES_SOURCE_NAME;
-  const policyName =
-    showPreviewRouting && rulerRuleType.grafana.alertingRule(rulerRule)
-      ? rulerRule.grafana_alert.notification_settings?.policy
-      : undefined;
+  const isGrafanaManagedUsingNotificationPolicies =
+    showRouting &&
+    rulerRuleType.grafana.alertingRule(rulerRule) &&
+    !rulerRule.grafana_alert.notification_settings?.receiver;
+
+  const policyName = isGrafanaManagedUsingNotificationPolicies
+    ? rulerRule.grafana_alert.notification_settings?.policy
+    : undefined;
 
   const { treeMatchingResults } = useAlertmanagerNotificationRoutingPreview(
     alertmanager,
-    showPreviewRouting ? [instance.labels] : [],
+    isGrafanaManagedUsingNotificationPolicies ? [instance.labels] : [],
     policyName
   );
 
@@ -64,8 +68,8 @@ export const AlertInstanceExtensionPoint = ({
   );
 
   const allLinks = useMemo(
-    () => (showPreviewRouting ? [...links, previewRoutingExtension] : links),
-    [links, showPreviewRouting, previewRoutingExtension]
+    () => (isGrafanaManagedUsingNotificationPolicies ? [...links, previewRoutingExtension] : links),
+    [links, isGrafanaManagedUsingNotificationPolicies, previewRoutingExtension]
   );
 
   if (allLinks.length === 0) {
@@ -92,7 +96,7 @@ export const AlertInstanceExtensionPoint = ({
           onDismiss={() => setSelectedExtension(undefined)}
         />
       )}
-      {isPreviewRoutingOpen && showPreviewRouting && previewRoutingInstance && previewRoutingJourney && (
+      {isPreviewRoutingOpen && showRouting && previewRoutingInstance && previewRoutingJourney && (
         <NotificationPolicySidebar
           policyName={policyName}
           journey={previewRoutingJourney}

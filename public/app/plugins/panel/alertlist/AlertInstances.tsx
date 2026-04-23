@@ -131,6 +131,7 @@ export const AlertInstances = ({
           instances={filteredAlerts}
           pagination={{ itemsPerPage: 2 * DEFAULT_PER_PAGE_PAGINATION }}
           footerRow={footerRow}
+          showRouting={false}
         />
       )}
     </div>
