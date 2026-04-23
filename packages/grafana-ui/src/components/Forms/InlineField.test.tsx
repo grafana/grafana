@@ -8,6 +8,7 @@ import { SecretTextArea } from '../SecretTextArea';
 import { MultiSelect, Select } from '../Select/Select';
 import { Slider } from '../Slider/Slider';
 import { InlineSwitch, Switch } from '../Switch/Switch';
+import { TagsInput } from '../TagsInput/TagsInput';
 import { TextArea } from '../TextArea/TextArea';
 
 import { Checkbox } from './Checkbox';
@@ -278,6 +279,28 @@ describe('InlineField', () => {
       render(
         <InlineField label="My label" invalid error="My error">
           <SecretTextArea isConfigured={true} onReset={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('TagsInput', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <TagsInput onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <TagsInput onChange={() => {}} />
         </InlineField>
       );
 
