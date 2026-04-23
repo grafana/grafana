@@ -23,7 +23,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
+    "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",

@@ -3559,12 +3559,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Fuplot-compare%40workspace%3Ascripts%2Fuplot-compare":
-  version: 0.0.0-use.local
-  resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Fuplot-compare%40workspace%3Ascripts%2Fuplot-compare"
-  languageName: node
-  linkType: soft
-
 "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
@@ -4334,7 +4328,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/uplot-compare@workspace:scripts/uplot-compare"
   dependencies:
-    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
+    "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.2"
     "@vitejs/plugin-react": "npm:^4.4.1"
