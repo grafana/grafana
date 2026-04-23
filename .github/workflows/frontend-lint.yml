@@ -244,7 +244,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.changed == 'true'
     name: Check circular dependencies
     runs-on: ubuntu-x64-small
     steps:
