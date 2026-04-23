@@ -302,7 +302,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 			display = &s
 			hasDisplayCol = true
 		}
-		for i := 0; i < timeLen; i++ {
+		for i := range timeLen {
 			t := timeField.At(i).(time.Time)
 			v, err := f.FloatAt(i)
 			if err != nil {

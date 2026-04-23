@@ -27,6 +27,16 @@ describe('InlineField', () => {
     expect(screen.getByLabelText('My label')).toBeInTheDocument();
   });
 
+  it('associates the label with an Input when no id is set', () => {
+    render(
+      <InlineField label="My label">
+        <Input />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+  });
+
   it('renders with the inputId of its children', () => {
     const comboboxOptions = [
       { label: 'Option 1', value: '1' },
