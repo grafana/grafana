@@ -122,18 +122,19 @@ const LogLineDetailsTabs = memo(
           return;
         }
         e.preventDefault();
-        if (!currentLog || logs.indexOf(currentLog) < 0) {
+        if (!currentLog || !logs.find((log) => log.uid === currentLog.uid)) {
           return;
         }
-        const nextLog = logs[logs.indexOf(currentLog) + delta];
+        const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
         if (!nextLog) {
           return;
         }
         replaceDetails(nextLog);
+        focusLogLine(nextLog);
       }
-      document.addEventListener('keyup', handleKeydown);
-      return () => document.removeEventListener('keyup', handleKeydown);
-    }, [currentLog, logs, replaceDetails]);
+      document.addEventListener('keydown', handleKeydown);
+      return () => document.removeEventListener('keydown', handleKeydown);
+    }, [currentLog, focusLogLine, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {
       inputRef.current = newSearch;
