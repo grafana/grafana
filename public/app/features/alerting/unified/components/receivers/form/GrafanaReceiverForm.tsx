@@ -22,7 +22,7 @@ import {
 import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
 import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
-import { canCreateNotifier, hasLegacyIntegrations } from '../../../utils/notifier-versions';
+import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
@@ -33,15 +33,16 @@ import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
 import { type Notifier } from './notifiers';
 
-const baseDefaultChannelValues = {
+const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
   secureSettings: {},
   settings: {},
   secureFields: {},
   disableResolveMessage: false,
+  type: 'email',
   // version is intentionally not set here - it will be determined by the notifier's currentVersion
   // when the integration is created/type is changed. The backend will use its default if not provided.
-};
+});
 
 export interface GrafanaReceiverFormProps {
   contactPoint?: GrafanaManagedContactPoint;
@@ -80,19 +81,6 @@ export const GrafanaReceiverForm = ({
   } = useOnCallIntegration();
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useIntegrationTypeSchemas();
-
-  // Pick a default integration type that is actually creatable. Prefer email for backwards compatibility;
-  // fall back to the first creatable notifier if email has been disallowed via the allowed_integrations setting.
-  const defaultChannelValues: GrafanaChannelValues = useMemo(() => {
-    const emailNotifier = grafanaNotifiers.find((n) => n.type === 'email');
-    const defaultNotifier =
-      emailNotifier && canCreateNotifier(emailNotifier) ? emailNotifier : grafanaNotifiers.find(canCreateNotifier);
-    return {
-      ...baseDefaultChannelValues,
-      type: defaultNotifier?.type ?? 'email',
-    };
-  }, [grafanaNotifiers]);
-
   const [testChannelData, setTestChannelData] = useState<{
     channelValues: GrafanaChannelValues;
     existingIntegration?: GrafanaManagedReceiverConfig;
@@ -136,7 +124,8 @@ export const GrafanaReceiverForm = ({
         locationService.push('/alerting/notifications');
       }
     } catch (error) {
-      // React form validation will handle this for us
+      // Propagate so ReceiverForm can show notifyApp.error with the backend message
+      throw error;
     }
   };
 

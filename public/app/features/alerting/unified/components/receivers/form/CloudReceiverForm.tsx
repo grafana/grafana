@@ -79,7 +79,8 @@ export const CloudReceiverForm = ({
         locationService.push('/alerting/notifications');
       }
     } catch (error) {
-      // React form validation will handle this for us
+      // Propagate so ReceiverForm can show notifyApp.error with the backend message
+      throw error;
     }
   };
 
