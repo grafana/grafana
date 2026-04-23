@@ -67,7 +67,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
@@ -232,7 +232,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz
             --suite=${{ matrix.path }}
@@ -304,7 +304,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
       - uses: actions/upload-artifact@v4
@@ -367,7 +367,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
 
@@ -486,14 +486,14 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
         uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
-          version: 0.18.8
+          version: 0.18.19
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
       - name: Upload pa11y results
