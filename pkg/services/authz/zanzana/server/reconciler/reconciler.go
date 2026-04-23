@@ -7,11 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/singleflight"
-
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -150,7 +148,7 @@ func (r *Reconciler) runLoop(ctx context.Context) {
 
 	// Start worker goroutines
 	var wg sync.WaitGroup
-	for i := 0; i < r.cfg.Workers; i++ {
+	for i := range r.cfg.Workers {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
