@@ -209,11 +209,7 @@ func TestKqlLiteral(t *testing.T) {
 }
 
 func splitKQLLines(kql string) []string {
-	var lines []string
-	for _, l := range split(kql) {
-		lines = append(lines, l)
-	}
-	return lines
+	return append([]string{}, split(kql)...)
 }
 
 func split(s string) []string {

@@ -121,7 +121,7 @@ func fetchWorkspaceMetadata(ctx context.Context, dsInfo types.DatasourceInfo, wo
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			fmt.Sprintf("Failed to close response body for metadata request", "err", err)
+			backend.Logger.Error("Failed to close response body for metadata request", "err", err)
 		}
 	}()
 
