@@ -356,7 +356,7 @@ func preprocessGrafanaSQLQueries(req *backend.QueryDataRequest) *backend.QueryDa
 
 	return &backend.QueryDataRequest{
 		PluginContext: req.PluginContext,
-		Headers:      req.Headers,
-		Queries:      queries,
+		Headers:       req.Headers,
+		Queries:       queries,
 	}
 }
