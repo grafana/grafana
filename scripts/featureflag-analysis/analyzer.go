@@ -121,14 +121,12 @@ func classifyFlag(name string, idx fileIndex) (migrationStatus, bool) {
 	beOld := flagOnSameLine(idx.beOld, []string{`"` + name + `"`, flagConst}, "IsEnabled")
 	beNew := flagNearLine(idx.beNew, []string{`"` + name + `"`, flagConst}, 4, "Boolean", "BooleanValue")
 
-	// TODO: temporarily disabled to get BE-only stats
-	// // FE old: property access config.featureToggles.flagName — match as whole word
-	// // to avoid false positives from substrings (e.g. "alert" in "alertingBacktesting")
-	// wbRe := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
-	// feOld := containsPattern(idx.feOld, wbRe)
-	// // FE new: quoted string literal 'flagName' or "flagName"
-	// feNew := containsAny(idx.feNew, `'`+name+`'`, `"`+name+`"`)
-	feOld, feNew := false, false
+	// FE old: property access config.featureToggles.flagName — match as whole word
+	// to avoid false positives from substrings (e.g. "alert" in "alertingBacktesting")
+	wbRe := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
+	feOld := containsPattern(idx.feOld, wbRe)
+	// FE new: quoted string literal 'flagName' or "flagName"
+	feNew := containsAny(idx.feNew, `'`+name+`'`, `"`+name+`"`)
 
 	s, ok := classify(beOld, beNew, feOld, feNew)
 	return s, ok
@@ -342,6 +340,17 @@ func containsPattern(files map[string]string, re *regexp.Regexp) bool {
 	for _, content := range files {
 		if re.MatchString(content) {
 			return true
+		}
+	}
+	return false
+}
+
+func containsAny(files map[string]string, patterns ...string) bool {
+	for _, content := range files {
+		for _, p := range patterns {
+			if strings.Contains(content, p) {
+				return true
+			}
 		}
 	}
 	return false
