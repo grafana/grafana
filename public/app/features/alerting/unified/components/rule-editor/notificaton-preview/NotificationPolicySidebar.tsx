@@ -52,6 +52,7 @@ export function NotificationPolicySidebar({ journeys, labels, onClose }: Notific
       <Stack direction="column" gap={2}>
         {journeys.map(({ journey }, journeyIndex) => {
           const finalRouteMatchInfo = journey.at(-1);
+          // Labels the final policy evaluated but did not match on.
           const nonMatchingLabels = finalRouteMatchInfo?.matchDetails.filter((detail) => !detail.match) ?? [];
 
           return (
@@ -61,6 +62,7 @@ export function NotificationPolicySidebar({ journeys, labels, onClose }: Notific
                 <Stack direction="column" gap={0}>
                   {journey.map((routeInfo, index) => (
                     <Fragment key={index}>
+                      {/* MatchDetails explains why the parent routed to this child — skipped for the root node. */}
                       {index > 0 && (
                         <>
                           <ConnectionLine />

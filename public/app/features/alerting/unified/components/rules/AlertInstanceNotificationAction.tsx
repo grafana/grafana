@@ -23,6 +23,7 @@ export const AlertInstanceNotificationAction = ({
 
   const rulerRule = rule?.rulerRule;
   const alertmanager = rule ? getRulesSourceName(rule.namespace.rulesSource) : GRAFANA_RULES_SOURCE_NAME;
+  // A rule uses notification policies when no direct receiver is configured; otherwise it uses simplified routing.
   const isGrafanaManagedUsingNotificationPolicies =
     rulerRuleType.grafana.alertingRule(rulerRule) &&
     !rulerRule.grafana_alert.notification_settings?.receiver;
@@ -39,6 +40,7 @@ export const AlertInstanceNotificationAction = ({
 
   if (isGrafanaManagedUsingNotificationPolicies) {
     const previewRoutingInstance = treeMatchingResults[0];
+    // Collect all matched routes — a policy with "continue matching" enabled can produce multiple matches per instance.
     const journeys =
       previewRoutingInstance?.matchedRoutes.map(({ matchDetails }) => ({
         journey: matchDetails.matchingJourney,
