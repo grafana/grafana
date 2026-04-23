@@ -657,8 +657,10 @@ func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.Searc
 		whereConditions := []string{
 			"org_user.org_id = ?",
 			fmt.Sprintf("u.email IN (%s)", placeholders),
+			"u.is_service_account = ?",
 		}
 		whereParams := append([]any{query.OrgID}, emailArgs...)
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
 
 		if query.ExcludeHiddenUsers && ss.cfg != nil {
 			cond, params := buildHiddenUsersFilter(nil, ss.cfg.HiddenUsers)

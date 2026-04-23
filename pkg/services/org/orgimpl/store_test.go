@@ -562,6 +562,29 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.Equal(t, ac1.Email, result[0].Email)
 		})
 
+		t.Run("excludes service accounts", func(t *testing.T) {
+			sa, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+				Login:            "sa1",
+				Email:            "sa1@test.com",
+				Name:             "sa1 name",
+				IsServiceAccount: true,
+				SkipOrgSetup:     true,
+			})
+			require.NoError(t, err)
+			err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+				OrgID: ac1.OrgID, UserID: sa.ID, Role: org.RoleViewer, AllowAddingServiceAccount: true,
+			})
+			require.NoError(t, err)
+
+			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
+				OrgID:  ac1.OrgID,
+				Emails: []string{ac1.Email, sa.Email},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, ac1.Email, result[0].Email)
+		})
+
 		t.Run("matches emails case-insensitively", func(t *testing.T) {
 			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
 				OrgID:  ac1.OrgID,
