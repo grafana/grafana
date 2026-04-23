@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -26,61 +25,120 @@ func mustTemplate(filename string) *template.Template {
 }
 
 var (
-	sqlEmbeddingsUpsert          = mustTemplate("resource_embeddings_upsert.sql")
-	sqlEmbeddingsDelete          = mustTemplate("resource_embeddings_delete.sql")
-	sqlEmbeddingsSearch          = mustTemplate("resource_embeddings_search.sql")
-	sqlEmbeddingsGetLatestRV     = mustTemplate("resource_embeddings_get_latest_rv.sql")
-	sqlEmbeddingsCreatePartition = mustTemplate("resource_embeddings_create_partition.sql")
+	sqlVectorCollectionCreateTable       = mustTemplate("vector_collection_create_table.sql")
+	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
+	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
+	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
+	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
+	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 )
 
-// -- Upsert request --
+// -- Create table request --
 
-type sqlEmbeddingsUpsertRequest struct {
+// sqlVectorCollectionCreateTableRequest renders the DDL for a single per-collection
+// vec_<id> table plus its HNSW and GIN indexes. Table and index names are
+// computed Go-side from the catalog id (vec_<id>, vec_<id>_hnsw, vec_<id>_metadata)
+// and inlined raw; they're always valid identifiers because the id is an integer.
+type sqlVectorCollectionCreateTableRequest struct {
 	sqltemplate.SQLTemplate
-	Vector    *Vector
-	Embedding any // pgvector.HalfVector
+	Table             string
+	HNSWIndexName     string
+	MetadataIndexName string
 }
 
-func (r *sqlEmbeddingsUpsertRequest) Validate() error {
-	if r.Vector == nil {
-		return fmt.Errorf("missing vector")
-	}
-	if r.Vector.Namespace == "" {
-		return fmt.Errorf("missing namespace")
-	}
-	return nil
-}
-
-// -- Delete request --
-
-type sqlEmbeddingsDeleteRequest struct {
-	sqltemplate.SQLTemplate
-	Namespace   string
-	Model       string // empty means all models
-	Group       string
-	Resource    string
-	Name        string
-	OlderThanRV int64
-}
-
-func (r *sqlEmbeddingsDeleteRequest) HasModel() bool {
-	return r.Model != ""
-}
-
-func (r *sqlEmbeddingsDeleteRequest) HasOlderThanRV() bool {
-	return r.OlderThanRV > 0
-}
-
-func (r *sqlEmbeddingsDeleteRequest) Validate() error {
-	if r.Namespace == "" || r.Group == "" || r.Resource == "" || r.Name == "" {
+func (r *sqlVectorCollectionCreateTableRequest) Validate() error {
+	if r.Table == "" || r.HNSWIndexName == "" || r.MetadataIndexName == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
 }
 
+// -- Upsert request --
+
+type sqlVectorCollectionUpsertRequest struct {
+	sqltemplate.SQLTemplate
+	Table     string
+	Vector    *Vector
+	Embedding any // pgvector.HalfVector
+}
+
+func (r *sqlVectorCollectionUpsertRequest) Validate() error {
+	if r.Table == "" {
+		return fmt.Errorf("missing table")
+	}
+	if r.Vector == nil {
+		return fmt.Errorf("missing vector")
+	}
+	return nil
+}
+
+// -- Delete request (whole resource) --
+
+type sqlVectorCollectionDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Table string
+	Name  string
+}
+
+func (r *sqlVectorCollectionDeleteRequest) Validate() error {
+	if r.Table == "" || r.Name == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+// -- DeleteSubresources request (targeted cleanup) --
+
+type sqlVectorCollectionDeleteSubresourcesRequest struct {
+	sqltemplate.SQLTemplate
+	Table        string
+	Name         string
+	Subresources []string
+}
+
+func (r *sqlVectorCollectionDeleteSubresourcesRequest) Validate() error {
+	if r.Table == "" || r.Name == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if len(r.Subresources) == 0 {
+		return fmt.Errorf("subresources must not be empty")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionDeleteSubresourcesRequest) SubresourcesSlice() reflect.Value {
+	return reflect.ValueOf(r.Subresources)
+}
+
+// -- GetContent request --
+
+type sqlVectorCollectionGetContentResponse struct {
+	Subresource string
+	Content     string
+}
+
+type sqlVectorCollectionGetContentRequest struct {
+	sqltemplate.SQLTemplate
+	Table    string
+	Name     string
+	Response *sqlVectorCollectionGetContentResponse
+}
+
+func (r *sqlVectorCollectionGetContentRequest) Validate() error {
+	if r.Table == "" || r.Name == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionGetContentRequest) Results() (*sqlVectorCollectionGetContentResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
 // -- Search request --
 
-type sqlEmbeddingsSearchResponse struct {
+type sqlVectorCollectionSearchResponse struct {
 	Name        string
 	Subresource string
 	Content     string
@@ -94,15 +152,12 @@ type MetadataFilterEntry struct {
 	JSON string // e.g. `{"datasource_uids":["ds1"]}`
 }
 
-type sqlEmbeddingsSearchRequest struct {
+type sqlVectorCollectionSearchRequest struct {
 	sqltemplate.SQLTemplate
-	Namespace      string
-	Model          string
-	Group          string
-	Resource       string
+	Table          string
 	QueryEmbedding any // pgvector.HalfVector
 	Limit          int64
-	Response       *sqlEmbeddingsSearchResponse
+	Response       *sqlVectorCollectionSearchResponse
 
 	// Filters (nil means no filter)
 	NameValues      []string
@@ -110,9 +165,9 @@ type sqlEmbeddingsSearchRequest struct {
 	MetadataFilters []MetadataFilterEntry
 }
 
-func (r *sqlEmbeddingsSearchRequest) Validate() error {
-	if r.Namespace == "" || r.Model == "" || r.Group == "" || r.Resource == "" {
-		return fmt.Errorf("missing required fields")
+func (r *sqlVectorCollectionSearchRequest) Validate() error {
+	if r.Table == "" {
+		return fmt.Errorf("missing table")
 	}
 	if r.Limit <= 0 {
 		return fmt.Errorf("limit must be positive")
@@ -120,7 +175,7 @@ func (r *sqlEmbeddingsSearchRequest) Validate() error {
 	return nil
 }
 
-func (r *sqlEmbeddingsSearchRequest) Results() (*sqlEmbeddingsSearchResponse, error) {
+func (r *sqlVectorCollectionSearchRequest) Results() (*sqlVectorCollectionSearchResponse, error) {
 	// Set-returning query: return a copy because Response is reused for each
 	// Scan call. Scan allocates a fresh []byte for Metadata, so a shallow copy
 	// is safe.
@@ -128,77 +183,18 @@ func (r *sqlEmbeddingsSearchRequest) Results() (*sqlEmbeddingsSearchResponse, er
 	return &cp, nil
 }
 
-func (r *sqlEmbeddingsSearchRequest) NameFilter() bool {
+func (r *sqlVectorCollectionSearchRequest) NameFilter() bool {
 	return len(r.NameValues) > 0
 }
 
-func (r *sqlEmbeddingsSearchRequest) NameFilterSlice() reflect.Value {
+func (r *sqlVectorCollectionSearchRequest) NameFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.NameValues)
 }
 
-func (r *sqlEmbeddingsSearchRequest) FolderFilter() bool {
+func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
 	return len(r.FolderValues) > 0
 }
 
-func (r *sqlEmbeddingsSearchRequest) FolderFilterSlice() reflect.Value {
+func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.FolderValues)
-}
-
-// -- GetLatestRV request --
-
-type sqlEmbeddingsGetLatestRVResponse struct {
-	ResourceVersion int64
-}
-
-type sqlEmbeddingsGetLatestRVRequest struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Model     string
-	Response  *sqlEmbeddingsGetLatestRVResponse
-}
-
-func (r *sqlEmbeddingsGetLatestRVRequest) Validate() error {
-	if r.Namespace == "" || r.Model == "" {
-		return fmt.Errorf("missing required fields")
-	}
-	return nil
-}
-
-func (r *sqlEmbeddingsGetLatestRVRequest) Results() (*sqlEmbeddingsGetLatestRVResponse, error) {
-	return r.Response, nil
-}
-
-// -- CreatePartition request --
-
-// sqlEmbeddingsCreatePartitionRequest builds the nested partitions for one
-// (namespace, model) pair. PostgreSQL's LIST partitioning only accepts a single
-// column, so we partition by namespace at level 1 and sub-partition by model at
-// level 2.
-type sqlEmbeddingsCreatePartitionRequest struct {
-	sqltemplate.SQLTemplate
-	Namespace              string
-	Model                  string
-	NamespacePartitionName string // level-1 table, e.g. "resource_embeddings_stacks_123"
-	ModelPartitionName     string // level-2 leaf table, e.g. "resource_embeddings_stacks_123__text_embedding_005"
-}
-
-func (r *sqlEmbeddingsCreatePartitionRequest) Validate() error {
-	if r.Namespace == "" || r.Model == "" ||
-		r.NamespacePartitionName == "" || r.ModelPartitionName == "" {
-		return fmt.Errorf("missing required fields")
-	}
-	return nil
-}
-
-// NamespaceLiteral returns the namespace as a PostgreSQL string literal.
-// PostgreSQL does not accept bind parameters in CREATE TABLE ... FOR VALUES IN (...),
-// so the value must be inlined as a constant.
-func (r *sqlEmbeddingsCreatePartitionRequest) NamespaceLiteral() string {
-	return "'" + strings.ReplaceAll(r.Namespace, "'", "''") + "'"
-}
-
-// ModelLiteral returns the model as a PostgreSQL string literal. See
-// NamespaceLiteral for the constraint that forces literal inlining.
-func (r *sqlEmbeddingsCreatePartitionRequest) ModelLiteral() string {
-	return "'" + strings.ReplaceAll(r.Model, "'", "''") + "'"
 }

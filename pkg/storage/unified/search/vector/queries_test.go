@@ -17,15 +17,26 @@ func TestVectorQueries(t *testing.T) {
 		SQLTemplatesFS: sqlTemplatesFS,
 		Dialects:       []sqltemplate.Dialect{sqltemplate.PostgreSQL},
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlEmbeddingsUpsert: {
+			sqlVectorCollectionCreateTable: {
 				{
 					Name: "simple",
-					Data: &sqlEmbeddingsUpsertRequest{
+					Data: &sqlVectorCollectionCreateTableRequest{
+						SQLTemplate:       mocks.NewTestingSQLTemplate(),
+						Table:             "vec_42",
+						HNSWIndexName:     "vec_42_hnsw",
+						MetadataIndexName: "vec_42_metadata",
+					},
+				},
+			},
+			sqlVectorCollectionUpsert: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionUpsertRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       "vec_42",
 						Vector: &Vector{
 							Namespace:       "stacks-123",
-							Group:           "dashboard.grafana.app",
-							Resource:        "dashboards",
+							CollectionID:    "dashboard.grafana.app/dashboards",
 							Name:            "abc-uid",
 							Subresource:     "panel/5",
 							ResourceVersion: 42,
@@ -39,67 +50,65 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlEmbeddingsDelete: {
+			sqlVectorCollectionDelete: {
 				{
-					Name: "delete all models",
-					Data: &sqlEmbeddingsDeleteRequest{
+					Name: "simple",
+					Data: &sqlVectorCollectionDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "stacks-123",
-						Group:       "dashboard.grafana.app",
-						Resource:    "dashboards",
+						Table:       "vec_42",
 						Name:        "abc-uid",
-						OlderThanRV: 0,
-					},
-				},
-				{
-					Name: "delete stale for model",
-					Data: &sqlEmbeddingsDeleteRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "stacks-123",
-						Model:       "text-embedding-005",
-						Group:       "dashboard.grafana.app",
-						Resource:    "dashboards",
-						Name:        "abc-uid",
-						OlderThanRV: 42,
 					},
 				},
 			},
-			sqlEmbeddingsSearch: {
+			sqlVectorCollectionDeleteSubresource: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionDeleteSubresourcesRequest{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Table:        "vec_42",
+						Name:         "abc-uid",
+						Subresources: []string{"panel/1", "panel/2"},
+					},
+				},
+			},
+			sqlVectorCollectionGetContent: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionGetContentRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       "vec_42",
+						Name:        "abc-uid",
+						Response:    &sqlVectorCollectionGetContentResponse{},
+					},
+				},
+			},
+			sqlVectorCollectionSearch: {
 				{
 					Name: "no filters",
-					Data: &sqlEmbeddingsSearchRequest{
+					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Namespace:      "stacks-123",
-						Model:          "text-embedding-005",
-						Group:          "dashboard.grafana.app",
-						Resource:       "dashboards",
+						Table:          "vec_42",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          10,
-						Response:       &sqlEmbeddingsSearchResponse{},
+						Response:       &sqlVectorCollectionSearchResponse{},
 					},
 				},
 				{
 					Name: "with name filter",
-					Data: &sqlEmbeddingsSearchRequest{
+					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Namespace:      "stacks-123",
-						Model:          "text-embedding-005",
-						Group:          "dashboard.grafana.app",
-						Resource:       "dashboards",
+						Table:          "vec_42",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          10,
 						NameValues:     []string{"dash-1", "dash-2"},
-						Response:       &sqlEmbeddingsSearchResponse{},
+						Response:       &sqlVectorCollectionSearchResponse{},
 					},
 				},
 				{
 					Name: "with all filters",
-					Data: &sqlEmbeddingsSearchRequest{
+					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Namespace:      "stacks-123",
-						Model:          "text-embedding-005",
-						Group:          "dashboard.grafana.app",
-						Resource:       "dashboards",
+						Table:          "vec_42",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          5,
 						NameValues:     []string{"dash-1"},
@@ -108,30 +117,7 @@ func TestVectorQueries(t *testing.T) {
 							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
 							{JSON: `{"query_languages":["promql"]}`},
 						},
-						Response: &sqlEmbeddingsSearchResponse{},
-					},
-				},
-			},
-			sqlEmbeddingsGetLatestRV: {
-				{
-					Name: "simple",
-					Data: &sqlEmbeddingsGetLatestRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "stacks-123",
-						Model:       "text-embedding-005",
-						Response:    &sqlEmbeddingsGetLatestRVResponse{},
-					},
-				},
-			},
-			sqlEmbeddingsCreatePartition: {
-				{
-					Name: "simple",
-					Data: &sqlEmbeddingsCreatePartitionRequest{
-						SQLTemplate:            mocks.NewTestingSQLTemplate(),
-						Namespace:              "stacks-123",
-						Model:                  "text-embedding-005",
-						NamespacePartitionName: "resource_embeddings_stacks_123",
-						ModelPartitionName:     "resource_embeddings_stacks_123__text_embedding_005",
+						Response: &sqlVectorCollectionSearchResponse{},
 					},
 				},
 			},

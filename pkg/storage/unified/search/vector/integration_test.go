@@ -3,7 +3,9 @@ package vector
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,16 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// To run these tests, start the pgvector devenv block and set the env var:
-//
-//	make devenv sources=pgvector
+const testCollectionID = "dashboard.grafana.app/dashboards"
+
 //	PGVECTOR_TEST_DB="host=localhost port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable" \
 //	  go test -run TestIntegration ./pkg/storage/unified/search/vector/... -v -count=1
-func setupIntegrationTest(t *testing.T) (VectorBackend, context.Context) {
+func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Context) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO we'll need to get these working with CI
 	connStr := os.Getenv("PGVECTOR_TEST_DB")
 	if connStr == "" {
 		t.Skip("PGVECTOR_TEST_DB not set, skipping pgvector integration test")
@@ -47,20 +47,38 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, context.Context) {
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
 	backend := NewPgvectorBackend(database)
 
-	// Clean up any leftover test data. Ignore error if partition doesn't exist yet.
-	_, _ = engine.DB().ExecContext(ctx, `DELETE FROM resource_embeddings WHERE namespace = 'integration-test'`)
+	// Clean up any leftover test data from prior runs. Iterate every collection
+	// for the integration-test namespace and drop its vec_<id> table, plus the
+	// catalog rows. Ignore errors for rows that don't exist yet.
+	rows, err := engine.DB().QueryContext(ctx, `SELECT id FROM vector_collections WHERE namespace = 'integration-test'`)
+	if err == nil {
+		var ids []int64
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err == nil {
+				ids = append(ids, id)
+			}
+		}
+		_ = rows.Close()
+		for _, id := range ids {
+			_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS vec_%d`, id))
+		}
+		_, _ = engine.DB().ExecContext(ctx, `DELETE FROM vector_collections WHERE namespace = 'integration-test'`)
+	}
+	// Reset the global checkpoint so monotonic state from prior tests doesn't
+	// leak into the assertions that expect a specific RV.
+	_, _ = engine.DB().ExecContext(ctx, `UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
 
-	return backend, ctx
+	return backend, engine, ctx
 }
 
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
-	backend, ctx := setupIntegrationTest(t)
+	backend, _, ctx := setupIntegrationTest(t)
 
 	vectors := []Vector{
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "dash-1",
 			Subresource:     "panel/1",
 			ResourceVersion: 10,
@@ -72,8 +90,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 		},
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "dash-1",
 			Subresource:     "panel/2",
 			ResourceVersion: 10,
@@ -85,8 +102,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 		},
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "dash-2",
 			Subresource:     "panel/1",
 			ResourceVersion: 20,
@@ -103,7 +119,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	require.NoError(t, err)
 
 	// Search -- query close to first vector
-	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.85, 0.15), 10)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(results), 3)
@@ -111,7 +127,7 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
 	// Search with name filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "name", Values: []string{"dash-2"}})
 	require.NoError(t, err)
@@ -119,14 +135,14 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "dash-2", results[0].Name)
 
 	// Search with folder filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "folder", Values: []string{"folder-a"}})
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
 	// Search with metadata filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
 	require.NoError(t, err)
@@ -134,26 +150,24 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	assert.Equal(t, "dash-2", results[0].Name)
 
 	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "dash-1", 0)
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash-1")
 	require.NoError(t, err)
-	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "dash-2", 0)
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash-2")
 	require.NoError(t, err)
 }
 
 func TestIntegrationVectorGetLatestRV(t *testing.T) {
-	backend, ctx := setupIntegrationTest(t)
+	backend, _, ctx := setupIntegrationTest(t)
 
-	// Empty namespace returns 0
-	rv, err := backend.GetLatestRV(ctx, "integration-test", "test-model")
+	// No collections yet -> 0.
+	rv, err := backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), rv)
 
-	// Upsert some vectors
 	err = backend.Upsert(ctx, []Vector{
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "rv-test",
 			Subresource:     "panel/1",
 			ResourceVersion: 42,
@@ -165,89 +179,101 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	rv, err = backend.GetLatestRV(ctx, "integration-test", "test-model")
+	rv, err = backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(42), rv)
 
-	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "rv-test", 0)
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "rv-test")
 	require.NoError(t, err)
 }
 
-func TestIntegrationVectorDeleteStale(t *testing.T) {
-	backend, ctx := setupIntegrationTest(t)
+func TestIntegrationVectorDeleteSubresources(t *testing.T) {
+	// Stale cleanup flow: upsert panels, caller computes the removed set via
+	// GetCurrentContent, calls DeleteSubresources to remove them.
+	backend, _, ctx := setupIntegrationTest(t)
 
-	// Upsert two panels at RV 10
 	err := backend.Upsert(ctx, []Vector{
 		{
-			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
-			Name:            "stale-test",
-			Subresource:     "panel/1",
-			ResourceVersion: 10,
-			Content:         "panel one",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.5, 0.5),
-			Model:           "test-model",
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+			ResourceVersion: 10, Content: "panel one", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
 		},
 		{
-			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
-			Name:            "stale-test",
-			Subresource:     "panel/2",
-			ResourceVersion: 10,
-			Content:         "panel two",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.5, 0.5),
-			Model:           "test-model",
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
+			ResourceVersion: 10, Content: "panel two", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
+		},
+		{
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/3",
+			ResourceVersion: 10, Content: "panel three", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
 		},
 	})
 	require.NoError(t, err)
 
-	// Update only panel/1 at RV 20 (simulates panel/2 being removed from dashboard)
-	err = backend.Upsert(ctx, []Vector{
-		{
-			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
-			Name:            "stale-test",
-			Subresource:     "panel/1",
-			ResourceVersion: 20,
-			Content:         "panel one updated",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.5, 0.5),
-			Model:           "test-model",
-		},
-	})
+	// Caller now knows the dashboard only has panel/1. Diff against stored.
+	stored, err := backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "dash")
+	require.NoError(t, err)
+	require.Len(t, stored, 3)
+
+	current := map[string]string{"panel/1": "panel one"}
+	var toDelete []string
+	for sub := range stored {
+		if _, ok := current[sub]; !ok {
+			toDelete = append(toDelete, sub)
+		}
+	}
+	require.ElementsMatch(t, []string{"panel/2", "panel/3"}, toDelete)
+
+	err = backend.DeleteSubresources(ctx, "integration-test", "test-model", testCollectionID, "dash", toDelete)
 	require.NoError(t, err)
 
-	// Delete stale vectors (RV < 20) -- should remove panel/2
-	err = backend.Delete(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards", "stale-test", 20)
-	require.NoError(t, err)
-
-	// Search should only find panel/1
-	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.5, 0.5), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "stale-test", 0)
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash")
+	require.NoError(t, err)
+}
+
+func TestIntegrationVectorGetCurrentContent(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	got, err := backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "nope")
+	require.NoError(t, err)
+	require.Nil(t, got)
+
+	err = backend.Upsert(ctx, []Vector{
+		{
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+			ResourceVersion: 1, Content: "alpha", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
+		},
+		{
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
+			ResourceVersion: 1, Content: "beta", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
+		},
+	})
+	require.NoError(t, err)
+
+	got, err = backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "alpha", "panel/2": "beta"}, got)
+
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash")
 	require.NoError(t, err)
 }
 
 func TestIntegrationVectorUpsertOverwrite(t *testing.T) {
-	backend, ctx := setupIntegrationTest(t)
+	backend, _, ctx := setupIntegrationTest(t)
 
-	// Upsert a vector
 	err := backend.Upsert(ctx, []Vector{
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "overwrite-test",
 			Subresource:     "panel/1",
 			ResourceVersion: 10,
@@ -259,12 +285,10 @@ func TestIntegrationVectorUpsertOverwrite(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Upsert same key with new content (ON CONFLICT DO UPDATE)
 	err = backend.Upsert(ctx, []Vector{
 		{
 			Namespace:       "integration-test",
-			Group:           "dashboard.grafana.app",
-			Resource:        "dashboards",
+			CollectionID:    testCollectionID,
 			Name:            "overwrite-test",
 			Subresource:     "panel/1",
 			ResourceVersion: 20,
@@ -276,21 +300,77 @@ func TestIntegrationVectorUpsertOverwrite(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Search should return updated content
-	results, err := backend.Search(ctx, "integration-test", "test-model", "dashboard.grafana.app", "dashboards",
+	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
 		makeEmbedding(0.9, 0.1), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "updated content", results[0].Content)
 
-	// RV should reflect the update
-	rv, err := backend.GetLatestRV(ctx, "integration-test", "test-model")
+	rv, err := backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(20), rv)
 
-	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "", "dashboard.grafana.app", "dashboards", "overwrite-test", 0)
+	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "overwrite-test")
 	require.NoError(t, err)
+}
+
+// TestIntegrationVectorConcurrentUpsert exercises the advisory-lock
+// provisioning path. N goroutines all write vectors to the same brand-new
+// (namespace, model, collection_id) tuple; the catalog insert + CREATE TABLE
+// must serialize cleanly. One collection row and one vec_<id> table must
+// exist at the end.
+func TestIntegrationVectorConcurrentUpsert(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	const workers = 8
+	var wg sync.WaitGroup
+	errs := make(chan error, workers)
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func(w int) {
+			defer wg.Done()
+			errs <- backend.Upsert(ctx, []Vector{
+				{
+					Namespace:       "integration-test",
+					CollectionID:    testCollectionID,
+					Name:            fmt.Sprintf("concurrent-%d", w),
+					Subresource:     "panel/1",
+					ResourceVersion: int64(w),
+					Content:         fmt.Sprintf("worker %d", w),
+					Metadata:        json.RawMessage(`{}`),
+					Embedding:       makeEmbedding(0.5, 0.5),
+					Model:           "concurrent-model",
+				},
+			})
+		}(w)
+	}
+	wg.Wait()
+	close(errs)
+	for e := range errs {
+		require.NoError(t, e)
+	}
+
+	// Exactly one catalog row for this tuple.
+	var count int64
+	err := engine.DB().QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM vector_collections WHERE namespace = $1 AND model = $2 AND collection_id = $3`,
+		"integration-test", "concurrent-model", testCollectionID,
+	).Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), count)
+
+	// All worker rows landed in the single collection table.
+	results, err := backend.Search(ctx, "integration-test", "concurrent-model", testCollectionID,
+		makeEmbedding(0.5, 0.5), 100)
+	require.NoError(t, err)
+	assert.Equal(t, workers, len(results))
+
+	// Cleanup
+	for w := 0; w < workers; w++ {
+		err := backend.Delete(ctx, "integration-test", "concurrent-model", testCollectionID, fmt.Sprintf("concurrent-%d", w))
+		require.NoError(t, err)
+	}
 }
 
 // makeEmbedding creates a 768-dim embedding with the first two values set and the rest zero.

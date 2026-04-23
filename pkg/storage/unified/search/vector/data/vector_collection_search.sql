@@ -5,11 +5,8 @@ SELECT
     {{ .Ident "embedding" }} <=> {{ .Arg .QueryEmbedding }} AS {{ .Ident "score" | .Into .Response.Score }},
     {{ .Ident "folder" | .Into .Response.Folder }},
     {{ .Ident "metadata" | .Into .Response.Metadata }}
-    FROM {{ .Ident "resource_embeddings" }}
-    WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-    AND {{ .Ident "model" }}       = {{ .Arg .Model }}
-    AND {{ .Ident "group" }}       = {{ .Arg .Group }}
-    AND {{ .Ident "resource" }}    = {{ .Arg .Resource }}
+    FROM {{ .Table }}
+    WHERE 1=1
     {{ if .NameFilter }}
     AND {{ .Ident "name" }} IN ({{ .ArgList .NameFilterSlice }})
     {{ end }}

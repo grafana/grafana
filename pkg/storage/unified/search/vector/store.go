@@ -8,42 +8,57 @@ import (
 // VectorBackend abstracts vector storage operations. The pgvector implementation
 // is the only backend for now, but the interface allows testing with mocks.
 //
-// Storage is partitioned by (namespace, model): each (tenant, embedding model)
-// pair gets its own HNSW index. Different models produce embeddings in
-// different vector spaces, so mixing them in one index would yield meaningless
-// nearest-neighbor results.
+// Storage is isolated per (namespace, model, collectionID): each tuple gets
+// its own standalone table with its own HNSW index. Different models produce
+// embeddings in different vector spaces, so mixing them in one index would
+// yield meaningless nearest-neighbor results. Different collections (resource
+// types) are also kept in separate indexes to avoid cross-type recall
+// degradation.
 type VectorBackend interface {
-	// Search performs vector similarity search within a single (namespace, model)
-	// partition. The query embedding must come from the same model as the
-	// stored vectors for results to be meaningful.
-	Search(ctx context.Context, namespace, model, group, resource string,
+	// Search performs vector similarity search within a single
+	// (namespace, model, collectionID) collection. The query embedding must
+	// come from the same model as the stored vectors for results to be
+	// meaningful.
+	Search(ctx context.Context, namespace, model, collectionID string,
 		embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error)
 
-	// Upsert inserts or updates vectors. Vectors are grouped by (namespace, model)
-	// internally so that each combination lands in its own partition.
+	// Upsert inserts or updates vectors. Vectors are grouped by
+	// (namespace, model, collectionID) internally so each combination lands
+	// in its own collection table. Collection tables are created lazily on
+	// first write.
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// Delete removes vectors for a resource. If model is non-empty, only rows
-	// in that model's partition are deleted; an empty model deletes across all
-	// models (used when a resource is removed from storage entirely).
-	// If olderThanRV > 0, only vectors with resource_version < olderThanRV are
-	// removed (stale panel cleanup after update); olderThanRV == 0 deletes all.
-	Delete(ctx context.Context, namespace, model, group, resource, name string, olderThanRV int64) error
+	// Delete removes every row for a resource within a specific collection —
+	// i.e. wipes all subresources under `name`. Used when a resource is
+	// hard-deleted. model must be non-empty.
+	Delete(ctx context.Context, namespace, model, collectionID, name string) error
 
-	// GetLatestRV returns the maximum resource_version stored for a given
-	// (namespace, model). Returns 0 if no vectors exist. Used by the write
-	// pipeline to resume polling per model.
-	GetLatestRV(ctx context.Context, namespace, model string) (int64, error)
+	// DeleteSubresources removes specific subresources under `name` in a
+	// collection. Callers use this for stale-subresource cleanup after diffing
+	// GetCurrentContent against the desired set. model must be non-empty.
+	// An empty subresources slice is a no-op (no rows removed).
+	DeleteSubresources(ctx context.Context, namespace, model, collectionID, name string, subresources []string) error
+
+	// GetCurrentContent returns the currently-stored content for each
+	// subresource under (namespace, model, collectionID, name), keyed by
+	// subresource. Missing or empty collections return a nil map with no
+	// error. Callers compare against candidate content to decide which
+	// subresources actually need re-embedding.
+	GetCurrentContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error)
+
+	// GetLatestRV returns the maximum resource_version seen by any Upsert
+	// across the entire backend. Returns 0 if no vectors have been written.
+	// Used by the write pipeline to resume polling from a global checkpoint.
+	GetLatestRV(ctx context.Context) (int64, error)
 }
 
 // Vector represents a single embeddable subresource (e.g. one dashboard panel).
 type Vector struct {
 	Namespace       string
-	Group           string          // API group, e.g. "dashboard.grafana.app"
-	Resource        string          // resource type, e.g. "dashboards"
+	CollectionID    string          // "<group>/<resource>", e.g. "dashboard.grafana.app/dashboards"
 	Name            string          // resource name (e.g. dashboard UID)
 	Subresource     string          // unique subresource ID, e.g. "panel/5"
-	ResourceVersion int64           // RV at time of embedding
+	ResourceVersion int64           // RV at time of embedding; fed into the global checkpoint (not stored per-row). Will be deprecated.
 	Folder          string          // folder UID for authz filtering
 	Content         string          // text that was embedded
 	Metadata        json.RawMessage // structured fields for filtering (JSONB)
