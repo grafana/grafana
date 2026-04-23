@@ -18,23 +18,29 @@ aliases:
 
 # On-prem file provisioning
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-On-prem file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions available in [nightly releases](https://grafana.com/grafana/download/nightly). It's **not available in Grafana Cloud**.
+On-prem file provisioning is available in Grafana v12 and later for open source and Enterprise editions. It's **not available in Grafana Cloud**.
 
-Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+For classic provisioning using configuration files refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< /admonition >}}
 
-On-prem local file provisioning allows you to configure how to store your dashboard JSON and other files from your local file system. You can set a single folder, or multiple folders to a different repository, with up to 10 connections.
+On-prem local file provisioning allows you to add resources that are stored in your local file system to your Grafana instance. You can
+configure how to save your dashboard JSONs and other files from your local file system into a single or multiple folders in a different repository, with up to 10 connections.
 
-With on-prem file provisioning:
+To set it up, refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/file-path-setup).
 
-- All provisioned resources are changed in the local files.
-- The dashboards saved in your GitHub repository or local folder appear in Grafana in the 'provisioned' folder. The dashboards and folders saved to the local path are referred to as 'provisioned' resources and are labeled as such in the Grafana UI.
+## How it works
+
+On-prem file provisioning is only available for dashboards at the moment.
+
+After setting up file provisioning:
+
+- The dashboards saved in your GitHub repository or local folder appear in Grafana in the `provisioned` folder.
+- The dashboards and folders saved to the local path are referred to as `provisioned` resources and are labeled as such in the Grafana UI.
+
+You can only modify provisioned dashboards locally.
+
 - Any changes made in the provisioned files are reflected in the Grafana database. The Grafana UI reads the database and updates the UI to reflect these changes.
 - You can't use the Grafana UI to edit or delete provisioned resources.
-
-## Explore file provisioning
-
-{{< section withDescriptions="true" depth="5" >}}
