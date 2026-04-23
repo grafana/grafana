@@ -468,7 +468,7 @@
   },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 5
+      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Forms/InlineField.story.tsx": {
