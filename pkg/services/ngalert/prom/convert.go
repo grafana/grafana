@@ -69,6 +69,16 @@ type RulesConfig struct {
 	IsPaused bool
 }
 
+// isValidPrometheusDatasourceType returns true for native Prometheus and Prometheus-compatible managed datasources.
+func isValidPrometheusDatasourceType(dsType string) bool {
+	return dsType == datasources.DS_PROMETHEUS || dsType == datasources.DS_AMAZON_PROMETHEUS || dsType == datasources.DS_AZURE_PROMETHEUS
+}
+
+// isValidPrometheusOrLokiDatasourceType returns true for Prometheus, Prometheus-compatible managed datasources, and Loki.
+func isValidPrometheusOrLokiDatasourceType(dsType string) bool {
+	return isValidPrometheusDatasourceType(dsType) || dsType == datasources.DS_LOKI
+}
+
 var (
 	defaultTimeRange        = 600 * time.Second
 	defaultEvaluationOffset = 0 * time.Minute
@@ -118,7 +128,7 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.KeepOriginalRuleDefinition == nil {
 		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
 	}
-	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
+	if !isValidPrometheusOrLokiDatasourceType(cfg.DatasourceType) {
 		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
 	}
 
@@ -218,7 +228,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	if isRecordingRule {
-		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
+		if !isValidPrometheusDatasourceType(p.cfg.TargetDatasourceType) {
 			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
 		}
 

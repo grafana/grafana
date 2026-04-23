@@ -1013,3 +1013,119 @@ func withInternalLabel(l map[string]string) map[string]string {
 
 	return result
 }
+
+func TestNewConverter_SupportedDatasourceTypes(t *testing.T) {
+	testCases := []struct {
+		name        string
+		dsType      string
+		expectError bool
+	}{
+		{
+			name:        "native prometheus datasource",
+			dsType:      datasources.DS_PROMETHEUS,
+			expectError: false,
+		},
+		{
+			name:        "loki datasource",
+			dsType:      datasources.DS_LOKI,
+			expectError: false,
+		},
+		{
+			name:        "amazon managed prometheus datasource",
+			dsType:      datasources.DS_AMAZON_PROMETHEUS,
+			expectError: false,
+		},
+		{
+			name:        "azure managed prometheus datasource",
+			dsType:      datasources.DS_AZURE_PROMETHEUS,
+			expectError: false,
+		},
+		{
+			name:        "unsupported datasource type",
+			dsType:      "unsupported-datasource",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  tc.dsType,
+				DefaultInterval: 1 * time.Minute,
+			}
+			_, err := NewConverter(cfg)
+			if tc.expectError {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrInvalidDatasourceType)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPrometheusRulesToGrafana_ManagedPrometheusRecordingRules(t *testing.T) {
+	testCases := []struct {
+		name            string
+		targetDsType    string
+		expectError     bool
+	}{
+		{
+			name:         "recording rule with native prometheus target",
+			targetDsType: datasources.DS_PROMETHEUS,
+			expectError:  false,
+		},
+		{
+			name:         "recording rule with amazon managed prometheus target",
+			targetDsType: datasources.DS_AMAZON_PROMETHEUS,
+			expectError:  false,
+		},
+		{
+			name:         "recording rule with azure managed prometheus target",
+			targetDsType: datasources.DS_AZURE_PROMETHEUS,
+			expectError:  false,
+		},
+		{
+			name:         "recording rule with unsupported target datasource",
+			targetDsType: "mysql",
+			expectError:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:        "datasource-uid",
+				DatasourceType:       datasources.DS_PROMETHEUS,
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: tc.targetDsType,
+				DefaultInterval:      1 * time.Minute,
+			}
+			converter, err := NewConverter(cfg)
+			require.NoError(t, err)
+
+			promGroup := PrometheusRuleGroup{
+				Name: "test-group",
+				Rules: []PrometheusRule{
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			}
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+			if tc.expectError {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrInvalidTargetDatasourceType)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, grafanaGroup)
+				require.Len(t, grafanaGroup.Rules, 1)
+				require.NotNil(t, grafanaGroup.Rules[0].Record)
+				require.Equal(t, "target-datasource-uid", grafanaGroup.Rules[0].Record.TargetDatasourceUID)
+			}
+		})
+	}
+}
