@@ -70,7 +70,7 @@ test.describe(
 );
 ```
 
-1. **Verify locally:**
+3. **Verify locally:**
 
 ```bash
 yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
