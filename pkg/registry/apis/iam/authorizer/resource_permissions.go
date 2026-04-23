@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/types"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -94,7 +94,7 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	// build checks - use item index as correlation ID so results map back without a side table
 	checks := make([]types.BatchCheckItem, 0, n)
 	var namespace string
-	for i := 0; i < n; i++ {
+	for i := range n {
 		ns, apiGroup, resource, name, ok := getTarget(i)
 		if !ok {
 			continue

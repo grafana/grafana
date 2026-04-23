@@ -41,6 +41,7 @@ import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
@@ -716,21 +717,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: [
-        {
-          name: '*',
-          type: 'datasource',
-          pluginId: pluginId,
-          value: datasource,
-        },
-      ],
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+      {
+        name: '*',
+        type: 'datasource',
+        pluginId: pluginId ?? undefined,
+        value: datasource ?? '',
+      },
+    ]);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   private async loadCommunityTemplateDashboard(gnetId: number | string): Promise<DashboardDTO> {
@@ -756,15 +753,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    // Call interpolate endpoint with the dashboard JSON and mappings
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: mappings,
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   public async fetchDashboard({

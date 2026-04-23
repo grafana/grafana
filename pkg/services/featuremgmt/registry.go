@@ -759,6 +759,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "reporting.pdfTablesFrontend",
+			Description: "Enables frontend-rendered table appendix pages in PDF reports",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "reportingV2Layouts",
 			Description: "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
 			Stage:       FeatureStageExperimental,
@@ -1542,15 +1550,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "unifiedStorageSearchUI",
-			Description:  "Enable unified storage search UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "elasticsearchCrossClusterSearch",
 			Description: "Enables cross cluster search in the Elasticsearch data source",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2178,7 +2177,7 @@ var (
 		{
 			Name:        "teamFolders",
 			Description: "Enables team folders functionality",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
@@ -2747,6 +2746,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "frontendService.settingsSourceFilter",
+			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "managedPluginsV2",

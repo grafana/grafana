@@ -20,6 +20,7 @@ import (
 
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingImages "github.com/grafana/alerting/images"
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -697,6 +698,37 @@ type FakeReceiverService struct {
 		GetReceiver []GetReceiverCall
 	}
 	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type FakeEmailValidator struct {
+	ValidateIntegrationFunc       func(ctx context.Context, requester identity.Requester, integration models.Integration) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error
+}
+
+func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
+	t.Helper()
+	return &FakeEmailValidator{
+		ValidateIntegrationFunc: func(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+			return err
+		},
+		ValidateIntegrationConfigFunc: func(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error {
+			return err
+		},
+	}
+}
+
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+	if f.ValidateIntegrationFunc != nil {
+		return f.ValidateIntegrationFunc(ctx, requester, integration)
+	}
+	return nil
+}
+
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, requester identity.Requester, integration alertingModels.IntegrationConfig) error {
+	if f.ValidateIntegrationConfigFunc != nil {
+		return f.ValidateIntegrationConfigFunc(ctx, requester, integration)
+	}
+	return nil
 }
 
 type GetReceiverCall struct {

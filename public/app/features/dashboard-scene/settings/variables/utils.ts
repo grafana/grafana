@@ -131,8 +131,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
   },
 });
 
-export const ADHOC_VARIABLE_TYPE = 'adhoc';
-
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -228,7 +226,7 @@ export function getVariableDefault(variables: Array<SceneVariable<SceneVariableS
 }
 
 export function getVariableNamePrefix(type: EditableVariableType): string {
-  return type === ADHOC_VARIABLE_TYPE ? 'filter' : type;
+  return type === 'adhoc' ? 'filter' : type;
 }
 
 export function getNextAvailableId(
