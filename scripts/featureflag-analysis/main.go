@@ -32,11 +32,10 @@ func main() {
 	var easyFlags []string
 	for _, f := range flags {
 		s, ok := classifyFlag(f.Name, idx)
-		easy := ""
 		if !ok {
-			fmt.Printf("%s\t%s\tno_usage\t\n", f.Name, f.Owner)
-			continue
+			s = statusUnknown
 		}
+		easy := ""
 		counts[s]++
 		if s == statusNotMigrated && isBEEasy(f.Name, idx) {
 			easyFlags = append(easyFlags, f.Name)
@@ -46,12 +45,13 @@ func main() {
 	}
 	sort.Strings(easyFlags)
 
-	total := counts[statusMigrated] + counts[statusPartial] + counts[statusNotMigrated]
+	total := counts[statusMigrated] + counts[statusPartial] + counts[statusNotMigrated] + counts[statusUnknown]
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintf(os.Stderr, "Total (with usage): %d\n", total)
-	fmt.Fprintf(os.Stderr, "Migrated:           %d\n", counts[statusMigrated])
-	fmt.Fprintf(os.Stderr, "Partial:            %d\n", counts[statusPartial])
-	fmt.Fprintf(os.Stderr, "Not migrated:       %d\n", counts[statusNotMigrated])
+	fmt.Fprintf(os.Stderr, "Total:        %d\n", total)
+	fmt.Fprintf(os.Stderr, "Migrated:     %d\n", counts[statusMigrated])
+	fmt.Fprintf(os.Stderr, "Partial:      %d\n", counts[statusPartial])
+	fmt.Fprintf(os.Stderr, "Not migrated: %d\n", counts[statusNotMigrated])
+	fmt.Fprintf(os.Stderr, "Unknown:      %d\n", counts[statusUnknown])
 	fmt.Fprintf(os.Stderr, "\nEasy to migrate (%d):\n", len(easyFlags))
 	for _, name := range easyFlags {
 		fmt.Fprintf(os.Stderr, "  %s\n", name)

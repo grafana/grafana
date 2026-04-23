@@ -13,6 +13,7 @@ const (
 	statusMigrated    migrationStatus = "migrated"
 	statusPartial     migrationStatus = "partial"
 	statusNotMigrated migrationStatus = "not_migrated"
+	statusUnknown     migrationStatus = "unknown"
 )
 
 type flagInfo struct {
