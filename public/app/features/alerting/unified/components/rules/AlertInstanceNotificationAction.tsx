@@ -10,17 +10,17 @@ import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/No
 import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
 
-interface AlertInstanceExtensionPointProps {
+interface AlertInstanceNotificationActionProps {
   rule?: CombinedRule;
   instance: Alert;
   showRouting?: boolean;
 }
 
-export const AlertInstanceExtensionPoint = ({
+export const AlertInstanceNotificationAction = ({
   rule,
   instance,
   showRouting,
-}: AlertInstanceExtensionPointProps): ReactElement | null => {
+}: AlertInstanceNotificationActionProps): ReactElement | null => {
   const [isPreviewRoutingOpen, setIsPreviewRoutingOpen] = useState(false);
 
   const rulerRule = rule?.rulerRule;

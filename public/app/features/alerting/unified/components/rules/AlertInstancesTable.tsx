@@ -8,7 +8,7 @@ import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/u
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
-import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
+import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertStateTag } from './AlertStateTag';
@@ -78,7 +78,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
             id: 'actions',
             label: t('alerting.alert-instances-table.notification', 'Notification'),
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
-              <AlertInstanceExtensionPoint rule={rule} instance={alert} showRouting />
+              <AlertInstanceNotificationAction rule={rule} instance={alert} showRouting />
             ),
             size: '120px',
           } satisfies AlertTableColumnProps,
