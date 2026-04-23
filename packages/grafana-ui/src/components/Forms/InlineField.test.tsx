@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { Cascader } from '../Cascader/Cascader';
 import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
+import { FilterInput } from '../FilterInput/FilterInput';
 import { Input } from '../Input/Input';
 import { FieldNamePicker } from '../MatchersUI/FieldNamePicker';
 import { SecretInput } from '../SecretInput';
@@ -347,6 +348,28 @@ describe('InlineField', () => {
       render(
         <InlineField label="My label" invalid error="My error">
           <Cascader options={[]} onSelect={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FilterInput', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <InlineField label="My label">
+          <FilterInput value="" onChange={() => {}} />
+        </InlineField>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <InlineField label="My label" invalid error="My error">
+          <FilterInput value="" onChange={() => {}} />
         </InlineField>
       );
 
