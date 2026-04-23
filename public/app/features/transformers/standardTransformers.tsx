@@ -523,6 +523,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         'Summarize and reorganize data based on three fields.'
       ),
       categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+      isApplicable: standardTransformers.groupingToMatrixTransformer.isApplicable,
+      isApplicableDescription: standardTransformers.groupingToMatrixTransformer.isApplicableDescription,
       imageDark: groupingToMatrixDark,
       imageLight: groupingToMatrixLight,
     },
@@ -634,6 +636,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         TransformerCategory.Reformat,
       ]),
       state: PluginState.beta,
+      isApplicable: standardTransformers.groupToNestedTable.isApplicable,
+      isApplicableDescription: standardTransformers.groupToNestedTable.isApplicableDescription,
       imageDark: groupToNestedTableDark,
       imageLight: groupToNestedTableLight,
     },
