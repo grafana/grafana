@@ -5,10 +5,32 @@ permissions:
 
 on:
   pull_request:
+    paths:
+      - 'public/**/*.tsx'
+      - 'public/**/*.ts'
+      - 'packages/**/*.tsx'
+      - 'packages/**/*.ts'
+      - '**/locales/**'
+      - '**/i18next.config.ts'
+      - '.nvmrc'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/i18n-verify.yml'
   push:
     branches:
       - main
       - release-*.*.*
+    paths:
+      - 'public/**/*.tsx'
+      - 'public/**/*.ts'
+      - 'packages/**/*.tsx'
+      - 'packages/**/*.ts'
+      - '**/locales/**'
+      - '**/i18next.config.ts'
+      - '.nvmrc'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/i18n-verify.yml'
 
 jobs:
   verify-i18n:
