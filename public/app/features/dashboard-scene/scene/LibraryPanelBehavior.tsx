@@ -79,6 +79,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       title = vizPanel.state.title ?? libPanelModel.title;
     }
 
+    const timeOverrideShown = (libPanelModel.timeFrom || libPanelModel.timeShift) && !libPanelModel.hideTimeOverride;
+
     const vizPanelState: VizPanelState = {
       title,
       options: libPanelModel.options ?? {},
@@ -89,6 +91,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       description: libPanelModel.description,
       titleItems: titleItems,
       $data: createPanelDataProvider(libPanelModel),
+      hoverHeader: !title && !timeOverrideShown,
     };
 
     if (libPanelModel.timeFrom || libPanelModel.timeShift) {

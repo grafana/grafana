@@ -164,6 +164,48 @@ describe('LibraryPanelBehavior', () => {
     expect(gridItem.state.body.state.title).toBe('Panel A');
   });
 
+  it('should set hoverHeader when panel and library panel have no title', async () => {
+    config.featureToggles.preferLibraryPanelTitle = false;
+    const { gridItem, behavior } = await buildTestSceneWithLibraryPanel({ panelTitle: '' });
+
+    const panel = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+    panel.title = '';
+
+    const libraryPanelState = {
+      name: 'LibraryPanel B',
+      title: '',
+      uid: '222',
+      type: 'table',
+      version: 2,
+      model: panel,
+    };
+
+    behavior.setPanelFromLibPanel(libraryPanelState);
+
+    expect(gridItem.state.body.state.hoverHeader).toBe(true);
+  });
+
+  it('should clear hoverHeader when library panel has a title and preferLibraryPanelTitle is true', async () => {
+    config.featureToggles.preferLibraryPanelTitle = true;
+    const { gridItem, behavior } = await buildTestSceneWithLibraryPanel({ panelTitle: '' });
+
+    const panel = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+
+    const libraryPanelState = {
+      name: 'LibraryPanel B',
+      title: 'LibraryPanel B title',
+      uid: '222',
+      type: 'table',
+      version: 2,
+      model: panel,
+    };
+
+    behavior.setPanelFromLibPanel(libraryPanelState);
+
+    expect(gridItem.state.body.state.hoverHeader).toBe(false);
+    config.featureToggles.preferLibraryPanelTitle = false;
+  });
+
   it('should not update panel if behavior not part of a vizPanel', async () => {
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
@@ -207,11 +249,11 @@ describe('LibraryPanelBehavior', () => {
   });
 });
 
-async function buildTestSceneWithLibraryPanel() {
+async function buildTestSceneWithLibraryPanel(options?: { panelTitle?: string }) {
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
   const vizPanel = new VizPanel({
-    title: 'Panel A',
+    title: options?.panelTitle ?? 'Panel A',
     pluginId: 'lib-panel-loading',
     key: 'panel-1',
     $behaviors: [behavior],
