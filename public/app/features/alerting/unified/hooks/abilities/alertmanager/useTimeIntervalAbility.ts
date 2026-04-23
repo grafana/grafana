@@ -32,14 +32,6 @@ const PERMISSIONS: Record<TimeIntervalAction, AccessControlAction[]> = {
   [TimeIntervalAction.Export]: [notificationsPermissions.read.grafana],
 };
 
-/**
- * Flat "any-of" permission bundle consumed by `getAlertManagerDataSourcesByPermission`
- * in `utils/datasource.ts` to decide whether to show the internal Grafana alertmanager.
- *
- * Derived from the per-action `PERMISSIONS` record above — a user with any permission
- * listed against any time-interval action is considered capable of doing something
- * meaningful with the Grafana alertmanager and will see it in the list.
- */
 export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
   (permissions) => permissions
 );
