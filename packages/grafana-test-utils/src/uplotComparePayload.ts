@@ -1,5 +1,5 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-/** Stable prefix for payload files: `uplot-compare-payload-<slug>-<id>.json`. */
+/** Stable prefix for payload files: `uplot-compare-payload-<slug>.json`. */
 export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload';
 
 const SLUG_MAX_LENGTH = 96;
