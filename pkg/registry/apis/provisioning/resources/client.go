@@ -19,6 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
+// Typed GVR/GVK values for the resources provisioning manages. These live
+// here (rather than in apps/provisioning/pkg/resources) because they
+// reference types from apps/dashboard/apps/folder/apps/iam, which
+// apps/provisioning does not depend on. The plain string constants for
+// Dashboard are mirrored in apps/provisioning/pkg/resources for callers
+// inside that module boundary.
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()

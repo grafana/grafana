@@ -10,6 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -122,13 +123,13 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 		if r.Kind == "" {
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
-		} else if r.Kind != provisioning.DashboardResourceKind {
+		} else if r.Kind != resources.DashboardKind {
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
-				fmt.Sprintf("only %s is supported for export", provisioning.DashboardResourceKind)))
+				fmt.Sprintf("only %s is supported for export", resources.DashboardKind)))
 		}
-		if r.Group != "" && r.Group != provisioning.DashboardResourceGroup {
+		if r.Group != "" && r.Group != resources.DashboardGroup {
 			list = append(list, field.Invalid(path.Child("group"), r.Group,
-				fmt.Sprintf("only %s is supported for export", provisioning.DashboardResourceGroup)))
+				fmt.Sprintf("only %s is supported for export", resources.DashboardGroup)))
 		}
 	}
 
