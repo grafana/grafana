@@ -34,6 +34,7 @@ func NewReceiverTestingService(
 	encryptionService secretService,
 	authz receiverTestingAccessControlService,
 	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverTestingService {
 	return &ReceiverTestingService{
 		receiverSvc:         receiverSvc,
@@ -41,6 +42,7 @@ func NewReceiverTestingService(
 		encryptionService:   encryptionService,
 		authz:               authz,
 		allowedIntegrations: allowedIntegrations,
+		emailValidator:      emailValidator,
 	}
 }
 
@@ -50,6 +52,7 @@ type ReceiverTestingService struct {
 	encryptionService   secretService
 	authz               receiverTestingAccessControlService
 	allowedIntegrations map[schema.IntegrationType]struct{}
+	emailValidator      EmailIntegrationValidator
 }
 
 type Alert struct {
@@ -149,7 +152,13 @@ func (t *ReceiverTestingService) testIntegration(ctx context.Context, user ident
 	if err != nil {
 		return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
 	}
-	am, err := t.amProvider.AlertmanagerFor(user.GetOrgID())
+	orgID := user.GetOrgID()
+	if integration.Config.Type() == schema.EmailType {
+		if err := t.emailValidator.ValidateIntegration(ctx, user, integration); err != nil {
+			return IntegrationTestResult{}, models.ErrReceiverInvalid(err)
+		}
+	}
+	am, err := t.amProvider.AlertmanagerFor(orgID)
 	if err != nil {
 		return IntegrationTestResult{}, err
 	}

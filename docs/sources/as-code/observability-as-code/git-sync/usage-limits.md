@@ -27,7 +27,7 @@ aliases:
 
 # Usage and performance limitations
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.**
 

@@ -3046,12 +3046,13 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
-			Name:        "grafana.correlationsSkipLegacy",
-			Description: "Route any calls to legacy correlations endpoints to call through to app platform",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Name:         "alerting.rulesAPIV2",
+			Description:  "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
