@@ -756,6 +756,7 @@ type TestRepo struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -2629,7 +2630,37 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
 }
 
+// CreateGithubRepo creates a github-type repository backed by the gittest server.
+// The repo will NOT become healthy (git auth uses default "git" user which doesn't
+// exist on gittest), but webhooks are created before the health check runs, so
+// Status.Webhook will be populated if the GitHub API mock is configured.
+// workflows is optional; defaults to ["write"].
+// webhookBaseURL is optional; pass it to enable webhook creation on the repo.
+func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", false, initialFiles, extraValues, workflows...)
+}
+
 func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "git", syncTarget, true, initialFiles, nil, workflows...)
+}
+
+// createRepo is the shared implementation for creating git-backed repositories.
+// repoType is "git" or "github", which determines the template used.
+// waitForReady controls whether to wait for the repo to become healthy.
+func (h *GitTestHelper) createRepo(
+	t *testing.T,
+	repoName string,
+	repoType string,
+	syncTarget string,
+	waitForReady bool,
+	initialFiles map[string][]byte,
+	extraTemplateValues map[string]any,
+	workflows ...string,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -2671,7 +2702,7 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+	templateValues := map[string]any{
 		"Name":          repoName,
 		"Title":         fmt.Sprintf("Test Repository %s", repoName),
 		"URL":           remote.URL,
@@ -2680,12 +2711,20 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 		"SyncTarget":    syncTarget,
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
-	})
+	}
+	for k, v := range extraTemplateValues {
+		templateValues[k] = v
+	}
+
+	tmpl := TestdataPath(repoType + ".json.tmpl")
+	repoObj := h.RenderObject(t, tmpl, templateValues)
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
-	h.waitForReadyRepository(t, repoName)
+	if waitForReady {
+		h.waitForReadyRepository(t, repoName)
+	}
 
 	return remote, local
 }

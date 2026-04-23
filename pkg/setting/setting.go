@@ -149,21 +149,22 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets            []string
-	ProvisioningAllowImageRendering       bool
-	ProvisioningMinSyncInterval           time.Duration
-	ProvisioningRepositoryTypes           []string
-	ProvisioningLokiURL                   string
-	ProvisioningLokiUser                  string
-	ProvisioningLokiPassword              string
-	ProvisioningLokiTenantID              string
-	ProvisioningMaxResourcesPerRepository int64  // 0 = unlimited
-	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
-	ProvisioningMaxIncrementalChanges     int    // default 100, 0 in config = unlimited
-	DataPath                              string
-	LogsPath                              string
-	EnterpriseLicensePath                 string
+	ProvisioningAllowedTargets                []string
+	ProvisioningAllowImageRendering           bool
+	ProvisioningMinSyncInterval               time.Duration
+	ProvisioningRepositoryTypes               []string
+	ProvisioningLokiURL                       string
+	ProvisioningLokiUser                      string
+	ProvisioningLokiPassword                  string
+	ProvisioningLokiTenantID                  string
+	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
+	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
+	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
+	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
+	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	DataPath                                  string
+	LogsPath                                  string
+	EnterpriseLicensePath                     string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -2417,6 +2418,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
+	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
