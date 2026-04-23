@@ -3021,8 +3021,82 @@
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
+      "chain": {
+        "alerts-after": "THEN ALERT RULES FIRE ON THEM",
+        "description-empty": "No dependencies between recording and alert rules in this group.",
+        "description-item": "{{alert}} depends on {{recordings}}",
+        "recordings-first": "RECORDING RULES EVALUATE FIRST"
+      },
+      "clear-filters": "Clear filters",
+      "deleted": {
+        "column-deleted-at": "DELETED AT",
+        "column-deleted-by": "DELETED BY",
+        "column-location": "LOCATION",
+        "column-name": "NAME",
+        "delete-permanently": "Delete permanently",
+        "empty": "No recently deleted rules found",
+        "restore": "Restore",
+        "subtitle": "Soft-deleted rules. Restore within 30 days.",
+        "title": "Recently deleted"
+      },
+      "dependency-overlay": {
+        "label": "Dependencies between recording rules and alert rules"
+      },
+      "ds-error-tag": "Error",
+      "evaluation-chain-badge": "evaluation chain",
+      "field": {
+        "contact-point": "Contact point",
+        "contact-point-placeholder": "Select contact point",
+        "data-source": "Data source",
+        "data-source-placeholder": "Select data sources",
+        "health": "Health",
+        "labels": "Labels",
+        "labels-placeholder": "env=prod, team=...",
+        "plugin-rules": "Plugin rules",
+        "rule-name": "Rule name",
+        "rule-name-placeholder": "Filter by name...",
+        "rule-source": "Rule source",
+        "rule-type": "Type"
+      },
+      "filter-folders": "Filter folders...",
+      "filters": "Filters",
+      "folders-tree": "Folders",
+      "health-all": "All",
+      "health-error": "Error",
+      "health-nodata": "No data",
+      "health-ok": "OK",
+      "import-export": "Import / export",
       "import-to-gma": "Import alert rules",
-      "import-to-gma-tool": "Import to Grafana Alerting"
+      "import-to-gma-tool": "Import to Grafana Alerting",
+      "instance-count_one": "{{count}} inst.",
+      "instance-count_other": "{{count}} inst.",
+      "loading": "Loading…",
+      "new-rule": "New rule in folder",
+      "no-contact": "no contact",
+      "no-contact-warning": "⚠ no contact",
+      "no-matching-folder": "No matching folder.",
+      "plugin-hide": "Hide",
+      "plugin-show": "Show",
+      "recently-deleted": "Recently deleted",
+      "saved-searches": "Saved searches",
+      "search-placeholder": "Search by name or enter filter query...",
+      "select-folder": "Select a folder from the left to see its rules.",
+      "show-dependency-arrows": "Show dependency arrows",
+      "source-all": "All",
+      "source-datasource": "Data source managed",
+      "source-grafana": "Grafana managed",
+      "state": {
+        "firing": "Firing",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering"
+      },
+      "state-label": "STATE",
+      "subtitle": "Rules that determine whether an alert will fire",
+      "title": "Rules",
+      "type-alert": "Alert rule",
+      "type-all": "All",
+      "type-recording": "Recording rule"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
