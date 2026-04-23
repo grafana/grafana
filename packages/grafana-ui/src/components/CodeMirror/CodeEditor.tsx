@@ -1,5 +1,6 @@
-import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
-import { EditorState } from '@codemirror/state';
+import { acceptCompletion, autocompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { EditorState, Prec } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
@@ -83,6 +84,16 @@ const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledb
   ];
 };
 
+// Bind Tab to accept completions before the default indent behavior
+const autocompleteTabKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: 'Tab',
+      run: acceptCompletion,
+    },
+  ])
+);
+
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
@@ -99,6 +110,7 @@ export const CodeEditor = memo(function CodeEditor({
 
   const extensions = useMemo(
     () => [
+      autocompleteTabKeymap,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
@@ -112,7 +124,7 @@ export const CodeEditor = memo(function CodeEditor({
       value={value}
       height={height}
       extensions={extensions}
-      onChange={(nextValue) => onChange(nextValue)}
+      onChange={onChange}
     />
   );
 });

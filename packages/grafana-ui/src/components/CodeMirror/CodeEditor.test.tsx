@@ -1,5 +1,6 @@
-import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
 import { render, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 
@@ -44,6 +45,13 @@ const getAutocompleteSources = () =>
   EditorState.create({
     extensions: getExtensions() as never[],
   }).languageDataAt<CompletionSource>('autocomplete', 0);
+
+const getKeyBindings = () =>
+  EditorState.create({
+    extensions: getExtensions() as never[],
+  })
+    .facet(keymap)
+    .flat();
 
 const getContentAttributes = () =>
   EditorState.create({
@@ -110,6 +118,14 @@ describe('CodeMirror CodeEditor', () => {
 
     expect(autocompletionMock).not.toHaveBeenCalled();
     expect(getAutocompleteSources()).toEqual([existingSource]);
+  });
+
+  it('binds Tab to accept completions before the default indent behavior', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    const tabBinding = getKeyBindings().find((binding) => binding.key === 'Tab');
+
+    expect(tabBinding).toEqual(expect.objectContaining({ key: 'Tab', run: acceptCompletion }));
   });
 
   it('adds accessibility attributes to the editor content when provided', () => {
