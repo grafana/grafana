@@ -68,7 +68,7 @@ export function toMatchUPlotSnapshot(
       compareUrl.searchParams.set('file', publicBasename);
       // Use stderr so jest-fail-on-console (console.* hooks) does not treat this as a test failure
       process.stderr.write(
-        `To debug this diff visually, run \`yarn workspace uplot-compare dev\`, then open:\n\n${compareUrl.toString()}\n\n(Payload written to ${fullPath})\n`
+        `To debug this diff visually, run \`yarn uplot-compare\`, then open:\n\n${compareUrl.toString()}\n\n(Payload written to ${fullPath})\n`
       );
     } catch (e) {
       console.warn(

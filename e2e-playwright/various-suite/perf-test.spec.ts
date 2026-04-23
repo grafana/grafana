@@ -7,7 +7,7 @@ import { RequestsRecorder } from '../utils/RequestsRecorder';
 
 const DASH_PATH = '/d/bds35fot3cv7kb/mostly-blank-dashboard';
 
-test('payload-size', { tag: '@performance' }, async ({ page }) => {
+test.only('payload-size', { tag: '@performance' }, async ({ page }) => {
   const promRegistry = new prom.Registry();
 
   const testRunTimeGauge = new prom.Gauge({
