@@ -963,20 +963,29 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
 }
 
-// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
+// RequireRepoDashboardCount polls the dashboards list until the number of
+// dashboards managed by the given repo matches the expected count, or the
+// default wait timeout elapses. Polling is required because SyncAndWait only
+// waits for the sync job resource to complete; the dashboards-list API may
+// not yet reflect newly-created/deleted resources at that instant.
 func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list dashboards")
-
-	var count int
-	for _, d := range dashboards.Items {
-		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID == repoName {
-			count++
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
 		}
-	}
-	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+
+		var count int
+		for _, d := range dashboards.Items {
+			managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repoName {
+				count++
+			}
+		}
+		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
