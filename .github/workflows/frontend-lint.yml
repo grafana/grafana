@@ -1,43 +1,93 @@
 name: Lint Frontend
 on:
   pull_request:
+    paths:
+      # Frontend source and config
+      - 'public/**'
+      - 'packages/**'
+      - 'apps/dashboard/pkg/migration/**'
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.css'
+      - '**.mjs'
+      - '**.cue'
+      - 'yarn.lock'
+      - 'package.json'
+      - '.prettier*'
+      - '.yarnrc.yml'
+      - 'eslint.config.js'
+      - 'jest.config.js'
+      - 'nx.json'
+      - 'tsconfig.json'
+      - '.yarn/**'
+      # Docs (prettier checks these too)
+      - 'contribute/**'
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
+      - '.vale.ini'
+      # Source for API client / OpenAPI generation (lint-frontend-api-clients, lint-frontend-openapi)
+      - 'pkg/tests/apis/openapi_snapshots/**'
+      - 'scripts/validate-npm-packages.sh'
+      # Actions used by this workflow
+      - '.github/actions/change-detection/**'
+      - '.github/actions/setup-node/**'
+      - '.github/actions/setup-enterprise/**'
+      - '.github/actions/yarn-install/**'
+      - '.github/workflows/frontend-lint.yml'
   push:
     branches:
       - main
       - release-*.*.*
+    paths:
+      # Frontend source and config
+      - 'public/**'
+      - 'packages/**'
+      - 'apps/dashboard/pkg/migration/**'
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.css'
+      - '**.mjs'
+      - '**.cue'
+      - 'yarn.lock'
+      - 'package.json'
+      - '.prettier*'
+      - '.yarnrc.yml'
+      - 'eslint.config.js'
+      - 'jest.config.js'
+      - 'nx.json'
+      - 'tsconfig.json'
+      - '.yarn/**'
+      # Docs (prettier checks these too)
+      - 'contribute/**'
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
+      - '.vale.ini'
+      # Source for API client / OpenAPI generation (lint-frontend-api-clients, lint-frontend-openapi)
+      - 'pkg/tests/apis/openapi_snapshots/**'
+      - 'scripts/validate-npm-packages.sh'
+      # Actions used by this workflow
+      - '.github/actions/change-detection/**'
+      - '.github/actions/setup-node/**'
+      - '.github/actions/setup-enterprise/**'
+      - '.github/actions/yarn-install/**'
+      - '.github/workflows/frontend-lint.yml'
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    name: Detect whether code changed
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.frontend }}
-      prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
-      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
-      changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/frontend-lint.yml
-
   lint-frontend-prettier:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-prettier-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -50,13 +100,13 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+
   lint-frontend-prettier-enterprise:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -73,14 +123,14 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+
   lint-frontend-typecheck:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Typecheck
     runs-on: ubuntu-latest
     env:
@@ -94,13 +144,13 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+
   lint-frontend-typecheck-enterprise:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Typecheck
     runs-on: ubuntu-latest
     env:
@@ -118,6 +168,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -148,8 +199,8 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
+
   lint-frontend-openapi:
-    # Run this workflow for OSS only
     permissions:
       contents: read
       id-token: write
@@ -183,6 +234,7 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
+
   lint-frontend-api-clients-enterprise:
     permissions:
       contents: read
@@ -216,12 +268,12 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
+
   lint-frontend-packed-packages:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name == 'pull_request'
     name: Verify packed frontend packages
     runs-on: ubuntu-latest
     steps:
@@ -239,12 +291,12 @@ jobs:
         yarn run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
+
   lint-circular-dependencies:
-    needs: detect-changes
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request'
     name: Check circular dependencies
     runs-on: ubuntu-x64-small
     steps:
@@ -308,9 +360,6 @@ jobs:
         fi
 
   yarn-install-validation:
-    needs:
-      - detect-changes
-    if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     runs-on: ubuntu-x64-small
     name: Validate yarn install
     permissions:
@@ -321,7 +370,6 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-
     # Deliberately not using the yarn-install action for exact control over the command for extra checks
     - name: Install yarn dependencies
       run: yarn install --immutable --check-cache
