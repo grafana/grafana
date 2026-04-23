@@ -5,6 +5,7 @@ import { MultiCombobox } from '../Combobox/MultiCombobox';
 import { Input } from '../Input/Input';
 import { SecretInput } from '../SecretInput';
 import { MultiSelect, Select } from '../Select/Select';
+import { Slider } from '../Slider/Slider';
 import { Switch } from '../Switch/Switch';
 
 import { Checkbox } from './Checkbox';
@@ -50,7 +51,7 @@ describe('Field', () => {
         </Field>
       );
 
-      expect(screen.getByRole('textbox', { description: 'My error' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
@@ -191,6 +192,28 @@ describe('Field', () => {
       );
 
       expect(screen.getByRole('combobox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Slider', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <Slider min={0} max={10} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <Slider min={0} max={10} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
