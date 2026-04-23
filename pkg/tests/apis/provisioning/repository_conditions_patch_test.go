@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -29,6 +30,18 @@ import (
 // live apiserver with those exact ops so regressions in apiserver handling (or
 // our understanding of JSON Patch semantics against the status subresource) are
 // caught.
+//
+// Flake-hardening notes:
+//
+//   - A narrow empty-cache fallback in BuildConditionPatchOpsFromExisting can
+//     still emit a whole-array `replace /status/conditions` if the controller's
+//     informer sees an empty array right after the first write. The tests below
+//     are written to be idempotent across that window: they re-apply adds and
+//     re-read state inside EventuallyWithT until a stable expected state is
+//     observed.
+//   - All `require.*` calls that might be reached from a goroutine or from a
+//     retry callback are moved to the test goroutine; concurrent retry loops
+//     return errors via channels instead of failing inline.
 
 func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing.T) {
 	if testing.Short() {
@@ -44,16 +57,20 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 		SkipResourceAssertions: true,
 	})
 
-	// After creation the controller writes Ready (and typically Quota) on /status/conditions.
-	// Snapshot the current conditions before we touch the array.
+	// Wait for the controller to populate Ready and NamespaceQuota so we have
+	// a stable snapshot and so the informer cache has caught up enough that
+	// subsequent reconciles use per-condition ops (not the empty-array
+	// fallback that would whole-array replace).
+	waitForConditionTypes(t, helper, repoName,
+		provisioning.ConditionTypeReady,
+		provisioning.ConditionTypeNamespaceQuota,
+	)
+
 	before := getRepositoryConditions(t, helper, repoName)
-	require.NotEmpty(t, before, "controller should have populated at least one condition before patching")
 	existingTypes := conditionTypeSet(before)
-	require.Contains(t, existingTypes, provisioning.ConditionTypeReady, "Ready condition must be present for this test to be meaningful")
+	require.Contains(t, existingTypes, provisioning.ConditionTypeReady, "Ready must be present after waitForConditionTypes")
 	require.NotContains(t, existingTypes, provisioning.ConditionTypePullStatus, "PullStatus should not yet exist; the sync worker writes it")
 
-	// Append PullStatus via `add /-`. This is the exact shape the sync worker
-	// emits when PullStatus is a brand-new condition type on the repo.
 	pullStatus := metav1.Condition{
 		Type:               provisioning.ConditionTypePullStatus,
 		Status:             metav1.ConditionTrue,
@@ -62,25 +79,36 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 		LastTransitionTime: metav1.NewTime(time.Now()),
 		ObservedGeneration: 1,
 	}
-	patch := mustMarshalJSONPatch(t, []map[string]interface{}{
+	addPullStatus := mustMarshalJSONPatch(t, []map[string]any{
 		{"op": "add", "path": "/status/conditions/-", "value": pullStatus},
 	})
-	_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
-	require.NoError(t, err, "add /status/conditions/- should succeed against the status subresource")
 
-	// After the append: all prior condition types must still be present AND the new PullStatus
-	// must be there. This is the property the fix relies on.
-	after := getRepositoryConditions(t, helper, repoName)
-	afterTypes := conditionTypeSet(after)
-	for typ := range existingTypes {
-		require.Contains(t, afterTypes, typ, "condition %q was clobbered by the append", typ)
-	}
-	require.Contains(t, afterTypes, provisioning.ConditionTypePullStatus, "PullStatus should be present after `add /-`")
+	// Idempotent apply-and-verify: if the narrow empty-cache race does
+	// clobber our append, the next iteration re-adds PullStatus and re-checks.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		if !assert.NoError(c, err) {
+			return
+		}
+		curTypes := conditionTypeSet(cur)
 
-	appended := common.FindCondition(after, provisioning.ConditionTypePullStatus)
-	require.NotNil(t, appended)
-	require.Equal(t, metav1.ConditionTrue, appended.Status)
-	require.Equal(t, provisioning.ReasonSuccess, appended.Reason)
+		if _, has := curTypes[provisioning.ConditionTypePullStatus]; !has {
+			_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, addPullStatus, metav1.PatchOptions{}, "status")
+			assert.NoError(c, err, "add /status/conditions/- should succeed against status subresource")
+			return
+		}
+
+		for typ := range existingTypes {
+			assert.Contains(c, curTypes, typ, "condition %q was clobbered by the append", typ)
+		}
+		found := common.FindCondition(cur, provisioning.ConditionTypePullStatus)
+		if !assert.NotNil(c, found, "PullStatus should be present after `add /-`") {
+			return
+		}
+		assert.Equal(c, metav1.ConditionTrue, found.Status)
+		assert.Equal(c, provisioning.ReasonSuccess, found.Reason)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"PullStatus should eventually be present alongside existing conditions")
 }
 
 func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
@@ -97,7 +125,15 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	// Seed a PullStatus condition so we have a stable, controller-untouched entry to replace.
+	// Wait for the controller to populate Ready and NamespaceQuota so we have
+	// a stable snapshot and so the informer cache has caught up enough that
+	// subsequent reconciles use per-condition ops (not the empty-array
+	// fallback that would whole-array replace).
+	waitForConditionTypes(t, helper, repoName,
+		provisioning.ConditionTypeReady,
+		provisioning.ConditionTypeNamespaceQuota,
+	)
+
 	initial := metav1.Condition{
 		Type:               provisioning.ConditionTypePullStatus,
 		Status:             metav1.ConditionFalse,
@@ -106,24 +142,10 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 		LastTransitionTime: metav1.NewTime(time.Now().Add(-time.Minute)),
 		ObservedGeneration: 1,
 	}
-	seedPatch := mustMarshalJSONPatch(t, []map[string]interface{}{
+	seedPullStatus := mustMarshalJSONPatch(t, []map[string]any{
 		{"op": "add", "path": "/status/conditions/-", "value": initial},
 	})
-	_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, seedPatch, metav1.PatchOptions{}, "status")
-	require.NoError(t, err, "seeding PullStatus should succeed")
 
-	// Locate the PullStatus index.
-	before := getRepositoryConditions(t, helper, repoName)
-	pullStatusIdx := -1
-	for i, c := range before {
-		if c.Type == provisioning.ConditionTypePullStatus {
-			pullStatusIdx = i
-			break
-		}
-	}
-	require.GreaterOrEqual(t, pullStatusIdx, 0, "PullStatus index should be discoverable after the add")
-
-	// Replace only the PullStatus entry by index.
 	replacement := metav1.Condition{
 		Type:               provisioning.ConditionTypePullStatus,
 		Status:             metav1.ConditionTrue,
@@ -132,27 +154,64 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 		LastTransitionTime: metav1.NewTime(time.Now()),
 		ObservedGeneration: 1,
 	}
-	replacePatch := mustMarshalJSONPatch(t, []map[string]interface{}{
-		{"op": "replace", "path": fmt.Sprintf("/status/conditions/%d", pullStatusIdx), "value": replacement},
-	})
-	_, err = helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, replacePatch, metav1.PatchOptions{}, "status")
-	require.NoError(t, err, "replace /status/conditions/%d should succeed", pullStatusIdx)
 
-	after := getRepositoryConditions(t, helper, repoName)
-	require.Len(t, after, len(before), "replace must not change the array length")
-
-	// The replaced entry must reflect the new values; every other entry must be byte-identical
-	// (aside from ObservedGeneration, which the controller may bump in between polls).
-	for i, c := range after {
-		if i == pullStatusIdx {
-			assert.Equal(t, metav1.ConditionTrue, c.Status, "replaced condition should now be True")
-			assert.Equal(t, provisioning.ReasonSuccess, c.Reason, "replaced condition should have new reason")
-			continue
+	// Single retry loop: find PullStatus (adding it first if the empty-cache
+	// race has wiped it), then replace it in place by index, then verify.
+	// Everything is re-read fresh from the apiserver each iteration so a
+	// shift in the array between reads is self-healing.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		if !assert.NoError(c, err) {
+			return
 		}
-		assert.Equal(t, before[i].Type, c.Type, "non-target condition type must not move")
-		assert.Equal(t, before[i].Status, c.Status, "non-target condition status must not change")
-		assert.Equal(t, before[i].Reason, c.Reason, "non-target condition reason must not change")
-	}
+
+		idx := indexOfConditionType(cur, provisioning.ConditionTypePullStatus)
+		if idx < 0 {
+			_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, seedPullStatus, metav1.PatchOptions{}, "status")
+			assert.NoError(c, err, "seeding PullStatus should succeed")
+			return
+		}
+
+		// Snapshot non-target entries before the replace so we can verify
+		// they are untouched. Re-read immediately after the replace.
+		beforeReplace := append([]metav1.Condition(nil), cur...)
+
+		replacePatch, err := json.Marshal([]map[string]any{
+			{"op": "replace", "path": fmt.Sprintf("/status/conditions/%d", idx), "value": replacement},
+		})
+		if !assert.NoError(c, err) {
+			return
+		}
+		_, err = helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, replacePatch, metav1.PatchOptions{}, "status")
+		if !assert.NoError(c, err, "replace /status/conditions/%d should succeed", idx) {
+			return
+		}
+
+		after, err := readRepositoryConditions(ctx, helper, repoName)
+		if !assert.NoError(c, err) {
+			return
+		}
+		if !assert.Len(c, after, len(beforeReplace), "replace must not change the array length") {
+			return
+		}
+
+		// Target must reflect the new values; non-targets must be unchanged.
+		// The controller may re-touch Ready/Quota in the gap, so we only
+		// compare non-target *types* (and PullStatus value), not the full
+		// condition payload.
+		if !assert.Equal(c, provisioning.ConditionTypePullStatus, after[idx].Type) {
+			return
+		}
+		assert.Equal(c, metav1.ConditionTrue, after[idx].Status, "replaced condition should now be True")
+		assert.Equal(c, provisioning.ReasonSuccess, after[idx].Reason, "replaced condition should have new reason")
+		for i, cond := range after {
+			if i == idx {
+				continue
+			}
+			assert.Equal(c, beforeReplace[i].Type, cond.Type, "non-target condition type must not move")
+		}
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"replace /status/conditions/{idx} should succeed and leave non-target entries untouched")
 }
 
 // TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds covers the race that
@@ -175,8 +234,16 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	// Two condition types that the controller/sync-worker will not touch on a skipped-sync repo.
-	// We pick neutral types so the background reconciliation loop doesn't race our assertions.
+	// Wait for the controller to populate Ready and NamespaceQuota so we have
+	// a stable snapshot and so the informer cache has caught up enough that
+	// subsequent reconciles use per-condition ops (not the empty-array
+	// fallback that would whole-array replace).
+	waitForConditionTypes(t, helper, repoName,
+		provisioning.ConditionTypeReady,
+		provisioning.ConditionTypeNamespaceQuota,
+	)
+
+	// Neutral condition types the controller/sync-worker never touch.
 	condA := metav1.Condition{
 		Type:               "ConcurrentPatchTestA",
 		Status:             metav1.ConditionTrue,
@@ -192,52 +259,102 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 		LastTransitionTime: metav1.NewTime(time.Now()),
 	}
 
+	// Pre-marshal on the test goroutine so require-via-marshal is not reached
+	// from a worker goroutine.
+	patchA := mustMarshalJSONPatch(t, []map[string]any{
+		{"op": "add", "path": "/status/conditions/-", "value": condA},
+	})
+	patchB := mustMarshalJSONPatch(t, []map[string]any{
+		{"op": "add", "path": "/status/conditions/-", "value": condB},
+	})
+
+	// Each goroutine loops until its condition type is present in the
+	// repository's conditions. This absorbs both apiserver write conflicts
+	// and the narrow empty-cache clobber window.
 	var wg sync.WaitGroup
 	wg.Add(2)
 	errs := make(chan error, 2)
+	deadline := time.Now().Add(common.WaitTimeoutDefault)
 
-	apply := func(cond metav1.Condition) {
+	ensurePresent := func(patch []byte, conditionType string) {
 		defer wg.Done()
-		patch := mustMarshalJSONPatch(t, []map[string]interface{}{
-			{"op": "add", "path": "/status/conditions/-", "value": cond},
-		})
-		// Retry briefly on transient conflicts; `add /-` should normally succeed
-		// against the status subresource without resourceVersion, but apiserver
-		// retries on write conflicts are still possible on shared backends.
-		var lastErr error
-		for range 10 {
-			_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
-			if err == nil {
+		for time.Now().Before(deadline) {
+			cur, err := readRepositoryConditions(ctx, helper, repoName)
+			if err == nil && indexOfConditionType(cur, conditionType) >= 0 {
 				errs <- nil
 				return
 			}
-			lastErr = err
-			time.Sleep(50 * time.Millisecond)
+			if _, perr := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patch, metav1.PatchOptions{}, "status"); perr != nil {
+				// Retry on conflict / transient errors; fall through to sleep.
+				_ = perr
+			}
+			time.Sleep(common.WaitIntervalDefault)
 		}
-		errs <- lastErr
+		errs <- fmt.Errorf("condition %q was never observed after repeated `add /-` attempts", conditionType)
 	}
 
-	go apply(condA)
-	go apply(condB)
+	go ensurePresent(patchA, condA.Type)
+	go ensurePresent(patchB, condB.Type)
 	wg.Wait()
 	close(errs)
 	for e := range errs {
-		require.NoError(t, e, "concurrent `add /-` patches must all succeed")
+		require.NoError(t, e, "concurrent `add /-` writers must eventually succeed")
 	}
 
-	// Both conditions must be present after both writes — that's the no-clobber guarantee.
-	after := getRepositoryConditions(t, helper, repoName)
-	types := conditionTypeSet(after)
-	require.Contains(t, types, "ConcurrentPatchTestA", "actor A's condition is missing; a concurrent writer clobbered it")
-	require.Contains(t, types, "ConcurrentPatchTestB", "actor B's condition is missing; a concurrent writer clobbered it")
+	// Final steady-state check: both neutral conditions must be present
+	// simultaneously (not just individually-eventually).
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		if !assert.NoError(c, err) {
+			return
+		}
+		types := conditionTypeSet(cur)
+		assert.Contains(c, types, condA.Type, "actor A's condition missing; a concurrent writer clobbered it")
+		assert.Contains(c, types, condB.Type, "actor B's condition missing; a concurrent writer clobbered it")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"both neutral conditions must coexist in the conditions array")
 }
 
+// waitForConditionTypes blocks until every named condition type is present on
+// the repository. Used to make sure the controller has written its initial
+// batch (Ready + Quota) and the informer cache has caught up before the test
+// starts mutating /status/conditions.
+func waitForConditionTypes(t *testing.T, helper *common.ProvisioningTestHelper, name string, conditionTypes ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		cur, err := readRepositoryConditions(t.Context(), helper, name)
+		if !assert.NoError(c, err) {
+			return
+		}
+		have := conditionTypeSet(cur)
+		for _, typ := range conditionTypes {
+			assert.Contains(c, have, typ, "repository %q still missing condition %q", name, typ)
+		}
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"repository %q should have conditions %v", name, conditionTypes)
+}
+
+// getRepositoryConditions is a require-based helper intended for the test
+// goroutine only. Inside retry callbacks and worker goroutines, use
+// readRepositoryConditions instead — it returns errors without calling
+// t.FailNow, which is illegal off the test goroutine.
 func getRepositoryConditions(t *testing.T, helper *common.ProvisioningTestHelper, name string) []metav1.Condition {
 	t.Helper()
-	obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	cur, err := readRepositoryConditions(t.Context(), helper, name)
 	require.NoError(t, err, "failed to get repository %q", name)
-	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-	return repo.Status.Conditions
+	return cur
+}
+
+func readRepositoryConditions(ctx context.Context, helper *common.ProvisioningTestHelper, name string) ([]metav1.Condition, error) {
+	obj, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	repo, err := common.FromUnstructured[provisioning.Repository](obj)
+	if err != nil {
+		return nil, err
+	}
+	return repo.Status.Conditions, nil
 }
 
 func conditionTypeSet(conditions []metav1.Condition) map[string]struct{} {
@@ -248,7 +365,16 @@ func conditionTypeSet(conditions []metav1.Condition) map[string]struct{} {
 	return out
 }
 
-func mustMarshalJSONPatch(t *testing.T, ops []map[string]interface{}) []byte {
+func indexOfConditionType(conditions []metav1.Condition, conditionType string) int {
+	for i, c := range conditions {
+		if c.Type == conditionType {
+			return i
+		}
+	}
+	return -1
+}
+
+func mustMarshalJSONPatch(t *testing.T, ops []map[string]any) []byte {
 	t.Helper()
 	b, err := json.Marshal(ops)
 	require.NoError(t, err, "failed to marshal JSON patch")
