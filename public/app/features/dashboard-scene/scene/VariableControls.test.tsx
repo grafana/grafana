@@ -100,11 +100,11 @@ describe('VariableControls', () => {
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
 
-  it('should render override variables instead of dashboard variable set when provided', async () => {
-    const dashboard = buildScene([new TextBoxVariable({ name: 'DashboardVar', hide: VariableHide.dontHide })]);
+  it('should prefer variablesOverride over dashboard variables', async () => {
+    const dashboard = buildScene([new TextBoxVariable({ name: 'DashboardVar' })]);
     dashboard.activate();
 
-    const sectionVariable = new TextBoxVariable({ name: 'SectionAncestorVar', hide: VariableHide.dontHide });
+    const sectionVariable = new TextBoxVariable({ name: 'SectionAncestorVar' });
     render(<VariableControls dashboard={dashboard} variablesOverride={[sectionVariable]} />);
 
     expect(await screen.findByText('SectionAncestorVar')).toBeInTheDocument();
