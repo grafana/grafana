@@ -6453,7 +6453,6 @@
         "save-library-panel": "Enregistrer le panneau de la bibliothèque",
         "share": {
           "arrow": "Partager",
-          "title": "Partager",
           "tooltip": "Copier le lien"
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
@@ -8655,6 +8654,7 @@
         "copy-link": "Copier le lien vers la ligne de journal",
         "copy-to-clipboard": "Copier dans le presse-papier",
         "inspect-value": "Inspecter la valeur",
+        "show-details": "",
         "view-log-line": "Afficher la ligne de journal"
       }
     },
@@ -11329,6 +11329,8 @@
       "fields-section": "Champs",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valeur du lien",
       "links-section": "Liens",
       "log-attributes-field": "Attributs du journal",
@@ -11577,13 +11579,13 @@
   "logstable": {
     "category-table": "Tableau des journaux",
     "description-show-controls": "Afficher les commandes du tableau",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Active ou désactive le bouton de lien vers la ligne de journal dans la première colonne de chaque ligne",
       "name": "Afficher le bouton de lien pour copier le journal"
-    },
-    "show-inspect-button": {
-      "description": "Active ou désactive le bouton d’inspection de la ligne de journal dans la première colonne de chaque ligne",
-      "name": "Afficher le bouton d’inspection"
     }
   },
   "manage-dashbaords": {
@@ -15930,6 +15932,7 @@
           "group-by": "Regrouper par"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoré",
       "placeholder-select-stats": "Sélectionner les statistiques"
     },
@@ -15941,6 +15944,16 @@
         "group-by": "Regrouper par"
       },
       "title-calc-alert": "Les calculs n’auront aucun effet si aucun champ n’est groupé"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

@@ -2028,6 +2028,18 @@ Defines the limits for how many alert rule versions are stored in the database p
 
 The default `0` value means there's no limit.
 
+<hr>
+
+#### `limit_email_to_org_members`
+
+When enabled, email contact point recipients are restricted to users that belong to the organization (including disabled users).
+This validation is applied only when creating or updating contact points, not at notification send time.
+
+Enabling this flag does not retroactively validate existing contact points.
+Admins should manually audit existing contact points after enabling this setting to ensure all recipients are org members.
+
+The default value is `false`.
+
 ### `[unified_alerting.screenshots]`
 
 For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).

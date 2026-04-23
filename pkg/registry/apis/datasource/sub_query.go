@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -93,7 +94,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+		ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
 
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{

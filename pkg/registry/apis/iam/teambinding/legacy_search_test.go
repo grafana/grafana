@@ -3,6 +3,7 @@ package teambinding
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"testing"
 
@@ -185,13 +186,8 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should cap limit at 100", func(t *testing.T) {
-		mockStore := &mockLegacyStore{
-			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(100), query.Pagination.Limit)
-				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
-			},
-		}
+	t.Run("should return error when limit exceeds common.MaxListLimit", func(t *testing.T) {
+		mockStore := &mockLegacyStore{}
 		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -200,7 +196,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		})
 
 		req := &resourcepb.ResourceSearchRequest{
-			Limit: 150,
+			Limit: common.MaxListLimit + 1,
 			Page:  1,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -218,14 +214,15 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		}
 
 		resp, err := client.Search(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
+		require.Error(t, err)
+		require.Nil(t, resp)
+		require.Contains(t, err.Error(), fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit))
 	})
 
-	t.Run("should default limit to 50 when limit is 0", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is 0", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
@@ -259,10 +256,10 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should default limit to 50 when limit is negative", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is negative", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
