@@ -50,7 +50,7 @@ export function handleRedirectTo(): void {
     if (redirectUrl.origin === window.location.origin) {
       const redirectOrgId = redirectUrl.searchParams.get('orgId');
 
-      if (redirectOrgId !== null && redirectOrgId !== '') {
+      if (redirectOrgId) {
         const targetOrgId = Number(redirectOrgId);
 
         if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
