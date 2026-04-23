@@ -51,9 +51,6 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	logger log.Logger,
 ) (bleve.Index, string, int64, error) {
 	store := b.opts.Snapshot.Store
-	if store == nil {
-		return nil, "", 0, nil
-	}
 
 	all, err := store.ListIndexes(ctx, key)
 	if err != nil {
@@ -129,6 +126,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
+	var droppedAge, droppedUnparseable int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
 		if m == nil {
@@ -136,22 +134,33 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		}
 		// Hard filter: age.
 		if maxAge > 0 && now.Sub(m.UploadTimestamp) > maxAge {
+			droppedAge++
 			continue
 		}
 		// Hard filter: unparseable version (we can't tier it).
 		v, err := semver.NewVersion(m.GrafanaBuildVersion)
 		if err != nil {
+			droppedUnparseable++
 			continue
 		}
-		candidates = append(candidates, snapshotCandidate{
+		c := snapshotCandidate{
 			key:     k,
 			meta:    m,
 			version: v,
 			tier:    snapshotTier(v, minVersion, running),
-		})
+		}
+		candidates = append(candidates, c)
+		b.log.Debug("snapshot candidate",
+			"key", c.key.String(),
+			"tier", c.tier,
+			"version", c.version.String(),
+			"rv", c.meta.LatestResourceVersion,
+			"uploaded", c.meta.UploadTimestamp,
+		)
 	}
 
 	if len(candidates) == 0 {
+		b.log.Debug("no snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
 		return snapshotCandidate{}, false
 	}
 
@@ -168,6 +177,13 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 		return candidates[i].meta.UploadTimestamp.After(candidates[j].meta.UploadTimestamp)
 	})
 
+	b.log.Debug("selected snapshot",
+		"key", candidates[0].key.String(),
+		"tier", candidates[0].tier,
+		"candidates", len(candidates),
+		"dropped_age", droppedAge,
+		"dropped_unparseable", droppedUnparseable,
+	)
 	return candidates[0], true
 }
 

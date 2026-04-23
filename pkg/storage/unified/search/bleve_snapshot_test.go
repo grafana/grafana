@@ -23,6 +23,7 @@ import (
 	"gocloud.dev/blob/memblob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -165,6 +166,7 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	newBackend := func(maxAge time.Duration, minVersion *semver.Version) *bleveBackend {
 		return &bleveBackend{
+			log:                 log.New("bleve-snapshot-test"),
 			opts:                BleveOptions{Snapshot: SnapshotOptions{MaxIndexAge: maxAge, MinBuildVersion: minVersion}},
 			runningBuildVersion: running,
 		}
@@ -286,14 +288,6 @@ func (dt downloadTest) run(t *testing.T) (bleve.Index, int64, error) {
 
 func (dt downloadTest) counter(status string) float64 {
 	return testutil.ToFloat64(dt.metrics.IndexSnapshotDownloads.WithLabelValues(status))
-}
-
-func TestTryDownloadRemoteSnapshot_StoreNil(t *testing.T) {
-	be, _ := newTestBleveBackend(t, SnapshotOptions{})
-
-	idx, _, _, err := be.tryDownloadRemoteSnapshot(context.Background(), newTestNsResource(), be.opts.Root, be.log)
-	require.NoError(t, err)
-	assert.Nil(t, idx)
 }
 
 func TestTryDownloadRemoteSnapshot_Empty(t *testing.T) {
