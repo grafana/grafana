@@ -13,6 +13,7 @@ import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { FeatureControlContextProvider } from './core/components/AppChrome/FeatureControl/FeatureControlProvider';
 import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
@@ -132,16 +133,18 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <MaybeTimeRangeProvider>
                       <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={registries}>
-                          <ExtensionSidebarContextProvider>
-                            <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                              <GlobalStyles />
-                              <div className="grafana-app">
-                                <RouterWrapper {...routerWrapperProps} />
-                                <LiveConnectionWarning />
-                                <PortalContainer />
-                              </div>
-                            </UNSAFE_PortalProvider>
-                          </ExtensionSidebarContextProvider>
+                          <FeatureControlContextProvider>
+                            <ExtensionSidebarContextProvider>
+                              <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                                <GlobalStyles />
+                                <div className="grafana-app">
+                                  <RouterWrapper {...routerWrapperProps} />
+                                  <LiveConnectionWarning />
+                                  <PortalContainer />
+                                </div>
+                              </UNSAFE_PortalProvider>
+                            </ExtensionSidebarContextProvider>
+                          </FeatureControlContextProvider>
                         </ExtensionRegistriesProvider>
                       </ScopesContextProvider>
                     </MaybeTimeRangeProvider>

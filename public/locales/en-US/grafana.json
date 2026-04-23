@@ -9119,6 +9119,13 @@
       "label-input": "Input"
     }
   },
+  "feature-control": {
+    "button": {
+      "aria-label": "Feature control",
+      "close-tooltip": "Close feature control",
+      "open-tooltip": "Open feature control"
+    }
+  },
   "folder-filter": {
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
