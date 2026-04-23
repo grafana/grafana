@@ -15,6 +15,7 @@ type PluginInfo struct {
 	JSONData plugins.JSONData
 
 	// apiVersion -> schema (currently only v0alpha1)
+	// This will be nil if no schemas are found, or if withSchemas is false when loading.
 	Schemas map[string]*pluginschema.PluginSchema
 }
 
@@ -75,16 +76,18 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, withSchemas bool) (Plugin
 
 	fss, err := fs.Sub(rootfs, "schema")
 	if err != nil {
-		return PluginInfo{}, fmt.Errorf("error accessing plugin fs %s: %w", jsondata.ID, err)
+		return info, fmt.Errorf("error accessing plugin fs %s: %w", jsondata.ID, err)
 	}
 
 	p := pluginschema.NewSchemaProvider(fss)
 	schema, err := p.Get("v0alpha1")
 	if err != nil {
-		return PluginInfo{}, fmt.Errorf("error loading schema %s: %w", jsondata.ID, err)
+		return info, fmt.Errorf("error loading schema %s: %w", jsondata.ID, err)
 	}
-	info.Schemas = map[string]*pluginschema.PluginSchema{
-		"v0alpha1": schema,
+	if !schema.IsZero() {
+		info.Schemas = map[string]*pluginschema.PluginSchema{
+			"v0alpha1": schema,
+		}
 	}
 	return info, nil
 }

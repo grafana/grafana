@@ -1020,9 +1020,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1030,9 +1030,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1081,9 +1081,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1091,9 +1091,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1124,9 +1124,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1134,9 +1134,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1195,9 +1195,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1205,9 +1205,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1258,9 +1258,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1268,9 +1268,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1353,9 +1353,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1363,9 +1363,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1406,9 +1406,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1416,9 +1416,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -1459,9 +1459,9 @@
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1469,9 +1469,9 @@
           }
         },
         {
-          "name": "name",
+          "name": "namespace",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",

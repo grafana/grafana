@@ -32,7 +32,7 @@ type PluginOptions struct {
 }
 
 // nolint:gocyclo
-func TransformOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, error) {
+func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, error) {
 	if opts.Schema.IsZero() {
 		return oas, nil // nothing special
 	}
@@ -113,8 +113,13 @@ func TransformOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, e
 		return oas, err
 	}
 
-	if len(routes.Paths) < 1 {
-		return oas, nil
+	routePrefix := opts.Path + "/{name}"
+	cfg = oas.Paths.Paths[routePrefix]
+	if cfg == nil {
+		return nil, fmt.Errorf("expecting route registered: %s", routePrefix)
+	}
+	if cfg.Get == nil {
+		return nil, fmt.Errorf("expecting GET under: %s/{name}", routePrefix)
 	}
 
 	var params []*spec3.Parameter
@@ -143,7 +148,7 @@ func TransformOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, e
 			op.OperationId = fmt.Sprintf("%s%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
 		}
 
-		oas.Paths.Paths[opts.Path+"{name}"+k] = v
+		oas.Paths.Paths[routePrefix+k] = v
 	}
 	return oas, nil
 }

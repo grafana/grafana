@@ -127,7 +127,9 @@ func RegisterAPIService(
 		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
 
 		// Register the openapi and query types
-		builder.schemas = plugin.Schemas
+		if plugin.Schemas != nil {
+			builder.schemas = plugin.Schemas
+		}
 
 		apiRegistrar.RegisterAPI(builder)
 	}
