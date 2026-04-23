@@ -12,7 +12,6 @@ SELECT
   INNER JOIN `grafana`.`user` as u ON t.service_account_id = u.id
 WHERE t.org_id = 1
    AND u.is_service_account
+   AND t.name = 'my-token'
    AND u.uid = 'sa-1'
-   AND t.id >= 2
- ORDER BY t.id asc
- LIMIT 1
+LIMIT 1
