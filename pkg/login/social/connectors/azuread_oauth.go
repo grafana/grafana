@@ -32,13 +32,16 @@ import (
 )
 
 const (
-	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
-	domainHintKey       = "domain_hint"
+	forceUseGraphAPIKey       = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	tokenExchangeTimeoutKey   = "token_exchange_timeout"
+	domainHintKey            = "domain_hint"
+	defaultTokenExchangeTimeout = 30 * time.Second
 )
 
 var (
 	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
+		tokenExchangeTimeoutKey: {Type: String},
 		allowedOrganizationsKey: {Type: String},
 		domainHintKey:           {Type: String},
 	}
@@ -212,6 +215,21 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	default:
 		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
 	}
+
+	// Parse token_exchange_timeout from extra settings (default: 30s)
+	tokenExchangeTimeout := defaultTokenExchangeTimeout
+	if timeoutStr := s.info.Extra[tokenExchangeTimeoutKey]; timeoutStr != "" {
+		if parsed, err := time.ParseDuration(timeoutStr); err == nil {
+			tokenExchangeTimeout = parsed
+		} else {
+			s.log.Warn("Invalid token_exchange_timeout value, using default", "value", timeoutStr, "error", err, "default", defaultTokenExchangeTimeout)
+		}
+	}
+
+	// Create a custom HTTP client with the configured timeout for token exchange.
+	// This prevents intermittent authentication failures in high-latency environments.
+	httpClient := &http.Client{Timeout: tokenExchangeTimeout}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 
 	// Default token exchange
 	return s.Config.Exchange(ctx, code, authOptions...)
