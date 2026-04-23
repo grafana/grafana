@@ -248,7 +248,7 @@ export { ButtonGroup } from './components/Button/ButtonGroup';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
-export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { fieldMatchersUI, useFieldMatchersOptions } from './components/MatchersUI/fieldMatchersUI';
 export {
   MatcherScopeSelector,
   getUniqueMatcherScopes,
