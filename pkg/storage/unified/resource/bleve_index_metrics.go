@@ -22,6 +22,9 @@ type BleveIndexMetrics struct {
 	SearchUpdateWaitTime    *prometheus.HistogramVec
 	RebuildQueueLength      prometheus.Gauge
 	SearchLegacyQueryFields prometheus.Counter
+
+	IndexSnapshotDownloads        *prometheus.CounterVec
+	IndexSnapshotDownloadDuration prometheus.Histogram
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -93,6 +96,18 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		SearchLegacyQueryFields: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name: "index_server_search_legacy_query_fields_total",
 			Help: "Search requests using query fields without title_ngram. Used to monitor when it is safe to remove ngram from title.",
+		}),
+		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_downloads_total",
+			Help: "Number of remote index snapshot download attempts at index build time, by outcome.",
+		}, []string{"status"}), // status: success, empty, download_error, validate_error
+		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_snapshot_download_duration_seconds",
+			Help:                            "Duration of successful remote index snapshot downloads, including open and validation.",
+			Buckets:                         IndexCreationBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
 
