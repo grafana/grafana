@@ -1,21 +1,12 @@
-.git
 .github
 .yarn
 build
 compiled
 data
-deployment_tools_config.json
 dist
-e2e/tmp
-node_modules
 pkg
 public/lib/monaco
 public/sass/*.generated.scss
-scripts/grafana-server/tmp
-vendor
-
-/coverage
-/codeowners-manifest
 
 # TS generate from cue by cuetsy
 **/*.gen.ts
@@ -33,15 +24,9 @@ public/api-merged.json
 public/api-enterprise-spec.json
 public/openapi3.json
 
-# Generated mock service worker
-public/mockServiceWorker.js
-
 # Crowdin files
 # Ignore `locales` directory so we also catch enterprise files
 **/locales/**/*.json
-
-/.nx/cache
-/.nx/workspace-data
 
 # Playwright results
 test-results
