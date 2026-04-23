@@ -3,9 +3,11 @@ import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
-import CodeEditor, { type CodeEditorProps } from './CodeEditor';
+import CodeEditor from './CodeEditor';
+import mdx from './CodeEditor.mdx';
+import { CodeEditorLanguage } from './languageLoader';
 
-const languageOptions: Array<NonNullable<CodeEditorProps['language']>> = ['sql', 'json'];
+const languageOptions: CodeEditorLanguage[] = ['sql', 'json'];
 
 const keywordCompletionSource: CompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
@@ -31,14 +33,34 @@ const meta: Meta<typeof CodeEditor> = {
   title: 'Inputs/CodeMirrorEditor',
   component: CodeEditor,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: ['onChange', 'completionSources', 'extensions'],
     },
   },
   argTypes: {
-    height: { control: 'text' },
-    language: { control: { type: 'select' }, options: languageOptions },
-    completionMode: { control: { type: 'inline-radio' }, options: ['merge', 'override'] },
+    height: {
+      control: 'text',
+      description: 'Editor height, such as `200px`.',
+      table: {
+        defaultValue: { summary: '200px' },
+      },
+    },
+    language: {
+      control: { type: 'select' },
+      description: 'Pass in a language to enable syntax highlighting and language-aware behavior.',
+      options: languageOptions,
+    },
+    completionMode: {
+      control: { type: 'inline-radio' },
+      description: 'How custom completion sources interact with language-provided completions.',
+      options: ['merge', 'override'],
+      table: {
+        defaultValue: { summary: 'merge' },
+      },
+    },
   },
 };
 

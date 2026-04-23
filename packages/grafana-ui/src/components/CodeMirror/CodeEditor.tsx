@@ -12,11 +12,29 @@ import { useLanguageExtension } from './useLanguageExtension';
 export type CodeEditorCompletionMode = 'override' | 'merge';
 
 export interface CodeEditorProps {
+  /**
+   * The current editor contents.
+   */
   value: string;
+  /**
+   * Syntax highlighting and language-aware behavior to enable.
+   */
   language?: CodeEditorLanguage;
+  /**
+   * Editor height, such as `'200px'` or `'100%'`.
+   */
   height?: string;
+  /**
+   * Called whenever the editor contents change.
+   */
   onChange: (value: string) => void;
+  /**
+   * Accessible label applied to the editor input.
+   */
   'aria-label'?: string;
+  /**
+   * Accessible label reference applied to the editor input.
+   */
   'aria-labelledby'?: string;
   /**
    * Autocomplete sources. When provided, enables autocompletion with the given sources.
@@ -65,7 +83,7 @@ const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledb
   ];
 };
 
-const CodeEditor = memo(function CodeEditor({
+export const CodeEditor = memo(function CodeEditor({
   value,
   language,
   height = '200px',

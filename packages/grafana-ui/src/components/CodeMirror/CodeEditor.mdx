@@ -1,0 +1,20 @@
+import { ArgTypes, Meta } from '@storybook/blocks';
+import { CodeEditor } from './CodeEditor';
+
+<Meta title="MDX|CodeMirrorEditor" component={CodeEditor} />
+
+# CodeMirrorEditor
+
+A code editor component using CodeMirror.
+
+### Usage
+
+```tsx
+import { CodeMirrorEditor } from '@grafana/ui';
+
+<CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
+```
+
+## Props
+
+<ArgTypes of={CodeEditor} />
