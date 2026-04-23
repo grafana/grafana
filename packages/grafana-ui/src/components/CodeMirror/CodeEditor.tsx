@@ -5,7 +5,10 @@ import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Alert } from '../Alert/Alert';
 
 import { type CodeEditorLanguage } from './languageLoader';
 import { useLanguageExtension } from './useLanguageExtension';
@@ -106,7 +109,7 @@ export const CodeEditor = memo(function CodeEditor({
   extensions: additionalExtensions,
 }: CodeEditorProps) {
   const theme = useTheme2();
-  const languageExtension = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
 
   const extensions = useMemo(
     () => [
@@ -119,12 +122,22 @@ export const CodeEditor = memo(function CodeEditor({
     [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
   );
   return (
-    <CodeMirror
-      theme={theme.isDark ? vscodeDark : vscodeLight}
-      value={value}
-      height={height}
-      extensions={extensions}
-      onChange={onChange}
-    />
+    <>
+      {languageExtensionError && (
+        <Alert title={t('grafana-ui.code-mirror.language-load-failed', 'Syntax highlighting failed to load')}>
+          {t(
+            'grafana-ui.code-mirror.language-load-failed-description',
+            'The editor will continue without language-specific features.'
+          )}
+        </Alert>
+      )}
+      <CodeMirror
+        theme={theme.isDark ? vscodeDark : vscodeLight}
+        value={value}
+        height={height}
+        extensions={extensions}
+        onChange={onChange}
+      />
+    </>
   );
 });

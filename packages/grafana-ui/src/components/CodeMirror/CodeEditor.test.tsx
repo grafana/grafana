@@ -1,8 +1,10 @@
 import { acceptCompletion, autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
+
+import { faro } from '@grafana/faro-web-sdk';
 
 import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
@@ -36,6 +38,14 @@ jest.mock('./languageLoader', () => ({
   loadLanguageExtension: jest.fn(),
 }));
 
+jest.mock('@grafana/faro-web-sdk', () => ({
+  faro: {
+    api: {
+      pushError: jest.fn(),
+    },
+  },
+}));
+
 const autocompletionMock = autocompletion as jest.MockedFunction<typeof autocompletion>;
 const loadLanguageExtensionMock = loadLanguageExtension as jest.MockedFunction<typeof loadLanguageExtension>;
 
@@ -64,6 +74,7 @@ describe('CodeMirror CodeEditor', () => {
     autocompletionMock.mockClear();
     loadLanguageExtensionMock.mockClear();
     loadLanguageExtensionMock.mockResolvedValue(null);
+    (faro.api.pushError as jest.Mock).mockClear();
   });
 
   it('merge mode contributes completionSources through language data and keeps existing sources', () => {
@@ -144,5 +155,25 @@ describe('CodeMirror CodeEditor', () => {
 
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql'));
     await waitFor(() => expect(getExtensions()).toContain(languageExtension));
+  });
+
+  it('reports language extension load failures and shows a warning while keeping the editor rendered', async () => {
+    const error = new Error('Failed to import SQL support');
+    loadLanguageExtensionMock.mockRejectedValue(error);
+
+    render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
+
+    expect(await screen.findByText('Syntax highlighting failed to load')).toBeInTheDocument();
+    expect(screen.getByText('The editor will continue without language-specific features.')).toBeInTheDocument();
+    expect(faro.api.pushError).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        context: expect.objectContaining({
+          type: 'async',
+          source: 'CodeMirror.useLanguageExtension',
+          language: 'sql',
+        }),
+      })
+    );
   });
 });
