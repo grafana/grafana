@@ -3,7 +3,6 @@
 package extensions_test
 
 import (
-	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"sigs.k8s.io/randfill"
 )
@@ -11,6 +10,5 @@ import (
 // Just use something from the package
 var (
 	_ testcontainers.Container = nil
-	_ nat.Port                 = ""
 	_                          = randfill.Filler{}
 )
