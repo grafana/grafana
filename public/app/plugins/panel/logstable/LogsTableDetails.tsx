@@ -176,6 +176,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
             displayedFields={[]}
             fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
             logs={logs}
+            logOptionsStorageKey={SETTING_KEY_ROOT}
             showControls={false}
             showTime={false}
             sortOrder={LogsSortOrder.Ascending}
