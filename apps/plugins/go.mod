@@ -92,7 +92,7 @@ require (
 	github.com/go-openapi/loads v0.23.3 // indirect
 	github.com/go-openapi/runtime v0.28.0 // indirect
 	github.com/go-openapi/spec v0.22.4 // indirect
-	github.com/go-openapi/strfmt v0.26.0 // indirect
+	github.com/go-openapi/strfmt v0.26.1 // indirect
 	github.com/go-openapi/swag v0.25.4 // indirect
 	github.com/go-openapi/swag/cmdutils v0.25.4 // indirect
 	github.com/go-openapi/swag/conv v0.25.5 // indirect
@@ -130,7 +130,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.291.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
@@ -162,7 +162,7 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
@@ -220,7 +220,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.1.6 // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
@@ -254,7 +254,7 @@ require (
 	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260311193753-579e4da9a98c // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect

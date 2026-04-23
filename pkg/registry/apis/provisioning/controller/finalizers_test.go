@@ -883,7 +883,7 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	)
 
 	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		items.Items = append(items.Items, provisioning.ResourceListItem{
 			Group:    "dashboard.grafana.app",
 			Resource: "dashboards",
@@ -979,7 +979,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 
 			items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
 
-			for i := 0; i < tc.dashboardCount; i++ {
+			for i := range tc.dashboardCount {
 				items.Items = append(items.Items, provisioning.ResourceListItem{
 					Group:    "dashboard.grafana.app",
 					Resource: "dashboards",
@@ -987,7 +987,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				})
 			}
 
-			for i := 0; i < tc.folderCount; i++ {
+			for i := range tc.folderCount {
 				items.Items = append(items.Items, provisioning.ResourceListItem{
 					Group:    folders.GroupVersion.Group,
 					Resource: "folders",

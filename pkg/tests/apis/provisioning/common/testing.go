@@ -40,6 +40,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -1056,6 +1057,51 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForRepositoryDeleted polls until the named repository reports NotFound.
+// Repository deletion is finalizer-driven (cleanup → release/remove orphan
+// resources); on loaded CI runners the chain routinely exceeds short bounds.
+func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, ctx context.Context, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// WaitForResourcesReleased polls until every item returned by client no longer
+// carries provisioning-manager annotations — i.e. the release-orphan-resources
+// finalizer has finished handing the objects back to the user.
+func WaitForResourcesReleased(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		for _, v := range items.Items {
+			annotations := v.GetAnnotations()
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerKind, "%s %q still has manager kind annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerIdentity, "%s %q still has manager identity annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourcePath, "%s %q still has source path annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourceChecksum, "%s %q still has source checksum annotation", resourceKind, v.GetName())
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be released", resourceKind)
+}
+
+// WaitForResourcesDeleted polls until the given client lists zero items.
+// Use this after a repository delete when the remove-orphan-resources
+// finalizer should have swept the managed resources away.
+func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
@@ -1077,6 +1123,17 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 func WithFolderAPIVersion(version string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
 	}
 }
 

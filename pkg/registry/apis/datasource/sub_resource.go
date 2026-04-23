@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -64,7 +65,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		return nil, err
 	}
 
-	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

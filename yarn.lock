@@ -3279,7 +3279,7 @@ __metadata:
     d3-interpolate: "npm:3.0.1"
     d3-scale-chromatic: "npm:3.1.0"
     date-fns: "npm:4.1.0"
-    dompurify: "npm:3.3.2"
+    dompurify: "npm:3.4.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
@@ -3745,7 +3745,6 @@ __metadata:
     "@openfeature/react-sdk": "npm:^1.2.1"
     "@openfeature/web-sdk": "npm:^1.7.3"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
-    "@rollup/plugin-terser": "npm:^1.0.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -7662,22 +7661,6 @@ __metadata:
     rollup:
       optional: true
   checksum: 10/88fee8c003a5730cca2c06edd200ec6a46c7ab28bed3a99aea6d3070f34f980f575fcbea906946579e41b0be6fd7a2fbc24cdf0ca24f172a555f130726915d8b
-  languageName: node
-  linkType: hard
-
-"@rollup/plugin-terser@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@rollup/plugin-terser@npm:1.0.0"
-  dependencies:
-    serialize-javascript: "npm:^7.0.3"
-    smob: "npm:^1.0.0"
-    terser: "npm:^5.17.4"
-  peerDependencies:
-    rollup: ^2.0.0||^3.0.0||^4.0.0
-  peerDependenciesMeta:
-    rollup:
-      optional: true
-  checksum: 10/eb4389d427d704f10a4d9a8c316fda5d2f8c92419bf24e7cf69497739a10236aa2f3004249b0bbf4290174588a5c274b1653b22e63068cea06f844c8b09aa5cf
   languageName: node
   linkType: hard
 
@@ -14415,7 +14398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clean-css@npm:^5.1.5, clean-css@npm:~5.3.2":
+"clean-css@npm:^5.1.5":
   version: 5.3.3
   resolution: "clean-css@npm:5.3.3"
   dependencies:
@@ -14777,7 +14760,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^10.0.0, commander@npm:^10.0.1":
+"commander@npm:^10.0.1":
   version: 10.0.1
   resolution: "commander@npm:10.0.1"
   checksum: 10/8799faa84a30da985802e661cc9856adfaee324d4b138413013ef7f087e8d7924b144c30a1f1405475f0909f467665cd9e1ce13270a2f41b141dab0b7a58f3fb
@@ -16780,15 +16763,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.3.2":
-  version: 3.3.2
-  resolution: "dompurify@npm:3.3.2"
+"dompurify@npm:3.4.0":
+  version: 3.4.0
+  resolution: "dompurify@npm:3.4.0"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/3ca02559677ce6d9583a500f21ffbb6b9e88f1af99f69fa0d0d9442cddbac98810588c869f8b435addb5115492d6e49870024bca322169b941bafedb99c7f281
+  checksum: 10/ead40b78ec51cd451f2c74fada4233ee0afeafdbab54af2f4a4bd5d4d138ac04d0d85140e79f533803ecfd1c3758edc1176087039c1e7217824f9794a9d34d2c
   languageName: node
   linkType: hard
 
@@ -19980,9 +19963,7 @@ __metadata:
     github-codeowners: "npm:^0.2.1"
     glob: "npm:11.1.0"
     history: "npm:4.10.1"
-    html-loader: "npm:5.1.0"
     html-tags: "npm:^5.1.0"
-    html-webpack-plugin: "npm:5.6.3"
     http-server: "npm:14.1.1"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
@@ -20033,7 +20014,7 @@ __metadata:
     msw: "npm:2.10.4"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.9"
-    node-forge: "npm:^1.3.1"
+    node-forge: "npm:^1.4.0"
     node-notifier: "npm:10.0.1"
     nx: "npm:22.5.4"
     ol: "npm:10.7.0"
@@ -20468,18 +20449,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:5.1.0":
-  version: 5.1.0
-  resolution: "html-loader@npm:5.1.0"
-  dependencies:
-    html-minifier-terser: "npm:^7.2.0"
-    parse5: "npm:^7.1.2"
-  peerDependencies:
-    webpack: ^5.0.0
-  checksum: 10/0be79d37e6d995ab5e60fd808291e75890626decbd6a2d73e634f4308928ebfcc604e1a179d643543f40c99f7cccc15b08a1f0572554e6eba38a6777922968cb
-  languageName: node
-  linkType: hard
-
 "html-minifier-terser@npm:^6.0.2":
   version: 6.0.2
   resolution: "html-minifier-terser@npm:6.0.2"
@@ -20494,23 +20463,6 @@ __metadata:
   bin:
     html-minifier-terser: cli.js
   checksum: 10/8362cab367136a727ba1e135e4d261e89a78018028f4bbd890bcf8f90f998fe543787b651ab9d9c904e0caebc427e2b51da96f3f60a4c374455ecd8f98789a8b
-  languageName: node
-  linkType: hard
-
-"html-minifier-terser@npm:^7.2.0":
-  version: 7.2.0
-  resolution: "html-minifier-terser@npm:7.2.0"
-  dependencies:
-    camel-case: "npm:^4.1.2"
-    clean-css: "npm:~5.3.2"
-    commander: "npm:^10.0.0"
-    entities: "npm:^4.4.0"
-    param-case: "npm:^3.0.4"
-    relateurl: "npm:^0.2.7"
-    terser: "npm:^5.15.1"
-  bin:
-    html-minifier-terser: cli.js
-  checksum: 10/7320095dbf08c361b45e855bd840d1d21fe86326afee775503594163532ebaaed9bb1c9dc98232b03c169dc24b56f30c294d559bca0cade59f9c950a1992db82
   languageName: node
   linkType: hard
 
@@ -20550,7 +20502,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-webpack-plugin@npm:5.6.3, html-webpack-plugin@npm:^5.5.0":
+"html-webpack-plugin@npm:^5.5.0":
   version: 5.6.3
   resolution: "html-webpack-plugin@npm:5.6.3"
   dependencies:
@@ -25645,10 +25597,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-forge@npm:^1.3.1":
-  version: 1.3.3
-  resolution: "node-forge@npm:1.3.3"
-  checksum: 10/f41c31b9296771a4b8c955d58417471712f54f324603a35f8e6cbac19d5e6eaaf5fd5fd14584dfedecbf46a05438ded6eee60a5f2f0822fc5061aaa073cfc75d
+"node-forge@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "node-forge@npm:1.4.0"
+  checksum: 10/d70fd769768e646eda73343d4d4105ccb6869315d975905a22117431c04ae5b6df6c488e34ed275b1a66b50195a09b84b5c8aeca3b8605c20605fcb8e9f109d9
   languageName: node
   linkType: hard
 
@@ -25766,10 +25718,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:7.0.12":
-  version: 7.0.12
-  resolution: "nodemailer@npm:7.0.12"
-  checksum: 10/31a2713be588fb6849d05698cb355a88902a64e17e63b1a5c8a10db3acc4349c329c3bbd83bc5bdefda92f8df5e0297364502f93042c0bae87c48e5652b663b7
+"nodemailer@npm:8.0.4":
+  version: 8.0.4
+  resolution: "nodemailer@npm:8.0.4"
+  checksum: 10/b396d52b1faf3ee73a6eca1b7febdb8ea16df50d6c41efbf0f1e500e6a42a73cea5e0db9e52d64b34f509ac3dbf4c10fe828de6cb3f66899b493be38b8abe926
   languageName: node
   linkType: hard
 
@@ -27094,7 +27046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse5@npm:^7.0.0, parse5@npm:^7.1.1, parse5@npm:^7.1.2":
+"parse5@npm:^7.0.0, parse5@npm:^7.1.1":
   version: 7.3.0
   resolution: "parse5@npm:7.3.0"
   dependencies:
@@ -31256,13 +31208,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"smob@npm:^1.0.0":
-  version: 1.4.1
-  resolution: "smob@npm:1.4.1"
-  checksum: 10/bc6ffcb9a1c3c875f9354cf814487d44cd925e2917683e2bf6f66a267eedf895f4989079541b73dc0ddc163cb0fa26078fa95067f1503707758437e9308afc2f
-  languageName: node
-  linkType: hard
-
 "smtp-server@npm:^3.11.0":
   version: 3.13.4
   resolution: "smtp-server@npm:3.13.4"
@@ -32553,7 +32498,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser@npm:^5.15.1, terser@npm:^5.17.4, terser@npm:^5.31.1, terser@npm:^5.7.2":
+"terser@npm:^5.31.1, terser@npm:^5.7.2":
   version: 5.37.0
   resolution: "terser@npm:5.37.0"
   dependencies:
