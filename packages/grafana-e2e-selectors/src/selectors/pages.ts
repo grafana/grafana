@@ -75,6 +75,9 @@ export const versionedPages = {
     dataSourceAddButton: {
       '12.4.0': 'data-testid data-source-add-button',
     },
+    advisorRunChecksButton: {
+      [MIN_GRAFANA_VERSION]: 'data-testid advisor-run-checks-button',
+    },
   },
   EditDataSource: {
     url: {

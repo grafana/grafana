@@ -33,6 +33,8 @@ Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a 
 
 Note that while Grafana is working on migrating existing APIs to the new `/apis` model, currently there may not be an exact match to the legacy API you're using.
 
+For more information refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration) documentation.
+
 ## API structure
 
 ### API path

@@ -3,6 +3,7 @@ package iam
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
 
@@ -105,6 +106,10 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
+
+	// Getters for existence validation during TeamBinding create
+	teamGetter rest.Getter
+	userGetter rest.Getter
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
