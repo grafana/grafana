@@ -5636,6 +5636,7 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
+        "section-filters-set": "Filters",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -14102,7 +14103,6 @@
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
-      "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
       "remove-transformation-filter": "Remove filter",
@@ -14114,6 +14114,27 @@
     "alerts": {
       "no-alerts": "No alert rules for this panel",
       "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "Change data source for selected queries",
+      "clear-selection": "Clear selection",
+      "datasource": "Data source",
+      "delete": "Delete",
+      "delete-confirm-body": "This action cannot be undone.",
+      "delete-confirm-title_one": "Delete {{count}} item?",
+      "delete-confirm-title_other": "Delete {{count}} items?",
+      "delete-tooltip": "Delete selected",
+      "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
+      "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
+      "disable-all": "Disable all",
+      "disable-all-tooltip": "Disable all selected",
+      "enable-all": "Enable all",
+      "enable-all-tooltip": "Enable all selected",
+      "hide": "Hide",
+      "hide-all-tooltip": "Hide all selected",
+      "show": "Show",
+      "show-all-tooltip": "Show all selected",
+      "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
@@ -14151,6 +14172,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max data points",
@@ -14161,6 +14183,7 @@
       "placeholder": {
         "no-limit": "No limit"
       },
+      "query-inspector": "Query inspector",
       "query-options": "Query Options"
     },
     "header": {
@@ -15932,6 +15955,7 @@
           "group-by": "Group by"
         }
       },
+      "placeholder-calculations": "Select calculation(s)",
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
@@ -15943,6 +15967,16 @@
         "group-by": "Group by"
       },
       "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "Select matcher type",
+      "aria-label-operation": "Select operation",
+      "aria-label-remove-rule": "Remove rule",
+      "button-add-rule": "Add rule",
+      "label-calculations": "Calculation(s)",
+      "label-keep-nested-field": "Keep nested field(s)",
+      "placeholder": "Select operation",
+      "tooltip-keep-nested-field": "When enabled, the raw field values are also retained in the nested sub-table alongside the aggregated column."
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

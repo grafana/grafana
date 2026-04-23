@@ -156,6 +156,7 @@ type searchServer struct {
 	dashboardIndexMaxAge time.Duration
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
+	buildVersion         *semver.Version
 	selectableFields     map[string][]string
 
 	bgTaskWg     sync.WaitGroup
@@ -221,6 +222,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
+		buildVersion:              opts.BuildVersion,
 		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
@@ -826,7 +828,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
 		sfields := s.selectableFields[sfKey]
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, sfields, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, completeCh)
@@ -897,7 +899,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -939,7 +941,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -963,6 +965,16 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Versio
 		if buildInfo.BuildVersion == nil || buildInfo.BuildVersion.Compare(minBuildVersion) < 0 {
 			if rebuildLogger != nil {
 				rebuildLogger.Info("index build version is before minBuildVersion, rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "minBuildVersion", minBuildVersion)
+			}
+			return true
+		}
+	}
+
+	// If index was built by a newer Grafana version than currently running, rebuild to ensure compatibility.
+	if maxBuildVersion != nil && buildInfo.BuildVersion != nil {
+		if buildInfo.BuildVersion.Compare(maxBuildVersion) > 0 {
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build version is after maxBuildVersion (running version), rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "maxBuildVersion", maxBuildVersion)
 			}
 			return true
 		}
