@@ -71,7 +71,7 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 		tenant := pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z")
 
-		tw.handleTenant(t.Context(),tenant)
+		tw.handleTenant(t.Context(), tenant)
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 	t.Run("does not overwrite existing complete record", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 		tenant := pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z")
-		tw.handleTenant(t.Context(),tenant)
+		tw.handleTenant(t.Context(), tenant)
 
 		// Overwrite with a different deleteAfter so we can detect an overwrite.
 		err := tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
@@ -92,7 +92,7 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		require.NoError(t, err)
 
 		// Handle the same tenant again — should be a no-op because the record is complete.
-		tw.handleTenant(t.Context(),tenant)
+		tw.handleTenant(t.Context(), tenant)
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
@@ -105,7 +105,7 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		tenant.SetName("tenant-1")
 		tenant.SetLabels(map[string]string{labelPendingDelete: "true"})
 
-		tw.handleTenant(t.Context(),tenant)
+		tw.handleTenant(t.Context(), tenant)
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
@@ -116,13 +116,13 @@ func TestTenantClearPendingDelete(t *testing.T) {
 	t.Run("removes record when tenant is no longer pending delete", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
 
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		_, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
@@ -133,7 +133,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		tenant := &unstructured.Unstructured{}
 		tenant.SetName("tenant-1")
 
-		tw.handleTenant(t.Context(),tenant)
+		tw.handleTenant(t.Context(), tenant)
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
@@ -149,7 +149,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		}))
 
 		// Reconcile path: tenant CRD says pending-delete.
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
@@ -158,7 +158,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		// Clear path: tenant CRD says active.
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		record, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
@@ -176,14 +176,14 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         collector.append,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash2", 101, nil)
 		saveTestResource(t, ds, "tenant-2", "apps", "dashboards", "other", 102, nil)
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		events := collector.all()
 		require.Len(t, events, 2)
@@ -210,7 +210,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         collector.append,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		// Seed resources already labelled as pending-delete.
@@ -227,7 +227,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		// Now "restore" the tenant (no pending-delete label).
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		events := collector.all()
 		require.Len(t, events, 1)
@@ -249,12 +249,12 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         failingWriter,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		saveTestResource(t, ds, "tenant-1", "apps", "deployments", "deploy-a", 100, nil)
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err, "record should exist even when labelling fails")
@@ -271,7 +271,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         failingWriter,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		// Seed a labelled resource and an existing pending-delete record.
@@ -284,7 +284,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		// "Restore" the tenant — unlabelling will fail.
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.NoError(t, err, "record should not be deleted when unlabelling fails")
@@ -298,13 +298,13 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         collector.append,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		// Resource already has the pending-delete label.
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "already-labelled", 100, map[string]string{labelPendingDelete: "true"})
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		assert.Empty(t, collector.all(), "should not write events for already-labelled resources")
 	})
@@ -328,10 +328,10 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         conflictWriter,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		// The latest version already has the label, so doEditResourceLabel
 		// detects the no-op and the operation succeeds without writing.
@@ -358,11 +358,11 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         conflictWriter,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 			retryMaxDelay:      time.Millisecond,
 		}
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		// All retry attempts are exhausted (conflicts every time), so the
 		// intent record exists but with LabelingComplete=false.
@@ -391,11 +391,11 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         conflictThenSucceed,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 			retryMaxDelay:      time.Millisecond,
 		}
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
@@ -456,11 +456,11 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         failOnSecond,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		// Step 1: Attempt to mark pending-delete — will partially fail.
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		// Record should exist with LabelingComplete=false.
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
@@ -474,7 +474,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		// The record should be deleted.
 		_, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
@@ -500,17 +500,17 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         failFirst,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		// First attempt: labelling fails, record stays incomplete.
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
 		assert.False(t, record.LabelingComplete)
 
 		// Second attempt: labelling succeeds, record is marked complete.
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 		record, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
 		assert.True(t, record.LabelingComplete, "record should be complete after retry")
@@ -524,7 +524,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
 			writeEvent:         collector.append,
-				stopCh:             make(chan struct{}),
+			stopCh:             make(chan struct{}),
 		}
 
 		pendingLabels := map[string]string{labelPendingDelete: "true"}
@@ -538,7 +538,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 
 		restored := &unstructured.Unstructured{}
 		restored.SetName("tenant-1")
-		tw.handleTenant(t.Context(),restored)
+		tw.handleTenant(t.Context(), restored)
 
 		assert.Empty(t, collector.all(), "no unlabelling should occur for orphaned records")
 	})
@@ -552,7 +552,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 			Orphaned:         true,
 		}))
 
-		tw.handleTenant(t.Context(),pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+		tw.handleTenant(t.Context(), pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
