@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync/atomic"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
@@ -954,7 +956,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := rc.process(&queueItem{key: namespace + "/" + repoName})
+			err := rc.process(namespace + "/" + repoName)
 			assert.NoError(t, err)
 
 			if tc.expectReconcile {
@@ -1049,7 +1051,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 		logger:        logging.DefaultLogger,
 	}
 
-	err := rc.process(&queueItem{key: "default/test-repo"})
+	err := rc.process("default/test-repo")
 	require.NoError(t, err)
 
 	// Find the last /status/conditions patch operation — if there are multiple
@@ -1201,7 +1203,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		logger:            logging.DefaultLogger.With("logger", loggerName),
 	}
 
-	err := rc.process(&queueItem{key: namespace + "/" + repoName})
+	err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	// The token patch must be present even though the repository is currently over quota.
@@ -1597,4 +1599,190 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 		"repository must recover after the hook-failure cooldown elapses")
 	assert.Empty(t, healthStatus.Error,
 		"recovered health status must clear HealthFailureHook")
+}
+
+// TestRepositoryController_DeduplicatesEnqueueWhileProcessing verifies that multiple enqueue
+// calls for the same key while it is being processed result in exactly one additional processing
+// round, not one per enqueue call. This guards against memory and CPU growth from status-update
+// feedback loops where every reconciliation triggers a new status patch which re-enqueues the
+// same key.
+func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
+	var processCount atomic.Int32
+	firstProcessingStarted := make(chan struct{})
+	releaseFirst := make(chan struct{})
+	secondProcessingDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-dedup",
+			},
+		),
+		repoSynced:   func() bool { return true },
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) error {
+		switch processCount.Add(1) {
+		case 1:
+			close(firstProcessingStarted)
+			<-releaseFirst
+		case 2:
+			close(secondProcessingDone)
+		}
+		return nil
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait for the first processing round to start, then enqueue the same key several times.
+	<-firstProcessingStarted
+	for range 5 {
+		rc.queue.Add("test/repo")
+	}
+	close(releaseFirst)
+
+	// Wait for the second round to finish, then shut down. Once Run returns no further
+	// calls to processFn are possible, so the count is final.
+	<-secondProcessingDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(2), processCount.Load(), "5 enqueues while processing must collapse to 1 additional round")
+}
+
+// TestRepositoryController_DeduplicatesEnqueueBeforeProcessing verifies that adding
+// the same key multiple times before any worker picks it up results in exactly one
+// processing round. This is the complement to the while-processing dedup test and
+// directly tests the dirty-set no-op path in Add() (queue.go:233).
+func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) {
+	var processCount atomic.Int32
+	processingDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-dedup-before",
+			},
+		),
+		repoSynced:   func() bool { return true },
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) error {
+		processCount.Add(1)
+		close(processingDone)
+		return nil
+	}
+
+	// Enqueue the same key several times before any worker starts.
+	for range 5 {
+		rc.queue.Add("test/repo")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait for the one expected round, then shut down. Once Run returns the count is final.
+	<-processingDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(1), processCount.Load(), "5 enqueues before pickup must collapse to 1 processing round")
+}
+
+// TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts verifies that a
+// ServiceUnavailable error causes the key to be re-queued with backoff, and that
+// processing stops after maxAttempts total attempts. This tests the NumRequeues-based
+// attempt counting that replaced the old item.attempts field on queueItem.
+func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testing.T) {
+	var processCount atomic.Int32
+	allAttemptsDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-retry",
+			},
+		),
+		repoSynced:   func() bool { return true },
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) error {
+		if processCount.Add(1) == maxAttempts {
+			close(allAttemptsDone)
+		}
+		return apierrors.NewServiceUnavailable("test")
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait for the final attempt, then shut down. Once Run returns the count is final.
+	<-allAttemptsDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(maxAttempts), processCount.Load(), "ServiceUnavailable should retry exactly maxAttempts times then give up")
+}
+
+// TestRepositoryController_NonRetryableErrorIsNotRetried verifies that errors other
+// than ServiceUnavailable are dropped after a single attempt with no re-queue.
+func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
+	var processCount atomic.Int32
+	processingDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-no-retry",
+			},
+		),
+		repoSynced:   func() bool { return true },
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) error {
+		processCount.Add(1)
+		close(processingDone)
+		return errors.New("some non-retryable error")
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait for the one expected attempt, then shut down. Once Run returns the count is final.
+	<-processingDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(1), processCount.Load(), "non-retryable errors must not be retried")
 }
