@@ -13,11 +13,12 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -802,7 +803,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("does not error if feature toggle enabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -822,7 +823,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("errors if feature toggle disabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",

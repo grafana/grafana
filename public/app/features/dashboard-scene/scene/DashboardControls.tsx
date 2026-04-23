@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -116,19 +116,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
         refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
-      // Subscribe to time range changes to track interactions
-      const timeRange = sceneGraph.getTimeRange(this);
-      const timeRangeSubscription = timeRange.subscribeToState((newState, prevState) => {
-        if (newState.value !== prevState.value) {
-          reportInteraction('grafana_dashboards_time_picker_changed');
-        }
-      });
-
       return () => {
         if (refreshPickerDeactivation) {
           refreshPickerDeactivation();
         }
-        timeRangeSubscription.unsubscribe();
       };
     });
   }
@@ -273,20 +264,23 @@ function DashboardControlActions({
   const canEditDashboard = dashboard.canEditDashboard();
   const canSave = Boolean(meta.canSave);
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
-  const hasUid = Boolean(uid);
+
+  const hasUid = Boolean(uid); // isNew
   const isSnapshot = Boolean(meta.isSnapshot);
   const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
+
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
+  const showSaveButton = isEditing && (canSave || canSaveAs);
+  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
 
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
-      {isEditing && (canSave || canSaveAs) && <SaveDashboard dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
-        <MakeDashboardEditableButton dashboard={dashboard} />
-      )}
+      {showSaveButton && <SaveDashboard dashboard={dashboard} />}
+      {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
+      {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
       {isPlaying && (
         <ButtonGroup>
           {!hidePlaylistNav && (

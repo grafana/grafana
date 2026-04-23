@@ -213,7 +213,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 
 	// Download and parse meta.json with a size limit to avoid OOM on malicious files.
 	var metaBuf bytes.Buffer
-	if err := s.bucket.Download(ctx, pfx+metaJSONFile, &limitedWriter{w: &metaBuf, n: maxMetaJSONSize}, nil); err != nil {
+	if err := s.bucket.Download(ctx, pfx+metaJSONFile, &resource.LimitedWriter{W: &metaBuf, N: maxMetaJSONSize}, nil); err != nil {
 		return nil, fmt.Errorf("reading meta.json: %w", err)
 	}
 	var meta IndexMeta
@@ -310,24 +310,6 @@ func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, lo
 	return f.Close()
 }
 
-var errWriteLimitExceeded = errors.New("write limit exceeded")
-
-// limitedWriter wraps a writer and stops accepting data once the limit is reached,
-// mirroring io.LimitedReader semantics.
-type limitedWriter struct {
-	w io.Writer
-	n int64
-}
-
-func (lw *limitedWriter) Write(p []byte) (int, error) {
-	if int64(len(p)) > lw.n {
-		return 0, errWriteLimitExceeded
-	}
-	n, err := lw.w.Write(p)
-	lw.n -= int64(n)
-	return n, err
-}
-
 func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	nsPfx := nsPrefix(nsResource)
 	result := make(map[ulid.ULID]*IndexMeta)
@@ -362,7 +344,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 
 		// Fetch and parse meta.json with a size limit.
 		var metaBuf bytes.Buffer
-		if err := s.bucket.Download(ctx, obj.Key, &limitedWriter{w: &metaBuf, n: maxMetaJSONSize}, nil); err != nil {
+		if err := s.bucket.Download(ctx, obj.Key, &resource.LimitedWriter{W: &metaBuf, N: maxMetaJSONSize}, nil); err != nil {
 			s.log.Error("failed to read meta.json", "key", obj.Key, "err", err)
 			continue
 		}
@@ -488,8 +470,8 @@ func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, n
 // transient download errors.
 func (s *BucketRemoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
 	var buf bytes.Buffer
-	if err := s.bucket.Download(ctx, metaKey, &limitedWriter{w: &buf, n: maxMetaJSONSize}, nil); err != nil {
-		if errors.Is(err, errWriteLimitExceeded) {
+	if err := s.bucket.Download(ctx, metaKey, &resource.LimitedWriter{W: &buf, N: maxMetaJSONSize}, nil); err != nil {
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
 			return false, nil // positively invalid: oversized
 		}
 		return false, err // transient download error, skip this prefix

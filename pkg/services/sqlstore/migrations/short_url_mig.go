@@ -28,4 +28,6 @@ func addShortURLMigrations(mg *Migrator) {
 	mg.AddMigration("alter table short_url alter column created_by type to bigint", NewRawSQLMigration("").
 		Mysql("ALTER TABLE short_url MODIFY created_by BIGINT;").
 		Postgres("ALTER TABLE short_url ALTER COLUMN created_by TYPE BIGINT;"))
+
+	mg.AddMigration("add index short_url.org_id-id", NewAddIndexMigration(shortURLV1, &Index{Cols: []string{"org_id", "id"}}))
 }

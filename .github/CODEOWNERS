@@ -432,7 +432,6 @@
 i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
-/e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
@@ -464,6 +463,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-restore-v1.spec.ts @grafana/grafana-frontend-navigation
+/e2e-playwright/dashboards-suite/dashboard-restore-v2.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-share-externally-create.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-internally.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-snapshot-create.spec.ts @grafana/sharing-squad
@@ -640,9 +641,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
-# @grafana/prometheus
-/packages/grafana-prometheus/ @grafana/data-sources-plugins
-
 # @grafana/runtime
 /packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
@@ -806,7 +804,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
 playwright.storybook.config.ts @grafana/grafana-frontend-platform

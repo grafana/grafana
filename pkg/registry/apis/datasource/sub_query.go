@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -56,34 +57,44 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getPluginContext(ctx, name)
+	m := newConnectMetric("query", r.builder.pluginJSON.ID)
 
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
 		if err != nil {
+			m.SetError()
 			responder.Error(err)
 			return
 		}
 
 		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
+			m.SetError()
 			responder.Error(err)
 			return
 		}
 		if dsRef != nil && dsRef.UID != name {
+			m.SetError()
 			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
 			return
 		}
 
-		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+		ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
 
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
@@ -92,9 +103,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       map[string]string{},
 		})
 
-		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
+		// all errors get converted into k8s errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
+			m.SetError()
 			responder.Object(int(backend.StatusBadRequest),
 				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
 					"A": {
@@ -108,9 +120,11 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		if err != nil {
+			m.SetError()
 			responder.Error(err)
 			return
 		}
+
 		responder.Object(dsV0.GetResponseCode(rsp),
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
