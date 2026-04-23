@@ -29,6 +29,7 @@ import { type TableColumn } from './SearchResultsTable';
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -157,6 +158,34 @@ export const generateColumns = (
   } else {
     width = TYPE_COLUMN_WIDTH;
     columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
+    availableWidth -= width;
+  }
+
+  const deletedByField = access.deletedBy;
+  if (deletedByField && hasValue(deletedByField)) {
+    width = DELETED_BY_COLUMN_WIDTH;
+    columns.push({
+      id: `column-deleted-by`,
+      field: deletedByField,
+      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+      width,
+      Cell: (p) => {
+        const rawValue = deletedByField.values[p.row.index];
+        const displayValue = typeof rawValue === 'string' && rawValue ? rawValue : '-';
+        const { key, ...cellProps } = p.cellProps;
+        return (
+          <div key={key} {...cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : (
+              <Text variant="body" truncate>
+                {displayValue}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    });
     availableWidth -= width;
   }
 

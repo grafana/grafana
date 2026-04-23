@@ -1,7 +1,9 @@
+import { iamAPIv0alpha1 } from 'app/api/clients/iam/v0alpha1';
 import { isResourceList } from 'app/features/apiserver/guards';
-import { type ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyUpdatedBy, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardDataDTO } from 'app/types/dashboard';
+import { dispatch } from 'app/types/store';
 
 import { type SearchHit } from './unified';
 import { resourceToSearchResult } from './utils';
@@ -91,8 +93,48 @@ class DeletedDashboardsCache {
 
   private async fetch(): Promise<SearchHit[]> {
     const resourceList = await this.getAsResourceList();
-    return resourceToSearchResult(resourceList);
+    const deletedByDisplayMap = await resolveDeletedByDisplayMap(resourceList);
+    return resourceToSearchResult(resourceList, deletedByDisplayMap);
   }
 }
 
 export const deletedDashboardsCache = new DeletedDashboardsCache();
+
+/**
+ * Resolves user display names for the `grafana.app/updatedBy` annotation on deleted dashboards.
+ * Returns `undefined` when nothing to resolve or the lookup fails, in which case callers fall
+ * back to rendering the raw annotation value.
+ */
+async function resolveDeletedByDisplayMap(
+  resourceList: ResourceList<DashboardDataDTO>
+): Promise<Map<string, string> | undefined> {
+  const uids = new Set<string>();
+  for (const item of resourceList.items) {
+    const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+    if (uid) {
+      uids.add(uid);
+    }
+  }
+  if (uids.size === 0) {
+    return undefined;
+  }
+
+  try {
+    const response = await dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: Array.from(uids) }));
+    const displayList = response.data;
+    if (!displayList) {
+      return undefined;
+    }
+    const map = new Map<string, string>();
+    for (const entry of displayList.display) {
+      map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
+      if (entry.internalId !== undefined) {
+        map.set(String(entry.internalId), entry.displayName);
+      }
+    }
+    return map;
+  } catch (error) {
+    console.error('Failed to resolve deleted dashboard user displays:', error);
+    return undefined;
+  }
+}

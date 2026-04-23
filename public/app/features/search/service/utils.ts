@@ -5,7 +5,7 @@ import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboa
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, type ManagerKind, type ResourceList } from '../../apiserver/types';
+import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
 import {
   type DashboardSearchHit,
   DashboardSearchItemType,
@@ -138,11 +138,19 @@ export function queryResultToViewItem(
   return viewItem;
 }
 
-export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+export function resourceToSearchResult(
+  resource: ResourceList<DashboardDataDTO>,
+  deletedByDisplayMap?: Map<string, string>
+): SearchHit[] {
   return resource.items.map((item) => {
     const field: Record<string, string | number> = {};
     if (item.metadata.deletionTimestamp) {
       field.deletionTimestamp = item.metadata.deletionTimestamp;
+    }
+
+    const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+    if (deletedByUid) {
+      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? deletedByUid;
     }
 
     const hit = {
@@ -226,6 +234,26 @@ export function filterSearchResults(
         const timeA = Date.parse(timestampA);
         const timeB = Date.parse(timestampB);
         return mult * (timeA - timeB);
+      });
+    } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
+      const collator = new Intl.Collator();
+      const mult = query.sort === 'deletedby-desc' ? -1 : 1;
+      filtered.sort((a, b) => {
+        const byA = a.field.deletedBy;
+        const byB = b.field.deletedBy;
+
+        // Handle missing deleter - items without a deleter go to the end
+        if (typeof byA !== 'string' && typeof byB !== 'string') {
+          return 0;
+        }
+        if (typeof byA !== 'string') {
+          return 1;
+        }
+        if (typeof byB !== 'string') {
+          return -1;
+        }
+
+        return mult * collator.compare(byA, byB);
       });
     } else {
       // Alphabetical sorting

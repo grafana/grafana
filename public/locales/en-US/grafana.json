@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
         "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-by-az": "Deleted by (A–Z)",
+        "deleted-by-za": "Deleted by (Z–A)",
         "deleted-newest": "Deleted (newest first)",
         "deleted-oldest": "Deleted (oldest first)"
       }
@@ -14409,6 +14411,7 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-by-header": "Deleted by",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
