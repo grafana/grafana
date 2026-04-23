@@ -147,6 +147,7 @@ func NewStorageBackend(
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
 	}
 
@@ -199,8 +200,9 @@ func NewStorageBackend(
 
 	if cfg.EnableSQLKVCompatibilityMode {
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect: dialect,
-			DB:      dbConn,
+			Dialect:                 dialect,
+			DB:                      dbConn,
+			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -257,6 +259,10 @@ type BackendOptions struct {
 
 	// If not zero, the backend will regularly remove times from resource_last_import_time table older than this.
 	LastImportTimeMaxAge time.Duration
+
+	// BatchTransactionTimeout bounds one batched WithTx in the resource version
+	// manager. Zero selects the rvmanager default.
+	BatchTransactionTimeout time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -293,6 +299,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
 	}
 	if err := backend.Init(ctx); err != nil {
@@ -345,6 +352,7 @@ type backend struct {
 
 	disablePruner           bool
 	dashboardVersionsToKeep int
+	batchTxnTimeout         time.Duration
 	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
@@ -391,8 +399,9 @@ func (b *backend) initLocked(ctx context.Context) error {
 
 	// Initialize ResourceVersionManager
 	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-		Dialect: b.dialect,
-		DB:      b.db,
+		Dialect:                 b.dialect,
+		DB:                      b.db,
+		BatchTransactionTimeout: b.batchTxnTimeout,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)

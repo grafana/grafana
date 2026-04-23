@@ -1168,7 +1168,7 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 				EnableMigration: true,
 			},
 		},
-		// Longer batched RV WithTx deadline via rvmanager default override (see apis/helper.go).
+		// Longer batched RV WithTx deadline via [unified_storage] resource_version_batch_transaction_timeout.
 		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
 		PermittedProvisioningPaths:                           ".|" + provisioningPath,
 		// Allow both folder and instance sync targets for tests

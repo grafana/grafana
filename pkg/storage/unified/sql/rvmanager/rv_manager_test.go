@@ -148,9 +148,6 @@ func TestExecWithRV_transactionContextRegression(t *testing.T) {
 }
 
 func TestBatchTransactionTimeout_explicitOverride(t *testing.T) {
-	t.Cleanup(ClearDefaultBatchTransactionTimeout)
-	ClearDefaultBatchTransactionTimeout()
-
 	dbp := test.NewDBProviderMatchWords(t)
 	m, err := NewResourceVersionManager(ResourceManagerOptions{
 		DB:                      dbp.DB,
@@ -166,25 +163,6 @@ func TestBatchTransactionTimeout_explicitOverride(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, defaultBatchTimeout, m2.batchTransactionTimeout())
-}
-
-func TestBatchTransactionTimeout_processDefaultOverride(t *testing.T) {
-	t.Cleanup(ClearDefaultBatchTransactionTimeout)
-	ClearDefaultBatchTransactionTimeout()
-
-	dbp := test.NewDBProviderMatchWords(t)
-	SetDefaultBatchTransactionTimeout(42 * time.Second)
-	t.Cleanup(ClearDefaultBatchTransactionTimeout)
-
-	m, err := NewResourceVersionManager(ResourceManagerOptions{
-		DB:      dbp.DB,
-		Dialect: sqltemplate.DialectForDriver("mysql"),
-	})
-	require.NoError(t, err)
-	require.Equal(t, 42*time.Second, m.batchTransactionTimeout())
-
-	ClearDefaultBatchTransactionTimeout()
-	require.Equal(t, defaultBatchTimeout, m.batchTransactionTimeout())
 }
 
 func TestSnowflakeFromRVRoundtrips(t *testing.T) {

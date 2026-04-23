@@ -717,6 +717,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("resource_version_batch_transaction_timeout", opts.UnifiedStorageResourceVersionBatchTransactionTimeout.String())
+		require.NoError(t, err)
+	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -892,9 +898,10 @@ type GrafanaOpts struct {
 	UnifiedStorageDisableSearch           bool
 	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
-	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, is applied
-	// before the test server starts via rvmanager.SetDefaultBatchTransactionTimeout
-	// (batched RV WithTx deadline). Used by provisioning integration tests on slow CI.
+	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, sets
+	// [unified_storage] resource_version_batch_transaction_timeout in the test
+	// server's ini. Bounds one batched RV WithTx; used by provisioning
+	// integration tests on slow CI.
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
 	ProvisioningAllowedTargets                           []string

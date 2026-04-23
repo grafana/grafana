@@ -702,6 +702,9 @@ type Cfg struct {
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
+	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
+	// resource version manager (all WriteEventFunc calls + RV stamp updates).
+	ResourceVersionBatchTransactionTimeout time.Duration
 
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration

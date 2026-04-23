@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -65,36 +64,10 @@ const (
 	defaultMaxBatchWaitTime = 100 * time.Millisecond
 	// defaultBatchTimeout bounds one batched WithTx (all WriteEventFunc calls,
 	// resource_version lock, RV stamp updates). Override per manager via
-	// ResourceManagerOptions.BatchTransactionTimeout, or process-wide when that
-	// is zero via SetDefaultBatchTransactionTimeout (integration tests).
+	// ResourceManagerOptions.BatchTransactionTimeout (wired from the
+	// [unified_storage] resource_version_batch_transaction_timeout ini key).
 	defaultBatchTimeout = 5 * time.Second
 )
-
-// HACK: Process-wide mutable default for batched RV transaction deadlines. Prefer wiring an explicit
-// BatchTransactionTimeout per ResourceVersionManager / server options; this exists so integration tests
-// (and overloaded CI, e.g. SQLite Enterprise shards) can raise the limit without an ini key. Not safe
-// with parallel packages or multiple servers expecting different values in one process.
-//
-// defaultBatchTxnTimeoutOverrideNs is used when BatchTransactionTimeout is zero.
-// Set with SetDefaultBatchTransactionTimeout; clear with ClearDefaultBatchTransactionTimeout.
-var defaultBatchTxnTimeoutOverrideNs atomic.Int64
-
-// SetDefaultBatchTransactionTimeout sets the batch transaction timeout for all ResourceVersionManager
-// instances that were created (or will be created) with BatchTransactionTimeout == 0.
-// Pass a value <= 0 to clear and restore the built-in default (defaultBatchTimeout).
-// Intended for integration tests; not synchronized across processes.
-func SetDefaultBatchTransactionTimeout(d time.Duration) {
-	if d <= 0 {
-		defaultBatchTxnTimeoutOverrideNs.Store(0)
-		return
-	}
-	defaultBatchTxnTimeoutOverrideNs.Store(d.Nanoseconds())
-}
-
-// ClearDefaultBatchTransactionTimeout removes a default set by SetDefaultBatchTransactionTimeout.
-func ClearDefaultBatchTransactionTimeout() {
-	defaultBatchTxnTimeoutOverrideNs.Store(0)
-}
 
 // ResourceVersionManager handles resource version operations
 type ResourceVersionManager struct {
@@ -168,9 +141,6 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 func (m *ResourceVersionManager) batchTransactionTimeout() time.Duration {
 	if m.batchTxnTimeout > 0 {
 		return m.batchTxnTimeout
-	}
-	if ns := defaultBatchTxnTimeoutOverrideNs.Load(); ns > 0 {
-		return time.Duration(ns)
 	}
 	return defaultBatchTimeout
 }
