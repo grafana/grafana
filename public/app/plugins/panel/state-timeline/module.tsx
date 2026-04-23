@@ -6,6 +6,7 @@ import {
   PanelPlugin,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -155,7 +156,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           ],
         },
         defaultValue: defaultOptions.namePosition,
-        showIf: () => !!config.featureToggles.stateTimelineNameAboveBars,
+        showIf: () => getFeatureFlagClient().getBooleanValue('stateTimeline.nameAboveBars', false),
       })
       .addNumberInput({
         path: 'perPage',
