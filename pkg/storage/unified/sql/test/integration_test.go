@@ -226,7 +226,7 @@ func TestClientServer(t *testing.T) {
 	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
 	require.NoError(t, err)
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		grpcService.StopAsync()
@@ -339,7 +339,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	require.NotNil(t, backendService)
 	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, grpcService,

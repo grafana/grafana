@@ -93,7 +93,7 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 	return s.legacyService.GetTeamsByUser(ctx, query)
 }
 
-func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
 	// TODO enable Kubernetes team service for GetTeamIDsByUser once the implementation is complete.
 	// if s.isKubernetesTeamServiceEnabled(ctx) {
 	// 	return s.k8sService.GetTeamIDsByUser(ctx, query)

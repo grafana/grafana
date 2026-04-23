@@ -259,7 +259,7 @@ export { ButtonGroup } from './components/Button/ButtonGroup';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
-export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { fieldMatchersUI, useFieldMatchersOptions } from './components/MatchersUI/fieldMatchersUI';
 export {
   MatcherScopeSelector,
   getUniqueMatcherScopes,
@@ -276,6 +276,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';

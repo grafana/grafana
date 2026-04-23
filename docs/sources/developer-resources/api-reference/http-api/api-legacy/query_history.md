@@ -21,7 +21,7 @@ title: 'Query History HTTP API '
 
 # Query history API
 
-{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="developers/deprecated-apis-nonmigrated.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This API can be used to add queries to Query history. It requires that the user is logged in and that Query history feature is enabled in config file.
 

@@ -4373,12 +4373,13 @@
       "button-label": "フォルダを選択",
       "clear-selection": "選択をクリア",
       "empty-message": "フォルダが見つかりません",
-      "error-title": "フォルダの読み込み中にエラーが発生しました",
+      "error-title": "",
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
       "shared-with-me": "自分に共有されたもの",
       "team-folders": "チームフォルダ",
+      "team-folders-error-title": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -5592,6 +5593,8 @@
         "annotation-set": "注釈とアラート",
         "dashboard": "ダッシュボード",
         "element": "要素",
+        "filter": "",
+        "filters-set": "",
         "link-set": "リンク",
         "local-variable": "ローカル変数",
         "multiple-elements": "複数の要素",
@@ -5620,8 +5623,10 @@
           "title": "行ヘッダー"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "変数を追加",
         "title": "変数"
       },
       "variable": {
@@ -6172,6 +6177,9 @@
           "hide-header": "行ヘッダーを非表示",
           "title": "タイトル"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "変数"
         },
@@ -6331,6 +6339,9 @@
             "title": "変数で繰り返す"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "変数"
         },
@@ -6411,7 +6422,6 @@
         "save-library-panel": "ライブラリパネルを保存",
         "share": {
           "arrow": "共有",
-          "title": "共有",
           "tooltip": "リンクをコピー"
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
@@ -7039,6 +7049,13 @@
       "sql-name": "SQLで変換",
       "sql-transformation-description": "MySQLのような構文を使用してデータを操作します"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7483,6 +7500,7 @@
       "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
@@ -7490,6 +7508,11 @@
       "file-path": "<strong>ファイルパス：</strong>{{filePath}}",
       "form-loading-error": "フォームの読み込みエラー",
       "form-loading-error-unknown": "フォームの読み込み中に予期しないエラーが発生しました。",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "説明",
       "label-target-folder": "ターゲットフォルダ",
       "label-title": "タイトル",
@@ -7507,6 +7530,9 @@
       "disabled-tooltip": "アラートルールを作成する前にダッシュボードを保存する",
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "複数の値を同時に選択可能にします",
@@ -7603,6 +7629,13 @@
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -7926,6 +7959,15 @@
     },
     "empty-state": {
       "message": "データソースが見つかりません"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8566,6 +8608,7 @@
         "copy-link": "ログ行へのリンクをコピー",
         "copy-to-clipboard": "クリップボードにコピー",
         "inspect-value": "値を検査",
+        "show-details": "",
         "view-log-line": "ログ行を表示"
       }
     },
@@ -11018,6 +11061,12 @@
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
       "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11214,6 +11263,8 @@
       "fields-section": "フィールド",
       "hide-log-line": "ログ行を非表示",
       "inline-mode": "インラインで表示",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "リンク値",
       "links-section": "リンク",
       "log-attributes-field": "ログ属性",
@@ -11462,13 +11513,13 @@
   "logstable": {
     "category-table": "ログテーブル",
     "description-show-controls": "テーブル操作を表示",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "各行の最初の列にあるログ行リンクボタンを有効/無効化",
       "name": "ログリンクのコピーボタンを表示"
-    },
-    "show-inspect-button": {
-      "description": "各行の最初の列にあるログ行の検査ボタンを有効/無効化",
-      "name": "検査ボタンを表示"
     }
   },
   "manage-dashbaords": {
@@ -12881,9 +12932,7 @@
       "update-available": "更新が利用可能です！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "プラグイン使用状況を確認するには、ダッシュボード全体を検索するための新しい検索インデックスが必要です。機能トグルを有効にしてください",
       "num-usages": "{{pluginName}}は<2>{{numUsages}}</2>回使用されています。",
-      "title-missing-feature-toggle-panel-title-search": "機能トグルがありません：{{toggle}}",
       "title-not-used-yet": "{{pluginName}}はまだどのダッシュボードでも使用されていません"
     },
     "plugins-errors-info": {
@@ -15333,6 +15382,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "破線",
         "label-dots": "点線",
         "label-solid": "実線"
@@ -15791,6 +15841,7 @@
           "group-by": "グループ化"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "無視",
       "placeholder-select-stats": "統計を選択"
     },
@@ -15802,6 +15853,16 @@
         "group-by": "グループ化"
       },
       "title-calc-alert": "グループ化されているフィールドがない場合、計算は効果がありません"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

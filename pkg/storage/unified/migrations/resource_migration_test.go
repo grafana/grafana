@@ -6,29 +6,36 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type testEnv struct {
@@ -534,7 +541,7 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 			_ = services.StopAndAwaitTerminated(context.Background(), svc)
 		})
 
-		testSQLiteRetryReleasesLock(t, env, backend, "test-retry")
+		testSQLiteRetryReleasesLock(t, env, backend, "test-retry", true)
 	})
 
 	t.Run("KV", func(t *testing.T) {
@@ -563,22 +570,27 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		testSQLiteRetryReleasesLock(t, env, backend, "test-retry-kv")
+		testSQLiteRetryReleasesLock(t, env, backend, "test-retry-kv", false)
 	})
 }
 
-func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.StorageBackend, id string) {
+func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.StorageBackend, id string, expectRebuild bool) {
 	t.Helper()
 
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
+	server, err := newRetryTestResourceServerWithSearch(t, backend)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = server.Stop(context.Background())
+	})
 
-	client := resource.NewLocalResourceClient(server)
+	client := &recordingRetryResourceClient{
+		ResourceClient: resource.NewLocalResourceClient(server),
+	}
 
 	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	var callCount int32
+
+	openTestSearchIndex(t, client, gr)
 
 	registry := NewMigrationRegistry()
 	registry.Register(MigrationDefinition{
@@ -634,10 +646,78 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	// The migrator func should have been called twice: once for the failed first attempt,
 	// once for the successful retry.
 	require.Equal(t, int32(2), atomic.LoadInt32(&callCount))
+	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
+	require.Nil(t, client.lastRebuildResponse.Error)
+	if expectRebuild {
+		require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
+	}
 }
 
-// retryAwareMigrator delegates Migrate to a real UnifiedMigrator and stubs
-// RebuildIndexes. It waits briefly for the server to release the bulk lock.
+func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) (resource.ResourceServer, error) {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000
+	cfg.IndexPath = t.TempDir()
+	cfg.DisablePruner = true
+
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"folder.grafana.app": "folders",
+		},
+	}
+
+	searchOpts, err := search.NewSearchOptions(featuremgmt.WithFeatures(), cfg, docBuilders, nil, nil)
+	require.NoError(t, err)
+
+	return resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: authlib.FixedAccessClient(true),
+		Search:       searchOpts,
+	})
+}
+
+func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema.GroupResource) {
+	t.Helper()
+
+	searchCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:    authlib.TypeUser,
+		UserID:  1,
+		UserUID: "user-uid-1",
+		OrgID:   1,
+		OrgRole: identity.RoleAdmin,
+		Login:   "testuser",
+		Name:    "Test User",
+	})
+
+	// Open the index before the migration so RebuildIndexes has a real index to rebuild.
+	searchResp, err := client.Search(searchCtx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     gr.Group,
+				Resource:  gr.Resource,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, searchResp.Error)
+}
+
+type recordingRetryResourceClient struct {
+	resource.ResourceClient
+	lastRebuildResponse *resourcepb.RebuildIndexesResponse
+}
+
+func (c *recordingRetryResourceClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	resp, err := c.ResourceClient.RebuildIndexes(ctx, in, opts...)
+	c.lastRebuildResponse = resp
+	return resp, err
+}
+
+// retryAwareMigrator delegates both Migrate and RebuildIndexes to a real UnifiedMigrator.
+// It waits briefly before retrying Migrate so the server releases the bulk lock.
 type retryAwareMigrator struct {
 	real      UnifiedMigrator
 	callCount int32
@@ -653,7 +733,100 @@ func (m *retryAwareMigrator) Migrate(ctx context.Context, opts MigrateOptions) (
 }
 
 func (m *retryAwareMigrator) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	return nil
+	return m.real.RebuildIndexes(ctx, opts)
+}
+
+func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("SQLite-only")
+	}
+
+	env := newTestEnv(t)
+	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+	require.NoError(t, err)
+
+	backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
+		DBProvider: eDB,
+		IsHA:       false,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+	svc, ok := backend.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	t.Cleanup(func() {
+		_ = services.StopAndAwaitTerminated(context.Background(), svc)
+	})
+
+	server, err := newRetryTestResourceServerWithSearch(t, backend)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = server.Stop(context.Background())
+	})
+
+	client := &recordingRetryResourceClient{
+		ResourceClient: resource.NewLocalResourceClient(server),
+	}
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	openTestSearchIndex(t, client, gr)
+
+	largeTitle := strings.Repeat("x", 256*1024)
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "sqlite-large-rebuild-busy",
+		MigrationID: "sqlite-large-rebuild-busy",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				for i := 0; i < 16; i++ {
+					err := stream.Send(&resourcepb.BulkRequest{
+						Key: &resourcepb.ResourceKey{
+							Namespace: opts.Namespace,
+							Group:     gr.Group,
+							Resource:  gr.Resource,
+							Name:      fmt.Sprintf("large-item-%d", i),
+						},
+						Action: resourcepb.BulkRequest_ADDED,
+						Value: []byte(fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
+							i, opts.Namespace, largeTitle)),
+					})
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
+	})
+
+	realMigrator := ProvideUnifiedMigrator(client, registry)
+	def := MigrationDefinition{
+		ID:          "sqlite-large-rebuild-busy",
+		MigrationID: "sqlite-large-rebuild-busy",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+		},
+	}
+
+	runnerCfg := setting.NewCfg()
+	runnerCfg.MigrationCacheSizeKB = 1
+	runner := NewMigrationRunner(realMigrator, noopLocker(), &transactionalTableRenamer{log: logger}, runnerCfg, def, nil)
+
+	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+	sess := env.engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+
+	runCtx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+	err = runner.Run(runCtx, sess, mg, RunOptions{DriverName: migrator.SQLite})
+	require.NoError(t, err)
+	require.NotNil(t, client.lastRebuildResponse)
+	require.Nil(t, client.lastRebuildResponse.Error)
+	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 }
 
 func TestIntegrationBuildRenamePairs(t *testing.T) {

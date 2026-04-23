@@ -4454,12 +4454,13 @@
       "button-label": "Выбрать папку",
       "clear-selection": "Очистить выбор",
       "empty-message": "Папки не найдены",
-      "error-title": "Ошибка загрузки папок",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
       "root-title": "Дашборды",
       "search-placeholder": "Поиск папок",
       "shared-with-me": "Доступные мне",
       "team-folders": "Папки команды",
+      "team-folders-error-title": "",
       "unknown-error": "Неизвестная ошибка"
     },
     "manage-folder-nav": {
@@ -5682,6 +5683,8 @@
         "annotation-set": "Аннотации и оповещения",
         "dashboard": "Дашборд",
         "element": "Элемент",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Ссылки",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
@@ -5710,8 +5713,10 @@
           "title": "Заголовок строки"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Добавить переменную",
         "title": "Переменные"
       },
       "variable": {
@@ -6265,6 +6270,9 @@
           "hide-header": "Скрытие заголовка строки",
           "title": "Заголовок"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Переменные"
         },
@@ -6424,6 +6432,9 @@
             "title": "Повторение по переменной"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Переменные"
         },
@@ -6504,7 +6515,6 @@
         "save-library-panel": "Сохранить панель библиотеки",
         "share": {
           "arrow": "Общий доступ",
-          "title": "Общий доступ",
           "tooltip": "Копировать ссылку"
         },
         "unlink-library-panel": "Отсоединить панель библиотеки"
@@ -7144,6 +7154,22 @@
       "sql-name": "Преобразование с помощью SQL",
       "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_few": "",
+      "title-hidden_many": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7600,6 +7626,7 @@
       "affected-dashboards_other": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Отмена",
       "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
       "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
@@ -7607,6 +7634,11 @@
       "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
       "form-loading-error": "Ошибка при загрузке формы",
       "form-loading-error-unknown": "Непредвиденная ошибка при загрузке формы.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Описание",
       "label-target-folder": "Целевая папка",
       "label-title": "Название",
@@ -7624,6 +7656,9 @@
       "disabled-tooltip": "Сохраните дашборд, прежде чем создавать правила оповещений",
       "new-alert-rule": "Новое правило оповещения",
       "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Позволяет выбирать несколько значений одновременно.",
@@ -7720,6 +7755,13 @@
       "page-nav": {
         "text": {
           "settings": "Параметры"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8055,6 +8097,15 @@
     },
     "empty-state": {
       "message": "Источники данных не найдены"
+    },
+    "list": {
+      "label": ""
+    },
+    "run-advisor-checks-button": {
+      "label": "",
+      "running": "",
+      "success": "",
+      "tooltip": ""
     }
   },
   "datasources": {
@@ -8695,6 +8746,7 @@
         "copy-link": "Копировать ссылку в строку журнала",
         "copy-to-clipboard": "Копировать в буфер обмена",
         "inspect-value": "Проверить значение",
+        "show-details": "",
         "view-log-line": "Просмотр строки журнала"
       }
     },
@@ -11198,6 +11250,12 @@
       "num-affected_few": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_many": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_other": "Обновление затронет <1>{{count}} дашбордов.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11403,6 +11461,8 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -11651,13 +11711,13 @@
   "logstable": {
     "category-table": "Таблица журналов",
     "description-show-controls": "Отображение элементов управления таблицами",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
       "name": "Отображение кнопки копирования ссылки на журнал"
-    },
-    "show-inspect-button": {
-      "description": "Включает/отключает кнопку проверки строки журнала в первом столбце каждой строки",
-      "name": "Отображение кнопки проверки"
     }
   },
   "manage-dashbaords": {
@@ -13079,9 +13139,7 @@
       "update-available": "Доступно обновление"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Для использования плагина требуется новый индекс поиска, чтобы найти варианты использования на дашбордах. Включите переключатель функциональности",
       "num-usages": "Количество использований {{pluginName}}: <2>{{numUsages}}</2>.",
-      "title-missing-feature-toggle-panel-title-search": "Отсутствует переключатель функциональности: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} еще не используется ни на одном дашборде"
     },
     "plugins-errors-info": {
@@ -15597,6 +15655,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "",
         "label-dash": "Тире",
         "label-dots": "Точки",
         "label-solid": "Сплошная"
@@ -16055,6 +16114,7 @@
           "group-by": "Группировать по"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Пропущено",
       "placeholder-select-stats": "Выбрать статистику"
     },
@@ -16066,6 +16126,16 @@
         "group-by": "Группировать по"
       },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
