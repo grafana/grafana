@@ -277,6 +277,166 @@ jobs:
           path: blob-report
           retention-days: 1
 
+  detect-changed-e2e-tests:
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.run-e2e-tests == 'true'
+    name: Detect changed E2E tests
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      tests-to-run: ${{ steps.filter.outputs.specs }}
+      has-tests: ${{ steps.filter.outputs.has-tests }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changed E2E spec files
+        id: changed-tests
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files: |
+            e2e-playwright/**/*.spec.ts
+          files_ignore: |
+            e2e-playwright/**/global-setup.spec.ts
+            e2e-playwright/**/global-teardown.spec.ts
+      - name: Filter to spec files that still exist
+        id: filter
+        env:
+          CHANGED_TESTS: ${{ steps.changed-tests.outputs.all_changed_files }}
+        run: |
+          existing=""
+          for f in $CHANGED_TESTS; do
+            if [ -f "$f" ]; then
+              existing="$existing $f"
+            fi
+          done
+          existing="${existing# }"
+          if [ -z "$existing" ]; then
+            echo "No changed spec files to flakey-check."
+            echo "has-tests=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-tests=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "specs<<EOF"
+              echo "$existing"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            echo "Changed specs to flakey-check:"
+            for f in $existing; do
+              echo "  - $f"
+            done
+          fi
+
+  flakey-check-changed-tests:
+    needs:
+      - build-backend
+      - build-frontend
+      - detect-changed-e2e-tests
+    if: needs.detect-changed-e2e-tests.outputs.has-tests == 'true'
+    name: Flakey check for changed E2E tests
+    runs-on: ubuntu-x64-large
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: grafana-backend
+          path: grafana-server/bin
+      - name: Fix binary permissions
+        run: chmod +x grafana-server/bin/grafana*
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: grafana-frontend
+          path: grafana-server/public
+      - name: Copy misc server files
+        run: |
+          cp -r conf/ grafana-server
+          cp -r tools/ grafana-server
+
+      - name: Configure for E2E testing
+        run: |
+          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+          mkdir -p grafana-server/data/plugins
+          cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
+
+      - name: Start Grafana server
+        run: |
+          grafana-server/bin/grafana server \
+            --homepath="$PWD/grafana-server" \
+            cfg:server.http_port=3001 \
+            > grafana-server/grafana.log 2>&1 &
+
+          printf "\nThe Grafana server is starting in the background.\n"
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=60
+          elapsed=0
+          printf "Waiting for Grafana to start"
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              printf "\n\n--- Grafana server logs ---\n"
+              cat grafana-server/grafana.log
+              printf "\n--- End of Grafana server logs ---\n\n"
+              printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
+              exit 1
+            fi
+            printf "."
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+          printf "\nThe Grafana server is ready\n"
+
+      # Disable retries so a test that passes on retry is still reported as a failure.
+      # --repeat-each runs every matched test 10 times; any single failure fails the job.
+      - name: Run changed Playwright tests 10 times each
+        env:
+          GRAFANA_URL: http://localhost:3001
+          CI: true
+          SPECS: ${{ needs.detect-changed-e2e-tests.outputs.tests-to-run }}
+        run: |
+          # shellcheck disable=SC2086
+          yarn e2e:pw --repeat-each=10 --retries=0 --reporter=dot,blob --output=playwright-test-results $SPECS
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: grafana-server-log-flakey-check
+          path: grafana-server/grafana.log
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: playwright-blob-flakey-check
+          path: blob-report
+          retention-days: 7
+
   required-playwright-tests:
     needs:
       - run-playwright-tests
