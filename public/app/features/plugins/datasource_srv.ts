@@ -35,9 +35,6 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import dashboardPluginJson from 'app/plugins/datasource/dashboard/plugin.json';
-import grafanaPluginJson from 'app/plugins/datasource/grafana/plugin.json';
-import mixedPluginJson from 'app/plugins/datasource/mixed/plugin.json';
 
 import { pluginImporter } from './importer/pluginImporter';
 
@@ -437,16 +434,16 @@ function getTypeFromInstanceSetting(instanceSettings: DataSourceInstanceSettings
     return instanceSettings.type;
   }
 
-  if (instanceSettings.name === dashboardPluginJson.name) {
-    return dashboardPluginJson.id;
+  if (instanceSettings.name === '-- Dashboard --') {
+    return 'dashboard';
   }
 
-  if (instanceSettings.name === grafanaPluginJson.name) {
-    return grafanaPluginJson.id;
+  if (instanceSettings.name === '-- Grafana --') {
+    return 'grafana';
   }
 
-  if (instanceSettings.name === mixedPluginJson.name) {
-    return mixedPluginJson.id;
+  if (instanceSettings.name === '-- Mixed --') {
+    return 'mixed';
   }
 
   return '';
