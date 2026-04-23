@@ -101,6 +101,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     }
 
     const prefsData = state;
+    // prevent page reload on save failure so the error banner remains visible
     try {
       await updatePreferences(prefsData);
     } catch {
