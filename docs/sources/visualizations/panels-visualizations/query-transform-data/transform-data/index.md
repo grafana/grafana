@@ -1465,8 +1465,6 @@ For each generated **Trend** field value, a calculation function can be selected
 
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
-
 ### Transpose
 
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
@@ -1547,7 +1545,6 @@ The transformation preserves all original time points while reducing noise, resu
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
 [sparkline cell type]: ref:sparkline-cell-type
-[configuration file]: ref:configuration-file
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle
 [dashboard variable]: ref:dashboard-variable
