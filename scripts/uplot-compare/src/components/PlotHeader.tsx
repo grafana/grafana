@@ -8,10 +8,11 @@ export function PlotHeader(props: {
   showBlend: boolean;
   mixBlendMode: OverlayBlendMode;
   onChangeBlendMode: (mode: OverlayBlendMode) => void;
+  title: string;
 }) {
   return (
     <div className="plot-header">
-      <div className={'plot-label'}>Actual</div>
+      <div className={'plot-label'}>{props.title}</div>
       <div className={'plot-action-wrap'}>
         <button className="plot-action-btn" type="button" onClick={props.onClick}>
           {props.renderActualSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
