@@ -61,7 +61,7 @@ function makeDisplayList(display: Display[]): DisplayList {
   };
 }
 
-type MockResult = { data: DisplayList | undefined };
+type MockResult = { data?: DisplayList; error?: unknown };
 
 // The dispatched RTK Query thunk returns a `QueryActionCreatorResult` — a thenable that also
 // exposes `.unsubscribe()`. The production code awaits the thenable and calls `.unsubscribe()`
@@ -119,7 +119,8 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledWith('initiate-thunk');
     const [keyArg, optionsArg] = mockInitiate.mock.calls[0] as [{ key: string[] }, { subscribe: boolean }];
-    expect(keyArg.key.slice().sort()).toEqual(['user:alice', 'user:bob']);
+    // Keys are sorted before dispatch so equivalent UID sets produce stable RTKQ cache keys.
+    expect(keyArg.key).toEqual(['user:alice', 'user:bob']);
     expect(optionsArg).toEqual({ subscribe: false });
   });
 
@@ -145,6 +146,25 @@ describe('resolveDeletedByDisplayMap', () => {
     await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+
+  it('logs and unsubscribes when RTK Query resolves with an error result', async () => {
+    // RTK Query query thunks are `SafePromise`s — on request failure they resolve with
+    // an `{ error, data: undefined }` shape rather than rejecting. Production must handle
+    // that path explicitly; a silent `return undefined` would swallow server errors.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unsubscribe = jest.fn();
+    mockDispatch.mockReturnValue(mockSubscription({ error: { status: 500, data: 'upstream failure' } }, unsubscribe));
+
+    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+
+    expect(map).toBeUndefined();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve deleted dashboard user displays:', {
+      status: 500,
+      data: 'upstream failure',
+    });
     consoleError.mockRestore();
   });
 
