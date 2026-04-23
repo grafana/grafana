@@ -23,6 +23,12 @@ const (
 	childReconcilerStatusKey      = "child-plugin-reconciler"
 	childStatusObservedGeneration = "observedGeneration"
 	childStatusAppliedChildren    = "appliedChildren"
+
+	childReconciliationStatusSuccess             = "success"
+	childReconciliationStatusError               = "error"
+	childReconciliationStatusSkippedShard        = "skipped_shard"
+	childReconciliationStatusSkippedUpToDate     = "skipped_up_to_date"
+	childReconciliationStatusSkippedMetaNotFound = "skipped_meta_not_found"
 )
 
 func ShouldHandlePlugin(plugin *pluginsv0alpha1.Plugin) bool {
@@ -133,6 +139,7 @@ type childReconcileResult struct {
 	observedGeneration int64
 	state              pluginsv0alpha1.PluginStatusOperatorStateState
 	description        *string
+	metricStatus       string
 }
 
 type childStoredState struct {
@@ -176,17 +183,17 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 			"parentId", plugin.Spec.ParentId,
 		)
 		logger.Error("Failed to determine child reconciler shard ownership", "error", err)
-		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action), plugin.Spec.Id).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues(childReconciliationStatusError, actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, err
 	}
 	if !ownsPlugin {
-		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action), plugin.Spec.Id).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues(childReconciliationStatusSkippedShard, actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
 	stored := getStoredChildState(plugin)
 	if req.Action == operator.ReconcileActionUpdated && stored.shouldSkipGeneration(plugin.Generation) {
-		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action), plugin.Spec.Id).Inc()
+		metrics.ChildReconciliationTotal.WithLabelValues(childReconciliationStatusSkippedUpToDate, actionLabel(req.Action), plugin.Spec.Id).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
@@ -200,9 +207,12 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		}
 	}
 
-	resultLabel := "success"
-	if err != nil {
-		resultLabel = "error"
+	resultLabel := outcome.metricStatus
+	if resultLabel == "" {
+		resultLabel = childReconciliationStatusSuccess
+		if err != nil {
+			resultLabel = childReconciliationStatusError
+		}
 	}
 	metrics.ChildReconciliationTotal.WithLabelValues(resultLabel, actionLabel(req.Action), plugin.Spec.Id).Inc()
 
@@ -250,7 +260,7 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 	desiredChildren, err := r.getDesiredChildren(ctx, plugin)
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
-			return childReconcileResult{}, false, nil
+			return childReconcileResult{metricStatus: childReconciliationStatusSkippedMetaNotFound}, false, nil
 		}
 
 		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceMetadataLookup, plugin, err)

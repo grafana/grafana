@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,7 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
@@ -206,6 +208,8 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 }
 
 func TestChildPluginReconciler_ReconcileSkipsRetryWhenMetaNotFound(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 			return nil, meta.ErrMetaNotFound
@@ -228,6 +232,8 @@ func TestChildPluginReconciler_ReconcileSkipsRetryWhenMetaNotFound(t *testing.T)
 	require.Equal(t, operator.ReconcileResult{}, result)
 	require.Empty(t, mockReg.registered)
 	require.Empty(t, mockReg.updatedStatuses)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusSkippedMetaNotFound, operator.ReconcileActionCreated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusSuccess, operator.ReconcileActionCreated, "test-plugin-app"))
 }
 
 func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
@@ -452,6 +458,8 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 }
 
 func TestChildPluginReconciler_SkipsWhenOwnedByAnotherShard(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(context.Context, meta.PluginRef) (*meta.Result, error) {
 			t.Fatal("GetMeta should not be called when the plugin belongs to a different shard")
@@ -482,9 +490,13 @@ func TestChildPluginReconciler_SkipsWhenOwnedByAnotherShard(t *testing.T) {
 	require.Empty(t, mockReg.registered)
 	require.Empty(t, mockReg.unregistered)
 	require.Empty(t, mockReg.updatedStatuses)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusSkippedShard, operator.ReconcileActionCreated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusSuccess, operator.ReconcileActionCreated, "test-plugin-app"))
 }
 
 func TestChildPluginReconciler_ReturnsOwnershipErrors(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
 	expectedErr := errors.New("ring unavailable")
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(context.Context, meta.PluginRef) (*meta.Result, error) {
@@ -516,6 +528,7 @@ func TestChildPluginReconciler_ReturnsOwnershipErrors(t *testing.T) {
 	require.Empty(t, mockReg.registered)
 	require.Empty(t, mockReg.unregistered)
 	require.Empty(t, mockReg.updatedStatuses)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusError, operator.ReconcileActionCreated, "test-plugin-app"))
 }
 
 func TestChildPluginReconciler_UpdateRemovesStaleChildren(t *testing.T) {
@@ -653,6 +666,8 @@ func TestChildPluginReconciler_ResyncRepairsMissingStoredChild(t *testing.T) {
 }
 
 func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGeneration(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 			t.Fatal("GetMeta should not be called for status-only updates")
@@ -680,9 +695,13 @@ func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGeneration(t *testin
 	require.Empty(t, mockReg.registered)
 	require.Empty(t, mockReg.unregistered)
 	require.Empty(t, mockReg.updatedStatuses)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusSkippedUpToDate, operator.ReconcileActionUpdated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusSuccess, operator.ReconcileActionUpdated, "test-plugin-app"))
 }
 
 func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGenerationFromLegacyDetails(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 			t.Fatal("GetMeta should not be called for status-only updates")
@@ -710,6 +729,36 @@ func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGenerationFromLegacy
 	require.Empty(t, mockReg.registered)
 	require.Empty(t, mockReg.unregistered)
 	require.Empty(t, mockReg.updatedStatuses)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusSkippedUpToDate, operator.ReconcileActionUpdated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusSuccess, operator.ReconcileActionUpdated, "test-plugin-app"))
+}
+
+func TestChildPluginReconciler_RecordsSuccessMetric(t *testing.T) {
+	resetChildReconciliationMetrics(t)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: []string{"child-plugin-1"}},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	result, err := reconciler.reconcile(context.Background(), operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: newTestPlugin("test-plugin-app", "1.0.0"),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Equal(t, 1.0, childReconciliationMetricValue(t, childReconciliationStatusSuccess, operator.ReconcileActionCreated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusError, operator.ReconcileActionCreated, "test-plugin-app"))
+	require.Equal(t, 0.0, childReconciliationMetricValue(t, childReconciliationStatusSkippedMetaNotFound, operator.ReconcileActionCreated, "test-plugin-app"))
 }
 
 // mockMetaProvider implements meta.Provider for testing
@@ -757,6 +806,19 @@ func (m mockOwnershipFilter) OwnsPlugin(ctx context.Context, plugin *pluginsv0al
 		return m.ownsFunc(ctx, plugin)
 	}
 	return true, nil
+}
+
+func resetChildReconciliationMetrics(t *testing.T) {
+	t.Helper()
+
+	metrics.ChildReconciliationTotal.Reset()
+	t.Cleanup(metrics.ChildReconciliationTotal.Reset)
+}
+
+func childReconciliationMetricValue(t *testing.T, status string, action operator.ReconcileAction, pluginID string) float64 {
+	t.Helper()
+
+	return testutil.ToFloat64(metrics.ChildReconciliationTotal.WithLabelValues(status, actionLabel(action), pluginID))
 }
 
 func (m *mockPluginRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
