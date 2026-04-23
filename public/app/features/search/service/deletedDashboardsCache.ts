@@ -130,6 +130,7 @@ export async function resolveDeletedByDisplayMap(
       map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
       if (entry.internalId !== undefined) {
         map.set(String(entry.internalId), entry.displayName);
+        map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
       }
     }
     return map;

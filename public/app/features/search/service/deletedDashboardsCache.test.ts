@@ -122,6 +122,21 @@ describe('resolveDeletedByDisplayMap', () => {
 
     expect(map?.get('user:alice')).toBe('Alice');
     expect(map?.get('42')).toBe('Alice');
+    expect(map?.get('user:42')).toBe('Alice');
+  });
+
+  it('aliases typed numeric annotations to the canonical entry via `<type>:<internalId>`', async () => {
+    // Simulates the case where the annotation is `user:1` but the server
+    // canonicalizes to `user:u000000001` plus `internalId: 1`.
+    mockDispatch.mockResolvedValue({
+      data: makeDisplayList([{ identity: { type: 'user', name: 'u000000001' }, displayName: 'Alice', internalId: 1 }]),
+    });
+
+    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:1')]));
+
+    expect(map?.get('user:1')).toBe('Alice');
+    expect(map?.get('user:u000000001')).toBe('Alice');
+    expect(map?.get('1')).toBe('Alice');
   });
 
   it('preserves Unicode display names verbatim', async () => {
