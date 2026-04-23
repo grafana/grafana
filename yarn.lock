@@ -2732,7 +2732,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2775,7 +2775,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2818,7 +2818,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2863,7 +2863,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2968,7 +2968,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3110,7 +3110,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3769,7 +3769,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -3920,7 +3920,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/runtime": ">=10.4.0"
@@ -4102,7 +4102,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     uwrap: "npm:0.1.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -20095,7 +20095,7 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
     vis-data: "npm:^8.0.0"
     vis-network: "npm:10.0.2"
     webpack: "npm:^5.105.0"
@@ -33787,6 +33787,15 @@ __metadata:
   bin:
     uuid: dist/esm/bin/uuid
   checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
+  languageName: node
+  linkType: hard
+
+"uuid@npm:14.0.0":
+  version: 14.0.0
+  resolution: "uuid@npm:14.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
   languageName: node
   linkType: hard
 
