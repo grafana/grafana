@@ -5,7 +5,13 @@ on:
     branches:
       - main
       - release-*
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/shellcheck.yml'
   pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/shellcheck.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
