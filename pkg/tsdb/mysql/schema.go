@@ -190,7 +190,11 @@ func (s *mysqlSchema) ColumnValues(ctx context.Context, req *schemas.ColumnValue
 			Errors: map[string]string{req.Table: err.Error()},
 		}, nil
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	for rows.Next() {
 		var colName, value string
@@ -218,7 +222,11 @@ func (s *mysqlSchema) queryTables(ctx context.Context, db *sql.DB) ([]string, er
 	if err != nil {
 		return nil, fmt.Errorf("querying tables: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	var tables []string
 	for rows.Next() {
@@ -240,7 +248,11 @@ func (s *mysqlSchema) queryColumns(ctx context.Context, db *sql.DB, table string
 	if err != nil {
 		return nil, fmt.Errorf("querying columns for %s: %w", table, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	var columns []schemas.Column
 	for rows.Next() {

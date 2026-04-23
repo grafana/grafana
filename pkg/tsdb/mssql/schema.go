@@ -275,7 +275,11 @@ func (s *mssqlSchema) ColumnValues(ctx context.Context, req *schemas.ColumnValue
 			Errors: map[string]string{req.Table: err.Error()},
 		}, nil
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	for rows.Next() {
 		var colName, value string
@@ -334,7 +338,11 @@ func (s *mssqlSchema) querySchemas(ctx context.Context, db *sql.DB) ([]string, e
 	if err != nil {
 		return nil, fmt.Errorf("querying schemas: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	var out []string
 	for rows.Next() {
@@ -355,7 +363,11 @@ func (s *mssqlSchema) queryTables(ctx context.Context, db *sql.DB, schema string
 	if err != nil {
 		return nil, fmt.Errorf("querying tables: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	var tables []string
 	for rows.Next() {
@@ -377,7 +389,11 @@ func (s *mssqlSchema) queryColumns(ctx context.Context, db *sql.DB, schema, tabl
 	if err != nil {
 		return nil, fmt.Errorf("querying columns for %s.%s: %w", schema, table, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			s.logger.Warn("Failed to close rows", "error", err)
+		}
+	}()
 
 	var columns []schemas.Column
 	for rows.Next() {
