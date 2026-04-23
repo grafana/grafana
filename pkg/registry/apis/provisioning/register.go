@@ -139,7 +139,7 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
-	maxIncrementalChanges         int
+	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 }
@@ -188,7 +188,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
-	maxIncrementalChanges int,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -240,7 +240,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
-		maxIncrementalChanges:               maxIncrementalChanges,
+		incrementalPolicy:                   incrementalPolicy,
 	}
 
 	for _, builder := range extraBuilders {
@@ -315,7 +315,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
-	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
+	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -347,7 +347,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
 	)
 	if err != nil {
 		return nil, err
@@ -385,7 +385,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
 	)
 	if err != nil {
 		return nil, err
@@ -1033,9 +1033,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				b.folderMetadataEnabled,
+				b.incrementalPolicy,
 				b.folderAPIVersion,
-				b.maxIncrementalChanges,
 				webhookSecretRotationInterval,
 			)
 			if err != nil {
