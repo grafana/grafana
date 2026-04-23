@@ -124,6 +124,17 @@ func NewSearchOptions(
 	}, nil
 }
 
+func snapshotLockHeartbeat(ttl time.Duration) time.Duration {
+	hb := ttl / 3
+	if hb <= 0 || hb*2 > ttl {
+		hb = ttl / 2
+	}
+	if hb <= 0 {
+		hb = time.Second
+	}
+	return hb
+}
+
 // buildSnapshotOptions opens the configured object-storage bucket and wraps it
 // as a RemoteIndexStore. Returns a zero SnapshotOptions (Store==nil) when the
 // feature is not enabled, so the backend short-circuits all new paths.
@@ -150,18 +161,16 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 	if ownerBase == "" {
 		ownerBase = "unknown-instance"
 	}
+	lockOwnerSuffix, err := ulid.New(ulid.Now(), rand.Reader)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("creating lock owner suffix: %w", err)
+	}
 	// Include a per-process ULID suffix to avoid owner collisions across instances
 	// that share the same configured instance_id/instance_name.
-	owner := fmt.Sprintf("%s/%s", ownerBase, ulid.MustNew(ulid.Now(), rand.Reader).String())
+	owner := fmt.Sprintf("%s/%s", ownerBase, lockOwnerSuffix.String())
 
 	lockTTL := DefaultSnapshotLockTTL
-	lockHeartbeat := lockTTL / 3
-	if lockHeartbeat <= 0 || lockHeartbeat*2 > lockTTL {
-		lockHeartbeat = lockTTL / 2
-	}
-	if lockHeartbeat <= 0 {
-		lockHeartbeat = time.Second
-	}
+	lockHeartbeat := snapshotLockHeartbeat(lockTTL)
 
 	return SnapshotOptions{
 		Store:           NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
