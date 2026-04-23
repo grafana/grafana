@@ -2189,13 +2189,27 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
 
 // HasState returns a matcher that asserts the job finished in the given state.
+// On mismatch it dumps the full job (spec + status) so the top-level error
+// message, errors list, summary counts, and warnings are visible in CI logs.
 func HasState(expected provisioning.JobState) JobMatcher {
 	return func(t *testing.T, job *unstructured.Unstructured) {
 		t.Helper()
 		actual := MustNestedString(job.Object, "status", "state")
 		require.Equal(t, string(expected), actual,
-			"job %q should have state %s", job.GetName(), expected)
+			"job %q should have state %s; full job:\n%s",
+			job.GetName(), expected, jobDump(job))
 	}
+}
+
+// jobDump renders a job as indented JSON for failure messages. Falls back to
+// the default formatter if marshalling fails (which should not happen for a
+// server-returned object).
+func jobDump(job *unstructured.Unstructured) string {
+	b, err := json.MarshalIndent(job.Object, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v (marshal error: %v)", job.Object, err)
+	}
+	return string(b)
 }
 
 // HasNoErrors returns a matcher that asserts the job completed without errors.
