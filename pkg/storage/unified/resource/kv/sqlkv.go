@@ -575,9 +575,7 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		return fmt.Errorf("failed to begin batch transaction: %w", txErr)
 	}
 	rollback := func() {
-		if tx != nil {
-			_ = tx.Rollback()
-		}
+		_ = tx.Rollback()
 	}
 
 	for i, op := range ops {

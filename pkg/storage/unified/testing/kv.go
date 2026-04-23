@@ -1216,14 +1216,12 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		errs := make([]error, 2)
 		start := make(chan struct{})
 		for i := range 2 {
-			wg.Add(1)
-			go func(idx int) {
-				defer wg.Done()
+			wg.Go(func() {
 				<-start
-				errs[idx] = kv.Batch(ctx, section, []resource.BatchOp{
-					{Mode: kvpkg.BatchOpCreate, Key: key, Value: values[idx]},
+				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpCreate, Key: key, Value: values[i]},
 				})
-			}(i)
+			})
 		}
 		close(start)
 		wg.Wait()
@@ -1257,14 +1255,12 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		errs := make([]error, 2)
 		start := make(chan struct{})
 		for i := range 2 {
-			wg.Add(1)
-			go func(idx int) {
-				defer wg.Done()
+			wg.Go(func() {
 				<-start
-				errs[idx] = kv.Batch(ctx, section, []resource.BatchOp{
-					{Mode: kvpkg.BatchOpPut, Key: key, Value: values[idx]},
+				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpPut, Key: key, Value: values[i]},
 				})
-			}(i)
+			})
 		}
 		close(start)
 		wg.Wait()
