@@ -1,5 +1,6 @@
+import { LocalStorageProvider } from '@openfeature/localstorage-provider';
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails } from '@openfeature/react-sdk';
+import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails, MultiProvider } from '@openfeature/react-sdk';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
@@ -32,6 +33,16 @@ function checkDefaultProvider(event?: EventDetails) {
 // If changing this, you MUST also update the same constant in packages/grafana-test-utils/src/utilities/featureFlags.ts
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
+const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
+
+// Allow direct access to a singleton localStorage provider,
+//  to allow the feature control developer UI to override flags via the provider
+let localStorageProvider: LocalStorageProvider;
+export function getLocalStorageProvider() {
+  return (localStorageProvider ??= new LocalStorageProvider({
+    prefix: GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX,
+  }));
+}
 
 export async function initOpenFeature() {
   OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
@@ -40,6 +51,7 @@ export async function initOpenFeature() {
   const subPath = config.appSubUrl || '';
   const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
 
+  const lsProvider = getLocalStorageProvider();
   const ofProvider = new OFREPWebProvider({
     baseUrl: baseUrl,
     disableVisibilityRefresh: true, // Do not refresh
@@ -47,10 +59,14 @@ export async function initOpenFeature() {
     timeoutMs: 5_000,
   });
 
-  await OpenFeature.setProviderAndWait(GRAFANA_CORE_OPEN_FEATURE_DOMAIN, ofProvider, {
-    targetingKey: config.namespace,
-    ...config.openFeatureContext,
-  });
+  await OpenFeature.setProviderAndWait(
+    GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
+    new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+    {
+      targetingKey: config.namespace,
+      ...config.openFeatureContext,
+    }
+  );
 }
 
 /**
