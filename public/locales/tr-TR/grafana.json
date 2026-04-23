@@ -6453,7 +6453,6 @@
         "save-library-panel": "Kütüphane panelini kaydet",
         "share": {
           "arrow": "Paylaş",
-          "title": "Paylaş",
           "tooltip": "Bağlantıyı kopyala"
         },
         "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
@@ -8655,6 +8654,7 @@
         "copy-link": "Bağlantıyı günlük kaydı satırına kopyala",
         "copy-to-clipboard": "Panoya kopyala",
         "inspect-value": "Değeri incele",
+        "show-details": "",
         "view-log-line": "Günlük kaydı satırını göster"
       }
     },
@@ -11329,6 +11329,8 @@
       "fields-section": "Alanlar",
       "hide-log-line": "Günlük satırını gizle",
       "inline-mode": "Satır içi görüntüle",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Bağlantı değeri",
       "links-section": "Bağlantılar",
       "log-attributes-field": "Günlük kaydı öznitelikleri",
@@ -11577,13 +11579,13 @@
   "logstable": {
     "category-table": "Günlük Kayıtları Tablosu",
     "description-show-controls": "Tablo kontrollerini göster",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Her satırın ilk sütunundaki günlük kaydı satırı bağlantı düğmesini etkinleştirir/devre dışı bırakır",
       "name": "Günlük kaydı bağlantısını kopyala düğmesini göster"
-    },
-    "show-inspect-button": {
-      "description": "Her satırın ilk sütunundaki günlük kaydı satırı inceleme düğmesini etkinleştirir/devre dışı bırakır",
-      "name": "İncele düğmesini göster"
     }
   },
   "manage-dashbaords": {
@@ -15930,6 +15932,7 @@
           "group-by": "Gruplandırma ölçütü"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Yok sayıldı",
       "placeholder-select-stats": "İstatistikleri seç"
     },
@@ -15941,6 +15944,16 @@
         "group-by": "Gruplandırma ölçütü"
       },
       "title-calc-alert": "Hiçbir alan gruplanmıyorsa hesaplamaların etkisi olmaz"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

@@ -6453,7 +6453,6 @@
         "save-library-panel": "Salva pannello della libreria",
         "share": {
           "arrow": "Condividi",
-          "title": "Condividi",
           "tooltip": "Copia link"
         },
         "unlink-library-panel": "Scollega pannello della libreria"
@@ -8655,6 +8654,7 @@
         "copy-link": "Copia il link alla riga del registro",
         "copy-to-clipboard": "Copia negli appunti",
         "inspect-value": "Ispeziona valore",
+        "show-details": "",
         "view-log-line": "Visualizza riga di registro"
       }
     },
@@ -11329,6 +11329,8 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Collega il valore",
       "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
@@ -11577,13 +11579,13 @@
   "logstable": {
     "category-table": "Tabella dei registri",
     "description-show-controls": "Visualizza i controlli della tabella",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Abilita/disabilita il pulsante di collegamento alla riga registro nella prima colonna di ogni riga",
       "name": "Mostra il pulsante collegamento al registro delle copie"
-    },
-    "show-inspect-button": {
-      "description": "Abilita/disabilita il pulsante di ispezione della riga registro nella prima colonna di ogni riga",
-      "name": "Mostra pulsante di ispezione"
     }
   },
   "manage-dashbaords": {
@@ -15930,6 +15932,7 @@
           "group-by": "Raggruppa per"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorato",
       "placeholder-select-stats": "Seleziona statistiche"
     },
@@ -15941,6 +15944,16 @@
         "group-by": "Raggruppa per"
       },
       "title-calc-alert": "I calcoli non avranno alcun effetto se non sono presenti campi da raggruppare"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

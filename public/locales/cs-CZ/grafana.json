@@ -6515,7 +6515,6 @@
         "save-library-panel": "Uložit panel knihovny",
         "share": {
           "arrow": "Sdílet",
-          "title": "Sdílet",
           "tooltip": "Kopírovat odkaz"
         },
         "unlink-library-panel": "Odpojit panel knihovny"
@@ -8747,6 +8746,7 @@
         "copy-link": "Kopírovat odkaz na řádek protokolu",
         "copy-to-clipboard": "Kopírovat do schránky",
         "inspect-value": "Zkontrolovat hodnotu",
+        "show-details": "",
         "view-log-line": "Zobrazit řádek protokolu"
       }
     },
@@ -11461,6 +11461,8 @@
       "fields-section": "Pole",
       "hide-log-line": "Skrýt řádek protokolu",
       "inline-mode": "Zobrazit v řádku",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Hodnota odkazu",
       "links-section": "Odkazy",
       "log-attributes-field": "Atributy protokolu",
@@ -11709,13 +11711,13 @@
   "logstable": {
     "category-table": "Tabulka protokolů",
     "description-show-controls": "Zobrazit ovládací prvky tabulky",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Povolit/zakázat tlačítko odkazu na řádek protokolu v prvním sloupci každého řádku",
       "name": "Zobrazit tlačítko pro kopírování odkazu na protokol"
-    },
-    "show-inspect-button": {
-      "description": "Povolit/zakázat tlačítko pro kontrolu řádku protokolu v prvním sloupci každého řádku",
-      "name": "Zobrazit tlačítko kontroly"
     }
   },
   "manage-dashbaords": {
@@ -16112,6 +16114,7 @@
           "group-by": "Seřadit podle"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorováno",
       "placeholder-select-stats": "Vyberte statistiky"
     },
@@ -16123,6 +16126,16 @@
         "group-by": "Seřadit podle"
       },
       "title-calc-alert": "Výpočty nebudou mít vliv, pokud nebudou seskupena žádná pole"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

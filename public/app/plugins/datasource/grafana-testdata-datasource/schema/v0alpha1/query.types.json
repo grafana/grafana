@@ -2,14 +2,14 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "datasource.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1709261615323"
+    "resourceVersion": "1776878010416"
   },
   "items": [
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1771247953198",
-        "creationTimestamp": "2024-03-01T02:53:35Z"
+        "resourceVersion": "1776878010416",
+        "creationTimestamp": "2026-04-22T17:13:30Z"
       },
       "spec": {
         "schema": {
@@ -58,20 +58,13 @@
             },
             "errorSource": {
               "description": "Possible enum values:\n - `\"plugin\"` \n - `\"downstream\"` ",
-              "enum": [
-                "plugin",
-                "downstream"
-              ],
+              "enum": ["plugin", "downstream"],
               "type": "string",
               "x-enum-description": {}
             },
             "errorType": {
               "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
-              "enum": [
-                "frontend_exception",
-                "frontend_observable",
-                "server_panic"
-              ],
+              "enum": ["frontend_exception", "frontend_observable", "server_panic"],
               "type": "string",
               "x-enum-description": {}
             },
@@ -104,13 +97,7 @@
                 },
                 "type": {
                   "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
-                  "enum": [
-                    "random",
-                    "random edges",
-                    "response_medium",
-                    "response_small",
-                    "feature_showcase"
-                  ],
+                  "enum": ["random", "random edges", "response_medium", "response_small", "feature_showcase"],
                   "type": "string",
                   "x-enum-description": {}
                 }
@@ -211,10 +198,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "tick",
-                    "type"
-                  ],
+                  "required": ["tick", "type"],
                   "type": "object"
                 },
                 "last": {
@@ -224,9 +208,7 @@
                   "type": "boolean"
                 }
               },
-              "required": [
-                "key"
-              ],
+              "required": ["key"],
               "type": "object"
             },
             "spanCount": {
@@ -255,12 +237,7 @@
                 },
                 "type": {
                   "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
-                  "enum": [
-                    "fetch",
-                    "logs",
-                    "signal",
-                    "traces"
-                  ],
+                  "enum": ["fetch", "logs", "signal", "traces"],
                   "type": "string",
                   "x-enum-description": {}
                 },
@@ -268,12 +245,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "noise",
-                "speed",
-                "spread",
-                "type"
-              ],
+              "required": ["noise", "speed", "spread", "type"],
               "type": "object"
             },
             "stringInput": {
@@ -309,36 +281,7 @@
             }
           },
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "simple random walk",
-            "saveModel": {
-              "scenarioId": "random_walk"
-            }
-          },
-          {
-            "name": "pulse wave example",
-            "saveModel": {
-              "pulseWave": {
-                "offCount": 20,
-                "offValue": 1.23,
-                "onCount": 10,
-                "onValue": 4.56,
-                "timeStep": 1000
-              },
-              "scenarioId": "predictable_pulse"
-            }
-          },
-          {
-            "name": "multiple series",
-            "saveModel": {
-              "scenarioId": "random_walk",
-              "seriesCount": 10,
-              "spread": 0.2
-            }
-          }
-        ]
+        }
       }
     }
   ]

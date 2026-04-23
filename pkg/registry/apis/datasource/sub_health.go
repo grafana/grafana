@@ -6,10 +6,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -60,7 +61,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		m.Record()
 		return nil, err
 	}
-	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
 	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
