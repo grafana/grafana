@@ -2192,7 +2192,7 @@
             }
           },
           "resource": {
-            "description": "Dashboard or folder",
+            "description": "Dashboards or folders",
             "type": "string",
             "default": ""
           },

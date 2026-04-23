@@ -264,25 +264,25 @@ func (r *Reconciler) computeDiffStreaming(
 	))
 	defer span.End()
 
-	pagesRead := 0
-
-	// Get store info for the namespace
+	// Get store info for the namespace. The reconciler runs as a background
+	// worker without end-user claims, so it calls the internal ReadTuples helper
+	// (mirroring WriteTuples) to bypass the public-API authorization check.
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
 	}
 
+	pagesRead := 0
 	var continuationToken string
 
 	// Read current tuples page-by-page and diff against expected
 	for {
 		req := &openfgav1.ReadRequest{
-			StoreId:           storeInfo.ID,
 			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
+		resp, err := r.server.ReadTuples(ctx, storeInfo, req)
 		if err != nil {
 			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}

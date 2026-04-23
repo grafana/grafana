@@ -19,6 +19,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -93,7 +94,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		limit := 50
+		limit := common.DefaultListLimit
 		offset := 0
 		page := 1
 		if queryParams.Has("limit") {
@@ -107,6 +108,15 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 		} else if queryParams.Has("page") {
 			page, _ = strconv.Atoi(queryParams.Get("page"))
 			offset = (page - 1) * limit
+		}
+
+		if limit > common.MaxListLimit {
+			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+			return
+		}
+
+		if limit < 1 {
+			limit = common.DefaultListLimit
 		}
 
 		// Get namespace from the request context

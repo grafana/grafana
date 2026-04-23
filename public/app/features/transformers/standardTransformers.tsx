@@ -609,7 +609,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     {
       id: DataTransformerID.groupToNestedTable,
       editor: lazy(() =>
-        import('./editors/GroupToNestedTableTransformerEditor').then((m) => ({
+        import('./editors/GroupToNestedTableTransformerEditor/index').then((m) => ({
           default: m.GroupToNestedTableTransformerEditor,
         }))
       ),
