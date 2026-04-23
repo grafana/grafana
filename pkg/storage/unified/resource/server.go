@@ -569,6 +569,28 @@ type server struct {
 	bookmarkFrequency time.Duration
 }
 
+// observeRequest records a sample into storage_server_grpc_request_duration_seconds.
+// Safe to call with a nil key or nil storageMetrics. Intended for use with defer.
+func (s *server) observeRequest(method string, key *resourcepb.ResourceKey, start time.Time, err error) {
+	if s.storageMetrics == nil || s.storageMetrics.RequestDuration == nil {
+		return
+	}
+	group, resource := "unknown", "unknown"
+	if key != nil {
+		if g := key.GetGroup(); g != "" {
+			group = g
+		}
+		if r := key.GetResource(); r != "" {
+			resource = r
+		}
+	}
+	code := "OK"
+	if err != nil {
+		code = status.Code(err).String()
+	}
+	s.storageMetrics.RequestDuration.WithLabelValues(method, group, resource, code).Observe(time.Since(start).Seconds())
+}
+
 // Init implements ResourceServer.
 func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
@@ -850,16 +872,18 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 	return nil
 }
 
-func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
+func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (resp *resourcepb.CreateResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
+	start := time.Now()
+	defer func() { s.observeRequest("Create", req.GetKey(), start, err) }()
 
 	if !s.trackWrite() {
 		return nil, errStopping
 	}
 	defer s.inflight.Done()
 
-	err := s.checkQuota(ctx, NamespacedResource{
+	err = s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -975,9 +999,11 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 	return true
 }
 
-func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (resp *resourcepb.UpdateResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
+	start := time.Now()
+	defer func() { s.observeRequest("Update", req.GetKey(), start, err) }()
 
 	if !s.trackWrite() {
 		return nil, errStopping
@@ -994,10 +1020,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		return rsp, nil
 	}
 
-	var (
-		res *resourcepb.UpdateResponse
-		err error
-	)
+	var res *resourcepb.UpdateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.update(queueCtx, user, req)
 	})
@@ -1040,9 +1063,11 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 	return rsp, nil
 }
 
-func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
+func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (resp *resourcepb.DeleteResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
+	start := time.Now()
+	defer func() { s.observeRequest("Delete", req.GetKey(), start, err) }()
 
 	if !s.trackWrite() {
 		return nil, errStopping
@@ -1059,11 +1084,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return rsp, nil
 	}
 
-	var (
-		res *resourcepb.DeleteResponse
-		err error
-	)
-
+	var res *resourcepb.DeleteResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.delete(queueCtx, user, req)
 	})
@@ -1150,7 +1171,10 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	return rsp, nil
 }
 
-func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (resp *resourcepb.ReadResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("Read", req.GetKey(), start, err) }()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &resourcepb.ReadResponse{
@@ -1164,10 +1188,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
-	var (
-		res *resourcepb.ReadResponse
-		err error
-	)
+	var res *resourcepb.ReadResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.read(queueCtx, user, req)
 	})
@@ -1209,10 +1230,12 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
-func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (resp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+	start := time.Now()
+	defer func() { s.observeRequest("List", req.GetOptions().GetKey(), start, err) }()
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1721,7 +1744,10 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 }
 
-func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (resp *resourcepb.ResourceSearchResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("Search", req.GetOptions().GetKey(), start, err) }()
+
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1735,7 +1761,10 @@ type StatsGetter interface {
 }
 
 // GetStats implements ResourceServer.
-func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (resp *resourcepb.ResourceStatsResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("GetStats", nil, start, err) }()
+
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
@@ -1751,7 +1780,10 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	return s.search.GetStats(ctx, req)
 }
 
-func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (resp *resourcepb.ListManagedObjectsResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("ListManagedObjects", nil, start, err) }()
+
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1759,7 +1791,10 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
-func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (resp *resourcepb.CountManagedObjectsResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("CountManagedObjects", nil, start, err) }()
+
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1773,7 +1808,10 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 }
 
 // GetBlob implements BlobStore.
-func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (resp *resourcepb.PutBlobResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("PutBlob", req.GetResource(), start, err) }()
+
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -1788,7 +1826,10 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	return rsp, nil
 }
 
-func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
+func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (resp *resourcepb.QuotaUsageResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("GetQuotaUsage", req.GetKey(), start, err) }()
+
 	if s.overridesService == nil {
 		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
 			Message: "overrides service not configured on resource server",
@@ -1846,7 +1887,10 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
-func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (resp *resourcepb.GetBlobResponse, err error) {
+	start := time.Now()
+	defer func() { s.observeRequest("GetBlob", req.GetResource(), start, err) }()
+
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
