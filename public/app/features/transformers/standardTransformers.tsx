@@ -1,6 +1,12 @@
 import { lazy } from 'react';
 
-import { DataTransformerID, PluginState, TransformerCategory, type TransformerRegistryItem } from '@grafana/data';
+import {
+  DataTransformerID,
+  PluginState,
+  TransformerCategory,
+  type DataTransformerInfo,
+  type TransformerRegistryItem,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
@@ -84,13 +90,23 @@ import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
 
 const emptyLazyEditor = lazy(async () => ({ default: () => <></> }));
 
-function hiddenTransformer(
-  id: DataTransformerID,
-  transformation: TransformerRegistryItem['transformation']
-): TransformerRegistryItem {
+function makeRegistryItemFromTransformer<T>(
+  transformer: DataTransformerInfo<T>,
+  metadata: Omit<TransformerRegistryItem<T>, 'transformation' | 'isApplicable' | 'isApplicableDescription' | 'defaultOptions'>
+): TransformerRegistryItem<T> {
+  return {
+    ...metadata,
+    transformation: () => Promise.resolve(transformer),
+    defaultOptions: transformer.defaultOptions,
+    isApplicable: transformer.isApplicable,
+    isApplicableDescription: transformer.isApplicableDescription,
+  };
+}
+
+function hiddenTransformer(id: DataTransformerID, transformer: DataTransformerInfo): TransformerRegistryItem {
   return {
     id,
-    transformation,
+    transformation: () => Promise.resolve(transformer),
     editor: emptyLazyEditor,
     name: id,
     description: '',
@@ -102,12 +118,11 @@ function hiddenTransformer(
 
 export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
-    {
+    makeRegistryItemFromTransformer(standardTransformers.reduceTransformer, {
       id: DataTransformerID.reduce,
       editor: lazy(() =>
         import('./editors/ReduceTransformerEditor').then((m) => ({ default: m.ReduceTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.reduceTransformer),
       name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
       description: t(
         'transformers.reduce-transformer-editor.description.reduce-to-single-value',
@@ -116,15 +131,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.CalculateNewFields]),
       imageDark: reduceDark,
       imageLight: reduceLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterFieldsByNameTransformer, {
       id: DataTransformerID.filterFieldsByName,
       editor: lazy(() =>
         import('./editors/FilterByNameTransformerEditor').then((m) => ({
           default: m.FilterByNameTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.filterFieldsByNameTransformer),
       name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
       description: t(
         'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
@@ -133,13 +147,12 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Filter]),
       imageDark: filterFieldsByNameDark,
       imageLight: filterFieldsByNameLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.renameByRegexTransformer, {
       id: DataTransformerID.renameByRegex,
       editor: lazy(() =>
         import('./editors/RenameByRegexTransformer').then((m) => ({ default: m.RenameByRegexTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.renameByRegexTransformer),
       name: t('transformers.rename-by-regex-transformer.name.rename-fields-by-regex', 'Rename fields by regex'),
       description: t(
         'transformers.rename-by-regex-transformer.description.rename-parts-using-regex',
@@ -148,13 +161,12 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.ReorderAndRename]),
       imageDark: renameByRegexDark,
       imageLight: renameByRegexLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterFramesByRefIdTransformer, {
       id: DataTransformerID.filterByRefId,
       editor: lazy(() =>
         import('./editors/FilterByRefIdTransformerEditor').then((m) => ({ default: m.FilterByRefIdTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.filterFramesByRefIdTransformer),
       name: t('transformers.filter-by-ref-id-transformer-editor.name.filter-data-by-query', 'Filter data by query'),
       description: t(
         'transformers.filter-by-ref-id-transformer-editor.description.filter-data-by-query-useful-sharing-results',
@@ -163,15 +175,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Filter]),
       imageDark: filterByRefIdDark,
       imageLight: filterByRefIdLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.filterByValueTransformer, {
       id: DataTransformerID.filterByValue,
       editor: lazy(() =>
         import('./FilterByValueTransformer/FilterByValueTransformerEditor').then((m) => ({
           default: m.FilterByValueTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.filterByValueTransformer),
       name: t('transformers.filter-by-value-transformer-editor.name.filter-data-by-values', 'Filter data by values'),
       description: t(
         'transformers.filter-by-value-transformer-editor.description.remove-rows-query-results-user-defined-filters',
@@ -180,16 +191,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Filter]),
       imageDark: filterByValueDark,
       imageLight: filterByValueLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.organizeFieldsTransformer, {
       id: DataTransformerID.organize,
       editor: lazy(() =>
         import('./editors/OrganizeFieldsTransformerEditor').then((m) => ({
           default: m.OrganizeFieldsTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.organizeFieldsTransformer),
-      defaultOptions: standardTransformers.organizeFieldsTransformer.defaultOptions,
       name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
       description: t(
         'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
@@ -198,8 +207,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.ReorderAndRename]),
       imageDark: organizeDark,
       imageLight: organizeLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.joinByFieldTransformer, {
       id: DataTransformerID.joinByField,
       aliasIds: [DataTransformerID.seriesToColumns],
       editor: lazy(() =>
@@ -207,7 +216,6 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.SeriesToFieldsTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.joinByFieldTransformer),
       name: t('transformers.join-by-field-transformer-editor.name.join-by-field', 'Join by field'),
       description: t(
         'transformers.join-by-field-transformer-editor.description.combine-rows-from-2-tables',
@@ -216,15 +224,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Combine]),
       imageDark: joinByFieldDark,
       imageLight: joinByFieldLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.seriesToRowsTransformer, {
       id: DataTransformerID.seriesToRows,
       editor: lazy(() =>
         import('./editors/SeriesToRowsTransformerEditor').then((m) => ({
           default: m.SeriesToRowsTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.seriesToRowsTransformer),
       name: t('transformers.series-to-rows-transformer-editor.name.series-to-rows', 'Series to rows'),
       description: t(
         'transformers.series-to-rows-transformer-editor.description.merge-multiple-series',
@@ -233,15 +240,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
       imageDark: seriesToRowsDark,
       imageLight: seriesToRowsLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.concatenateTransformer, {
       id: DataTransformerID.concatenate,
       editor: lazy(() =>
         import('./editors/ConcatenateTransformerEditor').then((m) => ({
           default: m.ConcatenateTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.concatenateTransformer),
       name: t('transformers.editors.concatenate-transformer-editor.name.concatenate-fields', 'Concatenate fields'),
       description: t(
         'transformers.editors.concatenate-transformer-editor.description.combine-all-fields',
@@ -251,16 +257,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       tags: new Set([t('transformers.editors.concatenate-transformer-editor.tags.combine', 'Combine')]),
       imageDark: concatenateDark,
       imageLight: concatenateLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.calculateFieldTransformer, {
       id: DataTransformerID.calculateField,
       editor: lazy(() =>
         import('./editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor').then((m) => ({
           default: m.CalculateFieldTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.calculateFieldTransformer),
-      defaultOptions: standardTransformers.calculateFieldTransformer.defaultOptions,
       name: t(
         'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
         'Add field from calculation'
@@ -272,15 +276,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.CalculateNewFields]),
       imageDark: calculateFieldDark,
       imageLight: calculateFieldLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.labelsToFieldsTransformer, {
       id: DataTransformerID.labelsToFields,
       editor: lazy(() =>
         import('./editors/LabelsToFieldsTransformerEditor').then((m) => ({
           default: m.LabelsAsFieldsTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.labelsToFieldsTransformer),
       name: t('transformers.labels-to-fields-transformer-editor.name.labels-to-fields', 'Labels to fields'),
       description: t(
         'transformers.labels-to-fields-transformer-editor.description.groups-series-time-return-labels-tags-fields',
@@ -289,16 +292,12 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: labelsToFieldsDark,
       imageLight: labelsToFieldsLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.groupByTransformer, {
       id: DataTransformerID.groupBy,
       editor: lazy(() =>
         import('./editors/GroupByTransformerEditor').then((m) => ({ default: m.GroupByTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.groupByTransformer),
-      defaultOptions: standardTransformers.groupByTransformer.defaultOptions,
-      isApplicable: standardTransformers.groupByTransformer.isApplicable,
-      isApplicableDescription: standardTransformers.groupByTransformer.isApplicableDescription,
       name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
       description: t(
         'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
@@ -311,27 +310,23 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ]),
       imageDark: groupByDark,
       imageLight: groupByLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.sortByTransformer, {
       id: DataTransformerID.sortBy,
       editor: lazy(() =>
         import('./editors/SortByTransformerEditor').then((m) => ({ default: m.SortByTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.sortByTransformer),
       name: t('transformers.sort-by-transformer-editor.name.sort-by', 'Sort by'),
       description: t('transformers.sort-by-transformer-editor.description.sort-fields', 'Sort fields in a frame.'),
       categories: new Set([TransformerCategory.ReorderAndRename]),
       imageDark: sortByDark,
       imageLight: sortByLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.mergeTransformer, {
       id: DataTransformerID.merge,
       editor: lazy(() =>
         import('./editors/MergeTransformerEditor').then((m) => ({ default: m.MergeTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.mergeTransformer),
-      isApplicable: standardTransformers.mergeTransformer.isApplicable,
-      isApplicableDescription: standardTransformers.mergeTransformer.isApplicableDescription,
       name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
       description: t(
         'transformers.merge-transformer-editor.description.merge-multiple-series',
@@ -340,13 +335,12 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Combine]),
       imageDark: mergeDark,
       imageLight: mergeLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.histogramTransformer, {
       id: DataTransformerID.histogram,
       editor: lazy(() =>
         import('./editors/HistogramTransformerEditor').then((m) => ({ default: m.HistogramTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.histogramTransformer),
       name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
       description: t(
         'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
@@ -355,7 +349,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.CreateNewVisualization]),
       imageDark: histogramDark,
       imageLight: histogramLight,
-    },
+    }),
     {
       id: DataTransformerID.rowsToFields,
       editor: lazy(() =>
@@ -413,15 +407,13 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: prepareTimeSeriesDark,
       imageLight: prepareTimeSeriesLight,
     },
-    {
+    makeRegistryItemFromTransformer(standardTransformers.convertFieldTypeTransformer, {
       id: DataTransformerID.convertFieldType,
       editor: lazy(() =>
         import('./editors/ConvertFieldTypeTransformerEditor').then((m) => ({
           default: m.ConvertFieldTypeTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.convertFieldTypeTransformer),
-      defaultOptions: standardTransformers.convertFieldTypeTransformer.defaultOptions,
       name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
       description: t(
         'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
@@ -431,7 +423,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
       imageDark: convertFieldTypeDark,
       imageLight: convertFieldTypeLight,
-    },
+    }),
     {
       id: DataTransformerID.spatial,
       editor: lazy(() =>
@@ -509,31 +501,27 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: heatmapDark,
       imageLight: heatmapLight,
     },
-    {
+    makeRegistryItemFromTransformer(standardTransformers.groupingToMatrixTransformer, {
       id: DataTransformerID.groupingToMatrix,
       editor: lazy(() =>
         import('./editors/GroupingToMatrixTransformerEditor').then((m) => ({
           default: m.GroupingToMatrixTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.groupingToMatrixTransformer),
       name: t('transformers.grouping-to-matrix-transformer-editor.name.grouping-to-matrix', 'Grouping to matrix'),
       description: t(
         'transformers.grouping-to-matrix-transformer-editor.description.summarize-and-reorganize-data',
         'Summarize and reorganize data based on three fields.'
       ),
       categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-      isApplicable: standardTransformers.groupingToMatrixTransformer.isApplicable,
-      isApplicableDescription: standardTransformers.groupingToMatrixTransformer.isApplicableDescription,
       imageDark: groupingToMatrixDark,
       imageLight: groupingToMatrixLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.limitTransformer, {
       id: DataTransformerID.limit,
       editor: lazy(() =>
         import('./editors/LimitTransformerEditor').then((m) => ({ default: m.LimitTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.limitTransformer),
       name: t('transformers.limit-transformer-editor.name.limit', 'Limit'),
       description: t(
         'transformers.limit-transformer-editor.description.limit-number-items-displayed',
@@ -542,7 +530,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Filter]),
       imageDark: limitDark,
       imageLight: limitLight,
-    },
+    }),
     {
       id: DataTransformerID.joinByLabels,
       editor: lazy(() =>
@@ -596,14 +584,13 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: partitionByValuesDark,
       imageLight: partitionByValuesLight,
     },
-    {
+    makeRegistryItemFromTransformer(standardTransformers.formatStringTransformer, {
       id: DataTransformerID.formatString,
       editor: lazy(() =>
         import('./editors/FormatStringTransformerEditor').then((m) => ({
           default: m.FormatStringTransfomerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.formatStringTransformer),
       name: t('transformers.format-string-transformer-editor.name.format-string', 'Format string'),
       state: PluginState.beta,
       description: t(
@@ -613,15 +600,14 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: formatStringDark,
       imageLight: formatStringLight,
-    },
-    {
+    }),
+    makeRegistryItemFromTransformer(standardTransformers.groupToNestedTable, {
       id: DataTransformerID.groupToNestedTable,
       editor: lazy(() =>
         import('./editors/GroupToNestedTableTransformerEditor/index').then((m) => ({
           default: m.GroupToNestedTableTransformerEditor,
         }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.groupToNestedTable),
       name: t(
         'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
         'Group to nested tables'
@@ -636,11 +622,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         TransformerCategory.Reformat,
       ]),
       state: PluginState.beta,
-      isApplicable: standardTransformers.groupToNestedTable.isApplicable,
-      isApplicableDescription: standardTransformers.groupToNestedTable.isApplicableDescription,
       imageDark: groupToNestedTableDark,
       imageLight: groupToNestedTableLight,
-    },
+    }),
     ...(config.featureToggles.smoothingTransformation
       ? [
           {
@@ -666,14 +650,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           },
         ]
       : []),
-    {
+    makeRegistryItemFromTransformer(standardTransformers.formatTimeTransformer, {
       id: DataTransformerID.formatTime,
       editor: lazy(() =>
         import('./editors/FormatTimeTransformerEditor').then((m) => ({ default: m.FormatTimeTransfomerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.formatTimeTransformer),
-      isApplicable: standardTransformers.formatTimeTransformer.isApplicable,
-      isApplicableDescription: standardTransformers.formatTimeTransformer.isApplicableDescription,
       name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
       state: PluginState.alpha,
       description: t(
@@ -683,7 +664,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: formatTimeDark,
       imageLight: formatTimeLight,
-    },
+    }),
     {
       id: DataTransformerID.timeSeriesTable,
       editor: lazy(() =>
@@ -707,12 +688,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: timeSeriesTableDark,
       imageLight: timeSeriesTableLight,
     },
-    {
+    makeRegistryItemFromTransformer(standardTransformers.transposeTransformer, {
       id: DataTransformerID.transpose,
       editor: lazy(() =>
         import('./editors/TransposeTransformerEditor').then((m) => ({ default: m.TransposeTransformerEditor }))
       ),
-      transformation: () => Promise.resolve(standardTransformers.transposeTransformer),
       name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
       description: t(
         'transformers.transpose-transformer-editor.description.transpose-data-frame',
@@ -726,23 +706,15 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ]),
       imageDark: transposeDark,
       imageLight: transposeLight,
-    },
-    hiddenTransformer(DataTransformerID.ensureColumns, () =>
-      Promise.resolve(standardTransformers.ensureColumnsTransformer)
-    ),
-    hiddenTransformer(DataTransformerID.noop, () => Promise.resolve(standardTransformers.noopTransformer)),
-    hiddenTransformer(DataTransformerID.order, () => Promise.resolve(standardTransformers.orderFieldsTransformer)),
-    hiddenTransformer(DataTransformerID.rename, () => Promise.resolve(standardTransformers.renameFieldsTransformer)),
-    hiddenTransformer(DataTransformerID.filterFields, () =>
-      Promise.resolve(standardTransformers.filterFieldsTransformer)
-    ),
-    hiddenTransformer(DataTransformerID.filterFrames, () =>
-      Promise.resolve(standardTransformers.filterFramesTransformer)
-    ),
-    hiddenTransformer(DataTransformerID.convertFrameType, () =>
-      Promise.resolve(standardTransformers.convertFrameTypeTransformer)
-    ),
+    }),
+    hiddenTransformer(DataTransformerID.ensureColumns, standardTransformers.ensureColumnsTransformer),
+    hiddenTransformer(DataTransformerID.noop, standardTransformers.noopTransformer),
+    hiddenTransformer(DataTransformerID.order, standardTransformers.orderFieldsTransformer),
+    hiddenTransformer(DataTransformerID.rename, standardTransformers.renameFieldsTransformer),
+    hiddenTransformer(DataTransformerID.filterFields, standardTransformers.filterFieldsTransformer),
+    hiddenTransformer(DataTransformerID.filterFrames, standardTransformers.filterFramesTransformer),
+    hiddenTransformer(DataTransformerID.convertFrameType, standardTransformers.convertFrameTypeTransformer),
     // No dedicated append transformer exists; noop ensures safe passthrough for saved dashboards that reference this id
-    hiddenTransformer(DataTransformerID.append, () => Promise.resolve(standardTransformers.noopTransformer)),
+    hiddenTransformer(DataTransformerID.append, standardTransformers.noopTransformer),
   ];
 };

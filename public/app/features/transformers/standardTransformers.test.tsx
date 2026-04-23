@@ -130,6 +130,28 @@ describe('getStandardTransformers', () => {
     });
   });
 
+  describe('isApplicable invariant', () => {
+    it('if DataTransformerInfo.isApplicable is defined, TransformerRegistryItem.isApplicable must also be defined', async () => {
+      const items = getStandardTransformers();
+      for (const item of items) {
+        const info = await item.transformation();
+        if (info.isApplicable !== undefined) {
+          expect(item.isApplicable).toBeDefined();
+        }
+      }
+    });
+
+    it('if DataTransformerInfo.isApplicableDescription is defined, TransformerRegistryItem.isApplicableDescription must also be defined', async () => {
+      const items = getStandardTransformers();
+      for (const item of items) {
+        const info = await item.transformation();
+        if (info.isApplicableDescription !== undefined) {
+          expect(item.isApplicableDescription).toBeDefined();
+        }
+      }
+    });
+  });
+
   describe('eager transformation resolution', () => {
     it.each([DataTransformerID.reduce, DataTransformerID.merge])(
       'resolves %s transformation without error and includes operator',
