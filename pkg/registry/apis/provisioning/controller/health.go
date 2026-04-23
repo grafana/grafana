@@ -202,7 +202,7 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
 //
-// When the hook-failure cooldown is active  the refresh is skipped to avoid
+// When the hook-failure cooldown is active, the refresh is skipped to avoid
 // overwriting the recorded hook failure.
 func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error) {
 	cfg := repo.Config()
