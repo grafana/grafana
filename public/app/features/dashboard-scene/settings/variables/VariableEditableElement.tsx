@@ -117,13 +117,16 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
     const { label, name } = this.variable.state;
-    const instanceName = label && label.trim() !== '' ? label : name;
+    const hasLabel = !!label && label.trim() !== '';
+    const instanceName = hasLabel ? label! : name;
+    const tooltip = hasLabel ? `$${name}` : undefined;
 
     if (sceneUtils.isAdHocVariable(this.variable)) {
       return {
         typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
         icon: 'filter',
         instanceName,
+        tooltip,
         isHidden: this.variable.state.hide === VariableHide.hideVariable,
       };
     }
@@ -132,6 +135,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'dollar-alt',
       instanceName,
+      tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }

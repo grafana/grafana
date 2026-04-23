@@ -82,6 +82,8 @@ export interface EditableDashboardElementInfo {
   typeName: string;
   icon: IconName;
   isHidden?: boolean;
+  /** Optional tooltip shown when hovering the element name in the outline */
+  tooltip?: string;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
