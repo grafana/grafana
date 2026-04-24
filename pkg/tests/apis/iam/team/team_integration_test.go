@@ -202,11 +202,11 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
-		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
-		defer func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) }()
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
-		_, err = teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+		_, err = teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -404,7 +404,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
-		defer func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) }()
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
 		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
@@ -426,7 +426,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
-		defer func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) }()
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
 		// Add viewer as admin alongside editor
 		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
@@ -477,7 +477,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
-		defer func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) }()
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
 		require.NoError(t, unstructured.SetNestedSlice(created.Object, []interface{}{
 			memberSpec(editorUID, "member", true),
@@ -489,5 +489,4 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, int32(400), se.ErrStatus.Code)
 		require.Contains(t, se.ErrStatus.Message, "external")
 	})
-
 }
