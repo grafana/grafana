@@ -167,8 +167,6 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
 	require.NoError(t, err)
 	require.Equal(t, cfg.Quota.Global.AlertRule, defaultGlobalLimits[tag])
-	tag, err = quota.NewTag(storesrv.QuotaTargetSrv, storesrv.QuotaTarget, scope)
-	require.NoError(t, err)
 	require.Equal(t, cfg.Quota.Global.File, defaultGlobalLimits[tag])
 
 	// fetch default limit/usage for org

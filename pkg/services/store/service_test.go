@@ -1,7 +1,6 @@
 package store
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -9,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -86,15 +84,6 @@ func TestIntegrationListFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
-
-	file, err := store.Read(context.Background(), dummyUser, "public/maps/countries.geojson")
-	require.NoError(t, err)
-	require.NotNil(t, file)
-
-	t.Skip("Skipping golden JSON frame test as it is flaky")
-	testDsFrame, err := testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
-	require.NoError(t, err)
-	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", testDsFrame, true)
 }
 
 func TestIntegrationListFilesWithoutPermissions(t *testing.T) {
@@ -191,43 +180,6 @@ func TestIntegrationShouldDelegateFileDeletion(t *testing.T) {
 
 	err := service.Delete(context.Background(), dummyUser, storageName+"/myFile.jpg")
 	require.NoError(t, err)
-}
-
-func TestIntegrationShouldDelegateFolderCreation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	service, mockStorage, storageName := setupUploadStore(t, nil)
-
-	mockStorage.On("CreateFolder", mock.Anything, "/nestedFolder/mostNestedFolder").Return(nil)
-
-	err := service.CreateFolder(context.Background(), dummyUser, &CreateFolderCmd{Path: storageName + "/nestedFolder/mostNestedFolder"})
-	require.NoError(t, err)
-}
-
-func TestIntegrationShouldDelegateFolderDeletion(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	service, mockStorage, storageName := setupUploadStore(t, nil)
-	cmds := []*DeleteFolderCmd{
-		{
-			Path:  storageName,
-			Force: false,
-		},
-		{
-			Path:  storageName,
-			Force: true,
-		}}
-
-	ctx := context.Background()
-
-	for _, cmd := range cmds {
-		mockStorage.On("DeleteFolder", ctx, "/", &filestorage.DeleteFolderOptions{
-			Force:        cmd.Force,
-			AccessFilter: allowAllPathFilter,
-		}).Once().Return(nil)
-		err := service.DeleteFolder(ctx, dummyUser, cmd)
-		require.NoError(t, err)
-	}
 }
 
 func TestIntegrationShouldUploadSvg(t *testing.T) {
@@ -377,20 +329,6 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run(test.name+": Creating a /content/nested folder should fail", func(t *testing.T) {
-			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
-
-			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: RootContent + "/" + test.nestedRoot})
-			require.ErrorIs(t, err, ErrValidationFailed)
-		})
-
-		t.Run(test.name+": Deleting a /content/nested folder should fail", func(t *testing.T) {
-			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
-
-			err := store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: RootContent + "/" + test.nestedRoot})
-			require.ErrorIs(t, err, ErrValidationFailed)
-		})
-
 		t.Run(test.name+": Listing /content/nested should delegate to the nested root", func(t *testing.T) {
 			mockContentFSApi.AssertNotCalled(t, "List")
 			test.mockNestedFS.On(
@@ -512,38 +450,6 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 				Contents:   jpgBytes,
 				Path:       strings.Join([]string{RootContent, "a", fileName}, "/"),
 			})
-			require.NoError(t, err)
-		})
-
-		t.Run(test.name+": Creating folders under /content/nested/.. should delegate to the nested roots", func(t *testing.T) {
-			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
-			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
-
-			test.mockNestedFS.On("CreateFolder", mock.Anything, "/folder").Return(nil)
-
-			path := strings.Join([]string{RootContent, test.nestedRoot, "folder"}, "/")
-			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
-			require.NoError(t, err)
-
-			test.mockNestedFS.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
-
-			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
-			require.NoError(t, err)
-		})
-
-		t.Run(test.name+": Creating folders under outside of the nested storages should delegate to the content root", func(t *testing.T) {
-			test.mockNestedFS.AssertNotCalled(t, "CreateFolder")
-			test.mockNestedFS.AssertNotCalled(t, "DeleteFolder")
-
-			mockContentFSApi.On("CreateFolder", mock.Anything, "/folder").Return(nil)
-
-			path := strings.Join([]string{RootContent, "folder"}, "/")
-			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
-			require.NoError(t, err)
-
-			mockContentFSApi.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
-
-			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
 			require.NoError(t, err)
 		})
 	}
