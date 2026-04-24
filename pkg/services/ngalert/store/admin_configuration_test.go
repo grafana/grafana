@@ -20,20 +20,18 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		Logger:   log.NewNopLogger(),
 	}
 
-	sendTo := ngmodels.ExternalAlertmanagers
-
 	t.Run("insert when no config exists", func(t *testing.T) {
 		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        1,
-				SendAlertsTo: &sendTo,
+				SendAlertsTo: ngmodels.ExternalAlertmanagers,
 			},
 		})
 		require.NoError(t, err)
 
 		cfg, err := store.GetAdminConfiguration(1)
 		require.NoError(t, err)
-		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg.SendAlertsTo)
+		require.Equal(t, ngmodels.ExternalAlertmanagers, cfg.SendAlertsTo)
 	})
 
 	t.Run("update existing config does not affect other orgs", func(t *testing.T) {
@@ -42,18 +40,17 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 			err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
 				AdminConfiguration: &ngmodels.AdminConfiguration{
 					OrgID:        orgID,
-					SendAlertsTo: &sendTo,
+					SendAlertsTo: ngmodels.ExternalAlertmanagers,
 				},
 			})
 			require.NoError(t, err)
 		}
 
 		// Update org 2 — this triggered the missing-WHERE bug when multiple orgs existed.
-		internal := ngmodels.InternalAlertmanager
 		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        2,
-				SendAlertsTo: &internal,
+				SendAlertsTo: ngmodels.InternalAlertmanager,
 			},
 		})
 		require.NoError(t, err)
@@ -61,15 +58,15 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		// Org 2 should reflect the update.
 		cfg2, err := store.GetAdminConfiguration(2)
 		require.NoError(t, err)
-		require.Equal(t, ngmodels.InternalAlertmanager, *cfg2.SendAlertsTo)
+		require.Equal(t, ngmodels.InternalAlertmanager, cfg2.SendAlertsTo)
 
 		// Org 1 and 3 must be untouched.
 		cfg1, err := store.GetAdminConfiguration(1)
 		require.NoError(t, err)
-		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg1.SendAlertsTo)
+		require.Equal(t, ngmodels.ExternalAlertmanagers, cfg1.SendAlertsTo)
 
 		cfg3, err := store.GetAdminConfiguration(3)
 		require.NoError(t, err)
-		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg3.SendAlertsTo)
+		require.Equal(t, ngmodels.ExternalAlertmanagers, cfg3.SendAlertsTo)
 	})
 }
