@@ -11,6 +11,7 @@ import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpe
 import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
+import { formatGrafanaDependency } from './formatGrafanaDependency';
 
 interface Props {
   plugin: CatalogPlugin;
@@ -142,7 +143,9 @@ export const VersionList = ({ plugin }: Props) => {
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {formatGrafanaDependency(version.grafanaDependency)}
+              </td>
             </tr>
           );
         })}
