@@ -46,21 +46,23 @@ type UploadRequest struct {
 	OverwriteExistingFile bool
 }
 
-// This service will be removed in the future -- do not write anythign new that depends on it.
+// Deprecated: This service will be removed in the future -- do not write anythign new that depends on it.
 // Currently used for:
 // - "grafana" datasource, will list static files from the public static root
 // - pkg/extensions/report/brandingstorage/storage.go to upload custom branding
 type StorageService interface {
 	registry.BackgroundService
 
-	// List folder contents
+	// Deprecated: this will be removed in the future
 	List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error)
 
-	// Read raw file contents out of the store
+	// Deprecated: this will be removed in the future
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
 
+	// Deprecated: this will be removed in the future
 	Upload(ctx context.Context, user *user.SignedInUser, req *UploadRequest) error
 
+	// Deprecated: this will be removed in the future
 	Delete(ctx context.Context, user *user.SignedInUser, path string) error
 }
 

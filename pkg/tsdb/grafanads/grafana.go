@@ -38,10 +38,12 @@ var (
 	_ backend.CheckHealthHandler = (*Service)(nil)
 )
 
+// nolint:staticcheck
 func ProvideService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	return newService(store, features)
 }
 
+// nolint:staticcheck
 func newService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		store:    store,
