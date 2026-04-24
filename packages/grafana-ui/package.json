@@ -69,7 +69,7 @@
     "@floating-ui/react": "0.27.16",
     "@grafana/data": "12.4.4",
     "@grafana/e2e-selectors": "12.4.4",
-    "@grafana/faro-web-sdk": "^1.13.2",
+    "@grafana/faro-web-sdk": "^2.2.4",
     "@grafana/i18n": "12.4.4",
     "@grafana/schema": "12.4.4",
     "@hello-pangea/dnd": "18.0.1",
