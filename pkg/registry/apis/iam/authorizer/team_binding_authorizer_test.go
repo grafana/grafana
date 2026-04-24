@@ -20,6 +20,7 @@ func newTeamBinding(teamName, name, subjectName string) *iamv0.TeamBinding {
 				Name: teamName,
 			},
 			Subject: iamv0.TeamBindingspecSubject{
+				Kind: "User",
 				Name: subjectName,
 			},
 		},
@@ -198,7 +199,7 @@ func TestTeamBinding_BeforeUpdate(t *testing.T) {
 			authz := NewTeamBindingAuthorizer(accessClient)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
-			err := authz.BeforeUpdate(ctx, binding)
+			err := authz.BeforeUpdate(ctx, binding, binding)
 			if tt.shouldAllow {
 				require.NoError(t, err)
 			} else {

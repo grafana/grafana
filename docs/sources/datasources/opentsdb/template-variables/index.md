@@ -16,34 +16,13 @@ menuTitle: Template variables
 title: OpenTSDB template variables
 weight: 300
 last_reviewed: 2026-01-28
-refs:
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  troubleshooting-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
 ---
 
 # OpenTSDB template variables
 
 Instead of hard-coding server, application, and sensor names in your metric queries, you can use template variables. Variables appear as drop-down menus at the top of the dashboard, making it easy to change the data being displayed without editing queries.
 
-For an introduction to template variables, refer to the [Variables](ref:variables) documentation.
+For an introduction to template variables, refer to the [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) documentation.
 
 ## Query variable
 
@@ -127,7 +106,7 @@ suggest_tagv(web)
 
 Returns tag values matching `web` across all metrics, such as `webserver01`, `webserver02`, `web-prod-01`.
 
-If template variables aren't populating in the **Preview of values** section, refer to [Troubleshooting](ref:troubleshooting-opentsdb).
+If template variables aren't populating in the **Preview of values** section, refer to [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/).
 
 ## Nested template variables
 
@@ -246,6 +225,6 @@ Use these in the downsample interval field for automatic interval adjustment:
 
 ## Next steps
 
-- [Build queries](ref:query-editor) using your template variables.
-- [Set up alerting](ref:alerting) with templated queries.
-- [Troubleshoot issues](ref:troubleshooting-opentsdb) if variables aren't populating.
+- [Build queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/) using your template variables.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/) with templated queries.
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) if variables aren't populating.

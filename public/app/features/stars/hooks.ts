@@ -5,7 +5,7 @@ import {
   useGetStarsQuery as useLegacyGetStarsQuery,
   useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
   useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
-} from '@grafana/api-clients/rtkq/legacy/user';
+} from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';

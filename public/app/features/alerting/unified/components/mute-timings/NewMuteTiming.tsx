@@ -18,7 +18,7 @@ function NewMuteTimingPage() {
       navId={navId}
       pageNav={{
         id: 'alert-policy-new',
-        text: t('alerting.new-mute-timing-page.text.add-time-interval', 'Add time interval'),
+        text: t('alerting.new-mute-timing-page.text.add-time-interval', 'New time interval'),
         parentItem: {
           text: t('alerting.time-intervals.title', 'Time intervals'),
           url: parentUrl,

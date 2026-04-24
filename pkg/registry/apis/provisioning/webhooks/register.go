@@ -31,22 +31,28 @@ type WebhookExtraBuilder struct {
 
 // FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
+		return buildWebhookURL(r.Spec.Webhook.BaseURL, r)
+	}
+
 	if !b.isPublic {
 		return ""
 	}
 
+	return buildWebhookURL(b.urlProvider(ctx, r.GetNamespace()), r)
+}
+
+func buildWebhookURL(baseURL string, r *provisioning.Repository) string {
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-	webhookURL := fmt.Sprintf(
-		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		b.urlProvider(ctx, r.GetNamespace()),
+	return fmt.Sprintf(
+		"%s/apis/%s/%s/namespaces/%s/%s/%s/webhook",
+		strings.TrimRight(baseURL, "/"),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),
 		gvr.Resource,
 		r.GetName(),
 	)
-
-	return webhookURL
 }
 
 // HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
@@ -76,7 +82,7 @@ func ProvideWebhooksWithImages(
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients)
+			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)

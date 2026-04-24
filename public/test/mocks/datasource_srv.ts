@@ -1,13 +1,13 @@
 import { Observable } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
   getDataSourceUID,
 } from '@grafana/data';
 
@@ -41,9 +41,9 @@ export class MockDataSourceApi extends DataSourceApi {
     meta?: DataSourcePluginMeta,
     public error: string | null = null
   ) {
-    const instaceSettings =
+    const instanceSettings =
       typeof datasource === 'string' ? ({ name: datasource } as DataSourceInstanceSettings) : datasource;
-    super(instaceSettings);
+    super(instanceSettings);
     if (result) {
       this.result = result;
     }

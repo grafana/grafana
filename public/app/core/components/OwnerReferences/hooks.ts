@@ -1,5 +1,5 @@
 import { useUpdateFolderMutation, useGetFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 
 /**
  * Get the owner references for a resource.

@@ -1,6 +1,5 @@
 import { defaults } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
-import { useAsyncFn } from 'react-use';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { computeInheritedTree } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
@@ -8,49 +7,83 @@ import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
+import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertmanagerGroup,
+  type ObjectMatcher,
+  ROUTES_META_SYMBOL,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { ContactPointsState } from '../../types/alerting';
+import { type ContactPointsState } from '../../types/alerting';
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../../utils/constants';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { contactPointsStateDtoToModel } from './../../api/grafana';
-import { useRouteGroupsMatcher } from './../../useRouteGroupsMatcher';
-import { InsertPosition } from './../../utils/routeTree';
-import { NotificationPoliciesFilter, findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
+import { type InsertPosition } from './../../utils/routeTree';
+import { findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
+import { RoutesMatchingFiltersProvider } from './RoutesMatchingFiltersContext';
+import { ResetModal } from './components/Modals';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 import {
   useAddNotificationPolicy,
   useDeleteNotificationPolicy,
+  useDeleteRoutingTree,
   useNotificationPolicyRoute,
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
+import { getAlertGroupsKey } from './utils';
+
+/** Async function that computes route-to-alert-group mapping off the main thread. */
+export type GetRouteGroupsMapFn = (
+  rootRoute: RouteWithID,
+  alertGroups: AlertmanagerGroup[],
+  options?: { unquoteMatchers?: boolean }
+) => Promise<Map<string, AlertmanagerGroup[]>>;
 
 interface PoliciesTreeProps {
   routeName?: string;
+  contactPointFilter?: string;
+  labelMatchersFilter?: ObjectMatcher[];
+  /** Whether policies default to expanded (true) or collapsed (false). Used with expandedOverrides. */
+  defaultExpanded?: boolean;
+  /** Set of policy IDs that override the defaultExpanded state. */
+  expandedOverrides?: Set<string>;
+  /** Called when a policy is toggled. When provided, the parent manages expand state. */
+  onTogglePolicyExpanded?: (policyId: string) => void;
+  /** Alert groups data for instance matching preview. When omitted, instance matching is disabled. */
+  alertGroups?: AlertmanagerGroup[];
+  /** Refetch alert groups after a policy mutation. */
+  refetchAlertGroups?: () => void;
+  /** Worker-based matching function (from useRouteGroupsMatcher). When omitted, instance matching is disabled. */
+  getRouteGroupsMap?: GetRouteGroupsMapFn;
 }
 
-export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
+export const PoliciesTree = ({
+  routeName,
+  contactPointFilter,
+  labelMatchersFilter,
+  defaultExpanded,
+  expandedOverrides,
+  onTogglePolicyExpanded,
+  alertGroups,
+  refetchAlertGroups,
+  getRouteGroupsMap,
+}: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
 
-  const [_, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
-  const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
-
-  const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
-  const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
-
-  const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
-  const { getRouteGroupsMap } = useRouteGroupsMatcher();
+  const { selectedAlertmanager, isGrafanaAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
   const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
   const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
@@ -86,10 +119,10 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
     alertmanager: selectedAlertmanager ?? '',
   });
 
-  const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: selectedAlertmanager ?? '' },
-    { skip: !canSeeAlertGroups || !selectedAlertmanager }
-  );
+  // resetting the routing tree (used for the "Reset" action in the more dropdown)
+  const [deleteRoutingTree] = useDeleteRoutingTree();
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetRoute, setResetRoute] = useState<RouteWithID | null>(null);
 
   const { contactPoints: receivers } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager ?? '',
@@ -106,18 +139,42 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
   }, [defaultPolicy]);
   const routeProvenance = defaultPolicy?.provenance;
 
-  // useAsync could also work but it's hard to wait until it's done in the tests
-  // Combining with useEffect gives more predictable results because the condition is in useEffect
-  const [{ value: routeAlertGroupsMap, error: instancesPreviewError }, triggerGetRouteGroupsMap] = useAsyncFn(
-    getRouteGroupsMap,
-    [getRouteGroupsMap]
-  );
+  // Compute route-to-alert-group mapping via the worker.
+  // Uses a ref-guard to avoid re-triggering when the async result causes a re-render.
+  const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState<Map<string, AlertmanagerGroup[]> | undefined>();
+  const [instancesPreviewError, setInstancesPreviewError] = useState<Error | undefined>();
+  const matchingInputsRef = useRef<{ rootRouteId: string | undefined; alertGroupsKey: string | undefined }>({
+    rootRouteId: undefined,
+    alertGroupsKey: undefined,
+  });
+
+  const computeMatching = useCallback(async () => {
+    if (!rootRoute || !alertGroups || !getRouteGroupsMap) {
+      return;
+    }
+    const alertGroupsKey = getAlertGroupsKey(alertGroups);
+    const inputKey = { rootRouteId: rootRoute.id, alertGroupsKey };
+    // Skip if inputs haven't changed (prevents re-triggering after state update)
+    if (
+      matchingInputsRef.current.rootRouteId === inputKey.rootRouteId &&
+      matchingInputsRef.current.alertGroupsKey === inputKey.alertGroupsKey
+    ) {
+      return;
+    }
+    matchingInputsRef.current = inputKey;
+
+    try {
+      const result = await getRouteGroupsMap(rootRoute, alertGroups, { unquoteMatchers: !isGrafanaAlertmanager });
+      setRouteAlertGroupsMap(result);
+      setInstancesPreviewError(undefined);
+    } catch (error) {
+      setInstancesPreviewError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }, [rootRoute, alertGroups, getRouteGroupsMap, isGrafanaAlertmanager]);
 
   useEffect(() => {
-    if (rootRoute && alertGroups) {
-      triggerGetRouteGroupsMap(rootRoute, alertGroups, { unquoteMatchers: !isGrafanaAlertmanager });
-    }
-  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap, isGrafanaAlertmanager]);
+    computeMatching();
+  }, [computeMatching]);
 
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
@@ -163,11 +220,16 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
     handleActionResult({ error: addNotificationPolicyState.error });
   }
 
+  function handleResetPolicy(route: RouteWithID) {
+    setResetRoute(route);
+    setIsResetModalOpen(true);
+  }
+
   function handleActionResult({ error }: { error?: Error }) {
     if (!error) {
       appNotification.success('Updated notification policies');
     }
-    if (selectedAlertmanager) {
+    if (selectedAlertmanager && refetchAlertGroups) {
       refetchAlertGroups();
     }
 
@@ -239,37 +301,56 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
       )}
       {hasPoliciesData && (
         <Stack direction="column" gap={1}>
-          <NotificationPoliciesFilter
-            onChangeMatchers={setLabelMatchersFilter}
-            onChangeReceiver={setContactPointFilter}
-            matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}
-          />
-          <Policy
-            receivers={receivers}
-            // add the timing defaults to the default policy to make sure child policies inherit properly
-            currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
-            contactPointsState={contactPointsState.receivers}
-            readOnly={!hasConfigurationAPI}
-            provenance={routeProvenance}
-            alertManagerSourceName={selectedAlertmanager}
-            onAddPolicy={openAddModal}
-            onEditPolicy={openEditModal}
-            onDeletePolicy={openDeleteModal}
-            onShowAlertInstances={showAlertGroupsModal}
-            routesMatchingFilters={routesMatchingFilters}
-            matchingInstancesPreview={{
-              groupsMap: routeAlertGroupsMap,
-              enabled: Boolean(canSeeAlertGroups && !instancesPreviewError),
-            }}
-            isAutoGenerated={false}
-            isDefaultPolicy
-          />
+          <RoutesMatchingFiltersProvider value={routesMatchingFilters}>
+            {(!routesMatchingFilters.filtersApplied || routesMatchingFilters.matchedRoutesWithPath.size > 0) && (
+              <Policy
+                receivers={receivers}
+                // add the timing defaults to the default policy to make sure child policies inherit properly
+                currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
+                contactPointsState={contactPointsState.receivers}
+                readOnly={!hasConfigurationAPI}
+                provenance={routeProvenance}
+                alertManagerSourceName={selectedAlertmanager}
+                onAddPolicy={openAddModal}
+                onEditPolicy={openEditModal}
+                onDeletePolicy={openDeleteModal}
+                onShowAlertInstances={showAlertGroupsModal}
+                onResetPolicy={handleResetPolicy}
+                matchingInstancesPreview={{
+                  groupsMap: routeAlertGroupsMap,
+                  enabled: Boolean(getRouteGroupsMap && canSeeAlertGroups && !instancesPreviewError),
+                }}
+                isAutoGenerated={false}
+                isDefaultPolicy
+                isActualDefaultPolicy={!routeName || routeName === ROOT_ROUTE_NAME}
+                defaultExpanded={defaultExpanded}
+                expandedOverrides={expandedOverrides}
+                onTogglePolicyExpanded={onTogglePolicyExpanded}
+              />
+            )}
+          </RoutesMatchingFiltersProvider>
         </Stack>
       )}
       {addModal}
       {editModal}
       {deleteModal}
       {alertInstancesModal}
+      <ResetModal
+        isOpen={isResetModalOpen}
+        onConfirm={async () => {
+          await deleteRoutingTree.execute({
+            name: resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ROOT_ROUTE_NAME,
+            resourceVersion: resetRoute?.[ROUTES_META_SYMBOL]?.resourceVersion,
+          });
+          refetchPolicies();
+        }}
+        onDismiss={() => {
+          setIsResetModalOpen(false);
+          setResetRoute(null);
+        }}
+        routeName={resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ''}
+        isActualDefaultPolicy={!routeName || routeName === ROOT_ROUTE_NAME}
+      />
     </>
   );
 };
@@ -353,8 +434,7 @@ function findMapIntersection(...matchingRoutes: FilterResult[]): FilterResult {
     // Check if the key exists in all other maps
     if (matchingRoutes.every((map) => map.has(key))) {
       // If yes, add the key to the result map
-      // @ts-ignore
-      result.set(key, matchingRoutes[0].get(key));
+      result.set(key, matchingRoutes[0].get(key)!);
     }
   }
 

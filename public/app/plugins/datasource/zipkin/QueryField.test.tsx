@@ -1,10 +1,10 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 
-import { CascaderOption } from '@grafana/ui';
+import { type CascaderOption } from '@grafana/ui';
 
 import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
-import { ZipkinDatasource } from './datasource';
-import { ZipkinQuery } from './types';
+import { type ZipkinDatasource } from './datasource';
+import { type ZipkinQuery } from './types';
 
 describe('QueryField', () => {
   it('renders properly', async () => {

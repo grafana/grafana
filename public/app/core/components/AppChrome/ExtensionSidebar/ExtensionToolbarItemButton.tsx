@@ -46,8 +46,10 @@ function ExtensionToolbarItemButtonComponent(
       iconOnly
       data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
       variant={isOpen ? 'active' : 'default'}
+      aria-expanded={isOpen}
       onClick={onClick}
       tooltip={tooltip}
+      aria-pressed={isOpen}
     />
   );
 }

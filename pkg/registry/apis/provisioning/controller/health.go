@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -31,10 +32,19 @@ type StatusPatcher interface {
 type RepositoryHealthCheckerInterface interface {
 	ShouldCheckHealth(repo *provisioning.Repository) bool
 	RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error)
-	RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error)
+	RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error)
 	RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error
 	RecordFailure(ctx context.Context, failureType provisioning.HealthFailureType, err error, repo *provisioning.Repository) error
 	HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool
+}
+
+// HealthResultWithPatchOps contains health-check results and patch operations
+// to be applied in a single status patch request.
+type HealthResultWithPatchOps struct {
+	TestResults    *provisioning.TestResults
+	HealthStatus   provisioning.HealthStatus
+	ReadyCondition metav1.Condition
+	PatchOps       []map[string]interface{}
 }
 
 // RepositoryHealthChecker provides unified health checking for repositories
@@ -64,13 +74,24 @@ func (hc *RepositoryHealthChecker) ShouldCheckHealth(repo *provisioning.Reposito
 		return true
 	}
 
-	// If the repository has a hook error, don't run the health check
-	if repo.Status.Health.Error == provisioning.HealthFailureHook {
+	// While the hook-failure cooldown is still active, skip the health check so health status is not overwritten.
+	if hc.inHookFailureCooldown(repo) {
 		return false
 	}
 
 	// Check general timing for health checks
 	return !hc.hasRecentHealthCheck(repo.Status.Health)
+}
+
+// inHookFailureCooldown reports whether hook-failure cooldown suppression
+// should currently apply to this repository.
+// No workflows implies no webhook is expected, thus no cooldown
+// (e.g. when deleting an existing webhook).
+func (hc *RepositoryHealthChecker) inHookFailureCooldown(repo *provisioning.Repository) bool {
+	if repo == nil || len(repo.Spec.Workflows) == 0 {
+		return false
+	}
+	return hc.HasRecentFailure(repo.Status.Health, provisioning.HealthFailureHook)
 }
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
@@ -177,37 +198,44 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 }
 
 // RefreshHealthWithPatchOps performs a health check on an existing repository
-// and returns the test results, health status, and patch operations to apply.
+// and returns the health result and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
-func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error) {
+//
+// When the hook-failure cooldown is active, the refresh is skipped to avoid
+// overwriting the recorded hook failure.
+func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error) {
 	cfg := repo.Config()
+
+	if hc.inHookFailureCooldown(cfg) {
+		logging.FromContext(ctx).Info("skipping health refresh while hook failure cooldown is active")
+		return HealthResultWithPatchOps{
+			HealthStatus:   cfg.Status.Health,
+			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, provisioning.ReasonInvalidSpec),
+		}, nil
+	}
 
 	// Use health checker to perform comprehensive health check with existing status
 	testResults, newHealthStatus, err := hc.refreshHealth(ctx, repo, cfg.Status.Health)
 	if err != nil {
-		return nil, provisioning.HealthStatus{}, nil, fmt.Errorf("health check failed: %w", err)
+		return HealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
 	var patchOps []map[string]interface{}
-
-	// Only return patch operation if health status actually changed
 	if hc.hasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
-		patchOps = append(patchOps, map[string]interface{}{
+		patchOps = []map[string]interface{}{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
-		})
+		}}
 	}
 
-	// Update Ready condition based on health status
-	// Repository health checks don't classify error types, so we use InvalidSpec as the default reason
-	readyCondition := buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec)
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), readyCondition); conditionPatchOps != nil {
-		patchOps = append(patchOps, conditionPatchOps...)
-	}
-
-	return testResults, newHealthStatus, patchOps, nil
+	return HealthResultWithPatchOps{
+		TestResults:    testResults,
+		HealthStatus:   newHealthStatus,
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec),
+		PatchOps:       patchOps,
+	}, nil
 }
 
 // RefreshTimestamp updates the health status timestamp without changing other fields
@@ -230,7 +258,7 @@ func (hc *RepositoryHealthChecker) RefreshTimestamp(ctx context.Context, repo *p
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
+	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
 	defer func() {

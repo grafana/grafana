@@ -13,24 +13,22 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 // TestIntegrationProvisioning_BOMs tests that BOMs in provisioned files are handled correctly
 func TestIntegrationProvisioning_BOMs(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "bom-test-repo"
 
 	t.Run("dashboard JSON file with UTF-8 BOM prefix", func(t *testing.T) {
 		// Create repository first
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -61,7 +59,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 				return
 			}
 			assert.NotNil(collect, dashboard)
-		}, waitTimeoutDefault, waitIntervalDefault, "dashboard should be provisioned")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned")
 
 		// Verify BOM was stripped from the stored dashboard
 		spec, ok := dashboard.Object["spec"].(map[string]any)
@@ -112,10 +110,10 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository
 		repoName := "bom-embedded-repo"
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -131,7 +129,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 				return
 			}
 			assert.NotNil(collect, dashboard)
-		}, waitTimeoutDefault, waitIntervalDefault, "dashboard should be provisioned")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned")
 
 		// Verify all BOMs were stripped
 		spec := dashboard.Object["spec"].(map[string]any)
@@ -186,10 +184,10 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository first
 		repoName := "bom-deletion-repo"
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -211,7 +209,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 				return
 			}
 			assert.NotNil(collect, dashboard)
-		}, waitTimeoutDefault, waitIntervalDefault, "dashboard should be provisioned")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned")
 
 		// Verify dashboard was provisioned with BOMs stripped
 		spec := dashboard.Object["spec"].(map[string]any)
@@ -245,7 +243,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 				return
 			}
 			// Repository not found - good!
-		}, waitTimeoutDefault, waitIntervalDefault, "repository should be deleted")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should be deleted")
 
 		// Verify dashboard STILL EXISTS (released, not deleted)
 		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-deletion-test", metav1.GetOptions{})
@@ -282,10 +280,10 @@ spec:
 
 		// Create repository first
 		repoName := "bom-yaml-repo"
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -306,7 +304,7 @@ spec:
 				return
 			}
 			assert.NotNil(collect, dashboard)
-		}, waitTimeoutDefault, waitIntervalDefault, "dashboard from YAML should be provisioned")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard from YAML should be provisioned")
 
 		// Verify BOM was stripped
 		spec := dashboard.Object["spec"].(map[string]any)

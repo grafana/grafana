@@ -1,10 +1,10 @@
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { type ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
-import { RootElement } from 'app/features/canvas/runtime/root';
+import { type RootElement } from 'app/features/canvas/runtime/root';
 
-import { DragNode, DropNode } from '../../types';
+import { type DragNode, type DropNode } from '../../types';
 
 export interface TreeElement {
   key: number;
@@ -14,6 +14,8 @@ export interface TreeElement {
   dataRef: ElementState | FrameState;
   style?: CSSProperties;
 }
+
+type TreeElementCallback = (item: TreeElement, index: number, arr: TreeElement[]) => void;
 
 export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {
   let elements: TreeElement[] = [];
@@ -46,11 +48,7 @@ export function onNodeDrop(
   const destPos = info.node.pos.split('-');
   const destPosition = info.dropPosition - Number(destPos[destPos.length - 1]);
 
-  const loop = (
-    data: TreeElement[],
-    key: number,
-    callback: { (item: TreeElement, index: number, arr: TreeElement[]): void }
-  ) => {
+  const loop = (data: TreeElement[], key: number, callback: TreeElementCallback) => {
     data.forEach((item, index, arr) => {
       if (item.key === key) {
         callback(item, index, arr);

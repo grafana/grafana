@@ -3108,6 +3108,7 @@
                   "summary": "Pull (incremental)",
                   "description": "look for changes since the last sync",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": true
                     }
@@ -3117,6 +3118,7 @@
                   "summary": "Pull from repository",
                   "description": "pull all files",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": false
                     }
@@ -4235,7 +4237,13 @@
         }
       },
       "FixFolderMetadataJobOptions": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "ref": {
+            "description": "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+            "type": "string"
+          }
+        }
       },
       "GitHubConnectionConfig": {
         "type": "object",
@@ -4313,7 +4321,7 @@
             "type": "string"
           },
           "url": {
-            "description": "The repository URL (e.g. `https://github.com/example/test.git`).",
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
           }
         }
@@ -4642,11 +4650,23 @@
       },
       "JobSpec": {
         "type": "object",
+        "required": ["action"],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.",
             "type": "string",
-            "enum": ["delete", "fixFolderMetadata", "migrate", "move", "pr", "pull", "push"]
+            "default": "",
+            "enum": [
+              "delete",
+              "deleteResources",
+              "fixFolderMetadata",
+              "migrate",
+              "move",
+              "pr",
+              "pull",
+              "push",
+              "releaseResources"
+            ]
           },
           "delete": {
             "description": "Delete when the action is `delete`",
@@ -5112,6 +5132,14 @@
             "type": "string",
             "default": "",
             "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+          },
+          "webhook": {
+            "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookConfig"
+              }
+            ]
           },
           "workflows": {
             "description": "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
@@ -5860,6 +5888,15 @@
           }
         }
       },
+      "WebhookConfig": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "description": "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+            "type": "string"
+          }
+        }
+      },
       "WebhookResponse": {
         "type": "object",
         "properties": {
@@ -5908,6 +5945,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "lastRotated": {
+            "type": "integer",
+            "format": "int64"
+          },
           "subscribedEvents": {
             "type": "array",
             "items": {
@@ -5939,6 +5980,10 @@
             "type": "string",
             "maxLength": 24576,
             "minLength": 1
+          },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
           },
           "name": {
             "description": "Name in the secret service (reference)",

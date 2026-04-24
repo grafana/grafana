@@ -1,19 +1,18 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { PanelEditor } from './PanelEditor';
+import { type PanelEditor } from './PanelEditor';
 
 export interface Props {
   panelEditor: PanelEditor;
 }
 
 export function PanelEditControls({ panelEditor }: Props) {
-  const { tableView, dataPane, useQueryExperienceNext } = panelEditor.useState();
+  const { tableView, dataPane } = panelEditor.useState();
   const styles = useStyles2(getStyles);
 
   if (!dataPane) {
@@ -31,19 +30,6 @@ export function PanelEditControls({ panelEditor }: Props) {
         aria-label={t('dashboard-scene.panel-edit-controls.table-view-aria-label-toggletableview', 'Toggle table view')}
         data-testid={selectors.components.PanelEditor.toggleTableView}
       />
-      {config.featureToggles.queryEditorNext && (
-        <InlineSwitch
-          label={t('dashboard-scene.panel-edit-controls.query-editor-version', 'Query editor v2')}
-          showLabel={true}
-          id="query-editor-version"
-          value={useQueryExperienceNext ?? true}
-          onClick={panelEditor.onToggleQueryEditorVersion}
-          aria-label={t(
-            'dashboard-scene.panel-edit-controls.query-editor-version-toggle',
-            'Toggle between query editor v1 and v2'
-          )}
-        />
-      )}
     </div>
   );
 }

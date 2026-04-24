@@ -142,6 +142,7 @@ debug.test
 /packaging/**/*.tar.gz.sha256
 pkg/cmd/grafana-server/__debug_bin
 pkg/services/quota/quotaimpl/storage/storage.json
+pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -265,8 +266,15 @@ public/mockServiceWorker.js
 .hippo
 
 coverage-summary.json
+
+# older path, but keeping to avoid surprises for devs who may have the earlier gitignored data
 devenv/blocks/auth/signer/keys/ec_private_key.pem
+
+devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 
 # Spec-kit files shouldn't be committed without a major design process
 .specs
 .playwright-mcp/
+overrides.yaml
+
+.profiles

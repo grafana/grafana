@@ -6,11 +6,6 @@ describe('NavLandingPageCard', () => {
   const mockText = 'My heading';
   const mockUrl = 'http://www.example.com/';
 
-  it('uses the text as a heading', () => {
-    render(<NavLandingPageCard text={mockText} url={mockUrl} />);
-    expect(screen.getByRole('heading', { name: mockText })).toBeInTheDocument();
-  });
-
   it('labels the link correctly', () => {
     render(<NavLandingPageCard text={mockText} url={mockUrl} />);
     const link = screen.getByRole('link', { name: mockText });

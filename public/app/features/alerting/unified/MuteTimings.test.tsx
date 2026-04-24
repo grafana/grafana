@@ -1,4 +1,4 @@
-import { InitialEntry } from 'history';
+import { type InitialEntry } from 'history';
 import { last } from 'lodash';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, within } from 'test/test-utils';
@@ -13,7 +13,7 @@ import {
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import EditMuteTimingPage from './components/mute-timings/EditMuteTiming';
@@ -177,7 +177,7 @@ describe('Mute timings', () => {
     const capture = captureRequests();
     renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
 
-    await screen.findByText(/add time interval/i);
+    await screen.findByText(/new time interval/i);
 
     await fillOutForm({
       name: 'maintenance period',

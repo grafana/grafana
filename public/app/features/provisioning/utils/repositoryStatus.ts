@@ -1,5 +1,5 @@
-import { BadgeColor, IconName } from '@grafana/ui';
-import { SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type BadgeColor, type IconName } from '@grafana/ui';
+import { type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 export interface RepositoryStatus {
   color: BadgeColor;

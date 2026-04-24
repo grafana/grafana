@@ -1,4 +1,7 @@
-import { GetSessionApiResponse, GetSnapshotResponseDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+import {
+  type GetSessionApiResponse,
+  type GetSnapshotResponseDto,
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';

@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import {
   Box,
   InlineField,
@@ -13,7 +13,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { InfluxOptions } from '../../../types';
+import { type InfluxOptions } from '../../../types';
 
 import { getInlineLabelStyles } from './constants';
 import {

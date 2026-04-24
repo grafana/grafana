@@ -37,16 +37,13 @@ export const defaultTargetSpec = (): TargetSpec => ({});
 
 export interface TransformationSpec {
 	type: "regex" | "logfmt";
-	expression: string;
-	field: string;
-	mapValue: string;
+	expression?: string;
+	field?: string;
+	mapValue?: string;
 }
 
 export const defaultTransformationSpec = (): TransformationSpec => ({
 	type: "regex",
-	expression: "",
-	field: "",
-	mapValue: "",
 });
 
 export interface Spec {

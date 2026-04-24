@@ -12,45 +12,7 @@ labels:
 title: Query profile data
 menuTitle: Query profile data
 weight: 400
-refs:
-  configure-tempo-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
-  flame-graph:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  explore-profiles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
-  explore-profiles-install:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/access/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/access/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-  flame-graph-panel:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
 ---
-
-https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
 
 # Query profile data
 
@@ -60,14 +22,14 @@ You can query your profile data using the open source Grafana Profiles Drilldown
 - Data source query editor provides complete control over your data exploration and is recommended for experienced users.
 
 In addition, you can embed flame graph panels in Grafana dashboards.
-Refer to the [Flame graph panel](ref:flame-graph-panel) documentation for details.
+Refer to the [Flame graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/) documentation for details.
 
 ## Profiles Drilldown
 
-[Grafana Profiles Drilldown](ref:explore-profiles) is a native Grafana application designed to integrate seamlessly with Pyroscope, the open source continuous profiling platform, providing a smooth, queryless experience for browsing and analyzing profiling data.
+[Grafana Profiles Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/) is a native Grafana application designed to integrate seamlessly with Pyroscope, the open source continuous profiling platform, providing a smooth, queryless experience for browsing and analyzing profiling data.
 
 You can use Profiles Drilldown in Grafana Cloud or in your own Grafana instance.
-For more information, refer to [Access or install Profiles Drilldown](ref:explore-profiles-install).
+For more information, refer to [Access or install Profiles Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/access/).
 
 ![Profiles Drilldown home screen](/media/docs/explore-profiles/explore-profiles-homescreen-v0.1.17.png)
 
@@ -119,7 +81,7 @@ To access the query editor:
 1. Expand the **Options** section to view **Query Type** and **Group by**.
    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
-1. Select a query type to return the profile data. Data is shown in the [Flame Graph](ref:flame-graph), metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
+1. Select a query type to return the profile data. Data is shown in the [Flame Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/), metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
 
 Using **Group by**, you can group metric data by a specified label.
 Without any **Group by** label, metric data aggregates over all the labels into single time series.
@@ -130,7 +92,7 @@ In conjunction with **Group by**, you can set a positive number in the **Limit**
 ### Profiles query results
 
 Profiles can be visualized in a flame graph.
-Refer to the [Flame Graph documentation](ref:flame-graph) to learn about the visualization and its features.
+Refer to the [Flame Graph documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/) to learn about the visualization and its features.
 
 ![Flame graph](/media/docs/pyroscope/query-editor/flame-graph.png 'Flame graph')
 

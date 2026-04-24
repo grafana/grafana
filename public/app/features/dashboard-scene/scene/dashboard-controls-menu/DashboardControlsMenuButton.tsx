@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardControlsMenu } from './DashboardControlsMenu';
 import { useDashboardControls } from './utils';
@@ -19,6 +22,20 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   const { variables, links, annotations } = useDashboardControls(dashboard);
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;
+  const [key, setKey] = useState('');
+
+  // hack to prevent the controls menu dropdown to appear above the confirmation modal (e.g. when deleting a variable)
+  // we do this because Dropdown should pass zIndex.dropdown to Portal but does not
+  // passing the zIndex seems to be the right thing to do but may break many things out there
+  useEffect(() => {
+    const handler = () => {
+      setKey(String(Date.now()));
+    };
+    const sub = appEvents.subscribe(ShowConfirmModalEvent, handler);
+    return () => {
+      sub.unsubscribe();
+    };
+  }, []);
 
   if (!hasDashboardControls) {
     return null;
@@ -26,6 +43,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
 
   return (
     <Dropdown
+      key={key}
       placement="bottom-start"
       overlay={
         <DashboardControlsMenu
@@ -34,6 +52,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
           annotations={annotations}
           dashboardUID={uid}
           isEditing={isEditing}
+          dashboard={dashboard}
         />
       }
     >

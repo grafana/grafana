@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 

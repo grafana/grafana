@@ -109,11 +109,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 
 	// Reset metrics to avoid stale data
-	sch.metrics.GroupRules.Reset()
-	sch.metrics.SimpleNotificationRules.Reset()
-	sch.metrics.Groups.Reset()
-	sch.metrics.SimplifiedEditorRules.Reset()
-	sch.metrics.PrometheusImportedRules.Reset()
+	sch.metrics.ResetRuleMetrics()
 
 	// Set metrics
 	for key, count := range buckets {

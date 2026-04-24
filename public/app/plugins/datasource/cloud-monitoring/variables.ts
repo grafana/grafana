@@ -1,12 +1,12 @@
-import { from, Observable } from 'rxjs';
+import { from, type Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
 
 import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
 import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
-import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery } from './types/types';
+import type CloudMonitoringDatasource from './datasource';
+import { type CloudMonitoringVariableQuery } from './types/types';
 
 export class CloudMonitoringVariableSupport extends CustomVariableSupport<
   CloudMonitoringDatasource,

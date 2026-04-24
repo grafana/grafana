@@ -1,14 +1,22 @@
 import { css } from '@emotion/css';
-import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
+import {
+  type ClickedItemData,
+  type ColorScheme,
+  type ColorSchemeDiff,
+  type PaneView,
+  type SelectedView,
+  type ViewMode,
+  type TextAlign,
+} from '../types';
 
-import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
+import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
@@ -40,7 +48,9 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  selectedView: SelectedView;
+  selectedView?: SelectedView;
+  viewMode?: ViewMode;
+  paneView?: PaneView;
   search: string;
 };
 
@@ -68,6 +78,8 @@ const FlameGraphCanvas = ({
   collapsing,
   getExtraContextMenuButtons,
   selectedView,
+  viewMode,
+  paneView,
   search,
 }: Props) => {
   const styles = getStyles();
@@ -225,6 +237,8 @@ const FlameGraphCanvas = ({
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
           selectedView={selectedView}
+          viewMode={viewMode}
+          paneView={paneView}
           search={search}
         />
       )}

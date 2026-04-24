@@ -3,8 +3,8 @@
  *
  * It includes auto-complete for template data and syntax highlighting
  */
-import { IDisposable, editor } from 'monaco-editor';
-import { ComponentProps, useEffect, useRef } from 'react';
+import { type IDisposable, type editor } from 'monaco-editor';
+import { type ComponentProps, useEffect, useRef } from 'react';
 
 import { CodeEditor } from '@grafana/ui';
 

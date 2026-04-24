@@ -115,6 +115,24 @@ func Test_expand(t *testing.T) {
 		require.True(t, errors.As(err, &expandErr))
 		require.EqualError(t, expandErr, "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}The instance has been down for {{ $value minutes, please check the instance is online': error parsing template __alert_test: template: __alert_test:1: function \"minutes\" not defined")
 	})
+
+	t.Run("templated label key is not expanded", func(t *testing.T) {
+		templatedKey := `{{ with (index $labels "instance") }}key-{{.}}{{ end }}`
+		original := map[string]string{templatedKey: "{{ $labels.instance }}"}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{templatedKey: "host1"}, results)
+	})
+
+	t.Run("empty label key uses fallback key", func(t *testing.T) {
+		original := map[string]string{"": "value"}
+
+		results, err := expand(ctx, logger, "test", original, template.Data{}, nil, time.Now())
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{emptyLabelKeyPrefix: "value"}, results)
+	})
 }
 
 func Test_mergeLabels(t *testing.T) {

@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AppEvents, CoreApp, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { AppEvents, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Box, Button, ButtonGroup, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
@@ -13,7 +13,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 
-import { AnnotationLayer } from './AnnotationEditableElement';
+import { type AnnotationLayer } from './AnnotationEditableElement';
 
 export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
@@ -71,7 +71,7 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
   const onSelectFromQueryLibrary = useCallback(() => {
     openDrawer({
       options: {
-        context: CoreApp.Dashboard,
+        context: 'dashboard-annotations',
       },
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {

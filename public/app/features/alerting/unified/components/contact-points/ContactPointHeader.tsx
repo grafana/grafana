@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { Fragment, type JSX, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
@@ -24,7 +25,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
+import { type ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -32,7 +33,7 @@ interface ContactPointHeaderProps {
 }
 
 export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeaderProps) => {
-  const { name, id, provenance, policies = [] } = contactPoint;
+  const { name, id, provenance, policies = [], grafana_managed_receiver_configs: integrations } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const { selectedAlertmanager } = useAlertmanager();
@@ -215,6 +216,27 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
+        {config.featureToggles.alertingNotificationHistoryGlobal && (
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            icon="history"
+            type="button"
+            disabled={integrations.length === 0}
+            tooltip={t(
+              'alerting.contact-point-header.tooltip-history',
+              'View the history of notification attempts made to this contact point'
+            )}
+            tooltipPlacement="top"
+            data-testid="history-action"
+            href={createRelativeUrl('/alerting/history', {
+              tab: 'notifications',
+              'var-RECEIVER_FILTER': name,
+            })}
+          >
+            {t('alerting.contact-point-header.button-history', 'History')}
+          </LinkButton>
+        )}
         <LinkButton
           tooltipPlacement="top"
           tooltip={

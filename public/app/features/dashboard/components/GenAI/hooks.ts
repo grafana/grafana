@@ -1,6 +1,6 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
-import { Subscription } from 'rxjs';
+import { type Subscription } from 'rxjs';
 
 import { llm } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';

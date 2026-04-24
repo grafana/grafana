@@ -14,7 +14,12 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
+import {
+  type SelectableValue,
+  type TraceKeyValuePair,
+  type TraceSearchProps,
+  type TraceSearchTag,
+} from '@grafana/data';
 
 import {
   KIND,
@@ -27,8 +32,8 @@ import {
   SPAN_NAME,
   SERVICE_NAME,
 } from '../constants/span';
-import TNil from '../types/TNil';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import type TNil from '../types/TNil';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
 /**
  * Filter spans using adhoc filters.

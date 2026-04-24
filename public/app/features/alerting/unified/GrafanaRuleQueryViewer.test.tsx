@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer } from './GrafanaRuleQueryViewer';
 import { mockCombinedRule } from './mocks';

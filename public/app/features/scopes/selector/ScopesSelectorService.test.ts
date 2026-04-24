@@ -1,12 +1,12 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { type Scope, type ScopeNode, type Store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
-import { RecentScope } from './types';
+import { type RecentScope } from './types';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({
@@ -1157,6 +1157,58 @@ describe('ScopesSelectorService', () => {
       expect(locationService.push).toHaveBeenCalledTimes(1);
     });
 
+    it('should NOT redirect when redirects are disabled', async () => {
+      service.setRedirectEnabled(false);
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should redirect again after re-enabling redirects', async () => {
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      // Disable, then re-enable — the flag should be toggleable back on.
+      service.setRedirectEnabled(false);
+      service.setRedirectEnabled(true);
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
+    });
+
     it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {
       const mockNodeWithRedirect: ScopeNode = {
         metadata: { name: 'test-scope-node' },
@@ -1626,6 +1678,33 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['scope-empty']);
 
       expect(apiClient.fetchMultipleScopeNodes).not.toHaveBeenCalled();
+    });
+
+    it('should backfill scopeNodeId into appliedScopes from defaultPath when initially absent', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call without scopeNodeId (simulates URL load without scope_node)
+      await service.changeScopes(['scope-sea-1']);
+
+      // scopeNodeId should be backfilled from defaultPath's last element
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+      expect(service.state.selectedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+    });
+
+    it('should not overwrite existing scopeNodeId when defaultPath is present', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call with an explicit scopeNodeId
+      await service.changeScopes(['scope-sea-1'], undefined, 'explicit-node');
+
+      // Should keep the explicit value, not overwrite from defaultPath
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('explicit-node');
     });
   });
 

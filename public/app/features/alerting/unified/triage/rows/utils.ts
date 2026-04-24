@@ -1,4 +1,4 @@
-import { EmptyLabelValue, LabelValue, WorkbenchRow } from '../types';
+import { EmptyLabelValue, type LabelValue, type WorkbenchRow } from '../types';
 
 // Generate unique keys for WorkbenchRow items
 export function generateRowKey(row: WorkbenchRow, fallbackIndex: number): string {

@@ -41,21 +41,6 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// CreateRenderingSession mocks base method.
-func (m *MockService) CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRenderingSession", ctx, authOpts, sessionOpts)
-	ret0, _ := ret[0].(Session)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateRenderingSession indicates an expected call of CreateRenderingSession.
-func (mr *MockServiceMockRecorder) CreateRenderingSession(ctx, authOpts, sessionOpts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRenderingSession", reflect.TypeOf((*MockService)(nil).CreateRenderingSession), ctx, authOpts, sessionOpts)
-}
-
 // GetRenderUser mocks base method.
 func (m *MockService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
 	m.ctrl.T.Helper()
@@ -115,33 +100,33 @@ func (mr *MockServiceMockRecorder) IsCapabilitySupported(ctx, capability any) *g
 }
 
 // Render mocks base method.
-func (m *MockService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
+func (m *MockService) Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Render", ctx, renderType, opts, session)
+	ret := m.ctrl.Call(m, "Render", ctx, renderType, opts)
 	ret0, _ := ret[0].(*RenderResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Render indicates an expected call of Render.
-func (mr *MockServiceMockRecorder) Render(ctx, renderType, opts, session any) *gomock.Call {
+func (mr *MockServiceMockRecorder) Render(ctx, renderType, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Render", reflect.TypeOf((*MockService)(nil).Render), ctx, renderType, opts, session)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Render", reflect.TypeOf((*MockService)(nil).Render), ctx, renderType, opts)
 }
 
 // RenderCSV mocks base method.
-func (m *MockService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
+func (m *MockService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RenderCSV", ctx, opts, session)
+	ret := m.ctrl.Call(m, "RenderCSV", ctx, opts)
 	ret0, _ := ret[0].(*RenderCSVResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RenderCSV indicates an expected call of RenderCSV.
-func (mr *MockServiceMockRecorder) RenderCSV(ctx, opts, session any) *gomock.Call {
+func (mr *MockServiceMockRecorder) RenderCSV(ctx, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderCSV", reflect.TypeOf((*MockService)(nil).RenderCSV), ctx, opts, session)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderCSV", reflect.TypeOf((*MockService)(nil).RenderCSV), ctx, opts)
 }
 
 // RenderErrorImage mocks base method.

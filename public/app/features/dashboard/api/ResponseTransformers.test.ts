@@ -1,13 +1,13 @@
-import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  PanelKind,
-  RowsLayoutKind,
-  RowsLayoutRowKind,
-  VariableKind,
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
@@ -25,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -33,7 +33,7 @@ import {
   ResponseTransformers,
   transformMappingsToV1,
 } from './ResponseTransformers';
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -406,7 +406,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -431,7 +430,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2beta1');
+      expect(transformed.apiVersion).toBe('v2');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -750,7 +749,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -839,7 +837,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -929,7 +927,6 @@ describe('ResponseTransformers', () => {
           slug: 'dashboard-slug',
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
       };
@@ -1113,14 +1110,14 @@ describe('ResponseTransformers', () => {
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            type: q.spec.query.spec.group,
-            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.group,
+            uid: q.spec.query.datasource?.name,
           },
           ...q.spec.query.spec,
         };
       })
     );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
     ) as GridLayoutItemKind;

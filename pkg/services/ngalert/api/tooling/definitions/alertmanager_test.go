@@ -258,7 +258,7 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 		},
 		Receivers: []*PostableApiReceiver{
 			{
-				Receiver: config.Receiver{
+				Receiver: definition.Receiver{
 					Name: "default",
 				},
 			},
@@ -286,7 +286,7 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 						},
 						Receivers: []*PostableApiReceiver{
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "default",
 								},
 							},
@@ -366,17 +366,17 @@ receivers:
 						},
 						Receivers: []*PostableApiReceiver{
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "default",
 								},
 							},
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "mimir-receiver",
 								},
 							},
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "defaultmimir-1",
 								},
 							},
@@ -441,17 +441,17 @@ receivers:
 						},
 						Receivers: []*PostableApiReceiver{
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "default",
 								},
 							},
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "mimir-receiver",
 								},
 							},
 							{
-								Receiver: config.Receiver{
+								Receiver: definition.Receiver{
 									Name: "defaultmimir-1",
 								},
 							},

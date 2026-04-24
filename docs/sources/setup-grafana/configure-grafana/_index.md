@@ -16,13 +16,18 @@ weight: 200
 # Configure Grafana
 
 Grafana has default and custom configuration files.
+
+## Customize your Grafana instance
+
 You can customize your Grafana instance by modifying the custom configuration file or by using environment variables.
-To see the list of settings for a Grafana instance, refer to [View server settings](/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
+
+- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
+- After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file and restart Grafana for your changes to take effect.
 
 {{< admonition type="note" >}}
-After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file.
 
-Restart Grafana for your changes to take effect.
+For basic configuration provisioning refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
+
 {{< /admonition >}}
 
 ## Configuration file location
@@ -74,7 +79,7 @@ For example:
 ## Override configuration with environment variables
 
 Don't use environment variables to _add_ new configuration settings.
-Instead, use environmental variables to _override_ existing options.
+Instead, use environment variables to _override_ existing options.
 
 To override an option:
 
@@ -100,7 +105,7 @@ client_secret = 0ldS3cretKey
 rendering_ignore_https_errors = true
 
 [feature_toggles]
-enable = newNavigation
+newNavigation = true
 ```
 
 You can override variables on Linux machines with:
@@ -110,7 +115,7 @@ export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
-export GF_FEATURE_TOGGLES_ENABLE=newNavigation
+export GF_FEATURE_TOGGLES_newNavigation=true
 ```
 
 ## Variable expansion
@@ -294,8 +299,7 @@ executed with working directory set to the installation path.
 
 Set this option to `true` to enable HTTP compression, this can improve
 transfer speed and bandwidth utilization. It is recommended that most
-users set it to `true`. By default it is set to `false` for compatibility
-reasons.
+users leave it set at the default of `true`, however compression might increase CPU usage on constrained environments or cause issues with poorly-configured reverse proxies.
 
 #### `cert_file`
 
@@ -335,6 +339,10 @@ Mode where the socket should be set when `protocol=socket`. Make sure that Grafa
 
 Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
+#### `serve_on_socket`
+
+If set to `true` and the primary `protocol` is `http`, `https`, or `h2`, Grafana will additionally serve on the Unix domain socket configured via `socket`. Defaults to `false`.
+
 #### `cdn_url`
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana adds edition and version paths.
@@ -365,6 +373,10 @@ exampleHeader2 = exampleValue2
 Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
+
+{{< admonition type="caution" >}}
+SQLite isn't recommended for production environments; use MySQL or PostgreSQL for production deployments.
+{{< /admonition >}}
 
 #### `type`
 
@@ -475,10 +487,6 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
-#### `skip_dashboard_uid_migration_on_startup`
-
-Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
-
 <hr />
 
 ### `[remote_cache]`
@@ -503,8 +511,9 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
-Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
+Example connection string: `network=tcp,addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
+- `network` (optional) can be `tcp` or `unix`.
 - `addr` is the host `:` port of the Redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to Redis.
 - `db` (optional) is the number identifier of the Redis database you want to use.
@@ -706,6 +715,10 @@ to data source settings to re-encode them.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+#### `gravatar_url`
+
+The base URL to use for fetching Gravatar profile images. Default is `https://secure.gravatar.com/avatar`.
+
 #### `data_source_proxy_whitelist`
 
 Define a allowlist of IP addresses or domains with ports, that can be used in data source URLs with the Grafana data source proxy.
@@ -864,6 +877,8 @@ This also limits the refresh interval options in Explore.
 #### `default_home_dashboard_path`
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+
+The file may contain either a classic dashboard JSON or a Kubernetes-format dashboard resource exported from the `dashboard.grafana.app` API (with top-level `apiVersion`, `kind`, `metadata` and `spec` fields). The Kubernetes-format is required for `v2` dashboard schemas.
 
 {{< admonition type="note" >}}
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
@@ -1762,6 +1777,20 @@ Enable or disable Grafana Alerting. The default value is `true`.
 
 Alerting rules migrated from dashboards and panels include a link back via the `annotations`.
 
+#### `allowed_integrations`
+
+Comma-separated list of contact point integration types to allow. If empty, all types are allowed.
+
+Valid types:
+
+```
+prometheus-alertmanager, dingding, discord, email, googlechat, jira, kafka,
+mqtt, oncall, opsgenie, pagerduty, pushover, sensugo, slack, sns, teams,
+telegram, threema, victorops, webex, webhook, wecom
+```
+
+Changing this setting does not affect existing integrations of a now-disallowed type. They remain in the Alertmanager configuration and continue to deliver notifications. However, any attempt to create or modify such a contact point through the UI or API returns a validation error, so they become effectively read-only until the type is re-allowed or the contact point is deleted. As provisioning files are validated at startup, a disallowed type there prevents Grafana from starting.
+
 #### `disabled_orgs`
 
 Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
@@ -1915,6 +1944,18 @@ The default value is `60s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
 
+#### `ha_single_node_evaluation`
+
+Enable single-node evaluation mode for alerting in high availability. When enabled, only one Grafana instance in the cluster evaluates alert rules instead of all instances evaluating all rules. This reduces query load on data sources from N times to 1. The default value is `false`.
+
+Requires high availability clustering to be configured (either Memberlist or Redis).
+
+For more information, refer to [Single-node evaluation mode](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#single-node-evaluation-mode).
+
+#### `ha_single_evaluation_alert_broadcast_queue_size`
+
+The size of the message queue used to broadcast alerts from the primary instance to other instances in single-node evaluation mode. Increase this value if you have many alert rules and see broadcast messages being dropped. The default value is `200`. Only used when `ha_single_node_evaluation` is `true`.
+
 #### `execute_alerts`
 
 Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible.
@@ -1986,6 +2027,18 @@ If a rule frequency is lower than this value, then this value is enforced.
 Defines the limits for how many alert rule versions are stored in the database per alert rule.
 
 The default `0` value means there's no limit.
+
+<hr>
+
+#### `limit_email_to_org_members`
+
+When enabled, email contact point recipients are restricted to users that belong to the organization (including disabled users).
+This validation is applied only when creating or updating contact points, not at notification send time.
+
+Enabling this flag does not retroactively validate existing contact points.
+Admins should manually audit existing contact points after enabling this setting to ensure all recipients are org members.
+
+The default value is `false`.
 
 ### `[unified_alerting.screenshots]`
 
@@ -2735,6 +2788,36 @@ ha_engine_password: $__file{/your/redis/password/secret/mount}
 
 <hr>
 
+### `[provisioning]`
+
+#### `allowed_targets`
+
+Comma-separated list of targets that a repository can control. `folder` by default. Use `folder` if you want the repository to only control a folder within the Grafana instance. Use `instance` if you want the repository to control the whole Grafana instance.
+
+#### `allow_image_rendering`
+
+Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
+
+#### `min_sync_interval`
+
+The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
+
+#### `repository_types`
+
+List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
+
+Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
+
+#### `max_repositories`
+
+Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimited repositories.
+
+#### `max_resources_per_repository`
+
+Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
+<hr>
+
 ### `[plugin.plugin_id]`
 
 This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
@@ -2870,15 +2953,19 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
-#### `enable`
-
-Keys of features to enable, separated by space.
-
 #### `FEATURE_NAME = <value>`
 
 Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
 
 For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
+
+#### `enable`
+
+{{< admonition type="note" >}}
+This option is deprecated and will be removed in a future major release. Use individual toggle entries instead.
+{{< /admonition >}}
+
+Keys of features to enable, separated by spaces.
 
 <hr>
 
@@ -2968,6 +3055,10 @@ Set the maximum length of a SQL query that can be used in a SQL expression. Defa
 
 The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
+#### `math_expression_memory_limit`
+
+Set the maximum estimated memory in bytes that a single math expression binary operation can allocate. Default is `1073741824` (1 GiB). A setting of `0` means no limit.
+
 ### `[geomap]`
 
 This section controls the defaults settings for **Geomap Plugin**.
@@ -2994,6 +3085,18 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ### `[rbac]`
 
 Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
+
+#### `plugin_cleanup`
+
+Comma-separated list of plugin IDs whose RBAC data (roles, permissions, and seed assignments) will be purged from the database at startup.
+Use this to clean up leftover data from plugins that have been uninstalled or renamed.
+
+The cleanup runs once at startup and is a no-op when the list is empty.
+
+```ini
+# Example
+plugin_cleanup = grafana-slo-app, grafana-irm-app
+```
 
 ### `[navigation.app_sections]`
 

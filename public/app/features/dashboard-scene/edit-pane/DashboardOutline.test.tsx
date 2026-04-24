@@ -31,59 +31,60 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
-const testScene = new DashboardScene({
-  title: 'Test Dashboard',
-  $variables: new SceneVariableSet({ variables: [] }),
-  $data: new DashboardDataLayerSet({ annotationLayers: [] }),
-  body: new RowsLayoutManager({
-    rows: [
-      new RowItem({
-        title: 'Row level 1',
-        layout: new RowsLayoutManager({
-          rows: [
-            new RowItem({
-              title: 'Row level 2',
-              layout: new TabsLayoutManager({
-                tabs: [
-                  new TabItem({
-                    title: 'Tab level 3 - A',
-                    layout: new AutoGridLayoutManager({
-                      layout: new AutoGridLayout({
-                        children: [
-                          new AutoGridItem({
-                            body: new VizPanel({
-                              title: 'Panel level 4 - A',
-                            }),
-                          }),
-                        ],
-                      }),
-                    }),
-                  }),
-                  new TabItem({
-                    title: 'Tab level 3 - B',
-                    layout: new AutoGridLayoutManager({
-                      layout: new AutoGridLayout({
-                        children: [
-                          new AutoGridItem({
-                            body: new VizPanel({
-                              title: 'Panel level 4 - A',
-                            }),
-                          }),
-                        ],
-                      }),
-                    }),
-                  }),
-                ],
-              }),
-            }),
-          ],
-        }),
-      }),
-    ],
-  }),
-});
 
 function buildTestScene() {
+  const testScene = new DashboardScene({
+    title: 'Test Dashboard',
+    $variables: new SceneVariableSet({ variables: [] }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+    body: new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          title: 'Row level 1',
+          layout: new RowsLayoutManager({
+            rows: [
+              new RowItem({
+                title: 'Row level 2',
+                layout: new TabsLayoutManager({
+                  tabs: [
+                    new TabItem({
+                      title: 'Tab level 3 - A',
+                      layout: new AutoGridLayoutManager({
+                        layout: new AutoGridLayout({
+                          children: [
+                            new AutoGridItem({
+                              body: new VizPanel({
+                                title: 'Panel level 4 - A',
+                              }),
+                            }),
+                          ],
+                        }),
+                      }),
+                    }),
+                    new TabItem({
+                      title: 'Tab level 3 - B',
+                      layout: new AutoGridLayoutManager({
+                        layout: new AutoGridLayout({
+                          children: [
+                            new AutoGridItem({
+                              body: new VizPanel({
+                                title: 'Panel level 4 - A',
+                              }),
+                            }),
+                          ],
+                        }),
+                      }),
+                    }),
+                  ],
+                }),
+              }),
+            ],
+          }),
+        }),
+      ],
+    }),
+  });
+
   activateFullSceneTree(testScene);
   return testScene;
 }
@@ -103,22 +104,26 @@ describe('DashboardOutline', () => {
     it('should call DashboardInteractions.outlineItemClicked with correct parameters when clicking on items', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
+      const pane = new DashboardOutline({});
 
       // enable selection on the edit pane to activate real selection behavior
+      scene.onEnterEditMode();
       scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(pane);
 
       render(
         <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
           <WrapSidebar>
-            <DashboardOutline editPane={scene.state.editPane} isEditing={true} />
+            <pane.Component model={pane} />
           </WrapSidebar>
         </ElementSelectionContext.Provider>
       );
-      // select Row lvl 1 (index 2 because Annotations section is at index 1)
+      // select Row lvl 1 (index 3 because Variables is at 0, Annotations at 1, Links at 2)
       await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
-        index: 2,
+        index: 3,
         depth: 1,
+        isEditing: true,
       });
       // click on caret to expand Row lvl 1
       await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.node('Row level 1')));
@@ -128,6 +133,7 @@ describe('DashboardOutline', () => {
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(2, {
         index: 0,
         depth: 2,
+        isEditing: true,
       });
 
       // click on caret to expand Row lvl 2
@@ -138,6 +144,32 @@ describe('DashboardOutline', () => {
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(3, {
         index: 1,
         depth: 3,
+        isEditing: true,
+      });
+    });
+
+    it('should call DashboardInteractions.outlineItemClicked with correct parameters when not in edit mode', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const pane = new DashboardOutline({});
+
+      // enable selection on the edit pane to activate real selection behavior
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(pane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <pane.Component model={pane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+      // select Row lvl 1 (index 0 because variables and annotations aren't shown in view mode)
+      await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
+      expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
+        index: 0,
+        depth: 1,
+        isEditing: undefined,
       });
     });
   });

@@ -4,14 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { getMessageFromError } from 'app/core/utils/errors';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ManagerKind } from '../../../features/apiserver/types';
+import { type ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { UseFoldersQueryProps } from './useFoldersQuery';
+import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<
@@ -60,12 +61,17 @@ export function useFoldersQueryAppPlatform({
     return createSelector(selectors, (...responses) => {
       // Returns loading true if any of the responses is still loading
       let isLoading = false;
+      let error: unknown = undefined;
 
       const responseByParent: Record<string, GetFolderChildrenQuery> = {};
 
       for (const response of responses) {
         if (response.status === QueryStatus.pending) {
           isLoading = true;
+        }
+
+        if (!error && response.error) {
+          error = response.error;
         }
 
         const parentName = response.originalArgs?.folder;
@@ -76,6 +82,7 @@ export function useFoldersQueryAppPlatform({
 
       return {
         isLoading,
+        error,
         responseByParent,
       };
     });
@@ -195,6 +202,7 @@ export function useFoldersQueryAppPlatform({
     emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
+    error: state.error ? new Error(getMessageFromError(state.error)) : undefined,
     requestNextPage,
   };
 }

@@ -67,6 +67,14 @@ describe('Alert rules searchParser', () => {
       }
     );
 
+    it.each([{ query: 'policy:team-a-policy', expectedFilter: 'team-a-policy' }])(
+      `should parse policy $expectedFilter filter from "$query" query`,
+      ({ query, expectedFilter }) => {
+        const filter = getSearchFilterFromQuery(query);
+        expect(filter.policy).toBe(expectedFilter);
+      }
+    );
+
     it('should parse non-filtering words as free form query', () => {
       const filter = getSearchFilterFromQuery('cpu usage rule');
       expect(filter.freeFormWords).toHaveLength(3);
@@ -132,9 +140,21 @@ describe('Alert rules searchParser', () => {
       expect(filter.labels).toContain('team=~fe.*devs');
       expect(filter.labels).toContain('cluster!~ba.+');
     });
+
+    it('should discard contactPoint when both contactPoint and policy are present in query', () => {
+      const filter = getSearchFilterFromQuery('contactPoint:slack policy:team-a-policy');
+      expect(filter.policy).toBe('team-a-policy');
+      expect(filter.contactPoint).toBeUndefined();
+    });
   });
 
   describe('applySearchFilterToQuery', () => {
+    it('should apply policy filter to query', () => {
+      const filter = getFilter({ policy: 'team-a-policy' });
+      const query = applySearchFilterToQuery('', filter);
+      expect(query).toContain('policy:team-a-policy');
+    });
+
     it('should apply filters to an empty query', () => {
       const filter = getFilter({
         freeFormWords: ['cpu', 'eighty'],
@@ -191,6 +211,13 @@ describe('Alert rules searchParser', () => {
       expect(query).toBe(
         'label:region=emea rule:"cpu > 80%" group:cpu-usage contactPoint:cp3 namespace:/etc/prometheus datasource:"Mimir Dev"'
       );
+    });
+
+    it('should not serialize contactPoint when policy is also present', () => {
+      const filter = getFilter({ policy: 'team-a-policy' });
+      const query = applySearchFilterToQuery('', filter);
+      expect(query).toContain('policy:team-a-policy');
+      expect(query).not.toContain('contactPoint');
     });
   });
 });

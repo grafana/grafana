@@ -1,8 +1,8 @@
-import { forwardRef, PropsWithChildren } from 'react';
+import { forwardRef, type PropsWithChildren } from 'react';
 
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 import { Icon, Tooltip, Box, Stack } from '@grafana/ui';
-import { Unit } from 'app/types/user';
+import { type Unit } from 'app/types/user';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
 

@@ -14,7 +14,7 @@
 
 import { createSelector } from 'reselect';
 
-import { TraceResponse, TraceSpanData } from '../types/trace';
+import { type TraceResponse, type TraceSpanData } from '../types/trace';
 import TreeNode from '../utils/TreeNode';
 
 import { getSpanId } from './span';

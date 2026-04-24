@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import React from 'react';
+import type React from 'react';
 
 import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, useRatioResize } from './hooks';
 
@@ -8,10 +8,13 @@ jest.mock('@grafana/ui', () => ({
   getDragStyles: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
+
 // Prevent heavy transitive imports (@grafana/scenes, @grafana/runtime) from loading.
 jest.mock('./constants', () => ({
   SidebarSize: { Mini: 'mini', Full: 'full' },
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
+  QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
 }));
 jest.mock('../../edit-pane/shared', () => ({ useEditPaneCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
@@ -22,6 +25,7 @@ describe('buildVizAndDataPaneGrid', () => {
     controlsEnabled: false,
     hasDataPane: true,
     isSidebarFullWidth: false,
+    showBanner: true,
     vizRatio: 0.5,
     sidebarRatio: 0.25,
   };
@@ -35,30 +39,41 @@ describe('buildVizAndDataPaneGrid', () => {
   it('places the controls row above the viz when controls are enabled', () => {
     const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true });
 
-    expect(gridTemplateAreas).toBe('"controls controls"\n"viz viz"\n"sidebar data-pane"');
-    expect(gridTemplateRows).toBe('auto 1fr 1fr');
+    expect(gridTemplateAreas).toBe(
+      '"controls controls"\n"viz viz"\n"version-toggle version-toggle"\n"sidebar data-pane"'
+    );
+    expect(gridTemplateRows).toBe('auto 1fr auto 1fr');
   });
 
   it('makes sidebar span every row when isSidebarFullWidth is true', () => {
     const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
 
-    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar data-pane"');
+    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+  });
+
+  it('omits version-toggle row when showBanner is false', () => {
+    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, showBanner: false });
+
+    expect(gridTemplateAreas).toBe('"viz viz"\n"sidebar data-pane"');
+    expect(gridTemplateRows).toBe('1fr 1fr');
   });
 
   it('converts vizRatio to fractional row height — ratio / (1 - ratio)', () => {
     // 0.5 → 1fr (equal split), 0.75 → 3fr (3x taller than data pane)
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.5 }).gridTemplateRows).toBe('1fr 1fr');
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr 1fr');
+    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.5 }).gridTemplateRows).toBe('1fr auto 1fr');
+    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr auto 1fr');
   });
 
-  it('converts sidebarRatio 0.5 to equal columns (1fr 1fr)', () => {
-    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('1fr 1fr');
+  it('converts sidebarRatio 0.5 to equal columns (minmax(220px, 1fr) 1fr)', () => {
+    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(220px, 1fr) 1fr');
   });
 
   it('converts sidebarRatio 0.25 to approximately one-third of the available width', () => {
-    // 0.25 / (1 - 0.25) = 0.333...fr
-    const [sidebarFr] = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns.split(' ');
-    expect(parseFloat(sidebarFr)).toBeCloseTo(1 / 3, 5);
+    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(200px, Xfr)
+    const columns = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns;
+    const match = columns.match(/minmax\(\d+px,\s*([\d.]+)fr\)/);
+    expect(match).not.toBeNull();
+    expect(parseFloat(match![1])).toBeCloseTo(1 / 3, 5);
   });
 });
 

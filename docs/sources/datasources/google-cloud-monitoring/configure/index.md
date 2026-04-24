@@ -17,67 +17,6 @@ labels:
 menuTitle: Configure
 title: Configure the Google Cloud Monitoring data source
 weight: 100
-refs:
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-  google-authentication:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
-  google-authentication-jwt:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file
-  google-authentication-gce:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  gcm-index:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/
 ---
 
 # Configure the Google Cloud Monitoring data source
@@ -99,19 +38,19 @@ Grafana includes built-in support for Google Cloud Monitoring, so you don't need
 Before you can request data from Google Cloud Monitoring, you must configure authentication.
 All requests to Google APIs are performed on the server-side by the Grafana backend.
 
-For authentication options and configuration details, refer to [Google authentication](ref:google-authentication).
+For authentication options and configuration details, refer to [Google authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/).
 
 When you configure Google authentication, note the following requirements specific to Google Cloud Monitoring.
 
 ### Configure a GCP Service Account
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file](ref:google-authentication-jwt), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+When you [create a Google Cloud Platform (GCP) Service Account and key file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 ### Grant the GCE Default Service Account scope
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](ref:google-authentication-gce), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
 
 ## Enable Google Cloud Platform APIs
 
@@ -176,7 +115,7 @@ Use service account impersonation to have Grafana authenticate as a different se
 
 _Only available for Grafana Cloud._
 
-Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. For more information on how PDC works, refer to [Private data source connect](ref:private-data-source-connect). For steps on setting up a PDC connection, refer to [Configure Grafana private data source connect (PDC)](ref:configure-pdc).
+Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. For more information on how PDC works, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/). For steps on setting up a PDC connection, refer to [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
 
 | Setting                         | Description                                                                 |
 | ------------------------------- | --------------------------------------------------------------------------- |
@@ -191,7 +130,7 @@ Click **Save & test** to test the connection. A successful connection displays t
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### Provisioning examples
 
@@ -355,9 +294,9 @@ For all available configuration options, refer to the [Grafana provider data sou
 
 After you configure the Google Cloud Monitoring data source, you can:
 
-- [Query GCP metrics](ref:query-editor) using the visual Builder, MQL, SLO, or PromQL query types.
-- [Create template variables](ref:template-variables) for dynamic, reusable dashboards.
-- [Add annotations](ref:annotations) to overlay GCP events on your graphs.
-- [Set up alerting](ref:alerting) to receive notifications based on GCP metrics and SLOs.
-- [Explore your data](ref:explore) to investigate metrics without building a dashboard.
-- [Import pre-configured dashboards](ref:gcm-index) for popular GCP services.
+- [Query GCP metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/) using the visual Builder, MQL, SLO, or PromQL query types.
+- [Create template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/) for dynamic, reusable dashboards.
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/) to overlay GCP events on your graphs.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/) to receive notifications based on GCP metrics and SLOs.
+- [Explore your data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate metrics without building a dashboard.
+- [Import pre-configured dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/) for popular GCP services.

@@ -3,14 +3,17 @@ package testcases
 import (
 	"context"
 	"testing"
+	"time"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // playlistsTestCase tests the "playlists" ResourceMigration
@@ -33,6 +36,10 @@ func (tc *playlistsTestCase) FeatureToggles() []string {
 	return nil
 }
 
+func (tc *playlistsTestCase) RenameTables() []string {
+	return []string{}
+}
+
 func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{
@@ -43,13 +50,18 @@ func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	}
 }
 
-func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *playlistsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
+	addPlaylistMigrations(mg)
+	addPlaylistUIDMigration(mg)
+}
+
+func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
 	// Get playlist service from the test environment
 	// The service writes directly to SQL storage, which works in Mode0
 	env := helper.GetEnv()
-	playlistSvc := playlistimpl.ProvideService(env.SQLStore, tracing.InitializeTracerForTest())
+	playlistSvc := &legacyPlaylistService{db: env.SQLStore}
 
 	// Use a non-existent dashboard UID for testing
 	// This avoids interfering with other test cases
@@ -74,6 +86,8 @@ func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
 		{Type: "dashboard_by_tag", Value: "mixed-tag", Order: 2},
 	})
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist3UID)
+
+	return false // the values do not exist over k8s apis
 }
 
 func (tc *playlistsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
@@ -104,7 +118,7 @@ func (tc *playlistsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, sh
 	}
 }
 
-func createTestPlaylist(t *testing.T, playlistSvc playlist.Service, orgID int64, name, interval string, items []playlist.PlaylistItem) string {
+func createTestPlaylist(t *testing.T, playlistSvc *legacyPlaylistService, orgID int64, name, interval string, items []playlist.PlaylistItem) string {
 	t.Helper()
 
 	cmd := &playlist.CreatePlaylistCommand{
@@ -120,4 +134,54 @@ func createTestPlaylist(t *testing.T, playlistSvc playlist.Service, orgID int64,
 	require.NotEmpty(t, result.UID)
 
 	return result.UID
+}
+
+// Legacy Playlist Service -- we only need create for test
+type legacyPlaylistService struct {
+	db db.DB
+}
+
+func (s *legacyPlaylistService) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
+	p := playlist.Playlist{}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	} else {
+		err := util.ValidateUID(cmd.UID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		ts := time.Now().UnixMilli()
+		p = playlist.Playlist{
+			Name:      cmd.Name,
+			Interval:  cmd.Interval,
+			OrgId:     cmd.OrgId,
+			UID:       cmd.UID,
+			CreatedAt: ts,
+			UpdatedAt: ts,
+		}
+
+		_, err := sess.Insert(&p)
+		if err != nil {
+			return err
+		}
+
+		playlistItems := make([]playlist.PlaylistItem, 0)
+		for order, item := range cmd.Items {
+			playlistItems = append(playlistItems, playlist.PlaylistItem{
+				PlaylistId: p.Id,
+				Type:       item.Type,
+				Value:      item.Value,
+				Order:      order + 1,
+				Title:      item.Title,
+			})
+		}
+
+		_, err = sess.Insert(&playlistItems)
+
+		return err
+	})
+	return &p, err
 }

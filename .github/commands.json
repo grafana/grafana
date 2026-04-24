@@ -1029,26 +1029,10 @@
   },
   {
     "type": "label",
-    "name": "area/panel/datagrid",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/dashboard-list",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "team/grafana-aws-datasources",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/97"
     }
   },
   {

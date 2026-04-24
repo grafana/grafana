@@ -1,5 +1,5 @@
-import { Action, defaultActionConfig, VariableSuggestion } from '@grafana/data';
-import { DataLinksInlineEditorBase, DataLinksInlineEditorBaseProps } from '@grafana/ui';
+import { type Action, defaultActionConfig, type VariableSuggestion } from '@grafana/data';
+import { DataLinksInlineEditorBase, type DataLinksInlineEditorBaseProps } from '@grafana/ui';
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
 

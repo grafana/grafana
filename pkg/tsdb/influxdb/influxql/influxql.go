@@ -10,13 +10,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/dskit/concurrency"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -30,7 +30,7 @@ const (
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 	ErrInvalidUrl      = errors.New("URL must contain scheme and host")
-	glog               = log.New("tsdb.influx_influxql")
+	glog               = backend.NewLoggerWith("logger", "tsdb.influx_influxql")
 )
 
 func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -38,7 +38,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 	response := backend.NewQueryDataResponse()
 	var err error
 
-	config := backend.GrafanaConfigFromContext(ctx)
+	config := config.GrafanaConfigFromContext(ctx)
 
 	// We are testing running of queries in parallel behind feature flag
 	if config.FeatureToggles().IsEnabled("influxdbRunQueriesInParallel") {
@@ -68,9 +68,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 			query.RefID = reqQuery.RefID
 			query.RawQuery = rawQuery
 
-			if setting.Env == setting.Dev {
-				logger.Debug("Influxdb query", "raw query", rawQuery)
-			}
+			logger.Debug("Influxdb query", "raw query", rawQuery)
 
 			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
 			if err != nil {
@@ -115,9 +113,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 			query.RefID = reqQuery.RefID
 			query.RawQuery = rawQuery
 
-			if setting.Env == setting.Dev {
-				logger.Debug("Influxdb query", "raw query", rawQuery)
-			}
+			logger.Debug("Influxdb query", "raw query", rawQuery)
 
 			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
 			if err != nil {
@@ -202,7 +198,8 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return backend.DataResponse{
-			Error: err,
+			Error:       err,
+			ErrorSource: backend.ErrorSourceDownstream,
 		}, err
 	}
 	defer func() {

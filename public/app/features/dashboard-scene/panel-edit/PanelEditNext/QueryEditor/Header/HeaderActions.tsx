@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from 'react';
+import { type RefObject, useCallback } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
@@ -7,6 +7,7 @@ import { Actions } from '../../Actions';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { PluginActions } from './PluginActions';
 import { QueryActionsMenu } from './QueryActionsMenu';
 import { SaveButton } from './SaveButton';
@@ -22,7 +23,7 @@ interface HeaderActionsProps {
  *
  * @remarks
  * Manages actions (hide, delete) for the currently selected query or transformation.
- * Delete confirmation behavior is configured per type in QUERY_EDITOR_TYPE_CONFIG and
+ * Delete confirmation behavior is configured per type in getQueryEditorTypeConfig and
  * handled by the Actions component.
  * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
  * own visibility by reading from QueryEditorUIContext.
@@ -65,7 +66,18 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
-      <Actions contentHeader={true} item={item} onDelete={onDelete} onToggleHide={onToggleHide} />
+      <Actions
+        contentHeader={true}
+        item={item}
+        onDelete={onDelete}
+        onToggleHide={onToggleHide}
+        order={{
+          delete: 2,
+          hide: 1,
+          duplicate: 0,
+        }}
+      />
+      <ExperimentalFeedbackButton />
       {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );

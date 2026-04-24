@@ -1,43 +1,35 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { useLocalStorage, useMeasure } from 'react-use';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
-import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
-import { SqlExpressionQuery } from '../../types';
+import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
+import { type SqlExpressionQuery } from '../../types';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
-import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
-import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
-const GenAISuggestionsDrawer = lazy(() =>
-  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
-    default: module.GenAISuggestionsDrawer,
-  }))
-);
-
-const GenAIExplanationDrawer = lazy(() =>
-  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
-    default: module.GenAIExplanationDrawer,
+const SQLEditor = lazy(() =>
+  import('@grafana/plugin-ui').then((module) => ({
+    default: module.SQLEditor,
   }))
 );
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -76,20 +68,9 @@ LIMIT
   10`;
 
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
-  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
-  const styles = useStyles2((theme) => getStyles(theme));
-  const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
-    useSQLSuggestions();
+  const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
 
-  const {
-    explanation,
-    handleCloseExplanation,
-    handleOpenExplanation,
-    handleExplain,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    updatePrevExpression,
-  } = useSQLExplanations(query.expression || '');
+  const styles = useStyles2((theme) => getStyles(theme));
 
   const {
     schemas,
@@ -99,7 +80,7 @@ LIMIT
     refetch: refetchSchemas,
   } = useSQLSchemas({
     queries,
-    enabled: isSchemaInspectorOpen,
+    enabled: true,
     timeRange: metadata?.range,
   });
 
@@ -118,7 +99,6 @@ LIMIT
         ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
         : -1,
       numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
-      seriesData: metadata?.data?.series,
     }),
     [alerting, metadata]
   );
@@ -148,12 +128,6 @@ LIMIT
       expression,
       format: alerting ? 'alerting' : undefined,
     });
-    updatePrevExpression(expression);
-  };
-
-  const onApplySuggestion = (suggestion: string) => {
-    onEditorChange(suggestion);
-    handleApplySuggestion(suggestion);
   };
 
   const executeQuery = useCallback(() => {
@@ -167,15 +141,12 @@ LIMIT
       onRunQuery();
     }
 
-    // Refetch schemas when query is run (only if inspector is open)
-    if (isSchemaInspectorOpen) {
-      refetchSchemas();
-    }
-  }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
+    refetchSchemas();
+  }, [onRunQuery, refetchSchemas]);
 
+  // Call the onChange method once so we have access to the initial query in consuming components
+  // But only if expression is empty
   useEffect(() => {
-    // Call the onChange method once so we have access to the initial query in consuming components
-    // But only if expression is empty
     if (!query.expression) {
       onEditorChange(initialQuery);
     }
@@ -199,23 +170,6 @@ LIMIT
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [executeQuery]);
 
-  const contextValue: SqlExprContextValue = {
-    // Explanations
-    explanation,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    handleExplain,
-    handleOpenExplanation,
-    handleCloseExplanation,
-    // Suggestions
-    suggestions,
-    isDrawerOpen,
-    handleHistoryUpdate,
-    handleApplySuggestion,
-    handleOpenDrawer,
-    handleCloseDrawer,
-  };
-
   const renderButtons = () => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
       <SqlQueryActions
@@ -225,6 +179,7 @@ LIMIT
         refIds={vars}
         initialQuery={initialQuery}
         errorContext={errorContext}
+        schemas={schemas?.sqlSchemas ?? null}
       />
       {isSchemasFeatureEnabled && (
         <Button
@@ -248,20 +203,22 @@ LIMIT
     >
       <div className={styles.editorContainer}>
         <AutoSizer>
-          {({ width, height }) => (
-            <SQLEditor
-              query={query.expression || initialQuery}
-              onChange={onEditorChange}
-              language={EDITOR_LANGUAGE_DEFINITION}
-              width={width}
-              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-            >
-              {({ formatQuery }) => (
-                <div ref={toolboxRef}>
-                  <QueryToolbox query={query} onFormatCode={formatQuery} />
-                </div>
-              )}
-            </SQLEditor>
+          {({ width, height }: Size) => (
+            <Suspense fallback={null}>
+              <SQLEditor
+                query={query.expression || initialQuery}
+                onChange={onEditorChange}
+                language={EDITOR_LANGUAGE_DEFINITION}
+                width={width}
+                height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+              >
+                {({ formatQuery }) => (
+                  <div ref={toolboxRef}>
+                    <QueryToolbox query={query} onFormatCode={formatQuery} />
+                  </div>
+                )}
+              </SQLEditor>
+            </Suspense>
           )}
         </AutoSizer>
       </div>
@@ -273,34 +230,13 @@ LIMIT
     </div>
   );
 
-  const renderSQLEditor = () => (
-    <Stack direction="column" gap={1}>
-      {renderButtons()}
-      {renderMainContent()}
-    </Stack>
-  );
-
   return (
-    <SqlExprProvider value={contextValue}>
-      <div className={styles.mainContainer}>
-        {renderSQLEditor()}
-        <Suspense fallback={null}>
-          <GenAISuggestionsDrawer
-            isOpen={isDrawerOpen}
-            onApplySuggestion={onApplySuggestion}
-            onClose={handleCloseDrawer}
-            suggestions={suggestions}
-          />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GenAIExplanationDrawer
-            isOpen={isExplanationOpen}
-            onClose={handleCloseExplanation}
-            explanation={explanation}
-          />
-        </Suspense>
-      </div>
-    </SqlExprProvider>
+    <div className={styles.mainContainer} data-testid="sql-expression-editor">
+      <Stack direction="column" gap={1}>
+        {renderButtons()}
+        {renderMainContent()}
+      </Stack>
+    </div>
   );
 };
 

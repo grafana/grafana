@@ -1,9 +1,11 @@
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+
+import { type JobType } from '../types';
 
 interface Props {
-  jobType?: 'sync' | 'delete' | 'move';
+  jobType?: JobType;
   urls?: RepositoryUrLs;
 }
 export function PullRequestButtons({ urls, jobType }: Props) {

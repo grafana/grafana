@@ -1,4 +1,4 @@
-import { LevelItem } from './FlameGraph/dataTransform';
+import { type LevelItem } from './FlameGraph/dataTransform';
 
 export { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 
@@ -21,6 +21,17 @@ export enum SelectedView {
   TopTable = 'topTable',
   FlameGraph = 'flameGraph',
   Both = 'both',
+}
+
+export enum ViewMode {
+  Single = 'single',
+  Split = 'split',
+}
+
+export enum PaneView {
+  TopTable = 'topTable',
+  FlameGraph = 'flameGraph',
+  CallTree = 'callTree',
 }
 
 export interface TableData {

@@ -1,5 +1,5 @@
 import {
-  DataFrame,
+  type DataFrame,
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
@@ -17,7 +17,8 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { barchartPresetsSupplier } from './presets';
 import { barchartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
@@ -254,10 +255,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
     commonOptionsBuilder.addTextSizeOptions(builder, { withValue: true });
   })
-  .setSuggestionsSupplier(barchartSuggestionsSupplier);
+  .setSuggestionsSupplier(barchartSuggestionsSupplier)
+  .setPresetsSupplier(barchartPresetsSupplier);
 
 function countNumberFields(data?: DataFrame[]): number {
   let count = 0;

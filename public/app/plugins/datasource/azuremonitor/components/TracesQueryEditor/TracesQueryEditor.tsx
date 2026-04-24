@@ -2,19 +2,19 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
 import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorErrorish, type AzureMonitorOption } from '../../types/types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
 import ResourceField from '../ResourceField/ResourceField';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';
 import FormatAsField from '../shared/FormatAsField';

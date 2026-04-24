@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
@@ -18,7 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { SQLSchemaData, SQLSchemaField, SQLSchemas } from '../hooks/useSQLSchemas';
+import { type SQLSchemaData, type SQLSchemaField, type SQLSchemas } from '../hooks/useSQLSchemas';
 
 import { getFieldTypeIcon } from './utils';
 

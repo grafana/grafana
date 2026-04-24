@@ -1,4 +1,4 @@
-import { flip, Placement, shift } from '@floating-ui/react';
+import { flip, type Placement, shift } from '@floating-ui/react';
 
 export const BOUNDARY_ELEMENT_ID = 'floating-boundary';
 

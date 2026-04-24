@@ -3,10 +3,10 @@ import { clone, some } from 'lodash';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
-import { FuncInstance } from '../gfunc';
-import { GraphiteTagOperator } from '../types';
+import { type FuncInstance } from '../gfunc';
+import { type GraphiteTagOperator } from '../types';
 
-import { GraphiteQueryEditorState } from './store';
+import { type GraphiteQueryEditorState } from './store';
 
 /**
  * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.

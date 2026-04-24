@@ -6,12 +6,14 @@ import (
 	"net/url"
 	"strconv"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func newSearchHandler(store Store) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func newSearchHandler(store Store, accessClient authtypes.AccessClient) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 		namespace := request.ResourceIdentifier.Namespace
 
@@ -23,8 +25,20 @@ func newSearchHandler(store Store) func(ctx context.Context, writer app.CustomRo
 			return err
 		}
 
+		allowed, err := canAccessAnnotations(ctx, accessClient, namespace, result.Items, utils.VerbList)
+		if err != nil {
+			return err
+		}
+
+		filtered := make([]annotationV0.Annotation, 0, len(result.Items))
+		for i, anno := range result.Items {
+			if allowed[i] {
+				filtered = append(filtered, anno)
+			}
+		}
+
 		response := &annotationV0.AnnotationList{
-			Items:    result.Items,
+			Items:    filtered,
 			ListMeta: metav1.ListMeta{Continue: result.Continue},
 		}
 
@@ -87,6 +101,11 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		if matchAny, err := strconv.ParseBool(v); err == nil {
 			opts.ScopesMatchAny = matchAny
 		}
+	}
+
+	// createdBy accepts a user uid
+	if v := queryParams.Get("createdBy"); v != "" {
+		opts.CreatedBy = v
 	}
 
 	return opts

@@ -190,6 +190,10 @@ The following screen recording shows this option in a time series visualization:
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+### Annotation options
+
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Graph styles options
 
 The options under the **Graph styles** section let you control the general appearance of [additional fields](#additional-fields) in the visualization, excluding [color](#standard-options).

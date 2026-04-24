@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -37,19 +36,17 @@ var (
 )
 
 type DualWriter interface {
-	IsEnabled(schema.GroupResource) bool
 	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
 	Status(ctx context.Context, gr schema.GroupResource) (dualwrite.StorageStatus, error)
 }
 
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
-	legacyClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) resourcepb.ResourceIndexClient {
+	legacyClient resourcepb.ResourceIndexClient) resourcepb.ResourceIndexClient {
 	return &searchWrapper{
 		dual:          dual,
 		groupResource: gr,
 		unifiedClient: unifiedClient,
 		legacyClient:  legacyClient,
-		features:      features,
 		logger:        log.New("unified-storage.search-client"),
 	}
 }
@@ -60,7 +57,6 @@ type searchWrapper struct {
 
 	unifiedClient resourcepb.ResourceIndexClient
 	legacyClient  resourcepb.ResourceIndexClient
-	features      featuremgmt.FeatureToggles
 	logger        log.Logger
 }
 
@@ -101,10 +97,9 @@ func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]struct{}) float
 	return float64(matches) / float64(len(legacyUIDs)) * 100.0
 }
 
-// If dual reader feature flag is enabled, and legacy is the main storage,
-// and we are writing to unified (which means we are effectively dual writing),
-// then make a background call to unified
-func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureToggles, dual DualWriter, gr schema.GroupResource) (bool, error) {
+// If legacy is the main storage and we are writing to unified (dual writing),
+// make a background call to unified to compare results.
+func shouldMakeBackgroundCall(ctx context.Context, dual DualWriter, gr schema.GroupResource) (bool, error) {
 	unifiedIsMainStorage, err := dual.ReadFromUnified(ctx, gr)
 	if err != nil {
 		return false, err
@@ -115,13 +110,7 @@ func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureT
 		return false, err
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	res := features != nil &&
-		features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) &&
-		!unifiedIsMainStorage &&
-		status.WriteUnified
-
-	return res, nil
+	return !unifiedIsMainStorage && status.WriteUnified, nil
 }
 
 func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest,
@@ -135,7 +124,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		client = s.unifiedClient
 	}
 
-	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
+	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.dual, s.groupResource)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +160,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		client = s.unifiedClient
 	}
 
-	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
+	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.dual, s.groupResource)
 	if err != nil {
 		return nil, err
 	}

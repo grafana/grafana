@@ -4,13 +4,17 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type TeamBindingspecSubject struct {
+	// kind of the identity
+	Kind string `json:"kind"`
 	// uid of the identity
 	Name string `json:"name"`
 }
 
 // NewTeamBindingspecSubject creates a new TeamBindingspecSubject object.
 func NewTeamBindingspecSubject() *TeamBindingspecSubject {
-	return &TeamBindingspecSubject{}
+	return &TeamBindingspecSubject{
+		Kind: "User",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for TeamBindingspecSubject.

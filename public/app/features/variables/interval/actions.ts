@@ -1,12 +1,12 @@
 import { rangeUtil } from '@grafana/data';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { getTemplateSrv, type TemplateSrv } from '../../templating/template_srv';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createIntervalOptions } from './reducer';

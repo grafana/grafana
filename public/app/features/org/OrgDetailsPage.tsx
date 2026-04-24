@@ -1,16 +1,17 @@
-import { PureComponent } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
+import { memo, useEffect } from 'react';
+import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
@@ -18,17 +19,23 @@ import { setOrganizationName } from './state/reducers';
 
 interface OwnProps {}
 
-export class OrgDetailsPage extends PureComponent<Props> {
-  async componentDidMount() {
-    await this.props.loadOrganization();
-  }
+export const OrgDetailsPage = memo(function OrgDetailsPage({
+  navModel,
+  organization,
+  loadOrganization,
+  setOrganizationName,
+  updateOrganization,
+}: Props) {
+  useEffect(() => {
+    loadOrganization();
+  }, [loadOrganization]);
 
-  onUpdateOrganization = (orgName: string) => {
-    this.props.setOrganizationName(orgName);
-    this.props.updateOrganization();
+  const onUpdateOrganization = (orgName: string) => {
+    setOrganizationName(orgName);
+    updateOrganization();
   };
 
-  handleConfirm = () => {
+  const handleConfirm = () => {
     return new Promise<boolean>((resolve) => {
       appEvents.publish(
         new ShowConfirmModalEvent({
@@ -43,34 +50,34 @@ export class OrgDetailsPage extends PureComponent<Props> {
     });
   };
 
-  render() {
-    const { navModel, organization } = this.props;
-    const isLoading = Object.keys(organization).length === 0;
-    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
-    const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
-    const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
+  const isLoading = Object.keys(organization).length === 0;
+  const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+  const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
+  const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
-          {!isLoading && (
-            <Stack direction="column" gap={3}>
-              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
-              {canReadPreferences && (
-                <SharedPreferences
-                  resourceUri="org"
-                  disabled={!canWritePreferences}
-                  preferenceType="org"
-                  onConfirm={this.handleConfirm}
-                />
-              )}
-            </Stack>
-          )}
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
+  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
+  const orgResourceUri = newPrefsEnabled ? 'namespace' : 'org';
+
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={isLoading}>
+        {!isLoading && (
+          <Stack direction="column" gap={3}>
+            {canReadOrg && <OrgProfile onSubmit={onUpdateOrganization} orgName={organization.name} />}
+            {canReadPreferences && (
+              <SharedPreferences
+                resourceUri={orgResourceUri}
+                disabled={!canWritePreferences}
+                preferenceType="org"
+                onConfirm={handleConfirm}
+              />
+            )}
+          </Stack>
+        )}
+      </Page.Contents>
+    </Page>
+  );
+});
 
 function mapStateToProps(state: StoreState) {
   return {

@@ -1,16 +1,16 @@
 import { useEffect } from 'react';
-import { Validate } from 'react-hook-form';
+import { type Validate } from 'react-hook-form';
 
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import {
   API_GROUP,
   API_VERSION,
-  TemplateGroup,
-  TemplateGroupList,
-  TemplateGroupTemplateKind,
+  type TemplateGroup,
+  type TemplateGroupList,
+  type TemplateGroupTemplateKind,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
@@ -23,7 +23,7 @@ import { KnownProvenance } from '../../types/knownProvenance';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
-import { TemplateFormValues } from '../receivers/TemplateForm';
+import { type TemplateFormValues } from '../receivers/TemplateForm';
 
 const apiVersion = `${API_GROUP}/${API_VERSION}`;
 const kind = 'TemplateGroup';

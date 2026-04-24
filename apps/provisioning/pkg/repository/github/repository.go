@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -129,7 +131,93 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 		r.SetBranch(branch)
 	}
 
-	return r.GitRepository.Test(ctx)
+	results, err := r.GitRepository.Test(ctx)
+	if err != nil || !results.Success {
+		return results, err
+	}
+
+	if result := r.checkBranchProtection(ctx); result != nil {
+		return result, nil
+	}
+
+	return results, nil
+}
+
+// checkBranchProtection validates that branch protection rules and repository rulesets
+// do not block direct pushes when the write workflow is configured.
+// Returns nil if the check passes or is not applicable.
+func (r *githubRepository) checkBranchProtection(ctx context.Context) *provisioning.TestResults {
+	if !r.hasWriteWorkflow() {
+		return nil
+	}
+
+	var allReasons []string
+
+	// Check classic branch protection rules
+	bp, err := r.gh.GetBranchProtection(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	if err != nil {
+		// Failed to check branch protection - return error to user
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "branch").String(),
+				Detail: fmt.Sprintf("failed to check branch protection for branch %q: %v", r.GetCurrentBranch(), err),
+			}},
+		}
+	}
+
+	if bp != nil {
+		if reasons := bp.BlocksDirectPush(); len(reasons) > 0 {
+			allReasons = append(allReasons, reasons...)
+		}
+	}
+
+	// Check repository rulesets
+	rulesets, err := r.gh.GetRulesets(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	if err != nil {
+		// Failed to check rulesets - return error to user
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "branch").String(),
+				Detail: fmt.Sprintf("failed to check repository rulesets for branch %q: %v", r.GetCurrentBranch(), err),
+			}},
+		}
+	}
+
+	if rulesets != nil {
+		if reasons := rulesets.BlocksDirectPush(); len(reasons) > 0 {
+			allReasons = append(allReasons, reasons...)
+		}
+	}
+
+	// If any blocking rules were found, return error
+	if len(allReasons) > 0 {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "workflows").String(),
+				Detail: fmt.Sprintf("branch %q has protection rules that prevent direct pushes: %s; the \"write\" workflow is not compatible with this branch", r.GetCurrentBranch(), strings.Join(allReasons, ", ")),
+			}},
+		}
+	}
+
+	return nil
+}
+
+func (r *githubRepository) hasWriteWorkflow() bool {
+	for _, w := range r.config.Spec.Workflows {
+		if w == provisioning.WriteWorkflow {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
@@ -140,7 +228,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
+		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, repository.ErrFileNotFound
 		}
 

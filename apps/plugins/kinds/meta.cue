@@ -8,8 +8,8 @@ metaV0Alpha1: {
 			pluginJson: #JSONData
 			class:      "core" | "external"
 			module: {
-				path:             string
-				hash?:            string
+				path:            string
+				hash?:           string
 				loadingStrategy: "fetch" | "script"
 			}
 			baseURL: string
@@ -21,6 +21,8 @@ metaV0Alpha1: {
 			translations?: [string]: string
 			// +listType=atomic
 			children?: [...string]
+			// +listType=atomic
+			aliasIds?: [...string]
 		}
 	}
 }
@@ -50,7 +52,7 @@ metaV0Alpha1: {
 	backend?:            bool
 	buildMode?:          string
 	builtIn?:            bool
-	category?:           "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+	category?:           string
 	enterpriseFeatures?: #EnterpriseFeatures
 	executable?:         string
 	hideFromList?:       bool

@@ -3,19 +3,34 @@ package sqleng
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	mssql "github.com/microsoft/go-mssqldb"
+	"github.com/microsoft/go-mssqldb/azuread"
+
 	"github.com/grafana/grafana/pkg/tsdb/mssql/azure"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
-	"github.com/grafana/grafana/pkg/util"
-	mssql "github.com/microsoft/go-mssqldb"
-	"github.com/microsoft/go-mssqldb/azuread"
 )
+
+// odbcNeedsEscape returns true if the value contains semicolon or closing brace,
+// which would break connection string parsing (semicolon is the key=value delimiter).
+func odbcNeedsEscape(s string) bool {
+	return strings.ContainsAny(s, ";}") || s != strings.TrimSpace(s)
+}
+
+// escapeOdbcValue wraps a connection string value in ODBC braces so that semicolons
+// and other special characters (e.g. in passwords) are not interpreted as delimiters.
+// The go-mssqldb driver uses this when the connection string has the "odbc:" prefix.
+func escapeOdbcValue(s string) string {
+	escaped := strings.ReplaceAll(s, "}", "}}")
+	return "{" + escaped + "}"
+}
 
 func newMSSQL(driverName string, rowLimit int64, dsInfo DataSourceInfo, cnnstr string, logger log.Logger, proxyClient proxy.Client) (*sql.DB, error) {
 	var connector *mssql.Connector
@@ -77,18 +92,18 @@ const (
 
 func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger, azureSettings *azsettings.AzureSettings, userAssertion string) (string, error) {
 	const dfltPort = "0"
-	var addr util.NetworkAddress
+	var addr NetworkAddress
 	if dsInfo.URL != "" {
 		u, err := utils.ParseURL(dsInfo.URL, logger)
 		if err != nil {
 			return "", err
 		}
-		addr, err = util.SplitHostPortDefault(u.Host, "localhost", dfltPort)
+		addr, err = SplitHostPortDefault(u.Host, "localhost", dfltPort)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		addr = util.NetworkAddress{
+		addr = NetworkAddress{
 			Host: "localhost",
 			Port: dfltPort,
 		}
@@ -121,9 +136,28 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 	case windowsAuthentication:
 		// No user id or password. We're using windows single sign on.
 	case kerberosRaw, kerberosKeytab, kerberosCredentialCacheFile, kerberosCredentialCache:
-		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, dsInfo.User, dsInfo.DecryptedSecureJSONData["password"], kerberosAuth)
+		user := dsInfo.User
+		pass := dsInfo.DecryptedSecureJSONData["password"]
+		useOdbc := odbcNeedsEscape(pass) || odbcNeedsEscape(user)
+		if useOdbc {
+			user = escapeOdbcValue(user)
+			pass = escapeOdbcValue(pass)
+		}
+
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth, logger)
+		if useOdbc {
+			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:")
+		}
 	default:
-		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
+		user := dsInfo.User
+		pass := dsInfo.DecryptedSecureJSONData["password"]
+		if odbcNeedsEscape(pass) || odbcNeedsEscape(user) {
+			user = escapeOdbcValue(user)
+			pass = escapeOdbcValue(pass)
+			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:") + fmt.Sprintf("user id=%s;password=%s;", user, pass)
+		} else {
+			connStr += fmt.Sprintf("user id=%s;password=%s;", user, pass)
+		}
 	}
 
 	// Port number 0 means to determine the port automatically, so we can let the driver choose

@@ -3,6 +3,7 @@ package encryption_test
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -240,6 +241,158 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		count, err = sut.GlobalEncryptedValueStorage.CountAll(t.Context(), &pastTime)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), count)
+	})
+}
+
+func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
+	t.Parallel()
+
+	t.Run("bulk update across multiple namespaces leaves all retrievable and decryptable", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		ctx := t.Context()
+
+		// Create values in two namespaces using EncryptionManager so we can decrypt later
+		namespaces := []string{"ns-a", "ns-b"}
+		created := make(map[string][]*contracts.EncryptedValue)
+		for _, ns := range namespaces {
+			for i := 1; i <= 3; i++ {
+				plaintext := fmt.Sprintf("secret-%s-%d", ns, i)
+				payload, err := sut.EncryptionManager.Encrypt(ctx, xkube.Namespace(ns), []byte(plaintext), contracts.EncryptionOption{})
+				require.NoError(t, err)
+				ev, err := sut.EncryptedValueStorage.Create(ctx, xkube.Namespace(ns), fmt.Sprintf("name-%d", i), int64(i), payload)
+				require.NoError(t, err)
+				created[ns] = append(created[ns], ev)
+			}
+		}
+
+		// Re-encrypt with new payloads (simulating consolidation: same plaintext, new key/material)
+		for _, ns := range namespaces {
+			var updates []contracts.BulkUpdateRow
+			for _, ev := range created[ns] {
+				plaintext, err := sut.EncryptionManager.Decrypt(ctx, xkube.Namespace(ns), ev.EncryptedPayload, contracts.EncryptionOption{})
+				require.NoError(t, err)
+				newPayload, err := sut.EncryptionManager.Encrypt(ctx, xkube.Namespace(ns), plaintext, contracts.EncryptionOption{})
+				require.NoError(t, err)
+				updates = append(updates, contracts.BulkUpdateRow{
+					Name:    ev.Name,
+					Version: ev.Version,
+					Payload: newPayload,
+				})
+			}
+			err := sut.EncryptedValueStorage.UpdateBulk(ctx, xkube.Namespace(ns), updates, 10)
+			require.NoError(t, err)
+		}
+
+		// All values must still be retrievable and decrypt to original plaintext
+		for _, ns := range namespaces {
+			for _, ev := range created[ns] {
+				got, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(ns), ev.Name, ev.Version)
+				require.NoError(t, err)
+				require.NotNil(t, got)
+				plaintext, err := sut.EncryptionManager.Decrypt(ctx, xkube.Namespace(ns), got.EncryptedPayload, contracts.EncryptionOption{})
+				require.NoError(t, err)
+				expected := fmt.Sprintf("secret-%s-%d", ns, ev.Version)
+				require.Equal(t, expected, string(plaintext), "namespace=%s name=%s", ns, ev.Name)
+			}
+		}
+	})
+
+	t.Run("UpdateBulk with empty slice is no-op and returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		err := sut.EncryptedValueStorage.UpdateBulk(t.Context(), "any-namespace", nil, 100)
+		require.NoError(t, err)
+
+		err = sut.EncryptedValueStorage.UpdateBulk(t.Context(), "any-namespace", []contracts.BulkUpdateRow{}, 100)
+		require.NoError(t, err)
+	})
+
+	t.Run("UpdateBulk with chunkSize <= 0 uses default chunk size", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		ctx := t.Context()
+		payload := contracts.EncryptedPayload{DataKeyID: "k1", EncryptedData: []byte("v1")}
+		ev, err := sut.EncryptedValueStorage.Create(ctx, "ns", "n1", 1, payload)
+		require.NoError(t, err)
+
+		updates := []contracts.BulkUpdateRow{
+			{Name: ev.Name, Version: ev.Version, Payload: contracts.EncryptedPayload{DataKeyID: "k2", EncryptedData: []byte("v2")}},
+		}
+		err = sut.EncryptedValueStorage.UpdateBulk(ctx, xkube.Namespace("ns"), updates, 0)
+		require.NoError(t, err)
+
+		got, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace("ns"), ev.Name, ev.Version)
+		require.NoError(t, err)
+		require.Equal(t, []byte("v2"), got.EncryptedData)
+		require.Equal(t, "k2", got.DataKeyID)
+	})
+
+	t.Run("UpdateBulk for non-existent rows returns error", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		ctx := t.Context()
+		updates := []contracts.BulkUpdateRow{
+			{Name: "nonexistent", Version: 1, Payload: contracts.EncryptedPayload{DataKeyID: "k", EncryptedData: []byte("x")}},
+		}
+		err := sut.EncryptedValueStorage.UpdateBulk(ctx, "ns", updates, 100)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "rows affected")
+		require.ErrorIs(t, err, encryption.ErrUnexpectedNumberOfRowsAffected)
+	})
+
+	t.Run("chunking issues one Exec per chunk", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		ctx := t.Context()
+		ns := xkube.Namespace("chunk-ns")
+
+		// Create 5 rows in the real DB
+		var created []*contracts.EncryptedValue
+		for i := 1; i <= 5; i++ {
+			ev, err := sut.EncryptedValueStorage.Create(ctx, ns, fmt.Sprintf("name-%d", i), int64(i), contracts.EncryptedPayload{
+				DataKeyID:     "key",
+				EncryptedData: []byte(fmt.Sprintf("data-%d", i)),
+			})
+			require.NoError(t, err)
+			created = append(created, ev)
+		}
+
+		// Wrap DB to count ExecContext calls
+		countingDB := &countingExecDatabase{inner: sut.Database}
+		storeWithCount, err := encryption.ProvideEncryptedValueStorage(countingDB, noop.NewTracerProvider().Tracer("test"))
+		require.NoError(t, err)
+
+		updates := make([]contracts.BulkUpdateRow, len(created))
+		for i, ev := range created {
+			updates[i] = contracts.BulkUpdateRow{
+				Name:    ev.Name,
+				Version: ev.Version,
+				Payload: contracts.EncryptedPayload{DataKeyID: ev.DataKeyID, EncryptedData: ev.EncryptedData},
+			}
+		}
+
+		// Chunk size 2 => ceil(5/2) = 3 Exec calls
+		err = storeWithCount.UpdateBulk(ctx, ns, updates, 2)
+		require.NoError(t, err)
+		require.Equal(t, 3, countingDB.execCount, "expected 3 ExecContext calls for 5 rows with chunk size 2")
+
+		// Chunk size 5 => 1 Exec call
+		countingDB.execCount = 0
+		err = storeWithCount.UpdateBulk(ctx, ns, updates, 5)
+		require.NoError(t, err)
+		require.Equal(t, 1, countingDB.execCount, "expected 1 ExecContext call for 5 rows with chunk size 5")
+
+		// Chunk size 10 => 1 Exec call (single chunk)
+		countingDB.execCount = 0
+		err = storeWithCount.UpdateBulk(ctx, ns, updates, 10)
+		require.NoError(t, err)
+		require.Equal(t, 1, countingDB.execCount, "expected 1 ExecContext call when chunk size larger than batch")
 	})
 }
 
@@ -712,4 +865,27 @@ func (m *mockGlobalEncryptedValueStorage) CountAll(ctx context.Context, untilTim
 		return 0, m.countAllError
 	}
 	return int64(len(m.encryptedValues)), nil
+}
+
+// countingExecDatabase wraps a contracts.Database and counts ExecContext calls (for chunking tests).
+type countingExecDatabase struct {
+	inner     contracts.Database
+	execCount int
+}
+
+func (c *countingExecDatabase) DriverName() string {
+	return c.inner.DriverName()
+}
+
+func (c *countingExecDatabase) Transaction(ctx context.Context, f func(context.Context) error) error {
+	return c.inner.Transaction(ctx, f)
+}
+
+func (c *countingExecDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	c.execCount++
+	return c.inner.ExecContext(ctx, query, args...)
+}
+
+func (c *countingExecDatabase) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
+	return c.inner.QueryContext(ctx, query, args...)
 }

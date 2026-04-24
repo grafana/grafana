@@ -24,7 +24,7 @@ func (s *pinnedVersionStep) Title() string {
 }
 
 func (s *pinnedVersionStep) Description() string {
-	return "Check if the Grafana version is pinned."
+	return "Checks if the Grafana version is pinned."
 }
 
 func (s *pinnedVersionStep) Resolution() string {

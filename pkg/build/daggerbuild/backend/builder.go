@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -17,29 +16,19 @@ type BuildOpts struct {
 	Tags              []string
 	WireTag           string
 	GoCacheProg       string
-	Static            bool
 	Enterprise        bool
-	CGOEnabled        bool
 }
 
 func distroOptsFunc(log *slog.Logger, distro Distribution, opts *BuildOpts) (DistroBuildOptsFunc, error) {
-	if !opts.CGOEnabled {
-		return func(distro Distribution, experiments, tags []string) *GoBuildOpts {
-			os, arch := OSAndArch(distro)
-			archv := ArchVersion(distro)
-			return &GoBuildOpts{
-				OS:         os,
-				Arch:       arch,
-				GoARM:      GoARM(archv),
-				CGOEnabled: false,
-			}
-		}, nil
-	}
-
-	if val, ok := DistributionGoOpts[distro]; ok {
-		return DistroOptsLogger(log, val), nil
-	}
-	return nil, errors.New("unrecognized distribution")
+	return func(distro Distribution, experiments, tags []string) *GoBuildOpts {
+		os, arch := OSAndArch(distro)
+		archv := ArchVersion(distro)
+		return &GoBuildOpts{
+			OS:    os,
+			Arch:  arch,
+			GoARM: GoARM(archv),
+		}
+	}, nil
 }
 
 func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
@@ -62,39 +51,6 @@ func WithViceroyEnv(log *slog.Logger, container *dagger.Container, distro Distri
 	return containers.WithEnv(container, ViceroyEnv(bopts)), nil
 }
 
-func ViceroyContainer(
-	d *dagger.Client,
-	log *slog.Logger,
-	distro Distribution,
-	goVersion string,
-	viceroyVersion string,
-	opts *BuildOpts,
-) (*dagger.Container, error) {
-	containerOpts := dagger.ContainerOpts{
-		Platform: "linux/amd64",
-	}
-
-	// Instead of directly using the `arch` variable here to substitute in the GoURL, we have to be careful with the Go releases.
-	// Supported releases (in the names):
-	// * amd64
-	// * armv6l
-	// * arm64
-	goURL := golang.DownloadURL(goVersion, "amd64")
-	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
-
-	// Install Go manually, and install make, git, and curl from the package manager.
-	container = container.
-		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
-		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
-		WithExec([]string{"dpkg", "--remove-architecture", "armel"}).
-		WithExec([]string{"apt-get", "update", "-yq"}).
-		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
-		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
-
-	return WithViceroyEnv(log, container, distro, opts)
-}
-
 func GolangContainer(
 	d *dagger.Client,
 	log *slog.Logger,
@@ -104,31 +60,7 @@ func GolangContainer(
 	distro Distribution,
 	opts *BuildOpts,
 ) (*dagger.Container, error) {
-	os, _ := OSAndArch(distro)
-	// Only use viceroy for all darwin builds
-	if opts.CGOEnabled && os == "darwin" {
-		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
-	}
-
 	container := golang.Container(d, platform, goVersion)
-
-	if opts.CGOEnabled {
-		container = container.
-			WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
-			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/zig-linux-x86_64-0.11.0.tar.xz"}).
-			WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
-			WithExec([]string{"mv", "/zig", "/bin/zig"}).
-			// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
-			WithExec([]string{"mkdir", "/toolchain"}).
-			WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
-			WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
-			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-			WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
-			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/riscv64-linux-musl-cross.tgz", "-P", "/toolchain"}).
-			WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"}).
-			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/x86_64-w64-mingw32-cross.tgz", "-P", "/toolchain"}).
-			WithExec([]string{"tar", "-xf", "/toolchain/x86_64-w64-mingw32-cross.tgz", "-C", "/toolchain"})
-	}
 	return WithGoEnv(log, container, distro, opts)
 }
 

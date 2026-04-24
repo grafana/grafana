@@ -553,7 +553,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything).Return()
 
 			hc := NewConnectionHealthChecker(mockTester, mockMetrics)
-			testResults, healthStatus, patchOps, err := hc.RefreshHealthWithPatchOps(context.Background(), tt.conn)
+			result, err := hc.RefreshHealthWithPatchOps(context.Background(), tt.conn)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -561,37 +561,32 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+			testResults := result.TestResults
+			healthStatus := result.HealthStatus
+			readyCondition := result.ReadyCondition
+			patchOps := result.PatchOps
 			assert.NotNil(t, testResults)
 			assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
+			assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
 
 			if tt.expectPatches {
-				// Should have 2 patches: health and condition
-				assert.Len(t, patchOps, 2)
+				// Should only include health patch operation.
+				assert.Len(t, patchOps, 1)
 
 				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, "/status/health", patchOps[0]["path"])
+			}
 
-				// Second patch should be conditions with Ready condition
-				assert.Equal(t, "replace", patchOps[1]["op"])
-				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
-
-				// Verify Ready condition is set correctly
-				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
-				require.True(t, ok, "conditions should be of type []metav1.Condition")
-				require.Len(t, conditions, 1, "should have exactly one condition")
-
-				readyCondition := conditions[0]
-				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
-
-				if tt.expectedHealth {
-					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
-				} else {
-					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
-					assert.Equal(t, tt.expectedReason, readyCondition.Reason)
-				}
+			if tt.expectedHealth {
+				assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
+				assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
 			} else {
+				assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
+				assert.Equal(t, tt.expectedReason, readyCondition.Reason)
+			}
+
+			if !tt.expectPatches {
 				assert.Empty(t, patchOps)
 			}
 		})

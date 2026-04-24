@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -43,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -2081,8 +2083,8 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	rev := legacy_storage.ConfigRevision{
 		Config: policy_exports.Config(),
 	}
-	sut.policies = newFakeNotificationPolicyService(rev)
-	sut.routeService = routes.NewFakeService(rev)
+	p := newFakeNotificationPolicyService(rev)
+	sut.policies = p
 
 	policies := []string{legacy_storage.UserDefinedRoutingTreeName} //nolint:prealloc
 	for policy := range policy_exports.Config().ManagedRoutes {
@@ -2243,7 +2245,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		OrgID: 1,
 		/*
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersCreate: {}, folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		*/
 	}
@@ -2295,8 +2297,9 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
 	rs := routes.NewFakeService(rev)
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
 	receiverSvc := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
+		receiverAuthz,
 		configStore,
 		env.prov,
 		env.store,
@@ -2306,15 +2309,17 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
 		tracer,
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(rev),
-		routeService:        rs,
-		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
-		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
+		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
@@ -2333,7 +2338,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		},
 		Logger: &logtest.Fake{},
@@ -2341,7 +2346,6 @@ func createTestRequestCtx() contextmodel.ReqContext {
 }
 
 type fakeNotificationPolicyService struct {
-	NotificationPolicyService
 	config legacy_storage.ConfigRevision
 	prov   models.Provenance
 }
@@ -2360,6 +2364,10 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 		},
 		prov: models.ProvenanceAPI,
 	}
+}
+
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 
 func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {

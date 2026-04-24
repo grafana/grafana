@@ -5,7 +5,6 @@ export const addTagTypes = [
   'ExternalGroupMapping',
   'Search',
   'ServiceAccount',
-  'SSOSetting',
   'TeamBinding',
   'Team',
   'User',
@@ -175,9 +174,15 @@ const injectedRtkApi = api
           url: `/searchTeams`,
           params: {
             query: queryArg.query,
+            title: queryArg.title,
+            uid: queryArg.uid,
+            teamId: queryArg.teamId,
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
+            membercount: queryArg.membercount,
+            accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['Search'],
@@ -190,6 +195,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
+            accesscontrol: queryArg.accesscontrol,
             sort: queryArg.sort,
           },
         }),
@@ -308,80 +314,42 @@ const injectedRtkApi = api
         invalidatesTags: ['ServiceAccount'],
       }),
       getServiceAccountTokens: build.query<GetServiceAccountTokensApiResponse, GetServiceAccountTokensApiArg>({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens` }),
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['ServiceAccount'],
       }),
-      listSsoSetting: build.query<ListSsoSettingApiResponse, ListSsoSettingApiArg>({
+      createServiceAccountTokens: build.mutation<
+        CreateServiceAccountTokensApiResponse,
+        CreateServiceAccountTokensApiArg
+      >({
         query: (queryArg) => ({
-          url: `/ssosettings`,
-          params: {
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
-            fieldSelector: queryArg.fieldSelector,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            pretty: queryArg.pretty,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
-            watch: queryArg.watch,
-          },
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          method: 'POST',
+          body: queryArg.createServiceAccountTokenRequestBody,
         }),
-        providesTags: ['SSOSetting'],
+        invalidatesTags: ['ServiceAccount'],
       }),
-      getSsoSetting: build.query<GetSsoSettingApiResponse, GetSsoSettingApiArg>({
-        query: (queryArg) => ({
-          url: `/ssosettings/${queryArg.name}`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['SSOSetting'],
+      getServiceAccountTokensWithPath: build.query<
+        GetServiceAccountTokensWithPathApiResponse,
+        GetServiceAccountTokensWithPathApiArg
+      >({
+        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
+        providesTags: ['ServiceAccount'],
       }),
-      replaceSsoSetting: build.mutation<ReplaceSsoSettingApiResponse, ReplaceSsoSettingApiArg>({
+      deleteServiceAccountTokensWithPath: build.mutation<
+        DeleteServiceAccountTokensWithPathApiResponse,
+        DeleteServiceAccountTokensWithPathApiArg
+      >({
         query: (queryArg) => ({
-          url: `/ssosettings/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.githubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['SSOSetting'],
-      }),
-      deleteSsoSetting: build.mutation<DeleteSsoSettingApiResponse, DeleteSsoSettingApiArg>({
-        query: (queryArg) => ({
-          url: `/ssosettings/${queryArg.name}`,
+          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
           method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-          },
         }),
-        invalidatesTags: ['SSOSetting'],
-      }),
-      updateSsoSetting: build.mutation<UpdateSsoSettingApiResponse, UpdateSsoSettingApiArg>({
-        query: (queryArg) => ({
-          url: `/ssosettings/${queryArg.name}`,
-          method: 'PATCH',
-          body: queryArg.patch,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
-          },
-        }),
-        invalidatesTags: ['SSOSetting'],
+        invalidatesTags: ['ServiceAccount'],
       }),
       listTeamBinding: build.query<ListTeamBindingApiResponse, ListTeamBindingApiArg>({
         query: (queryArg) => ({
@@ -735,6 +703,44 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['User'],
       }),
+      getUserStatus: build.query<GetUserStatusApiResponse, GetUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['User'],
+      }),
+      replaceUserStatus: build.mutation<ReplaceUserStatusApiResponse, ReplaceUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.user,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['User'],
+      }),
+      updateUserStatus: build.mutation<UpdateUserStatusApiResponse, UpdateUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['User'],
+      }),
       getUserTeams: build.query<GetUserTeamsApiResponse, GetUserTeamsApiArg>({
         query: (queryArg) => ({
           url: `/users/${queryArg.name}/teams`,
@@ -942,14 +948,26 @@ export type SearchExternalGroupMappingsApiArg = {
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
-  /** team name query string */
+  /** team name query string (fuzzy/partial match). Mutually exclusive with title. */
   query?: string;
+  /** exact match on team name. Mutually exclusive with query. */
+  title?: string;
+  /** filter by team UIDs. Mutually exclusive with teamId. */
+  uid?: string[];
+  /** filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid. */
+  teamId?: number[];
   /** limit the number of results */
   limit?: number;
   /** start the query at the given offset */
   offset?: number;
   /** page number to start from */
   page?: number;
+  /** when true, includes member count for each team in the response */
+  membercount?: boolean;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
+  /** sortable field */
+  sort?: string;
 };
 export type GetSearchUsersApiResponse = unknown;
 export type GetSearchUsersApiArg = {
@@ -960,6 +978,8 @@ export type GetSearchUsersApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
   /** sortable field */
   sort?: string;
 };
@@ -1132,115 +1152,34 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList;
+export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListServiceAccountTokensBody;
 export type GetServiceAccountTokensApiArg = {
-  /** name of the ServiceAccountTokenList */
+  /** name of the ServiceAccount */
   name: string;
-};
-export type ListSsoSettingApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList;
-export type ListSsoSettingApiArg = {
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  /** maximum number of tokens to return in a single page */
   limit?: number;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
-  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
-  watch?: boolean;
+  /** continue token returned by a previous list response to fetch the next page */
+  continue?: string;
 };
-export type GetSsoSettingApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
-export type GetSsoSettingApiArg = {
-  /** name of the SSOSetting */
+export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateServiceAccountTokenBody;
+export type CreateServiceAccountTokensApiArg = {
+  /** name of the ServiceAccount */
   name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
+  createServiceAccountTokenRequestBody: CreateServiceAccountTokenRequestBody;
 };
-export type ReplaceSsoSettingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
-export type ReplaceSsoSettingApiArg = {
-  /** name of the SSOSetting */
+export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ GetServiceAccountTokenBody;
+export type GetServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
   name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
-  fieldManager?: string;
-  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
-  fieldValidation?: string;
-  githubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
+  /** name of the token to operate on */
+  tokenName: string;
 };
-export type DeleteSsoSettingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
-export type DeleteSsoSettingApiArg = {
-  /** name of the SSOSetting */
+export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteServiceAccountTokenBody;
+export type DeleteServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
   name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-};
-export type UpdateSsoSettingApiResponse = /** status 200 OK */
-  | GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting
-  | /** status 201 Created */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
-export type UpdateSsoSettingApiArg = {
-  /** name of the SSOSetting */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
-  fieldManager?: string;
-  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
-  fieldValidation?: string;
-  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
-  force?: boolean;
-  patch: Patch;
+  /** name of the token to operate on */
+  tokenName: string;
 };
 export type ListTeamBindingApiResponse = /** status 200 OK */ TeamBindingList;
 export type ListTeamBindingApiArg = {
@@ -1572,9 +1511,9 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroupsResponse;
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
-  /** name of the GetGroupsResponse */
+  /** name of the GetTeamGroupsResponse */
   name: string;
   /** number of results to return */
   limit?: number;
@@ -1746,6 +1685,43 @@ export type DeleteUserApiArg = {
 };
 export type UpdateUserApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
 export type UpdateUserApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
+export type GetUserStatusApiResponse = /** status 200 OK */ User;
+export type GetUserStatusApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceUserStatusApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
+export type ReplaceUserStatusApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  user: User;
+};
+export type UpdateUserStatusApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
+export type UpdateUserStatusApiArg = {
   /** name of the User */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -2016,49 +1992,28 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken = {
-  created: Time;
-  expires?: Time;
-  lastUsed?: Time;
-  name?: string;
-  revoked?: boolean;
+export type ListServiceAccountTokensBody = {
+  continue: string;
+  items: any[];
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
+export type CreateServiceAccountTokenBody = {
+  expires: number;
+  serviceAccountTokenName: string;
+  token: string;
 };
-export type Unstructured = {
-  [key: string]: any;
+export type CreateServiceAccountTokenRequestBody = {
+  expiresInSeconds?: number;
+  tokenName: string;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingSpec = {
-  settings: Unstructured;
-  /** Possible enum values:
-     - `"db"`
-     - `"system"` system is from config file, env or argument */
-  source: 'db' | 'system';
+export type GetServiceAccountTokenBody = {
+  body: any;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata */
-  metadata?: ObjectMeta;
-  spec?: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingSpec;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
+export type DeleteServiceAccountTokenBody = {
+  message: string;
 };
 export type TeamBindingspecSubject = {
+  /** kind of the identity */
+  kind: string;
   /** uid of the identity */
   name: string;
 };
@@ -2090,9 +2045,20 @@ export type TeamBindingList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type TeamTeamMember = {
+  /** whether the member was added externally (e.g. team sync) */
+  external: boolean;
+  /** kind of the identity */
+  kind: string;
+  /** uid of the identity */
+  name: string;
+  /** permission of the identity in the team */
+  permission: string;
+};
 export type TeamSpec = {
   email: string;
   externalUID: string;
+  members: TeamTeamMember[];
   provisioned: boolean;
   title: string;
 };
@@ -2113,14 +2079,14 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GetGroupsExternalGroupMapping = {
+export type GetTeamGroupsExternalGroupMapping = {
   externalGroup: string;
   name: string;
 };
-export type GetGroupsResponse = {
+export type GetTeamGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GetGroupsExternalGroupMapping[];
+  items: GetTeamGroupsExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
@@ -2165,8 +2131,13 @@ export type UserSpec = {
   role: string;
   title: string;
 };
+export type UserTeamSyncStatus = {
+  lastSyncAt: number;
+  state: string;
+};
 export type UserStatus = {
   lastSeenAt: number;
+  teamSync?: UserTeamSyncStatus;
 };
 export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2236,13 +2207,10 @@ export const {
   useUpdateServiceAccountMutation,
   useGetServiceAccountTokensQuery,
   useLazyGetServiceAccountTokensQuery,
-  useListSsoSettingQuery,
-  useLazyListSsoSettingQuery,
-  useGetSsoSettingQuery,
-  useLazyGetSsoSettingQuery,
-  useReplaceSsoSettingMutation,
-  useDeleteSsoSettingMutation,
-  useUpdateSsoSettingMutation,
+  useCreateServiceAccountTokensMutation,
+  useGetServiceAccountTokensWithPathQuery,
+  useLazyGetServiceAccountTokensWithPathQuery,
+  useDeleteServiceAccountTokensWithPathMutation,
   useListTeamBindingQuery,
   useLazyListTeamBindingQuery,
   useCreateTeamBindingMutation,
@@ -2274,6 +2242,10 @@ export const {
   useReplaceUserMutation,
   useDeleteUserMutation,
   useUpdateUserMutation,
+  useGetUserStatusQuery,
+  useLazyGetUserStatusQuery,
+  useReplaceUserStatusMutation,
+  useUpdateUserStatusMutation,
   useGetUserTeamsQuery,
   useLazyGetUserTeamsQuery,
 } = injectedRtkApi;

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -120,15 +121,6 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	// Excluded groups have no Versions.Kinds[] in its app manifest, so we cant index anything for search.
-	excludedGroups := []string{
-		"provisioning.grafana.app",
-		"scope.grafana.app",
-	}
-	if slices.Contains(excludedGroups, req.Options.Key.Group) {
-		return false
-	}
-
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
@@ -137,5 +129,9 @@ func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
-	return true
+	// TODO have a way of including enterprise manifests
+	manifests := AppManifestsWithKinds(AppManifests())
+	return slices.ContainsFunc(manifests, func(m app.Manifest) bool {
+		return m.ManifestData.Group == req.Options.Key.Group
+	})
 }

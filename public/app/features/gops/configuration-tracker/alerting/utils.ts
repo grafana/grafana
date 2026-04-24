@@ -1,4 +1,4 @@
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
 const DEFAULT_EMAIL = '<example@email.com>';
 
 export function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {

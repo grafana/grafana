@@ -14,6 +14,9 @@ import (
 )
 
 var ErrNotFound = errors.New("key not found")
+var ErrEmptyValue = errors.New("key must have a value")
+var ErrKeyAlreadyExists = errors.New("key already exists")
+var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
 
 // KeyValue represents a key-value pair returned by BatchGet
 type KeyValue struct {
@@ -59,9 +62,6 @@ type BatchOp struct {
 // Maximum limit for batch operations
 const MaxBatchOps = 20
 
-// ErrKeyAlreadyExists is returned when BatchOpCreate is used on an existing key
-var ErrKeyAlreadyExists = errors.New("key already exists")
-
 // BatchError wraps errors from Batch operations with context about which operation failed
 type BatchError struct {
 	Err   error   // The underlying error
@@ -92,6 +92,7 @@ type KV interface {
 
 	// Save a new value - returns a WriteCloser to write the value to.
 	// Existent keys will be overwritten with the new value.
+	// Trying to save a key without a value returns an error
 	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
 
 	// Delete a value.
@@ -109,12 +110,16 @@ type KV interface {
 	// Batch executes all operations atomically within a single transaction.
 	// If any operation fails, all operations are rolled back.
 	// Operations are executed in order; the batch stops on first failure.
+	// Put/Create/Update without a value will return an error.
 	//
 	// Operation semantics:
 	//   - BatchOpPut: Upsert (create or update), never fails on key state
 	//   - BatchOpCreate: Fail with ErrKeyAlreadyExists if key exists
 	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
 	//   - BatchOpDelete: Idempotent, never fails on key state
+	//
+	// Implementations MAY refuse specific sections (e.g. SqlKV rejects
+	// DataSection with ErrBatchNotSupportedOnDataSection).
 	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
@@ -244,6 +249,9 @@ func (w *badgerWriteCloser) Close() error {
 	}
 
 	data := w.buf.Bytes()
+	if len(data) == 0 {
+		return ErrEmptyValue
+	}
 
 	txn := w.db.NewTransaction(true)
 	defer txn.Discard()
@@ -435,6 +443,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 
 		switch op.Mode {
 		case BatchOpCreate:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Check that key doesn't exist, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if err == nil {
@@ -448,6 +459,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 			}
 
 		case BatchOpUpdate:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Check that key exists, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if errors.Is(err, badger.ErrKeyNotFound) {
@@ -461,6 +475,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 			}
 
 		case BatchOpPut:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Upsert: create or update
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
 				return &BatchError{Err: err, Index: i, Op: op}

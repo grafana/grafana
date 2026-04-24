@@ -1,24 +1,31 @@
 import * as React from 'react';
 import { Component } from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import { type default as uPlot, type AlignedData } from 'uplot';
 
 import {
-  DataFrame,
-  DataLinkPostProcessor,
-  Field,
+  type DataFrame,
+  type DataLinkPostProcessor,
+  type Field,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
   getLinksSupplier,
-  InterpolateFunction,
-  TimeRange,
-  TimeZone,
+  type InterpolateFunction,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
-import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
-import { Themeable2, VizLayout, VizLayoutLegendProps } from '@grafana/ui';
-import { AxisProps, pluginLog, Renderers, ScaleProps, UPlotChart, UPlotConfigBuilder } from '@grafana/ui/internal';
+import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema';
+import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
+import {
+  type AxisProps,
+  pluginLog,
+  type Renderers,
+  type ScaleProps,
+  UPlotChart,
+  type UPlotConfigBuilder,
+} from '@grafana/ui/internal';
 
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { type GraphNGLegendEvent, type XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 /**

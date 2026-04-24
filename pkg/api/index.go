@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -21,6 +23,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -57,7 +60,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+		UserID: userID,
+		OrgID:  c.GetOrgID(),
+		Teams:  c.TeamIDs, // nolint:staticcheck
+	}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
@@ -121,6 +128,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(c.Req.Context(), featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(c.Req.Context()))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -139,7 +148,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -190,11 +199,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
+		RenderBindingSupported:              renderBindingSupported,
 	}
 
 	if hs.Cfg.CSPEnabled {
 		data.CSPEnabled = true
-		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
+		hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, hosts, c.RequestNonce)
 	}
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
@@ -213,6 +224,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
+	data.NavTree.RemoveEmptyAdminSections()
+	data.NavTree.RemoveEmptyConnectionsSection()
 	data.NavTree.Sort()
 
 	return &data, nil

@@ -105,11 +105,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap/
-  datagrid:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/datagrid/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/datagrid/
   status-history:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/status-history/
@@ -185,7 +180,6 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Flame graph](ref:flame-graph) is the main visualization for profiling.
   - [Canvas](ref:canvas) allows you to explicitly place elements within static and dynamic layouts.
   - [Geomap](ref:geomap) helps you visualize geospatial data.
-  - [Datagrid](ref:datagrid) allows you to create and manipulate data, and act as data source for other panels.
 - Widgets
   - [Dashboard list](ref:dashboard-list) can list dashboards.
   - [Alert list](ref:alert-list) can list alerts.

@@ -1,8 +1,10 @@
-import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type SceneObject, type VizPanel } from '@grafana/scenes';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { LayoutRegistryItem } from './LayoutRegistryItem';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+
+import { type LayoutRegistryItem } from './LayoutRegistryItem';
 
 /**
  * A scene object that usually wraps an underlying layout
@@ -73,9 +75,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
 
   /**
-   * Duplicate, like clone but with new keys
+   * Duplicate, like clone but with new keys.
+   * @param panelIdGenerator Optional sequential ID generator shared across
+   *   sibling layouts to prevent duplicate panel IDs.
    */
-  duplicate(): DashboardLayoutManager;
+  duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager;
 
   /**
    * Paste a panel from the clipboard
@@ -86,6 +90,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Get children for outline
    */
   getOutlineChildren(): SceneObject[];
+
+  /**
+   * Returns a list of all grid layout types contained within child tree
+   */
+  getAllGridTypes(): string[];
 }
 
 export interface LayoutManagerSerializer {

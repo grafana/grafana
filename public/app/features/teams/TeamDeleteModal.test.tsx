@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 
-import { TeamDeleteModal, Props } from './TeamDeleteModal';
+import { TeamDeleteModal, type Props } from './TeamDeleteModal';
 
 describe('TeamDeleteModal', () => {
   const mockOnDismiss = jest.fn();

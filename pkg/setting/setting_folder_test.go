@@ -18,26 +18,26 @@ func TestMaxDeptFolderSettings(t *testing.T) {
 		{
 			name:     "returns default when ini file is nil",
 			noFile:   true,
-			expected: defaultMaxNestedFolderDepth,
+			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when key is absent",
-			expected: defaultMaxNestedFolderDepth,
+			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when value is not a valid integer",
 			iniValue: strp("notanint"),
-			expected: defaultMaxNestedFolderDepth,
+			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when value is zero",
 			iniValue: strp("0"),
-			expected: defaultMaxNestedFolderDepth,
+			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when value is negative",
 			iniValue: strp("-1"),
-			expected: defaultMaxNestedFolderDepth,
+			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns configured value when within range (3)",

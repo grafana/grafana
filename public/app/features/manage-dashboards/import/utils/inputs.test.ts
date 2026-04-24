@@ -1,14 +1,21 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import {
-  AnnotationQueryKind,
-  PanelKind,
-  QueryVariableKind,
-  Spec as DashboardV2Spec,
+  type AnnotationQueryKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
+import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import {
+  type DashboardInputs,
+  type DashboardJson,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
+  InputType,
+} from '../../types';
 
 import {
   applyV1Inputs,
@@ -16,17 +23,23 @@ import {
   detectExportFormat,
   extractV1Inputs,
   extractV2Inputs,
+  interpolateLibraryPanelDatasources,
+  interpolateV1Dashboard,
   isVariableRef,
   replaceDatasourcesInDashboard,
-  DatasourceMappings,
+  type DatasourceMappings,
 } from './inputs';
 
 // Mock external dependencies
+const mockGetDataSourceSrv: Record<string, jest.Mock> = {
+  getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
+  get: jest.fn().mockResolvedValue({ meta: { builtIn: false } }),
+  getInstanceSettings: jest.fn().mockReturnValue(undefined),
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
-  }),
+  getDataSourceSrv: () => mockGetDataSourceSrv,
 }));
 
 jest.mock('../../../library-panels/state/api', () => ({
@@ -92,6 +105,10 @@ interface QueryVariableModel extends VariableModel {
 interface DatasourceVariableModel {
   type: string;
   current?: { value?: string; text?: string; selected?: boolean };
+}
+
+interface ConstantVariableModel extends VariableModel {
+  query?: string;
 }
 
 // Removed duplicate constants - now defined at top of file
@@ -212,6 +229,41 @@ describe('extractV1Inputs', () => {
     expect(result.constants).toHaveLength(0);
   });
 
+  it('should skip expressions datasource inputs', async () => {
+    const dashboard = createV1DashboardWithInputs([
+      {
+        name: 'DS_PROMETHEUS',
+        type: InputType.DataSource,
+        label: 'Prometheus',
+        pluginId: 'prometheus',
+      },
+      {
+        name: 'DS_LOKI',
+        type: InputType.DataSource,
+        label: 'Loki',
+        pluginId: 'loki',
+      },
+      {
+        name: 'VAR_NAMESPACE',
+        type: InputType.Constant,
+        label: 'Namespace',
+        value: 'default',
+      },
+      {
+        name: 'DS_EXPRESSION',
+        label: 'Expression',
+        description: '',
+        type: InputType.DataSource,
+        pluginId: '__expr__',
+      },
+    ]);
+
+    const result = await extractV1Inputs(dashboard);
+
+    expect(result.dataSources.map((ds) => ds.name)).toEqual(['DS_PROMETHEUS', 'DS_LOKI']);
+    expect(result.constants.map((c) => c.name)).toEqual(['VAR_NAMESPACE']);
+  });
+
   it('should handle empty __inputs array', async () => {
     const dashboard = { title: 'Test Dashboard', __inputs: [] };
     const result = await extractV1Inputs(dashboard);
@@ -220,8 +272,8 @@ describe('extractV1Inputs', () => {
 });
 
 describe('extractV2Inputs', () => {
-  it('should return empty inputs for non-object dashboard', () => {
-    expect(extractV2Inputs(null)).toEqual(emptyInputs);
+  it('should return empty inputs for non-object dashboard', async () => {
+    expect(await extractV2Inputs(null)).toEqual(emptyInputs);
   });
 
   it.each([
@@ -229,14 +281,24 @@ describe('extractV2Inputs', () => {
       'query variables',
       {
         elements: {},
-        variables: [{ kind: 'QueryVariable', spec: { name: 'myvar', query: { group: 'prometheus' } } }],
+        variables: [
+          {
+            kind: 'QueryVariable',
+            spec: { name: 'myvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+          },
+        ],
       },
     ],
     [
       'annotations',
       {
         elements: {},
-        annotations: [{ kind: 'AnnotationQuery', spec: { name: 'Deployments', query: { group: 'prometheus' } } }],
+        annotations: [
+          {
+            kind: 'AnnotationQuery',
+            spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+          },
+        ],
       },
     ],
     [
@@ -248,50 +310,86 @@ describe('extractV2Inputs', () => {
             spec: {
               data: {
                 kind: 'QueryGroup',
-                spec: { queries: [{ kind: 'PanelQuery', spec: { query: { group: 'prometheus' } } }] },
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: { query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+                    },
+                    // expression queries shouldn't be added to input, adding this just to prevent regressions
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          datasource: {
+                            name: '__expr__',
+                          },
+                          group: '__expr__',
+                          spec: {},
+                        },
+                        refId: 'B',
+                      },
+                    },
+                  ],
+                },
               },
             },
           },
         },
       },
     ],
-  ])('should collect datasource types from %s', (_source, dashboard) => {
-    const result = extractV2Inputs(dashboard);
+  ])('should collect datasource types from %s', async (_source, dashboard) => {
+    const result = await extractV2Inputs(dashboard);
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
   });
 
-  it('should handle empty dashboard gracefully', () => {
-    const result = extractV2Inputs({});
+  it('should handle empty dashboard gracefully', async () => {
+    const result = await extractV2Inputs({});
     expect(result).toEqual(emptyInputs);
   });
 
-  it('should deduplicate datasource types', () => {
+  it('should keep distinct datasource labels', async () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'var1', query: { group: 'prometheus' } } },
-        { kind: 'QueryVariable', spec: { name: 'var2', query: { group: 'prometheus' } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var2', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-2' } } },
+        },
       ],
-      annotations: [{ spec: { name: 'Deployments', query: { group: 'prometheus' } } }],
+      annotations: [
+        { spec: { name: 'Deployments', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-3' } } } },
+      ],
     };
 
-    const result = extractV2Inputs(dashboard);
+    const result = await extractV2Inputs(dashboard);
 
-    expect(result.dataSources).toHaveLength(1);
-    expect(result.dataSources[0].pluginId).toBe('prometheus');
+    expect(result.dataSources).toHaveLength(3);
+    expect(result.dataSources.map((ds) => ds.name)).toEqual(['prom-1', 'prom-2', 'prom-3']);
+    expect(result.dataSources.map((ds) => ds.pluginId)).toEqual(['prometheus', 'prometheus', 'prometheus']);
   });
 
-  it('should collect multiple different datasource types', () => {
+  it('should collect multiple different datasource types', async () => {
     const dashboard = {
       elements: {},
       variables: [
-        { kind: 'QueryVariable', spec: { name: 'promvar', query: { group: 'prometheus' } } },
-        { kind: 'QueryVariable', spec: { name: 'lokivar', query: { group: 'loki' } } },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'lokivar', query: { group: 'loki', labels: { [ExportLabel]: 'loki-1' } } },
+        },
       ],
     };
 
-    const result = extractV2Inputs(dashboard);
+    const result = await extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(2);
     expect(result.dataSources.map((ds) => ds.pluginId)).toContain('prometheus');
@@ -307,8 +405,131 @@ describe('extractV2Inputs', () => {
       'panels without QueryGroup data',
       { elements: { 'panel-1': { kind: 'Panel', spec: { data: { kind: 'Snapshot', spec: {} } } } } },
     ],
-  ])('should skip %s', (_name, dashboard) => {
-    expect(extractV2Inputs(dashboard).dataSources).toHaveLength(0);
+  ])('should skip %s', async (_name, dashboard) => {
+    expect((await extractV2Inputs(dashboard)).dataSources).toHaveLength(0);
+  });
+
+  it('should skip built-in datasources', async () => {
+    mockGetDataSourceSrv.get.mockResolvedValueOnce({ meta: { builtIn: true } });
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'myvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources).toHaveLength(0);
+  });
+
+  it('should keep non-built-in datasources and skip built-in ones', async () => {
+    mockGetDataSourceSrv.get
+      .mockResolvedValueOnce({ meta: { builtIn: false } })
+      .mockResolvedValueOnce({ meta: { builtIn: true } });
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'grafvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.dataSources[0].pluginId).toBe('prometheus');
+  });
+
+  it('should extract constant variables', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            label: 'Environment',
+            query: 'production',
+            description: 'Target environment',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.constants).toHaveLength(1);
+    expect(result.constants[0]).toEqual({
+      name: 'environment',
+      label: 'Environment',
+      info: 'Target environment',
+      value: 'production',
+      type: InputType.Constant,
+    });
+  });
+
+  it('should use variable name as label fallback', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'my_const',
+            query: 'value',
+            current: { text: 'value', value: 'value' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.constants[0].label).toBe('my_const');
+    expect(result.constants[0].info).toBe('Specify a string constant');
+  });
+
+  it('should extract both datasource and constant inputs', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'namespace',
+            query: 'default',
+            current: { text: 'default', value: 'default' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.constants).toHaveLength(1);
+    expect(result.constants[0].name).toBe('namespace');
   });
 });
 
@@ -375,6 +596,372 @@ describe('applyV1Inputs', () => {
     const dsVariable = result.templating?.list?.[1] as DatasourceVariableModel;
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
+
+  it('handles legacy string datasource format', () => {
+    const dashboard = {
+      title: 'PostgreSQL Database',
+      uid: '000000039',
+      schemaVersion: 19,
+      panels: [
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [{ expr: 'pg_static{instance="$instance"}', refId: 'A' }],
+        },
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [
+            { expr: 'rate(process_cpu_seconds_total[5m])', refId: 'A' },
+            { datasource: '${DS_PROMETHEUS}', expr: 'pg_up', refId: 'B' },
+          ],
+        },
+      ],
+      templating: {
+        list: [
+          {
+            type: 'datasource',
+            name: 'DS_PROMETHEUS',
+            query: 'prometheus',
+            current: { value: '${DS_PROMETHEUS}', text: '${DS_PROMETHEUS}', selected: true },
+          },
+          {
+            type: 'query',
+            name: 'namespace',
+            datasource: '${DS_PROMETHEUS}',
+            query: 'query_result(pg_exporter_last_scrape_duration_seconds)',
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_PROMETHEUS',
+          label: 'DS_PROMETHEUS',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'PostgreSQL Database',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'prom-uid', type: 'prometheus', name: 'grafanacloud-prom' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('prom-uid');
+    expect(result.panels?.[1].datasource?.uid).toBe('prom-uid');
+
+    const panel2 = result.panels?.[1] as PanelWithTargets;
+    expect(panel2.targets?.[1].datasource?.uid).toBe('prom-uid');
+
+    const dsVariable = result.templating?.list?.[0] as DatasourceVariableModel;
+    expect(dsVariable.current?.value).toBe('prom-uid');
+
+    const queryVariable = result.templating?.list?.[1] as QueryVariableModel;
+    expect(queryVariable.datasource?.uid).toBe('prom-uid');
+  });
+
+  it('replaces constant variable query, current, and options with user-provided values', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      templating: {
+        list: [
+          {
+            type: 'constant',
+            name: 'timezone',
+            query: '${VAR_TIMEZONE}',
+            current: { text: '${VAR_TIMEZONE}', value: '${VAR_TIMEZONE}', selected: false },
+            options: [{ text: '${VAR_TIMEZONE}', value: '${VAR_TIMEZONE}', selected: false }],
+          },
+          {
+            type: 'constant',
+            name: 'url',
+            query: '${VAR_URL}',
+            current: { text: '${VAR_URL}', value: '${VAR_URL}', selected: false },
+            options: [{ text: '${VAR_URL}', value: '${VAR_URL}', selected: false }],
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [],
+      constants: [
+        { name: 'VAR_TIMEZONE', label: 'Timezone', info: '', value: 'UTC', type: InputType.Constant },
+        { name: 'VAR_URL', label: 'URL', info: '', value: 'http://default', type: InputType.Constant },
+      ],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test-uid',
+      gnetId: '',
+      constants: ['Europe/Berlin', 'http://my-app:7070'],
+      dataSources: [],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    const vars = result.templating?.list as ConstantVariableModel[];
+    expect(vars[0].query).toBe('Europe/Berlin');
+    expect(vars[0].current?.text).toBe('Europe/Berlin');
+    expect(vars[0].current?.value).toBe('Europe/Berlin');
+    expect(vars[0].options?.[0].text).toBe('Europe/Berlin');
+    expect(vars[1].query).toBe('http://my-app:7070');
+    expect(vars[1].current?.text).toBe('http://my-app:7070');
+    expect(vars[1].current?.value).toBe('http://my-app:7070');
+  });
+
+  it('replaces legacy string datasource placeholders in panels and annotations', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 39,
+      annotations: {
+        list: [
+          {
+            name: 'anno',
+            datasource: '${DS}',
+            enable: true,
+            iconColor: 'red',
+            target: { limit: 1, matchAny: true, tags: [], type: 'tags' },
+          },
+        ],
+      },
+      panels: [
+        {
+          datasource: '${DS}',
+          targets: [{ datasource: '${DS}' }],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    expect(result.annotations?.list?.[0].datasource?.uid).toBe('ds-uid');
+    expect(result.panels?.[0].datasource?.uid).toBe('ds-uid');
+
+    const panelWithTargets = result.panels?.[0] as PanelWithTargets;
+    expect(panelWithTargets.targets?.[0].datasource?.uid).toBe('ds-uid');
+  });
+
+  describe('row panels', () => {
+    type RowPanel = { type: string; collapsed: boolean; datasource?: { uid: string }; panels: PanelWithTargets[] };
+
+    const makeForm = (): ImportDashboardDTO => ({
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    });
+
+    it('should import dashboards with both collapsed and uncollapsed rows', () => {
+      const dashboard = {
+        title: 'old',
+        uid: 'old',
+        panels: [
+          { type: 'row', collapsed: false, title: 'Summary' },
+          { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+          {
+            type: 'row',
+            collapsed: true,
+            panels: [{ datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] }],
+          },
+          { type: 'row', collapsed: false, title: 'Appendix' },
+        ],
+      } as unknown as Dashboard;
+
+      const result = applyV1Inputs(dashboard, sampleV1Inputs, makeForm());
+
+      expect(result.panels).toHaveLength(4);
+      expect((result.panels?.[0] as unknown as { type: string }).type).toBe('row');
+      expect((result.panels?.[1] as unknown as PanelWithTargets).datasource?.uid).toBe('ds-uid');
+      const collapsedRow = result.panels?.[2] as unknown as RowPanel;
+      expect(collapsedRow.panels[0].datasource?.uid).toBe('ds-uid');
+      expect(collapsedRow.panels[0].targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
+    });
+
+    it('replaces datasources in collapsed row children', () => {
+      const dashboard = {
+        title: 'old',
+        uid: 'old',
+        panels: [
+          { type: 'row', collapsed: false, title: 'Summary' },
+          {
+            datasource: { type: 'datasource', uid: '-- Mixed --' },
+            targets: [
+              { datasource: { type: 'grafana-bigquery-datasource', uid: '${DS}' }, refId: 'A' },
+              { datasource: { type: 'grafana-athena-datasource', uid: '${DS}' }, refId: 'B' },
+            ],
+          },
+          {
+            type: 'row',
+            collapsed: true,
+            datasource: { uid: '${DS}' },
+            panels: [
+              { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+              { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+            ],
+          },
+          { type: 'row', collapsed: false, title: 'Appendix' },
+        ],
+      } as unknown as Dashboard;
+
+      const result = applyV1Inputs(dashboard, sampleV1Inputs, makeForm());
+
+      expect(result.panels).toHaveLength(4);
+
+      expect((result.panels?.[0] as unknown as { type: string }).type).toBe('row');
+
+      expect(result.panels?.[1].datasource?.uid).toBe('-- Mixed --');
+      const mixedPanel = result.panels?.[1] as PanelWithTargets;
+      expect(mixedPanel.targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect(mixedPanel.targets?.[1].datasource?.uid).toBe('ds-uid');
+
+      const row = result.panels?.[2] as unknown as RowPanel;
+      expect(row.datasource?.uid).toBe('ds-uid');
+      expect(row.panels[0].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[0].targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[1].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[1].targets?.[0].datasource?.uid).toBe('ds-uid');
+
+      expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
+    });
+  });
+});
+
+describe('interpolateLibraryPanelDatasources', () => {
+  it('replaces ${DS_...} placeholders in panel and target datasources', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: '${DS_INFLUX}' },
+      targets: [
+        { datasource: { type: 'influxdb', uid: '${DS_INFLUX}' }, refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[0].datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('replaces legacy string datasource placeholders in panel and targets', () => {
+    const model = {
+      datasource: '${DS_INFLUX}',
+      targets: [
+        { datasource: '${DS_INFLUX}', refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
+    expect(result.targets[0].datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('returns model unchanged when no placeholders exist', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: 'some-uid' },
+      targets: [{ datasource: { type: 'influxdb', uid: 'some-uid' }, refId: 'A' }],
+      type: 'timeseries',
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, sampleV1Inputs, {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'f' },
+    });
+
+    expect(result.datasource.uid).toBe('some-uid');
+    expect(result.targets[0].datasource.uid).toBe('some-uid');
+  });
 });
 
 describe('applyV2Inputs', () => {
@@ -392,7 +979,11 @@ describe('applyV2Inputs', () => {
                   {
                     kind: 'PanelQuery',
                     spec: {
-                      query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-1' },
+                        datasource: { name: 'old-ds' },
+                      },
                     },
                   },
                 ],
@@ -405,7 +996,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'AnnotationQuery',
           spec: {
-            query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: 'old-ds' },
+            },
           },
         },
       ],
@@ -413,7 +1008,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'QueryVariable',
           spec: {
-            query: { group: 'prometheus', datasource: { name: 'old-ds' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: 'old-ds' },
+            },
           },
         },
       ],
@@ -423,7 +1022,7 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -442,6 +1041,150 @@ describe('applyV2Inputs', () => {
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
   });
 
+  it('uses datasource labels to keep selections independent', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-1' },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'prometheus',
+                        labels: { [ExportLabel]: 'prometheus-2' },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      annotations: [],
+      variables: [],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+      'datasource-prometheus-2': { uid: 'ds-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const updatedPanel = result.elements.panel as PanelKind;
+    const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
+    const firstQuery = queries[0];
+    const secondQuery = queries[1];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const firstSpec = firstQuery?.spec as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const secondSpec = secondQuery?.spec as any;
+    expect(firstSpec?.query?.datasource?.name).toBe('ds-uid-1');
+    expect(secondSpec?.query?.datasource?.name).toBe('ds-uid-2');
+  });
+
+  it('applies user-provided constant values to ConstantVariable specs', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'region',
+            query: 'us-east-1',
+            current: { text: 'us-east-1', value: 'us-east-1' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-environment': 'staging',
+      'constant-region': 'eu-west-1',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('staging');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.current).toEqual({
+      text: 'staging',
+      value: 'staging',
+    });
+
+    const regionVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'region');
+    expect(regionVar?.kind === 'ConstantVariable' && regionVar.spec.query).toBe('eu-west-1');
+  });
+
+  it('preserves constant values when no form value is provided', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('production');
+  });
+
   it('preserves variable references and does not replace them', () => {
     const dashboard = {
       title: 'old',
@@ -450,7 +1193,11 @@ describe('applyV2Inputs', () => {
         {
           kind: 'AnnotationQuery',
           spec: {
-            query: { group: 'prometheus', datasource: { name: '${ds}' } },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1' },
+              datasource: { name: '${ds}' },
+            },
           },
         },
       ],
@@ -461,7 +1208,7 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -813,5 +1560,144 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(getPanelQueryDatasourceName(result, 'panel-variable')).toBe('${ds}');
       expect(getPanelQueryDatasourceName(result, 'panel-hardcoded')).toBe('new-loki-uid');
     });
+  });
+});
+
+describe('interpolateV1Dashboard', () => {
+  const promInput = {
+    name: 'DS_PROMETHEUS',
+    type: 'datasource' as const,
+    pluginId: 'prometheus',
+    label: 'Prometheus',
+    description: '',
+    value: '',
+  };
+  const exprInput = {
+    name: 'DS_EXPRESSION',
+    type: 'datasource' as const,
+    pluginId: '__expr__',
+    label: 'Expression',
+    description: '',
+    value: '',
+  };
+  const makeDashboard = (overrides: Partial<DashboardJson> = {}): DashboardJson =>
+    ({
+      __inputs: [promInput],
+      panels: [{ datasource: { type: 'prometheus', uid: '${DS_PROMETHEUS}' }, targets: [], type: 'timeseries' }],
+      title: 'Test',
+      ...overrides,
+    }) as unknown as DashboardJson;
+  const makeExprDashboard = () =>
+    makeDashboard({
+      __inputs: [promInput, exprInput],
+      panels: [
+        {
+          datasource: { type: 'prometheus', uid: '${DS_PROMETHEUS}' },
+          targets: [
+            {
+              datasource: { type: '__expr__', uid: '${DS_EXPRESSION}' },
+              expression: '$A * 2',
+              refId: 'B',
+              type: 'math',
+            },
+          ],
+          type: 'timeseries',
+        },
+      ] as unknown as DashboardJson['panels'],
+    });
+  const getPanel = (result: DashboardJson, idx = 0) => (result.panels as Panel[])[idx];
+
+  beforeEach(() => {
+    mockGetDataSourceSrv.getInstanceSettings = jest
+      .fn()
+      .mockImplementation((uid: string) =>
+        uid === 'prom-uid' ? { uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } : undefined
+      );
+  });
+
+  it('should replace datasource placeholders with wildcard mapping', () => {
+    const result = interpolateV1Dashboard(makeDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    expect(getPanel(result).datasource!.uid).toBe('prom-uid');
+  });
+
+  it('should replace named datasource mapping', () => {
+    const result = interpolateV1Dashboard(makeDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+    ]);
+    expect(getPanel(result).datasource!.uid).toBe('prom-uid');
+  });
+
+  it('should handle expression datasources', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+    ]);
+    const panel = getPanel(result);
+    expect(panel.datasource!.uid).toBe('prom-uid');
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+    expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
+  });
+
+  it('should force expression datasource to __expr__ even when mapped to a real UID', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [
+      { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
+      { name: 'DS_EXPRESSION', type: 'datasource', pluginId: '__expr__', value: 'some-real-uid' },
+    ]);
+    const panel = getPanel(result);
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+    expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
+  });
+
+  it('should handle expression datasources with wildcard mapping', () => {
+    const result = interpolateV1Dashboard(makeExprDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    const panel = getPanel(result);
+    expect(panel.datasource!.uid).toBe('prom-uid');
+    expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
+  });
+
+  it('should handle constants', () => {
+    const dashboard = makeDashboard({
+      __inputs: [{ name: 'VAR_INTERVAL', type: 'constant', label: 'Interval', description: '', value: '1m' }],
+      panels: [] as DashboardJson['panels'],
+      templating: {
+        list: [
+          {
+            type: 'constant',
+            name: 'interval',
+            query: '${VAR_INTERVAL}',
+            current: { text: '', value: '' },
+            options: [{ text: '', value: '' }],
+          },
+        ],
+      } as DashboardJson['templating'],
+    });
+    const result = interpolateV1Dashboard(dashboard, [{ name: 'VAR_INTERVAL', type: 'constant', value: '5m' }]);
+    const variable = result.templating!.list![0] as VariableModel & { query: string; current: { value: string } };
+    expect(variable.query).toBe('5m');
+    expect(variable.current.value).toBe('5m');
+  });
+
+  it('should strip __inputs, __elements, __requires from result', () => {
+    const dashboard = makeDashboard({
+      __elements: { somePanel: {} } as unknown as DashboardJson['__elements'],
+      __requires: [{ type: 'panel', id: 'timeseries' }] as DashboardJson['__requires'],
+    });
+    const result = interpolateV1Dashboard(dashboard, [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    expect(result.__inputs).toBeUndefined();
+    expect(result.__elements).toBeUndefined();
+    expect(result.__requires).toBeUndefined();
+  });
+
+  it('should work with no __inputs', () => {
+    const dashboard = makeDashboard({ __inputs: undefined, panels: [] as DashboardJson['panels'] });
+    const result = interpolateV1Dashboard(dashboard, []);
+    expect(result.title).toBe('Test');
+  });
+
+  it('should throw when datasource UID cannot be resolved', () => {
+    expect(() =>
+      interpolateV1Dashboard(makeDashboard(), [
+        { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'nonexistent-uid' },
+      ])
+    ).toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
   });
 });

@@ -74,6 +74,8 @@ type Requester interface {
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool
+	// GetAccessToken returns the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
+	GetAccessToken() string
 	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
 	GetIDToken() string
 

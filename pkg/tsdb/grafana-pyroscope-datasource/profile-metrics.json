@@ -107,7 +107,7 @@
     "id": "process_cpu:alloc_size:bytes:cpu:nanoseconds",
     "description": "Size of memory allocated during CPU time",
     "type": "alloc_size",
-    "group": "alloc_size",
+    "group": "memory",
     "unit": "bytes",
     "aggregationType": "cumulative"
   },
@@ -158,5 +158,77 @@
     "group": "process_cpu",
     "unit": "short",
     "aggregationType": "instant"
+  },
+  "process_cpu:cpu_samples:count:cpu:nanoseconds": {
+    "id": "process_cpu:cpu_samples:count:cpu:nanoseconds",
+    "description": "Number of CPU samples collected",
+    "type": "cpu_samples",
+    "group": "process_cpu",
+    "unit": "short",
+    "aggregationType": "cumulative"
+  },
+  "alloc:alloc_samples:count:cpu:nanoseconds": {
+    "id": "alloc:alloc_samples:count:cpu:nanoseconds",
+    "description": "Number of memory allocation samples",
+    "type": "alloc_samples",
+    "group": "memory",
+    "unit": "short",
+    "aggregationType": "cumulative"
+  },
+  "alloc:alloc_size:bytes:cpu:nanoseconds": {
+    "id": "alloc:alloc_size:bytes:cpu:nanoseconds",
+    "description": "Size of memory allocated",
+    "type": "alloc_size",
+    "group": "memory",
+    "unit": "bytes",
+    "aggregationType": "cumulative"
+  },
+  "exception:exception:count:cpu:nanoseconds": {
+    "id": "exception:exception:count:cpu:nanoseconds",
+    "description": "Number of exceptions thrown",
+    "type": "exception",
+    "group": "exceptions",
+    "unit": "short",
+    "aggregationType": "cumulative"
+  },
+  "heap:inuse_objects:count:cpu:nanoseconds": {
+    "id": "heap:inuse_objects:count:cpu:nanoseconds",
+    "description": "Number of objects currently in use on the heap",
+    "type": "inuse_objects",
+    "group": "memory",
+    "unit": "short",
+    "aggregationType": "instant"
+  },
+  "heap:inuse_space:bytes:cpu:nanoseconds": {
+    "id": "heap:inuse_space:bytes:cpu:nanoseconds",
+    "description": "Size of heap memory currently in use",
+    "type": "inuse_space",
+    "group": "memory",
+    "unit": "bytes",
+    "aggregationType": "instant"
+  },
+  "lock:lock_count:count:cpu:nanoseconds": {
+    "id": "lock:lock_count:count:cpu:nanoseconds",
+    "description": "Number of lock acquisitions attempted during CPU time",
+    "type": "lock_count",
+    "group": "locks",
+    "unit": "short",
+    "aggregationType": "instant"
+  },
+  "lock:lock_time:nanoseconds:cpu:nanoseconds": {
+    "id": "lock:lock_time:nanoseconds:cpu:nanoseconds",
+    "description": "Cumulative time spent acquiring locks",
+    "type": "lock_time",
+    "group": "locks",
+    "unit": "ns",
+    "aggregationType": "cumulative"
+  },
+  "thread_lifetime:thread_lifetime_timeline:nanoseconds:cpu:nanoseconds": {
+    "id": "thread_lifetime:thread_lifetime_timeline:nanoseconds:cpu:nanoseconds",
+    "description": "Lifetime of threads in nanoseconds",
+    "type": "thread_lifetime_timeline",
+    "group": "thread_lifetime",
+    "unit": "ns",
+    "aggregationType": "cumulative"
   }
 }

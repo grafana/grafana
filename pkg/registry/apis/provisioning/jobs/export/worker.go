@@ -6,17 +6,20 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
-type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderAPIVersion string) error
 
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
@@ -29,6 +32,7 @@ type ExportWorker struct {
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
 	enabled             bool
+	folderAPIVersion    string
 }
 
 func NewExportWorker(
@@ -39,6 +43,7 @@ func NewExportWorker(
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
 	enabled bool,
+	folderAPIVersion string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -48,6 +53,7 @@ func NewExportWorker(
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
 		enabled:             enabled,
+		folderAPIVersion:    folderAPIVersion,
 	}
 }
 
@@ -56,7 +62,7 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 }
 
 // Process will start a job
-func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if !r.enabled {
 		return fmt.Errorf("export functionality is disabled by configuration")
 	}
@@ -66,7 +72,21 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", options)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.export.process")
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("export.branch", options.Branch),
+		attribute.String("export.folder", options.Folder),
+		attribute.String("export.path", options.Path),
+	)
+
 	start := time.Now()
 	outcome := utils.ErrorOutcome
 	resourcesExported := 0
@@ -116,7 +136,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
+		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress, r.folderAPIVersion)
 	}
 
 	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)

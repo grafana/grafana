@@ -1,4 +1,4 @@
-import { Route as AlertingRoute, RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
+import { type Route as AlertingRoute, type RouteWithID as AlertingRouteWithID } from '@grafana/alerting';
 import { type LabelMatcher } from '@grafana/alerting/unstable';
 import {
   MatcherOperator,

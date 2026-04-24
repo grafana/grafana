@@ -19,22 +19,6 @@ labels:
 menuTitle: Template variables
 title: Microsoft SQL Server template variables
 weight: 400
-refs:
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  variable-syntax-advanced-variable-format-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
 ---
 
 # Microsoft SQL Server template variables
@@ -43,9 +27,9 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana displays these variables in drop-down select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as **template variables**.
 
-For general information on using variables in Grafana, refer to [Add variables](ref:add-template-variables).
+For general information on using variables in Grafana, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
-For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
+For an introduction to templating and template variables, refer to [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
 ## Query variable
 
@@ -127,4 +111,4 @@ ${servers:csv}
 
 This outputs the values as an unquoted comma-separated list.
 
-Refer to [Advanced variable format options](ref:variable-syntax-advanced-variable-format-options) for additional information.
+Refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) for additional information.

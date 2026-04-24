@@ -23,12 +23,6 @@ labels:
 menuTitle: Configure
 title: Configure the InfluxDB data source
 weight: 300
-refs:
-  provision-grafana:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana
 ---
 
 # Configure the InfluxDB data source
@@ -213,7 +207,7 @@ A successful test returns one of the following messages depending on your query 
 | InfluxQL       | `datasource is working. X measurements found` |
 | SQL            | `OK`                                          |
 
-If the test fails, refer to [Troubleshoot issues with the InfluxDB data source](../troubleshooting/) for help resolving common connection and authentication errors.
+If the test fails, refer to [Troubleshoot InfluxDB data source issues](../troubleshooting/) for help resolving common connection and authentication errors.
 
 ### Min time interval
 
@@ -238,7 +232,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer
-to [Provision Grafana](ref:provision-grafana).
+to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana).
 
 {{< admonition type="note" >}}
 The `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).

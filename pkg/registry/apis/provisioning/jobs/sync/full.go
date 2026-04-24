@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// FullSync computes and applies the diff between a repository state and Grafana, honoring ordering, quotas,
+// and folder metadata. It orchestrates compare, quota check, and phased application of deletions and creations.
 func FullSync(
 	ctx context.Context,
 	repo repository.Reader,
@@ -33,6 +35,7 @@ func FullSync(
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -60,8 +63,10 @@ func FullSync(
 
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	var changes []ResourceFileChange
+	var missingFolderMetadata []string
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
@@ -70,10 +75,48 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
+	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		logging.FromContext(ctx).Info("missing folder metadata detected", "count", len(missingFolderMetadata))
+		changeActions := make(map[string]repository.FileAction, len(changes))
+		for _, c := range changes {
+			changeActions[c.Path] = c.Action
+		}
+		for _, p := range missingFolderMetadata {
+			builder := jobs.NewFolderResult(p).
+				WithWarning(resources.NewMissingFolderMetadata(p))
+			if action, ok := changeActions[p]; ok {
+				builder = builder.WithAction(action)
+			} else {
+				builder = builder.WithAction(repository.FileActionIgnored)
+			}
+			progress.Record(ctx, builder.Build())
+		}
+	}
+
+	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
+		logging.FromContext(ctx).Info("invalid folder metadata detected", "count", len(invalidFolderMetadata))
+		for _, invalid := range invalidFolderMetadata {
+			action := invalid.Action
+			if action == "" {
+				action = repository.FileActionIgnored
+			}
+			progress.Record(ctx, jobs.NewFolderResult(invalid.Path).
+				WithAction(action).
+				WithWarning(invalid).
+				Build())
+		}
+	}
+
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
+
+	// Detect file renames: collapse delete+create pairs that share the same
+	// content hash into a single update so K8s UIDs are preserved.
+	_, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
+	changes = DetectRenames(changes)
+	renameSpan.End()
 
 	// Check quota before applying changes
 	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
@@ -85,7 +128,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)
+	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -120,7 +163,18 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 	return false
 }
 
-func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) {
+// applyChange applies a single resource or folder change, handling delete/create/update and recording progress.
+func applyChange(
+	ctx context.Context,
+	change ResourceFileChange,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -165,6 +219,14 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			// Keep this tree mutation scoped to folder metadata for now.
+			// It clears the deleted folder's stale in-memory entry so the same
+			// full sync can recreate that folder at a new path when _folder.json
+			// preserves the UID.
+			if folderMetadataEnabled && safepath.IsDir(change.Path) {
+				logging.FromContext(deleteCtx).Debug("folder tree entry removed after delete", "path", change.Path, "uid", change.Existing.Name)
+				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+			}
 		}
 		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
@@ -172,21 +234,23 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	}
 
 	// Handle folders based on action type
+	// Quota for folder creation is enforced by the beforeCreate hook inside EnsureFolderPathExist.
 	if safepath.IsDir(change.Path) {
-		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
-			progress.Record(ctx, jobs.NewFolderResult(change.Path).
-				WithAction(change.Action).
-				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
-				AsSkipped().
-				Build())
-			return
-		}
-
-		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
-		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
+		var ensureOpts []resources.EnsurePathOption
+		if change.Action == repository.FileActionUpdated && change.Existing != nil {
+			// Force the full ancestor walk so parent-only changes are not skipped
+			// by the early-return optimisation, and mark the old UID as relocating
+			// so the ID conflict check is bypassed for it at the new path.
+			ensureOpts = append(ensureOpts,
+				resources.WithForceWalk(),
+				resources.WithRelocatingUIDs(change.Existing.Name),
+			)
+		}
+
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)
@@ -212,7 +276,19 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	var name string
+	var gvk schema.GroupVersionKind
+	var err error
+
+	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
+		oldGVR := schema.GroupVersionResource{
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR)
+	} else {
+		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef)
+	}
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)
@@ -223,7 +299,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	writeSpan.End()
 }
 
-// instrument a function with a phase and metrics
+// instrumentedFullSyncPhase records timing metrics around a full-sync phase.
 func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metrics jobs.JobMetrics) error {
 	phaseStart := time.Now()
 	err := fn()
@@ -231,7 +307,26 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
+// applyChanges orders and executes the diff:
+// - deletions first (files then folders),
+// - then folder creations,
+// - then file creations.
+// It delegates to:
+// - serial folder handling,
+// - parallel resource handling with per-change timeouts.
+func applyChanges(
+	ctx context.Context,
+	changes []ResourceFileChange,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -239,78 +334,188 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	)
 	defer applyChangesSpan.End()
 
-	// Separate changes into four categories for proper ordering:
-	// 1. File deletions (must happen before folder deletions)
-	// 2. Folder deletions
-	// 3. Folder creations (must happen before file creations)
-	// 4. File creations (must happen after folder creations)
-	var fileDeletions []ResourceFileChange
-	var folderDeletions []ResourceFileChange
-	var folderCreations []ResourceFileChange
-	var fileCreations []ResourceFileChange
+	buckets := categorizeChanges(changes)
 
-	for _, change := range changes {
-		isFolder := safepath.IsDir(change.Path)
-		isDeleted := change.Action == repository.FileActionDeleted
-
-		if isDeleted {
-			if isFolder {
-				folderDeletions = append(folderDeletions, change)
-			} else {
-				fileDeletions = append(fileDeletions, change)
-			}
-		} else {
-			if isFolder {
-				folderCreations = append(folderCreations, change)
-			} else {
-				fileCreations = append(fileCreations, change)
-			}
-		}
+	// Folder renames (FolderRenamed) are net-zero: each creates a new folder
+	// and deletes the old one in the cleanup phase. Temporarily raise the
+	// quota limit so the creations succeed before the deletions free the slots.
+	if buckets.folderRenames > 0 {
+		quotaTracker.AllowOverLimit(buckets.folderRenames)
 	}
 
 	applyChangesSpan.SetAttributes(
-		attribute.Int("file_deletions", len(fileDeletions)),
-		attribute.Int("folder_deletions", len(folderDeletions)),
-		attribute.Int("folder_creations", len(folderCreations)),
-		attribute.Int("file_creations", len(fileCreations)),
+		attribute.Int("file_renames", len(buckets.fileRenames)),
+		attribute.Int("file_deletions", len(buckets.fileDeletions)),
+		attribute.Int("folder_deletions", len(buckets.folderDeletions)),
+		attribute.Int("folder_creations", len(buckets.folderCreations)),
+		attribute.Int("file_creations", len(buckets.fileCreations)),
 	)
 
-	if len(fileDeletions) > 0 {
+	if len(buckets.fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
+			return applyResourcesInParallel(ctx, buckets.fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
 	}
 
-	if len(folderDeletions) > 0 {
-		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker)
-		}, metrics); err != nil {
-			return err
-		}
-	}
-
-	if len(folderCreations) > 0 {
+	if len(buckets.folderCreations) > 0 {
+		// Process folder creations/updates shallowest-first so that parent folders are set up (and their old tree entries removed)
+		// before children are walked to ensure consistency in moves and renames.
+		safepath.SortByDepth(buckets.folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker)
+			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
 	}
 
-	if len(fileCreations) > 0 {
+	if len(buckets.fileRenames) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
+			return applyResourcesInParallel(ctx, buckets.fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	if len(buckets.folderDeletions) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
+			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	if len(buckets.fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
+			return applyResourcesInParallel(ctx, buckets.fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return cleanupRenamedFolders(ctx, buckets.folderCreations, repositoryResources, progress, tracer, metrics)
 }
 
-func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) error {
+// changeBuckets groups resource changes by the phase in which they must be applied.
+type changeBuckets struct {
+	fileDeletions   []ResourceFileChange
+	folderCreations []ResourceFileChange
+	fileRenames     []ResourceFileChange
+	folderDeletions []ResourceFileChange
+	fileCreations   []ResourceFileChange
+	folderRenames   int
+}
+
+// categorizeChanges separates changes into ordered phases:
+// 1. File deletions (free up folder contents early, must happen before folder deletions)
+// 2. Folder creations (destination folders must exist before renames/creates)
+// 3. File renames (after destination folders exist, before old folders are deleted)
+// 4. Folder deletions (old folders are now empty)
+// 5. File creations/updates (must happen after folder creations)
+// 6. Old folder deletions (must happen after all children have been re-parented)
+// It also counts folder renames so callers can temporarily lift the quota for the
+// creation phase (the matching deletions happen later in the old-folder cleanup).
+func categorizeChanges(changes []ResourceFileChange) changeBuckets {
+	var buckets changeBuckets
+	for _, change := range changes {
+		isFolder := safepath.IsDir(change.Path)
+
+		switch {
+		case change.Action == repository.FileActionRenamed && !isFolder:
+			buckets.fileRenames = append(buckets.fileRenames, change)
+		case change.Action == repository.FileActionDeleted && !isFolder:
+			buckets.fileDeletions = append(buckets.fileDeletions, change)
+		case change.Action == repository.FileActionDeleted && isFolder:
+			buckets.folderDeletions = append(buckets.folderDeletions, change)
+		case isFolder:
+			buckets.folderCreations = append(buckets.folderCreations, change)
+			if change.FolderRenamed {
+				buckets.folderRenames++
+			}
+		default:
+			buckets.fileCreations = append(buckets.fileCreations, change)
+		}
+	}
+	return buckets
+}
+
+// cleanupRenamedFolders deletes the original folders left behind after a UID
+// change. It runs once all children have been re-parented so that the old
+// folder tree is empty and safe to remove.
+func cleanupRenamedFolders(
+	ctx context.Context,
+	folderCreations []ResourceFileChange,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	metrics jobs.JobMetrics,
+) error {
+	type oldFolder struct {
+		Path   string
+		UID    string
+		Reason string
+	}
+
+	var oldFolders []oldFolder
+	for _, change := range folderCreations {
+		if change.FolderRenamed {
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name, Reason: change.Reason})
+		}
+	}
+
+	if len(oldFolders) == 0 {
+		return nil
+	}
+
+	logging.FromContext(ctx).Info("folder rename cleanup", "count", len(oldFolders))
+	return instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
+		safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
+		for _, old := range oldFolders {
+			if ctx.Err() != nil {
+				break
+			}
+
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+
+			// Skip if the replacement folder failed to be created or updated (e.g. UID conflict warning).
+			if progress.HasDirPathFailedCreation(old.Path) || progress.HasChildPathFailedUpdate(old.Path) {
+				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
+				progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
+					WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
+					AsSkipped().
+					Build())
+				skipSpan.End()
+				continue
+			}
+
+			resultBuilder := jobs.NewFolderResult(old.Path).
+				WithAction(repository.FileActionDeleted).
+				WithName(old.UID).
+				WithReason(old.Reason)
+			if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
+				resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
+			}
+			progress.Record(ctx, resultBuilder.Build())
+		}
+		return nil
+	}, metrics)
+}
+
+// applyFoldersSerially processes folder changes one by one.
+func applyFoldersSerially(
+	ctx context.Context,
+	folders []ResourceFileChange,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -321,17 +526,27 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 		}
 
 		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker)
+			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		})
 	}
 
 	return nil
 }
 
-func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, quotaTracker quotas.QuotaTracker) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("applying resources in parallel test changes 1")
-
+// applyResourcesInParallel applies non-folder changes concurrently up to maxSyncWorkers.
+// Folder changes are handled serially, this is for files.
+func applyResourcesInParallel(
+	ctx context.Context,
+	resources []ResourceFileChange,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	if len(resources) == 0 {
 		return nil
 	}
@@ -361,7 +576,7 @@ loop:
 			defer func() { <-sem }()
 
 			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker)
+				applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 			})
 		}(change)
 	}
@@ -375,7 +590,7 @@ loop:
 	return ctx.Err()
 }
 
-// wrapWithTimeout wraps a function call with a timeout context
+// wrapWithTimeout runs fn with a derived context that times out after the given duration.
 func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

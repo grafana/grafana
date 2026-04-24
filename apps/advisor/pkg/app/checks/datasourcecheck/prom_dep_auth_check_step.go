@@ -19,11 +19,11 @@ func (s *promDepAuthStep) Title() string {
 }
 
 func (s *promDepAuthStep) Description() string {
-	return "Check if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
+	return "Checks if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return fmt.Sprintf("Enable the feature toggle for 'prometheusTypeMigration'. If this feature toggle is already enabled, make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
+	return fmt.Sprintf("Make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
 }
 
 func (s *promDepAuthStep) ID() string {

@@ -156,8 +156,8 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	}
 
 	// Plugin is not installed but IS available - return false to show install link
-	// Plugin is not installed and NOT available in repo - return true (nothing to install)
+	// Plugin is not installed and NOT available in repo - return false (nothing to install)
 	isAvailableInRepo := len(availablePlugins) > 0
-	c.pluginCanBeInstalledCache[pluginType] = !isAvailableInRepo
+	c.pluginCanBeInstalledCache[pluginType] = isAvailableInRepo
 	return isAvailableInRepo, nil
 }

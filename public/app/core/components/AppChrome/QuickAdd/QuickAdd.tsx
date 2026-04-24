@@ -1,52 +1,73 @@
-import { useMemo, useState } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { Fragment, useMemo, useState } from 'react';
 
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
-import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
-import {
-  CONTENT_KINDS,
-  DashboardLibraryInteractions,
-  SOURCE_ENTRY_POINTS,
-} from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import { findCreateActions } from './utils';
+import {
+  ALERTING_GROUP_COLOR_DARK_NAME,
+  ALERTING_GROUP_COLOR_LIGHT_NAME,
+  DASHBOARD_GROUP_COLOR_NAME,
+  ITEM_ICONS,
+  findCreateActionGroups,
+} from './utils';
 
 export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const theme = useTheme2();
 
-  const createActions = useMemo(() => {
-    const createActions = findCreateActions(navBarTree);
+  const actionGroups = useMemo(() => {
+    const groups = findCreateActionGroups(navBarTree);
 
     if (config.featureToggles.dashboardTemplates) {
       const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
       if (testDataSources.length > 0) {
-        createActions.splice(1, 0, {
+        const templateItem: NavModelItem = {
           id: 'browse-template-dashboard',
-          text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
+          text: t('navigation.quick-add.new-template-dashboard-button', 'Use template'),
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
-            DashboardLibraryInteractions.entryPointClicked({
-              entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-              contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-            });
+            isAnalyticsFrameworkEnabled
+              ? NewDashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                })
+              : DashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                });
           },
-        });
+        };
+
+        // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
+        const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+        if (dashboardGroup) {
+          dashboardGroup.items.push(templateItem);
+        }
       }
     }
 
-    return createActions;
-  }, [navBarTree]);
-  const showQuickAdd = createActions.length > 0;
+    return groups;
+  }, [isAnalyticsFrameworkEnabled, navBarTree]);
+
+  const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 
   if (!showQuickAdd) {
     return null;
   }
+
   const handleVisibleChange = () => {
     if (!isOpen) {
       reportInteraction('grafana_create_new_button_menu_opened', {
@@ -57,24 +78,47 @@ export const QuickAdd = ({}: Props) => {
   };
 
   const MenuActions = () => {
+    const groupColors: Record<string, string> = {
+      'dashboards/browse': theme.visualization.getColorByName(DASHBOARD_GROUP_COLOR_NAME),
+      alerting:
+        theme.colors.mode === 'dark'
+          ? theme.visualization.getColorByName(ALERTING_GROUP_COLOR_LIGHT_NAME)
+          : theme.visualization.getColorByName(ALERTING_GROUP_COLOR_DARK_NAME),
+    };
+
     return (
       <Menu>
-        {createActions.map((createAction, index) => (
-          <Menu.Item
-            key={index}
-            url={createAction.url}
-            label={createAction.text}
-            onClick={() => {
-              reportInteraction('grafana_menu_item_clicked', { url: createAction.url, from: 'quickadd' });
-              createAction.onClick?.();
-            }}
-          />
-        ))}
+        {actionGroups.map((group, groupIdx) => {
+          const iconColor = groupColors[group.parentId];
+          return (
+            <Fragment key={group.parentId}>
+              {groupIdx > 0 && <Menu.Divider />}
+              {/* Empty parentText (ungrouped items) becomes undefined to suppress the group header */}
+              <Menu.Group label={group.parentText || undefined}>
+                {group.items.map((item) => {
+                  return (
+                    <Menu.Item
+                      key={item.id ?? item.url}
+                      url={item.url}
+                      label={item.text}
+                      icon={item.id ? ITEM_ICONS[item.id] : undefined}
+                      iconColor={iconColor}
+                      onClick={() => {
+                        reportInteraction('grafana_menu_item_clicked', { url: item.url, from: 'quickadd' });
+                        item.onClick?.();
+                      }}
+                    />
+                  );
+                })}
+              </Menu.Group>
+            </Fragment>
+          );
+        })}
       </Menu>
     );
   };
 
-  return showQuickAdd ? (
+  return (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <ToolbarButton
@@ -86,5 +130,5 @@ export const QuickAdd = ({}: Props) => {
       </Dropdown>
       <NavToolbarSeparator />
     </>
-  ) : null;
+  );
 };

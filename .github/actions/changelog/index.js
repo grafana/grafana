@@ -51,76 +51,80 @@ const graphql = async (ghtoken, query, variables) => {
     JSON.stringify({
       status: results.status,
       text: results.statusText,
+      errors: res.errors,
     })
   );
 
   return res.data;
 };
 
-// Using Github GraphQL API find the timestamp for the given tag/commit hash.
-// This is required for PR listing, because Github API only takes date/time as
-// a "since" parameter while listing. Currently there is no way to provide two
-// "commitish" items and get a list of PRs in between them.
-const getCommitishDate = async (name, owner, target) => {
-  const result = await graphql(
-    ghtoken,
-    `
-      query getCommitDate($owner: String!, $name: String!, $target: String!) {
-        repository(owner: $owner, name: $name) {
-          object(expression: $target) {
-            ... on Commit {
-              committedDate
-            }
-          }
-        }
-      }
-    `,
-    {name, owner, target}
+// A helper for Github REST API endpoints
+const rest = async (ghtoken, path) => {
+  const results = await fetch(`https://api.github.com/${path}`, {
+    headers: {
+      Authorization: `Bearer ${ghtoken}`,
+    },
+  });
+
+  const res = await results.json();
+
+  LOG(
+    JSON.stringify({
+      status: results.status,
+      text: results.statusText,
+    })
   );
-  return result.repository.object.committedDate;
+
+  return res;
+};
+
+// Using Github REST API get a list of commits between the two "commitish" items.
+// Use the REST API, rather than the GraphQL API, as the GraphQL ref compare only returns the first 1000 commits.
+const getComparison = async (name, owner, from, to) => {
+  LOG(`Fetching ${owner}/${name} PRs between ${from} and ${to}`);
+
+  let page = 1;
+  let nodes = [];
+
+  for (; ;) {
+    const result = await rest(ghtoken, `repos/${owner}/${name}/compare/${from}...${to}?per_page=100&page=${page}`);
+    nodes = nodes.concat(result.commits.map(({ sha, node_id }) => ({ sha, node_id })));
+    LOG(`Fetched ${result.commits.length} commits, total so far: ${nodes.length}`);
+
+    if (nodes.length >= result.total_commits || !result.commits.length) {
+      break;
+    }
+    page++;
+  }
+
+  return nodes;
 };
 
 // Using Github GraphQL API get a list of PRs between the two "commitish" items.
-// This resoves the "since" item's timestamp first and iterates over all PRs
-// till "target" using naïve pagination.
+// This resolves the diff using the REST API, and then populates PR data from the GraphQL API.
 const getHistory = async (name, owner, from, to) => {
-  LOG(`Fetching ${owner}/${name} PRs between ${from} and ${to}`);
+  const commits = await getComparison(name, owner, from, to);
+
   const query = `
-  query findCommitsWithAssociatedPullRequests(
-    $name: String!
-    $owner: String!
-    $from: String!
-    $to: String!
-    $cursor: String
-  ) {
-    repository(name: $name, owner: $owner) {
-      ref(qualifiedName: $from) {
-        compare(headRef: $to) {
-          commits(first: 25, after: $cursor) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
+    query($nodeIds: [ID!]!) {
+      nodes(ids: $nodeIds) {
+        ... on Commit {
+          oid
+          associatedPullRequests(first: 1) {
             nodes {
-              id
-              associatedPullRequests(first: 1) {
+              title
+              number
+              labels(first: 10) {
                 nodes {
-                  title
-                  number
-                  labels(first: 10) {
-                    nodes {
-                      name
-                    }
-                  }
-                  commits(first: 1) {
-                    nodes {
-                      commit {
-                        author {
-                          user {
-                            login
-                          }
-                        }
+                  name
+                }
+              }
+              commits(first: 1) {
+                nodes {
+                  commit {
+                    author {
+                      user {
+                        login
                       }
                     }
                   }
@@ -131,26 +135,17 @@ const getHistory = async (name, owner, from, to) => {
         }
       }
     }
-  }`;
+  `;
 
-  let cursor;
   let nodes = [];
-  for (; ;) {
-    const result = await graphql(ghtoken, query, {
-      name,
-      owner,
-      from,
-      to,
-      cursor,
-    });
-    LOG(`GraphQL: ${JSON.stringify(result)}`);
-    nodes = [...nodes, ...result.repository.ref.compare.commits.nodes];
-    const {hasNextPage, endCursor} = result.repository.ref.compare.commits.pageInfo;
-    if (!hasNextPage) {
-      break;
-    }
-    cursor = endCursor;
+
+  while (commits.length) {
+    const batch = commits.splice(0, 25).map(c => c.node_id);
+    const result = await graphql(ghtoken, query, { nodeIds: batch });
+    nodes = nodes.concat(result.nodes);
+    LOG(`Fetched PRs for ${batch.length} commits, total so far: ${nodes.length}`);
   }
+
   return nodes;
 };
 
@@ -164,6 +159,7 @@ const getChangeLogItems = async (name, owner, from, to) => {
   const hasLabel = ({labels}, label) => labels.nodes.some(({name}) => name === label);
   // get all the PRs between the two "commitish" items
   const history = await getHistory(name, owner, from, to);
+  LOG(`History for ${owner}/${name} between ${from} and ${to}: ${history.length} PRs`);
 
   const items = history.flatMap((node) => {
     // discard PRs without a "changelog" label

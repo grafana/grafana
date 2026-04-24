@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
 import { type ComponentType, createElement, useState } from 'react';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Tab } from '../Tabs/Tab';
 import { TabsBar } from '../Tabs/TabsBar';
-import { PopoverContentProps } from '../Tooltip/types';
+import { type PopoverContentProps } from '../Tooltip/types';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';

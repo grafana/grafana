@@ -1,5 +1,7 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { useState, ChangeEvent } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react';
+import { useState, type ChangeEvent } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { SecretInput } from './SecretInput';
 import mdx from './SecretInput.mdx';
@@ -41,14 +43,16 @@ const Template: StoryFn<typeof SecretInput> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (
-    <SecretInput
-      width={args.width}
-      value={secret}
-      isConfigured={args.isConfigured}
-      placeholder={args.placeholder}
-      onChange={(event: ChangeEvent<HTMLInputElement>) => setSecret(event.target.value.trim())}
-      onReset={() => setSecret('')}
-    />
+    <Field label="Your secret password">
+      <SecretInput
+        width={args.width}
+        value={secret}
+        isConfigured={args.isConfigured}
+        placeholder={args.placeholder}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setSecret(event.target.value.trim())}
+        onReset={() => setSecret('')}
+      />
+    </Field>
   );
 };
 

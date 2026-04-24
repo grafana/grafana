@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -22,6 +24,10 @@ import (
 type changeInfo struct {
 	GrafanaBaseURL string
 
+	// Attribution: identifies which provisioning repository posted this comment
+	RepositoryName  string
+	RepositoryTitle string
+
 	// Files we tried to read
 	Changes []fileChangeInfo
 
@@ -30,6 +36,14 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
+}
+
+func (c changeInfo) GrafanaHost() string {
+	u, err := url.Parse(c.GrafanaBaseURL)
+	if err != nil || u.Host == "" {
+		return c.GrafanaBaseURL
+	}
+	return u.Host
 }
 
 type fileChangeInfo struct {
@@ -49,6 +63,10 @@ type fileChangeInfo struct {
 	// URL where we can see a preview of this particular change
 	PreviewURL           string
 	PreviewScreenshotURL string
+
+	// HasRemovedMetadata is true when the original file contains metadata
+	// fields (namespace, labels, annotations) that will be removed when parsing the resource.
+	HasRemovedMetadata bool
 }
 
 type evaluator struct {
@@ -80,6 +98,8 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		RepositoryName:       cfg.Name,
+		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
 
@@ -105,8 +125,7 @@ var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
 func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		// TODO: read the old and verify
-		return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
+		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
 	}
 
 	info := fileChangeInfo{Change: change}
@@ -124,6 +143,19 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		return info
 	}
 
+	if change.Action == repository.FileActionUpdated {
+		// Detect metadata stripped by resource parser.
+		// Read the file from the default branch (empty ref) and compare its
+		// metadata against the PR-branch parsed version.
+		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
+		if baseErr == nil && baseFileInfo != nil {
+			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
+			if parseErr == nil && baseObj != nil {
+				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, info.Parsed.Obj)
+			}
+		}
+	}
+
 	// Find a name within the file
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
@@ -133,7 +165,6 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
-		return info
 	}
 
 	// Dashboards get special handling
@@ -182,6 +213,38 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	return info
 }
 
+// evaluateDeletedFile is best-effort: it tries to read and parse the file at
+// the previous ref to extract metadata (kind, title, GrafanaURL)
+func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
+	info := fileChangeInfo{Change: change}
+
+	fileInfo, err := repo.Read(ctx, change.Path, change.PreviousRef)
+	if err != nil {
+		return info
+	}
+
+	info.Parsed, err = parser.Parse(ctx, fileInfo)
+	if err != nil {
+		return info
+	}
+
+	obj := info.Parsed.Obj
+	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
+	if info.Parsed.GVK.Kind == dashboardKind {
+		urlBuilder, err := url.Parse(baseURL)
+		if err != nil {
+			return info
+		}
+		if info.Parsed.Existing != nil {
+			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			info.GrafanaURL = grafanaURL.String()
+		}
+	}
+
+	return info
+}
+
 func renderScreenshotFromGrafanaURL(ctx context.Context,
 	baseURL string,
 	renderer ScreenshotRenderer,
@@ -214,4 +277,30 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	}
 	outcome = utils.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
+}
+
+// hasRemovedMetadata returns true if the original object (from the file)
+// contains metadata fields (namespace, labels, annotations) that are absent
+// or different in the parsed object (post-Parse).
+func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
+		return true
+	}
+	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
+		return true
+	}
+	if len(original.GetAnnotations()) > 0 && hasMissingKeys(original.GetAnnotations(), parsed.GetAnnotations()) {
+		return true
+	}
+	return false
+}
+
+// hasMissingKeys returns true if any key in original is absent from parsed.
+func hasMissingKeys(original, parsed map[string]string) bool {
+	for k := range original {
+		if _, exists := parsed[k]; !exists {
+			return true
+		}
+	}
+	return false
 }

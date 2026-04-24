@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 
 import { EditableTitle } from './EditableTitle';
 
@@ -86,6 +86,22 @@ describe('EditableTitle', () => {
       expect(screen.getByRole('heading')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
     });
+  });
+
+  it('clicking cancel does not call onEdit and restores the original title', async () => {
+    render(<EditableTitle value={value} onEdit={mockEdit} />);
+
+    await user.click(screen.getByRole('button', { name: 'Edit title' }));
+
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, 'New value');
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: value })).toBeInTheDocument();
   });
 
   it('displays an error message when attempting to save an empty value', async () => {

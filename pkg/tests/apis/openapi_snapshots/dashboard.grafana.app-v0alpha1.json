@@ -1822,7 +1822,29 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "fields"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "fields": {
+                      "description": "Sortable fields (depends on backend support)",
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
@@ -2281,6 +2303,55 @@
           }
         }
       ]
+    },
+    "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/{name}/deletekey": {
+      "get": {
+        "tags": [
+          "Snapshot"
+        ],
+        "description": "connect GET requests to deletekey of Snapshot",
+        "operationId": "getSnapshotDeletekey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardSnapshotWithDeleteKey"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v0alpha1",
+          "kind": "DashboardSnapshotWithDeleteKey"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DashboardSnapshotWithDeleteKey",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -2324,7 +2395,7 @@
             }
           },
           "resource": {
-            "description": "Dashboard or folder",
+            "description": "Dashboards or folders",
             "type": "string",
             "default": ""
           },
@@ -2625,19 +2696,10 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationPermission": {
         "type": "object",
         "required": [
-          "dashboard",
-          "organization"
+          "dashboard"
         ],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {
@@ -2810,6 +2872,52 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardSnapshotWithDeleteKey": {
+        "description": "This is returned from the POST command",
+        "type": "object",
+        "required": [
+          "metadata",
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "deleteKey": {
+            "description": "The delete key is only returned when the item is created.  It is not returned from a get request",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Snapshot",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardSnapshotWithDeleteKey",
             "version": "v0alpha1"
           }
         ]
@@ -3205,6 +3313,10 @@
             "additionalProperties": {
               "type": "object"
             }
+          },
+          "deleteKey": {
+            "description": "Snapshot delete key",
+            "type": "string"
           },
           "expires": {
             "description": "Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)",

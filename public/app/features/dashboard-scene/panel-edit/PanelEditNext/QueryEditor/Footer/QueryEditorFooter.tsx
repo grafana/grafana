@@ -1,12 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { InspectTab } from 'app/features/inspector/types';
 
-import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
-import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
+import { getDashboardSceneFor } from '../../../../utils/utils';
+import { FOOTER_HEIGHT, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { trackQueryMenuAction, trackQueryOptionsToggle } from '../../tracking';
+import {
+  useDatasourceContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
 interface FooterLabelValue {
@@ -19,10 +28,17 @@ interface FooterLabelValue {
 export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
-  const { queryOptions } = useQueryEditorUIContext();
+  const { queryOptions, cardType } = useQueryEditorUIContext();
   const { options, openSidebar, closeSidebar, isQueryOptionsOpen } = queryOptions;
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
+  const { panel } = usePanelContext();
+
+  const onOpenInspector = useCallback(() => {
+    const dashboard = getDashboardSceneFor(panel);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
+    trackQueryMenuAction('open_inspector', cardType);
+  }, [panel, cardType]);
 
   // Compute footer items from actual query options
   // Items with isActive=true have non-default (user-set) values and are highlighted
@@ -71,10 +87,13 @@ export function QueryEditorFooter() {
 
     // Don't focus interval since it's read-only
     if (fieldId && fieldId !== QueryOptionField.interval) {
+      trackQueryOptionsToggle(true);
       openSidebar(fieldId);
     } else if (!isQueryOptionsOpen) {
+      trackQueryOptionsToggle(true);
       openSidebar();
     } else {
+      trackQueryOptionsToggle(false);
       closeSidebar();
     }
   };
@@ -112,6 +131,19 @@ export function QueryEditorFooter() {
           </li>
         ))}
       </ul>
+
+      <div className={styles.footerActions}>
+        <Button
+          fill="text"
+          size="sm"
+          icon="crosshair"
+          variant="secondary"
+          onClick={onOpenInspector}
+          aria-label={t('query-editor-next.footer.query-inspector', 'Query inspector')}
+        >
+          <Trans i18nKey="query-editor-next.footer.inspect-queries">Inspect queries</Trans>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -124,25 +156,37 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
+      backgroundColor: theme.colors.background.primary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
-      padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
+      padding: theme.spacing(0, 0.5, 0, 1.5),
       zIndex: theme.zIndex.navbarFixed,
-      minHeight: 26,
-      overflow: 'hidden',
+      height: FOOTER_HEIGHT,
     }),
     itemsList: css({
       display: 'flex',
       alignItems: 'center',
+      position: 'relative',
       gap: theme.spacing(1),
       listStyle: 'none',
       margin: 0,
       padding: 0,
       flex: 1,
+      minWidth: 0,
       overflow: 'hidden',
       whiteSpace: 'nowrap',
+
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: theme.spacing(4),
+        background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+        pointerEvents: 'none',
+      },
     }),
     itemButton: css({
       // Override Button's default padding and add gap for children
@@ -184,21 +228,14 @@ function getStyles(theme: GrafanaTheme2) {
       transform: 'rotate(180deg)',
     }),
     queryOptionsWrapper: css({
-      position: 'relative',
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        right: '100%',
-        top: 0,
-        bottom: 0,
-        width: theme.spacing(4),
-        background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
-        pointerEvents: 'none',
-      },
+    }),
+    footerActions: css({
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
     }),
   };
 }

@@ -41,6 +41,9 @@ type MimirClient interface {
 
 	// Mimir implements an extended version of the receivers API under a different path.
 	GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error)
+
+	// GetLimits retrieves tenant-scoped limits from the remote Alertmanager.
+	GetLimits(ctx context.Context) (*TenantLimits, error)
 }
 
 type Mimir struct {

@@ -1,6 +1,10 @@
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -31,8 +35,8 @@ jest.mock('../layouts-shared/utils', () => ({
   }),
 }));
 
-function buildRowsLayoutManager() {
-  const rowsLayoutManager = new RowsLayoutManager({ rows: [] });
+function buildRowsLayoutManager(rows: RowItem[] = []) {
+  const rowsLayoutManager = new RowsLayoutManager({ key: 'test-RowsLayoutManager', rows });
   new DashboardScene({ body: rowsLayoutManager });
   return rowsLayoutManager;
 }
@@ -168,6 +172,77 @@ describe('RowsLayoutManager', () => {
         expect(parent.state.body).toBe(rowsLayoutManager);
         expect(rowsLayoutManager.state.rows).toHaveLength(1);
         expect(rowsLayoutManager.state.rows[0]).toBe(row);
+      });
+    });
+  });
+
+  describe('duplicate', () => {
+    it('should return a new RowsLayoutManager instance', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+
+      const duplicated = rowsLayoutManager.duplicate() as RowsLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(RowsLayoutManager);
+      expect(duplicated).not.toBe(rowsLayoutManager);
+      expect(duplicated.state.key).not.toBe(rowsLayoutManager.state.key);
+    });
+
+    it('should duplicate each row', () => {
+      const rows = [new RowItem({ title: 'Row 1' }), new RowItem({ title: 'Row 2' }), new RowItem({ title: 'Row 3' })];
+      const rowDuplicateSpies = rows.map((row) => jest.spyOn(row, 'duplicate'));
+      const rowsLayoutManager = buildRowsLayoutManager(rows);
+
+      const duplicated = rowsLayoutManager.duplicate() as RowsLayoutManager;
+
+      expect(rowDuplicateSpies[0]).toHaveBeenCalledTimes(1);
+      expect(rowDuplicateSpies[1]).toHaveBeenCalledTimes(1);
+      expect(rowDuplicateSpies[2]).toHaveBeenCalledTimes(1);
+
+      expect(duplicated.state.rows.length).toBe(3);
+      expect(duplicated.state.rows[0]).not.toBe(rows[0]);
+      expect(duplicated.state.rows[1]).not.toBe(rows[1]);
+      expect(duplicated.state.rows[2]).not.toBe(rows[2]);
+    });
+
+    describe('when rows contain panels', () => {
+      it('should assign unique panel keys across all rows, starting after the highest existing id', () => {
+        const rowsLayoutManager = buildRowsLayoutManager([
+          new RowItem({
+            title: 'Row 1',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-1', title: 'Panel A' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-2', title: 'Panel B' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+          new RowItem({
+            title: 'Row 2',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-3', title: 'Panel C', pluginId: 'table' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-4', title: 'Panel D', pluginId: 'table' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+        ]);
+
+        const duplicated = rowsLayoutManager.duplicate();
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-5', 'panel-6', 'panel-7', 'panel-8']);
       });
     });
   });

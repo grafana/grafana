@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DATA_TEST_ID, LayerDragDropList, LayerDragDropListProps } from './LayerDragDropList';
+import { DATA_TEST_ID, LayerDragDropList, type LayerDragDropListProps } from './LayerDragDropList';
 
 describe('LayerDragDropList', () => {
   type testLayer = { name: string; getName: () => string };

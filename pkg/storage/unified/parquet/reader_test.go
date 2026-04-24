@@ -81,9 +81,9 @@ func TestParquetWriteThenRead(t *testing.T) {
 
 		// Verify that we read all values
 		require.Equal(t, []string{
-			"rrr/ns/ggg/aaa",
-			"rrr/ns/ggg/bbb",
-			"rrr/ns/ggg/ccc",
+			"ns/ggg/rrr/aaa",
+			"ns/ggg/rrr/bbb",
+			"ns/ggg/rrr/ccc",
 		}, keys)
 	})
 

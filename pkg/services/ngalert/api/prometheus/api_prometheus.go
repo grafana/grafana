@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -86,12 +88,12 @@ func badRequestError(err error) apimodels.RuleResponse {
 
 func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
-		log,
-		manager,
-		status,
-		store,
-		authz,
-		provenanceStore,
+		log:             log,
+		manager:         manager,
+		status:          status,
+		store:           store,
+		authz:           authz,
+		provenanceStore: provenanceStore,
 	}
 }
 
@@ -274,6 +276,7 @@ type RuleGroupStatusesOptions struct {
 	OrgID             int64
 	Query             url.Values
 	AllowedNamespaces map[string]string
+	SortByFullpath    bool
 }
 
 type ListAlertRulesStore interface {
@@ -338,6 +341,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			OrgID:             orgID,
 			Query:             c.Req.Form,
 			AllowedNamespaces: allowedNamespaces,
+			SortByFullpath:    openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingRuleGroupSortByFolderFullpath, false, openfeature.TransactionContext(c.Req.Context())),
 		},
 		RuleStatusMutatorGenerator(srv.status),
 		RuleAlertStateMutatorGenerator(srv.manager),
@@ -539,6 +543,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		RuleLimit:          remainingRules,
 		ContinueToken:      token,
 		Compact:            ctx.compact,
+		SortByFullpath:     ctx.opts.SortByFullpath,
 	}
 
 	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
@@ -894,6 +899,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	compact := getBoolWithDefault(opts.Query, "compact", false)
 	span.SetAttributes(attribute.Bool("compact", compact))
+
+	span.SetAttributes(attribute.Bool("order_by_full_path", opts.SortByFullpath))
+
 	pagCtx := &paginationContext{
 		opts:               opts,
 		provenanceRecords:  nil,

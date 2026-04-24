@@ -1,19 +1,19 @@
 import { map } from 'rxjs/operators';
 
 import {
-  SynchronousDataTransformerInfo,
-  DataFrame,
+  type SynchronousDataTransformerInfo,
+  type DataFrame,
   DataFrameType,
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
   fieldMatchers,
   FieldMatcherID,
-  Field,
+  type Field,
   MutableDataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Labels } from 'app/types/unified-alerting-dto';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { partitionByValues } from '../partitionByValues/partitionByValues';
 

@@ -2,8 +2,8 @@ import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
 import { stringToJsRegex } from '../../text/string';
-import { DataFrame } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { type DataFrame } from '../../types/dataFrame';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

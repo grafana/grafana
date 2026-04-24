@@ -134,7 +134,6 @@ describe('Backend / Frontend single version migration result comparison', () => 
           }
         }
       }
-
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });

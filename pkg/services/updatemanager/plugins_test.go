@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type mockPluginPreinstall struct {
@@ -384,10 +383,11 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 		featuremgmt.FlagPluginsAutoUpdate: flag,
 	}
 
-	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
-		ProviderType: setting.StaticProviderType,
-		StaticFlags:  staticFlags,
-	})
+	// Create static provider with Grafana's standard flags
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(staticFlags)
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

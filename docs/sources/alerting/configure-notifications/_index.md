@@ -44,6 +44,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
+  configure-inhibition-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
 ---
 
 # Configure notifications
@@ -65,6 +70,7 @@ The topics in this section include step-by-step instructions for:
 - [Configuring notification policies](ref:configure-notification-policies) to determine how alerts are routed to contact points.
 - [Templating notifications](ref:configure-templates) to customize notification messages.
 - [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
+- [Configuring inhibition rules](ref:configure-inhibition-rules) to suppress notifications for dependent alerts when a root-cause alert is already firing.
 
 ## Alertmanager architecture
 

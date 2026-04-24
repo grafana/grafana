@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package annotation.store.v1;
+
+option go_package = "github.com/grafana/grafana/pkg/registry/apps/annotation/storepb/v1;storev1";
+
+// AnnotationStore service provides CRUD operations for annotations
+// and additional operations for cleanup and listing tags.
+service AnnotationStore {
+  // Get retrieves an annotation by namespace and name
+  rpc Get(GetRequest) returns (GetResponse);
+
+  // List retrieves annotations based on filter criteria
+  rpc List(ListRequest) returns (ListResponse);
+
+  // Create creates a new annotation
+  rpc Create(CreateRequest) returns (CreateResponse);
+
+  // Update updates an existing annotation
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+
+  // Delete removes an annotation by namespace and name
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  // Cleanup removes old annotations and returns the number of deleted items
+  rpc Cleanup(CleanupRequest) returns (CleanupResponse);
+
+  // ListTags retrieves all tags with their counts for a namespace
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+}
+
+// Annotation represents a simplified annotation for CRUD operations
+message Annotation {
+  string name = 1;
+  string namespace = 2;
+  string created_by = 3;
+  AnnotationSpec spec = 4;
+}
+
+// AnnotationSpec contains the annotation specification fields
+message AnnotationSpec {
+  string text = 1;
+  int64 time = 2;
+  optional int64 time_end = 3;
+  optional string dashboard_uid = 4;
+  optional int64 panel_id = 5;
+  repeated string tags = 6;
+  repeated string scopes = 7;
+}
+
+// Get operation messages
+message GetRequest {
+  string namespace = 1;
+  string name = 2;
+}
+
+message GetResponse {
+  Annotation annotation = 1;
+}
+
+// List operation messages
+message ListRequest {
+  string namespace = 1;
+  ListOptions options = 2;
+}
+
+message ListOptions {
+  string dashboard_uid = 1;
+  int64 panel_id = 2;
+  int64 from = 3;
+  int64 to = 4;
+  int64 limit = 5;
+  string continue = 6;
+  repeated string tags = 7;
+  bool tags_match_any = 8;
+  repeated string scopes = 9;
+  bool scopes_match_any = 10;
+  string created_by = 11;
+}
+
+message ListResponse {
+  repeated Annotation items = 1;
+  string continue = 2;
+}
+
+// Create operation messages
+message CreateRequest {
+  Annotation annotation = 1;
+}
+
+message CreateResponse {
+  Annotation annotation = 1;
+}
+
+// Update operation messages
+message UpdateRequest {
+  Annotation annotation = 1;
+}
+
+message UpdateResponse {
+  Annotation annotation = 1;
+}
+
+// Delete operation messages
+message DeleteRequest {
+  string namespace = 1;
+  string name = 2;
+}
+
+message DeleteResponse {}
+
+// Cleanup operation messages
+message CleanupRequest {}
+
+message CleanupResponse {
+  int64 deleted_count = 1;
+}
+
+// ListTags operation messages
+message ListTagsRequest {
+  string namespace = 1;
+  TagListOptions options = 2;
+}
+
+message TagListOptions {
+  string prefix = 1;
+  int32 limit = 2;
+}
+
+message ListTagsResponse {
+  repeated Tag tags = 1;
+}
+
+message Tag {
+  string name = 1;
+  int64 count = 2;
+}

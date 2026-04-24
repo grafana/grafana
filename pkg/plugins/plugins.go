@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	ErrFileNotExist              = errors.New("file does not exist")
+	ErrFileNotExist              = fs.ErrNotExist
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")

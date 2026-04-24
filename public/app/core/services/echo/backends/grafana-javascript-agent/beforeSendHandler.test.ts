@@ -1,4 +1,4 @@
-import { TransportItem, TransportItemType } from '@grafana/faro-core';
+import { type TransportItem, TransportItemType } from '@grafana/faro-core';
 
 import { beforeSendHandler } from './beforeSendHandler';
 

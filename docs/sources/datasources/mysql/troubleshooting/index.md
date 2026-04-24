@@ -15,22 +15,6 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot MySQL data source issues
 weight: 400
-refs:
-  configure-mysql-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
-  mysql-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
 ---
 
 # Troubleshoot MySQL data source issues
@@ -53,7 +37,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 1. Check that the host and port are correct in the data source configuration. The default MySQL port is `3306`.
 1. Ensure there are no firewall rules blocking the connection between Grafana and MySQL.
 1. Verify that MySQL is configured to allow remote connections by checking the `bind-address` setting in your MySQL configuration.
-1. For Grafana Cloud, ensure you have configured [Private data source connect](ref:private-data-source-connect) if your MySQL instance isn't publicly accessible.
+1. For Grafana Cloud, ensure you have configured [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your MySQL instance isn't publicly accessible.
 
 ### Connection timeout
 

@@ -1,7 +1,7 @@
 /**
  * The channel id is defined as:
  *
- *   ${scope}/${namespace}/${path}
+ *   ${scope}/${stream}/${path}
  *
  * The scope drives how the namespace is used and controlled
  *
@@ -81,17 +81,17 @@ export interface LiveChannelStatusEvent {
    *
    * This will remain in the status until a new message is successfully received from the channel
    */
-  error?: any;
+  error?: unknown;
 }
 
 export interface LiveChannelJoinEvent {
   type: LiveChannelEventType.Join;
-  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
+  user: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelLeaveEvent {
   type: LiveChannelEventType.Leave;
-  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
+  user: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelMessageEvent<T> {
@@ -125,7 +125,7 @@ export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is L
  * @alpha -- experimental
  */
 export interface LiveChannelPresenceStatus {
-  users: any; // @alpha -- experimental -- will be filled in when we improve the UI
+  users: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 /**
@@ -141,12 +141,15 @@ export interface LiveChannelAddress {
   stream: string; // depends on the scope
   path: string;
 
+  /** @deprecated use 'stream' instead.  */
+  namespace?: string;
+
   /**
    * Additional metadata passed to a channel.  The backend will propagate this JSON object to
    * each OnSubscribe and RunStream calls.  This value should be constant across multiple requests
    * to the same channel path
    */
-  data?: any;
+  data?: unknown;
 }
 
 /**
@@ -174,6 +177,10 @@ export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undef
  * @alpha -- experimental
  */
 export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
+  // convert requested namespace into "stream" property
+  if (addr?.namespace && !addr?.stream?.length) {
+    addr.stream = addr.namespace;
+  }
   return !!(addr?.path && addr.stream && addr.scope);
 }
 
@@ -183,16 +190,21 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
  * @alpha -- experimental
  */
 export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
-  if (!addr.scope) {
+  let { scope, stream, path, namespace } = addr;
+  if (!stream && namespace) {
+    stream = namespace;
+  }
+
+  if (!scope?.length) {
     return '';
   }
-  let id: string = addr.scope;
-  if (!addr.stream) {
+  let id: string = scope;
+  if (!stream?.length) {
     return id;
   }
-  id += '/' + addr.stream;
-  if (!addr.path) {
+  id += '/' + stream; // or namespace
+  if (!path?.length) {
     return id;
   }
-  return id + '/' + addr.path;
+  return id + '/' + path;
 }

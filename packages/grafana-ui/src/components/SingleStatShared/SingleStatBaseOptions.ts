@@ -1,22 +1,22 @@
-import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   fieldReducers,
-  PanelModel,
-  ReduceDataOptions,
+  type PanelModel,
+  type ReduceDataOptions,
   ReducerID,
   sortThresholds,
-  Threshold,
-  ThresholdsConfig,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
   validateFieldConfig,
-  ValueMapping,
+  type ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, type OptionsWithLegend, type OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -101,7 +101,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
       }
 
       if (legendConfig.values) {
-        const enabledLegendValues = pickBy(legendConfig, identity);
+        const enabledLegendValues = Object.fromEntries(Object.entries(legendConfig).filter(([, v]) => v));
         options.legend.calcs = getReducersFromLegend(enabledLegendValues);
       }
 
@@ -288,17 +288,17 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const config = panel.fieldConfig?.defaults;
     let unit = config?.unit;
     if (unit === 'percent') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 100;
       }
     } else if (unit === 'percentunit') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 1;
       }
     }
@@ -373,7 +373,16 @@ export function migrateFromValueOptions(old: any) {
     fieldOptions,
   };
 
-  return omit(newOptions, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+  const {
+    valueMappings: _vm,
+    thresholds: _th,
+    valueOptions: _vo,
+    minValue: _min,
+    maxValue: _mx,
+    ...cleanedOptions
+  } = newOptions;
+
+  return cleanedOptions;
 }
 
 export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {

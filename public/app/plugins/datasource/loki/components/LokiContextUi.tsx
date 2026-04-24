@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { dateTime, type GrafanaTheme2, type LogRowModel, renderMarkdown, type SelectableValue } from '@grafana/data';
 import { RawQuery } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -22,14 +22,14 @@ import {
 } from '@grafana/ui';
 
 import {
-  LogContextProvider,
+  type LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-  PreservedLabels,
+  type PreservedLabels,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { lokiGrammar } from '../syntax';
-import { ContextFilter, LokiQuery } from '../types';
+import { type ContextFilter, type LokiQuery } from '../types';
 
 export interface LokiContextUiProps {
   logContextProvider: LogContextProvider;
@@ -335,7 +335,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           >
             Widen the search
           </Label>
-          <MultiSelect
+          <MultiSelect<string>
             isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
@@ -376,7 +376,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               >
                 Refine the search
               </Label>
-              <MultiSelect
+              <MultiSelect<string>
                 isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}

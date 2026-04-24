@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginauth "github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
@@ -36,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -74,6 +77,7 @@ import (
 var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
 	extras.ProvideProvisioningOSSConnectionExtras,
+	extras.ProvideFactoryFromConfig,
 )
 
 var configProviderExtras = wire.NewSet(
@@ -96,6 +100,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
+	wire.Bind(new(pluginauth.RBACCleaner), new(*acimpl.Service)),
 	validations.ProvideValidator,
 	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
 	validations.ProvideURLValidator,
@@ -158,6 +163,8 @@ var wireExtsBasicSet = wire.NewSet(
 	provisioningExtras,
 	configProviderExtras,
 	advisor.ProvideAppInstaller,
+	zStore.ProvideDefaultStoreProvider,
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -204,6 +211,10 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
+	// Zanzana store provider
+	zStore.ProvideDefaultStoreProvider,
+	// Zanzana MT reconciler CRD list
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

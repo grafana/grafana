@@ -1,23 +1,23 @@
 import { isEqual } from 'lodash';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridItemStateLike,
+  type SceneGridItemStateLike,
   SceneGridLayout,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
   sceneUtils,
-  VizPanel,
+  type VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -27,7 +27,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { buildVizPanel } from '../serialization/layoutSerializers/utils';

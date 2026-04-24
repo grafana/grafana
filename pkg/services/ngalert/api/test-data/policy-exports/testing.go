@@ -52,12 +52,12 @@ var Config = func() *definitions.PostableUserConfig {
 			},
 			// Add receiver references to help tests avoid validation errors.
 			Receivers: []*definition.PostableApiReceiver{
-				{Receiver: prometheus.Receiver{Name: "default-receiver"}},
-				{Receiver: prometheus.Receiver{Name: "lotsa-emails"}},
-				{Receiver: prometheus.Receiver{Name: "lotsa-emails-override"}},
-				{Receiver: prometheus.Receiver{Name: "slack-multi-channel"}},
-				{Receiver: prometheus.Receiver{Name: "provisioned-contact-point"}},
-				{Receiver: prometheus.Receiver{Name: "nested-receiver"}},
+				{Receiver: definition.Receiver{Name: "default-receiver"}},
+				{Receiver: definition.Receiver{Name: "lotsa-emails"}},
+				{Receiver: definition.Receiver{Name: "lotsa-emails-override"}},
+				{Receiver: definition.Receiver{Name: "slack-multi-channel"}},
+				{Receiver: definition.Receiver{Name: "provisioned-contact-point"}},
+				{Receiver: definition.Receiver{Name: "nested-receiver"}},
 			},
 		},
 		ManagedRoutes: map[string]*definition.Route{

@@ -1,6 +1,6 @@
-import { BuildInfo, CurrentUserDTO } from '@grafana/data';
-import { InternalLoggerLevel } from '@grafana/faro-web-sdk';
-import { EchoEvent, EchoEventType } from '@grafana/runtime';
+import { type BuildInfo, type CurrentUserDTO } from '@grafana/data';
+import { type InternalLoggerLevel } from '@grafana/faro-web-sdk';
+import { type EchoEvent, type EchoEventType } from '@grafana/runtime';
 
 export interface BaseTransport {
   sendEvent(event: EchoEvent): PromiseLike<Response>;

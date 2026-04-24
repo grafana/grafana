@@ -49,6 +49,11 @@ func TestValidate(t *testing.T) {
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel)),
 		},
 		{
+			name:                 "group by with duplicate values is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, FolderTitleLabel, model.AlertNameLabel)),
+			expErrorContains:     "duplicate",
+		},
+		{
 			name:                 "group wait empty is valid",
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(nil)),
 		},
@@ -96,6 +101,29 @@ func TestValidate(t *testing.T) {
 			name:                 "repeat interval zero is invalid",
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(0*time.Second))),
 			expErrorContains:     "repeat interval",
+		},
+		{
+			name:                 "valid notification settings with policy routing",
+			notificationSettings: NotificationSettingsFromPolicy("policy"),
+		},
+		{
+			name:                 "empty policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(""),
+			expErrorContains:     "policy must be specified",
+		},
+		{
+			name:                 "default policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(DefaultRoutingTreeName),
+			expErrorContains:     "default",
+		},
+		{
+			name:                 "contact point and policy routing both unspecific is valid",
+			notificationSettings: NotificationSettings{}, // Additional checks are done at the API level to reject this, but at the model level it's ok to ignore this state.
+		},
+		{
+			name:                 "contact point and policy routing both specific is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithPolicy("policy")),
+			expErrorContains:     "only one of policy routing or contact point routing can be specified",
 		},
 	}
 
@@ -269,6 +297,16 @@ func TestNormalizedGroupBy(t *testing.T) {
 			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy("custom", model.AlertNameLabel, "something", FolderTitleLabel, "other")),
 			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom", "other", "something"},
 		},
+		{
+			name:                      "deduplicates repeated labels",
+			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, "custom", model.AlertNameLabel, "custom")),
+			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom"},
+		},
+		{
+			name:                      "deduplicates ... leaving only ...",
+			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(GroupByAll, GroupByAll)),
+			expectedNormalizedGroupBy: []string{GroupByAll},
+		},
 	}
 
 	for _, tt := range testCases {
@@ -277,4 +315,11 @@ func TestNormalizedGroupBy(t *testing.T) {
 			require.Equal(t, normalized, tt.expectedNormalizedGroupBy)
 		})
 	}
+}
+
+func TestFingerprintStabilityWithDuplicateGroupBy(t *testing.T) {
+	withDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom", model.AlertNameLabel, "custom"}}
+	withoutDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom"}}
+	require.Equal(t, withDups.Fingerprint(nil), withoutDups.Fingerprint(nil),
+		"fingerprint should be identical for semantically equivalent group_by regardless of duplicates")
 }

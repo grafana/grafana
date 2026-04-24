@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 import tinycolor from 'tinycolor2';
 
 import { InlineList } from './InlineList';

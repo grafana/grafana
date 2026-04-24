@@ -1,9 +1,9 @@
 import { systemDateFormats } from '../datetime/formats';
 import { createTheme } from '../themes/createTheme';
-import { FieldConfig, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { type FieldConfig, FieldType } from '../types/dataFrame';
+import { type DisplayProcessor, type DisplayValue } from '../types/displayValue';
 import { ThresholdsMode } from '../types/thresholds';
-import { MappingType, ValueMapping } from '../types/valueMapping';
+import { MappingType, type ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 

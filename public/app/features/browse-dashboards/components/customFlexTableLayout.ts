@@ -1,4 +1,4 @@
-import { Hooks, UseTableColumnProps } from 'react-table';
+import { type Hooks, type UseTableColumnProps } from 'react-table';
 
 /**
  * Simplified flex layout module for react-table.

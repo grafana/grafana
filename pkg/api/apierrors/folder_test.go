@@ -55,7 +55,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		},
 		{
 			name:  "folder title empty",
-			input: dashboards.ErrFolderTitleEmpty,
+			input: folder.ErrTitleEmpty,
 			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
 		},
 		{
@@ -81,8 +81,8 @@ func TestToFolderErrorResponse(t *testing.T) {
 		// --- 403 Forbidden ---
 		{
 			name:  "folder access denied",
-			input: dashboards.ErrFolderAccessDenied,
-			want:  response.Error(http.StatusForbidden, "Access denied", dashboards.ErrFolderAccessDenied),
+			input: folder.ErrAccessDenied,
+			want:  response.Error(http.StatusForbidden, "Access denied", folder.ErrAccessDenied),
 		},
 		// --- 404 Not Found ---
 		{
@@ -93,14 +93,14 @@ func TestToFolderErrorResponse(t *testing.T) {
 		// --- 409 Conflict ---
 		{
 			name:  "folder with same uid exists",
-			input: dashboards.ErrFolderWithSameUIDExists,
-			want:  response.Error(http.StatusConflict, dashboards.ErrFolderWithSameUIDExists.Error(), nil),
+			input: folder.ErrSameUIDExists,
+			want:  response.Error(http.StatusConflict, folder.ErrSameUIDExists.Error(), nil),
 		},
 		// --- 412 Precondition Failed ---
 		{
 			name:  "folder version mismatch",
-			input: dashboards.ErrFolderVersionMismatch,
-			want:  response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()}),
+			input: folder.ErrVersionMismatch,
+			want:  response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()}),
 		},
 		// --- 500 Internal Server Error ---
 		{

@@ -6,9 +6,9 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import {
   RefIDPicker,
-  Props,
+  type Props,
   RefIDMultiPicker,
-  MultiProps,
+  type MultiProps,
   stringsToRegexp,
   regexpToStrings,
 } from './FieldsByFrameRefIdMatcher';

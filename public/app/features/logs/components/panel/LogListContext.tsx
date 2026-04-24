@@ -1,8 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -10,35 +11,35 @@ import {
   useState,
 } from 'react';
 
-import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
-  DataFrame,
-  LogLevel,
-  LogRowModel,
+  type DataFrame,
+  type LogLevel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsSortOrder,
   shallowCompare,
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { PopoverContent } from '@grafana/ui';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
-import { LogLineTimestampResolution } from './LogLine';
-import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListOptions, LogListFontSize } from './LogList';
+import { type LogLineTimestampResolution } from './LogLine';
+import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 export interface LogListContextData
-  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'unwrappedColumns'> {
+  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
@@ -56,12 +57,14 @@ export interface LogListContextData
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
+  setShowLevel: (showLevel: boolean) => void;
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setUnwrappedColumns: (unwrappedColumns: boolean) => void;
   setWrapLogMessage: (showTime: boolean) => void;
+  showLevel: boolean;
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
@@ -70,6 +73,7 @@ export interface LogListContextData
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -87,6 +91,7 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
@@ -94,6 +99,7 @@ export const LogListContext = createContext<LogListContextData>({
   setTimestampResolution: () => {},
   setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
@@ -139,6 +145,7 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
@@ -147,6 +154,7 @@ export interface Props {
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
   getRowContextQuery?: GetRowContextQueryFn;
+  isCustomGrammar?: boolean;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
@@ -172,6 +180,7 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showLevel?: boolean;
   showLogAttributes?: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -184,6 +193,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -191,6 +201,7 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
+  isCustomGrammar,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -216,6 +227,7 @@ export const LogListContextProvider = ({
   prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
+  showLevel: showLevelProp = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showLevel`, true) : true,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -244,6 +256,8 @@ export const LogListContextProvider = ({
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
+  const [showLevel, setShowLevelState] = useState(showLevelProp);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -271,18 +285,18 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!otelLogsFormattingEnabled || !setDisplayedFields || showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, otelLogsFormattingEnabled, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+    if (otelLogsFormattingEnabled && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, otelDisplayedFields, otelLogsFormattingEnabled, showLogAttributes]);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {
@@ -354,6 +368,11 @@ export const LogListContextProvider = ({
     setWrapLogMessageState(wrapLogMessageProp);
   }, [wrapLogMessageProp]);
 
+  // Sync showLevel
+  useEffect(() => {
+    setShowLevelState(showLevelProp);
+  }, [showLevelProp]);
+
   // Sync timestamp resolution
   useEffect(() => {
     setLogListState((state) => ({
@@ -416,6 +435,16 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('pinnedLogs', pinnedLogs);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setShowLevel = useCallback(
+    (newShowLevel: boolean) => {
+      setShowLevelState(newShowLevel);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.showLevel`, newShowLevel);
+      }
+    },
+    [logOptionsStorageKey]
   );
 
   const setShowTime = useCallback(
@@ -568,6 +597,7 @@ export const LogListContextProvider = ({
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,
@@ -578,6 +608,7 @@ export const LogListContextProvider = ({
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,
+        isCustomGrammar,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
@@ -608,6 +639,7 @@ export const LogListContextProvider = ({
         setLogListState,
         setPinnedLogs,
         setPrettifyJSON,
+        setShowLevel,
         setShowTime,
         setShowUniqueLabels,
         setSortOrder,
@@ -615,6 +647,7 @@ export const LogListContextProvider = ({
         setTimestampResolution,
         setUnwrappedColumns,
         setWrapLogMessage,
+        showLevel: Boolean(showLevel),
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,

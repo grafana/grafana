@@ -1,12 +1,21 @@
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import {
-  UseGenericSavedSearchesResult,
+  type UseGenericSavedSearchesResult,
   createAppliedTracker,
   createAutoApplyTracker,
-  createDefaultLoader,
+  createStorageLoader,
   useGenericSavedSearches,
 } from '../../hooks/useGenericSavedSearches';
+import { TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID, getTriagePredefinedSearches } from '../triagePredefinedSearches';
+
+import { createPredefinedOverridesLoader } from './useTriagePredefinedOverrides';
 
 export const TRIAGE_SAVED_SEARCHES_STORAGE_KEY = 'triageSavedSearches';
+
+const TRIAGE_CONFIG = {
+  storageKey: TRIAGE_SAVED_SEARCHES_STORAGE_KEY,
+  trackingContext: { page: 'triage' as const },
+};
 
 export interface UseTriageSavedSearchesResult extends UseGenericSavedSearchesResult {}
 
@@ -24,10 +33,30 @@ export function useTriageSavedSearches(): UseTriageSavedSearchesResult {
  * Load the default triage saved search from storage.
  * Used by auto-apply hooks to load default search on first visit.
  */
-export const loadDefaultTriageSavedSearch = createDefaultLoader({
-  storageKey: TRIAGE_SAVED_SEARCHES_STORAGE_KEY,
-  trackingContext: { page: 'triage' },
-});
+export async function loadDefaultTriageSavedSearch(): Promise<SavedSearch | null> {
+  const loadOverrides = createPredefinedOverridesLoader();
+  const { defaultSearchId: defaultId } = await loadOverrides();
+
+  const loadSavedSearches = createStorageLoader(TRIAGE_CONFIG);
+
+  if (defaultId != null) {
+    const predefined = getTriagePredefinedSearches();
+    const fromPredefined = predefined.find((s) => s.id === defaultId);
+    if (fromPredefined) {
+      return fromPredefined;
+    }
+    const savedSearches = await loadSavedSearches();
+    const fromSaved = savedSearches.find((s) => s.id === defaultId);
+    return fromSaved ?? null;
+  }
+
+  const savedSearches = await loadSavedSearches();
+  const fromUser = savedSearches.find((s) => s.isDefault);
+  if (fromUser) {
+    return fromUser;
+  }
+  return getTriagePredefinedSearches().find((s) => s.id === TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID) ?? null;
+}
 
 export const trackTriageSavedSearchApplied = createAppliedTracker({ page: 'triage' });
 export const trackTriageSavedSearchAutoApply = createAutoApplyTracker({ page: 'triage' });

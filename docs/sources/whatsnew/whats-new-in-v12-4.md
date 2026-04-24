@@ -52,6 +52,7 @@ posts:
     items:
       - whats-new/2025-12-17-unified-storage-for-playlists.md
       - whats-new/2026-01-08-automatic-storage-migration-for-small-instances.md
+      - whats-new/2026-03-06-plugin-processes-no-longer-receive-all-host-environment-variables-by-default.md
 whats_new_grafana_version: 12.4
 weight: -53
 ---

@@ -1,8 +1,8 @@
-import { CoreApp, PanelProps } from '@grafana/data';
+import { CoreApp, type PanelProps } from '@grafana/data';
 import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
 
-import { Options } from './types';
+import { type Options } from './types';
 
 function interaction(name: string, context: Record<string, string | number> = {}) {
   reportInteraction(`grafana_flamegraph_${name}`, {

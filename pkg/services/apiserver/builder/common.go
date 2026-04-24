@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,7 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana/pkg/api/routing"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -123,6 +124,15 @@ type APIRoutes struct {
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
 	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
+}
+
+// HTTPRouteRegistrar can be implemented by builders that need to register
+// routes directly on Grafana's HTTP router (not the k8s apiserver's GoRestful
+// container). This is useful for cluster-global endpoints that don't fit the
+// k8s namespace model. RegisterHTTPRoutes is called automatically by
+// service.RegisterAPI when a builder implements this interface.
+type HTTPRouteRegistrar interface {
+	RegisterHTTPRoutes(rr routing.RouteRegister)
 }
 
 func getGroup(builder APIGroupBuilder) (string, error) {

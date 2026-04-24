@@ -1,11 +1,11 @@
-import { Location } from 'history';
+import { type Location } from 'history';
 import { pickBy } from 'lodash';
 
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { loadDashboards } from './utils';
 
@@ -13,9 +13,11 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
   autofitpanels: true,
   orgId: true,
+  hideLogo: true,
   '_dash.hideTimePicker': true,
   '_dash.hideVariables': true,
   '_dash.hideLinks': true,
+  '_dash.hidePlaylistNav': true,
 };
 
 export interface PlaylistSrvState {

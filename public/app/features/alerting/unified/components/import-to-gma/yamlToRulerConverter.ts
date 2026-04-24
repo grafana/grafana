@@ -1,6 +1,10 @@
 import { load } from 'js-yaml';
 
-import { RulerCloudRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  type RulerCloudRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 interface PrometheusYamlFile {
   namespace?: string;

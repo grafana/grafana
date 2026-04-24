@@ -46,8 +46,10 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -119,7 +121,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
-	r.Get("/admin/provisioning/*", reqOrgAdmin, hs.Index)
+	r.Get("/admin/provisioning/*", middleware.ProvisioningAuth(reqOrgAdmin), hs.Index)
 
 	if hs.Cfg.CloudMigration.Enabled {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
@@ -129,6 +131,12 @@ func (hs *HTTPServer) registerRoutes() {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
+			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
+			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
+			ac.EvalPermission(secret.ActionSecretKeepersCreate),
+			ac.EvalPermission(secret.ActionSecretKeepersRead),
+		)), hs.Index)
+		r.Get("/admin/secrets/secure-values", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
 			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
 		)), hs.Index)
@@ -156,7 +164,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/connections/datasources", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/new", authorize(datasources.NewPageAccess), hs.Index)
 	r.Get("/connections/datasources/edit/*", authorize(datasources.EditPageAccess), hs.Index)
-	r.Get("/connections", authorize(datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections", reqSignedIn, hs.Index)
 	r.Get("/connections/add-new-connection", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	// Plugin details pages
 	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
@@ -232,12 +240,6 @@ func (hs *HTTPServer) registerRoutes() {
 	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
 		r.Get("/user/email/update", reqSignedInNoAnonymous, routing.Wrap(hs.UpdateUserEmail))
 		r.Post("/api/user/email/start-verify", reqSignedInNoAnonymous, routing.Wrap(hs.StartEmailVerificaton))
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		r.Post("/api/login/passwordless/start", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), hs.StartPasswordless)
-		r.Post("/api/login/passwordless/authenticate", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPasswordless))
 	}
 
 	// invited
@@ -367,7 +369,7 @@ func (hs *HTTPServer) registerRoutes() {
 				return ac.EvalAny(
 					ac.EvalPermission(ac.ActionOrgUsersRead),
 					ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
-					ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite),
+					ac.EvalPermission(folder.ActionFoldersPermissionsWrite),
 					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
 				)
 			}
@@ -416,14 +418,14 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), hs.getK8sDataSourceByUIDHandler())
 
-			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
-			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
-			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceHealthHandler())
+			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
 			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceDisableIdApi) {
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceLegacyIdApi) {
 				// Deprecated Access by internal ID
 				datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
 				datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
@@ -500,7 +502,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionSnapshotsRead)), routing.Wrap(hs.SearchDashboardSnapshots))
+			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)), routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist
@@ -535,11 +537,15 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))
 
 		apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
+			// Note: push and publish do not use the same auth.
+			// Publish is channel-based and uses per-channel PublishAuth from pipeline rules,
+			// and Push is a single managed-stream endpoint where RBAC is used.
+
 			// the channel path is in the name
 			liveRoute.Post("/publish", routing.Wrap(hs.Live.HandleHTTPPublish))
 
 			// POST influx line protocol.
-			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
+			liveRoute.Post("/push/:streamId", authorize(ac.EvalPermission(ac.ActionLivePush)), hs.LivePushGateway.Handle)
 
 			// List available streams and fields
 			liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
@@ -599,7 +605,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrCreate, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
-	r.Delete("/api/snapshots/:key", authorize(ac.EvalPermission(dashboards.ActionSnapshotsDelete)), routing.Wrap(hs.DeleteDashboardSnapshot))
+	r.Delete("/api/snapshots/:key", authorize(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsDelete)), routing.Wrap(hs.DeleteDashboardSnapshot))
 
 	// Snapshots delete for public mode or using the deleteKey
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrDelete, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))

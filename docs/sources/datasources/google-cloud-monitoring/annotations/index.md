@@ -17,17 +17,11 @@ labels:
 menuTitle: Annotations
 title: Google Cloud Monitoring annotations
 weight: 400
-refs:
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Google Cloud Monitoring annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can use annotations to mark important events, deployments, or incidents on your dashboards.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can use annotations to mark important events, deployments, or incidents on your dashboards.
 
 ## Before you begin
 

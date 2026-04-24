@@ -2,6 +2,7 @@
  * LIST_VARIABLES command
  *
  * List all template variables in the current dashboard in v2beta1 VariableKind format.
+ * Returns an ordered array matching the dashboard schema variable ordering.
  */
 
 import { SceneVariableSet } from '@grafana/scenes';

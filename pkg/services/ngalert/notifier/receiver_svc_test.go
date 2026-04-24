@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/receivers/line"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -338,7 +338,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceNone,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone),
+			expectedErr:      validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:             "delete provisioning provenance fails when caller is a different type", // TODO: This should fail once we move from lenient to strict validation.
@@ -539,7 +539,7 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &definitions.PostableApiReceiver{
-				Receiver: config.Receiver{
+				Receiver: definitions.Receiver{
 					Name: lineIntegration.Name,
 				},
 				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -565,6 +565,28 @@ func TestReceiverService_Create(t *testing.T) {
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
+			name:        "create with integration not in allowlist fails",
+			user:        writer,
+			receiver:    baseReceiver.Clone(),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.EmailType)},
+		},
+		{
+			name:                "create with integration in allowlist succeeds",
+			user:                writer,
+			receiver:            baseReceiver.Clone(),
+			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
+		},
+		{
+			name:        "create with multiple integrations rejects when any is not in allowlist",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
+		},
+		{
 			name:     "should be able to create receiver with the same name as imported ones",
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver1")),
@@ -574,6 +596,20 @@ func TestReceiverService_Create(t *testing.T) {
 			),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withImportedIncluded},
+		},
+		{
+			name:           "with email integration and allowed emails should not fail",
+			user:           writer,
+			receiver:       models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			opts:           []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+		},
+		{
+			name:        "with email integration and not allowed emails should fail",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -784,7 +820,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceNone)),
 			existing:    util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone),
+			expectedErr: validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:     "changing provenance from one type to another fails", // TODO: This should fail once we move from lenient to strict validation.
@@ -856,6 +892,40 @@ func TestReceiverService_Update(t *testing.T) {
 			existing:       util.Pointer(models.CopyReceiverWith(baseReceiver)),
 			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
 			opts:           []createReceiverServiceSutOpt{withImportedIncluded, withInvalidExtraConfig},
+		},
+		{
+			name:        "update with integration not in allowlist fails",
+			user:        writer,
+			receiver:    baseReceiver.Clone(),
+			existing:    util.Pointer(baseReceiver.Clone()),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.EmailType)},
+		},
+		{
+			name:                "update with integration in allowlist succeeds",
+			user:                writer,
+			receiver:            baseReceiver.Clone(),
+			existing:            util.Pointer(baseReceiver.Clone()),
+			expectedUpdate:      models.CopyReceiverWith(baseReceiver, rm.Encrypted(models.Base64Enrypt)),
+			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
+		},
+		{
+			name:                "update with email integration and allowed emails should not fail",
+			user:                writer,
+			existing:            util.Pointer(baseReceiver.Clone()),
+			receiver:            models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedUpdate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedProvenances: map[string]models.Provenance{emailIntegration.UID: models.ProvenanceNone},
+			opts:                []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+		},
+		{
+			name:        "update with email integration and not allowed emails should fail",
+			user:        writer,
+			existing:    util.Pointer(baseReceiver.Clone()),
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedErr: models.ErrReceiverInvalidBase,
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1784,6 +1854,22 @@ func withImportedIncluded(_ *testing.T, sut *ReceiverService) {
 	sut.includeImported = true
 }
 
+func withAllowedIntegrations(types ...schema.IntegrationType) createReceiverServiceSutOpt {
+	allowed := make(map[schema.IntegrationType]struct{}, len(types))
+	for _, t := range types {
+		allowed[t] = struct{}{}
+	}
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.allowedIntegrations = allowed
+	}
+}
+
+func withEmailValidator(emailValidator EmailIntegrationValidator) createReceiverServiceSutOpt {
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.emailValidator = emailValidator
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc, getExtraConfig())
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -1801,7 +1887,10 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&NoopOrgEmailValidator{},
 	)
 	for _, opt := range opts {
 		opt(t, sut)

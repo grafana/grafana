@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, Labels } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { type GrafanaTheme2, type Labels } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
   Alert,
   Box,
+  Button,
   Drawer,
   Icon,
   LoadingBar,
@@ -18,50 +19,80 @@ import {
   Text,
   TextLink,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
-import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
+import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
+import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
+import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
+function DrawerBackButton({ onClick }: { onClick: () => void }) {
+  const backLabel = t('alerting.triage.instance-details-drawer.back', 'Back');
+  return (
+    <Stack direction="row" alignItems="center">
+      <Button variant="secondary" size="sm" fill="text" icon="arrow-left" onClick={onClick} aria-label={backLabel}>
+        {backLabel}
+      </Button>
+    </Stack>
+  );
+}
+
 function calculateDrawerWidth(rightColumnWidth: number): number {
-  //first add the padding from the Page (32px)
   const calculatedWidth = rightColumnWidth + 32;
-  // now clamp the width to a max of 1400px
-  return Math.min(calculatedWidth, 1400);
+  return Math.max(700, Math.min(calculatedWidth, 1400));
 }
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
   instanceLabels: Labels;
+  commonLabels?: Labels;
   onClose: () => void;
 }
 
-export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
+/** Stacked drilldown views inside the instance drawer. Only `instance-details` and `silence` are wired today; to do: contact point list, notification details, declare incident. */
+type DrawerView =
+  | { type: 'instance-details' }
+  | { type: 'contact-point-list'; receiverName: string }
+  | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
+  | { type: 'silence' }
+  | { type: 'declare-incident' };
+
+export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
+  const theme = useTheme2();
   const { rightColumnWidth } = useWorkbenchContext();
+  const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
+  const closeSilenceTimerRef = useRef<number | undefined>(undefined);
+  const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
+  const silenceDrawerCloseAnimationMs = Number(theme.transitions.duration.standard ?? 180);
+  const activeView = viewStack[viewStack.length - 1];
+  const canGoBack = viewStack.length > 1;
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -79,7 +110,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     isError: stateHistoryError,
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
-    labels: instanceLabels,
+    matchers: labelsToMatchersParam(instanceLabels),
     from: timeRange.from.unix(),
     to: timeRange.to.unix(),
   });
@@ -94,6 +125,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
 
+  const showInstanceTimeline =
+    config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+
   const showDrawerTimeRangeBanner = useMemo(() => {
     if (!rule?.grafana_alert) {
       return false;
@@ -101,42 +135,115 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
-  if (error) {
-    return (
-      <Drawer
-        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <ErrorContent error={error} />
-      </Drawer>
-    );
-  }
+  const getTopDrawerContentWrapper = useCallback(() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('.main-view .rc-drawer-content-wrapper');
+    return wrappers.item(wrappers.length - 1) ?? null;
+  }, []);
 
-  if (loading || !rule) {
-    return (
-      <Drawer
-        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
-      </Drawer>
-    );
-  }
+  const resetSilencePanelStyles = useCallback(() => {
+    const el = getTopDrawerContentWrapper();
+    if (el) {
+      el.style.removeProperty('transition');
+      el.style.removeProperty('transform');
+    }
+  }, [getTopDrawerContentWrapper]);
 
-  return (
-    <Drawer
-      title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
-      onClose={onClose}
-      width={drawerWidth}
-    >
+  const handleDrawerClose = () => {
+    if (closeSilenceTimerRef.current !== undefined) {
+      window.clearTimeout(closeSilenceTimerRef.current);
+      closeSilenceTimerRef.current = undefined;
+    }
+    resetSilencePanelStyles();
+    setIsClosingSilenceDrawer(false);
+    setViewStack([{ type: 'instance-details' }]);
+    onClose();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeSilenceTimerRef.current !== undefined) {
+        window.clearTimeout(closeSilenceTimerRef.current);
+      }
+      resetSilencePanelStyles();
+    };
+  }, [resetSilencePanelStyles]);
+
+  const popTopView = () => {
+    setViewStack((current) => {
+      if (current.length <= 1) {
+        return current;
+      }
+      return current.slice(0, -1);
+    });
+  };
+
+  const animateCloseSilenceDrawer = useCallback(() => {
+    if (isClosingSilenceDrawer) {
+      return;
+    }
+
+    const el = getTopDrawerContentWrapper();
+    if (el) {
+      el.style.transition = `transform ${silenceDrawerCloseAnimationMs}ms ease-in`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.style.transform = 'translateX(100%)';
+        });
+      });
+    }
+
+    setIsClosingSilenceDrawer(true);
+    closeSilenceTimerRef.current = window.setTimeout(() => {
+      resetSilencePanelStyles();
+      popTopView();
+      setIsClosingSilenceDrawer(false);
+      closeSilenceTimerRef.current = undefined;
+    }, silenceDrawerCloseAnimationMs);
+  }, [getTopDrawerContentWrapper, isClosingSilenceDrawer, silenceDrawerCloseAnimationMs, resetSilencePanelStyles]);
+
+  const handleBack = () => {
+    if (activeView.type === 'silence') {
+      animateCloseSilenceDrawer();
+      return;
+    }
+
+    popTopView();
+  };
+
+  const handleOpenSilence = useCallback(() => {
+    setViewStack((current) => [...current, { type: 'silence' }]);
+  }, []);
+
+  const sharedTitleProps = useMemo(
+    () => ({
+      instanceLabels,
+      commonLabels,
+      alertState: instanceState,
+      onOpenSilence: handleOpenSilence,
+    }),
+    [instanceLabels, commonLabels, instanceState, handleOpenSilence]
+  );
+
+  const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
+
+  const getInstanceDetailsBody = () => {
+    if (error) {
+      return <ErrorContent error={error} />;
+    }
+
+    if (loading || !rule) {
+      return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+    }
+
+    return (
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
         </Stack>
         {showDrawerTimeRangeBanner && !instanceState && <DrawerTimeRangeInfoBanner />}
-        {instanceState && <InstanceStateInfoBanner state={instanceState} />}
+        {(instanceState === GrafanaAlertState.NoData || instanceState === GrafanaAlertState.Error) && (
+          <InstanceStateInfoBanner state={instanceState === GrafanaAlertState.NoData ? 'nodata' : 'error'} />
+        )}
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>
@@ -153,31 +260,97 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           </Box>
         )}
 
-        <Box ref={ref}>
-          <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
-          {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
-          {stateHistoryError && (
-            <Alert
-              severity="error"
-              title={t('alerting.instance-details.history-error', 'Failed to load state history')}
-            >
-              {t(
-                'alerting.instance-details.history-error-desc',
-                'Unable to fetch state transition history for this instance.'
-              )}
-            </Alert>
-          )}
-          {!stateHistoryFetching && !stateHistoryError && (
-            <Stack direction="column" gap={1}>
-              {historyRecords.length > 0 ? (
-                <InstanceStateTransitions records={historyRecords} />
-              ) : (
-                <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
-              )}
-            </Stack>
-          )}
-        </Box>
+        {showInstanceTimeline ? (
+          <InstanceTimelineSection
+            ruleUID={ruleUID}
+            instanceLabels={instanceLabels}
+            timeRange={timeRange}
+            historyRecords={historyRecords}
+            stateHistoryFetching={stateHistoryFetching}
+            stateHistoryError={stateHistoryError}
+            loadingBarRef={ref}
+          />
+        ) : (
+          <Box ref={ref}>
+            <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+            {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
+            {stateHistoryError && (
+              <Alert
+                severity="error"
+                title={t('alerting.instance-details.history-error', 'Failed to load state history')}
+              >
+                {t(
+                  'alerting.instance-details.history-error-desc',
+                  'Unable to fetch state transition history for this instance.'
+                )}
+              </Alert>
+            )}
+            {!stateHistoryFetching && !stateHistoryError && (
+              <Stack direction="column" gap={1}>
+                {historyRecords.length > 0 ? (
+                  <InstanceStateTransitions records={historyRecords} maxItems={10} />
+                ) : (
+                  <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
+                )}
+              </Stack>
+            )}
+          </Box>
+        )}
       </Stack>
+    );
+  };
+
+  if (error || loading || !rule) {
+    return (
+      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+        {getInstanceDetailsBody()}
+      </Drawer>
+    );
+  }
+
+  if (activeView.type === 'silence' || isClosingSilenceDrawer) {
+    return (
+      <>
+        <Drawer
+          title={<InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule.grafana_alert} />}
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          {getInstanceDetailsBody()}
+        </Drawer>
+        <Drawer
+          title={
+            <InstanceDetailsDrawerTitle
+              {...sharedTitleProps}
+              rule={rule.grafana_alert}
+              sectionLabel={<Trans i18nKey="alerting.triage.instance-details-drawer.section-silence">Silence</Trans>}
+              titleText={rule.grafana_alert.title}
+              hideActions
+              showAlertState={false}
+              titleSection={<DrawerBackButton onClick={handleBack} />}
+            />
+          }
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <Drawer
+      title={
+        <Stack direction="column" gap={1}>
+          {canGoBack && <DrawerBackButton onClick={handleBack} />}
+          {getDrawerTitle()}
+        </Stack>
+      }
+      onClose={handleDrawerClose}
+      width={drawerWidth}
+    >
+      {getInstanceDetailsBody()}
     </Drawer>
   );
 }
@@ -235,32 +408,28 @@ function extractQueryDetails(rule: GrafanaRuleDefinition) {
   return { dataQueries, thresholds };
 }
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const MAX_STATE_TRANSITIONS = 10;
 
-function formatTimestamp(timestamp: number) {
-  return dateFormatter.format(new Date(timestamp));
-}
-
-function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
+function InstanceStateTransitions({
+  records,
+  maxItems = MAX_STATE_TRANSITIONS,
+}: {
+  records: LogRecord[];
+  maxItems?: number;
+}) {
   const styles = useStyles2(stateTransitionStyles);
-  const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc');
+  const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc').slice(0, maxItems);
 
   return (
     <div className={styles.container}>
       {sortedRecords.map((record, index) => (
         <Fragment key={`${record.timestamp}-${index}`}>
           <Text color="secondary" variant="bodySmall">
-            {formatTimestamp(record.timestamp)}
+            {formatTimelineDate(record.timestamp)}
           </Text>
-          <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
+          <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />
-          <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
+          <EventState state={record.line.current} showLabel addFilter={noop} type="to" />
         </Fragment>
       ))}
     </div>

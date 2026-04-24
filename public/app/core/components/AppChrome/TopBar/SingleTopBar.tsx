@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { memo } from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScopesContextValue } from '@grafana/runtime';
+import { type ScopesContextValue } from '@grafana/runtime';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -71,7 +71,8 @@ export const SingleTopBar = memo(function SingleTopBar({
               narrow
               id={MEGA_MENU_TOGGLE_ID}
               onClick={onToggleMegaMenu}
-              tooltip={t('navigation.megamenu.open', 'Open menu')}
+              tooltip={t('navigation.megamenu.open', 'Main menu')}
+              aria-expanded={state.megaMenuOpen}
             >
               <Stack gap={0} alignItems="center">
                 <Icon name="bars" size="xl" />

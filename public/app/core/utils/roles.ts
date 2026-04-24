@@ -1,5 +1,5 @@
-import { RoleDto } from 'app/api/clients/legacy';
-import { Role } from 'app/types/accessControl';
+import { type RoleDto } from 'app/api/clients/legacy';
+import { type Role } from 'app/types/accessControl';
 
 export const isNotDelegatable = (role: Role) => {
   return role.delegatable !== undefined && !role.delegatable;

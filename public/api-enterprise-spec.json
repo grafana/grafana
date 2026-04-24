@@ -22,30 +22,6 @@
   },
   "basePath": "/api",
   "paths": {
-    "/access-control/assignments/search": {
-      "post": {
-        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "tags": [
-          "enterprise"
-        ],
-        "summary": "Debug permissions.",
-        "operationId": "searchResult",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/searchResultResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
@@ -594,11 +570,6 @@
           {
             "type": "boolean",
             "name": "includeHidden",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "name": "includeMapped",
             "in": "query"
           },
           {
@@ -2920,6 +2891,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -3006,9 +2980,6 @@
       "type": "object",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/AnnotationActions"
-        },
-        "organization": {
           "$ref": "#/definitions/AnnotationActions"
         }
       }
@@ -3975,10 +3946,6 @@
         },
         "uid": {
           "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -4268,9 +4235,6 @@
           "type": "boolean"
         },
         "isSnapshot": {
-          "type": "boolean"
-        },
-        "isStarred": {
           "type": "boolean"
         },
         "provisioned": {
@@ -4982,6 +4946,29 @@
           "type": "string"
         },
         "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "FooterItem": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "string"
+        },
+        "fontStyle": {
+          "type": "string"
+        },
+        "fontWeight": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
           "type": "string"
         }
       }
@@ -7091,6 +7078,15 @@
         "embeddedImageTheme": {
           "type": "string"
         },
+        "footerFontFamily": {
+          "type": "string"
+        },
+        "footerItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FooterItem"
+          }
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -7099,8 +7095,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "pdfDashboardTitleEnabled": {
+          "type": "boolean"
+        },
+        "pdfHeaderEnabled": {
+          "type": "boolean"
+        },
         "pdfTheme": {
           "type": "string"
+        },
+        "pdfTimeRangeEnabled": {
+          "type": "boolean"
         },
         "userId": {
           "type": "integer",
@@ -7352,32 +7357,6 @@
         }
       }
     },
-    "SearchDTO": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "onlyRoles": {
-          "type": "boolean"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        }
-      }
-    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -7444,50 +7423,6 @@
           "format": "int64"
         },
         "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "SearchResult": {
-      "type": "object",
-      "properties": {
-        "result": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SearchResultItem"
-          }
-        }
-      }
-    },
-    "SearchResultItem": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -8395,47 +8330,11 @@
         }
       }
     },
-    "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
-      "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
-      "properties": {
-        "ForceQuery": {
-          "type": "boolean"
-        },
-        "Fragment": {
-          "type": "string"
-        },
-        "Host": {
-          "type": "string"
-        },
-        "OmitHost": {
-          "type": "boolean"
-        },
-        "Opaque": {
-          "type": "string"
-        },
-        "Path": {
-          "type": "string"
-        },
-        "RawFragment": {
-          "type": "string"
-        },
-        "RawPath": {
-          "type": "string"
-        },
-        "RawQuery": {
-          "type": "string"
-        },
-        "Scheme": {
-          "type": "string"
-        },
-        "User": {
-          "$ref": "#/definitions/Userinfo"
-        }
-      }
-    },
-    "Unstructured": {
+    "URL": { 
+			"type": "string", 
+			"format": "url" 
+		},
+		"Unstructured": {
       "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
@@ -8745,10 +8644,6 @@
           "items": {
             "$ref": "#/definitions/Permission"
           }
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -9101,6 +8996,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },
@@ -10506,12 +10404,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/HitList"
-      }
-    },
-    "searchResultResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/SearchResult"
       }
     },
     "searchTeamGroupsResponse": {

@@ -5,9 +5,9 @@ import { Field } from '@grafana/ui';
 
 import { defaultDecorators } from '../../../../../tests/story-utils';
 
-import { ContactPointSelector, ContactPointSelectorProps } from './ContactPointSelector';
+import { ContactPointSelector, type ContactPointSelectorProps } from './ContactPointSelector';
 import mdx from './ContactPointSelector.mdx';
-import { simpleContactPointsListScenario, withErrorScenario } from './ContactPointSelector.test.scenario';
+import { simpleContactPointsListScenario, withErrorScenario } from './ContactPointSelector.scenario';
 
 const meta: Meta<typeof ContactPointSelector> = {
   component: ContactPointSelector,

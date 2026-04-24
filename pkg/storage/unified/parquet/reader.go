@@ -49,12 +49,11 @@ func (r *parquetReader) Next() bool {
 	r.req = nil
 	for r.err == nil && r.reader != nil {
 		if r.bufferIndex >= r.bufferSize && r.value.reader.HasNext() {
-			r.bufferIndex = 0
 			r.err = r.readBulk()
 			if r.err != nil {
+				r.close()
 				return false
 			}
-			r.bufferIndex = r.value.count
 		}
 
 		if r.bufferSize > r.bufferIndex {
@@ -78,11 +77,13 @@ func (r *parquetReader) Next() bool {
 
 		r.rowGroupIDX++
 		if r.rowGroupIDX >= r.reader.NumRowGroups() {
-			_ = r.reader.Close()
-			r.reader = nil
+			r.close()
 			return false
 		}
 		r.err = r.open(r.reader.RowGroup(r.rowGroupIDX))
+		if r.err != nil {
+			r.close()
+		}
 	}
 
 	return false
@@ -96,6 +97,13 @@ func (r *parquetReader) Request() *resourcepb.BulkRequest {
 // RollbackRequested implements resource.BulkRequestIterator.
 func (r *parquetReader) RollbackRequested() bool {
 	return r.err != nil
+}
+
+func (r *parquetReader) close() {
+	if r.reader != nil {
+		_ = r.reader.Close()
+		r.reader = nil
+	}
 }
 
 func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error) {
@@ -146,6 +154,7 @@ func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error
 		reader.group,
 		reader.resource,
 		reader.name,
+		reader.folder,
 		reader.action,
 		reader.value,
 	}

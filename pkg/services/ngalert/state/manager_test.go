@@ -370,6 +370,54 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	}, time.Second, 100*time.Millisecond, "unexpected annotations")
 }
 
+func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	evaluationTime, err := time.Parse("2006-01-02", "2022-02-02")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ng, dbstore := tests.SetupTestEnv(t, 1)
+
+	cfg := state.ManagerCfg{
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: ng.InstanceStore,
+		Images:        &state.NoopImageService{},
+		Clock:         clock.New(),
+		Historian:     &state.FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
+	}
+	st := state.NewManager(cfg, state.NewNoopPersister())
+
+	const mainOrgID int64 = 1
+
+	templatedKeyOne := `{{ with (index $labels "missing_key") }}{{.}}{{ end }}`
+	templatedKeyTwo := `{{ $labels. }}`
+
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+		templatedKeyOne: "empty-key-value",
+		templatedKeyTwo: "error-key-value",
+	})
+
+	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+		Instance:    data.Labels{"instance_label": "test-value"},
+		State:       eval.Alerting,
+		EvaluatedAt: evaluationTime,
+	}}, data.Labels{
+		"alertname": rule.Title,
+	}, nil)
+
+	states := st.GetStatesForRuleUID(ctx, mainOrgID, rule.UID)
+	require.Len(t, states, 1)
+
+	labels := states[0].Labels
+	require.Equal(t, "empty-key-value", labels[templatedKeyOne])
+	require.Equal(t, "error-key-value", labels[templatedKeyTwo])
+}
+
 func TestProcessEvalResults(t *testing.T) {
 	evaluationDuration := 10 * time.Millisecond
 	evaluationInterval := 10 * time.Second

@@ -1,11 +1,11 @@
-import { HTMLAttributes, memo, useId, useMemo } from 'react';
+import { type HTMLAttributes, memo, useId, useMemo } from 'react';
 
-import { FieldDisplay } from '@grafana/data';
+import { type FieldDisplay } from '@grafana/data';
 
 import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';
 import { ARC_END, ARC_START } from './constants';
-import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
+import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
 
 export interface RadialArcPathPropsBase {
@@ -111,7 +111,13 @@ export const RadialArcPath = memo(
     const vizContent = (
       <>
         {isGradient ? (
-          <foreignObject x={boxX} y={Math.max(boxY, 0)} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+          <foreignObject
+            x={boxX}
+            y={Math.max(boxY, 0)}
+            width={Math.max(vizWidth, boxSize)}
+            height={Math.max(vizHeight, boxSize)}
+            mask={`url(#${id})`}
+          >
             <div style={bgDivStyle} />
           </foreignObject>
         ) : (

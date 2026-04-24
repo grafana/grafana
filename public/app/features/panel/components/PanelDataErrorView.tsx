@@ -4,15 +4,15 @@ import {
   CoreApp,
   FieldType,
   getPanelDataSummary,
-  GrafanaTheme2,
-  PanelData,
-  PanelDataSummary,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelDataSummary,
+  type PanelPluginVisualizationSuggestion,
   store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
+import { type PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';

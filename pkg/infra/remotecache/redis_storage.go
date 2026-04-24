@@ -55,6 +55,8 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 				return nil, fmt.Errorf("%v: %w", "value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
+		case "network":
+			options.Network = connVal
 		case "ssl":
 			if connVal != "true" && connVal != "false" && connVal != "insecure" {
 				return nil, fmt.Errorf("ssl must be set to 'true', 'false', or 'insecure' when present")

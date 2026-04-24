@@ -16,22 +16,11 @@ menuTitle: Troubleshooting
 title: Troubleshoot OpenTSDB data source issues
 weight: 500
 last_reviewed: 2026-01-28
-refs:
-  configure-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/
-  template-variables-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
 ---
 
 # Troubleshoot OpenTSDB data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the OpenTSDB data source. For configuration instructions, refer to [Configure the OpenTSDB data source](ref:configure-opentsdb).
+This document provides solutions to common issues you may encounter when configuring or using the OpenTSDB data source. For configuration instructions, refer to [Configure the OpenTSDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/configure/).
 
 ## Connection errors
 
@@ -138,7 +127,7 @@ These errors occur when executing queries against OpenTSDB.
 
 1. Enable real-time metadata tracking in OpenTSDB by setting `tsd.core.meta.enable_realtime_ts` to `true` in your OpenTSDB configuration.
 1. Sync existing metadata by running `tsdb uid metasync` on the OpenTSDB server.
-1. Verify the variable query syntax is correct. Refer to [Template variables](ref:template-variables-opentsdb) for the correct syntax.
+1. Verify the variable query syntax is correct. Refer to [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) for the correct syntax.
 1. Check that the data source connection is working.
 
 ## Performance issues

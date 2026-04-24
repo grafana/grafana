@@ -8,5 +8,6 @@ export default defineConfig({
     defaultNS: 'grafana-azure-monitor-datasource',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    warnOnConflicts: 'error',
   },
 });

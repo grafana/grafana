@@ -1,6 +1,6 @@
-import { escapeStringForRegex, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
+import { escapeStringForRegex, Registry, type RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
-import { ExtractFieldsOptions, FieldExtractorID } from './types';
+import { type ExtractFieldsOptions, FieldExtractorID } from './types';
 
 type Parser = (v: string) => Record<string, any> | undefined;
 

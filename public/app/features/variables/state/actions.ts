@@ -1,40 +1,40 @@
 import { castArray, isEqual } from 'lodash';
 
 import {
-  DataQuery,
+  type DataQuery,
   getDataSourceRef,
   isDataSourceRef,
   isEmptyObject,
   isObject,
   LoadingState,
-  TimeRange,
-  TypedVariableModel,
-  UrlQueryMap,
-  UrlQueryValue,
-  OrgVariableModel,
-  QueryVariableModel,
-  DashboardVariableModel,
-  UserVariableModel,
+  type TimeRange,
+  type TypedVariableModel,
+  type UrlQueryMap,
+  type UrlQueryValue,
+  type OrgVariableModel,
+  type QueryVariableModel,
+  type DashboardVariableModel,
+  type UserVariableModel,
   VariableHide,
-  VariableOption,
+  type VariableOption,
   VariableRefresh,
-  VariableWithOptions,
+  type VariableWithOptions,
 } from '@grafana/data';
 import { config, locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { store } from 'app/store/store';
-import { AppNotification } from 'app/types/appNotifications';
-import { ThunkResult, StoreState } from 'app/types/store';
+import { type AppNotification } from 'app/types/appNotifications';
+import { type ThunkResult, type StoreState } from 'app/types/store';
 
 import { appEvents } from '../../../core/app_events';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Graph, Node } from '../../../core/utils/dag';
+import { Graph, type Node } from '../../../core/utils/dag';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { getTemplateSrv, type TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
 import { cleanEditorState } from '../editor/reducer';
@@ -48,12 +48,12 @@ import {
   initialVariableModelState,
   TransactionStatus,
   VariablesChanged,
-  VariablesChangedEvent,
+  type VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
 } from '../types';
 import {
-  ExtendedUrlQueryMap,
+  type ExtendedUrlQueryMap,
   getCurrentText,
   getCurrentValue,
   getVariableRefresh,
@@ -79,38 +79,8 @@ import {
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { KeyedVariableIdentifier } from './types';
+import { type KeyedVariableIdentifier } from './types';
 import { cleanVariables } from './variablesReducer';
-
-// process flow queryVariable
-// thunk => processVariables
-//    adapter => setValueFromUrl
-//      thunk => setOptionFromUrl
-//        adapter => updateOptions
-//          thunk => updateQueryVariableOptions
-//            action => updateVariableOptions
-//            action => updateVariableTags
-//            thunk => validateVariableSelectionState
-//              adapter => setValue
-//                thunk => setOptionAsCurrent
-//                  action => setCurrentVariableValue
-//                  thunk => variableUpdated
-//                    adapter => updateOptions for dependent nodes
-//        adapter => setValue
-//          thunk => setOptionAsCurrent
-//            action => setCurrentVariableValue
-//            thunk => variableUpdated
-//              adapter => updateOptions for dependent nodes
-//    adapter => updateOptions
-//      thunk => updateQueryVariableOptions
-//        action => updateVariableOptions
-//        action => updateVariableTags
-//        thunk => validateVariableSelectionState
-//          adapter => setValue
-//            thunk => setOptionAsCurrent
-//              action => setCurrentVariableValue
-//              thunk => variableUpdated
-//                adapter => updateOptions for dependent nodes
 
 export const initDashboardTemplating = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {

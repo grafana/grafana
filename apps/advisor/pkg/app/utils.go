@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -163,21 +164,11 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
-	// Pull failures from the report for the items to retry
-	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
-		if f.ItemID == itemToRetry {
-			for _, newFailure := range failures {
-				if newFailure.StepID == f.StepID {
-					// Same failure found, keep it
-					return false
-				}
-			}
-			// Failure no longer found, remove it
-			return true
-		}
-		// Failure not in the list of items to retry, keep it
-		return false
+	// Pull this item's failures and replace them with the retry result
+	currentFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
+		return f.ItemID == itemToRetry
 	})
+	c.Status.Report.Failures = append(currentFailures, failures...)
 	// Wait for the retry annotation to be persisted before patching the object
 	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
 	if err != nil {
@@ -218,6 +209,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					defer func() {
 						if r := recover(); r != nil {
 							log.Error("panic recovered in step", "step", step.ID(), "error", r, "item", item)
+							metrics.StepPanicsTotal.WithLabelValues(step.ID()).Inc()
 						}
 					}()
 					logger := log.With("step", step.ID())

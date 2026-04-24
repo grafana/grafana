@@ -25,7 +25,7 @@ func (s *unsignedStep) Title() string {
 }
 
 func (s *unsignedStep) Description() string {
-	return "Checks has a missing or invalid signature."
+	return "Checks if the plugin's signature is missing or invalid."
 }
 
 func (s *unsignedStep) Resolution() string {

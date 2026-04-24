@@ -1,4 +1,5 @@
-import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { type EvalFunction } from 'app/features/alerting/state/alertDef';
+import { type AlertQuery, type GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',
@@ -54,6 +55,7 @@ export interface RuleFormValues {
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
+  selectedPolicy?: string; // named notification policy for routing
   editorSettings?: SimplifiedEditor;
   metric?: string;
   targetDatasourceUid?: string;
@@ -68,3 +70,11 @@ export interface RuleFormValues {
 }
 
 export type Folder = { title: string; uid: string };
+
+export interface SimpleCondition {
+  whenField?: string;
+  evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
+}

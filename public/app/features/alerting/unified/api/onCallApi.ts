@@ -1,4 +1,4 @@
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 

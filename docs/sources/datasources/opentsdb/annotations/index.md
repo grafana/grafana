@@ -14,34 +14,13 @@ menuTitle: Annotations
 title: OpenTSDB annotations
 weight: 450
 last_reviewed: 2026-01-28
-refs:
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
 ---
 
 # OpenTSDB annotations
 
 Annotations allow you to overlay event information on graphs, providing context for metric changes. The OpenTSDB data source supports both metric-specific annotations and global annotations stored in OpenTSDB.
 
-For general information about annotations in Grafana, refer to [Annotate visualizations](ref:annotations).
+For general information about annotations in Grafana, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
 
 ## Annotation types
 
@@ -249,6 +228,6 @@ The annotation displays but has no description text.
 
 ## Next steps
 
-- [Build queries](ref:query-editor) to visualize metrics alongside annotations.
-- [Use template variables](ref:template-variables) to create dynamic dashboards.
-- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds.
+- [Build queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/) to visualize metrics alongside annotations.
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) to create dynamic dashboards.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/) to get notified when metrics cross thresholds.

@@ -1,6 +1,6 @@
 import { StackingMode } from '@grafana/schema';
 
-import { FieldConfig } from './panelcfg.gen';
+import { type FieldConfig } from './panelcfg.gen';
 
 export const defaultHistogramConfig: FieldConfig = {
   stacking: {

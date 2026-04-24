@@ -1,23 +1,26 @@
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
-import { Folder } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { AnnoKeySourcePath, type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { BaseProvisionedFormData } from '../../types/form';
+import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { type BaseProvisionedFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getProvisionedRequestError } from '../utils/errors';
+import { joinPath } from '../utils/path';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
@@ -33,7 +36,9 @@ interface Props {
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
+  const [, updateUrlParams] = useUrlParams();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const methods = useForm<BaseProvisionedFormData>({
     defaultValues: initialValues,
@@ -47,14 +52,18 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
     const paramValue = prUrl ?? repository?.url ?? '';
+    const params: Record<string, string> = {};
 
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue,
-      repoType: info.repoType,
-    });
+    if (paramValue) {
+      params.new_pull_request_url = paramValue;
+    }
+    if (info.repoType) {
+      params.repo_type = info.repoType;
+    }
 
-    navigate(url);
+    if (Object.keys(params).length > 0) {
+      updateUrlParams(params);
+    }
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
@@ -64,24 +73,25 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    // Fallback to provisioning URL
-    if (repository?.name && request.data?.path) {
-      let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
-      if (request.data.ref?.length) {
-        url += '?ref=' + request.data.ref;
-      }
-      navigate(url);
-    }
+    // When sync is disabled, the BE returns resource.upsert as null (no Grafana resource created).
+    // Redirect to dashboards with a banner linking to the repo status page.
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'resource_pushed_to',
+      paramValue: repository?.name,
+      repoType: repository?.type,
+    });
+
+    navigate(url);
   };
 
   const onError = (error: unknown) => {
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload: [
-        t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
+    setError(
+      getProvisionedRequestError(
         error,
-      ],
-    });
+        'folder',
+        t('browse-dashboards.new-provisioned-folder-form.error-saving', 'An error occurred while creating folder.')
+      )
+    );
   };
 
   // Use the repository-type and resource-type aware provisioned request handler
@@ -101,13 +111,20 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
 
   const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
+    setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
+      onError(
+        t(
+          'browse-dashboards.new-provisioned-folder-form.error-missing-title-or-repo',
+          'Missing folder name or repository information'
+        )
+      );
       return;
     }
+
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-    const prefix = basePath ? `${basePath}/` : '';
-    const path = `${prefix}${title}/`;
+    const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
       title,
@@ -174,7 +191,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
-            hidePath
+            hiddenFields={['path']}
           />
 
           {prURL && (
@@ -193,6 +210,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
               </a>
             </Alert>
           )}
+
+          {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
             <Button variant="secondary" fill="outline" onClick={onDismiss}>

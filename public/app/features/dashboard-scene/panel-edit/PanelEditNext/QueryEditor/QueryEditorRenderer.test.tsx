@@ -1,9 +1,15 @@
-import { render, screen } from '@testing-library/react';
-import { useState } from 'react';
+import { act, render, screen } from '@testing-library/react';
+import { useEffect, useRef, useState } from 'react';
 
-import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
+import {
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../constants';
 
@@ -14,6 +20,7 @@ import {
   mockActions,
   mockQueryOptionsState,
   mockTransformToggles,
+  mockTypeConfig,
   renderWithQueryEditorProvider,
 } from './testUtils';
 
@@ -22,7 +29,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.mock('app/features/query/components/QueryErrorAlert', () => ({
-  QueryErrorAlert: () => null,
+  QueryErrorAlert: ({ error }: { error: DataQueryError }) => <div data-testid="query-error-alert">{error.message}</div>,
 }));
 
 interface TestQuery extends DataQuery {
@@ -95,7 +102,7 @@ describe('QueryEditorRenderer', () => {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-          qrState={{ queries: [queryA, queryB], data: undefined, isLoading: false, queryError: undefined }}
+          qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
@@ -118,8 +125,17 @@ describe('QueryEditorRenderer', () => {
             pendingTransformation: null,
             setPendingTransformation: jest.fn(),
             finalizePendingTransformation: jest.fn(),
+            pendingSavedQuery: null,
+            setPendingSavedQuery: jest.fn(),
+            showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
+            toggleQuerySelection: jest.fn(),
+            toggleTransformationSelection: jest.fn(),
+            clearSelection: jest.fn(),
           }}
           actions={mockActions}
+          typeConfig={mockTypeConfig}
         >
           <QueryEditorRenderer />
         </QueryEditorProvider>
@@ -133,5 +149,104 @@ describe('QueryEditorRenderer', () => {
 
     // Must show series-b, not the stale series-a value from query A's editor instance
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-b');
+  });
+
+  it('applies onChange called from a useEffect cleanup when switching away from a query', async () => {
+    const updateSelectedQuery = jest.fn();
+
+    // Editor that flushes a pending edit via onChange in its unmount cleanup.
+    function CleanupOnChangeEditor({ query, onChange }: { query: TestQuery; onChange: (q: DataQuery) => void }) {
+      const pendingEdit = { ...query, legendFormat: `${query.legendFormat}-edited` };
+      const pendingEditRef = useRef(pendingEdit);
+      pendingEditRef.current = pendingEdit;
+      const onChangeRef = useRef(onChange);
+      onChangeRef.current = onChange;
+
+      useEffect(() => {
+        return () => onChangeRef.current(pendingEditRef.current);
+      }, []);
+
+      return <div data-testid="cleanup-editor">{query.legendFormat}</div>;
+    }
+
+    const mockDatasourceWithCleanup: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
+      components: { QueryEditor: CleanupOnChangeEditor },
+    };
+
+    function buildJsx(selectedQuery: DataQuery) {
+      return (
+        <QueryEditorProvider
+          dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
+          qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
+          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
+          alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
+          uiState={{
+            selectedQuery,
+            selectedTransformation: null,
+            selectedAlert: null,
+            setSelectedQuery: jest.fn(),
+            setSelectedTransformation: jest.fn(),
+            setSelectedAlert: jest.fn(),
+            queryOptions: mockQueryOptionsState,
+            selectedQueryDsData: {
+              datasource: mockDatasourceWithCleanup as DataSourceApi,
+              dsSettings: ds1SettingsMock,
+            },
+            selectedQueryDsLoading: false,
+            showingDatasourceHelp: false,
+            toggleDatasourceHelp: jest.fn(),
+            transformToggles: mockTransformToggles,
+            cardType: QueryEditorType.Query,
+            pendingExpression: null,
+            setPendingExpression: jest.fn(),
+            finalizePendingExpression: jest.fn(),
+            pendingTransformation: null,
+            setPendingTransformation: jest.fn(),
+            finalizePendingTransformation: jest.fn(),
+            pendingSavedQuery: null,
+            setPendingSavedQuery: jest.fn(),
+            showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
+            toggleQuerySelection: jest.fn(),
+            toggleTransformationSelection: jest.fn(),
+            clearSelection: jest.fn(),
+          }}
+          actions={{ ...mockActions, updateSelectedQuery }}
+          typeConfig={mockTypeConfig}
+        >
+          <QueryEditorRenderer />
+        </QueryEditorProvider>
+      );
+    }
+
+    const { rerender } = render(buildJsx(queryA));
+
+    await act(async () => {
+      rerender(buildJsx(queryB));
+    });
+
+    expect(updateSelectedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ refId: 'A', legendFormat: 'series-a-edited' }),
+      'A'
+    );
+  });
+
+  it('shows an error when the query has an error', () => {
+    renderWithQueryEditorProvider(<QueryEditorRenderer />, {
+      queries: [queryA, queryB],
+      selectedQuery: queryA,
+      uiStateOverrides: { selectedQueryDsData },
+      qrState: {
+        data: {
+          state: LoadingState.Error,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          errors: [{ message: 'Error!!', refId: queryA.refId }],
+        },
+      },
+    });
+
+    expect(screen.getByText('Error!!')).toBeInTheDocument();
   });
 });

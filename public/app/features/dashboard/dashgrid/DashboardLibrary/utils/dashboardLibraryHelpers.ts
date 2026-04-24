@@ -1,11 +1,11 @@
 import { locationService } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type VizPanel } from '@grafana/scenes';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { CONTENT_KINDS } from '../interactions';
-import { GnetDashboard } from '../types';
+import { CONTENT_KINDS } from '../constants';
+import { type GnetDashboard } from '../types';
 
 function getPanelDatasourceTypes(scene: DashboardScene): string[] {
   const types = new Set<string>();

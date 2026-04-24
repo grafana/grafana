@@ -2,11 +2,8 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
-	"sort"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -16,21 +13,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type finalizer struct {
-	lister        resources.ResourceLister
-	clientFactory resources.ClientFactory
-	metrics       *finalizerMetrics
-	maxWorkers    int
+	lister           resources.ResourceLister
+	clientFactory    resources.ClientFactory
+	metrics          *finalizerMetrics
+	maxWorkers       int
+	folderAPIVersion string
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -69,7 +66,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
+			count, err = f.releaseExistingItems(ctx, repo.Config())
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -77,7 +74,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
+			count, err = f.deleteExistingItems(ctx, repo.Config())
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -97,11 +94,91 @@ func (f *finalizer) process(ctx context.Context,
 	return nil
 }
 
-// internal iterator to walk the existing items
-func (f *finalizer) processExistingItems(
+type itemProcessor func(ctx context.Context, item *provisioning.ResourceListItem) error
+
+// newItemProcessor wraps a per-resource callback with client resolution and
+// not-found handling.
+func (f *finalizer) newItemProcessor(
+	ctx context.Context,
+	clients resources.ResourceClients,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) itemProcessor {
+	baseLogger := logging.FromContext(ctx)
+	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		// If the item is a folder, use the configured folder API version.
+		logger := baseLogger
+		var version string
+		if item.Group == resources.FolderResource.Group && item.Resource == resources.FolderResource.Resource {
+			version = f.folderAPIVersion
+			logger = logger.With("version", version)
+		}
+
+		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
+			Group:    item.Group,
+			Resource: item.Resource,
+			Version:  version,
+		})
+		if err != nil {
+			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
+			return err
+		}
+
+		// Retry on optimistic-concurrency conflicts from the unified storage
+		// layer ("requested RV does not match current RV"). The finalizer races
+		// with other reconciles/syncs that may mutate the same resource, and a
+		// transient RV mismatch should not fail the whole finalizer run.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return cb(res, item)
+		})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
+				return nil
+			}
+			logger.Error("error processing item", "name", item.Name, "error", err)
+			return fmt.Errorf("processing item: %w", err)
+		}
+		return nil
+	}
+}
+
+// processFolderItems processes folder items sequentially to respect hierarchy.
+func (f *finalizer) processFolderItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var count int
+	for _, item := range items {
+		if err := process(ctx, item); err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+// processResourceItems processes non-folder items concurrently.
+func (f *finalizer) processResourceItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var processed int64
+	err := concurrency.ForEachJob(ctx, len(items), f.maxWorkers, func(ctx context.Context, idx int) error {
+		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		if err := process(jobCtx, items[idx]); err != nil {
+			return err
+		}
+		atomic.AddInt64(&processed, 1)
+		return nil
+	})
+	return int(processed), err
+}
+
+// splitItems separates a sorted list into folder items and non-folder items,
+// preserving the order within each group.
+var splitItems = resources.SplitItems
+
+// deleteExistingItems removes all resources managed by the repository.
+// Non-folder resources are deleted concurrently first, then folders are
+// deleted sequentially deepest-first so they are empty before removal.
+func (f *finalizer) deleteExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
-	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) (int, error) {
 	logger := logging.FromContext(ctx)
 	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
@@ -115,75 +192,61 @@ func (f *finalizer) processExistingItems(
 		return 0, err
 	}
 
-	// Safe deletion order
-	sortResourceListForDeletion(items)
+	resources.SortResourceListForDeletion(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.removeResources(ctx, logger))
 
-	var dashboards, folderItems []*provisioning.ResourceListItem
-	for _, item := range items.Items {
-		if item.Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &item)
-		} else {
-			dashboards = append(dashboards, &item)
-		}
+	count, err := f.processResourceItems(ctx, resourceItems, process)
+	if err != nil {
+		return count, err
 	}
 
-	processItem := func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
-		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
-			Group:    item.Group,
-			Resource: item.Resource,
-		})
-		if err != nil {
-			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
-			return err
-		}
-
-		err = cb(res, item)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
-				return nil
-			}
-			logger.Error("error processing item", "name", item.Name, "error", err)
-			return fmt.Errorf("processing item: %w", err)
-		}
-		return nil
+	n, err := f.processFolderItems(ctx, folderItems, process)
+	count += n
+	if err != nil {
+		return count, err
 	}
 
-	processGroup := func(group []*provisioning.ResourceListItem) (int, error) {
-		var processed int64
-		err := concurrency.ForEachJob(ctx, len(group), f.maxWorkers, func(ctx context.Context, idx int) error {
-			jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			defer cancel()
-			item := group[idx]
-			if err := processItem(jobCtx, item); err != nil {
-				return err
-			}
-			atomic.AddInt64(&processed, 1)
-			return nil
-		})
-		return int(processed), err
+	logger.Info("deleted items", "items", count)
+	return count, nil
+}
+
+// releaseExistingItems releases all resources managed by the repository
+// top-down by depth. Folders are released sequentially to respect hierarchy;
+// non-folder resources between folder groups are released concurrently.
+func (f *finalizer) releaseExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
+	if err != nil {
+		return 0, err
 	}
 
-	count := 0
-
-	if len(dashboards) > 0 {
-		processed, err := processGroup(dashboards)
-		if err != nil {
-			return processed, err
-		}
-		count += processed
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return 0, err
 	}
 
-	if len(folderItems) > 0 {
-		for _, item := range folderItems {
-			if err := processItem(ctx, item); err != nil {
-				return count, err
-			}
-			count++
-		}
+	resources.SortResourceListForRelease(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.releaseResources(ctx, logger))
+
+	n, err := f.processFolderItems(ctx, folderItems, process)
+	count := n
+	if err != nil {
+		return count, err
 	}
 
-	logger.Info("processed items", "items", count)
+	n, err = f.processResourceItems(ctx, resourceItems, process)
+	count += n
+	if err != nil {
+		return count, err
+	}
+
+	logger.Info("released items", "items", count)
 	return count, nil
 }
 
@@ -197,7 +260,7 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		patchAnnotations, err := getPatchedAnnotations(item)
+		patchAnnotations, err := resources.GetReleasePatch(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
 		}
@@ -223,80 +286,4 @@ func (f *finalizer) removeResources(
 		)
 		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 	}
-}
-
-type jsonPatchOperation struct {
-	Op   string `json:"op"`
-	Path string `json:"path"`
-}
-
-func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
-	annotations := []jsonPatchOperation{
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
-	}
-
-	if item.Path != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
-			},
-		)
-	}
-	if item.Hash != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
-			},
-		)
-	}
-
-	return json.Marshal(annotations)
-}
-
-func escapePatchString(s string) string {
-	s = strings.ReplaceAll(s, "~", "~0")
-	s = strings.ReplaceAll(s, "/", "~1")
-	return s
-}
-
-func sortResourceListForDeletion(list *provisioning.ResourceList) {
-	// FIXME: this code should be simplified once unified storage folders support recursive deletion
-	// Sort by the following logic:
-	// - Put folders at the end so that we empty them first.
-	// - Sort folders by depth so that we remove the deepest first
-	// - If the repo is created within a folder in grafana, make sure that folder is last.
-	sort.Slice(list.Items, func(i, j int) bool {
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-
-		// non-folders always go first in the order of deletion.
-		if isFolderI != isFolderJ {
-			return !isFolderI
-		}
-
-		// if both are not folders, keep order (doesn't matter)
-		if !isFolderI && !isFolderJ {
-			return false
-		}
-
-		hasFolderI := list.Items[i].Folder != ""
-		hasFolderJ := list.Items[j].Folder != ""
-		// if one folder is in the root (i.e. does not have a folder specified), put that last
-		if hasFolderI != hasFolderJ {
-			return hasFolderI
-		}
-
-		// if both are nested folder, sort by depth, with the deepest one being first
-		depthI := len(strings.Split(list.Items[i].Path, "/"))
-		depthJ := len(strings.Split(list.Items[j].Path, "/"))
-		if depthI != depthJ {
-			return depthI > depthJ
-		}
-
-		// otherwise, keep order (doesn't matter)
-		return false
-	})
 }

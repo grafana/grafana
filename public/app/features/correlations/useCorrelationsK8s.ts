@@ -1,10 +1,15 @@
 import { handleRequestError } from '@grafana/api-clients';
 import {
-  Correlation as CorrelationK8s,
+  type Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
-import { CorrelationData, CorrelationExternal, CorrelationQuery, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getDataSourceSrv,
+} from '@grafana/runtime';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 
@@ -12,12 +17,17 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
   const dsSrv = getDataSourceSrv();
   const sourceDS = dsSrv.getInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
   if (sourceDS !== undefined) {
+    // if a resource has a manager set, it must explicitly allow edits
+    const isManaged = item.metadata.annotations?.['grafana.app/managedBy'] !== undefined;
+    const managerAllowsEdits = item.metadata.annotations?.['grafana.app/managerAllowsEdits'] === 'true';
+    const managedReadOnly = isManaged && !managerAllowsEdits;
+
     const baseCor = {
       uid: item.metadata.name!,
       sourceUID: sourceDS.uid,
       label: item.spec.label,
       description: item.spec.description,
-      provisioned: false, // todo
+      provisioned: managedReadOnly,
     };
 
     const transformationsFmt = item.spec.config.transformations?.map((trans) => {
@@ -74,7 +84,6 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
   const { currentData, isLoading, error } = useListCorrelationQuery({ limit: pagedLimit });
   const startIdx = limit * (page - 1);
   const pagedData = currentData?.items.slice(startIdx, startIdx + limit) ?? [];
-
   const enrichedCorrelations =
     currentData !== undefined
       ? pagedData

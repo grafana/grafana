@@ -6,13 +6,13 @@ import {
   fieldReducers,
   getFieldDisplayName,
   getFrameDisplayName,
-  PanelProps,
+  type PanelProps,
   ReducerID,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
-import { Options, UpdateConfig } from './panelcfg.gen';
+import { type Options, type UpdateConfig } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 

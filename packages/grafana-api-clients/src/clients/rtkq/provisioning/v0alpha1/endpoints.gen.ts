@@ -1425,6 +1425,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1433,6 +1435,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1441,6 +1445,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1628,7 +1634,10 @@ export type DeleteJobOptions = {
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
   resources?: ResourceRef[];
 };
-export type FixFolderMetadataJobOptions = object;
+export type FixFolderMetadataJobOptions = {
+  /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
@@ -1670,13 +1679,24 @@ export type ExportJobOptions = {
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
+     - `"deleteResources"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
      - `"fixFolderMetadata"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+     - `"push"` replicates the local copy of the repository in the remote branch.
+     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set. */
+  action:
+    | 'delete'
+    | 'deleteResources'
+    | 'fixFolderMetadata'
+    | 'migrate'
+    | 'move'
+    | 'pr'
+    | 'pull'
+    | 'push'
+    | 'releaseResources';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */
@@ -1789,7 +1809,7 @@ export type GitRepositoryConfig = {
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
-  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
 export type GitHubRepositoryConfig = {
@@ -1829,6 +1849,10 @@ export type SyncOptions = {
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
+export type WebhookConfig = {
+  /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
+  baseUrl?: string;
+};
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
@@ -1857,6 +1881,8 @@ export type RepositorySpec = {
      - `"gitlab"`
      - `"local"` */
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
+  webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
@@ -1903,6 +1929,7 @@ export type TokenStatus = {
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
+  lastRotated?: number;
   subscribedEvents?: string[];
   url?: string;
 };

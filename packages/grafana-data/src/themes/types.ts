@@ -1,17 +1,17 @@
 import { z } from 'zod';
 
-import { GrafanaTheme } from '../types/theme';
+import { type GrafanaTheme } from '../types/theme';
 
-import { ThemeBreakpoints } from './breakpoints';
-import { ThemeColors } from './createColors';
-import { ThemeComponents } from './createComponents';
-import { ThemeShadows } from './createShadows';
-import { ThemeShape } from './createShape';
-import { ThemeSpacing } from './createSpacing';
-import { ThemeTransitions } from './createTransitions';
-import { ThemeTypography } from './createTypography';
-import { ThemeVisualizationColors } from './createVisualizationColors';
-import { ThemeZIndices } from './zIndex';
+import { type ThemeBreakpoints } from './breakpoints';
+import { type ThemeColors } from './createColors';
+import { type ThemeComponents } from './createComponents';
+import { type ThemeShadows } from './createShadows';
+import { type ThemeShape } from './createShape';
+import { type ThemeSpacing } from './createSpacing';
+import { type ThemeTransitions } from './createTransitions';
+import { type ThemeTypography } from './createTypography';
+import { type ThemeVisualizationColors } from './createVisualizationColors';
+import { type ThemeZIndices } from './zIndex';
 
 /**
  * @beta

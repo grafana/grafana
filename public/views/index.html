@@ -275,6 +275,11 @@
         assets: [[.Assets]]
       };
 
+      // For the image-renderer to check support for render bindings
+      [[if .RenderBindingSupported]]
+      window.__grafanaRenderBindingSupported = true;
+      [[end]]
+
       // FEMT index.html uses this, and we want to keep the index.ts the same for both
       window.__grafana_boot_data_promise = Promise.resolve();
 

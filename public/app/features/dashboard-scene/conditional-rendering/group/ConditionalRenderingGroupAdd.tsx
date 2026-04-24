@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
-import { ObjectsWithConditionalRendering } from '../object';
+import { DashboardInteractions } from '../../utils/interactions';
+import { type ObjectsWithConditionalRendering } from '../object';
 
-import { GroupConditionConditionType } from './types';
+import { type GroupConditionConditionType } from './types';
 
 interface Props {
   objectType: ObjectsWithConditionalRendering;
@@ -36,6 +37,11 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
     return allOptions;
   }, [objectType, hasVariables]);
 
+  const onAddRuleClick = (option: SelectableValue<GroupConditionConditionType>) => {
+    DashboardInteractions.clickAddConditionalRuleButton({ ruleId: option.value! });
+    onAdd(option);
+  };
+
   return (
     <ValuePicker
       isFullWidth
@@ -44,7 +50,7 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
       variant="secondary"
       label={t('dashboard.conditional-rendering.conditions.group.add.button', 'Add rule')}
       options={options}
-      onChange={(option) => onAdd(option)}
+      onChange={(option) => onAddRuleClick(option)}
     />
   );
 };

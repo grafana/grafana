@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
@@ -120,7 +121,12 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
 		controllerCfg.ResyncInterval(),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
+		controllerCfg.DrainTimeout(),
 		quotaGetter,
+		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -134,6 +140,9 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("repository operator is ready")
 		deps.HealthNotifier.SetReady()
+	}, func() {
+		logger.Info("repository operator shutting down")
+		deps.HealthNotifier.SetNotReady()
 	})
 	return nil
 }

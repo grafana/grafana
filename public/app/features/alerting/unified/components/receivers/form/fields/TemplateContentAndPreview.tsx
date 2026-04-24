@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, useStyles2 } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
@@ -44,7 +44,7 @@ export function TemplateContentAndPreview({
         <Box flex={1}>
           <div className={styles.viewerContainer({ height: 400 })}>
             <AutoSizer>
-              {({ width, height }) => (
+              {({ width, height }: Size) => (
                 <TemplateEditor
                   value={templateContent}
                   containerStyles={styles.editorContainer}

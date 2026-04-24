@@ -1,7 +1,7 @@
 import { LogsSortOrder } from '@grafana/data';
 
 import { onSortOrderChange } from './onSortOrderChange';
-import { Options } from './types';
+import { type Options } from './types';
 
 describe('onSortOrderChange', () => {
   const timeFieldName = 'timestamp';

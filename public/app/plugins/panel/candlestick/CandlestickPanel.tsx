@@ -2,33 +2,33 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import { useMemo, useState } from 'react';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, PanelProps, useDataLinksContext } from '@grafana/data';
+import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
-  UPlotConfigBuilder,
-  XAxisInteractionAreaPlugin,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { AxisProps, ScaleProps, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
-import { type Options, defaultCandlestickColors, VizDisplayMode } from './panelcfg.gen';
-import { drawMarkers, FieldIndices } from './utils';
+import { defaultCandlestickColors, type Options, VizDisplayMode } from './panelcfg.gen';
+import { drawMarkers, type FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}
 
@@ -323,10 +323,10 @@ export const CandlestickPanel = ({
                 maxWidth={options.tooltip.maxWidth}
               />
             )}
-            <AnnotationsPlugin2
+            <AnnotationsPlugin
               replaceVariables={replaceVariables}
-              multiLane={options.annotations?.multiLane}
-              annotations={data.annotations ?? []}
+              options={options.annotations}
+              annotations={data.annotations}
               config={uplotConfig}
               timeZone={timeZone}
               newRange={newAnnotationRange}

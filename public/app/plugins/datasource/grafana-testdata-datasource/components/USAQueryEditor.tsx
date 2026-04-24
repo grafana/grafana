@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
 
-import { USAQuery } from '../dataquery';
+import { type USAQuery } from '../dataquery';
 
 export interface Props {
   onChange: (value: USAQuery) => void;

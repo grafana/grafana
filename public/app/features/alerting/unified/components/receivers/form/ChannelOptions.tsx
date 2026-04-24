@@ -1,22 +1,22 @@
 import * as React from 'react';
 import type { JSX } from 'react';
-import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
+import { type DeepMap, type FieldError, type FieldErrors, useFormContext } from 'react-hook-form';
 
-import { Field, SecretInput } from '@grafana/ui';
+import { Field } from '@grafana/ui';
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import {
-  ChannelValues,
-  CloudChannelValues,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelValues,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../../../types/receiver-form';
 
-import { OptionField } from './fields/OptionField';
+import { ConfiguredSecretInput, OptionField } from './fields/OptionField';
 
 export interface Props<R extends ChannelValues> {
   defaultValues: R;
@@ -81,10 +81,10 @@ export function ChannelOptions<R extends ChannelValues>({
               htmlFor={`${settingsPath}${option.propertyName}`}
               noMargin
             >
-              <SecretInput
+              <ConfiguredSecretInput
                 id={`${settingsPath}${option.propertyName}`}
+                readOnly={readOnly}
                 onReset={() => onResetSecureField(option.secureFieldKey ?? option.propertyName)}
-                isConfigured
               />
             </Field>
           );

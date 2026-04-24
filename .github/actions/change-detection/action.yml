@@ -14,6 +14,9 @@ outputs:
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_changed || 'true' }}
+  frontend-dependencies:
+    description: Whether the frontend dependencies or self have changed in any way
+    value: ${{ steps.changed-files.outputs.frontend_dependencies_any_changed || 'true' }}
   frontend-packages:
     description: Whether any frontend packages have changed
     value: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}
@@ -21,7 +24,7 @@ outputs:
     description: Whether the e2e tests or self have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_any_changed == 'true' ||
       steps.changed-files.outputs.backend_any_changed == 'true' ||
-      steps.changed-files.outputs.frontend_any_changed == 'true' || 'true' }}
+      steps.changed-files.outputs.frontend_any_changed == 'true' }}
   e2e-cloud-plugins:
     description: Whether the cloud plugins code or tests have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_changed || 'true' }}
@@ -34,6 +37,12 @@ outputs:
   dockerfile:
     description: Whether the dockerfile or self have changed in any way
     value: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}
+  makefile:
+    description: Whether any Makefile changed
+    value: ${{ steps.changed-files.outputs.makefile_any_changed || 'true' }}
+  rpm-packaging:
+    description: Whether RPM/DEB packaging scripts or the Makefile changed
+    value: ${{ steps.changed-files.outputs.rpm_packaging_any_changed || 'true' }}
   devenv:
     description: Whether the devenv or self have changed in any way
     value: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}
@@ -53,11 +62,24 @@ runs:
             - '${{ inputs.self }}'
           dockerfile:
             - 'Dockerfile'
+            - 'Makefile'
+          makefile:
+            - 'Makefile'
+            - '**/Makefile'
+          rpm_packaging:
+            - 'scripts/build-rpm.sh'
+            - 'scripts/build-deb.sh'
+            - 'scripts/build-targz.sh'
+            - 'scripts/verify-pkg-stig.sh'
+            - 'Makefile'
+            - '${{ inputs.self }}'
           backend:
             - '!*.md'
             - '!docs/**'
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
             - '**/go.sum'
@@ -74,6 +96,7 @@ runs:
             - '.github/actions/change-detection/**'
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
+            - 'scripts/ci/backend-tests/**'
             - 'kindsv2/**'
             - '${{ inputs.self }}'
           frontend:
@@ -100,6 +123,9 @@ runs:
             - '.yarn/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
+          frontend_dependencies:
+            - 'yarn.lock'
+            - 'package.json'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
@@ -131,7 +157,6 @@ runs:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
             - '**.sh'
-            - '.trivyignore'
             - '.prettierrc.js'
             - '**/Makefile'
             - 'proto/**.yaml'
@@ -152,6 +177,7 @@ runs:
             - '${{ inputs.self }}'
           devenv:
             - 'devenv/**'
+            - '.dockerignore'
             - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash
@@ -176,5 +202,9 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.docs_all_changed_files }}"
         echo "Dockerfile: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.dockerfile_all_changed_files }}"
+        echo "Makefile: ${{ steps.changed-files.outputs.makefile_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.makefile_all_changed_files }}"
+        echo "RPM packaging: ${{ steps.changed-files.outputs.rpm_packaging_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.rpm_packaging_all_changed_files }}"
         echo "devenv: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.devenv_all_changed_files }}"

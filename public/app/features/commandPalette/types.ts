@@ -1,4 +1,6 @@
-import { Action } from 'kbar';
+import { type Action } from 'kbar';
+
+import { type ManagerKind } from 'app/features/apiserver/types';
 
 type NotNullable<T> = Exclude<T, null | undefined>;
 
@@ -13,6 +15,7 @@ type RootCommandPaletteAction = Omit<Action, 'parent'> & {
   priority: NotNullable<Action['priority']>;
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
+  managedBy?: ManagerKind;
 };
 
 type ChildCommandPaletteAction = Action & {

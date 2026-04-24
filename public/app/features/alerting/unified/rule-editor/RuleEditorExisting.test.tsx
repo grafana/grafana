@@ -125,10 +125,8 @@ describe('RuleEditor grafana managed rules', () => {
     await user.type(evalInterval, '12m');
     await user.click(screen.getByRole('button', { name: /create/i }));
 
-    // Update the pending period as well, otherwise we'll get a form validation error
-    // and the rule won't try and save
-    await user.type(screen.getByLabelText(/pending period/i), '12m');
-
+    // The pending period is auto-adjusted to match the new interval (12m > 5m)
+    // so we can save without manually updating it
     const capture = captureRequests(
       (req) => req.method === 'POST' && req.url.includes('/api/ruler/grafana/api/v1/rules/uuid020c61ef')
     );
@@ -140,6 +138,31 @@ describe('RuleEditor grafana managed rules', () => {
 
     expect(postBody.name).toBe('new group');
     expect(postBody.interval).toBe('12m');
+  });
+
+  it('should not validate new group interval against previously selected group rules', async () => {
+    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+    // The rule belongs to grafana-group-1 (interval: 1m) which has a rule with for: '5m'.
+    // Open the new evaluation group modal while that group is selected.
+    await user.click(await screen.findByRole('button', { name: /new evaluation group/i }));
+    await screen.findByRole('dialog');
+
+    await user.type(screen.getByLabelText(/evaluation group name/i), 'brand-new-group');
+    const evalInterval = screen.getByLabelText(/^evaluation interval/i);
+
+    // Set interval to 10m, which is larger than the existing rule's for: '5m'.
+    // Before the fix, the modal validated against the previously selected group's rules
+    // and would reject this interval.
+    await user.clear(evalInterval);
+    await user.type(evalInterval, '10m');
+
+    expect(screen.queryByText(/evaluation interval should be smaller or equal/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create/i })).toBeEnabled();
+
+    // After creating, the pending period should auto-adjust from '5m' to '10m'
+    await user.click(screen.getByRole('button', { name: /create/i }));
+    expect(screen.getByLabelText(/pending period/i)).toHaveValue('10m');
   });
 });
 

@@ -28,4 +28,24 @@ describe('Dropdown', () => {
     await userEvent.click(button);
     expect(screen.queryByText('View settings')).toBeVisible();
   });
+
+  it('sets aria-expanded on the trigger button', async () => {
+    const menu = (
+      <Menu>
+        <Menu.Item label="View settings" />
+      </Menu>
+    );
+
+    render(
+      <Dropdown overlay={menu}>
+        <Button>Toggle</Button>
+      </Dropdown>
+    );
+
+    const button = screen.getByRole('button', { name: 'Toggle' });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+  });
 });

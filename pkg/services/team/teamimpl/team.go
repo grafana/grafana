@@ -2,165 +2,166 @@ package teamimpl
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// At package level
-const defaultCacheDuration = 5 * time.Minute
-
 type Service struct {
-	cache  *localcache.CacheService
-	store  store
-	tracer tracing.Tracer
+	legacyService     team.Service
+	k8sService        team.Service
+	openFeatureClient *openfeature.Client
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+var _ team.Service = (*Service)(nil)
 
-	if err := store.teamMemberUidMigration(); err != nil {
+func (s *Service) LegacySearchService() team.Service {
+	return s.legacyService
+}
+
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
+	legacyService, err := NewLegacyService(db, cfg, tracer)
+	if err != nil {
 		return nil, err
 	}
 
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
+
 	return &Service{
-		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
-		store:  store,
-		tracer: tracer,
+		legacyService:     legacyService,
+		k8sService:        k8sService,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}, nil
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	_, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
-		attribute.Int64("orgID", cmd.OrgID),
-		attribute.String("name", cmd.Name),
-	))
-	defer span.End()
-	return s.store.Create(ctx, cmd)
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.CreateTeam(ctx, cmd)
+	}
+
+	return s.legacyService.CreateTeam(ctx, cmd)
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	ctx, span := s.tracer.Start(ctx, "team.UpdateTeam", trace.WithAttributes(
-		attribute.Int64("orgID", cmd.OrgID),
-		attribute.Int64("teamID", cmd.ID),
-	))
-	defer span.End()
-	return s.store.Update(ctx, cmd)
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.UpdateTeam(ctx, cmd)
+	}
+
+	return s.legacyService.UpdateTeam(ctx, cmd)
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	ctx, span := s.tracer.Start(ctx, "team.DeleteTeam", trace.WithAttributes(
-		attribute.Int64("orgID", cmd.OrgID),
-		attribute.Int64("teamID", cmd.ID),
-	))
-	defer span.End()
-	return s.store.Delete(ctx, cmd)
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.DeleteTeam(ctx, cmd)
+	}
+
+	return s.legacyService.DeleteTeam(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	ctx, span := s.tracer.Start(ctx, "team.SearchTeams", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.String("query", query.Query),
-	))
-	defer span.End()
-	return s.store.Search(ctx, query)
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.SearchTeams(ctx, query)
+	}
+
+	return s.legacyService.SearchTeams(ctx, query)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.GetTeamByID", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.Int64("teamID", query.ID),
-		attribute.String("teamUID", query.UID),
-	))
-	defer span.End()
-	return s.store.GetByID(ctx, query)
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.GetTeamByID(ctx, query)
+	}
+
+	return s.legacyService.GetTeamByID(ctx, query)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.GetTeamsByUser", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.Int64("userID", query.UserID),
-	))
-	defer span.End()
-	return s.store.GetByUser(ctx, query)
+	// TODO enable Kubernetes team service for GetTeamsByUser once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamsByUser(ctx, query)
+	// }
+
+	return s.legacyService.GetTeamsByUser(ctx, query)
 }
 
-func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	ctx, span := s.tracer.Start(ctx, "team.GetTeamIDsByUser", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.Int64("userID", query.UserID),
-	))
-	defer span.End()
-	return s.store.GetIDsByUser(ctx, query)
+func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
+	// TODO enable Kubernetes team service for GetTeamIDsByUser once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamIDsByUser(ctx, query)
+	// }
+
+	return s.legacyService.GetTeamIDsByUser(ctx, query)
 }
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
-		attribute.Int64("orgID", orgId),
-		attribute.Int64("teamID", teamId),
-		attribute.Int64("userID", userId),
-	))
-	defer span.End()
-	return s.store.IsMember(orgId, teamId, userId)
+	// TODO enable Kubernetes team service for IsTeamMember once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
+	// }
+
+	return s.legacyService.IsTeamMember(ctx, orgId, teamId, userId)
 }
 
 func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	ctx, span := s.tracer.Start(ctx, "team.RemoveUsersMemberships", trace.WithAttributes(
-		attribute.Int64("userID", userID),
-	))
-	defer span.End()
-	return s.store.RemoveUsersMemberships(ctx, userID)
+	// TODO enable Kubernetes team service for RemoveUsersMemberships once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.RemoveUsersMemberships(ctx, userID)
+	// }
+
+	return s.legacyService.RemoveUsersMemberships(ctx, userID)
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMemberships", trace.WithAttributes(
-		attribute.Int64("orgID", orgID),
-		attribute.Int64("userID", userID),
-	))
-	defer span.End()
-	cacheKey := fmt.Sprintf("teams:%d:%d:%t", orgID, userID, external)
-	if !bypassCache {
-		if cached, found := s.cache.Get(cacheKey); found {
-			if teams, ok := cached.([]*team.TeamMemberDTO); ok {
-				return teams, nil
-			}
-			s.cache.Delete(cacheKey)
-		}
-	}
-	teams, err := s.store.GetMemberships(ctx, orgID, userID, external)
-	if err != nil {
-		return nil, err
-	}
-	if len(teams) == 0 {
-		// Cache empty headers if no teams found
-		s.cache.Set(cacheKey, []*team.TeamMemberDTO{}, defaultCacheDuration)
-		return []*team.TeamMemberDTO{}, nil
-	}
+	// TODO enable Kubernetes team service for GetUserTeamMemberships once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
+	// }
 
-	if !bypassCache {
-		s.cache.Set(cacheKey, teams, defaultCacheDuration)
-	}
-	return teams, nil
+	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.GetTeamMembers", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.Int64("teamID", query.TeamID),
-		attribute.String("teamUID", query.TeamUID),
-	))
-	defer span.End()
-	return s.store.GetMembers(ctx, query)
+	// TODO enable Kubernetes team service for GetTeamMembers once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamMembers(ctx, query)
+	// }
+
+	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
 func (s *Service) RegisterDelete(query string) {
-	s.store.RegisterDelete(query)
+	// TODO enable Kubernetes team service for RegisterDelete once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(context.Background()) {
+	// 	s.k8sService.RegisterDelete(query)
+	// 	return
+	// }
+
+	s.legacyService.RegisterDelete(query)
+}
+
+func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.
+// The main use case is for internal calls coming from the externalgroupmapping legacy search, those
+// calls have a service identity and no contexthandler, so we use that as a heuristic to determine
+// if we should fallback to the legacy service. This allows us to incrementally migrate the
+// externalgroupmapping search to the new k8s team service without breaking existing functionality.
+// We can remove this fallback once the migration is complete and all internal calls are using the new k8s team service.
+func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }

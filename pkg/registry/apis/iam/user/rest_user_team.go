@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -90,7 +91,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			return
 		}
 
-		limit := 50
+		limit := common.DefaultListLimit
 		offset := 0
 		page := 1
 		if queryParams.Has("limit") {
@@ -104,6 +105,15 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 		} else if queryParams.Has("page") {
 			page, _ = strconv.Atoi(queryParams.Get("page"))
 			offset = (page - 1) * limit
+		}
+
+		if limit > common.MaxListLimit {
+			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+			return
+		}
+
+		if limit < 1 {
+			limit = common.DefaultListLimit
 		}
 
 		span.SetAttributes(attribute.Int("limit", limit),
@@ -150,8 +160,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			return
 		}
 
-		responder.Object(http.StatusOK, &iamv0alpha1.GetTeamsResponse{
-			GetTeamsBody: searchResults,
+		responder.Object(http.StatusOK, &iamv0alpha1.GetUserTeamsResponse{
+			GetUserTeamsBody: searchResults,
 		})
 	}), nil
 }
@@ -166,15 +176,15 @@ func (s *UserTeamREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetUserTeamsBody, error) {
 	if result == nil {
-		return iamv0alpha1.GetTeamsBody{}, nil
+		return iamv0alpha1.GetUserTeamsBody{}, nil
 	}
 	if result.Error != nil {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	}
 	if result.Results == nil {
-		return iamv0alpha1.GetTeamsBody{}, nil
+		return iamv0alpha1.GetUserTeamsBody{}, nil
 	}
 
 	userIDX := -1
@@ -200,28 +210,28 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	if userIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
 	}
 	if teamIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
 	}
 	if externalIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
 	}
 
-	body := iamv0alpha1.GetTeamsBody{
-		Items: make([]iamv0alpha1.GetTeamsUserTeam, len(result.Results.Rows)),
+	body := iamv0alpha1.GetUserTeamsBody{
+		Items: make([]iamv0alpha1.GetUserTeamsUserTeam, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
+			return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.GetTeamsUserTeam{
+		body.Items[i] = iamv0alpha1.GetUserTeamsUserTeam{
 			User:       string(row.Cells[userIDX]),
 			Team:       string(row.Cells[teamIDX]),
 			Permission: string(row.Cells[permissionIDX]),

@@ -18,7 +18,7 @@ var flagBuildID = &cli.StringFlag{
 
 var BuildID = pipeline.Argument{
 	Name:        "build-id",
-	Description: "The grafana backend binaries ('grafana', 'grafana-cli', 'grafana-server') in a directory",
+	Description: "The build ID used in package names",
 	Flags: []cli.Flag{
 		flagBuildID,
 	},

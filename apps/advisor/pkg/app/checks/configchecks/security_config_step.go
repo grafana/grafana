@@ -25,7 +25,7 @@ func (s *securityConfigStep) Title() string {
 }
 
 func (s *securityConfigStep) Description() string {
-	return "Check if the Grafana security config is set correctly."
+	return "Checks if the Grafana security configuration is set correctly."
 }
 
 func (s *securityConfigStep) Resolution() string {

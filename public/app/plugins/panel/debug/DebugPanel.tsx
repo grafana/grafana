@@ -1,10 +1,10 @@
-import { PanelProps } from '@grafana/data';
+import { type PanelProps } from '@grafana/data';
 
 import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
 import { StateView } from './StateView';
-import { Options, DebugMode } from './panelcfg.gen';
+import { type Options, DebugMode } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 

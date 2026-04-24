@@ -87,7 +87,7 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 }
 
 type GitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -254,6 +254,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+// ConnectionName returns the name of the connection referenced by this repository,
+// or an empty string if the repository does not use a connection.
+func (r *Repository) ConnectionName() string {
+	if r.Spec.Connection != nil {
+		return r.Spec.Connection.Name
+	}
+	return ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }
@@ -279,6 +288,11 @@ type RepositorySpec struct {
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
+
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfig `json:"webhook,omitempty"`
 
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
@@ -346,6 +360,19 @@ type SyncOptions struct {
 
 func (SyncOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncOptions"
+}
+
+type WebhookConfig struct {
+	// Base URL of the Grafana instance used to construct the webhook endpoint
+	// registered with the external Git provider. Only the base URL should be
+	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
+	// and resource name are appended automatically. Trailing slashes are stripped.
+	// Must be a valid HTTP or HTTPS URL.
+	BaseURL string `json:"baseUrl,omitempty"`
+}
+
+func (WebhookConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "WebhookConfig"
 }
 
 // The status of a Repository.
@@ -430,6 +457,7 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+	LastRotated      int64    `json:"lastRotated,omitempty"`
 }
 
 func (WebhookStatus) OpenAPIModelName() string {

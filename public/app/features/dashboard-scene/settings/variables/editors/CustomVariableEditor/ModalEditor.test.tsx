@@ -84,14 +84,14 @@ describe('ModalEditor', () => {
       const table = elements.multiPropsPreviewTable();
 
       const headerCells = within(table).getAllByRole('columnheader');
-      expect(headerCells.map((cell) => cell.textContent)).toEqual(['text', 'value', 'region']);
+      expect(headerCells.map((cell) => cell.textContent)).toEqual(['value', 'text', 'region']);
 
       const rows = Array.from(table.tBodies[0].rows);
       const firstDataRowCells = within(rows[0]).getAllByRole('cell');
-      expect(firstDataRowCells.map((cell) => cell.textContent)).toEqual(['Development', 'dev', 'eu']);
+      expect(firstDataRowCells.map((cell) => cell.textContent)).toEqual(['dev', 'Development', 'eu']);
 
       const secondDataRowCells = within(rows[1]).getAllByRole('cell');
-      expect(secondDataRowCells.map((cell) => cell.textContent)).toEqual(['Production', 'prod', 'us']);
+      expect(secondDataRowCells.map((cell) => cell.textContent)).toEqual(['prod', 'Production', 'us']);
     });
   });
 });

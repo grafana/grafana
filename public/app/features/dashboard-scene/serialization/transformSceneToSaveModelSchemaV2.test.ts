@@ -1,4 +1,11 @@
-import { VariableRefresh, PanelData, LoadingState, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import {
+  VariableRefresh,
+  type PanelData,
+  LoadingState,
+  toDataFrame,
+  FieldType,
+  getDefaultTimeRange,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
@@ -17,7 +24,7 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneDataNode,
@@ -30,11 +37,12 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema';
 import {
-  GridLayoutSpec,
-  AutoGridLayoutSpec,
-  RowsLayoutSpec,
-  TabsLayoutSpec,
+  type GridLayoutSpec,
+  type AutoGridLayoutSpec,
+  type RowsLayoutSpec,
+  type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -43,7 +51,7 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -54,7 +62,8 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import {
@@ -209,6 +218,23 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           targetBlank: false,
           tooltip: '',
           type: 'link',
+        },
+        // This link is was added by a datasource, we wouldn't like it to end up in the JSON schema
+        {
+          title: 'Default link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          origin: {
+            type: 'datasource',
+            group: 'datasource',
+          },
         },
       ],
       body: new DefaultGridLayoutManager({
@@ -455,6 +481,78 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.links).toHaveLength(2);
     expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
     expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
+  it('should omit links with origin from serialized save model', () => {
+    const sceneWithOriginLink = new DashboardScene({
+      links: [
+        {
+          title: 'Editable Link',
+          url: 'http://example.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Default link',
+          url: 'http://ds.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource', group: 'loki' },
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginLink);
+
+    expect(result.links).toHaveLength(1);
+    expect(result.links![0].title).toBe('Editable Link');
+    expect(result.links![0].origin).toBeUndefined();
+  });
+
+  it('should omit variables with origin from serialized save model', () => {
+    const sceneWithOriginVariable = new DashboardScene({
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'editableVar',
+            label: 'Editable',
+            query: 'a,b',
+            value: 'a',
+            text: 'a',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+          }),
+          new CustomVariable({
+            name: 'dsVar',
+            label: 'From datasource',
+            query: 'x,y',
+            value: 'x',
+            text: 'x',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            origin: { type: 'datasource', group: 'loki' },
+          }),
+        ],
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginVariable);
+
+    expect(result.variables).toHaveLength(1);
+    expect(result.variables![0].spec.name).toBe('editableVar');
+    expect(result.variables![0].spec.origin).toBeUndefined();
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -1466,6 +1564,70 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
     expect(snapshotElement.kind).toBe('Panel');
     expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
     expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 time range fields', () => {
+  function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
+    return new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      ...(timeRange && { $timeRange: timeRange }),
+    });
+  }
+
+  function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
+    const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
+    expect(result.kind).toEqual('Panel');
+    return (result.spec as PanelSpec).data.spec.queryOptions;
+  }
+
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>, except?: string) {
+    const fields = ['timeFrom', 'timeShift', 'hideTimeOverride', 'timeCompare'] as const;
+    for (const f of fields) {
+      if (f !== except) {
+        expect(queryOptions[f]).toBeUndefined();
+      }
+    }
+  }
+
+  it('should omit time range fields when the panel has no $timeRange', () => {
+    expectNoTimeRangeFields(getQueryOptions());
+  });
+
+  it('should omit time range fields when $timeRange is a SceneTimeRange (not PanelTimeRange)', () => {
+    expectNoTimeRangeFields(getQueryOptions(new SceneTimeRange({})));
+  });
+
+  it('should serialize all four time range fields when set on PanelTimeRange', () => {
+    const queryOptions = getQueryOptions(
+      new PanelTimeRange({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        compareWith: '1d',
+      })
+    );
+
+    expect(queryOptions).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      timeCompare: '1d',
+    });
+  });
+
+  it.each([
+    ['timeFrom only', { timeFrom: '2h' }, 'timeFrom', '2h'],
+    ['timeShift only', { timeShift: '1h' }, 'timeShift', '1h'],
+    ['hideTimeOverride only', { hideTimeOverride: true }, 'hideTimeOverride', true],
+    ['compareWith only maps to timeCompare', { compareWith: '1d' }, 'timeCompare', '1d'],
+  ] as const)('should serialize %s', (_, state, field, value) => {
+    const queryOptions = getQueryOptions(new PanelTimeRange(state));
+
+    expect(queryOptions[field]).toBe(value);
+    expectNoTimeRangeFields(queryOptions, field);
   });
 });
 

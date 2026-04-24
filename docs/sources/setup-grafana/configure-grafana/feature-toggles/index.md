@@ -24,22 +24,27 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                   | Description                                                                                                                                                   | Enabled by default |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `publicDashboardsScene`               | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                   | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
-| `logsContextDatasourceUi`             | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
-| `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
+| `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
+| `provisioning`                        | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
+| `provisioningFolderMetadata`          | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                             | Enable AI powered features in dashboards                                                                                                                      | Yes                |
-| `kubernetesDashboards`                | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
-| `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
+| `dashboardNewLayouts`                 | Enables new dashboard layouts                                                                                                                                 | Yes                |
+| `dashboardDefaultLayoutSelector`      | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
+| `sceneCsvExport`                      | Enables CSV export using scenes dashboard architecture                                                                                                        | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
+| `playlistsRBAC`                       | Enables RBAC for playlists                                                                                                                                    |                    |
+| `newUnconfiguredPanel`                | Enables the new unconfigured panel experience                                                                                                                 | Yes                |
+| `alertingListViewV2`                  | Enables the new alert list view design                                                                                                                        | Yes                |
+| `alertingNavigationV2`                | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
 | `cloudWatchRoundUpEndTime`            | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
@@ -57,14 +62,19 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`              | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
+| `grafanaAdvisor`                      | Enables Advisor app                                                                                                                                           | Yes                |
 | `newLogsPanel`                        | Enables the new logs panel                                                                                                                                    | Yes                |
 | `alertingMigrationUI`                 | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                      | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
+| `restoreDashboards`                   | Enables restore deleted dashboards feature                                                                                                                    | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `newVizSuggestions`                   | Enable new visualization suggestions                                                                                                                          | Yes                |
+| `externalVizSuggestions`              | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
+| `multiPropsVariables`                 | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 
 ## Public preview feature toggles
 
@@ -73,31 +83,35 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | Feature toggle name               | Description                                                                                            |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                |
-| `grpcServer`                      | Run the GRPC server                                                                                    |
-| `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                   |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
-| `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
-| `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
+| `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
+| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
+| `timeComparison`                  | Enables time comparison option in supported panels                                                     |
+| `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
+| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
-| `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
+| `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `newGauge`                        | Enable new gauge visualization                                                                         |
-| `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
+| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
+| `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
+| `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
+| `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles
 

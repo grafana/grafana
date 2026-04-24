@@ -1,71 +1,72 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
+import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
-  QueryVariable,
+  type QueryVariable,
   sceneGraph,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneDataTransformer,
-  SceneQueryRunner,
-  SceneVariables,
+  type SceneQueryRunner,
+  type SceneVariables,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
-  PanelKind,
-  PanelQueryKind,
-  TransformationKind,
-  FieldConfigSource,
-  DataTransformerConfig,
-  PanelQuerySpec,
-  DataQueryKind,
-  QueryOptionsSpec,
-  QueryVariableKind,
-  TextVariableKind,
-  IntervalVariableKind,
-  DatasourceVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  GroupByVariableKind,
-  AdhocVariableKind,
-  AnnotationQueryKind,
-  DataLink,
-  LibraryPanelKind,
-  Element,
-  DashboardCursorSync,
-  FieldColor,
+  type PanelKind,
+  type PanelQueryKind,
+  type TransformationKind,
+  type FieldConfigSource,
+  type TransformationSpec,
+  type PanelQuerySpec,
+  type DataQueryKind,
+  type QueryOptionsSpec,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type IntervalVariableKind,
+  type DatasourceVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type GroupByVariableKind,
+  type AdhocVariableKind,
+  type AnnotationQueryKind,
+  type DataLink,
+  type LibraryPanelKind,
+  type Element,
+  type DashboardCursorSync,
+  type FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
-  SwitchVariableKind,
+  type SwitchVariableKind,
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
+  type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
-
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
@@ -89,27 +90,44 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
 
+  let preferences: Preferences | undefined = undefined;
+
+  if (config.featureToggles.dashboardDefaultLayoutSelector && sceneDash.preferences?.defaultLayoutTemplate) {
+    const template = sceneDash.preferences.defaultLayoutTemplate;
+    const serialized = template.serialize();
+    if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {
+      preferences = {
+        layout: serialized,
+      };
+    }
+  }
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
+    preferences,
     description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
-    links: (sceneDash.links || []).map((link) => ({
-      title: link.title ?? defaultDashboardLink().title,
-      url: link.url ?? defaultDashboardLink().url,
-      type: link.type ?? defaultDashboardLinkType(),
-      icon: link.icon ?? defaultDashboardLink().icon,
-      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
-      tags: link.tags ?? defaultDashboardLink().tags,
-      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
-      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
-      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
-      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
-      ...(link.placement !== undefined && { placement: link.placement }),
-    })),
+    links: (sceneDash.links || [])
+      // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them
+      // from generating the JSON model from the scenes object.
+      .filter(isLinkEditable)
+      .map((link) => ({
+        title: link.title ?? defaultDashboardLink().title,
+        url: link.url ?? defaultDashboardLink().url,
+        type: link.type ?? defaultDashboardLinkType(),
+        icon: link.icon ?? defaultDashboardLink().icon,
+        tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+        tags: link.tags ?? defaultDashboardLink().tags,
+        asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+        keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+        includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+        targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+        ...(link.placement !== undefined && { placement: link.placement }),
+      })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
 
@@ -492,9 +510,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
       const transformation = transformationItem;
 
       if ('id' in transformation) {
-        // Transformation is a DataTransformerConfig
-        const transformationSpec: DataTransformerConfig = {
-          id: transformation.id,
+        const transformationSpec: TransformationSpec = {
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
@@ -502,7 +518,8 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
         };
 
         transformations.push({
-          kind: transformation.id,
+          kind: 'Transformation',
+          group: transformation.id,
           spec: transformationSpec,
         });
       } else {

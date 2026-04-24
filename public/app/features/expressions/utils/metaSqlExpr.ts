@@ -1,10 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
-import { QueryFormat, SQLQuery, SQLSelectableValue } from '@grafana/plugin-ui';
-import { DataQuery } from '@grafana/schema';
-import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
-import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
+import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
+import { type DataQuery } from '@grafana/schema';
 
 import { dataSource } from '../ExpressionDatasource';
 
@@ -34,6 +32,87 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
   });
 
   return mapFieldsToTypes(fields);
+}
+
+type RAQBFieldType = 'boolean' | 'text' | 'number' | 'date' | 'datetime' | 'time';
+
+function mapFieldsToTypes(columns: SQLSelectableValue[]) {
+  const fields: SQLSelectableValue[] = [];
+
+  for (const col of columns) {
+    const type = col.type?.toUpperCase() ?? '';
+    let raqbFieldType: RAQBFieldType = 'text';
+
+    switch (type) {
+      case 'BOOLEAN':
+      case 'BOOL':
+        raqbFieldType = 'boolean';
+        break;
+      case 'FLOAT':
+      case 'FLOAT64':
+      case 'INT':
+      case 'INTEGER':
+      case 'INT64':
+      case 'NUMERIC':
+      case 'BIGNUMERIC':
+        raqbFieldType = 'number';
+        break;
+      case 'DATE':
+        raqbFieldType = 'date';
+        break;
+      case 'DATETIME':
+      case 'TIMESTAMP':
+        raqbFieldType = 'datetime';
+        break;
+      case 'TIME':
+        raqbFieldType = 'time';
+        break;
+    }
+
+    fields.push({ ...col, raqbFieldType, icon: mapColumnTypeToIcon(type) });
+  }
+
+  return fields;
+}
+
+function mapColumnTypeToIcon(type: string) {
+  switch (type) {
+    case 'TIME':
+    case 'DATETIME':
+    case 'TIMESTAMP':
+      return 'clock-nine';
+    case 'BOOLEAN':
+      return 'toggle-off';
+    case 'INTEGER':
+    case 'FLOAT':
+    case 'FLOAT64':
+    case 'INT':
+    case 'SMALLINT':
+    case 'BIGINT':
+    case 'TINYINT':
+    case 'BYTEINT':
+    case 'INT64':
+    case 'NUMERIC':
+    case 'DECIMAL':
+      return 'calculator-alt';
+    case 'CHAR':
+    case 'VARCHAR':
+    case 'STRING':
+    case 'BYTES':
+    case 'TEXT':
+    case 'TINYTEXT':
+    case 'MEDIUMTEXT':
+    case 'LONGTEXT':
+      return 'text';
+    case 'GEOGRAPHY':
+      return 'map';
+    default:
+      return undefined;
+  }
+}
+
+function quoteIdentifierIfNecessary(value: string) {
+  return /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(value) ? value : `\`${value}\``;
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go

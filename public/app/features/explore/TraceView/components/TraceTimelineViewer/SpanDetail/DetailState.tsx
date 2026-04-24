@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceLog } from '@grafana/data';
+import { type TraceLog } from '@grafana/data';
 
-import { TraceSpanReference } from '../../types/trace';
+import { type TraceSpanReference } from '../../types/trace';
 
 /**
  * Which items of a {@link SpanDetail} component are expanded.

@@ -1,5 +1,5 @@
-import { DataFrame, Field } from '../types/dataFrame';
-import { DisplayProcessor } from '../types/displayValue';
+import { type DataFrame, type Field } from '../types/dataFrame';
+import { type DisplayProcessor } from '../types/displayValue';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 /**
@@ -32,7 +32,7 @@ export class DataFrameView<T extends object = any> extends FunctionalVector<T> {
       }
 
       fields[field.name] = field;
-      const getter = () => field.values.get(this.index); // .get() to support all Vector types
+      const getter = () => field.values[this.index];
 
       if (!obj.hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {

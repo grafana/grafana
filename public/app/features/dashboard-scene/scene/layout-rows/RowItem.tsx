@@ -2,17 +2,19 @@ import React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { logWarning } from '@grafana/runtime';
+import { config, logWarning } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  NewSceneObjectAddedEvent,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';
@@ -22,20 +24,23 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
+import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
-import { BulkActionElement } from '../types/BulkActionElement';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { type BulkActionElement } from '../types/BulkActionElement';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
-import { LayoutParent } from '../types/LayoutParent';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { type LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
@@ -69,6 +74,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+  private _filtersSet?: SectionFiltersSet;
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -95,14 +101,33 @@ export class RowItem
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
-      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'list-ul',
       isHidden,
     };
   }
 
-  public getOutlineChildren(): SceneObject[] {
-    return this.state.layout.getOutlineChildren();
+  private getFiltersSet(): SectionFiltersSet {
+    if (!this._filtersSet) {
+      this._filtersSet = new SectionFiltersSet({ sectionRef: this.getRef() });
+    }
+    return this._filtersSet;
+  }
+
+  public getOutlineChildren(isEditing?: boolean): SceneObject[] {
+    const layoutChildren = this.state.layout.getOutlineChildren();
+    if (
+      isEditing &&
+      getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false) &&
+      this.state.$variables
+    ) {
+      return [
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
+        this.state.$variables,
+        ...layoutChildren,
+      ];
+    }
+    return layoutChildren;
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -110,7 +135,7 @@ export class RowItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Row'));
+    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
@@ -121,9 +146,11 @@ export class RowItem
       source: this,
       perform: () => {
         this.setState({ layout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
       undo: () => {
         this.setState({ layout: currentLayout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
     });
   }
@@ -136,11 +163,6 @@ export class RowItem
 
   public onConfirmDelete() {
     if (this.getLayout().getVizPanels().length === 0) {
-      this.onDelete();
-      return;
-    }
-
-    if (this.getParentLayout().shouldUngroup()) {
       this.onDelete();
       return;
     }
@@ -168,8 +190,10 @@ export class RowItem
     this.getParentLayout().duplicateRow(this);
   }
 
-  public duplicate(): RowItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  // panelIdGenerator is a shared sequential counter created by the parent layout
+  // we forward id to ensure sibling tabs never produce duplicate panel IDs
+  public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 
   public serialize(): RowsLayoutRowKind {
@@ -257,7 +281,11 @@ export class RowItem
     if (repeat) {
       this.setState({ repeatByVariable: repeat });
     } else {
-      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
+      this.setState({
+        repeatedRows: undefined,
+        $variables: removeRepeatLocalVariableFromSet(this.state.$variables, this.state.repeatByVariable),
+        repeatByVariable: undefined,
+      });
     }
   }
 

@@ -1,19 +1,20 @@
-import { useMemo } from 'react';
+import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { useAlertmanagerConfig } from './useAlertmanagerConfig';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 /**
- * Hook to detect if the selected Alertmanager has inhibition rules configured.
- * @param alertmanagerSourceName - The name of the Alertmanager datasource
- * @returns An object with `hasInhibitionRules` boolean and `isLoading` state
+ * Hook to detect if the Grafana Alertmanager has inhibition rules configured,
+ * using the k8s API for inhibition rules.
+ *
+ * Only fetches when the selected alertmanager is the Grafana-managed one,
+ * since the k8s API only manages Grafana alertmanager inhibition rules.
  */
 export function useHasInhibitionRules(alertmanagerSourceName: string | undefined) {
-  const { data: config, isLoading } = useAlertmanagerConfig(alertmanagerSourceName);
+  const isGrafanaAlertmanager = alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  const hasInhibitionRules = useMemo(() => {
-    const rules = config?.alertmanager_config?.inhibit_rules;
-    return Array.isArray(rules) && rules.length > 0;
-  }, [config]);
+  const { data, isLoading } = generatedAPI.useListInhibitionRuleQuery({}, { skip: !isGrafanaAlertmanager });
 
-  return { hasInhibitionRules, isLoading };
+  const hasInhibitionRules = isGrafanaAlertmanager && Array.isArray(data?.items) && data.items.length > 0;
+
+  return { hasInhibitionRules, isLoading: isGrafanaAlertmanager && isLoading };
 }

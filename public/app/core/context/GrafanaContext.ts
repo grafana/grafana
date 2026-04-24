@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext } from 'react';
 
-import { LocationService, locationService, BackendSrv, GrafanaBootConfig } from '@grafana/runtime';
+import { type LocationService, locationService, type BackendSrv, type GrafanaBootConfig } from '@grafana/runtime';
 
-import { AppChromeService } from '../components/AppChrome/AppChromeService';
-import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
-import { KeybindingSrv } from '../services/keybindingSrv';
+import { type AppChromeService } from '../components/AppChrome/AppChromeService';
+import { type NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
+import { type KeybindingSrv } from '../services/keybindingSrv';
 
 export interface GrafanaContextType {
   backend: BackendSrv;

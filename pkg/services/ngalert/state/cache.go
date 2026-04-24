@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 )
 
+const emptyLabelKeyPrefix = "__empty_label_key__"
+
 type ruleStates struct {
 	states map[data.Fingerprint]*State
 }
@@ -217,14 +219,19 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 		expanded = make(map[string]string, len(original))
 	)
 	for k, v := range original {
+		safeKey := k
+		if safeKey == "" {
+			safeKey = emptyLabelKeyPrefix
+			log.Warn("Rule contains empty label key, using fallback key", "fallbackKey", safeKey)
+		}
 		result, err := template.Expand(ctx, name, v, data, externalURL, evaluatedAt)
 		if err != nil {
 			log.Error("Error in expanding template", "error", err)
 			errs = errors.Join(errs, err)
 			// keep the original template on error
-			expanded[k] = v
+			expanded[safeKey] = v
 		} else {
-			expanded[k] = result
+			expanded[safeKey] = result
 		}
 	}
 	return expanded, errs

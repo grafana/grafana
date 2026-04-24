@@ -43,6 +43,7 @@ import {
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  getPanelPluginMetas,
   initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -50,6 +51,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -65,7 +67,7 @@ import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolde
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import {
-  GrafanaContextType,
+  type GrafanaContextType,
   useMegaMenuOpenInternal,
   useReturnToPreviousInternal,
 } from './core/context/GrafanaContext';
@@ -138,6 +140,7 @@ export class GrafanaApp {
       window.parent.postMessage('GrafanaAppInit', '*');
 
       initSystemJSHooks();
+      initializeLoggersRegistry();
 
       // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
       // on the login page.
@@ -253,14 +256,12 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
-      const skipAppPluginsPreload =
-        config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
-      if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
+      if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
       }
 
       getPluginExtensionRegistries();
+      await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
@@ -315,7 +316,7 @@ export class GrafanaApp {
       await postInitTasks();
     } catch (error) {
       console.error('Failed to start Grafana', error);
-      window.__grafana_load_failed();
+      window.__grafana_load_failed(error);
     } finally {
       stopMeasure('frontend_app_init');
     }
