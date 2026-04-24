@@ -3,12 +3,14 @@ package team
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,6 +43,7 @@ func TestIntegrationTeams(t *testing.T) {
 			})
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
+			doTeamSpecMembersTests(t, helper)
 
 			if mode < 3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
@@ -192,6 +195,25 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, statusErr.ErrStatus.Message, "externalUID is only allowed for provisioned teams")
 	})
 
+	t.Run("should return AlreadyExists when creating a team with a taken name", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		_, err = teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+	})
+
 	t.Run("should create team with generateName and get it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -338,5 +360,195 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
 		require.Contains(t, statusErr.ErrStatus.Message, "not found")
+	})
+}
+
+func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrTeams,
+	})
+
+	editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+
+	newTeamWithMembers := func(prefix string, members []map[string]interface{}) *unstructured.Unstructured {
+		body := map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": prefix},
+			"spec": map[string]interface{}{
+				"title":       "Team " + prefix,
+				"email":       prefix + "@example.com",
+				"provisioned": false,
+				"externalUID": "",
+				"members":     members,
+			},
+		}
+		return &unstructured.Unstructured{Object: body}
+	}
+
+	memberSpec := func(uid, permission string, external bool) map[string]interface{} {
+		return map[string]interface{}{
+			"kind":       "User",
+			"name":       uid,
+			"permission": permission,
+			"external":   external,
+		}
+	}
+
+	t.Run("should create team with members and hydrate on Get", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-", []map[string]interface{}{
+			memberSpec(editorUID, "member", false),
+		})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		members, found, err := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Len(t, members, 1)
+		m := members[0].(map[string]interface{})
+		require.Equal(t, "User", m["kind"])
+		require.Equal(t, editorUID, m["name"])
+		require.Equal(t, "member", m["permission"])
+		require.Equal(t, false, m["external"])
+	})
+
+	t.Run("should add, update permission, and remove members via Update", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-upd-", []map[string]interface{}{
+			memberSpec(editorUID, "member", false),
+		})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		// Add viewer as admin alongside editor
+		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+			memberSpec(editorUID, "member", false),
+			memberSpec(viewerUID, "admin", false),
+		}, "spec", "members"))
+		updated, err := teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(updated.Object, "spec", "members")
+		require.Len(t, members, 2)
+
+		// Promote editor to admin
+		fetched, err = teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+			memberSpec(editorUID, "admin", false),
+			memberSpec(viewerUID, "admin", false),
+		}, "spec", "members"))
+		updated, err = teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		members, _, _ = unstructured.NestedSlice(updated.Object, "spec", "members")
+		require.Len(t, members, 2)
+		for _, raw := range members {
+			m := raw.(map[string]interface{})
+			require.Equal(t, "admin", m["permission"])
+		}
+
+		// Remove viewer
+		fetched, err = teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+			memberSpec(editorUID, "admin", false),
+		}, "spec", "members"))
+		updated, err = teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		members, _, _ = unstructured.NestedSlice(updated.Object, "spec", "members")
+		require.Len(t, members, 1)
+		m := members[0].(map[string]interface{})
+		require.Equal(t, editorUID, m["name"])
+	})
+
+	t.Run("should reject toggling external on an existing member", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-ext-", []map[string]interface{}{
+			memberSpec(editorUID, "member", false),
+		})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		require.NoError(t, unstructured.SetNestedSlice(created.Object, []interface{}{
+			memberSpec(editorUID, "member", true),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var se *errors.StatusError
+		require.ErrorAs(t, err, &se)
+		require.Equal(t, int32(400), se.ErrStatus.Code)
+		require.Contains(t, se.ErrStatus.Message, "external")
+	})
+
+	// Guards the ErrTeamMemberAlreadyAdded → apierrors.NewConflict mapping on
+	// the Update path. Several goroutines race to add the same user; if two
+	// reach legacy.UpdateTeam before either commits, the second INSERT hits the
+	// UNIQUE(org_id, team_id, user_id) constraint and the store must surface a
+	// 409 (not a 500) so the client can retry.
+	t.Run("concurrent adds of the same member never return 500", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-race-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		const parallel = 10
+		var wg sync.WaitGroup
+		errs := make([]error, parallel)
+		start := make(chan struct{})
+		for i := 0; i < parallel; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				fetched, getErr := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+				if getErr != nil {
+					errs[i] = getErr
+					return
+				}
+				if err := unstructured.SetNestedSlice(fetched.Object, []interface{}{
+					memberSpec(editorUID, "member", false),
+				}, "spec", "members"); err != nil {
+					errs[i] = err
+					return
+				}
+				_, errs[i] = teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		successes := 0
+		for i, e := range errs {
+			if e == nil {
+				successes++
+				continue
+			}
+			var se *errors.StatusError
+			require.ErrorAs(t, e, &se, "goroutine %d returned non-status error: %v", i, e)
+			require.NotEqual(t, int32(500), se.ErrStatus.Code,
+				"goroutine %d got 500 (%q); member-add race must surface as 409", i, se.ErrStatus.Message)
+		}
+		require.Greater(t, successes, 0, "expected at least one goroutine to succeed")
+
+		// Final state must contain the user exactly once regardless of race
+		// outcomes, proving the retries converge.
+		final, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
+		require.Len(t, members, 1)
+		m := members[0].(map[string]interface{})
+		require.Equal(t, editorUID, m["name"])
 	})
 }
