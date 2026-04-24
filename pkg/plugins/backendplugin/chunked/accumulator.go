@@ -17,7 +17,7 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 	return datasourcetest.AccumulateJSON(func(yield func(*pluginv2.QueryChunkedDataResponse, error) bool) {
 		decoder := jsontext.NewDecoder(jsonl, jsontext.AllowDuplicateNames(true))
 		for {
-			err := readToken(decoder, jsontext.ObjectStart.Kind())
+			err := readToken(decoder, jsontext.KindBeginObject)
 			if err != nil {
 				if errors.Is(err, io.EOF) {
 					return
@@ -63,7 +63,7 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 			}
 
 			if err == nil {
-				err = readToken(decoder, jsontext.ObjectEnd.Kind())
+				err = readToken(decoder, jsontext.KindEndObject)
 			}
 
 			// Stop iterating on error
