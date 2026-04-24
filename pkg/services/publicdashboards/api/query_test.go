@@ -195,6 +195,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
+		service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 
 		return testServer, service
