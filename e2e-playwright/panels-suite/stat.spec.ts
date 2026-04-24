@@ -8,13 +8,18 @@ test.use({
 
 test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
   test('renders successfully', async ({ gotoDashboardPage, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '31' }),
+    });
 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Value Options All')),
       'stat panel is rendered'
     ).toBeVisible();
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
@@ -69,6 +74,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       queryParams: new URLSearchParams({ editPanel: '15' }),
     });
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
+
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot'),
       'no sparkline chart when graphMode is none'
@@ -120,6 +128,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       queryParams: new URLSearchParams({ editPanel: '6' }),
     });
 
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
+
     // panel 6 uses colorMode: background — threshold colors fill the cell backgrounds
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors with colorMode: background').toBeHidden();
@@ -130,6 +141,9 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '14' }),
     });
+
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+    await expect(panelContent, 'panel has content').not.toBeEmpty();
 
     // panel 14 uses colorMode: value — threshold colors applied to text only
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
