@@ -1,5 +1,5 @@
 import { type StoryFn, type Meta } from '@storybook/react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
@@ -61,11 +61,10 @@ const meta: Meta<typeof Cascader> = {
   },
 };
 
-const Template: StoryFn<typeof Cascader> = (args) => {
-  const id = useId();
+const Template: StoryFn<typeof Cascader> = ({ disabled, ...rest }) => {
   return (
-    <Field label="Cascader field">
-      <Cascader {...args} id={id} />
+    <Field label="Cascader field" disabled={disabled}>
+      <Cascader {...rest} />
     </Field>
   );
 };
@@ -100,13 +99,12 @@ export const WithOptionsStateUpdate = () => {
       value: 'initial',
     },
   ]);
-  const id = useId();
 
   setTimeout(() => setOptions(options), 2000);
 
   return (
     <Field label="Cascader field with updated options">
-      <Cascader options={updatedOptions} onSelect={onSelect} id={id} />
+      <Cascader options={updatedOptions} onSelect={onSelect} />
     </Field>
   );
 };

@@ -1,11 +1,19 @@
 import { render, screen } from '@testing-library/react';
 
+import { Cascader } from '../Cascader/Cascader';
 import { Combobox } from '../Combobox/Combobox';
 import { MultiCombobox } from '../Combobox/MultiCombobox';
+import { FileDropzone } from '../FileDropzone/FileDropzone';
+import { FilterInput } from '../FilterInput/FilterInput';
 import { Input } from '../Input/Input';
+import { FieldNamePicker } from '../MatchersUI/FieldNamePicker';
 import { SecretInput } from '../SecretInput';
+import { SecretTextArea } from '../SecretTextArea';
 import { MultiSelect, Select } from '../Select/Select';
+import { Slider } from '../Slider/Slider';
 import { Switch } from '../Switch/Switch';
+import { TagsInput } from '../TagsInput/TagsInput';
+import { TextArea } from '../TextArea/TextArea';
 
 import { Checkbox } from './Checkbox';
 import { Field } from './Field';
@@ -50,7 +58,7 @@ describe('Field', () => {
         </Field>
       );
 
-      expect(screen.getByRole('textbox', { description: 'My error' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
@@ -126,6 +134,43 @@ describe('Field', () => {
     });
   });
 
+  describe('RadioButtonGroup', () => {
+    const radioOptions = [
+      { label: 'Light', value: 'light' },
+      { label: 'Dark', value: 'dark' },
+    ];
+
+    it('renders the fieldset group with an accessible name from the legend', () => {
+      render(
+        <Field label="Theme">
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
+    });
+
+    it('renders required indicator inside the legend', () => {
+      render(
+        <Field label="Theme" required>
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme *' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('radio', { name: 'Dark', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
   describe('Select', () => {
     it('associates with the field label correctly when no id is set', () => {
       render(
@@ -194,36 +239,170 @@ describe('Field', () => {
     });
   });
 
-  it('associates the label with a SecretInput when no id is set', () => {
-    render(
-      <Field label="My label">
-        <SecretInput isConfigured={false} onReset={() => {}} />
-      </Field>
-    );
+  describe('Slider', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <Slider min={0} max={10} />
+        </Field>
+      );
 
-    // can't use getByRole here as type="password" inputs don't have an implicit role
-    // see https://github.com/testing-library/dom-testing-library/issues/567
-    expect(screen.getByLabelText('My label')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <Slider min={0} max={10} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
   });
 
-  it('associates the label with a Checkbox when no id is set', () => {
-    render(
-      <Field label="My label">
-        <Checkbox />
-      </Field>
-    );
+  describe('TextArea', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <TextArea />
+        </Field>
+      );
 
-    expect(screen.getByRole('checkbox', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <TextArea />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
   });
 
-  it('associates the label with a Switch when no id is set', () => {
-    render(
-      <Field label="My label">
-        <Switch />
-      </Field>
-    );
+  describe('SecretTextArea', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <SecretTextArea isConfigured={false} onReset={() => {}} />
+        </Field>
+      );
 
-    expect(screen.getByRole('switch', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <SecretTextArea isConfigured={true} onReset={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('TagsInput', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <TagsInput onChange={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <TagsInput onChange={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FieldNamePicker', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <FieldNamePicker value="foo" onChange={() => {}} item={{ id: 'foo', name: 'Foo' }} context={{ data: [] }} />
+        </Field>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <FieldNamePicker value="foo" onChange={() => {}} item={{ id: 'foo', name: 'Foo' }} context={{ data: [] }} />
+        </Field>
+      );
+
+      expect(screen.getByRole('combobox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Cascader', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <Cascader options={[]} onSelect={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <Cascader options={[]} onSelect={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FilterInput', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <FilterInput value="" onChange={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <FilterInput value="" onChange={() => {}} />
+        </Field>
+      );
+
+      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
+  describe('FileDropzone', () => {
+    it('associates with the field label correctly when no id is set', () => {
+      render(
+        <Field label="My label">
+          <FileDropzone />
+        </Field>
+      );
+
+      expect(screen.getByLabelText('My label')).toBeInTheDocument();
+    });
   });
 
   it('renders with the inputId of its children', () => {
@@ -238,32 +417,5 @@ describe('Field', () => {
     );
 
     expect(screen.getByLabelText('My other label')).toBeInTheDocument();
-  });
-
-  describe('fieldset/legend rendering for group controls', () => {
-    const radioOptions = [
-      { label: 'Light', value: 'light' },
-      { label: 'Dark', value: 'dark' },
-    ];
-
-    it('renders the fieldset group with an accessible name from the legend', () => {
-      render(
-        <Field label="Theme">
-          <RadioButtonGroup options={radioOptions} />
-        </Field>
-      );
-
-      expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
-    });
-
-    it('renders required indicator inside the legend', () => {
-      render(
-        <Field label="Theme" required>
-          <RadioButtonGroup options={radioOptions} />
-        </Field>
-      );
-
-      expect(screen.getByRole('group', { name: 'Theme *' })).toBeInTheDocument();
-    });
   });
 });
