@@ -28,6 +28,7 @@ import {
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
+  buildPanelKind,
   getDefaultDatasource,
   getPanelQueries,
   ResponseTransformers,
@@ -1075,6 +1076,85 @@ describe('ResponseTransformers', () => {
           expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
           expect(query.spec.query.kind).toBe('DataQuery');
         });
+      });
+    });
+
+    describe('buildPanelKind', () => {
+      it('preserves variable datasource expression when panel datasource is a string', () => {
+        const panel: Panel = {
+          id: 1,
+          type: 'timeseries',
+          title: 'Test',
+          datasource: '$DataSource' as any,
+          targets: [{ refId: 'A' }],
+          fieldConfig: { defaults: {}, overrides: [] },
+          options: {},
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          transformations: [],
+        };
+
+        const result = buildPanelKind(panel);
+        const query = result.spec.data.spec.queries[0];
+
+        expect(query.spec.query.datasource?.name).toBe('$DataSource');
+      });
+
+      it('preserves legacy datasource name string so lookup-by-name can succeed at runtime', () => {
+        const panel: Panel = {
+          id: 2,
+          type: 'timeseries',
+          title: 'Test',
+          datasource: 'My Prometheus' as any,
+          targets: [{ refId: 'A' }],
+          fieldConfig: { defaults: {}, overrides: [] },
+          options: {},
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          transformations: [],
+        };
+
+        const result = buildPanelKind(panel);
+        const query = result.spec.data.spec.queries[0];
+
+        expect(query.spec.query.datasource?.name).toBe('My Prometheus');
+      });
+
+      it('leaves object datasource untouched', () => {
+        const panel: Panel = {
+          id: 3,
+          type: 'timeseries',
+          title: 'Test',
+          datasource: { uid: 'abc123', type: 'mysql' },
+          targets: [{ refId: 'A' }],
+          fieldConfig: { defaults: {}, overrides: [] },
+          options: {},
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          transformations: [],
+        };
+
+        const result = buildPanelKind(panel);
+        const query = result.spec.data.spec.queries[0];
+
+        expect(query.spec.query.datasource?.name).toBe('abc123');
+        expect(query.spec.query.group).toBe('mysql');
+      });
+
+      it('preserves string datasource on individual targets', () => {
+        const panel: Panel = {
+          id: 4,
+          type: 'timeseries',
+          title: 'Test',
+          datasource: { uid: 'panel-ds', type: 'mysql' },
+          targets: [{ refId: 'A', datasource: '$TargetDS' as any }],
+          fieldConfig: { defaults: {}, overrides: [] },
+          options: {},
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          transformations: [],
+        };
+
+        const result = buildPanelKind(panel);
+        const query = result.spec.data.spec.queries[0];
+
+        expect(query.spec.query.datasource?.name).toBe('$TargetDS');
       });
     });
   });

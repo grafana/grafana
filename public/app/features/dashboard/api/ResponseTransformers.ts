@@ -506,7 +506,9 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
     // and fall through to use panel datasource (matches backend behavior)
     const targetDs = t.datasource;
     const isEmptyDatasourceObject = targetDs && typeof targetDs === 'object' && Object.keys(targetDs).length === 0;
-    const ds = isEmptyDatasourceObject ? panelDatasource : targetDs || panelDatasource;
+    // V1 targets can also store datasource as a plain string (variable or legacy name) — normalize to DataSourceRef
+    const normalizedTargetDs = typeof targetDs === 'string' ? { uid: targetDs, type: '' } : targetDs;
+    const ds = isEmptyDatasourceObject ? panelDatasource : normalizedTargetDs || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -582,8 +584,14 @@ function extractAngularOptions(panel: Panel): Record<string, unknown> {
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
+  // V1 panels can store datasource as a plain string (variable expression or legacy name).
+  // Normalize to DataSourceRef so the uid is preserved through V1→V2 conversion.
+  const panelDatasource =
+    typeof p.datasource === 'string'
+      ? { uid: p.datasource, type: '' }
+      : (p.datasource ?? { type: '', uid: '' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-  const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
+  const queries = getPanelQueries((p.targets as any) || [], panelDatasource);
 
   const transformations = getPanelTransformations(p.transformations || []);
 
