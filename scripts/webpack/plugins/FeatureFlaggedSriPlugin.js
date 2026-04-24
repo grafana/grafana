@@ -4,10 +4,7 @@ const webpack = require('webpack');
 /** @typedef {import('webpack/lib/Compiler.js')} Compiler */
 
 const PLUGIN_NAME = 'FeatureFlaggedSRIPlugin';
-const FEATURE_TOGGLE_WRAP = [
-  'if (window.grafanaBootData && window.grafanaBootData.settings && window.grafanaBootData.settings.featureToggles && window.grafanaBootData.settings.featureToggles.assetSriChecks) {',
-  '}',
-];
+const FEATURE_TOGGLE_WRAP = ['if (window.__grafanaAssetSriChecksEnabled) {', '}'];
 
 /**
  * Webpack plugin that wraps Webpack runtime integrity checks in a feature flag
