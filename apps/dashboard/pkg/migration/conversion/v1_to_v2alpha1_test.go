@@ -608,7 +608,7 @@ func TestV1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "legacy bare-string panel datasource: known names resolve, unknown names are preserved as UID-only refs, \"default\" sentinel resolves to the default datasource",
+			name: "legacy bare-string panel datasource: known names resolve, unknown names are preserved as UID-only refs",
 			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{

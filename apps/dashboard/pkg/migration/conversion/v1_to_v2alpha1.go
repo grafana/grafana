@@ -97,20 +97,10 @@ func resolveLegacyStringDatasource(ctx context.Context, name string, provider sc
 	if provider == nil {
 		return name, ""
 	}
-
-	ref := schemaversion.MigrateDatasourceNameToRef(
-		name,
-		map[string]bool{"returnDefaultAsNull": false},
-		provider.Index(ctx),
-	)
-
-	if u, ok := ref["uid"].(string); ok {
-		uid = u
+	if ds := schemaversion.ResolveDatasourceRef(name, provider.Index(ctx)); ds != nil {
+		return ds.UID, ds.Type
 	}
-	if t, ok := ref["type"].(string); ok {
-		typ = t
-	}
-	return uid, typ
+	return name, ""
 }
 
 // prepareV1ConversionContext sets up the context with namespace and service identity
