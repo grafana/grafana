@@ -14,8 +14,35 @@ import {
 import { getFrameMatchers } from './matchers';
 import { standardTransformersRegistry, type TransformerRegistryItem } from './standardTransformersRegistry';
 
-// Cache resolved transformations to avoid re-resolving on subsequent calls
-const resolvedTransformations = new Map<string, DataTransformerInfo>();
+// Cache in-flight (and resolved) transformation promises so concurrent callers
+// share a single resolution rather than each invoking info.transformation()
+// independently. Failures evict the entry so the next caller can retry.
+const transformationPromises = new Map<string, Promise<DataTransformerInfo>>();
+
+const getTransformation = (info: TransformerRegistryItem): Promise<DataTransformerInfo> => {
+  const pending = transformationPromises.get(info.id);
+  if (pending) {
+    return pending;
+  }
+
+  const promise = Promise.resolve()
+    .then(() => info.transformation())
+    .catch((err) => {
+      transformationPromises.delete(info.id);
+      throw err;
+    });
+
+  transformationPromises.set(info.id, promise);
+  return promise;
+};
+
+/**
+ * Test-only: clears the in-flight/resolved transformation promise cache so
+ * tests can start from a known state. Not exported from the package index.
+ */
+export const __resetTransformationCacheForTests = () => {
+  transformationPromises.clear();
+};
 
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>
@@ -29,17 +56,9 @@ const getOperator =
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
 
     return source.pipe(
-      mergeMap((before) => {
-        const cached = resolvedTransformations.get(config.id);
-        const transformationPromise = cached ? Promise.resolve(cached) : info.transformation();
-
-        return from(transformationPromise).pipe(
+      mergeMap((before) =>
+        from(getTransformation(info)).pipe(
           mergeMap((transformation) => {
-            // Cache the resolved transformation
-            if (!cached) {
-              resolvedTransformations.set(config.id, transformation);
-            }
-
             const defaultOptions = transformation.defaultOptions ?? {};
             const options = { ...defaultOptions, ...config.options };
 
@@ -60,8 +79,8 @@ const getOperator =
               postProcessTransform(before, info, matcher)
             );
           })
-        );
-      })
+        )
+      )
     );
   };
 
