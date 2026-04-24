@@ -45,11 +45,11 @@ The following Git Sync per-tier limits apply:
 
 | Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
-| Amount of repositories                    | 1                | 10                | 10              | 10                     |
-| Amount of synced resources per repository | 20               | Grafana limit (1) | No limit (2)    | No limit (2)           |
+| Amount of repositories                    | 1                | 10 (1)            | 10 (2)          | 10 (2)                 |
+| Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
 
-- (1) If you're a Cloud user, contact Support to modify your limits.
-- (2) If you're an on-prem user, you can customize your limit using the `max_repositories` configuration setting. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
+- (1) If you're a Cloud user, contact Support to modify the amount of repostories you can sync.
+- (2) If you're an on-prem user, you can customize the amount of repostories you can sync using the `max_repositories` configuration setting. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
 
 ## Compatible Git providers
 
