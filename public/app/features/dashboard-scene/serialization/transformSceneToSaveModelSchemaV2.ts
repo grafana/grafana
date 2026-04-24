@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -18,6 +18,7 @@ import {
 import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -954,21 +955,6 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
-export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
-  if (!ds) {
-    return undefined;
-  }
-  if (typeof ds === 'string') {
-    if (ds.startsWith('$')) {
-      return { uid: ds };
-    }
-
-    const instance = getDataSourceSrv().getInstanceSettings(ds);
-    return instance ? getDataSourceRef(instance) : { uid: ds };
-  }
-  return ds;
-}
-
 /**
  * Returns the datasource value that should be persisted for a panel query, variable or annotation
  * - Undefined if the datasource was not defined in the initial save model
@@ -986,7 +972,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
 
   // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
-    const elementDS = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
+    const elementDS =
+      migrateDatasourceNameToRef('datasource' in element ? element.datasource : undefined, {
+        returnDefaultAsNull: true,
+      }) ?? undefined;
+
     if (elementDS) {
       const isEmptyDatasourceObject = Object.keys(elementDS).length === 0;
       if (!isEmptyDatasourceObject) {
@@ -994,7 +984,7 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
       }
     }
 
-    const panelDS = normalizeDataSourceRef(context?.state?.datasource);
+    const panelDS = migrateDatasourceNameToRef(context?.state?.datasource, { returnDefaultAsNull: true }) ?? undefined;
     if (panelDS?.uid) {
       const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
       const notExpr =
@@ -1008,11 +998,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    datasource = normalizeDataSourceRef(element.state.datasource);
+    datasource = migrateDatasourceNameToRef(element.state.datasource, { returnDefaultAsNull: true }) ?? undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    datasource = normalizeDataSourceRef(element.datasource);
+    datasource = migrateDatasourceNameToRef(element.datasource, { returnDefaultAsNull: true }) ?? undefined;
   }
 
   // If a datasource was resolved from the element, use it

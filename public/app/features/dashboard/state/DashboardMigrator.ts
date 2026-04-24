@@ -1071,6 +1071,11 @@ export function migrateDatasourceNameToRef(
     return nameOrRef;
   }
 
+  // Template variable references (e.g. "$ds", "${ds}") are preserved as UID-only
+  if (typeof nameOrRef === 'string' && nameOrRef.startsWith('$')) {
+    return { uid: nameOrRef };
+  }
+
   const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
   if (!ds) {
     return { uid: nameOrRef ? nameOrRef : undefined }; // not found
