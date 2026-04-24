@@ -1285,10 +1285,6 @@ func (i *kvListIterator) Next() bool {
 
 		i.currentDataObj, i.err = i.nextDataObj, i.nextErr
 		if i.err != nil {
-			if i.shouldRetry(i.err) {
-				i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
-				continue
-			}
 			return false
 		}
 
@@ -1875,9 +1871,6 @@ func (i *kvHistoryIterator) Next() bool {
 			return false
 		}
 		if err != nil {
-			if i.shouldRetry(err) {
-				continue
-			}
 			i.err = err
 			return false
 		}
