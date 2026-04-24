@@ -24,18 +24,6 @@ export interface MutationResult {
   changes: MutationChange[];
   warnings?: string[];
   data?: unknown;
-  /**
-   * Internal: callback to undo this mutation. Set by variable commands to wire
-   * into the DashboardEditActionEvent undo/redo system. Underscore prefix signals
-   * that this field is for internal infrastructure use only and must not be
-   * forwarded to external callers.
-   */
-  _undo?: () => void;
-  /**
-   * Internal: human-readable description shown in the undo history UI.
-   * Set alongside _undo by commands that support undo/redo.
-   */
-  _description?: string;
 }
 
 export interface MutationChange {

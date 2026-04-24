@@ -63,55 +63,47 @@ export class DashboardMutationClient implements MutationClient {
 
     const context: MutationContext = { scene: this.scene };
 
+    // Snapshot variable state before the mutation for undo/redo wiring.
+    // This follows the same snapshot pattern used by dashboardEditActions in shared.ts.
+    const varsBefore = this.scene.state.$variables?.state.variables.slice() ?? [];
+    const varSetBefore = this.scene.state.$variables;
+
     try {
       const result = await registration.handler(payload, context);
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
+
+        // Wire into the DashboardEditPane undo/redo history system when the variable
+        // set changed. Mutation was already applied inside the handler, so perform()
+        // skips its first call and re-applies on subsequent redo calls.
+        const varSetAfter = this.scene.state.$variables;
+        if (varSetAfter !== varSetBefore && typeof this.scene.publishEvent === 'function') {
+          const varsAfter = varSetAfter!.state.variables.slice();
+          const scene = this.scene;
+          let alreadyPerformed = true;
+
+          this.scene.publishEvent(
+            new DashboardEditActionEvent({
+              source: this.scene,
+              description: type,
+              perform() {
+                if (alreadyPerformed) {
+                  alreadyPerformed = false;
+                  return;
+                }
+                scene.state.$variables?.setState({ variables: varsAfter });
+              },
+              undo() {
+                scene.state.$variables?.setState({ variables: varsBefore });
+              },
+            }),
+            true
+          );
+        }
       }
 
-      // Wire undo/redo into the DashboardEditPane event system when the command
-      // provides an _undo callback. The mutation has already been applied at this
-      // point, so perform() is a no-op for the initial registration. The DashboardEditPane
-      // handleEditAction calls perform() immediately then pushes to undoStack.
-      // When redo is invoked, performAction calls perform() again -- at that point
-      // the _undo has already restored the previous state, so perform() must
-      // re-apply the mutation. We capture the current variables state here to
-      // use as the "redo" snapshot (state after the mutation).
-      if (result.success && result._undo && typeof this.scene.publishEvent === 'function') {
-        const undoFn = result._undo;
-        const description = result._description ?? mutation.type;
-        // Capture the post-mutation variable state for redo.
-        const varSet = this.scene.state.$variables;
-        const variablesAfterMutation = varSet ? varSet.state.variables.slice() : [];
-        const scene = this.scene;
-
-        let alreadyPerformed = true;
-
-        this.scene.publishEvent(
-          new DashboardEditActionEvent({
-            source: this.scene,
-            description,
-            perform: () => {
-              // First call is a no-op because mutation was already applied.
-              if (alreadyPerformed) {
-                alreadyPerformed = false;
-                return;
-              }
-              // Subsequent calls (redo): restore the post-mutation state.
-              if (scene.state.$variables) {
-                scene.state.$variables.setState({ variables: variablesAfterMutation });
-              }
-            },
-            undo: undoFn,
-          }),
-          true
-        );
-      }
-
-      // Strip internal fields before returning to callers.
-      const { _undo: _u, _description: _d, ...publicResult } = result;
-      return publicResult;
+      return result;
     } catch (error) {
       return {
         success: false,

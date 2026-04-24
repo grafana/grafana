@@ -242,6 +242,36 @@ describe('Variable mutation commands', () => {
     expect(result.error).toContain('Validation failed');
   });
 
+  it('ADD_VARIABLE Zod rejects unknown variable kind', async () => {
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'WeirdVariable', spec: { name: 'x' } } },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+  });
+
+  it('ADD_VARIABLE Zod rejects CustomVariable with missing query field', async () => {
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: {} } },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+  });
+
+  it('UPDATE_VARIABLE Zod rejects missing name field', async () => {
+    const result = await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'x', query: 'a' } } },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+  });
+
   it('rejects unknown command types', async () => {
     const result = await client.execute({
       type: 'NONEXISTENT_COMMAND',
@@ -398,12 +428,26 @@ describe('Variable mutation commands', () => {
       expect((restoredVar as CustomVariable | undefined)?.state.query).toBe('before');
     });
 
-    it('internal _undo/_description fields are stripped from the returned result', async () => {
-      const result = await clientWithEvents.execute(
-        cmd.addVariable({ variable: { kind: 'CustomVariable', spec: { name: 'check', query: 'x' } } })
+    it('ADD_VARIABLE redo re-applies the mutation after undo', async () => {
+      await clientWithEvents.execute(
+        cmd.addVariable({ variable: { kind: 'CustomVariable', spec: { name: 'redoable', query: 'a,b' } } })
       );
-      expect(result).not.toHaveProperty('_undo');
-      expect(result).not.toHaveProperty('_description');
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock scene has publishEvent as jest.Mock
+      const publishMock = (sceneWithEvents as unknown as { publishEvent: jest.Mock }).publishEvent;
+      const event: DashboardEditActionEvent = publishMock.mock.calls[0][0];
+      const { perform, undo } = event.payload;
+
+      // Trigger the initial no-op (simulates DashboardEditPane.handleEditAction)
+      perform();
+
+      undo();
+      expect(
+        sceneWithEvents.state.$variables?.state.variables.find((v) => v.state.name === 'redoable')
+      ).toBeUndefined();
+
+      perform();
+      expect(sceneWithEvents.state.$variables?.state.variables.find((v) => v.state.name === 'redoable')).toBeDefined();
     });
   });
 
