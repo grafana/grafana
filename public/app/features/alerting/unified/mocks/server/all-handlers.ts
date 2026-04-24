@@ -5,6 +5,7 @@
 import accessControlHandlers from 'app/features/alerting/unified/mocks/server/handlers/accessControl';
 import alertNotifierHandlers from 'app/features/alerting/unified/mocks/server/handlers/alertNotifiers';
 import alertmanagerHandlers from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
+import chainHandlers from 'app/features/alerting/unified/mocks/server/handlers/chains';
 import datasourcesHandlers from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/eval';
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
@@ -32,6 +33,7 @@ import userStorageHandlers from 'app/features/alerting/unified/mocks/server/hand
 export const alertingHandlers = [
   ...alertNotifierHandlers,
   ...grafanaRulerHandlers,
+  ...chainHandlers,
   ...historianHandlers,
   ...mimirRulerHandlers,
   ...alertmanagerHandlers,

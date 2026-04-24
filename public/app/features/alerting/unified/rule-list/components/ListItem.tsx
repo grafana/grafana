@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { type AriaAttributes, type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -13,15 +13,26 @@ interface ListItemProps extends AriaAttributes {
   metaRight?: ReactNode[];
   actions?: ReactNode;
   'data-testid'?: string;
+  className?: string;
 }
 
 export const ListItem = (props: ListItemProps) => {
   const styles = useStyles2(getStyles);
-  const { icon = null, title, description, meta, metaRight, actions, 'data-testid': testId, ...ariaAttributes } = props;
+  const {
+    icon = null,
+    title,
+    description,
+    meta,
+    metaRight,
+    actions,
+    'data-testid': testId,
+    className,
+    ...ariaAttributes
+  } = props;
 
   return (
     <li
-      className={styles.alertListItemContainer}
+      className={cx(styles.alertListItemContainer, className)}
       role="treeitem"
       aria-selected="false"
       data-testid={testId}

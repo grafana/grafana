@@ -487,3 +487,10 @@ export function trackViewExperienceToggleConfirmed(
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }
+
+/**
+ * Track clicks on the Edit / More buttons inside a chain header (v2 chain rail).
+ */
+export function trackChainHeaderActionClick(payload: { chainId: string; action: 'edit' | 'more' }) {
+  reportInteraction('grafana_alerting_chain_header_action_click', payload);
+}

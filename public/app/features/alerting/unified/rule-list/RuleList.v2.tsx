@@ -11,6 +11,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
+import { shouldUseAlertingRulesAPIV2 } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -21,6 +22,7 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
+import { ChainRailGroupedView } from './chainRail/ChainRailGroupedView';
 import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
@@ -28,6 +30,13 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
+  const useChainRail = shouldUseAlertingRulesAPIV2();
+
+  const groupedBody = useChainRail ? (
+    <ChainRailGroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+  ) : (
+    <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+  );
 
   return (
     <Stack direction="column">
@@ -37,11 +46,7 @@ function RuleList() {
         <Stack direction="row" grow={1} minHeight={0}>
           <RulesFilterSidebar />
           <Box flex={1} minWidth={0} paddingLeft={2}>
-            {viewMode === 'list' ? (
-              <FilterView filterState={filterState} />
-            ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-            )}
+            {viewMode === 'list' ? <FilterView filterState={filterState} /> : groupedBody}
           </Box>
         </Stack>
       </Stack>

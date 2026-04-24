@@ -24,6 +24,7 @@ import {
   type RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { type Chain } from '../../rule-list/chainRail/types';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -106,6 +107,16 @@ const rulerGrafanaGroupFactory = Factory.define<RulerGrafanaRuleGroupDTO>(({ seq
   name: `test-group-${sequence}`,
   interval: '1m',
   rules: grafanaAlertingRuleFactory.buildList(3),
+}));
+
+const chainFactory = Factory.define<Chain>(({ sequence }) => ({
+  id: `chain-${sequence}`,
+  name: `Chain ${sequence}`,
+  folderUid: 'test-folder',
+  groupName: `test-group-${sequence}`,
+  mode: 'Sequential',
+  interval: '1m',
+  ruleUids: [],
 }));
 
 class DataSourceFactory extends Factory<DataSourceInstanceSettings> {
@@ -327,4 +338,5 @@ export const alertingFactory = {
       receiver: grafanaReceiverConfigFactory,
     },
   },
+  chain: chainFactory,
 };

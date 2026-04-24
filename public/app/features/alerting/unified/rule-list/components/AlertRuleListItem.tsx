@@ -60,6 +60,10 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
+  // When true, interval + next-evaluation metadata is suppressed because the
+  // chain header above this row owns chain-level timing.
+  inChain?: boolean;
+  className?: string;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -87,6 +91,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
+    inChain = false,
+    className,
   } = props;
 
   const listItemAriaId = useId();
@@ -111,7 +117,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   }
 
   if (!isPaused) {
-    if (lastEvaluation && evaluationInterval) {
+    if (!inChain && lastEvaluation && evaluationInterval) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
@@ -158,6 +164,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   return (
     <ListItem
       aria-labelledby={listItemAriaId}
+      className={className}
       title={
         <Stack direction="row" alignItems="center">
           <TextLink href={href} color="primary" inline={false} id={listItemAriaId}>
@@ -201,7 +208,8 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
-}: RecordingRuleListItemProps) {
+  className,
+}: RecordingRuleListItemProps & { className?: string }) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
     metadata.push(
@@ -225,6 +233,7 @@ export function RecordingRuleListItem({
 
   return (
     <ListItem
+      className={className}
       title={
         <Stack direction="row" alignItems="center">
           <TextLink color="primary" href={href} inline={false}>

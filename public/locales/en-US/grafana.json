@@ -830,6 +830,15 @@
         }
       }
     },
+    "chain-rail": {
+      "edit": "Edit",
+      "edit-aria": "Edit {{name}}",
+      "more": "More",
+      "more-aria": "More options for {{name}}",
+      "no-rules": "No rules found in this chain",
+      "rule-count_one": "{{count}} rules",
+      "rule-count_other": "{{count}} rules"
+    },
     "channel-sub-form": {
       "badge-deprecated": "Deprecated",
       "delete": "Delete",
