@@ -151,7 +151,6 @@ func isDataSourceRef(ref interface{}) bool {
 
 // ResolveDatasourceRef resolves a bare-string datasource name/UID via the index.
 // "default" resolves to the configured default, otherwise falls through to Lookup.
-// Returns nil when unresolved; callers decide how to handle that.
 func ResolveDatasourceRef(name string, index *DatasourceIndex) *DataSourceInfo {
 	if index == nil || name == "" {
 		return nil
