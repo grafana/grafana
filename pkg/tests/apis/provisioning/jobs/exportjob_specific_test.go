@@ -107,15 +107,17 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 }
 
 // TestIntegrationProvisioning_ExportSpecificResources_NotFound verifies that
-// naming a dashboard that does not exist finishes the job in warning state
-// with a "not found" warning recorded against that resource, rather than
-// failing the entire export.
+// naming a dashboard that does not exist finishes the job in error state
+// with a "not found" error recorded against that resource. The caller asked
+// for something that cannot be exported, so the job surfaces the failure
+// rather than silently dropping the reference.
 func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// A real dashboard exists alongside the missing ref so we can assert the
-	// partial-success behavior: present ones are written, absent ones warn.
+	// partial-write behavior: present ones are still written even though the
+	// job ends in error because of the missing sibling.
 	v1Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 	_, err := helper.DashboardsV1.Resource.Create(ctx, v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
@@ -145,19 +147,18 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-		"missing resource should downgrade the job to warning, not error")
-	require.Empty(t, jobObj.Status.Errors, "not-found should surface as warning, not error")
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"missing explicitly-requested resource should fail the job")
 
-	foundWarning := false
-	for _, w := range jobObj.Status.Warnings {
-		if strings.Contains(w, "does-not-exist") {
-			foundWarning = true
+	foundError := false
+	for _, e := range jobObj.Status.Errors {
+		if strings.Contains(e, "does-not-exist") {
+			foundError = true
 			break
 		}
 	}
-	require.True(t, foundWarning,
-		"expected a warning mentioning the missing resource; got: %v", jobObj.Status.Warnings)
+	require.True(t, foundError,
+		"expected an error mentioning the missing resource; got: %v", jobObj.Status.Errors)
 
 	// The present dashboard should still have been exported.
 	present := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v1.json")

@@ -1,23 +1,18 @@
 // Package resources holds identifiers for the Kubernetes resources that
-// provisioning manages.
-//
-// apps/provisioning is a separate Go module from apps/dashboard, so the
-// typed GroupVersionResource/GroupVersionKind values that wrap these
-// strings live in pkg/registry/apis/provisioning/resources (where the
-// dashboard module is available as a dependency). This package holds the
-// plain string constants that admission validators and other
-// module-internal callers can reference without pulling in the full
-// dashboard module.
-//
-// The constants here must stay in sync with
-// dashboardV1.DashboardResourceInfo and the corresponding GVR/GVK vars
-// in pkg/registry/apis/provisioning/resources.
+// provisioning manages. GVR/GVK values are re-derived from the source-of-truth
+// ResourceInfo registrations in apps/dashboard so renames and version bumps
+// propagate automatically.
 package resources
 
-const (
-	// DashboardKind is metadata.kind for dashboard resources.
-	DashboardKind = "Dashboard"
+import (
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+)
 
-	// DashboardGroup is the API group for dashboard resources.
-	DashboardGroup = "dashboard.grafana.app"
+var (
+	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
+	DashboardKind             = dashboardV1.DashboardResourceInfo.GroupVersionKind()
+	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 )

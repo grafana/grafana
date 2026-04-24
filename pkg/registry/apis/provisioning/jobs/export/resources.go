@@ -81,7 +81,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			WithAction(repository.FileActionIgnored)
 
 		if ref.Kind != "" && ref.Kind != resources.DashboardKind.Kind {
-			result.WithWarning(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
+			result.WithError(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
 				return err
@@ -92,7 +92,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		item, err := dashClient.Get(ctx, ref.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				result.WithWarning(fmt.Errorf("dashboard %q not found", ref.Name))
+				result.WithError(fmt.Errorf("dashboard %q not found", ref.Name))
 			} else {
 				result.WithError(fmt.Errorf("get dashboard %q: %w", ref.Name, err))
 			}
@@ -127,10 +127,11 @@ func exportResource(ctx context.Context,
 }
 
 // exportItem writes a single resource to the repository, applying the shared
-// ignore/shim/UID-regen rules. When explicitlyRequested is true, a skipped
-// managed resource produces a warning so the caller sees why the dashboard
-// they named was not exported; the bulk path keeps the quiet ignore since
-// encountering managed resources is expected when iterating the whole namespace.
+// ignore/shim/UID-regen rules. When explicitlyRequested is true, a managed
+// resource produces an error: the caller named a dashboard that cannot be
+// exported, so the job should surface that failure rather than silently
+// dropping it. The bulk path keeps the quiet ignore since encountering
+// managed resources is expected when iterating the whole namespace.
 func exportItem(ctx context.Context,
 	item *unstructured.Unstructured,
 	options provisioning.ExportJobOptions,
@@ -156,7 +157,9 @@ func exportItem(ctx context.Context,
 	if manager.Identity != "" {
 		resultBuilder.WithAction(repository.FileActionIgnored)
 		if explicitlyRequested {
-			resultBuilder.WithWarning(fmt.Errorf("dashboard %q is managed by %q and was not exported", name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("dashboard %q is managed by %q and cannot be exported", name, manager.Identity))
+			progress.Record(ctx, resultBuilder.Build())
+			return progress.TooManyErrors()
 		}
 		progress.Record(ctx, resultBuilder.Build())
 		return nil

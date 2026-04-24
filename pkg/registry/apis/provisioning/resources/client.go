@@ -10,29 +10,24 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
-	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
-// Typed GVR/GVK values for the resources provisioning manages. These live
-// here (rather than in apps/provisioning/pkg/resources) because they
-// reference types from apps/dashboard/apps/folder/apps/iam, which
-// apps/provisioning does not depend on. The plain string constants for
-// Dashboard are mirrored in apps/provisioning/pkg/resources for callers
-// inside that module boundary.
+// Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
+// so there is a single source of truth. Folder and User live here because
+// pkg/registry/apis/provisioning is the only caller for those.
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
-	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
-	DashboardKind             = dashboardV1.DashboardResourceInfo.GroupVersionKind()
-	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
-	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResource         = provisioningresources.DashboardResource
+	DashboardKind             = provisioningresources.DashboardKind
+	DashboardResourceV2alpha1 = provisioningresources.DashboardResourceV2alpha1
+	DashboardResourceV2beta1  = provisioningresources.DashboardResourceV2beta1
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}

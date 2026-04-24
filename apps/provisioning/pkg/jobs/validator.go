@@ -123,13 +123,13 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		}
 		if r.Kind == "" {
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
-		} else if r.Kind != resources.DashboardKind {
+		} else if r.Kind != resources.DashboardKind.Kind {
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
-				fmt.Sprintf("only %s is supported for export", resources.DashboardKind)))
+				fmt.Sprintf("only %s is supported for export", resources.DashboardKind.Kind)))
 		}
-		if r.Group != "" && r.Group != resources.DashboardGroup {
+		if r.Group != "" && r.Group != resources.DashboardResource.Group {
 			list = append(list, field.Invalid(path.Child("group"), r.Group,
-				fmt.Sprintf("only %s is supported for export", resources.DashboardGroup)))
+				fmt.Sprintf("only %s is supported for export", resources.DashboardResource.Group)))
 		}
 	}
 

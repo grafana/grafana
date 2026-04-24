@@ -114,7 +114,7 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestExportSpecificResources_ManagedDashboardWarning(t *testing.T) {
+func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
 		"managed-dash": managedDashboardObject("managed-dash", "other-repo"),
 	}}
@@ -128,14 +128,14 @@ func TestExportSpecificResources_ManagedDashboardWarning(t *testing.T) {
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		// Caller asked for this dashboard explicitly -> we should warn them
-		// it was skipped because it is managed by another repository.
+		// Caller named a dashboard that another manager already owns: the
+		// export cannot fulfil the request, so the result must carry an error
+		// (not a warning) so the job surfaces the failure.
 		return r.Name() == "managed-dash" &&
 			r.Action() == repository.FileActionIgnored &&
-			r.Warning() != nil
+			r.Error() != nil
 	})).Return()
-	// No TooManyErrors call: the managed-resource skip returns early without
-	// consulting the error-threshold gate, matching the bulk-export path.
+	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
 		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard"}},
@@ -146,7 +146,7 @@ func TestExportSpecificResources_ManagedDashboardWarning(t *testing.T) {
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestExportSpecificResources_NotFoundRecordsWarning(t *testing.T) {
+func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{}}
 
 	resourceClients := resources.NewMockResourceClients(t)
@@ -158,7 +158,10 @@ func TestExportSpecificResources_NotFoundRecordsWarning(t *testing.T) {
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Name() == "missing" && r.Action() == repository.FileActionIgnored && r.Warning() != nil
+		// Caller named a dashboard that does not exist: the export cannot
+		// fulfil the request, so the job must surface an error rather than
+		// silently drop the reference.
+		return r.Name() == "missing" && r.Action() == repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
@@ -229,7 +232,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
 }
 
-func TestExportSpecificResources_NonDashboardKindIsWarnedAndSkipped(t *testing.T) {
+func TestExportSpecificResources_NonDashboardKindIsErroredAndSkipped(t *testing.T) {
 	// ForKind still gets called once at the top of ExportSpecificResources so
 	// the shim can be prepared, even though no dashboards end up being fetched.
 	resourceClients := resources.NewMockResourceClients(t)
@@ -241,7 +244,10 @@ func TestExportSpecificResources_NonDashboardKindIsWarnedAndSkipped(t *testing.T
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Name() == "folder-ref" && r.Action() == repository.FileActionIgnored && r.Warning() != nil
+		// A non-Dashboard kind is a caller mistake (admission would normally
+		// reject it); if it still reaches the worker, fail the item rather
+		// than quietly warn so the job surfaces the bad input.
+		return r.Name() == "folder-ref" && r.Action() == repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
