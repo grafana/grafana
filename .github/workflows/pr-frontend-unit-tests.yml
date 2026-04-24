@@ -215,7 +215,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup Docker
-      uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
+      uses: docker/setup-docker-action@b2189fbf2a6592b51fee7cdd93ee2bfaeba733db # v4
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Install Tilt
