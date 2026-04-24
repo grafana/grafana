@@ -77,10 +77,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
       } else {
         return;
       }
-      if (!currentLog || logs.indexOf(currentLog) < 0) {
+      if (!currentLog || logs.findIndex((log) => log.uid === currentLog.uid) < 0) {
         return;
       }
-      const nextLog = logs[logs.indexOf(currentLog) + delta];
+      const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
       if (!nextLog) {
         return;
       }
