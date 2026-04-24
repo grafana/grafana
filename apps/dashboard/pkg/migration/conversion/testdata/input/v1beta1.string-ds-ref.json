@@ -1,0 +1,152 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "string-ds-ref"
+  },
+  "spec": {
+    "schemaVersion": 41,
+    "title": "String DS Ref (legacy bare names)",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "timezone": "utc",
+    "weekStart": "",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "type": "query",
+          "name": "query_known_name",
+          "label": "Query (known name)",
+          "datasource": "Existing Target Name",
+          "query": "label_values(foo)",
+          "hide": 0,
+          "refresh": 1
+        },
+        {
+          "type": "query",
+          "name": "query_unknown_name",
+          "label": "Query (unknown name)",
+          "datasource": "UnknownThing",
+          "query": "label_values(bar)",
+          "hide": 0,
+          "refresh": 1
+        },
+        {
+          "type": "datasource",
+          "name": "datasource",
+          "label": "Datasource",
+          "query": "prometheus",
+          "current": {
+            "selected": false,
+            "text": "prom",
+            "value": "prom"
+          }
+        },
+        {
+          "type": "adhoc",
+          "name": "adhoc_known_name",
+          "label": "Adhoc (known name)",
+          "datasource": "Existing Target Name"
+        },
+        {
+          "type": "groupby",
+          "name": "groupby_known_name",
+          "label": "GroupBy (known name)",
+          "datasource": "Existing Target Name"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "timeseries",
+        "title": "Panel: bare known datasource name",
+        "datasource": "Existing Target Name",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "fieldConfig": { "defaults": {}, "overrides": [] },
+        "options": {},
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": "Existing Target Name",
+            "expr": "up"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "type": "timeseries",
+        "title": "Panel: bare unknown datasource name",
+        "datasource": "TEST_DB",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "fieldConfig": { "defaults": {}, "overrides": [] },
+        "options": {},
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": "TEST_DB",
+            "expr": "up"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "type": "timeseries",
+        "title": "Panel: template variable datasource (unchanged behavior)",
+        "datasource": "${datasource}",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "fieldConfig": { "defaults": {}, "overrides": [] },
+        "options": {},
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": "${datasource}",
+            "expr": "up"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "type": "timeseries",
+        "title": "Panel: object datasource ref (unchanged behavior)",
+        "datasource": {
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "fieldConfig": { "defaults": {}, "overrides": [] },
+        "options": {},
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "expr": "{job=\"x\"}"
+          }
+        ]
+      }
+    ]
+  }
+}

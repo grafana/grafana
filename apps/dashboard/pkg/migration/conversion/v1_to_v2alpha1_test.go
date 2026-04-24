@@ -607,6 +607,46 @@ func TestV1ToV2alpha1(t *testing.T) {
 				assert.Equal(t, map[string]interface{}{"name": "Field1"}, overrideMatcher.Options)
 			},
 		},
+		{
+			name: "legacy bare-string panel datasource is preserved as a ref (not dropped) when unknown to the index",
+			createV1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":         103,
+									"type":       "timeseries",
+									"datasource": "TEST_DB",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId": "A",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Contains(t, v2alpha1.Spec.Elements, "panel-103")
+				panel := v2alpha1.Spec.Elements["panel-103"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 1)
+				query := panel.Spec.Data.Spec.Queries[0]
+				require.NotNil(t, query.Spec.Datasource, "bare-string panel datasource should be preserved as a ref, not dropped")
+
+				require.NotNil(t, query.Spec.Datasource.Uid)
+				require.NotNil(t, query.Spec.Datasource.Type)
+				assert.Equal(t, "TEST_DB", *query.Spec.Datasource.Uid,
+					"unknown legacy string datasource should be preserved as the UID")
+				assert.Equal(t, "", *query.Spec.Datasource.Type,
+					"unknown legacy string datasource should have empty type (no index match)")
+			},
+		},
 	}
 
 	for _, tt := range testCases {

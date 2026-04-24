@@ -91,6 +91,18 @@ func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	return dsUID
 }
 
+// resolves a bare-string datasource name/UID (e.g. "TEST_DB") to a (uid, type) pair.
+// Unknown strings are preserved as UID with empty type.
+func resolveLegacyStringDatasource(ctx context.Context, name string, provider schemaversion.DataSourceIndexProvider) (uid, typ string) {
+	if provider == nil {
+		return name, ""
+	}
+	if ds := provider.Index(ctx).Lookup(name); ds != nil {
+		return ds.UID, ds.Type
+	}
+	return name, ""
+}
+
 // prepareV1ConversionContext sets up the context with namespace and service identity
 // for v1 dashboard conversions. This context is needed to retrieve datasources for
 // converting dashboard datasource references.
@@ -1313,8 +1325,9 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1677,8 +1690,9 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1870,8 +1884,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -2176,9 +2191,14 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			}
 		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
 			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
-			// Only process template variables - other string values are not supported in V2 format
 			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
 				Uid: &dsStr,
+			}
+		} else if dsStr, ok := ds.(string); ok && dsStr != "" {
+			dsUID, dsType := resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
+			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+				Type: &dsType,
+				Uid:  &dsUID,
 			}
 		}
 	}
@@ -2268,8 +2288,9 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		}
 	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
 		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		queryDatasourceUID = dsStr
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && dsStr != "" {
+		queryDatasourceUID, queryDatasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	}
 	// Apply panel ref when panel has a concrete UID (non-empty, not mixed) and query has no ref or differs (same rule as frontend).
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
