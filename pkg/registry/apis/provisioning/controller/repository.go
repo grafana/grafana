@@ -194,7 +194,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 
 	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
-		go wait.UntilWithContext(ctx, rc.runWorker, time.Second)
+		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
+		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
 	}
 
 	logger.Info("Started workers")
