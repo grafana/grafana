@@ -123,8 +123,8 @@ func (r *redactor) name(kind identKind, original string) string {
 func (r *redactor) redact(stmt sqlparser.SQLNode) {
 	_ = sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
 		if cte, ok := node.(*sqlparser.CommonTableExpr); ok && cte.AliasedTableExpr != nil {
-			if !cte.AliasedTableExpr.As.IsEmpty() {
-				_ = r.name(identKindTable, cte.AliasedTableExpr.As.String())
+			if !cte.As.IsEmpty() {
+				_ = r.name(identKindTable, cte.As.String())
 			}
 		}
 		return true, nil
