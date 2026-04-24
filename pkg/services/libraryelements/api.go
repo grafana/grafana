@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
-	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -430,7 +429,7 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, model.ErrLibraryElementProvisionedFolder) {
 		return response.Error(http.StatusConflict, model.ErrLibraryElementProvisionedFolder.Error(), err)
 	}
-	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
+	if errors.Is(err, model.ErrLibraryElementInsufficientPermissions) {
 		return response.Error(http.StatusForbidden, err.Error(), err)
 	}
 
