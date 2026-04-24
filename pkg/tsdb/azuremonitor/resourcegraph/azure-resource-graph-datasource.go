@@ -205,11 +205,6 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, reqBod
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return AzureResourceGraphResponse{}, err
-	}
-
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			e.Logger.Warn("Failed to close response body", "err", err)
@@ -217,6 +212,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}()
 
 	if res.StatusCode/100 != 2 {
+		body, _ := io.ReadAll(res.Body)
 		err := fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return AzureResourceGraphResponse{}, backend.DownstreamError(err)
@@ -225,10 +221,11 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}
 
 	var data AzureResourceGraphResponse
-	d := json.NewDecoder(bytes.NewReader(body))
+	// UseNumber preserves int64 precision; Log Analytics-style response
+	// tables downstream of this may type-assert cells to json.Number.
+	d := json.NewDecoder(res.Body)
 	d.UseNumber()
-	err = d.Decode(&data)
-	if err != nil {
+	if err := d.Decode(&data); err != nil {
 		return AzureResourceGraphResponse{}, err
 	}
 

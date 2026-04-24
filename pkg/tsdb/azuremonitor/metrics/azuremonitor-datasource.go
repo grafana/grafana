@@ -296,19 +296,14 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 		}
 	}()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %s", err)
-	}
-
 	if res.StatusCode/100 != 2 {
+		body, _ := io.ReadAll(res.Body)
 		return "", utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.SubscriptionsResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal subscription detail response. error: %s, status: %s, body: %s", err, res.Status, string(body))
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return "", fmt.Errorf("failed to unmarshal subscription detail response. error: %s, status: %s", err, res.Status)
 	}
 
 	return data.DisplayName, nil
@@ -378,18 +373,13 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, url string) 
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return types.AzureMonitorResponse{}, err
-	}
-
 	if res.StatusCode/100 != 2 {
+		body, _ := io.ReadAll(res.Body)
 		return types.AzureMonitorResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.AzureMonitorResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
 		return types.AzureMonitorResponse{}, err
 	}
 

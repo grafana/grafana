@@ -853,10 +853,6 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureRespon
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return AzureLogAnalyticsResponse{}, err
-	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			e.Logger.Warn("Failed to close response body", "err", err)
@@ -864,14 +860,17 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
+		body, _ := io.ReadAll(res.Body)
 		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse
-	d := json.NewDecoder(bytes.NewReader(body))
+	// UseNumber preserves int64 precision; downstream converters in
+	// azure-response-table-frame.go type-assert cells to json.Number and
+	// fail on any other numeric type, so this must stay.
+	d := json.NewDecoder(res.Body)
 	d.UseNumber()
-	err = d.Decode(&data)
-	if err != nil {
+	if err := d.Decode(&data); err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
 
