@@ -510,12 +510,12 @@ export interface FeatureToggles {
   scopeApi?: boolean;
   /**
   * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default false
+  * @default true
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default false
+  * @default true
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
@@ -981,7 +981,7 @@ export interface FeatureToggles {
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
-  * @default false
+  * @default true
   */
   useScopesNavigationEndpoint?: boolean;
   /**
