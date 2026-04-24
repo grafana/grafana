@@ -98,19 +98,16 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
-	queryJSONModel := dataquery.AzureMonitorQuery{}
+	// GrafanaSql is not present on the generated AzureMonitorQuery type yet;
+	// embedding lets us pick it up in the same Unmarshal pass.
+	// TODO: Move GrafanaSql to the generated type.
+	var queryJSONModel struct {
+		dataquery.AzureMonitorQuery
+		GrafanaSql bool `json:"grafanaSql"`
+	}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
-	}
-
-	// TODO: Move this to the generated type
-	var queryEnvelope struct {
-		GrafanaSql bool `json:"grafanaSql"`
-	}
-	err = json.Unmarshal(query.JSON, &queryEnvelope)
-	if err != nil {
-		queryEnvelope.GrafanaSql = false
 	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
@@ -133,7 +130,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	filterInBody := true
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
-	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
+	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel.AzureMonitorQuery); hasOne {
 		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
@@ -239,7 +236,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
-		GrafanaSql:   queryEnvelope.GrafanaSql,
+		GrafanaSql:   queryJSONModel.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
