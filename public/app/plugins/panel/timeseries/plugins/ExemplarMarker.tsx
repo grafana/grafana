@@ -176,6 +176,7 @@ export const ExemplarMarker = ({
         ref={refs.setReference}
         className={styles.markerWrapper}
         data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
+        data-rowindex={rowIndex}
         role="button"
         tabIndex={0}
         {...getReferenceProps()}
