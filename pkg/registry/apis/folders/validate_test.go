@@ -57,10 +57,19 @@ func TestValidateCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "reserved name",
+			name: "reserved name - general",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "general", // can not name something with general
+					Name: folder.GeneralFolderUID,
+				},
+			},
+			expectedErr: "invalid uid for folder provided",
+		},
+		{
+			name: "reserved name - sharedwithme",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: folder.SharedWithMeFolderUID,
 				},
 			},
 			expectedErr: "invalid uid for folder provided",
@@ -198,6 +207,42 @@ func TestValidateCreate(t *testing.T) {
 			maxDepth: setting.NewCfg().MaxNestedFolderDepth,
 		},
 		{
+			name: "title is reserved name General",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "abc123",
+				},
+				Spec: folders.FolderSpec{
+					Title: "General",
+				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
+			name: "title is reserved name General case insensitive",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "abc123",
+				},
+				Spec: folders.FolderSpec{
+					Title: "GENERAL",
+				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
+			name: "title is reserved name General with surrounding whitespace",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "abc123",
+				},
+				Spec: folders.FolderSpec{
+					Title: "  General  ",
+				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
 			name: "cannot create a circular reference",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -305,6 +350,66 @@ func TestValidateUpdate(t *testing.T) {
 					Title: "old title",
 				},
 			},
+		},
+		{
+			name: "title is reserved name General",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "General",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
+			name: "title is reserved name General case insensitive",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "GENERAL",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
+			name: "title is reserved name General with surrounding whitespace",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "  General  ",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			expectedErr: "folder.name-exists",
 		},
 		{
 			name: "error to move into k6 folder",

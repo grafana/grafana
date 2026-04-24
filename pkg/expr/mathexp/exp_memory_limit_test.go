@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestEstimateBinaryMemory(t *testing.T) {
@@ -153,7 +154,7 @@ func TestWalkBinary_memory_limit_blocks_cartesian_explosion(t *testing.T) {
 	// Empty labels match everything, producing a true 10,000-pair cartesian product.
 	aValues := make(Values, 100)
 	bValues := make(Values, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		aValues[i] = makeSeries("a", data.Labels{},
 			tp{time.Unix(1, 0), float64Pointer(1)},
 			tp{time.Unix(2, 0), float64Pointer(2)},
@@ -187,7 +188,7 @@ func TestWalkBinary_memory_limit_allows_matched_labels(t *testing.T) {
 	// This produces exactly 100 unions (1:1), which should be well within limits.
 	aValues := make(Values, 100)
 	bValues := make(Values, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		label := data.Labels{"id": string(rune('A'+i%26)) + string(rune('0'+i/26))}
 		aValues[i] = makeSeries("a", label,
 			tp{time.Unix(1, 0), float64Pointer(float64(i))},

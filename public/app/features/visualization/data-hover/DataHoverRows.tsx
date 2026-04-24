@@ -7,9 +7,9 @@ import * as React from 'react';
 import { type DataFrame, FieldType, getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 import { DataHoverRow } from './DataHoverRow';
+import { renderValue } from './renderValue';
 
 type Props = {
   layers: GeomapLayerHover[];

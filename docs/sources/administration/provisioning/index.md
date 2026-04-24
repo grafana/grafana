@@ -19,9 +19,15 @@ weight: 4100
 
 Grafana has an active provisioning system that uses configuration files. You can define data sources and dashboards using files that can be version controlled, making GitOps more natural.
 
+{{< admonition type="note" >}}
+
+For advanced as code options such as Infrastructure as code, Git Sync or on-prem file provisioning refer to [Deploy, configure and provision Grafana with as-code workflows](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/).
+
+{{< /admonition >}}
+
 ## Configuration file
 
-Refer to [Configuration](../../setup-grafana/configure-grafana/) for more information on what you can configure in `grafana.ini`.
+Refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) for more information on what you can configure in `grafana.ini`.
 
 ### Configuration file locations
 
@@ -78,19 +84,6 @@ datasources:
       password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
       password4: 'Pa$sw0rd' # Resolved as Pa
 ```
-
-## Configuration management tools
-
-The Grafana community maintains libraries for many popular configuration management tools.
-
-| Tool      | Project                                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Puppet    | <https://forge.puppet.com/puppet/grafana>                                                                                         |
-| Ansible   | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
-| Chef      | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
-| Saltstack | <https://github.com/salt-formulas/salt-formula-grafana>                                                                           |
-| Jsonnet   | <https://github.com/grafana/grafonnet-lib/>)                                                                                      |
-| NixOS     | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
 ## Data sources
 
@@ -746,3 +739,14 @@ Grafana Enterprise supports:
 
 - [Provisioning role-based access control with Grafana](../roles-and-permissions/access-control/rbac-grafana-provisioning/)
 - [Provisioning role-based access control with Terraform](../roles-and-permissions/access-control/rbac-terraform-provisioning/)
+
+## Configuration management tools
+
+The Grafana community maintains libraries for many popular configuration management tools.
+
+| Tool    | Project                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet  | <https://forge.puppet.com/puppet/grafana>                                                                                         |
+| Ansible | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
+| Chef    | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
+| NixOS   | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |

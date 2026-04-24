@@ -1,7 +1,5 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-import WKT from 'ol/format/WKT';
-import Geometry from 'ol/geom/Geometry';
 import { type CSSProperties } from 'react';
 import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -31,6 +29,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
@@ -1106,17 +1105,18 @@ function isPlainObject(value: unknown): value is object {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+export function buildInspectValue(
+  value: unknown,
+  field: Field,
+  formatGeometry?: OpenLayersContextValue['formatGeometry']
+): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  if (field.type === FieldType.geo && value instanceof Geometry) {
-    inspectValue = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (field.type === FieldType.geo && isGeometry(value)) {
+    inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
     mode = TableCellInspectorMode.code;
   } else if (
     cellOptions.type === TableCellDisplayMode.Sparkline ||

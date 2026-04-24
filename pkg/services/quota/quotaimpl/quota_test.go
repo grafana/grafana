@@ -44,6 +44,7 @@ import (
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -561,7 +562,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 	)
 	require.NoError(t, err)
 	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), cfg, quotaService, storesrv.ProvideSystemUsersService())

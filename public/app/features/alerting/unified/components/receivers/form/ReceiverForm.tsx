@@ -113,7 +113,6 @@ export function ReceiverForm<R extends ChannelValues>({
         error.cause = e;
         logError(error);
       }
-      throw e;
     }
   };
 

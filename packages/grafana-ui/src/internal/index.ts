@@ -73,7 +73,7 @@ export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
 export { TimeZoneOffset, formatUtcOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
-export { TimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
+export { TimeZoneTitle, getTimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';

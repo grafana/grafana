@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -48,7 +47,7 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 	query := &annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        orgID,
-		Limit:        1000,
+		AnnotationID: id,
 		Type:         "annotation",
 	}
 
@@ -57,13 +56,11 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		return nil, err
 	}
 
-	for _, item := range items {
-		if item.ID == id {
-			return a.toK8sResource(item, namespace), nil
-		}
+	if len(items) == 0 {
+		return nil, ErrNotFound
 	}
 
-	return nil, apierrors.NewNotFound(annotationGR, name)
+	return a.toK8sResource(items[0], namespace), nil
 }
 
 func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOptions) (*AnnotationList, error) {

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 
 import {
-  PluginState,
   type TransformerRegistryItem,
   type TransformerUIProps,
   ReducerID,
@@ -133,7 +132,6 @@ export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryI
       transformation: timeSeriesTableTransformer,
       name: timeSeriesTableTransformer.name,
       description: timeSeriesTableTransformer.description,
-      state: PluginState.beta,
       imageDark: darkImage,
       imageLight: lightImage,
     };

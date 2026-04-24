@@ -16,7 +16,7 @@ import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
-import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
+import { getTimeZoneTitle, TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { getMonthOptions } from '../options';
 
 interface Props {
@@ -73,7 +73,7 @@ export const TimePickerFooter = (props: Props) => {
       >
         <div className={style.timeZoneContainer}>
           <div className={style.timeZone}>
-            <TimeZoneTitle title={info.name} />
+            <TimeZoneTitle title={getTimeZoneTitle(info)} />
             <div className={style.spacer} />
             <TimeZoneDescription info={info} />
           </div>

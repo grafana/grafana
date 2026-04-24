@@ -97,7 +97,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	// we can simply return the fallback for validation.
 	err := provisioning.ValidateContactPoint(context.Background(), &cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
-	})
+	}, nil)
 	if err != nil {
 		return definitions.EmbeddedContactPoint{}, err
 	}

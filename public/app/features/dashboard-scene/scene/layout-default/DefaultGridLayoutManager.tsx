@@ -95,6 +95,10 @@ export class DefaultGridLayoutManager
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public getAllGridTypes(): string[] {
+    return [DefaultGridLayoutManager.descriptor.id];
+  }
+
   public mergeGrid(other: DashboardLayoutGrid) {
     let offset = 0;
     for (const child of this.state.grid.state.children) {

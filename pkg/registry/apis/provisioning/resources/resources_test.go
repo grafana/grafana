@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -11,10 +12,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 // Use a GVR not in SupportsFolderAnnotation to avoid FolderManager dependency
@@ -474,4 +477,145 @@ func TestDeleteOldResource(t *testing.T) {
 		require.NoError(t, err)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
+}
+
+// TestWrapAsValidationErrorIfNeeded pins the classification that decides
+// whether an error produced while writing a resource becomes a job-level
+// warning (non-fatal, the sync continues) or a hard error (fails the sync).
+// Anything wrapped as *ResourceValidationError is later surfaced as a warning
+// by jobs.classifyWarning.
+func TestWrapAsValidationErrorIfNeeded(t *testing.T) {
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+
+	t.Run("nil passes through", func(t *testing.T) {
+		require.NoError(t, wrapAsValidationErrorIfNeeded(nil))
+	})
+
+	t.Run("already a ResourceValidationError is returned unchanged", func(t *testing.T) {
+		original := NewResourceValidationError(errors.New("boom"))
+		got := wrapAsValidationErrorIfNeeded(original)
+		require.Same(t, original, got, "should return the same instance, not rewrap")
+	})
+
+	t.Run("field.Error is wrapped as a warning", func(t *testing.T) {
+		fieldErr := field.Required(field.NewPath("metadata", "name"), "missing name")
+		got := wrapAsValidationErrorIfNeeded(fieldErr)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("apierrors BadRequest is wrapped as a warning", func(t *testing.T) {
+		badReq := apierrors.NewBadRequest("bad payload")
+		got := wrapAsValidationErrorIfNeeded(badReq)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("apierrors Invalid (schema type mismatch) is wrapped as a warning", func(t *testing.T) {
+		// Mirrors the dashboard apiserver's strict validation path, which
+		// returns StatusReasonInvalid for CUE "conflicting values" failures.
+		invalid := apierrors.NewInvalid(dashboardGK, "AWSLambda", field.ErrorList{
+			field.Invalid(
+				field.NewPath("spec", "refresh"),
+				field.OmitValueType{},
+				`conflicting values false and string (mismatched types bool and string)`,
+			),
+		})
+		got := wrapAsValidationErrorIfNeeded(invalid)
+		requireWrappedAsValidation(t, got)
+		// The warning message should preserve the apiserver details so
+		// operators can locate the offending field in the file.
+		require.Contains(t, got.Error(), `Dashboard.dashboard.grafana.app "AWSLambda" is invalid`)
+		require.Contains(t, got.Error(), "spec.refresh")
+	})
+
+	t.Run("apierrors Invalid (immutable metadata.name) is wrapped as a warning", func(t *testing.T) {
+		// metadata.name immutability is enforced by apimachinery and returned
+		// as StatusReasonInvalid. This is the "field is immutable" variant
+		// seen when a file changes the name of an existing resource.
+		invalid := apierrors.NewInvalid(dashboardGK, "API-initiation-monitor", field.ErrorList{
+			field.Invalid(
+				field.NewPath("metadata", "name"),
+				"API-initiation-monitor",
+				"field is immutable",
+			),
+		})
+		got := wrapAsValidationErrorIfNeeded(invalid)
+		requireWrappedAsValidation(t, got)
+		require.Contains(t, got.Error(), "metadata.name")
+		require.Contains(t, got.Error(), "field is immutable")
+	})
+
+	t.Run("apierrors Invalid wrapped with fmt.Errorf is still wrapped as a warning", func(t *testing.T) {
+		// The sync path wraps the raw apiserver error with fmt.Errorf(%w).
+		// errors.As / IsInvalid must still traverse the chain.
+		invalid := apierrors.NewInvalid(dashboardGK, "dash", field.ErrorList{
+			field.Invalid(field.NewPath("spec", "refresh"), field.OmitValueType{}, "mismatched types"),
+		})
+		wrapped := fmt.Errorf("writing resource: %w", invalid)
+		got := wrapAsValidationErrorIfNeeded(wrapped)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("DashboardErr is wrapped as a warning", func(t *testing.T) {
+		dErr := dashboardaccess.DashboardErr{
+			StatusCode: 400,
+			Status:     "bad-request",
+			Reason:     "Dashboard refresh interval is too low",
+		}
+		got := wrapAsValidationErrorIfNeeded(dErr)
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("ErrDuplicateName is wrapped as a warning", func(t *testing.T) {
+		got := wrapAsValidationErrorIfNeeded(fmt.Errorf("dup: %w", ErrDuplicateName))
+		requireWrappedAsValidation(t, got)
+	})
+
+	t.Run("ErrAlreadyInRepository is wrapped as a warning", func(t *testing.T) {
+		got := wrapAsValidationErrorIfNeeded(fmt.Errorf("dup: %w", ErrAlreadyInRepository))
+		requireWrappedAsValidation(t, got)
+	})
+
+	// The following are explicitly NOT wrapped: they represent transient or
+	// authorization issues, or internal failures, where the whole sync should
+	// surface as an error rather than being quietly downgraded to a warning.
+	t.Run("apierrors Forbidden is not wrapped", func(t *testing.T) {
+		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "g", Resource: "r"}, "foo", errors.New("nope"))
+		got := wrapAsValidationErrorIfNeeded(forbidden)
+		requireNotWrapped(t, got, forbidden)
+	})
+
+	t.Run("apierrors Conflict is not wrapped", func(t *testing.T) {
+		conflict := apierrors.NewConflict(schema.GroupResource{Group: "g", Resource: "r"}, "foo", errors.New("version mismatch"))
+		got := wrapAsValidationErrorIfNeeded(conflict)
+		requireNotWrapped(t, got, conflict)
+	})
+
+	t.Run("apierrors InternalError is not wrapped", func(t *testing.T) {
+		internal := apierrors.NewInternalError(errors.New("kaboom"))
+		got := wrapAsValidationErrorIfNeeded(internal)
+		requireNotWrapped(t, got, internal)
+	})
+
+	t.Run("arbitrary non-apimachinery errors are not wrapped", func(t *testing.T) {
+		plain := errors.New("network timeout")
+		got := wrapAsValidationErrorIfNeeded(plain)
+		requireNotWrapped(t, got, plain)
+	})
+}
+
+func requireWrappedAsValidation(t *testing.T, err error) {
+	t.Helper()
+	require.Error(t, err)
+	var validationErr *ResourceValidationError
+	require.True(t, errors.As(err, &validationErr),
+		"error %q should be wrapped as *ResourceValidationError to become a job warning", err)
+}
+
+func requireNotWrapped(t *testing.T, got, original error) {
+	t.Helper()
+	require.Error(t, got)
+	var validationErr *ResourceValidationError
+	require.False(t, errors.As(got, &validationErr),
+		"error %q should NOT be wrapped as *ResourceValidationError (would incorrectly become a warning)", got)
+	require.Same(t, original, got, "non-wrapped errors should be returned unchanged")
 }

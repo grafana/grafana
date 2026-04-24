@@ -13,6 +13,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -42,19 +43,26 @@ const (
 
 	editLabelMaxAttempts   = 4
 	editLabelMaxRetryDelay = 2 * time.Second
+
+	defaultPollInterval = 1 * time.Hour
+	pollPageSize        = 2000
 )
 
-// TenantWatcher watches Tenant CRDs via a Kubernetes informer and syncs
-// pending-delete state to the KV store.
+// TenantWatcher watches Tenant CRDs and syncs pending-delete state to the KV
+// store. It runs either a Kubernetes informer or a periodic polling loop
+// depending on config.
 type TenantWatcher struct {
 	log                log.Logger
 	pendingDeleteStore *PendingDeleteStore
 	dataStore          *dataStore
 	writeEvent         EventAppender
-	ctx                context.Context
+	client             dynamic.Interface
 	stopCh             chan struct{}
-	factory            dynamicinformer.DynamicSharedInformerFactory
 	retryMaxDelay      time.Duration
+	// Informer-path state. Nil when UsePolling is true.
+	factory dynamicinformer.DynamicSharedInformerFactory
+	// Polling-path state. Zero when UsePolling is false.
+	pollInterval time.Duration
 }
 
 // TenantWatcherConfig holds configuration for the TenantWatcher.
@@ -73,7 +81,14 @@ type TenantWatcherConfig struct {
 	ResyncInterval time.Duration
 	// RetryMaxDelay is the maximum delay between retries in case of write conflicts when updating resource labels.
 	RetryMaxDelay time.Duration
-	Log           log.Logger
+	// UsePolling selects the periodic polling strategy instead of a Kubernetes
+	// informer. Better memory usage than informer since informer reads all pending delete tenants into cache.
+	// Polling is only memory bound by page size.
+	UsePolling bool
+	// PollInterval is the delay between poll cycles when UsePolling is true.
+	// Defaults to 1 hour if zero.
+	PollInterval time.Duration
+	Log          log.Logger
 }
 
 // NewTenantWatcherConfig creates TenantWatcherConfig from Grafana settings and returns nil
@@ -93,6 +108,8 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
 		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
 		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
+		UsePolling:         cfg.TenantWatcherUsePolling,
+		PollInterval:       cfg.TenantWatcherPollInterval,
 		Log:                logger,
 	}
 
@@ -199,30 +216,174 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),
 		dataStore:          ds,
 		writeEvent:         writeEvent,
-		ctx:                ctx,
+		client:             client,
 		stopCh:             make(chan struct{}),
 		retryMaxDelay:      retryMaxDelay,
 	}
 
-	tw.factory = dynamicinformer.NewDynamicSharedInformerFactory(client, resync)
+	if cfg.UsePolling {
+		interval := cfg.PollInterval
+		if interval <= 0 {
+			interval = defaultPollInterval
+		}
+		tw.pollInterval = interval
+		go tw.startPolling(ctx)
+		logger.Info("tenant watcher started", "strategy", "polling", "poll_interval", interval)
+		return tw, nil
+	}
+
+	if err := tw.startInformer(ctx, resync); err != nil {
+		return nil, err
+	}
+	logger.Info("tenant watcher started", "strategy", "informer")
+
+	return tw, nil
+}
+
+func (tw *TenantWatcher) startInformer(ctx context.Context, resync time.Duration) error {
+	tw.factory = dynamicinformer.NewDynamicSharedInformerFactory(tw.client, resync)
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
-	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			tw.handleTenant(obj.(*unstructured.Unstructured))
+			tw.handleTenant(ctx, obj.(*unstructured.Unstructured))
 		},
 		UpdateFunc: func(_, newObj interface{}) {
-			tw.handleTenant(newObj.(*unstructured.Unstructured))
+			tw.handleTenant(ctx, newObj.(*unstructured.Unstructured))
 		},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tw.factory.Start(tw.stopCh)
-	logger.Info("tenant watcher started")
+	return nil
+}
 
-	return tw, nil
+func (tw *TenantWatcher) startPolling(ctx context.Context) {
+	tw.runPollCycle(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tw.stopCh:
+			return
+		case <-time.After(tw.pollInterval):
+			tw.runPollCycle(ctx)
+		}
+	}
+}
+
+// runPollCycle does one poll cycle: paginated LIST of pending-delete tenants,
+// reconcile each, then clear KV records for tenants that dropped out of the
+// filtered view. Memory is bounded to one page plus the liveNames set.
+func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
+	start := time.Now()
+	liveNames := make(map[string]struct{})
+
+	var continueToken string
+	var pageCount int
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tw.stopCh:
+			return
+		default:
+		}
+
+		page, err := tw.client.Resource(tenantGVR).List(ctx, metav1.ListOptions{
+			Limit:         pollPageSize,
+			Continue:      continueToken,
+			LabelSelector: labelPendingDelete + "=true",
+		})
+		if err != nil {
+			tw.log.Error("tenant watcher poll cycle: list failed, skipping clear phase",
+				"error", err, "pages_so_far", pageCount, "names_so_far", len(liveNames))
+			return
+		}
+		pageCount++
+		for i := range page.Items {
+			item := &page.Items[i]
+			liveNames[item.GetName()] = struct{}{}
+			tw.handleTenant(ctx, item)
+		}
+		continueToken = page.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	listDuration := time.Since(start)
+
+	// An empty list should never happen. If it does something is very wrong, and we don't want to nuke all the
+	// pending delete records as a consequence.
+	if len(liveNames) == 0 {
+		tw.log.Warn("tenant watcher poll cycle: zero live tenants, skipping clear phase",
+			"pages", pageCount, "list_duration", listDuration)
+		return
+	}
+
+	// Go through all pending delete records and reconcile against the pending-delete tenants from the List above
+	clearStart := time.Now()
+	var cleared, leftForDeleter, scanned, raced, orphanedSkipped int
+	for name, err := range tw.pendingDeleteStore.Names(ctx) {
+		if err != nil {
+			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
+			return
+		}
+		scanned++
+		if _, live := liveNames[name]; live {
+			continue
+		}
+		// Orphaned records can't be cleared by the watcher, so skip the tenant
+		// API GET entirely — clearTenantPendingDelete would refuse to clear them.
+		record, err := tw.pendingDeleteStore.Get(ctx, name)
+		if err != nil {
+			tw.log.Warn("tenant watcher poll cycle: failed to read pending delete record, leaving record",
+				"tenant", name, "error", err)
+			leftForDeleter++
+			continue
+		}
+		if record.Orphaned {
+			orphanedSkipped++
+			continue
+		}
+		got, err := tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
+		// if not found then the tenant was deleted in the tenant api - so keep the record
+		if apierrors.IsNotFound(err) {
+			leftForDeleter++
+			continue
+		}
+		if err != nil {
+			tw.log.Warn("tenant watcher poll cycle: failed to check tenant existence, leaving record",
+				"tenant", name, "error", err)
+			leftForDeleter++
+			continue
+		}
+		// Defend against a race: the label was re-added between our LIST and
+		// this GET. If the tenant is back in the pending-delete cohort, skip
+		// clearing — the next cycle will reconcile it.
+		if got == nil || got.GetLabels()[labelPendingDelete] == "true" {
+			raced++
+			continue
+		}
+		tw.clearTenantPendingDelete(ctx, name)
+		cleared++
+	}
+
+	tw.log.Info("tenant watcher poll cycle complete",
+		"live_tenants", len(liveNames),
+		"pages", pageCount,
+		"kv_records_scanned", scanned,
+		"cleared", cleared,
+		"left_for_deleter", leftForDeleter,
+		"raced", raced,
+		"orphaned_skipped", orphanedSkipped,
+		"list_duration", listDuration,
+		"clear_duration", time.Since(clearStart),
+		"total_duration", time.Since(start),
+	)
 }
 
 // Stop stops the tenant watcher and waits for the informer goroutines to exit.
@@ -233,14 +394,12 @@ func (tw *TenantWatcher) Stop() {
 	}
 }
 
-func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
+func (tw *TenantWatcher) handleTenant(ctx context.Context, tenant *unstructured.Unstructured) {
 	name := tenant.GetName()
 	labels := tenant.GetLabels()
 	annotations := tenant.GetAnnotations()
 
 	tw.log.Debug("tenant watcher got tenant event", "tenant", name, "labels", labels, "annotations", annotations)
-
-	tw.pendingDeleteStore.RefreshCache(tw.ctx)
 
 	if labels[labelPendingDelete] == "true" {
 		deleteAfter, ok := annotations[annotationPendingDeleteAfter]
@@ -248,17 +407,17 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 			tw.log.Warn("tenant marked pending-delete but missing delete-after annotation", "tenant", name)
 			return
 		}
-		tw.reconcileTenantPendingDelete(name, deleteAfter)
+		tw.reconcileTenantPendingDelete(ctx, name, deleteAfter)
 	} else {
-		tw.clearTenantPendingDelete(name)
+		tw.clearTenantPendingDelete(ctx, name)
 	}
 }
 
 // reconcileTenantPendingDelete ensures a pending-delete record exists for the
 // tenant and that all of its resources have been labelled.
-func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter string) {
+func (tw *TenantWatcher) reconcileTenantPendingDelete(ctx context.Context, name string, deleteAfter string) {
 	// Fast path: if the record exists and labelling is complete, nothing to do.
-	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	record, err := tw.pendingDeleteStore.Get(ctx, name)
 	if err == nil && record.LabelingComplete {
 		return
 	}
@@ -272,21 +431,21 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 	record = PendingDeleteRecord{
 		DeleteAfter:      deleteAfter,
 		LabelingComplete: false,
-		Force:            record.Force,
+		Orphaned:         record.Orphaned,
 	}
-	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
+	if err := tw.pendingDeleteStore.Upsert(ctx, name, record); err != nil {
 		tw.log.Error("failed to save pending delete record", "tenant", name, "error", err)
 		return
 	}
 
-	if err := tw.tenantResourcesEditPendingDeleteLabel(name, true); err != nil {
+	if err := tw.tenantResourcesEditPendingDeleteLabel(ctx, name, true); err != nil {
 		tw.log.Error("failed to label tenant resources", "tenant", name, "error", err)
 		return
 	}
 
 	// Mark labelling as complete.
 	record.LabelingComplete = true
-	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
+	if err := tw.pendingDeleteStore.Upsert(ctx, name, record); err != nil {
 		tw.log.Error("failed to mark labeling complete", "tenant", name, "error", err)
 	}
 	tw.log.Info("reconciled tenant pending delete", "tenant", name, "delete_after", deleteAfter)
@@ -294,8 +453,8 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 
 // tenantResourcesEditPendingDeleteLabel iterates every resource belonging to
 // the given tenant and adds or removes the pending-delete label.
-func (tw *TenantWatcher) tenantResourcesEditPendingDeleteLabel(tenantName string, addLabel bool) error {
-	groupResources, err := tw.dataStore.getGroupResources(tw.ctx)
+func (tw *TenantWatcher) tenantResourcesEditPendingDeleteLabel(ctx context.Context, tenantName string, addLabel bool) error {
+	groupResources, err := tw.dataStore.getGroupResources(ctx)
 	if err != nil {
 		return fmt.Errorf("getting group resources: %w", err)
 	}
@@ -307,12 +466,12 @@ func (tw *TenantWatcher) tenantResourcesEditPendingDeleteLabel(tenantName string
 			Namespace: tenantName,
 		}
 
-		for dataKey, err := range tw.dataStore.ListLatestResourceKeys(tw.ctx, listKey) {
+		for dataKey, err := range tw.dataStore.ListLatestResourceKeys(ctx, listKey) {
 			if err != nil {
 				return fmt.Errorf("listing resource keys for %s/%s: %w", gr.Group, gr.Resource, err)
 			}
 
-			if err := tw.editResourceLabel(dataKey, addLabel); err != nil {
+			if err := tw.editResourceLabel(ctx, dataKey, addLabel); err != nil {
 				return fmt.Errorf("editing label on %s: %w", dataKey.String(), err)
 			}
 		}
@@ -321,19 +480,19 @@ func (tw *TenantWatcher) tenantResourcesEditPendingDeleteLabel(tenantName string
 	return nil
 }
 
-func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error {
+func (tw *TenantWatcher) editResourceLabel(ctx context.Context, dataKey DataKey, addLabel bool) error {
 	var err error
 	for attempt := range editLabelMaxAttempts {
 		if attempt > 0 {
 			jitter := time.Duration(rand.Int64N(int64(tw.retryMaxDelay)))
 			select {
 			case <-time.After(jitter):
-			case <-tw.ctx.Done():
-				return tw.ctx.Err()
+			case <-ctx.Done():
+				return ctx.Err()
 			}
 
 			// Re-fetch latest DataKey to get a fresh ResourceVersion.
-			dataKey, err = tw.dataStore.GetLatestResourceKey(tw.ctx, GetRequestKey{
+			dataKey, err = tw.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 				Group:     dataKey.Group,
 				Resource:  dataKey.Resource,
 				Namespace: dataKey.Namespace,
@@ -344,7 +503,7 @@ func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error
 			}
 		}
 
-		err = tw.doEditResourceLabel(dataKey, addLabel)
+		err = tw.doEditResourceLabel(ctx, dataKey, addLabel)
 		if err == nil {
 			return nil
 		}
@@ -355,8 +514,8 @@ func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error
 	return fmt.Errorf("editing resource label failed after %d attempts: %w", editLabelMaxAttempts, err)
 }
 
-func (tw *TenantWatcher) doEditResourceLabel(dataKey DataKey, addLabel bool) error {
-	reader, err := tw.dataStore.Get(tw.ctx, dataKey)
+func (tw *TenantWatcher) doEditResourceLabel(ctx context.Context, dataKey DataKey, addLabel bool) error {
+	reader, err := tw.dataStore.Get(ctx, dataKey)
 	if err != nil {
 		return fmt.Errorf("reading resource: %w", err)
 	}
@@ -411,28 +570,26 @@ func (tw *TenantWatcher) doEditResourceLabel(dataKey DataKey, addLabel bool) err
 		Object:     obj,
 	}
 
-	if _, err := tw.writeEvent(tw.ctx, event); err != nil {
+	if _, err := tw.writeEvent(ctx, event); err != nil {
 		return fmt.Errorf("writing event: %w", err)
 	}
 	return nil
 }
 
-// clearTenantPendingDelete removes the pending-delete record for a tenant from the
-// KV store, but only if the tenant is in the local cache (i.e. actually has a
-// record). For the vast majority of tenants this is a no-op map lookup.
-func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
-	if !tw.pendingDeleteStore.Has(name) {
+// clearTenantPendingDelete removes the pending-delete record for a tenant from
+// the KV store. No-op if the tenant has no record.
+func (tw *TenantWatcher) clearTenantPendingDelete(ctx context.Context, name string) {
+	record, err := tw.pendingDeleteStore.Get(ctx, name)
+	if errors.Is(err, kvpkg.ErrNotFound) {
 		return
 	}
-
-	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
 	if err != nil {
 		tw.log.Warn("failed to get pending delete record for clearing", "tenant", name, "error", err)
 		return
 	}
 
-	if record.Force {
-		tw.log.Warn("tenant has force pending-delete record, skipping clear", "tenant", name)
+	if record.Orphaned {
+		tw.log.Warn("tenant has orphaned pending-delete record, skipping clear", "tenant", name)
 		return
 	}
 
@@ -441,18 +598,18 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 	// reconcileTenantPendingDelete will see LabelingComplete=false and re-label.
 	if record.LabelingComplete {
 		record.LabelingComplete = false
-		if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
+		if err := tw.pendingDeleteStore.Upsert(ctx, name, record); err != nil {
 			tw.log.Error("failed to mark labeling incomplete before unlabelling", "tenant", name, "error", err)
 			return
 		}
 	}
 
-	if err := tw.tenantResourcesEditPendingDeleteLabel(name, false); err != nil {
+	if err := tw.tenantResourcesEditPendingDeleteLabel(ctx, name, false); err != nil {
 		tw.log.Error("failed to unlabel tenant resources, will not delete pending delete record", "tenant", name, "error", err)
 		return
 	}
 
-	if err := tw.pendingDeleteStore.Delete(tw.ctx, name); err != nil {
+	if err := tw.pendingDeleteStore.Delete(ctx, name); err != nil {
 		tw.log.Warn("failed to delete pending delete record", "tenant", name, "error", err)
 		return
 	}
