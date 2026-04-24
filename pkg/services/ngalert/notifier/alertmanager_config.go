@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -386,8 +387,48 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
-// modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
-// applies a modification function to the ExtraConfigs, and saves the result.
+// loadAndMergeExtraConfig parses rawCfg, applies modifyFn to its ExtraConfigs, validates the
+// result (ManagedRoutes conflict and merge), encrypts the ExtraConfigs, and returns the updated
+// config alongside the MergeResult.
+func (moa *MultiOrgAlertmanager) loadAndMergeExtraConfig(
+	ctx context.Context,
+	rawCfg string,
+	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+) (*definitions.PostableUserConfig, definitions.MergeResult, error) {
+	cfg, err := Load([]byte(rawCfg))
+	if err != nil {
+		return nil, definitions.MergeResult{}, fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
+	}
+
+	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
+	if err != nil {
+		return nil, definitions.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
+	}
+
+	if len(cfg.ManagedRoutes) > 0 {
+		for _, c := range cfg.ExtraConfigs {
+			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
+				return nil, definitions.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+			}
+		}
+	}
+
+	merge, err := cfg.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return nil, definitions.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
+	}
+
+	if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
+		return nil, definitions.MergeResult{}, fmt.Errorf("failed to encrypt external configurations: %w", err)
+	}
+
+	return cfg, merge, nil
+}
+
+// modifyAndApplyExtraConfiguration loads the current configuration, applies modifyFn to the
+// ExtraConfigs, validates the result, and saves+applies it inside a single DB transaction.
+// If applying the config to the alertmanager fails, the transaction is rolled back so the DB
+// stays on the last known-good state.
 func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
@@ -399,27 +440,9 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return definition.RenameResources{}, fmt.Errorf("failed to get current configuration: %w", err)
 	}
 
-	cfg, err := Load([]byte(currentCfg.AlertmanagerConfiguration))
+	cfg, merge, err := moa.loadAndMergeExtraConfig(ctx, currentCfg.AlertmanagerConfiguration, modifyFn)
 	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
-	}
-
-	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
-	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to apply extra configuration: %w", err)
-	}
-
-	if len(cfg.ManagedRoutes) > 0 {
-		for _, c := range cfg.ExtraConfigs {
-			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
-				return definition.RenameResources{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-			}
-		}
-	}
-
-	merge, err := cfg.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
+		return definition.RenameResources{}, err
 	}
 
 	if dryRun {
@@ -433,10 +456,6 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
 			return definition.RenameResources{}, err
 		}
-	}
-
-	if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to encrypt external configurations: %w", err)
 	}
 
 	if err := moa.saveAndApplyConfig(ctx, org, am, cfg); err != nil {
@@ -473,6 +492,37 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
 	}
 	return renamed, nil
+}
+
+// SaveExtraConfiguration persists an ExtraConfiguration to the database without applying it.
+// For new orgs with no existing configuration the default config is used as the base.
+// The main sync loop picks up the saved config and applies it on the same tick.
+func (moa *MultiOrgAlertmanager) SaveExtraConfiguration(ctx context.Context, orgID int64, ec definitions.ExtraConfiguration) error {
+	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	if err != nil {
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return fmt.Errorf("failed to get current configuration: %w", err)
+		}
+		currentCfg = &models.AlertConfiguration{
+			AlertmanagerConfiguration: moa.settings.UnifiedAlerting.DefaultConfiguration,
+		}
+	}
+
+	modifyFn := func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+		return []definitions.ExtraConfiguration{ec}, nil
+	}
+
+	cfg, _, err := moa.loadAndMergeExtraConfig(ctx, currentCfg.AlertmanagerConfiguration, modifyFn)
+	if err != nil {
+		return err
+	}
+
+	cfgBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize alertmanager configuration: %w", err)
+	}
+
+	return moa.configStore.SaveAlertmanagerConfiguration(ctx, newSaveAMConfigCmd(string(cfgBytes), orgID, false))
 }
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.

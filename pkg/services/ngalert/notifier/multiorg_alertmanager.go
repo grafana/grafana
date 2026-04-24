@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -110,15 +112,19 @@ type MultiOrgAlertmanager struct {
 	alertsBroadcastChannel alertingCluster.ClusterChannel
 	settleCancel           context.CancelFunc
 
-	configStore AlertingStore
-	orgStore    store.OrgStore
-	kvStore     kvstore.KVStore
-	factory     OrgAlertmanagerFactory
+	configStore      AlertingStore
+	orgStore         store.OrgStore
+	kvStore          kvstore.KVStore
+	adminConfigStore store.AdminConfigurationStore
+	factory          OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
+
+	datasourceService datasources.DataSourceService
+	httpClient        *http.Client
 
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
@@ -150,6 +156,8 @@ func NewMultiOrgAlertmanager(
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,
+	adminConfigStore store.AdminConfigurationStore,
+	datasourceService datasources.DataSourceService,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -163,11 +171,14 @@ func NewMultiOrgAlertmanager(
 		configStore:                 configStore,
 		orgStore:                    orgStore,
 		kvStore:                     kvStore,
+		adminConfigStore:            adminConfigStore,
 		decryptFn:                   decryptFn,
 		receiverResourcePermissions: receiverResourcePermissions,
 		routesResourcePermissions:   routesResourcePermissions,
 		metrics:                     m,
 		ns:                          ns,
+		datasourceService:           datasourceService,
+		httpClient:                  &http.Client{Timeout: 30 * time.Second},
 		peer:                        &NilPeer{},
 	}
 
@@ -342,6 +353,9 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 		return err
 	}
 
+	// Sync remote AM configs to DB first so SyncAlertmanagersForOrgs sees fresh data.
+	moa.syncExternalAMs(ctx, orgIDs)
+
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
@@ -374,6 +388,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
 		return
 	}
+
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
