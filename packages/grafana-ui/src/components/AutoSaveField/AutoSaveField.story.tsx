@@ -105,7 +105,6 @@ export const AllComponents: StoryFn = (args) => {
   const [checkBoxValue, setCheckBoxValue] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
   const [switchValue, setSwitchValue] = useState(false);
-  const comboboxId = useId();
   const radioButtonId = useId();
   const textAreaId = useId();
 
@@ -126,7 +125,6 @@ export const AllComponents: StoryFn = (args) => {
       <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Combobox as child" {...args}>
         {(onChange) => (
           <Combobox
-            id={comboboxId}
             options={themeOptions}
             value={comoboboxValue}
             onChange={(v) => {
