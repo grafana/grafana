@@ -31,6 +31,13 @@ const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: true });
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
   });
 
   afterAll(() => {

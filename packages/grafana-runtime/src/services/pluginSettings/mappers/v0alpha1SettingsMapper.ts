@@ -3,9 +3,7 @@ import {
   PluginIncludeType,
   PluginType,
   type KeyValue,
-  PluginState,
   PluginSignatureType,
-  PluginSignatureStatus,
   locationUtil,
   type PluginMeta,
 } from '@grafana/data';
@@ -16,6 +14,8 @@ import {
   extensionsMapper,
   infoMapper,
   loadingStrategyMapper,
+  stateMapper,
+  signatureStatusMapper,
 } from '../../pluginMeta/mappers/shared';
 import type { Include as v0alpha1Include, Spec as v0alpha1Spec } from '../../pluginMeta/types/meta/types.spec.gen';
 import { logPluginSettingsWarning } from '../logging';
@@ -160,43 +160,6 @@ export function includesMapper(spec: v0alpha1Spec): PluginInclude[] {
     uid: i.uid ?? '',
     slug: slugMapper(i),
   }));
-}
-
-export function stateMapper(spec: v0alpha1Spec): PluginState {
-  switch (spec.pluginJson.state) {
-    case 'alpha':
-      return PluginState.alpha;
-    case 'beta':
-      return PluginState.beta;
-    case 'deprecated':
-      return PluginState.deprecated;
-    case 'stable':
-      return PluginState.stable;
-    default:
-      logPluginSettingsWarning(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return (spec.pluginJson.state ?? '') as PluginState;
-  }
-}
-
-export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus {
-  switch (spec.signature.status) {
-    case 'internal':
-      return PluginSignatureStatus.internal;
-    case 'invalid':
-      return PluginSignatureStatus.invalid;
-    case 'modified':
-      return PluginSignatureStatus.modified;
-    case 'valid':
-      return PluginSignatureStatus.valid;
-    default:
-      logPluginSettingsWarning(
-        `signatureStatusMapper: unknown PluginSignatureStatus ${spec.signature.status}`,
-        spec.pluginJson.id
-      );
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return (spec.signature.status ?? '') as PluginSignatureStatus;
-  }
 }
 
 export function signatureTypeMapper(spec: v0alpha1Spec): PluginSignatureType {

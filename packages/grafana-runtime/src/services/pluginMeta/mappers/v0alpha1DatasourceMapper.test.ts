@@ -1,5 +1,6 @@
 import { PluginLoadingStrategy, PluginSignatureStatus, PluginType } from '@grafana/data';
 
+import { setLogger } from '../../logging/registry';
 import { v0alpha1Response } from '../test-fixtures/v0alpha1Response';
 import type { DatasourcePluginMetas } from '../types';
 
@@ -13,6 +14,13 @@ describe('v0alpha1DatasourceMapper', () => {
   let result: DatasourcePluginMetas;
 
   beforeAll(() => {
+    setLogger('grafana/runtime.plugins.settings', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
     result = v0alpha1DatasourceMapper(v0alpha1Response);
   });
 

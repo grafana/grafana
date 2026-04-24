@@ -3,7 +3,7 @@ import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import type { DatasourcePluginMetas, DatasourcePluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
+import { angularMapper, infoMapper, loadingStrategyMapper, signatureStatusMapper, stateMapper } from './shared';
 
 function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
   const {
@@ -27,7 +27,7 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
   const type = PluginType.datasource;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;

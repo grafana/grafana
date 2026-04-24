@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 
 import { setLogger } from '../../logging/registry';
+import { signatureStatusMapper, stateMapper } from '../../pluginMeta/mappers/shared';
 import { myOrgTestAppMeta } from '../../pluginMeta/test-fixtures/v0alpha1Response';
 import type { Include as v0alpha1Include, Spec as v0alpha1Spec } from '../../pluginMeta/types/meta/types.spec.gen';
 import { myOrgTestAppSettings } from '../test-fixtures/v0alpha1Response';
@@ -21,10 +22,8 @@ import {
   inlineSecureValuesMapper,
   secureJsonFieldsMapper,
   settingsSpecMapper,
-  signatureStatusMapper,
   signatureTypeMapper,
   slugMapper,
-  stateMapper,
   typeMapper,
   v0alpha1SettingsMapper,
 } from './v0alpha1SettingsMapper';

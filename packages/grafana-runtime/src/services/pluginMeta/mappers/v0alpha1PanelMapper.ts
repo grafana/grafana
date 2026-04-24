@@ -3,7 +3,7 @@ import { type PanelPluginMeta, PluginType } from '@grafana/data';
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
+import { angularMapper, infoMapper, loadingStrategyMapper, signatureStatusMapper, stateMapper } from './shared';
 
 const idToSortMap: Record<string, number> = {
   timeseries: 1,
@@ -38,7 +38,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const type = PluginType.panel;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
