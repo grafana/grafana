@@ -33,6 +33,8 @@ export const FlagKeys = {
   QueryEditorNext: "queryEditorNext",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
+  /** Enables reporting for any page in Grafana */
+  ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
@@ -205,6 +207,18 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 */
 export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("recentlyViewedDashboards", false, options).value;
+};
+
+
+/**
+* Enables reporting for any page in Grafana
+*
+* **Details:**
+* - flag key: `reporting.anyPageReporting`
+* - default value: `false`
+*/
+export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reporting.anyPageReporting", false, options).value;
 };
 
 

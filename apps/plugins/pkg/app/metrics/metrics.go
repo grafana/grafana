@@ -18,7 +18,7 @@ var (
 			Name:      "plugin_child_reconciliation_total",
 			Help:      "Total number of child plugin reconciliation operations",
 		},
-		[]string{"status", "action"},
+		[]string{"status", "action", "plugin_id"},
 	)
 
 	ChildReconciliationDurationSeconds = prometheus.NewHistogram(

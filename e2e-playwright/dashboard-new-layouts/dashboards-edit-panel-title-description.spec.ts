@@ -12,9 +12,8 @@ test.use({
 
 const PAGE_UNDER_TEST = '5SdHCadmz/panel-tests-graph';
 
-// TODO: https://github.com/grafana/grafana/issues/120984
-test.skip(
-  'Dashboard',
+test.describe(
+  'Dashboard edit - Panel title and description',
   {
     tag: ['@dashboards'],
   },
@@ -48,14 +47,8 @@ test.skip(
 
       // Reveal description tooltip and check that its value is as expected
       const descriptionIcon = page.locator('[data-testid="title-items-container"] > span').first();
-      await descriptionIcon.click({ force: true });
-
-      // Get the tooltip ID from the aria-describedby attribute
-      const tooltipId = await descriptionIcon.getAttribute('aria-describedby');
-      await expect(async () => {
-        const tooltip = page.locator(`[id="${tooltipId}"]`);
-        await expect(tooltip).toHaveText(`${newDescription}\n`);
-      }).toPass();
+      await descriptionIcon.hover();
+      await expect(page.getByRole('tooltip')).toHaveText(newDescription);
     });
   }
 );

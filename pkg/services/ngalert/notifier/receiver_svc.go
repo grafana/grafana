@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -37,6 +38,8 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
+	emailValidator         EmailIntegrationValidator
 }
 
 type routeService interface {
@@ -102,6 +105,8 @@ func NewReceiverService(
 	tracer tracing.Tracer,
 	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -116,7 +121,22 @@ func NewReceiverService(
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
+		emailValidator:         emailValidator,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
@@ -359,6 +379,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
 		return nil, err
 	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
 
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
@@ -373,7 +396,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, user, createdReceiver); err != nil {
 		span.RecordError(err)
 		return nil, models.ErrReceiverInvalid(err)
 	}
@@ -421,6 +444,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
@@ -499,7 +525,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
 	}
 
-	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, user, updatedReceiver); err != nil {
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
@@ -837,4 +863,19 @@ func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.
 		))
 	}
 	return result
+}
+
+func (rs *ReceiverService) validateReceiver(ctx context.Context, user identity.Requester, receiver models.Receiver) error {
+	if err := receiver.Validate(rs.decryptor(ctx)); err != nil {
+		return err
+	}
+	for idx, integration := range receiver.Integrations {
+		if integration == nil || integration.Config.Type() != schema.EmailType {
+			continue
+		}
+		if err := rs.emailValidator.ValidateIntegration(ctx, user, *integration); err != nil {
+			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
 }

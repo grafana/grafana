@@ -28,7 +28,7 @@
     "@types/react": "18.3.18",
     "i18next-cli": "^1.48.0",
     "ts-node": "10.9.2",
-    "typescript": "5.9.2",
+    "typescript": "6.0.2",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {

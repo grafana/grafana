@@ -4,6 +4,7 @@ import {
   FieldType,
   getDisplayProcessor,
   MappingType,
+  SpecialValueMatch,
   ThresholdsMode,
   type Field,
 } from '@grafana/data';
@@ -143,10 +144,7 @@ describe('prepData', () => {
     const data = prepData!([series]);
     const diams = data[1]![2] as number[];
 
-    // Math: min=0, max=100, minPx=2²=4, maxPx=10²=100, pxRange=96
-    // val=0:   pct=0,   area=4+0*96=4,     diam=√4=2
-    // val=50:  pct=0.5, area=4+0.5*96=52,  diam=√52≈7.211
-    // val=100: pct=1,   area=4+1*96=100,   diam=√100=10
+    // diam = √(minPx² + valPct * (maxPx² - minPx²))
     expect(diams[0]).toBeCloseTo(2, 5);
     expect(diams[1]).toBeCloseTo(Math.sqrt(52), 5);
     expect(diams[2]).toBeCloseTo(10, 5);
@@ -168,9 +166,7 @@ describe('prepData', () => {
     const { prepData } = prepConfig(allSeries, theme);
     const data = prepData!(allSeries);
 
-    // Global range: min=0, max=100 (across both series)
-    // series1 val=0: pct=0, diam=√4=2
-    // series2 val=100: pct=1, diam=√100=10
+    // global range min=0, max=100 spans both series
     const diams1 = data[1]![2] as number[];
     const diams2 = data[2]![2] as number[];
     expect(diams1[0]).toEqual(2);
@@ -179,27 +175,25 @@ describe('prepData', () => {
 });
 
 describe('color field compilation', () => {
-  it('compiles absolute threshold color config without throwing', () => {
-    const colorField = makeField({
-      name: 'temp',
-      values: [10, 50, 90],
-      config: {
-        color: { mode: FieldColorModeId.Thresholds },
-        thresholds: {
-          mode: ThresholdsMode.Absolute,
-          steps: [
-            { value: -Infinity, color: 'green' },
-            { value: 30, color: 'yellow' },
-            { value: 70, color: 'red' },
-          ],
-        },
-      },
-    });
-
-    const series = makeSeries({
+  function makeColorSeries(colorFieldConfig: Record<string, unknown>) {
+    const colorField = makeField({ name: 'clr', values: [10, 50, 90], config: colorFieldConfig });
+    return makeSeries({
       color: { field: colorField, fixed: '#ff0000' },
       x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
       y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    });
+  }
+  it('produces valid output with absolute threshold color config', () => {
+    const series = makeColorSeries({
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 30, color: 'yellow' },
+          { value: 70, color: 'red' },
+        ],
+      },
     });
 
     const { prepData } = prepConfig([series], theme);
@@ -215,28 +209,84 @@ describe('color field compilation', () => {
     ]);
   });
 
-  it('compiles value-to-text mapping color config without throwing', () => {
-    const colorField = makeField({
-      name: 'status',
-      values: [1, 2, 3],
-      config: {
-        mappings: [
-          {
-            type: MappingType.ValueToText,
-            options: {
-              '1': { text: 'low', color: 'green' },
-              '2': { text: 'med', color: 'yellow' },
-              '3': { text: 'high', color: 'red' },
-            },
+  it('produces valid output with value-to-text color mapping', () => {
+    const series = makeColorSeries({
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            '1': { text: 'low', color: 'green' },
+            '2': { text: 'med', color: 'yellow' },
+            '3': { text: 'high', color: 'red' },
           },
-        ],
-      },
+        },
+      ],
     });
 
-    const series = makeSeries({
-      color: { field: colorField, fixed: '#ff0000' },
-      x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
-      y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toEqual([
+      null,
+      [
+        [1, 2, 3],
+        [10, 20, 30],
+        [5, 5, 5],
+        ['#ff0000', '#ff0000', '#ff0000'],
+      ],
+    ]);
+  });
+
+  it('produces valid output with range-to-text color mapping', () => {
+    const series = makeColorSeries({
+      mappings: [
+        {
+          type: MappingType.RangeToText,
+          options: { from: 0, to: 50, result: { text: 'low', color: 'blue' } },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: { from: 51, to: 100, result: { text: 'high', color: 'red' } },
+        },
+      ],
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toEqual([
+      null,
+      [
+        [1, 2, 3],
+        [10, 20, 30],
+        [5, 5, 5],
+        ['#ff0000', '#ff0000', '#ff0000'],
+      ],
+    ]);
+  });
+
+  it.each([
+    ['NaN', SpecialValueMatch.NaN],
+    ['Null', SpecialValueMatch.Null],
+  ])('produces valid output with special value %s color mapping', (_label, match) => {
+    const series = makeColorSeries({
+      mappings: [{ type: MappingType.SpecialValue, options: { match, result: { text: 'special', color: 'gray' } } }],
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toEqual([
+      null,
+      [
+        [1, 2, 3],
+        [10, 20, 30],
+        [5, 5, 5],
+        ['#ff0000', '#ff0000', '#ff0000'],
+      ],
+    ]);
+  });
+
+  it('produces valid output with continuous gradient color mode', () => {
+    const series = makeColorSeries({
+      color: { mode: FieldColorModeId.ContinuousGrYlRd },
     });
 
     const { prepData } = prepConfig([series], theme);

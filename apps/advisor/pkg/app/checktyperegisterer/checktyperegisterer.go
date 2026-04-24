@@ -9,6 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/org"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
@@ -90,7 +91,7 @@ func (r *Runner) Run(ctx context.Context) error {
 }
 
 func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, checkType string, obj resource.Object) error {
-	for i := 0; i < r.retryAttempts; i++ {
+	for i := range r.retryAttempts {
 		current, err := r.client.Get(ctx, obj.GetStaticMetadata().Identifier())
 		if err != nil {
 			if errors.IsNotFound(err) {

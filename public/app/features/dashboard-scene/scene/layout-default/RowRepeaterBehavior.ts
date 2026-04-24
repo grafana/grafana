@@ -39,6 +39,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
+    let isFirstRender = true;
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter(
@@ -57,6 +58,11 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
 
         this.performRepeat(true);
+      }
+
+      if (isFirstRender) {
+        isFirstRender = false;
+        originalRow.state.children.forEach((child) => child.forceRender());
       }
     });
 

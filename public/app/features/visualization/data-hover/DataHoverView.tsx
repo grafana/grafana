@@ -10,8 +10,9 @@ import {
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { TextLink, useStyles2 } from '@grafana/ui';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';
+
+import { renderValue } from './renderValue';
 
 export interface Props {
   data?: DataFrame; // source data

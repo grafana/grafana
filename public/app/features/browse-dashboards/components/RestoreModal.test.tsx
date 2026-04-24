@@ -1,5 +1,5 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -82,7 +82,9 @@ describe('RestoreModal', () => {
     // getAutoTarget returns originCandidate for non-404 errors → restoreTarget is set
     // The FolderPicker's own facade also gets 403, so it can't resolve the title.
     // But the Restore button should be enabled because restoreTarget !== undefined.
-    expect(await screen.findByRole('button', { name: 'Restore' })).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
+    });
   });
 
   it('does not preselect while validation is in progress', async () => {

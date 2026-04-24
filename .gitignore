@@ -276,3 +276,5 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 .specs
 .playwright-mcp/
 overrides.yaml
+
+.profiles

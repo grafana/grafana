@@ -316,7 +316,7 @@ export class GrafanaApp {
       await postInitTasks();
     } catch (error) {
       console.error('Failed to start Grafana', error);
-      window.__grafana_load_failed();
+      window.__grafana_load_failed(error);
     } finally {
       stopMeasure('frontend_app_init');
     }

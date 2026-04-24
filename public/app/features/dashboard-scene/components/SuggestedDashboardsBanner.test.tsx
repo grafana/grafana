@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import { type JSX } from 'react';
 import { render } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';

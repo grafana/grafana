@@ -181,8 +181,8 @@ describe('RenameProvisionedFolderForm', () => {
       expect(request.url.pathname).toContain('/repositories/test-repo/files/');
       expect(request.url.searchParams.get('ref')).toBe('my-branch');
       expect(request.url.searchParams.get('message')).toBe('Rename folder');
+      // No metadata.name — omitting the ID lets the backend preserve the existing UID from the repo.
       expect(request.body).toEqual({
-        metadata: { name: 'folder-uid' },
         spec: { title: 'Test Folder' },
       });
     });
@@ -246,8 +246,8 @@ describe('RenameProvisionedFolderForm', () => {
       const request = requireCapturedRequest(capturedRequest);
       // Path stays the same — only the title in the body changes
       expect(request.url.pathname).toContain('folders/test-folder/');
+      // No metadata.name — omitting the ID lets the backend preserve the existing UID from the repo.
       expect(request.body).toEqual({
-        metadata: { name: 'folder-uid' },
         spec: { title: 'New Folder Name' },
       });
     });

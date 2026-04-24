@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { addMinutes, subDays, subHours } from 'date-fns';
+import { addMinutes } from 'date-fns/addMinutes';
+import { subDays } from 'date-fns/subDays';
+import { subHours } from 'date-fns/subHours';
 import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -347,7 +349,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                         </div>
                         <Box flex={1}>
                           <AutoSizer>
-                            {({ width, height }) => (
+                            {({ width, height }: Size) => (
                               <TemplateEditor
                                 value={getValues('content')}
                                 onBlur={(value) => setValue('content', value)}
