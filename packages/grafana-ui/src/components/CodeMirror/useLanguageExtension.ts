@@ -39,7 +39,7 @@ export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExt
             ? caughtError
             : new Error('Failed to load CodeMirror language extension', { cause: caughtError });
 
-        faro.api.pushError(error, {
+        faro?.api?.pushError(error, {
           context: {
             type: 'async',
             source: 'CodeMirror.useLanguageExtension',
