@@ -14,16 +14,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	ofTesting "github.com/open-feature/go-sdk/openfeature/testing"
 )
 
+var ofProvider = ofTesting.NewTestProvider()
+
 func TestExternalAlertmanagerChoice(t *testing.T) {
+	if err := openfeature.SetProvider(ofProvider); err != nil {
+		t.Fatalf("failed to set OpenFeature provider: %v", err)
+	}
+
 	tests := []struct {
 		name               string
 		alertmanagerChoice definitions.AlertmanagersChoice
 		datasources        []*datasources.DataSource
 		statusCode         int
 		message            string
-		features           featuremgmt.FeatureToggles
+		flagEnabled        bool
 	}{
 		{
 			name:               "setting the choice to external by having a enabled external am datasource should succeed",
@@ -40,7 +49,6 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			},
 			statusCode: http.StatusCreated,
 			message:    "admin configuration updated",
-			features:   featuremgmt.WithFeatures(),
 		},
 		{
 			name:               "setting the choice to external by having a disabled external am datasource should fail",
@@ -55,7 +63,6 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			},
 			statusCode: http.StatusBadRequest,
 			message:    "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option",
-			features:   featuremgmt.WithFeatures(),
 		},
 		{
 			name:               "setting the choice to external and having no am configured should fail",
@@ -63,7 +70,6 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusBadRequest,
 			message:            "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option",
-			features:           featuremgmt.WithFeatures(),
 		},
 		{
 			name:               "setting the choice to all and having no external am configured should succeed",
@@ -71,7 +77,6 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusCreated,
 			message:            "admin configuration updated",
-			features:           featuremgmt.WithFeatures(),
 		},
 		{
 			name:               "setting the choice to internal should always succeed",
@@ -79,7 +84,6 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusCreated,
 			message:            "admin configuration updated",
-			features:           featuremgmt.WithFeatures(),
 		},
 		{
 			name:               "setting the choice to internal should succeed when external disallowed",
@@ -87,7 +91,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusCreated,
 			message:            "admin configuration updated",
-			features:           featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal),
+			flagEnabled:        true,
 		},
 		{
 			name:               "setting the choice to all should fail when external disallowed",
@@ -95,7 +99,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusBadRequest,
 			message:            "Sending alerts to external alertmanagers is disallowed on this instance",
-			features:           featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal),
+			flagEnabled:        true,
 		},
 		{
 			name:               "setting the choice to external should fail when external disallowed",
@@ -103,14 +107,21 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			datasources:        []*datasources.DataSource{},
 			statusCode:         http.StatusBadRequest,
 			message:            "Sending alerts to external alertmanagers is disallowed on this instance",
-			features:           featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal),
+			flagEnabled:        true,
 		},
 	}
+
 	ctx := createRequestCtxInOrg(1)
 	ctx.OrgRole = org.RoleAdmin
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sut := createAPIAdminSut(t, test.datasources, test.features)
+			ofProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagAlertingDisableSendAlertsExternal: {
+					Key:      featuremgmt.FlagAlertingDisableSendAlertsExternal,
+					Variants: map[string]any{"": test.flagEnabled},
+				},
+			})
+			sut := createAPIAdminSut(t, test.datasources)
 			resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
 				AlertmanagersChoice: &test.alertmanagerChoice,
 			})
@@ -123,13 +134,14 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 	}
 }
 
-func createAPIAdminSut(t *testing.T,
-	datasources []*datasources.DataSource, features featuremgmt.FeatureToggles) ConfigSrv {
+func createAPIAdminSut(
+	t *testing.T,
+	datasources []*datasources.DataSource,
+) ConfigSrv {
 	return ConfigSrv{
 		datasourceService: &fakeDatasources.FakeDataSourceService{
 			DataSources: datasources,
 		},
-		store:          store.NewFakeAdminConfigStore(t),
-		featureManager: features,
+		store: store.NewFakeAdminConfigStore(t),
 	}
 }

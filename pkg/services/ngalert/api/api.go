@@ -174,7 +174,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			store:                api.AdminConfigStore,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
-			featureManager:       api.FeatureManager,
 		},
 	), m)
 

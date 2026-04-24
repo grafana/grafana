@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ConfigSrv struct {
@@ -25,7 +26,6 @@ type ConfigSrv struct {
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
 	log                  log.Logger
-	featureManager       featuremgmt.FeatureToggles
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *contextmodel.ReqContext) response.Response {
@@ -74,6 +74,9 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 }
 
 func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+	ctx := c.Req.Context()
+	ofClient := openfeature.NewDefaultClient()
+
 	if c.GetOrgRole() != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
@@ -92,13 +95,12 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 			return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		disableExternal := srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDisableSendAlertsExternal)
+		disableExternal := ofClient.Boolean(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal, false, openfeature.TransactionContext(ctx))
 		if disableExternal && sendAlertsTo != ngmodels.InternalAlertmanager {
 			return response.Error(http.StatusBadRequest, "Sending alerts to external alertmanagers is disallowed on this instance", nil)
 		}
 
-		externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.GetOrgID())
+		externalAlertmanagers, err := srv.externalAlertmanagers(ctx, c.GetOrgID())
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Couldn't fetch the external Alertmanagers from datasources", err)
 		}
