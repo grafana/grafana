@@ -48,15 +48,15 @@ We provide release documentation in multiple places to address different needs:
 
 Grafana currently follows a monthly release schedule. Below are the planned releases for 2026. However, these dates may be subject to change:
 
-| **Release date** | **Grafana versions**      | **Release type**  |
-| ---------------- | ------------------------- | ----------------- |
-| Jan. 13, 2026    | Supported versions        | Patching          |
-| Feb. 24, 2026    | 12.4 & Supported versions | Minor & patching  |
-| Mar. 24, 2026    | Supported versions        | Patching          |
-| Apr. 14, 2026    | 13.0 & Supported versions | Major & patching  |
-| May 12, 2026     | Supported versions        | Security          |
-| Jun. 16, 2026    | 13.1 & Supported versions | Minor & patching  |
-| TBD              | 13.2                      | Minor             |
+| **Release date** | **Grafana versions**      | **Release type** |
+| ---------------- | ------------------------- | ---------------- |
+| Jan. 13, 2026    | Supported versions        | Patching         |
+| Feb. 24, 2026    | 12.4 & Supported versions | Minor & patching |
+| Mar. 24, 2026    | Supported versions        | Patching         |
+| Apr. 14, 2026    | 13.0 & Supported versions | Major & patching |
+| May 12, 2026     | Supported versions        | Security         |
+| Jun. 16, 2026    | 13.1 & Supported versions | Minor & patching |
+| TBD              | 13.2                      | Minor            |
 
 ### A few important notes
 
