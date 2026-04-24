@@ -78,7 +78,10 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 		},
 	}}
 
-	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
+	// Pin to a non-email type so the default integration doesn't randomly land on EmailType,
+	// which would route through emailValidator and fail with 'email address is not allowed'
+	// because the generator's random Name won't match validEmailIntegration.
+	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig(schema.SlackType))()
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
 	validEmailIntegration := models.IntegrationGen(
 		models.IntegrationMuts.WithUID(""),
