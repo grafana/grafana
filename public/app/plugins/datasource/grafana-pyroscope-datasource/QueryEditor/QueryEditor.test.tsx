@@ -27,6 +27,8 @@ describe('createSelector (UTF-8 label names)', () => {
           maxNodes: 1000,
           groupBy: [],
           includeExemplars: false,
+          includeHeatmap: false,
+          heatmapType: 'individual',
         }}
         datasource={ds}
         onChange={jest.fn()}
@@ -56,6 +58,8 @@ describe('createSelector (UTF-8 label names)', () => {
           maxNodes: 1000,
           groupBy: [],
           includeExemplars: false,
+          includeHeatmap: false,
+          heatmapType: 'individual',
         }}
         datasource={ds}
         onChange={jest.fn()}
