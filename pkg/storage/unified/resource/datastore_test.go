@@ -655,7 +655,7 @@ func TestDataStore_List(t *testing.T) {
 		require.NoError(t, err)
 
 		// List the data
-		var results []DataKey
+		results := make([]DataKey, 0, 2)
 		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -689,7 +689,7 @@ func TestDataStore_List(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		var results []DataKey
+		results := make([]DataKey, 0)
 		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -723,7 +723,7 @@ func TestDataStore_List(t *testing.T) {
 		require.NoError(t, err)
 
 		// List should include deleted keys
-		var results []DataKey
+		results := make([]DataKey, 0, 1)
 		for key, err := range ds.Keys(ctx, deletedResourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -777,7 +777,7 @@ func TestDataStore_Integration(t *testing.T) {
 		}
 
 		// List all versions
-		var results []DataKey
+		results := make([]DataKey, 0, len(versions))
 		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -803,7 +803,7 @@ func TestDataStore_Integration(t *testing.T) {
 		require.Equal(t, ErrNotFound, err)
 
 		// List should now have 2 items
-		results = nil
+		results = make([]DataKey, 0, 2)
 		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -881,7 +881,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get keys
-		var keys []DataKey
+		keys := make([]DataKey, 0, 3)
 		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -910,7 +910,7 @@ func TestDataStore_Keys(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		var keys []DataKey
+		keys := make([]DataKey, 0)
 		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -941,7 +941,7 @@ func TestDataStore_Keys(t *testing.T) {
 		err := ds.Save(ctx, dataKey4, io.NopCloser(bytes.NewReader([]byte("different-value"))))
 		require.NoError(t, err)
 
-		var keys []DataKey
+		keys := make([]DataKey, 0, 4)
 		for key, err := range ds.Keys(ctx, partialKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -974,7 +974,7 @@ func TestDataStore_Keys(t *testing.T) {
 		err := ds.Save(ctx, dataKey5, io.NopCloser(bytes.NewReader([]byte("namespace-only-value"))))
 		require.NoError(t, err)
 
-		var keys []DataKey
+		keys := make([]DataKey, 0, 5)
 		for key, err := range ds.Keys(ctx, namespaceOnlyKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)

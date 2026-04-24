@@ -566,7 +566,7 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 }
 
 func generateThresholds(thresholds []interface{}, colors []interface{}) []interface{} {
-	steps := []interface{}{}
+	steps := make([]interface{}, 0, 1+len(thresholds))
 
 	// Add the base step (equivalent to -Infinity)
 	var baseColor interface{} = "red" // default fallback
