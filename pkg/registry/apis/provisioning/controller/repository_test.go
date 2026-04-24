@@ -1519,7 +1519,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace + "/" + repoName))
+	require.NoError(t, rc.process(namespace+"/"+repoName))
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(),
 		"health refresh must run after workflows are removed even during the previous cooldown")
@@ -1581,7 +1581,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 	stub := &hookRepoStub{cfg: repo}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace + "/" + repoName))
+	require.NoError(t, rc.process(namespace+"/"+repoName))
 
 	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
 		"hooks must not run when the spec is observed and the webhook already exists")
