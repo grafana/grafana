@@ -18,6 +18,11 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
+	// ExternalAMConfigSyncTotal counts sync attempts by org and status (success|error).
+	ExternalAMConfigSyncTotal *prometheus.CounterVec
+	// ExternalAMConfigSyncDuration measures per-org sync duration in seconds.
+	ExternalAMConfigSyncDuration prometheus.Histogram
+
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
 
@@ -37,6 +42,19 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Subsystem: Subsystem,
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
+		}),
+		ExternalAMConfigSyncTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "external_alertmanager_config_sync_total",
+			Help:      "Total number of external Alertmanager config sync attempts, partitioned by slug and status.",
+		}, []string{"org_id", "status"}),
+		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "external_alertmanager_config_sync_duration_seconds",
+			Help:      "Duration of external Alertmanager config sync operations in seconds.",
+			Buckets:   prometheus.DefBuckets,
 		}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
