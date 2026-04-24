@@ -484,6 +484,6 @@ export function trackViewExperienceToggleConfirmed(
  * Track which rule list version (V1 or V2) is displayed on page load.
  * Fired once per mount in the RuleList router component.
  */
-export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
+export function trackRuleListPageView(payload: { view: 'v1' | 'v2' | 'v3' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }

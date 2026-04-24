@@ -1,3 +1,5 @@
+import { type ReactNode } from 'react';
+
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -21,6 +23,7 @@ interface GrafanaRuleListItemProps {
   namespaceName: string;
   operation?: 'creating' | 'deleting';
   showLocation?: boolean;
+  chainPill?: ReactNode;
 }
 
 export function GrafanaRuleListItem({
@@ -29,6 +32,7 @@ export function GrafanaRuleListItem({
   namespaceName,
   operation,
   showLocation = true,
+  chainPill,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
@@ -68,12 +72,13 @@ export function GrafanaRuleListItem({
         instancesCount={instancesCount}
         operation={operation}
         showLocation={showLocation}
+        chainPill={chainPill}
       />
     );
   }
 
   if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} />;
+    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} chainPill={chainPill} />;
   }
 
   return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;
