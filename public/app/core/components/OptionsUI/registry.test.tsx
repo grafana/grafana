@@ -19,8 +19,12 @@ const ARRAY_VALUE_EDITORS = new Set(['strings', 'stats-picker', 'links', 'action
 /** Select-style editors require `settings.options` (see SelectFieldConfigSettings). */
 const OPTION_LIST_EDITORS = new Set(['radio', 'select', 'multi-select']);
 
-/** Editors that can't mount cleanly in jsdom (e.g. need browser layout APIs). */
-const SKIP_MOUNT_TEST = new Set(['thresholds']);
+/**
+ * Editors that can't mount cleanly in jsdom.
+ * - thresholds: needs layout APIs
+ * - dashboard-uid: mounts DashboardPicker, which boots UnifiedSearcher and getBackendSrv() via loadLocationInfo
+ */
+const SKIP_MOUNT_TEST = new Set(['thresholds', 'dashboard-uid']);
 
 function defaultEditorValue(id: string): unknown {
   if (ARRAY_VALUE_EDITORS.has(id)) {
