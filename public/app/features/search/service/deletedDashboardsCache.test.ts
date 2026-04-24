@@ -5,6 +5,7 @@ import { dispatch } from 'app/types/store';
 import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from '../../apiserver/types';
 
 import { resolveDeletedByDisplayMap } from './deletedDashboardsCache';
+import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   iamAPIv0alpha1: {
@@ -64,8 +65,8 @@ function makeDisplayList(display: Display[]): DisplayList {
 type MockResult = { data?: DisplayList; error?: unknown };
 
 // The dispatched RTK Query thunk returns a `QueryActionCreatorResult` — a thenable that also
-// exposes `.unsubscribe()`. The production code awaits the thenable and calls `.unsubscribe()`
-// in a `finally` block, so tests must return a shape that matches both.
+// exposes `.unsubscribe()`. Production awaits the thenables via `Promise.allSettled` and calls
+// `.unsubscribe()` in a `finally` block, so tests must return a shape that matches both.
 function mockSubscription(
   result: MockResult | Error,
   unsubscribe: jest.Mock = jest.fn()
@@ -149,22 +150,22 @@ describe('resolveDeletedByDisplayMap', () => {
     consoleError.mockRestore();
   });
 
-  it('logs and unsubscribes when RTK Query resolves with an error result', async () => {
+  it('logs and marks UIDs as unknown when RTK Query resolves with an error result', async () => {
     // RTK Query query thunks are `SafePromise`s — on request failure they resolve with
-    // an `{ error, data: undefined }` shape rather than rejecting. Production must handle
-    // that path explicitly; a silent `return undefined` would swallow server errors.
+    // an `{ error, data: undefined }` shape rather than rejecting. Production routes the error
+    // through `getMessageFromError`, which falls back to `JSON.stringify` for plain objects.
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     const unsubscribe = jest.fn();
     mockDispatch.mockReturnValue(mockSubscription({ error: { status: 500, data: 'upstream failure' } }, unsubscribe));
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
-    expect(map).toBeUndefined();
+    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(consoleError).toHaveBeenCalledWith('Failed to resolve deleted dashboard user displays:', {
-      status: 500,
-      data: 'upstream failure',
-    });
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to resolve deleted dashboard user displays:',
+      expect.stringContaining('500')
+    );
     consoleError.mockRestore();
   });
 
@@ -176,7 +177,6 @@ describe('resolveDeletedByDisplayMap', () => {
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
     expect(map?.get('user:alice')).toBe('Alice');
-    expect(map?.size).toBe(1);
   });
 
   it('additionally keys the map by String(internalId) when provided', async () => {
@@ -229,7 +229,7 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(map?.get('user:mohamed')).toBe('محمد العربي');
   });
 
-  it('omits entries for UIDs the server could not resolve', async () => {
+  it('marks UIDs the server could not resolve with DELETED_BY_REMOVED', async () => {
     mockDispatch.mockReturnValue(
       mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
     );
@@ -239,25 +239,109 @@ describe('resolveDeletedByDisplayMap', () => {
     );
 
     expect(map?.get('user:alice')).toBe('Alice');
-    expect(map?.has('user:missing')).toBe(false);
+    // Successful batch, no IAM entry for user:missing — account was deleted.
+    expect(map?.get('user:missing')).toBe(DELETED_BY_REMOVED);
   });
 
-  it('returns undefined when the dispatch resolves with no data', async () => {
+  it('marks requested UIDs as DELETED_BY_UNKNOWN when the dispatch resolves with no data', async () => {
     mockDispatch.mockReturnValue(mockSubscription({ data: undefined }));
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
-    expect(map).toBeUndefined();
+    // `data === undefined` is treated as batch failure so the UI renders a consistent placeholder
+    // rather than a raw UID.
+    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
   });
 
-  it('returns undefined and swallows errors when the dispatch rejects', async () => {
+  it('marks requested UIDs as DELETED_BY_UNKNOWN and swallows errors when the dispatch rejects', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockDispatch.mockReturnValue(mockSubscription(new Error('boom')));
 
     const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
 
-    expect(map).toBeUndefined();
+    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
     expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('chunks large UID sets into batches of at most IAM_DISPLAY_BATCH_SIZE keys', async () => {
+    // Build 250 unique UIDs; at batch size 200 this must split into 2 dispatches.
+    const items: Array<Resource<DashboardDataDTO>> = [];
+    for (let i = 0; i < 250; i++) {
+      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+    }
+    mockDispatch.mockReturnValue(mockSubscription({ data: makeDisplayList([]) }));
+
+    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+
+    expect(mockInitiate).toHaveBeenCalledTimes(2);
+    const firstBatch = (mockInitiate.mock.calls[0][0] as { key: string[] }).key;
+    const secondBatch = (mockInitiate.mock.calls[1][0] as { key: string[] }).key;
+    expect(firstBatch.length).toBeLessThanOrEqual(200);
+    expect(secondBatch.length).toBeLessThanOrEqual(200);
+    expect(firstBatch.length + secondBatch.length).toBe(250);
+    // Every requested UID is present in the returned map; unresolved entries get a sentinel.
+    for (let i = 0; i < 250; i++) {
+      expect(map?.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_REMOVED);
+    }
+  });
+
+  it('preserves successful batches when a sibling batch fails', async () => {
+    // Two batches: first succeeds with a display; second rejects.
+    const items: Array<Resource<DashboardDataDTO>> = [];
+    for (let i = 0; i < 250; i++) {
+      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+    }
+
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unsubscribeA = jest.fn();
+    const unsubscribeB = jest.fn();
+    mockDispatch
+      .mockReturnValueOnce(
+        mockSubscription(
+          {
+            data: makeDisplayList([{ identity: { type: 'user', name: 'u0000' }, displayName: 'Alice' }]),
+          },
+          unsubscribeA
+        )
+      )
+      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
+
+    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+
+    // First batch's resolved UID: real display name.
+    expect(map?.get('user:u0000')).toBe('Alice');
+    // First batch's unresolved UIDs: DELETED_BY_REMOVED (successful batch, no IAM entry).
+    expect(map?.get('user:u0001')).toBe(DELETED_BY_REMOVED);
+    // Second batch's UIDs: DELETED_BY_UNKNOWN (batch failed).
+    expect(map?.get('user:u0200')).toBe(DELETED_BY_UNKNOWN);
+    expect(map?.get('user:u0249')).toBe(DELETED_BY_UNKNOWN);
+    // Both batches' subscriptions unsubscribed.
+    expect(unsubscribeA).toHaveBeenCalledTimes(1);
+    expect(unsubscribeB).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+
+  it('returns an all-unknown map when every batch fails', async () => {
+    const items: Array<Resource<DashboardDataDTO>> = [];
+    for (let i = 0; i < 250; i++) {
+      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+    }
+
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unsubscribeA = jest.fn();
+    const unsubscribeB = jest.fn();
+    mockDispatch
+      .mockReturnValueOnce(mockSubscription(new Error('batch-1 failed'), unsubscribeA))
+      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
+
+    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+
+    for (let i = 0; i < 250; i++) {
+      expect(map?.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_UNKNOWN);
+    }
+    expect(unsubscribeA).toHaveBeenCalledTimes(1);
+    expect(unsubscribeB).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
   });
 });
