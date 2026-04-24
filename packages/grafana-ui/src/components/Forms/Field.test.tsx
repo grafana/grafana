@@ -134,6 +134,43 @@ describe('Field', () => {
     });
   });
 
+  describe('RadioButtonGroup', () => {
+    const radioOptions = [
+      { label: 'Light', value: 'light' },
+      { label: 'Dark', value: 'dark' },
+    ];
+
+    it('renders the fieldset group with an accessible name from the legend', () => {
+      render(
+        <Field label="Theme">
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
+    });
+
+    it('renders required indicator inside the legend', () => {
+      render(
+        <Field label="Theme" required>
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme *' })).toBeInTheDocument();
+    });
+
+    it('associates with the field error correctly when no id is set', () => {
+      render(
+        <Field label="My label" invalid error="My error">
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('radio', { name: 'Dark', description: 'My error' })).toBeInTheDocument();
+    });
+  });
+
   describe('Select', () => {
     it('associates with the field label correctly when no id is set', () => {
       render(
@@ -380,32 +417,5 @@ describe('Field', () => {
     );
 
     expect(screen.getByLabelText('My other label')).toBeInTheDocument();
-  });
-
-  describe('fieldset/legend rendering for group controls', () => {
-    const radioOptions = [
-      { label: 'Light', value: 'light' },
-      { label: 'Dark', value: 'dark' },
-    ];
-
-    it('renders the fieldset group with an accessible name from the legend', () => {
-      render(
-        <Field label="Theme">
-          <RadioButtonGroup options={radioOptions} />
-        </Field>
-      );
-
-      expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
-    });
-
-    it('renders required indicator inside the legend', () => {
-      render(
-        <Field label="Theme" required>
-          <RadioButtonGroup options={radioOptions} />
-        </Field>
-      );
-
-      expect(screen.getByRole('group', { name: 'Theme *' })).toBeInTheDocument();
-    });
   });
 });

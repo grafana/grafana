@@ -1,5 +1,4 @@
 import { type StoryFn } from '@storybook/react';
-import { useId } from 'react';
 import { type ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
@@ -57,7 +56,6 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const radioId = useId();
   return (
     <Form
       defaultValues={defaultValues}
@@ -98,11 +96,11 @@ const renderForm = (defaultValues?: FormDTO) => {
               <Switch name="switch" {...register} />
             </Field>
 
-            <Field label="RadioButton" htmlFor={radioId}>
+            <Field label="RadioButton">
               <InputControl
                 name="radio"
                 control={control}
-                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} id={radioId} />}
+                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} />}
               />
             </Field>
 

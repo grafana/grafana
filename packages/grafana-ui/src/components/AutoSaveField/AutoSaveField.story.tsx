@@ -1,5 +1,5 @@
 import { type StoryFn, type Meta } from '@storybook/react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Checkbox } from '../Forms/Checkbox';
@@ -74,12 +74,10 @@ const themeOptions = [
 
 export const Basic: StoryFn = (args) => {
   const [inputValue, setInputValue] = useState('');
-  const id = useId();
   return (
     <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} {...args}>
       {(onChange) => (
         <Input
-          id={id}
           value={inputValue}
           onChange={(e) => {
             const value = e.currentTarget.value;
@@ -105,7 +103,6 @@ export const AllComponents: StoryFn = (args) => {
   const [checkBoxValue, setCheckBoxValue] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
   const [switchValue, setSwitchValue] = useState(false);
-  const radioButtonId = useId();
 
   return (
     <div>
@@ -140,7 +137,6 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <RadioButtonGroup
-            id={radioButtonId}
             options={themeOptions}
             value={radioButtonValue}
             onChange={(themeOption) => {
