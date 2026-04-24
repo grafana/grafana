@@ -68,7 +68,6 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       } else {
         return;
       }
-      e.preventDefault();
       if (!currentLog || logs.indexOf(currentLog) < 0) {
         return;
       }
@@ -76,6 +75,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       if (!nextLog) {
         return;
       }
+      e.preventDefault();
       replaceDetails(nextLog);
     }
     document.addEventListener('keyup', handleKeyup);

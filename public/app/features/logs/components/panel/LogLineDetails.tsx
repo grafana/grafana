@@ -122,7 +122,6 @@ const LogLineDetailsTabs = memo(
         } else {
           return;
         }
-        e.preventDefault();
         if (!currentLog || !logs.find((log) => log.uid === currentLog.uid)) {
           return;
         }
@@ -130,6 +129,7 @@ const LogLineDetailsTabs = memo(
         if (!nextLog) {
           return;
         }
+        e.preventDefault();
         replaceDetails(nextLog);
         focusLogLine(nextLog, 'auto');
       }
