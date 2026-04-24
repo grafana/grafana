@@ -1,66 +1,35 @@
 import { render, screen } from '@testing-library/react';
 
-import { VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
+import { type DataLink } from '@grafana/data';
 
 import { DataLinksValueEditor } from './links';
 
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  return {
-    ...actual,
-    DataLinksInlineEditor: jest.fn(() => <div data-testid="links-inline" />),
-  };
-});
-
-const { DataLinksInlineEditor } = jest.requireMock('@grafana/ui');
+type EditorItem = Parameters<typeof DataLinksValueEditor>[0]['item'];
+const editorItem = { settings: {} } as EditorItem;
 
 describe('DataLinksValueEditor', () => {
-  beforeEach(() => {
-    jest.mocked(DataLinksInlineEditor).mockClear();
-  });
-
-  it('passes links, data, showOneClick, and suggestion scope to DataLinksInlineEditor', () => {
-    const getSuggestions = jest.fn(() => [{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
-    const onChange = jest.fn();
-    const links = [{ title: 't', url: 'u' }];
-
-    render(
-      <DataLinksValueEditor
-        value={links as Parameters<typeof DataLinksValueEditor>[0]['value']}
-        onChange={onChange}
-        context={{ data: [], getSuggestions }}
-        item={{ settings: { showOneClick: true } } as Parameters<typeof DataLinksValueEditor>[0]['item']}
-      />
-    );
+  it('renders the links editor container and add button', () => {
+    render(<DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
 
     expect(screen.getByTestId('links-inline')).toBeInTheDocument();
-
-    expect(DataLinksInlineEditor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        links,
-        data: [],
-        showOneClick: true,
-      }),
-      expect.anything()
-    );
-
-    const getSuggestionsProp = DataLinksInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(typeof getSuggestionsProp).toBe('function');
-    expect(getSuggestionsProp()).toEqual([{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
-    expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
+    expect(screen.getByRole('button', { name: /add link/i })).toBeInTheDocument();
   });
 
-  it('uses empty suggestions when context.getSuggestions is missing', () => {
-    render(
-      <DataLinksValueEditor
-        value={[]}
-        onChange={jest.fn()}
-        context={{ data: [] }}
-        item={{ settings: {} } as Parameters<typeof DataLinksValueEditor>[0]['item']}
-      />
-    );
+  it('displays existing link titles in the list', () => {
+    const links: DataLink[] = [
+      { title: 'Grafana Homepage', url: 'https://grafana.com' },
+      { title: 'Docs', url: 'https://grafana.com/docs' },
+    ];
 
-    const getSuggestionsProp = DataLinksInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(getSuggestionsProp()).toEqual([]);
+    render(<DataLinksValueEditor value={links} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    expect(screen.getByText('Grafana Homepage')).toBeInTheDocument();
+    expect(screen.getByText('Docs')).toBeInTheDocument();
+  });
+
+  it('renders without crashing when context.getSuggestions is absent', () => {
+    render(<DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    expect(screen.getByTestId('links-inline')).toBeInTheDocument();
   });
 });

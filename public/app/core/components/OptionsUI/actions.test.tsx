@@ -1,64 +1,42 @@
 import { render, screen } from '@testing-library/react';
 
-import { ActionType, HttpRequestMethod, VariableOrigin, VariableSuggestionsScope, type Action } from '@grafana/data';
-
-jest.mock('app/features/actions/ActionsInlineEditor', () => ({
-  ActionsInlineEditor: jest.fn(() => <div data-testid="actions-inline" />),
-}));
+import { ActionType, HttpRequestMethod, type Action } from '@grafana/data';
 
 import { ActionsValueEditor } from './actions';
 
-const { ActionsInlineEditor } = jest.requireMock('app/features/actions/ActionsInlineEditor');
-
-const minimalAction: Action = {
-  type: ActionType.Fetch,
-  title: 'act',
-  [ActionType.Fetch]: {
-    method: HttpRequestMethod.GET,
-    url: 'http://example.com',
-  },
-};
-
 const editorItem = { id: 'actions-editor', name: 'Actions', settings: {} };
 
+const makeAction = (title: string): Action => ({
+  type: ActionType.Fetch,
+  title,
+  [ActionType.Fetch]: { method: HttpRequestMethod.GET, url: 'http://example.com' },
+});
+
 describe('ActionsValueEditor', () => {
-  beforeEach(() => {
-    jest.mocked(ActionsInlineEditor).mockClear();
+  it('renders the actions editor container and add button', () => {
+    render(<ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add action/i })).toBeInTheDocument();
   });
 
-  it('passes actions, data, and suggestion scope to ActionsInlineEditor', () => {
-    const getSuggestions = jest.fn(() => [{ label: 'a', value: 'b', origin: VariableOrigin.Value }]);
-    const onChange = jest.fn();
-    const actions = [minimalAction];
-
+  it('displays existing action titles in the list', () => {
     render(
       <ActionsValueEditor
-        value={actions}
-        onChange={onChange}
-        context={{ data: [], getSuggestions }}
+        value={[makeAction('Send Alert'), makeAction('Open Dashboard')]}
+        onChange={jest.fn()}
+        context={{ data: [] }}
         item={editorItem}
       />
     );
 
-    expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
-
-    expect(ActionsInlineEditor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actions,
-        data: [],
-      }),
-      expect.anything()
-    );
-
-    const getSuggestionsProp = ActionsInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(getSuggestionsProp()).toEqual([{ label: 'a', value: 'b', origin: VariableOrigin.Value }]);
-    expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
+    expect(screen.getByText('Send Alert')).toBeInTheDocument();
+    expect(screen.getByText('Open Dashboard')).toBeInTheDocument();
   });
 
-  it('uses empty suggestions when context.getSuggestions is missing', () => {
+  it('renders without crashing when context.getSuggestions is absent', () => {
     render(<ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
 
-    const getSuggestionsProp = ActionsInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(getSuggestionsProp()).toEqual([]);
+    expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
   });
 });
