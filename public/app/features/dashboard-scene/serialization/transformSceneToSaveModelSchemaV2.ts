@@ -954,7 +954,7 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
-function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
+export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
   if (!ds) {
     return undefined;
   }
