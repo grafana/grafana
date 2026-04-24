@@ -1326,7 +1326,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
 		datasourceUID = dsStr
-	} else if dsStr, ok := datasource.(string); ok {
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
 		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
@@ -1694,7 +1694,7 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
 		datasourceUID = dsStr
-	} else if dsStr, ok := datasource.(string); ok {
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
 		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
@@ -1891,7 +1891,7 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
 		datasourceUID = dsStr
-	} else if dsStr, ok := datasource.(string); ok {
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
 		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
@@ -1915,8 +1915,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 	// Only include datasource if datasourceUID exists
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		groupByVar.Spec.Datasource = dsRef
 	}

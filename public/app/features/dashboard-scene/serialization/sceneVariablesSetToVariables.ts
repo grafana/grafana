@@ -375,8 +375,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
-      const rawDatasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
-      const datasource = typeof rawDatasource === 'string' ? { uid: rawDatasource } : rawDatasource;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
 
       if (typeof query !== 'string') {
         dataQuery = {
