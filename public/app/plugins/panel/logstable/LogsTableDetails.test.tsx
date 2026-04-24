@@ -103,6 +103,7 @@ const setup = (
     >
       <LogDetailsContext.Provider value={detailsData}>
         <LogsTableDetails
+          containerElement={null}
           options={{ ...baseOptions, ...optionsOverrides }}
           onOptionsChange={onOptionsChange}
           timeRange={timeRange}
@@ -194,7 +195,13 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
+          <LogsTableDetails
+            containerElement={null}
+            options={baseOptions}
+            onOptionsChange={jest.fn()}
+            timeRange={timeRange}
+            timeZone="UTC"
+          />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
@@ -244,7 +251,13 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
+          <LogsTableDetails
+            containerElement={null}
+            options={baseOptions}
+            onOptionsChange={jest.fn()}
+            timeRange={timeRange}
+            timeZone="UTC"
+          />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
