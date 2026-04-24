@@ -23,12 +23,13 @@ import { type Options } from './options/types';
 import { isCoreApp, isIsLabelFilterActive } from './types';
 
 interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
+  containerElement: HTMLDivElement | null;
   options: Options;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone }: Props) => {
+export const LogsTableDetails = ({ containerElement, options, onOptionsChange, timeRange, timeZone }: Props) => {
   const {
     currentLog,
     closeDetails,
@@ -60,6 +61,14 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
 
   useEffect(() => {
     function handleKeyup(e: KeyboardEvent) {
+      if (
+        containerElement &&
+        e.target instanceof Element &&
+        e.target.contains(containerElement) === false &&
+        containerElement.contains(e.target) === false
+      ) {
+        return;
+      }
       let delta: number;
       if (e.key === 'ArrowDown') {
         delta = 1;
@@ -80,7 +89,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
     }
     document.addEventListener('keyup', handleKeyup);
     return () => document.removeEventListener('keyup', handleKeyup);
-  }, [currentLog, logs, replaceDetails]);
+  }, [containerElement, currentLog, logs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
