@@ -229,7 +229,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Overview+",
+              "title": "ERRORS slo!",
               "collapse": false,
               "layout": {
                 "kind": "TabsLayout",
@@ -238,7 +238,7 @@
                     {
                       "kind": "TabsLayoutTab",
                       "spec": {
-                        "title": "Drilldown",
+                        "title": "Traces:all",
                         "layout": {
                           "kind": "GridLayout",
                           "spec": {
@@ -250,7 +250,81 @@
                     {
                       "kind": "TabsLayoutTab",
                       "spec": {
-                        "title": "Drilldown-wip",
+                        "title": "Bugs Fixed!!!",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": []
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "PerfZk",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": []
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "New tab",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": []
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "New-tab",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": []
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "SUCCESS slo!",
+              "collapse": false,
+              "layout": {
+                "kind": "TabsLayout",
+                "spec": {
+                  "tabs": [
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "bugs-fixed",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": []
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "Bugs Fixed!!",
                         "layout": {
                           "kind": "GridLayout",
                           "spec": {
@@ -276,18 +350,7 @@
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
-      "autoRefreshIntervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
