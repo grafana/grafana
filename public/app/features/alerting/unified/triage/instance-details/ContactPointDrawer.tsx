@@ -13,21 +13,17 @@ import { AccessControlAction } from 'app/types/accessControl';
 const DEFAULT_PAGE_SIZE = 10;
 
 export interface ContactPointDrawerProps {
-  /**
-   * Search string for the embedded list (usually the contact point title shown in the timeline / rule).
-   * This filters rows; it is not necessarily the same string as `receiverResourceName` in `onEditContactPoint`.
-   */
   listSearchQuery: string;
-  /** When set, Edit on a contact point opens the stacked edit drawer instead of the full page. */
+  /** K8s `metadata.name` (`id` in list) when known — narrows the list to one row so renames do not break fuzzy search. */
+  receiverResourceId?: string;
   onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
-/**
- * Contact point list filtered by name, for use inside the instance details drawer.
- * Alert Activity uses Grafana managed alert rules only, so this always loads Grafana-managed contact points.
- * Callers should only open this when the user can view contact points (see `useCanViewContactPoints` in the parent).
- */
-export function ContactPointDrawer({ listSearchQuery, onEditContactPoint }: ContactPointDrawerProps) {
+export function ContactPointDrawer({
+  listSearchQuery,
+  receiverResourceId,
+  onEditContactPoint,
+}: ContactPointDrawerProps) {
   const fetchPolicies = useMemo(() => !shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME), []);
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
@@ -36,6 +32,14 @@ export function ContactPointDrawer({ listSearchQuery, onEditContactPoint }: Cont
     fetchPolicies,
     fetchStatuses,
   });
+
+  const forResourceId = useMemo(
+    () => (receiverResourceId ? contactPoints.find((cp) => cp.id === receiverResourceId) : undefined),
+    [contactPoints, receiverResourceId]
+  );
+
+  const listContactPoints = forResourceId ? [forResourceId] : contactPoints;
+  const searchForList = forResourceId ? undefined : listSearchQuery;
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.contact-points-tab.text-loading', 'Loading...')} />;
@@ -63,10 +67,11 @@ export function ContactPointDrawer({ listSearchQuery, onEditContactPoint }: Cont
         </Alert>
       ) : (
         <ContactPointsList
-          contactPoints={contactPoints}
-          search={listSearchQuery}
+          contactPoints={listContactPoints}
+          search={searchForList}
           pageSize={DEFAULT_PAGE_SIZE}
           onEditContactPoint={onEditContactPoint}
+          fallbackWhenSearchUnmatched={!forResourceId}
         />
       )}
     </Stack>
