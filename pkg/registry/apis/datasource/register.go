@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 	"go.opentelemetry.io/otel/attribute"
 )
 
