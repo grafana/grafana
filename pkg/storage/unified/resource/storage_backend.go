@@ -1138,8 +1138,8 @@ const (
 
 // kvListIteratorBackoff is the default backoff config used between retry attempts.
 var kvListIteratorBackoff = backoff.Config{
-	MinBackoff: time.Second,
-	MaxBackoff: 10 * time.Second,
+	MinBackoff: 500 * time.Millisecond,
+	MaxBackoff: 3 * time.Second,
 }
 
 var batchGetRetryLogger = log.New("kv-batchget-retry")
@@ -1148,8 +1148,7 @@ type batchGetRetryPull struct {
 	ctx       context.Context
 	dataStore *dataStore
 	keys      []DataKey
-	keyIdx    map[DataKey]int // first-occurrence position of each key
-	nextIdx   int             // next not-yet-yielded position in keys
+	nextIdx   int // next not-yet-yielded position in keys
 	stopFn    func()
 	retryBo   *backoff.Backoff
 
@@ -1159,20 +1158,13 @@ type batchGetRetryPull struct {
 	next func() (DataObj, error, bool)
 }
 
-// newBatchGetRetryPull builds a pull-style iterator over dataStore.BatchGet that
-// retries on kv.ErrRetryable failures
+// newBatchGetRetryPull builds a pull-style iterator over dataStore.BatchGet
+// that retries on kv.ErrRetryable failures.
 func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey) *batchGetRetryPull {
-	keyIdx := make(map[DataKey]int, len(keys))
-	for idx, dk := range keys {
-		if _, ok := keyIdx[dk]; !ok {
-			keyIdx[dk] = idx
-		}
-	}
 	p := &batchGetRetryPull{
 		ctx:       ctx,
 		dataStore: ds,
 		keys:      keys,
-		keyIdx:    keyIdx,
 		retryBo:   backoff.New(ctx, kvListIteratorBackoff),
 	}
 	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, keys))
@@ -1202,11 +1194,11 @@ func (p *batchGetRetryPull) fetch() (DataObj, error, bool) {
 // Returns (false, nil) if the error is not retryable or budget is exhausted
 // Returns (false, err) if the wait was aborted (e.g. ctx cancelled).
 func (p *batchGetRetryPull) tryRetry(err error) (bool, error) {
-	p.totalFailures++
-	p.consecutiveFailures++
 	if !errors.Is(err, kv.ErrRetryable) {
 		return false, nil
 	}
+	p.totalFailures++
+	p.consecutiveFailures++
 	logArgs := []any{
 		"next_idx", p.nextIdx,
 		"remaining_keys", len(p.keys) - p.nextIdx,
@@ -1236,8 +1228,11 @@ func (p *batchGetRetryPull) tryRetry(err error) (bool, error) {
 func (p *batchGetRetryPull) advance(key DataKey) {
 	p.consecutiveFailures = 0
 	p.retryBo.Reset()
-	if idx, ok := p.keyIdx[key]; ok && idx >= p.nextIdx {
-		p.nextIdx = idx + 1
+	for i := p.nextIdx; i < len(p.keys); i++ {
+		if p.keys[i] == key {
+			p.nextIdx = i + 1
+			return
+		}
 	}
 }
 
