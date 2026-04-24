@@ -301,7 +301,7 @@ function ReceiverLinkOrButton({
         variant="secondary"
         fill="text"
         size="sm"
-        className={styles.receiverAsideButton}
+        className={cx(styles.receiverAsideButton, styles.receiverLink)}
         onClick={() => onOpenContactPoint(receiverName)}
       >
         {label}
