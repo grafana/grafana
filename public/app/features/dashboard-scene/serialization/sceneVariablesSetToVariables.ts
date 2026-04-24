@@ -375,7 +375,11 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
-      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+      // Legacy query variables may carry a bare-string datasource that schema migrations
+      // leave untouched; coerce it to a UID-only ref so it survives v2 serialization
+      // (mirrors backend v1→v2alpha1 conversion, which preserves unresolved strings as `{uid: name}`).
+      const rawDatasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+      const datasource = typeof rawDatasource === 'string' ? { uid: rawDatasource } : rawDatasource;
 
       if (typeof query !== 'string') {
         dataQuery = {
