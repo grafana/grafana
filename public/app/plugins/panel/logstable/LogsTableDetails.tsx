@@ -60,7 +60,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   }, [closeDetails, showDetails.length]);
 
   useEffect(() => {
-    function handleKeyup(e: KeyboardEvent) {
+    function handleKeydown(e: KeyboardEvent) {
       if (
         containerElement &&
         e.target instanceof Element &&
@@ -87,8 +87,8 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
       e.preventDefault();
       replaceDetails(nextLog);
     }
-    document.addEventListener('keyup', handleKeyup);
-    return () => document.removeEventListener('keyup', handleKeyup);
+    document.addEventListener('keydown', handleKeydown);
+    return () => document.removeEventListener('keydown', handleKeydown);
   }, [containerElement, currentLog, logs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
