@@ -622,7 +622,13 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
-	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	return filepath.Join(b.opts.Root, resourceSubPath(key))
+}
+
+// resourceSubPath returns the namespaced on-disk/object-store path for a resource,
+// for example: default/dashboards.dashboard.grafana.app
+func resourceSubPath(key resource.NamespacedResource) string {
+	return filepath.Join(cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {
