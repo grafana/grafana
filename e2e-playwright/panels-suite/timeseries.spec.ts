@@ -26,24 +26,26 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
     await expect(timeseriesUplot, 'uplot is rendered').toBeVisible();
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+    const hovered = { position: { x: 100, y: 50 } };
+    const off = { position: { x: 300, y: 50 } };
 
-    await timeseriesUplot.hover({ position: { x: 100, y: 50 } });
+    await timeseriesUplot.hover(hovered);
     await expect(tooltip, 'tooltip appears on hover').toBeVisible();
 
-    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
-    await timeseriesUplot.hover({ position: { x: 300, y: 50 } });
+    await timeseriesUplot.click(hovered);
+    await timeseriesUplot.hover(off);
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
 
-    await timeseriesUplot.click({ position: { x: 300, y: 50 } });
+    await timeseriesUplot.click(off);
     await timeseriesUplot.blur();
     await expect(tooltip, 'tooltip closed after unpinning and hovering away').toBeHidden();
 
-    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
+    await timeseriesUplot.click(hovered);
     await expect(tooltip, 'tooltip appears on click').toBeVisible();
     await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
     await expect(tooltip, 'tooltip closed on "x" click').toBeHidden();
 
-    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
+    await timeseriesUplot.click(hovered);
     await expect(tooltip, 'tooltip appears on click').toBeVisible();
     await page.keyboard.press('Meta+C');
     await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
@@ -55,7 +57,7 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))
       .getByLabel('Hidden')
       .click();
-    await timeseriesUplot.hover({ position: { x: 100, y: 50 } });
+    await timeseriesUplot.hover(hovered);
     await expect(tooltip, 'tooltip is not shown when disabled').toBeHidden();
   });
 
