@@ -133,14 +133,7 @@ describe('operatorSelectableValues', () => {
   it('returns an entry for each FilterOperator', () => {
     const ops = operatorSelectableValues();
     const keys = Object.keys(ops);
-    expect(keys).toContain('Contains');
-    expect(keys).toContain('=');
-    expect(keys).toContain('!=');
-    expect(keys).toContain('>');
-    expect(keys).toContain('>=');
-    expect(keys).toContain('<');
-    expect(keys).toContain('<=');
-    expect(keys).toContain('Expression');
+    expect(keys.sort()).toMatchSnapshot();
   });
 
   it('each operator entry has a value matching its key', () => {
