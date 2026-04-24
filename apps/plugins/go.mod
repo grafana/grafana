@@ -15,6 +15,7 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 
 require (
+	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/goccy/go-json v0.10.5
@@ -26,6 +27,7 @@ require (
 	github.com/grafana/grafana/pkg/apiserver v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.23.2
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
@@ -47,6 +49,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
+	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -77,6 +80,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
@@ -238,6 +242,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.7 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.7 // indirect

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -15,21 +16,19 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
-)
-
-const (
-	memcachedKeySyncInterval = 30 * time.Second
 )
 
 var noRetryPolicy operator.RetryPolicy = func(error, int) (bool, time.Duration) {
@@ -69,12 +68,9 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			InformerSupplier: childReconcilerInformerSupplier(
-				specificConfig.ChildReconciler.MemcachedSelector,
-				specificConfig.ChildReconciler.OwnershipFilter,
-			),
-			RetryPolicy:     childReconcilerRetryPolicy(specificConfig.ChildReconciler),
-			InformerOptions: childReconcilerInformerOptions(logger, specificConfig.ChildReconciler),
+			InformerSupplier: childReconcilerInformerSupplier(specificConfig.ChildReconciler),
+			RetryPolicy:      childReconcilerRetryPolicy(specificConfig.ChildReconciler),
+			InformerOptions:  childReconcilerInformerOptions(logger, specificConfig.ChildReconciler),
 		},
 		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},
 	}
@@ -105,7 +101,7 @@ type PluginAppConfig struct {
 
 type ChildReconcilerConfig struct {
 	Enabled              bool
-	MemcachedSelector    operator.MemcachedServerSelector
+	RedisCache           RedisCacheConfig
 	OwnershipFilter      install.OwnershipFilter
 	RetryPolicy          operator.RetryPolicy
 	DisableRetries       bool
@@ -122,6 +118,15 @@ type PluginAppInstallerConfig struct {
 	ChildReconciler      ChildReconcilerConfig
 }
 
+type RedisCacheConfig struct {
+	Context      context.Context
+	Client       redis.UniversalClient
+	Prefix       string
+	IndexBuckets int
+	ScanCount    int64
+	GetBatchSize int
+}
+
 func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstaller, error) {
 	metrics.MustRegister(config.PrometheusRegisterer)
 
@@ -129,7 +134,7 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 		MetaProviderManager: config.MetaProviderManager,
 		ChildReconciler: ChildReconcilerConfig{
 			Enabled:              config.ChildReconciler.Enabled,
-			MemcachedSelector:    config.ChildReconciler.MemcachedSelector,
+			RedisCache:           config.ChildReconciler.RedisCache,
 			OwnershipFilter:      config.ChildReconciler.OwnershipFilter,
 			RetryPolicy:          config.ChildReconciler.RetryPolicy,
 			DisableRetries:       config.ChildReconciler.DisableRetries,
@@ -186,9 +191,9 @@ func (g *gatedInformer) WaitForSync(ctx context.Context) error {
 	return g.Informer.WaitForSync(ctx)
 }
 
-func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, ownershipFilter install.OwnershipFilter) simple.InformerSupplier {
+func childReconcilerInformerSupplier(cfg ChildReconcilerConfig) simple.InformerSupplier {
 	var gate readinessGate
-	if readyFilter, ok := ownershipFilter.(readinessGate); ok {
+	if readyFilter, ok := cfg.OwnershipFilter.(readinessGate); ok {
 		gate = readyFilter
 	}
 
@@ -205,7 +210,7 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 	}
 
 	baseSupplier := simple.OptimizedInformerSupplier
-	if selector == nil {
+	if cfg.RedisCache.Client == nil {
 		return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
 			inf, err := baseSupplier(kind, clients, options)
 			if err != nil {
@@ -221,15 +226,8 @@ func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector, 
 			return nil, err
 		}
 
-		keySyncInterval := time.Duration(0)
-		if options.CacheResyncInterval > 0 {
-			keySyncInterval = memcachedKeySyncInterval
-		}
-
-		store, err := operator.NewMemcachedStore(kind, operator.MemcachedStoreConfig{
-			ServerSelector:  selector,
-			KeySyncInterval: keySyncInterval,
-		})
+		var store cache.Store
+		store, err = NewRedisStore(kind, cfg.RedisCache)
 		if err != nil {
 			return nil, err
 		}
@@ -262,27 +260,84 @@ type filteredPluginInformer struct {
 func (f *filteredPluginInformer) AddEventHandler(handler operator.ResourceWatcher) error {
 	return f.Informer.AddEventHandler(&operator.SimpleWatcher{
 		AddFunc: func(ctx context.Context, object resource.Object) error {
-			plugin, ok := object.(*pluginsv0alpha1.Plugin)
-			if !ok || !install.ShouldHandlePlugin(plugin) {
+			logging.DefaultLogger.Debug("filteredPluginInformer.AddFunc", "type", fmt.Sprintf("%T", object))
+			plugin, ok := toTypedPlugin(object)
+			if !ok {
+				logging.DefaultLogger.Warn("filteredPluginInformer.AddFunc: toTypedPlugin failed", "type", fmt.Sprintf("%T", object))
 				return nil
 			}
-			return handler.Add(ctx, object)
+			if !install.ShouldHandlePlugin(plugin) {
+				return nil
+			}
+			logging.DefaultLogger.Info("filteredPluginInformer.AddFunc: passing plugin to reconciler", "id", plugin.Spec.Id, "namespace", plugin.Namespace)
+			return handler.Add(ctx, plugin)
 		},
 		UpdateFunc: func(ctx context.Context, src, tgt resource.Object) error {
-			plugin, ok := tgt.(*pluginsv0alpha1.Plugin)
+			plugin, ok := toTypedPlugin(tgt)
 			if !ok || !install.ShouldHandlePlugin(plugin) {
 				return nil
 			}
-			return handler.Update(ctx, src, tgt)
+			srcPlugin, ok := toTypedPlugin(src)
+			if !ok {
+				return nil
+			}
+			return handler.Update(ctx, srcPlugin, plugin)
 		},
 		DeleteFunc: func(ctx context.Context, object resource.Object) error {
-			plugin, ok := object.(*pluginsv0alpha1.Plugin)
+			plugin, ok := toTypedPlugin(object)
 			if !ok || !install.ShouldHandlePlugin(plugin) {
 				return nil
 			}
-			return handler.Delete(ctx, object)
+			return handler.Delete(ctx, plugin)
 		},
 	})
+}
+
+// toTypedPlugin converts a resource.Object to *pluginsv0alpha1.Plugin.
+//
+// The SDK informer pipeline may deliver objects as *resource.UntypedObject (from list
+// responses), *k8s.UntypedObjectWrapper, or *unstructured.Unstructured (from the native
+// Kubernetes watch interface). The fast path handles already-typed objects; the fallback
+// marshals to JSON and decodes into the typed struct, which is correct for all other
+// representations including Kubernetes unstructured objects.
+func toTypedPlugin(obj resource.Object) (*pluginsv0alpha1.Plugin, bool) {
+	if p, ok := obj.(*pluginsv0alpha1.Plugin); ok {
+		return p, true
+	}
+	// Fast path for SDK UntypedObject: read fields directly from the in-memory map
+	// to avoid a marshal round-trip.
+	if untyped, ok := obj.(*resource.UntypedObject); ok {
+		p := &pluginsv0alpha1.Plugin{}
+		p.TypeMeta = untyped.TypeMeta
+		p.ObjectMeta = untyped.ObjectMeta
+		if id, ok2 := untyped.Spec["id"].(string); ok2 {
+			p.Spec.Id = id
+		}
+		if version, ok2 := untyped.Spec["version"].(string); ok2 {
+			p.Spec.Version = version
+		}
+		if url, ok2 := untyped.Spec["url"].(string); ok2 {
+			p.Spec.Url = &url
+		}
+		if parentId, ok2 := untyped.Spec["parentId"].(string); ok2 {
+			p.Spec.ParentId = &parentId
+		}
+		if statusRaw, ok2 := untyped.Subresources["status"]; ok2 {
+			_ = json.Unmarshal(statusRaw, &p.Status)
+		}
+		return p, true
+	}
+	// Fallback for Kubernetes unstructured types (e.g. *unstructured.Unstructured,
+	// *k8s.UntypedObjectWrapper) returned by the native watch interface.
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return nil, false
+	}
+	p := &pluginsv0alpha1.Plugin{}
+	if err := json.Unmarshal(data, p); err != nil {
+		return nil, false
+	}
+	return p, true
 }
 
 func childReconcilerRetryPolicy(cfg ChildReconcilerConfig) operator.RetryPolicy {

@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -22,7 +23,7 @@ import (
 
 func TestChildReconcilerInformerSupplier(t *testing.T) {
 	t.Run("uses optimized informer by default", func(t *testing.T) {
-		inf, err := childReconcilerInformerSupplier(nil, nil)(
+		inf, err := childReconcilerInformerSupplier(ChildReconcilerConfig{})(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
@@ -32,25 +33,30 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 		require.Equal(t, "*cache.cache", nestedInformerStoreType(t, inf))
 	})
 
-	t.Run("uses memcached informer when configured", func(t *testing.T) {
-		selector, err := simple.NewMemcachedHostList([]string{"127.0.0.1:11211"})
+	t.Run("uses redis informer when configured", func(t *testing.T) {
+		server, err := miniredis.Run()
 		require.NoError(t, err)
+		t.Cleanup(server.Close)
 
-		inf, err := childReconcilerInformerSupplier(selector, nil)(
+		client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+		t.Cleanup(func() { _ = client.Close() })
+
+		inf, err := childReconcilerInformerSupplier(ChildReconcilerConfig{
+			RedisCache: RedisCacheConfig{Client: client},
+		})(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
 		)
 		require.NoError(t, err)
 		require.Equal(t, "*app.filteredPluginInformer", reflect.TypeOf(inf).String())
-		require.Equal(t, "*operator.MemcachedStore", nestedInformerStoreType(t, inf))
-		require.False(t, nestedMemcachedTrackKeys(t, inf))
+		require.Equal(t, "*app.RedisStore", nestedInformerStoreType(t, inf))
 	})
 
 	t.Run("gates plugin informer when ownership filter exposes readiness", func(t *testing.T) {
 		gate := mockReadinessGate{ready: make(chan struct{})}
 
-		inf, err := childReconcilerInformerSupplier(nil, gate)(
+		inf, err := childReconcilerInformerSupplier(ChildReconcilerConfig{OwnershipFilter: gate})(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
@@ -62,7 +68,7 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 	t.Run("does not gate non-plugin informers", func(t *testing.T) {
 		gate := mockReadinessGate{ready: make(chan struct{})}
 
-		inf, err := childReconcilerInformerSupplier(nil, gate)(
+		inf, err := childReconcilerInformerSupplier(ChildReconcilerConfig{OwnershipFilter: gate})(
 			pluginsv0alpha1.MetaKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},
@@ -159,7 +165,7 @@ func TestChildReconcilerErrorHandler(t *testing.T) {
 	logger := logging.NewSLogLogger(slog.NewTextHandler(&sink, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	handler := childReconcilerErrorHandler(logger)
 
-	handler(context.Background(), &install.ChildPluginReconcilerError{
+	handler(t.Context(), &install.ChildPluginReconcilerError{
 		Source:    install.ChildPluginReconcilerFailureSourceMetadataLookup,
 		PluginID:  "test-plugin",
 		Version:   "1.2.3",
@@ -181,7 +187,7 @@ func TestChildReconcilerErrorHandlerFallsBackToInformerError(t *testing.T) {
 	logger := logging.NewSLogLogger(slog.NewTextHandler(&sink, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	handler := childReconcilerErrorHandler(logger)
 
-	handler(context.Background(), errors.New("watch closed"))
+	handler(t.Context(), errors.New("watch closed"))
 
 	output := sink.String()
 	require.Contains(t, output, "Child plugin informer failed")
@@ -208,35 +214,6 @@ func nestedInformerStoreType(t *testing.T, inf operator.Informer) string {
 	require.False(t, store.IsNil())
 
 	return store.Elem().Type().String()
-}
-
-func nestedMemcachedTrackKeys(t *testing.T, inf operator.Informer) bool {
-	t.Helper()
-
-	concurrent, ok := unwrapConcurrentInformer(t, inf)
-	require.True(t, ok)
-
-	concurrentValue := reflect.ValueOf(concurrent).Elem()
-	nestedInformer := concurrentValue.FieldByName("informer")
-	require.True(t, nestedInformer.IsValid())
-
-	customInformer := nestedInformer
-	for customInformer.Kind() == reflect.Interface || customInformer.Kind() == reflect.Pointer {
-		require.False(t, customInformer.IsNil())
-		customInformer = customInformer.Elem()
-	}
-	store := customInformer.FieldByName("store")
-	require.True(t, store.IsValid())
-	require.False(t, store.IsNil())
-
-	memcachedStore := store
-	for memcachedStore.Kind() == reflect.Interface || memcachedStore.Kind() == reflect.Pointer {
-		require.False(t, memcachedStore.IsNil())
-		memcachedStore = memcachedStore.Elem()
-	}
-	trackKeys := memcachedStore.FieldByName("trackKeys")
-	require.True(t, trackKeys.IsValid())
-	return trackKeys.Bool()
 }
 
 func unwrapConcurrentInformer(t *testing.T, inf operator.Informer) (*operator.ConcurrentInformer, bool) {
@@ -298,8 +275,8 @@ func TestFilteredPluginInformerSkipsNonAppPlugins(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, wrapped)
 
-	require.NoError(t, wrapped.Add(context.Background(), nonAppPlugin))
-	require.NoError(t, wrapped.Add(context.Background(), appPlugin))
+	require.NoError(t, wrapped.Add(t.Context(), nonAppPlugin))
+	require.NoError(t, wrapped.Add(t.Context(), appPlugin))
 	require.Equal(t, []string{"example-app"}, added)
 }
 
