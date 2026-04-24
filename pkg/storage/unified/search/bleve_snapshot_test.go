@@ -39,6 +39,18 @@ type fakeRemoteIndexStore struct {
 	downloadCalls atomic.Int32
 }
 
+type noopIndexStoreLock struct {
+	lost chan struct{}
+}
+
+func (l *noopIndexStoreLock) Release() error {
+	return nil
+}
+
+func (l *noopIndexStoreLock) Lost() <-chan struct{} {
+	return l.lost
+}
+
 func (f *fakeRemoteIndexStore) put(key ulid.ULID, meta *IndexMeta) {
 	if f.data == nil {
 		f.data = map[ulid.ULID]*IndexMeta{}
@@ -68,6 +80,10 @@ func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.Names
 		return nil, fmt.Errorf("not found")
 	}
 	return meta, writeFakeSnapshot(destDir, meta)
+}
+
+func (f *fakeRemoteIndexStore) LockBuildIndex(context.Context, resource.NamespacedResource) (IndexStoreLock, error) {
+	return &noopIndexStoreLock{lost: make(chan struct{})}, nil
 }
 
 func (f *fakeRemoteIndexStore) UploadIndex(context.Context, resource.NamespacedResource, string, IndexMeta) (ulid.ULID, error) {
@@ -406,7 +422,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	bucket := memblob.OpenBucket(nil)
 	t.Cleanup(func() { _ = bucket.Close() })
 
-	store := NewBucketRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket, newFakeBackend(newConditionalBucket()), "test-owner", 5*time.Second, 500*time.Millisecond)
 	key := newTestNsResource()
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.5.0",
