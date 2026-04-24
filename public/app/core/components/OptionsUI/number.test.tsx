@@ -19,7 +19,7 @@ describe('NumberValueEditor', () => {
       />
     );
 
-    const input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
+    const input = screen.getByRole('spinbutton');
     fireEvent.blur(input, { target: { value: '3.7' } });
 
     expect(onChange).toHaveBeenCalledWith(3);
@@ -29,7 +29,7 @@ describe('NumberValueEditor', () => {
     const onChange = jest.fn();
     render(<NumberValueEditor value={1} onChange={onChange} item={baseItem} context={{ data: [] }} id="n2" />);
 
-    const input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
+    const input = screen.getByRole('spinbutton');
     fireEvent.blur(input, { target: { value: '3.25' } });
 
     expect(onChange).toHaveBeenCalledWith(3.25);
