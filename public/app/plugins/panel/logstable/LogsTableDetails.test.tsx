@@ -296,13 +296,7 @@ describe('LogsTableDetails', () => {
     const allLogs = [logA, logB, logC];
     const replaceDetails = jest.fn();
 
-    setup(
-      { currentLog: logB, showDetails: allLogs, replaceDetails },
-      undefined,
-      undefined,
-      jest.fn(),
-      allLogs
-    );
+    setup({ currentLog: logB, showDetails: allLogs, replaceDetails }, undefined, undefined, jest.fn(), allLogs);
 
     await waitFor(() => {
       expect(screen.getByText('Log line')).toBeInTheDocument();

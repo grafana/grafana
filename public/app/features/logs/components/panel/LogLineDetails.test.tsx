@@ -752,16 +752,11 @@ describe('LogLineDetails', () => {
       const replaceDetails = jest.fn();
       const focusLogLine = jest.fn();
 
-      await setup(
-        { logs, focusLogLine },
-        undefined,
-        undefined,
-        {
-          showDetails: logs,
-          currentLog: logs[0],
-          replaceDetails,
-        }
-      );
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[0],
+        replaceDetails,
+      });
 
       fireEvent.keyDown(document, { key: 'ArrowDown' });
 
@@ -774,16 +769,11 @@ describe('LogLineDetails', () => {
       const replaceDetails = jest.fn();
       const focusLogLine = jest.fn();
 
-      await setup(
-        { logs, focusLogLine },
-        undefined,
-        undefined,
-        {
-          showDetails: logs,
-          currentLog: logs[1],
-          replaceDetails,
-        }
-      );
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[1],
+        replaceDetails,
+      });
 
       fireEvent.keyDown(document, { key: 'ArrowUp' });
 
