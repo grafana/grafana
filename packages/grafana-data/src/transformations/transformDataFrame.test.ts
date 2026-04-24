@@ -2,13 +2,13 @@ import { map } from 'rxjs';
 
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { FieldType } from '../types/dataFrame';
-import { type CustomTransformOperator } from '../types/transformations';
+import { type CustomTransformOperator, type DataTransformerInfo } from '../types/transformations';
 import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
 
 import { ReducerID } from './fieldReducer';
 import { FrameMatcherID } from './matchers/ids';
 import { standardTransformersRegistry } from './standardTransformersRegistry';
-import { transformDataFrame } from './transformDataFrame';
+import { __resetTransformationCacheForTests, transformDataFrame } from './transformDataFrame';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { DataTransformerID } from './transformers/ids';
 import { reduceTransformer, ReduceTransformerMode } from './transformers/reduce';
@@ -245,37 +245,81 @@ describe('transformDataFrame', () => {
   });
 
   describe('transformation caching', () => {
-    it('calls the transformation factory only once for repeated pipeline runs', async () => {
-      // Use a unique ID so the module-level resolvedTransformations Map starts cold.
-      const CACHE_TEST_ID = '__transformDataFrame_cache_test_unique__';
-      const transformationFactory = jest.fn().mockResolvedValue(reduceTransformer);
+    const CACHE_TEST_ID = '__transformDataFrame_cache_test__';
+    const cfg = [{ id: CACHE_TEST_ID, options: { reducers: [ReducerID.first] } }];
 
-      // register() works even after initialization; the registry guard is on setInit()
+    // The registry has no public unregister, and `register()` throws on duplicate
+    // ids, so we register the test transformer once and swap the underlying
+    // factory per test via this indirection.
+    let transformationFactory: jest.Mock<Promise<DataTransformerInfo>, []> = jest.fn();
+
+    beforeAll(() => {
       standardTransformersRegistry.register({
         id: CACHE_TEST_ID,
-        transformation: transformationFactory,
+        transformation: () => transformationFactory(),
         name: 'Cache test',
         description: '',
         editor: () => null,
         imageDark: '',
         imageLight: '',
       });
+    });
 
-      const cfg = [{ id: CACHE_TEST_ID, options: { reducers: [ReducerID.first] } }];
+    beforeEach(() => {
+      __resetTransformationCacheForTests();
+      transformationFactory = jest.fn();
+    });
+
+    afterEach(() => {
+      __resetTransformationCacheForTests();
+    });
+
+    it('calls the transformation factory only once for repeated pipeline runs', async () => {
+      transformationFactory.mockResolvedValue(reduceTransformer);
+
       const data = [getSeriesAWithSingleField()];
-
       await expect(transformDataFrame(cfg, data)).toEmitValuesWith(() => {});
       await expect(transformDataFrame(cfg, data)).toEmitValuesWith(() => {});
 
       expect(transformationFactory).toHaveBeenCalledTimes(1);
+    });
 
-      // Clean up registry entry (resolvedTransformations entry is harmless since ID is unique)
-      const reg = standardTransformersRegistry as unknown as { byId: Map<string, unknown>; ordered: unknown[] };
-      reg.byId.delete(CACHE_TEST_ID);
-      const idx = reg.ordered.findIndex((i: unknown) => (i as { id: string }).id === CACHE_TEST_ID);
-      if (idx >= 0) {
-        reg.ordered.splice(idx, 1);
-      }
+    it('only invokes the factory once when concurrent callers race before resolution', async () => {
+      // Hold the factory promise unresolved until both subscriptions are in flight,
+      // so we exercise the in-flight (not resolved) branch of the cache.
+      let resolveFactory!: (info: DataTransformerInfo) => void;
+      const factoryPromise = new Promise<DataTransformerInfo>((resolve) => {
+        resolveFactory = resolve;
+      });
+      transformationFactory.mockReturnValue(factoryPromise);
+
+      const data = [getSeriesAWithSingleField()];
+      const first = transformDataFrame(cfg, data).toPromise();
+      const second = transformDataFrame(cfg, data).toPromise();
+
+      // Yield once so both subscriptions register their interest in the cached promise
+      // before we resolve it; without the shared promise, each would call the factory.
+      await Promise.resolve();
+      resolveFactory(reduceTransformer);
+
+      await Promise.all([first, second]);
+
+      expect(transformationFactory).toHaveBeenCalledTimes(1);
+    });
+
+    it('evicts a rejected resolution so a subsequent call retries successfully', async () => {
+      transformationFactory
+        .mockRejectedValueOnce(new Error('transient load failure'))
+        .mockResolvedValueOnce(reduceTransformer);
+
+      const data = [getSeriesAWithSingleField()];
+
+      await expect(transformDataFrame(cfg, data).toPromise()).rejects.toThrow('transient load failure');
+
+      // Second call should hit the factory again (cache evicted) and succeed.
+      await expect(transformDataFrame(cfg, data)).toEmitValuesWith(() => {});
+
+      expect(transformationFactory).toHaveBeenCalledTimes(2);
     });
   });
 
