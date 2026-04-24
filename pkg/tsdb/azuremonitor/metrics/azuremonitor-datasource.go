@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
@@ -55,9 +56,27 @@ type subscriptionCacheEntry struct {
 }
 
 // subscriptionCacheKey composes the fields that disambiguate a subscription
-// lookup across datasource instances and Azure clouds.
-func subscriptionCacheKey(dsId int64, baseUrl, subscriptionId string) string {
-	return fmt.Sprintf("%d|%s|%s", dsId, baseUrl, subscriptionId)
+// lookup. orgId and dsId scope to a single Grafana datasource; baseUrl
+// disambiguates across Azure clouds (public, government, china) configured
+// on the same datasource over time.
+func subscriptionCacheKey(orgId, dsId int64, baseUrl, subscriptionId string) string {
+	return fmt.Sprintf("%d|%d|%s|%s", orgId, dsId, baseUrl, subscriptionId)
+}
+
+// isUserScopedAuth reports whether the datasource issues requests with an
+// identity that varies per Grafana user. In those modes persistent caching
+// is unsafe: a user who has lost access to a subscription would continue to
+// receive a cached display name until the TTL expires. Singleflight
+// coalescing within a single burst is still safe and still applied.
+func isUserScopedAuth(creds azcredentials.AzureCredentials) bool {
+	if creds == nil {
+		return false
+	}
+	switch creds.AzureAuthType() {
+	case azcredentials.AzureAuthCurrentUserIdentity, azcredentials.AzureAuthClientSecretObo:
+		return true
+	}
+	return false
 }
 
 var (
@@ -288,20 +307,33 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
-	cacheKey := subscriptionCacheKey(dsId, baseUrl, subscriptionId)
-	if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
-		return entry.displayName, nil
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64, creds azcredentials.AzureCredentials) (string, error) {
+	userScoped := isUserScopedAuth(creds)
+	cacheKey := subscriptionCacheKey(orgId, dsId, baseUrl, subscriptionId)
+
+	// Persistent caching is only safe in auth modes where every request from
+	// this datasource uses the same Azure identity. In user-scoped modes the
+	// request is authorised on behalf of the current Grafana user, so a
+	// cached display name could be served to a user who has since lost
+	// access. Singleflight coalescing of concurrent callers is still applied
+	// in both modes.
+	if !userScoped {
+		if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+			return entry.displayName, nil
+		}
 	}
 
 	// Coalesce concurrent misses for the same cacheKey. Callers that arrive
 	// while a fetch is in flight will share its result (and its error), which
 	// is acceptable for this short-lived lookup.
 	result, err, _ := e.subscriptionFlights.Do(cacheKey, func() (any, error) {
-		// Re-check under the flight: another caller may have refreshed the
-		// entry between the fast-path miss and acquiring the flight slot.
-		if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
-			return entry.displayName, nil
+		if !userScoped {
+			// Re-check under the flight: another caller may have refreshed
+			// the entry between the fast-path miss and acquiring the flight
+			// slot.
+			if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+				return entry.displayName, nil
+			}
 		}
 
 		displayName, err := e.fetchSubscriptionDisplayName(cli, ctx, subscriptionId, baseUrl, dsId, orgId)
@@ -309,10 +341,12 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 			return "", err
 		}
 
-		e.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
-			displayName: displayName,
-			expiresAt:   time.Now().Add(subscriptionCacheTTL),
-		})
+		if !userScoped {
+			e.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+				displayName: displayName,
+				expiresAt:   time.Now().Add(subscriptionCacheTTL),
+			})
+		}
 		return displayName, nil
 	})
 	if err != nil {
@@ -424,7 +458,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		return nil, err
 	}
 
-	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID, dsInfo.Credentials)
 	if err != nil {
 		return nil, err
 	}
