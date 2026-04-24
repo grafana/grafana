@@ -33,7 +33,7 @@ func TestCanGetCompatibleDatasources(t *testing.T) {
 
 	require.NoError(t, err)
 
-	expectedDatasources := []string{"postgres"}
+	expectedDatasources := []string{"postgres"} //nolint:prealloc
 	expectedDatasources = append(expectedDatasources, grafanaDatasources...)
 	sort.Strings(expectedDatasources)
 

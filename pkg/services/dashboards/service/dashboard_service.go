@@ -1394,7 +1394,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	defer span.End()
 
 	filteredDashboards := make([]*dashboards.DashboardRef, 0)
-	folderUIDs := make([]string, 0)
+	folderUIDs := make([]string, 0, len(userDashboards))
 	for _, dashboard := range userDashboards {
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
 	}
@@ -1585,7 +1585,7 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
-	hitList := make([]*model.Hit, 0)
+	hitList := make([]*model.Hit, 0, len(res))
 
 	for _, item := range res {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()

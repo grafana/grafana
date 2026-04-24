@@ -225,7 +225,7 @@ func TestCalculate(t *testing.T) {
 			platform  fsPlatform
 			fsFactory func() (plugins.FS, error)
 		}
-		var testCases []testCase
+		var testCases []testCase //nolint:prealloc
 		for _, fsFactory := range []struct {
 			name string
 			f    func() (plugins.FS, error)

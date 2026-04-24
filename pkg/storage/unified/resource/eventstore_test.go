@@ -408,7 +408,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// List events when store is empty
-	retrievedEvents := make([]Event, 0)
+	retrievedEvents := make([]Event, 0) //nolint:prealloc
 	for event, err := range store.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
@@ -762,7 +762,7 @@ func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
 
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
-	retrievedEvents := make([]string, 0)
+	retrievedEvents := make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
@@ -779,7 +779,7 @@ func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
 
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
-	retrievedEvents = make([]string, 0)
+	retrievedEvents = make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
