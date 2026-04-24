@@ -586,6 +586,12 @@ export class DashboardMigrator {
         query.datasource = migrateDatasourceNameToRef(query.datasource, { returnDefaultAsNull: false });
       }
 
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.type === 'query' && typeof variable.datasource === 'string') {
+          variable.datasource = migrateDatasourceNameToRef(variable.datasource, { returnDefaultAsNull: false });
+        }
+      }
+
       // Migrate datasource: null to current default
       const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       if (defaultDs) {

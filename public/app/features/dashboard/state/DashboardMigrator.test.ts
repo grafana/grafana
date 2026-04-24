@@ -2031,6 +2031,22 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('when migrating query variable with bare-string datasource', () => {
+    it('should resolve a known name to a full DataSourceRef', () => {
+      const model = new DashboardModel({
+        templating: {
+          list: [
+            // @ts-expect-error
+            { type: 'query', name: 'known', datasource: 'prom' },
+          ],
+        },
+        schemaVersion: 35,
+      });
+
+      expect(model.templating.list[0].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+    });
+  });
+
   describe('when migrating default (null) datasource with panel with expressions queries', () => {
     let model: DashboardModel;
 
