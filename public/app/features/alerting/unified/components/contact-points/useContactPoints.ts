@@ -5,7 +5,6 @@
 
 import { useMemo } from 'react';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -29,7 +28,6 @@ import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '.
 import { KnownProvenance } from '../../types/knownProvenance';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { K8sAnnotations } from '../../utils/k8s/constants';
-import { stringifyFieldSelector } from '../../utils/k8s/utils';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -49,8 +47,13 @@ const {
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
-const { useListReceiverQuery, useDeleteReceiverMutation, useCreateReceiverMutation, useReplaceReceiverMutation } =
-  generatedAPI;
+const {
+  useListReceiverQuery,
+  useGetReceiverQuery,
+  useDeleteReceiverMutation,
+  useCreateReceiverMutation,
+  useReplaceReceiverMutation,
+} = generatedAPI;
 
 const defaultOptions = {
   refetchOnFocus: true,
@@ -77,7 +80,8 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   }, [installed, loading, oncallIntegrationsResponse]);
 };
 
-const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
+/** Maps a notifications API `Receiver` to the unified contact point shape (also used after save mutations). */
+export function parseK8sReceiver(item: K8sReceiver): GrafanaManagedContactPoint {
   const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
   const provenance = metadataProvenance === KnownProvenance.None ? undefined : metadataProvenance;
 
@@ -88,7 +92,7 @@ const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
     grafana_managed_receiver_configs: item.spec.integrations,
     metadata: item.metadata,
   };
-};
+}
 
 const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListReceiverQuery>) => {
   return useListReceiverQuery(hookParams, {
@@ -206,55 +210,41 @@ const useGetAlertmanagerContactPoint = (
 };
 
 /**
- * Load one Grafana-managed receiver via `listReceiver` + `metadata.name` fieldSelector: callers may pass
- * K8s name or display title (see dual query below). `queryOptions` are forwarded to both `useListReceiverQuery` calls.
+ * Load one Grafana-managed receiver via `GET .../receivers/{name}`.
+ * `name` is the path segment: use `metadata.name` / `id` from a list or save response, not the display title alone.
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
-  queryOptions?: Parameters<typeof useListReceiverQuery>[1]
+  queryOptions?: Parameters<typeof useGetReceiverQuery>[1]
 ) => {
   const skip = queryOptions?.skip;
 
-  const directList = useListReceiverQuery(
-    { fieldSelector: stringifyFieldSelector([['metadata.name', name]]) },
-    { ...queryOptions, skip: skip || !name }
-  );
-
-  const directHasItem = (directList.data?.items?.length ?? 0) > 0;
-  const directPending = directList.isLoading || directList.isFetching;
-
-  const encodedList = useListReceiverQuery(
-    { fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(name)]]) },
-    {
-      ...queryOptions,
-      skip: skip || !name || directPending || directHasItem,
-    }
-  );
+  const query = useGetReceiverQuery({ name }, { ...queryOptions, skip: skip || !name });
 
   return useMemo(() => {
-    const raw = directList.data?.items?.[0] ?? encodedList.data?.items?.[0];
+    const raw = query.data;
     const data = raw ? parseK8sReceiver(raw) : undefined;
-
-    const encodedPending = encodedList.isLoading || encodedList.isFetching;
-    const isLoading = directPending || (!directHasItem && encodedPending);
-
-    const lastError = data ? undefined : (directList.error ?? encodedList.error);
 
     return {
       data,
       currentData: data,
-      isLoading,
-      isFetching: directList.isFetching || encodedList.isFetching,
-      isSuccess: !isLoading && !lastError,
-      isError: Boolean(lastError),
-      error: lastError,
-      refetch: () => Promise.all([directList.refetch(), encodedList.refetch()]).then(() => undefined),
+      isLoading: query.isLoading || query.isFetching,
+      isFetching: query.isFetching,
+      isSuccess: query.isSuccess && Boolean(data),
+      isError: query.isError,
+      error: query.error,
+      refetch: query.refetch,
     };
-  }, [directList, encodedList, directHasItem, directPending]);
+  }, [query]);
 };
 
 export interface UseGetContactPointArgs {
   alertmanager: string;
+  /**
+   * For Grafana-managed (K8s) contact points, the path segment is the live `metadata.name` for that object
+   * (see `parseK8sReceiver` / list `id`); it is not the same as the display `spec.title` when the name was
+   * generated for the store.
+   */
   name: string;
   skip?: boolean;
 }
