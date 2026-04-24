@@ -15,6 +15,7 @@ import * as common from '@grafana/schema';
 export const pluginVersion = "13.1.0-pre";
 
 export interface Options {
+  allowDownload?: boolean;
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   enableLogDetails?: boolean;

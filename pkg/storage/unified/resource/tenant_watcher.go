@@ -326,7 +326,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 
 	// Go through all pending delete records and reconcile against the pending-delete tenants from the List above
 	clearStart := time.Now()
-	var cleared, leftForDeleter, scanned, raced int
+	var cleared, leftForDeleter, scanned, raced, orphanedSkipped int
 	for name, err := range tw.pendingDeleteStore.Names(ctx) {
 		if err != nil {
 			tw.log.Error("tenant watcher poll cycle: failed to list kv records", "error", err)
@@ -334,6 +334,19 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		}
 		scanned++
 		if _, live := liveNames[name]; live {
+			continue
+		}
+		// Orphaned records can't be cleared by the watcher, so skip the tenant
+		// API GET entirely — clearTenantPendingDelete would refuse to clear them.
+		record, err := tw.pendingDeleteStore.Get(ctx, name)
+		if err != nil {
+			tw.log.Warn("tenant watcher poll cycle: failed to read pending delete record, leaving record",
+				"tenant", name, "error", err)
+			leftForDeleter++
+			continue
+		}
+		if record.Orphaned {
+			orphanedSkipped++
 			continue
 		}
 		got, err := tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
@@ -366,6 +379,7 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 		"cleared", cleared,
 		"left_for_deleter", leftForDeleter,
 		"raced", raced,
+		"orphaned_skipped", orphanedSkipped,
 		"list_duration", listDuration,
 		"clear_duration", time.Since(clearStart),
 		"total_duration", time.Since(start),
