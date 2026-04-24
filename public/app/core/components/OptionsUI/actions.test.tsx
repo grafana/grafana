@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import { ActionType, HttpRequestMethod, type Action } from '@grafana/data';
+import { ActionType, HttpRequestMethod, type Action, VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
 
 import { ActionsValueEditor } from './actions';
 
@@ -34,9 +35,59 @@ describe('ActionsValueEditor', () => {
     expect(screen.getByText('Open Dashboard')).toBeInTheDocument();
   });
 
-  it('renders without crashing when context.getSuggestions is absent', () => {
+  it('opens the add modal (without crashing) when context.getSuggestions is absent', async () => {
     render(<ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
 
-    expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /add action/i }));
+
+    expect(screen.getByRole('dialog', { name: /add action/i })).toBeInTheDocument();
+  });
+
+  it('opens the edit modal (without crashing) when context.getSuggestions is absent', async () => {
+    render(
+      <ActionsValueEditor
+        value={[makeAction('Send Alert')]}
+        onChange={jest.fn()}
+        context={{ data: [] }}
+        item={editorItem}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }));
+
+    expect(screen.getByRole('dialog', { name: /edit action/i })).toBeInTheDocument();
+  });
+
+  it('calls getSuggestions with Values scope when the add modal opens', async () => {
+    const suggestions = [{ value: '${__value.text}', label: 'Value', origin: VariableOrigin.Value }];
+    const getSuggestions = jest.fn().mockReturnValue(suggestions);
+
+    render(
+      <ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [], getSuggestions }} item={editorItem} />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /add action/i }));
+
+    expect(screen.getByRole('dialog', { name: /add action/i })).toBeInTheDocument();
+    expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
+  });
+
+  it('calls getSuggestions with Values scope when the edit modal opens', async () => {
+    const suggestions = [{ value: '${__value.text}', label: 'Value', origin: VariableOrigin.Value }];
+    const getSuggestions = jest.fn().mockReturnValue(suggestions);
+
+    render(
+      <ActionsValueEditor
+        value={[makeAction('Send Alert')]}
+        onChange={jest.fn()}
+        context={{ data: [], getSuggestions }}
+        item={editorItem}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }));
+
+    expect(screen.getByRole('dialog', { name: /edit action/i })).toBeInTheDocument();
+    expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
   });
 });
