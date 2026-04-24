@@ -59,7 +59,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
   }, [closeDetails, showDetails.length]);
 
   useEffect(() => {
-    function handleKeydown(e: KeyboardEvent) {
+    function handleKeyup(e: KeyboardEvent) {
       let delta: number;
       if (e.key === 'ArrowDown') {
         delta = 1;
@@ -78,8 +78,8 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       }
       replaceDetails(nextLog);
     }
-    document.addEventListener('keyup', handleKeydown);
-    return () => document.removeEventListener('keyup', handleKeydown);
+    document.addEventListener('keyup', handleKeyup);
+    return () => document.removeEventListener('keyup', handleKeyup);
   }, [currentLog, logs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
