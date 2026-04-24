@@ -10,7 +10,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { DashboardModel } from '../state/DashboardModel';
 import { type PanelModel } from '../state/PanelModel';
 
-import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+import { DASHBOARD_SCHEMA_VERSION, migrateDatasourceNameToRef } from './DashboardMigrator';
 
 const dataSources = {
   prom: mockDataSource({
@@ -2537,5 +2537,46 @@ describe('when migrating to specific target versions', () => {
     const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
     // Schema version should remain unchanged when no migrations are needed
     expect(model.schemaVersion).toBe(25);
+  });
+});
+
+describe('migrateDatasourceNameToRef', () => {
+  describe('with returnDefaultAsNull: true', () => {
+    it('returns null for nullish or "default" inputs', () => {
+      expect(migrateDatasourceNameToRef(null, { returnDefaultAsNull: true })).toBeNull();
+      expect(migrateDatasourceNameToRef(undefined, { returnDefaultAsNull: true })).toBeNull();
+      expect(migrateDatasourceNameToRef('default', { returnDefaultAsNull: true })).toBeNull();
+    });
+
+    it('passes existing DataSourceRef objects through unchanged', () => {
+      const ref = { uid: 'prom-uid', type: 'prometheus' };
+      expect(migrateDatasourceNameToRef(ref, { returnDefaultAsNull: true })).toBe(ref);
+    });
+
+    it('resolves a bare-string datasource name via getDataSourceSrv', () => {
+      expect(migrateDatasourceNameToRef('prom', { returnDefaultAsNull: true })).toEqual({
+        uid: 'prom-uid',
+        type: 'prometheus',
+      });
+    });
+
+    it('falls back to a UID-only ref for unresolved strings', () => {
+      expect(migrateDatasourceNameToRef('nonexistent-ds', { returnDefaultAsNull: true })).toEqual({
+        uid: 'nonexistent-ds',
+      });
+    });
+
+    // Pins down parity with the backend isTemplateVariable handling in
+    // apps/dashboard/pkg/migration/conversion/v1_to_v2alpha1.go. Template variables
+    // must serialize as UID-only refs so output does not depend on the currently
+    // selected variable value (which is what getInstanceSettings would otherwise return).
+    it('preserves template variable references ($name and ${name}) as UID-only refs', () => {
+      expect(migrateDatasourceNameToRef('$datasource', { returnDefaultAsNull: true })).toEqual({
+        uid: '$datasource',
+      });
+      expect(migrateDatasourceNameToRef('${datasource}', { returnDefaultAsNull: true })).toEqual({
+        uid: '${datasource}',
+      });
+    });
   });
 });

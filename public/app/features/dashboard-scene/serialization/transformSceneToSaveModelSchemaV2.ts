@@ -955,6 +955,16 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
+export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
+  if (!ds) {
+    return undefined;
+  }
+  if (typeof ds === 'object' && isEmptyObject(ds)) {
+    return ds;
+  }
+  return migrateDatasourceNameToRef(ds, { returnDefaultAsNull: true }) ?? undefined;
+}
+
 /**
  * Returns the datasource value that should be persisted for a panel query, variable or annotation
  * - Undefined if the datasource was not defined in the initial save model
@@ -972,11 +982,7 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
 
   // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
-    const elementDS =
-      migrateDatasourceNameToRef('datasource' in element ? element.datasource : undefined, {
-        returnDefaultAsNull: true,
-      }) ?? undefined;
-
+    const elementDS = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
     if (elementDS) {
       const isEmptyDatasourceObject = Object.keys(elementDS).length === 0;
       if (!isEmptyDatasourceObject) {
@@ -984,7 +990,7 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
       }
     }
 
-    const panelDS = migrateDatasourceNameToRef(context?.state?.datasource, { returnDefaultAsNull: true }) ?? undefined;
+    const panelDS = normalizeDataSourceRef(context?.state?.datasource);
     if (panelDS?.uid) {
       const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
       const notExpr =
@@ -998,11 +1004,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    datasource = migrateDatasourceNameToRef(element.state.datasource, { returnDefaultAsNull: true }) ?? undefined;
+    datasource = normalizeDataSourceRef(element.state.datasource);
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    datasource = migrateDatasourceNameToRef(element.datasource, { returnDefaultAsNull: true }) ?? undefined;
+    datasource = normalizeDataSourceRef(element.datasource);
   }
 
   // If a datasource was resolved from the element, use it
