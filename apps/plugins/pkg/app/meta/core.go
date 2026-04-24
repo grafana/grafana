@@ -187,7 +187,8 @@ func createLoader(cdnAssets bool, staticRootPath string) pluginsLoader.Service {
 }
 
 type assetProvider struct {
-	// cdnAssets
+	// cdnAssets controls whether to return paths relative to staticRootPath (CDN)
+	// or in "plugins/<id>/..." format (on-prem, frontend prepends "public/").
 	cdnAssets bool
 	// staticRootPath is the absolute path to the static root ("public/" directory).
 	staticRootPath string
