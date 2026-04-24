@@ -168,11 +168,11 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
-		if !allowed {
-			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID: '%s'", folderUID)
-		}
 		if err != nil {
 			return err
+		}
+		if !allowed {
+			return fmt.Errorf("%w: folder UID '%s'", model.ErrLibraryElementInsufficientPermissions, folderUID)
 		}
 		if _, err := session.Insert(&element); err != nil {
 			if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
