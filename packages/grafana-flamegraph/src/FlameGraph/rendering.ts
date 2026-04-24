@@ -69,7 +69,7 @@ export function useFlameRender(options: RenderOptions) {
     focusedItemData,
     collapsedMap,
   } = options;
-  const ctx = useSetupCanvas(canvasRef, wrapperWidth, depth);
+  const { ctx, devicePixelRatio } = useSetupCanvas(canvasRef, wrapperWidth, depth);
   const theme = useTheme2();
 
   // There is a bit of dependency injections here that does not add readability, mainly to prevent recomputing some
@@ -92,7 +92,7 @@ export function useFlameRender(options: RenderOptions) {
     focusedItemData ? focusedItemData.item.level : 0
   );
 
-  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap);
+  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap, devicePixelRatio);
 
   useEffect(() => {
     if (!ctx) {
@@ -141,6 +141,7 @@ export function useFlameRender(options: RenderOptions) {
     renderFunc,
     collapsedMap,
     mutedColor,
+    devicePixelRatio,
   ]);
 }
 
@@ -169,16 +170,18 @@ function useRenderFunc(
   data: FlameGraphDataContainer,
   getBarColor: (item: LevelItem, label: string, muted: boolean) => string,
   textAlign: TextAlign,
-  collapsedMap: CollapsedMap
+  collapsedMap: CollapsedMap,
+  devicePixelRatio: number
 ) {
   return useMemo(() => {
     if (!ctx) {
       return () => {};
     }
 
+    const dpr = devicePixelRatio;
     const renderFunc: RenderFunc = (item, x, y, width, height, label) => {
       ctx.beginPath();
-      ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
+      ctx.rect(x + BAR_BORDER_WIDTH * dpr, y, width, height);
       ctx.fillStyle = getBarColor(item, label, false);
       ctx.stroke();
       ctx.fill();
@@ -190,7 +193,7 @@ function useRenderFunc(
         finalLabel = `(${numberOfCollapsedItems}) ` + label;
       }
 
-      if (width >= LABEL_THRESHOLD) {
+      if (width >= LABEL_THRESHOLD * dpr) {
         if (collapsedItemConfig) {
           renderLabel(
             ctx,
@@ -198,12 +201,12 @@ function useRenderFunc(
             finalLabel,
             item,
             width,
-            textAlign === 'left' ? x + GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET : x,
+            textAlign === 'left' ? x + (GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET) * dpr : x,
             y,
             textAlign
           );
 
-          renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig);
+          renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig, dpr);
         } else {
           renderLabel(ctx, data, finalLabel, item, width, x, y, textAlign);
         }
@@ -211,7 +214,7 @@ function useRenderFunc(
     };
 
     return renderFunc;
-  }, [ctx, getBarColor, textAlign, data, collapsedMap]);
+  }, [ctx, getBarColor, textAlign, data, collapsedMap, devicePixelRatio]);
 }
 
 /**
@@ -229,13 +232,14 @@ function renderGroupingStrip(
   y: number,
   height: number,
   item: LevelItem,
-  collapsedItemConfig: CollapseConfig
+  collapsedItemConfig: CollapseConfig,
+  dpr: number
 ) {
-  const groupStripX = x + GROUP_STRIP_MARGIN_LEFT;
+  const groupStripX = x + GROUP_STRIP_MARGIN_LEFT * dpr;
 
   // This is to mask the label in case we align it right to left.
   ctx.beginPath();
-  ctx.rect(x, y, groupStripX - x + GROUP_STRIP_WIDTH + GROUP_STRIP_PADDING, height);
+  ctx.rect(x, y, groupStripX - x + (GROUP_STRIP_WIDTH + GROUP_STRIP_PADDING) * dpr, height);
   ctx.fill();
 
   // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
@@ -243,16 +247,16 @@ function renderGroupingStrip(
   // visually.
   ctx.beginPath();
   if (collapsedItemConfig.collapsed) {
-    ctx.rect(groupStripX, y + height / 4, GROUP_STRIP_WIDTH, height / 2);
+    ctx.rect(groupStripX, y + height / 4, GROUP_STRIP_WIDTH * dpr, height / 2);
   } else {
     if (collapsedItemConfig.items[0] === item) {
       // Top item
-      ctx.rect(groupStripX, y + height / 2, GROUP_STRIP_WIDTH, height / 2);
+      ctx.rect(groupStripX, y + height / 2, GROUP_STRIP_WIDTH * dpr, height / 2);
     } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
       // Bottom item
-      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH, height / 2);
+      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH * dpr, height / 2);
     } else {
-      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH, height);
+      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH * dpr, height);
     }
   }
 
@@ -282,17 +286,18 @@ export function walkTree(
   const stack: Array<{ item: LevelItem; levelOffset: number }> = [];
   stack.push({ item: root, levelOffset: 0 });
 
-  const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
+  const dpr = window.devicePixelRatio;
+  const pixelsPerTick = (wrapperWidth * dpr) / totalViewTicks / (rangeMax - rangeMin);
   let collapsedItemRendered: LevelItem | undefined = undefined;
 
   while (stack.length > 0) {
     const { item, levelOffset } = stack.shift()!;
     let curBarTicks = item.value;
-    const muted = curBarTicks * pixelsPerTick <= MUTE_THRESHOLD;
-    const width = curBarTicks * pixelsPerTick - (muted ? 0 : BAR_BORDER_WIDTH * 2);
-    const height = PIXELS_PER_LEVEL;
+    const muted = curBarTicks * pixelsPerTick <= MUTE_THRESHOLD * dpr;
+    const width = curBarTicks * pixelsPerTick - (muted ? 0 : BAR_BORDER_WIDTH * dpr * 2);
+    const height = PIXELS_PER_LEVEL * dpr;
 
-    if (width < HIDE_THRESHOLD) {
+    if (width < HIDE_THRESHOLD * dpr) {
       // We don't render nor it's children
       continue;
     }
@@ -317,7 +322,7 @@ export function walkTree(
 
     if (!skipRender) {
       const barX = getBarX(item.start, totalViewTicks, rangeMin, pixelsPerTick);
-      const barY = (item.level + levelOffset) * PIXELS_PER_LEVEL;
+      const barY = (item.level + levelOffset) * PIXELS_PER_LEVEL * dpr;
 
       let label = data.getLabel(item.itemIndexes[0]);
       if (isCollapsedItem) {
@@ -373,8 +378,28 @@ function useColorFunction(
   );
 }
 
+/**
+ * Returns the current devicePixelRatio and re-renders when it changes (e.g. moving the window
+ * between a HiDPI and a standard display).
+ */
+function useDevicePixelRatio() {
+  const [devicePixelRatio, setDevicePixelRatio] = useState(window.devicePixelRatio);
+
+  useEffect(() => {
+    function onChange() {
+      setDevicePixelRatio(window.devicePixelRatio);
+    }
+    const mq = window.matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [devicePixelRatio]);
+
+  return devicePixelRatio;
+}
+
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperWidth: number, numberOfLevels: number) {
   const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
+  const devicePixelRatio = useDevicePixelRatio();
 
   useEffect(() => {
     if (!(numberOfLevels && canvasRef.current)) {
@@ -382,18 +407,18 @@ function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperW
     }
     const ctx = canvasRef.current.getContext('2d')!;
 
-    const height = PIXELS_PER_LEVEL * numberOfLevels;
-    canvasRef.current.width = Math.round(wrapperWidth * window.devicePixelRatio);
+    const height = PIXELS_PER_LEVEL * devicePixelRatio * numberOfLevels;
+    canvasRef.current.width = Math.round(wrapperWidth * devicePixelRatio);
     canvasRef.current.height = Math.round(height);
     canvasRef.current.style.width = `${wrapperWidth}px`;
-    canvasRef.current.style.height = `${height / window.devicePixelRatio}px`;
+    canvasRef.current.style.height = `${height / devicePixelRatio}px`;
 
     ctx.textBaseline = 'middle';
-    ctx.font = 12 * window.devicePixelRatio + 'px monospace';
+    ctx.font = 12 * devicePixelRatio + 'px monospace';
     ctx.strokeStyle = 'white';
     setCtx(ctx);
-  }, [canvasRef, setCtx, wrapperWidth, numberOfLevels]);
-  return ctx;
+  }, [canvasRef, setCtx, wrapperWidth, numberOfLevels, devicePixelRatio]);
+  return { ctx, devicePixelRatio };
 }
 
 // Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
@@ -416,11 +441,12 @@ function renderLabel(
   const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
   // We only measure name here instead of full label because of how we deal with the units and aligning later.
+  const dpr = window.devicePixelRatio;
   const measure = ctx.measureText(label);
-  const spaceForTextInRect = width - BAR_TEXT_PADDING_LEFT;
+  const spaceForTextInRect = width - BAR_TEXT_PADDING_LEFT * dpr;
 
   let fullLabel = `${label} (${unit})`;
-  let labelX = Math.max(x, 0) + BAR_TEXT_PADDING_LEFT;
+  let labelX = Math.max(x, 0) + BAR_TEXT_PADDING_LEFT * dpr;
 
   // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
   // that will already show full text.
@@ -430,11 +456,11 @@ function renderLabel(
     // mainly see the name. This also reflects how pyro/flamegraph works.
     if (textAlign === 'right') {
       fullLabel = label;
-      labelX = x + width - BAR_TEXT_PADDING_LEFT;
+      labelX = x + width - BAR_TEXT_PADDING_LEFT * dpr;
     }
   }
 
-  ctx.fillText(fullLabel, labelX, y + PIXELS_PER_LEVEL / 2 + 2);
+  ctx.fillText(fullLabel, labelX, y + (PIXELS_PER_LEVEL * dpr) / 2 + 2);
   ctx.restore();
 }
 

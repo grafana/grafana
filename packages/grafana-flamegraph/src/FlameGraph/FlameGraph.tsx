@@ -289,7 +289,7 @@ const getStylesLegacy = () => ({
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',
     display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+    marginBottom: `${PIXELS_PER_LEVEL}px`,
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',
@@ -334,7 +334,7 @@ const getStylesNew = (theme: GrafanaTheme2) => ({
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',
     display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+    marginBottom: `${PIXELS_PER_LEVEL}px`,
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',
