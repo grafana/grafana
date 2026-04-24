@@ -1,20 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
 
 import { ColorValueEditor } from './color';
-
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  return {
-    ...actual,
-    ColorPicker: jest.fn(({ children }: { children: (args: { showColorPicker: () => void }) => ReactNode }) =>
-      children({
-        showColorPicker: jest.fn(),
-      })
-    ),
-  };
-});
 
 describe('ColorValueEditor', () => {
   it('shows placeholder text when value is empty and details are enabled', () => {
