@@ -62,10 +62,17 @@ type HashRingOwnershipFilterConfig struct {
 
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
+
+	// MinPeers, if > 1, blocks the informer from starting until the ring has at
+	// least this many healthy members. Set to the expected replica count to
+	// prevent the startup duplicate-processing race where both pods reconcile all
+	// resources before gossip converges. 0 or 1 disables the wait.
+	MinPeers int
 }
 
 type ownershipReadRing interface {
 	GetWithOptions(key uint32, op ring.Operation, opts ...ring.Option) (ring.ReplicationSet, error)
+	GetAllHealthy(op ring.Operation) (ring.ReplicationSet, error)
 	State() services.State
 }
 
@@ -79,6 +86,8 @@ type HashRingOwnershipFilter struct {
 	manager   *services.Manager
 	ready     chan struct{}
 	readyOnce sync.Once
+	minPeers  int
+	logger    kitlog.Logger
 }
 
 func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog.Logger, reg prometheus.Registerer) (*HashRingOwnershipFilter, error) {
@@ -176,12 +185,19 @@ func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog
 		instance: lifecycler,
 		manager:  manager,
 		ready:    make(chan struct{}),
+		minPeers: cfg.MinPeers,
+		logger:   logger,
 	}, nil
 }
 
 func (f *HashRingOwnershipFilter) Run(ctx context.Context) error {
 	if err := services.StartManagerAndAwaitHealthy(ctx, f.manager); err != nil {
 		return err
+	}
+	if f.minPeers > 1 {
+		if err := f.waitForMinPeers(ctx, f.minPeers); err != nil {
+			return err
+		}
 	}
 	f.readyOnce.Do(func() {
 		close(f.ready)
@@ -193,6 +209,27 @@ func (f *HashRingOwnershipFilter) Run(ctx context.Context) error {
 	defer cancel()
 
 	return services.StopManagerAndAwaitStopped(stopCtx, f.manager)
+}
+
+func (f *HashRingOwnershipFilter) waitForMinPeers(ctx context.Context, minPeers int) error {
+	_ = f.logger.Log("msg", "waiting for ring peers", "min_peers", minPeers)
+	for {
+		set, err := f.readRing.GetAllHealthy(childReconcilerRingOp)
+		if err == nil && len(set.Instances) >= minPeers {
+			_ = f.logger.Log("msg", "ring has required peers, releasing informer", "peers", len(set.Instances))
+			return nil
+		}
+		current := 0
+		if err == nil {
+			current = len(set.Instances)
+		}
+		_ = f.logger.Log("msg", "waiting for ring peers", "current", current, "min_peers", minPeers)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 func (f *HashRingOwnershipFilter) WaitUntilReady(ctx context.Context) error {

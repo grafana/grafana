@@ -5,14 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
@@ -20,6 +24,8 @@ import (
 )
 
 const (
+	maxChildConcurrency = 5
+
 	childReconcilerStatusKey      = "child-plugin-reconciler"
 	childStatusObservedGeneration = "observedGeneration"
 	childStatusAppliedChildren    = "appliedChildren"
@@ -171,6 +177,14 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		return operator.ReconcileResult{}, nil
 	}
 
+	ctx, span := getTracer().Start(ctx, "child-reconciler.reconcile")
+	span.SetAttributes(
+		attribute.String("plugin.id", plugin.Spec.Id),
+		attribute.String("plugin.namespace", plugin.Namespace),
+		attribute.String("reconcile.action", actionLabel(req.Action)),
+	)
+	defer span.End()
+
 	ownsPlugin, err := r.ownershipFilter.OwnsPlugin(ctx, plugin)
 	if err != nil {
 		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceOwnership, plugin, err)
@@ -214,6 +228,8 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	resultLabel := childReconciliationStatusSuccess
 	if err != nil {
 		resultLabel = childReconciliationStatusError
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
 	metrics.ChildReconciliationTotal.WithLabelValues(resultLabel, actionLabel(req.Action), plugin.Spec.Id).Inc()
 
@@ -274,6 +290,11 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 		}, true, err
 	}
 
+	hasChildren := len(desiredChildren) > 0
+	if !hasChildren && len(currentChildren) == 0 {
+		return childReconcileResult{}, false, nil
+	}
+
 	outcome, err := r.applyChildren(ctx, plugin, currentChildren, desiredChildren)
 	if err != nil {
 		err = newChildPluginReconcilerError(ChildPluginReconcilerFailureSourceApplyChildren, plugin, err)
@@ -288,39 +309,76 @@ func (r *ChildPluginReconciler) reconcileDesiredChildren(
 }
 
 func (r *ChildPluginReconciler) getDesiredChildren(ctx context.Context, plugin *pluginsv0alpha1.Plugin) ([]string, error) {
+	ctx, span := getTracer().Start(ctx, "child-reconciler.getDesiredChildren")
+	span.SetAttributes(
+		attribute.String("plugin.id", plugin.Spec.Id),
+		attribute.String("plugin.version", plugin.Spec.Version),
+	)
+	defer span.End()
+
 	result, err := r.metaManager.GetMeta(ctx, meta.PluginRef{
 		ID:      plugin.Spec.Id,
 		Version: plugin.Spec.Version,
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	children := normalizeChildren(result.Meta.Children)
+	span.SetAttributes(attribute.Int("children.count", len(children)))
 	metrics.ChildrenCountPerReconcile.Observe(float64(len(children)))
 	return children, nil
 }
 
 func (r *ChildPluginReconciler) cleanupChildren(ctx context.Context, namespace string, children []string) ([]string, error) {
-	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace)
-	applied := sliceToSet(normalizeChildren(children))
+	ctx, span := getTracer().Start(ctx, "child-reconciler.cleanupChildren")
+	span.SetAttributes(
+		attribute.String("plugin.namespace", namespace),
+		attribute.Int("children.count", len(children)),
+	)
+	defer span.End()
 
-	var errs []error
-	for _, childID := range normalizeChildren(children) {
-		if err := ctx.Err(); err != nil {
-			errs = append(errs, err)
-			break
-		}
-		err := r.registrar.Unregister(ctx, namespace, childID, SourceChildPluginReconciler)
-		if err != nil && !errorsK8s.IsNotFound(err) {
-			logger.Error("Failed to unregister child plugin", "error", err, "pluginId", childID)
-			errs = append(errs, err)
-			continue
-		}
-		delete(applied, childID)
+	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace)
+	normalized := normalizeChildren(children)
+
+	var (
+		mu      sync.Mutex
+		applied = sliceToSet(normalized)
+		errs    []error
+	)
+
+	sem := make(chan struct{}, maxChildConcurrency)
+	var wg sync.WaitGroup
+	for _, childID := range normalized {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			err := r.registrar.Unregister(ctx, namespace, id, SourceChildPluginReconciler)
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil && !errorsK8s.IsNotFound(err) {
+				logger.Error("Failed to unregister child plugin", "error", err, "pluginId", id)
+				errs = append(errs, err)
+			} else {
+				delete(applied, id)
+			}
+		}(childID)
+	}
+	wg.Wait()
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		errs = append(errs, ctxErr)
 	}
 
-	return mapKeys(applied), errors.Join(errs...)
+	err := errors.Join(errs...)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	return mapKeys(applied), err
 }
 
 func (r *ChildPluginReconciler) repairStoredChildren(
@@ -328,42 +386,23 @@ func (r *ChildPluginReconciler) repairStoredChildren(
 	parent *pluginsv0alpha1.Plugin,
 	stored childStoredState,
 ) (childReconcileResult, bool, error) {
+	ctx, span := getTracer().Start(ctx, "child-reconciler.repairStoredChildren")
+	span.SetAttributes(
+		attribute.String("plugin.namespace", parent.Namespace),
+		attribute.Int("children.count", len(stored.appliedChildren)),
+	)
+	defer span.End()
+
 	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
 	appliedChildren := normalizeChildren(stored.appliedChildren)
-
-	var errs []error
-	for _, childID := range appliedChildren {
-		if err := ctx.Err(); err != nil {
-			errs = append(errs, err)
-			break
-		}
-
-		expected := r.childInstall(parent, childID)
-		existing, err := r.registrar.Get(ctx, parent.Namespace, childID)
-		switch {
-		case errorsK8s.IsNotFound(err):
-			err = r.registrar.Register(ctx, parent.Namespace, expected)
-		case err != nil:
-			logger.Error("Failed to get child plugin during resync repair", "error", err, "pluginId", childID)
-			errs = append(errs, err)
-			continue
-		case !expected.MatchesSpec(existing) || existing.Annotations[PluginInstallSourceAnnotation] != SourceChildPluginReconciler:
-			err = r.registrar.Register(ctx, parent.Namespace, expected)
-		default:
-			continue
-		}
-
-		if err != nil {
-			logger.Error("Failed to repair child plugin during resync", "error", err, "pluginId", childID)
-			errs = append(errs, err)
-		}
-	}
 
 	outcome := childReconcileResult{
 		appliedChildren:    appliedChildren,
 		observedGeneration: parent.Generation,
 	}
-	if err := errors.Join(errs...); err != nil {
+	if err := r.ensureChildrenMatchExpected(ctx, parent, appliedChildren, logger, "repair"); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		msg := err.Error()
 		outcome.state = pluginsv0alpha1.PluginStatusOperatorStateStateFailed
 		outcome.description = &msg
@@ -380,50 +419,143 @@ func (r *ChildPluginReconciler) applyChildren(
 	currentChildren []string,
 	desiredChildren []string,
 ) (childReconcileResult, error) {
+	ctx, span := getTracer().Start(ctx, "child-reconciler.applyChildren")
+	span.SetAttributes(attribute.String("plugin.namespace", parent.Namespace))
+	defer span.End()
+
 	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
 
 	currentChildren = normalizeChildren(currentChildren)
 	desiredChildren = normalizeChildren(desiredChildren)
+	span.SetAttributes(
+		attribute.Int("children.current_count", len(currentChildren)),
+		attribute.Int("children.desired_count", len(desiredChildren)),
+	)
 	desiredSet := sliceToSet(desiredChildren)
-	applied := sliceToSet(currentChildren)
 
-	var errs []error
+	var (
+		mu      sync.Mutex
+		applied = sliceToSet(currentChildren)
+		errs    []error
+	)
+
+	sem := make(chan struct{}, maxChildConcurrency)
+	var wg sync.WaitGroup
+
 	for _, childID := range currentChildren {
 		if _, ok := desiredSet[childID]; ok {
 			continue
 		}
-		if err := ctx.Err(); err != nil {
-			errs = append(errs, err)
-			break
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			err := r.registrar.Unregister(ctx, parent.Namespace, id, SourceChildPluginReconciler)
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil && !errorsK8s.IsNotFound(err) {
+				logger.Error("Failed to unregister child plugin", "error", err, "pluginId", id)
+				errs = append(errs, err)
+			} else {
+				delete(applied, id)
+			}
+		}(childID)
+	}
+	wg.Wait()
+
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		errs = append(errs, ctxErr)
+	} else if slices.Equal(currentChildren, desiredChildren) {
+		errs = append(errs, r.ensureChildrenMatchExpected(ctx, parent, desiredChildren, logger, "update"))
+	} else {
+		for _, childID := range desiredChildren {
+			wg.Add(1)
+			go func(id string) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+				err := r.registrar.Register(ctx, parent.Namespace, r.childInstall(parent, id))
+				mu.Lock()
+				defer mu.Unlock()
+				if err != nil {
+					logger.Error("Failed to register child plugin", "error", err, "pluginId", id)
+					errs = append(errs, err)
+				} else {
+					applied[id] = struct{}{}
+				}
+			}(childID)
 		}
-		err := r.registrar.Unregister(ctx, parent.Namespace, childID, SourceChildPluginReconciler)
-		if err != nil && !errorsK8s.IsNotFound(err) {
-			logger.Error("Failed to unregister child plugin", "error", err, "pluginId", childID)
-			errs = append(errs, err)
-			continue
+		wg.Wait()
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			errs = append(errs, ctxErr)
 		}
-		delete(applied, childID)
 	}
 
-	for _, childID := range desiredChildren {
-		if err := ctx.Err(); err != nil {
-			errs = append(errs, err)
-			break
-		}
-
-		childInstall := r.childInstall(parent, childID)
-		err := r.registrar.Register(ctx, parent.Namespace, childInstall)
-		if err != nil {
-			logger.Error("Failed to register child plugin", "error", err, "pluginId", childID)
-			errs = append(errs, err)
-			continue
-		}
-		applied[childID] = struct{}{}
+	err := errors.Join(errs...)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
-
 	return childReconcileResult{
 		appliedChildren: normalizeChildren(mapKeys(applied)),
-	}, errors.Join(errs...)
+	}, err
+}
+
+func (r *ChildPluginReconciler) ensureChildrenMatchExpected(
+	ctx context.Context,
+	parent *pluginsv0alpha1.Plugin,
+	childIDs []string,
+	logger logging.Logger,
+	logAction string,
+) error {
+	var (
+		mu   sync.Mutex
+		errs []error
+	)
+
+	sem := make(chan struct{}, maxChildConcurrency)
+	var wg sync.WaitGroup
+	for _, childID := range normalizeChildren(childIDs) {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			expected := r.childInstall(parent, id)
+			existing, err := r.registrar.Get(ctx, parent.Namespace, id)
+			switch {
+			case errorsK8s.IsNotFound(err):
+				err = r.registrar.Register(ctx, parent.Namespace, expected)
+			case err != nil:
+				logger.Error("Failed to get child plugin", "error", err, "pluginId", id, "action", logAction)
+				mu.Lock()
+				errs = append(errs, err)
+				mu.Unlock()
+				return
+			case !expected.MatchesSpec(existing) || existing.Annotations[PluginInstallSourceAnnotation] != SourceChildPluginReconciler:
+				err = r.registrar.Register(ctx, parent.Namespace, expected)
+			default:
+				return
+			}
+
+			if err != nil {
+				logger.Error("Failed to ensure child plugin matches expected state", "error", err, "pluginId", id, "action", logAction)
+				mu.Lock()
+				errs = append(errs, err)
+				mu.Unlock()
+			}
+		}(childID)
+	}
+	wg.Wait()
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		mu.Lock()
+		errs = append(errs, ctxErr)
+		mu.Unlock()
+	}
+
+	return errors.Join(errs...)
 }
 
 func (r *ChildPluginReconciler) childInstall(parent *pluginsv0alpha1.Plugin, childID string) *PluginInstall {

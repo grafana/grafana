@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	kitlog "github.com/go-kit/log"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
@@ -86,6 +87,34 @@ func TestHashChildReconcilerShardKey_UsesNamespaceAndName(t *testing.T) {
 	require.Equal(t, expectedShardHash(plugin.Namespace, plugin.Name), hashChildReconcilerShardKey(plugin))
 }
 
+func TestHashRingOwnershipFilter_WaitForMinPeers(t *testing.T) {
+	kitLogger := kitlog.NewNopLogger()
+
+	t.Run("returns immediately when peers already sufficient", func(t *testing.T) {
+		readRing := &fakeOwnershipReadRing{
+			set: ring.ReplicationSet{
+				Instances: []ring.InstanceDesc{{Addr: "10.0.0.1:7946"}, {Addr: "10.0.0.2:7946"}},
+			},
+		}
+		filter := &HashRingOwnershipFilter{readRing: readRing, logger: kitLogger}
+		require.NoError(t, filter.waitForMinPeers(t.Context(), 2))
+	})
+
+	t.Run("returns context error when peers never arrive", func(t *testing.T) {
+		readRing := &fakeOwnershipReadRing{
+			set: ring.ReplicationSet{
+				Instances: []ring.InstanceDesc{{Addr: "10.0.0.1:7946"}},
+			},
+		}
+		filter := &HashRingOwnershipFilter{readRing: readRing, logger: kitLogger}
+		ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+		defer cancel()
+
+		err := filter.waitForMinPeers(ctx, 2)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
+}
+
 func TestHashRingOwnershipFilter_WaitUntilReady(t *testing.T) {
 	t.Run("returns once ready", func(t *testing.T) {
 		filter := &HashRingOwnershipFilter{ready: make(chan struct{})}
@@ -113,6 +142,13 @@ type fakeOwnershipReadRing struct {
 
 func (f *fakeOwnershipReadRing) GetWithOptions(key uint32, _ ring.Operation, _ ...ring.Option) (ring.ReplicationSet, error) {
 	f.lastKey = key
+	if f.err != nil {
+		return ring.ReplicationSet{}, f.err
+	}
+	return f.set, nil
+}
+
+func (f *fakeOwnershipReadRing) GetAllHealthy(_ ring.Operation) (ring.ReplicationSet, error) {
 	if f.err != nil {
 		return ring.ReplicationSet{}, f.err
 	}

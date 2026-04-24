@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -188,10 +190,24 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 }
 
 // Register creates or updates a plugin install in the registry.
-func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
+func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) (retErr error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
+	}()
+
+	ctx, span := getTracer().Start(ctx, "registrar.register")
+	span.SetAttributes(
+		attribute.String("plugin.id", install.ID),
+		attribute.String("plugin.namespace", namespace),
+		attribute.String("plugin.source", install.Source),
+	)
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
 	}()
 
 	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace, "pluginId", install.ID, "version", install.Version)
@@ -313,10 +329,24 @@ func (r *InstallRegistrar) Get(ctx context.Context, namespace string, name strin
 }
 
 // Unregister removes a plugin install from the registry.
-func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
+func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) (retErr error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("unregister").Observe(time.Since(start).Seconds())
+	}()
+
+	ctx, span := getTracer().Start(ctx, "registrar.unregister")
+	span.SetAttributes(
+		attribute.String("plugin.id", name),
+		attribute.String("plugin.namespace", namespace),
+		attribute.String("plugin.source", source),
+	)
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
 	}()
 
 	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace, "pluginId", name, "source", source)
@@ -357,8 +387,21 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	return err
 }
 
-func (r *InstallRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) error {
+func (r *InstallRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, update StatusUpdateFunc) (retErr error) {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", plugin.Namespace, "pluginId", plugin.Name)
+
+	ctx, span := getTracer().Start(ctx, "registrar.update-status")
+	span.SetAttributes(
+		attribute.String("plugin.id", plugin.Name),
+		attribute.String("plugin.namespace", plugin.Namespace),
+	)
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
 
 	client, err := r.GetClient()
 	if err != nil {
