@@ -665,11 +665,10 @@ func TestV1ToV2alpha1(t *testing.T) {
 				require.NotNil(t, unknownQuery.Spec.Datasource,
 					"unknown legacy string datasource should be preserved as a ref, not dropped")
 				require.NotNil(t, unknownQuery.Spec.Datasource.Uid)
-				require.NotNil(t, unknownQuery.Spec.Datasource.Type)
 				assert.Equal(t, "TEST_DB", *unknownQuery.Spec.Datasource.Uid,
 					"unknown legacy string datasource should preserve the name as UID")
-				assert.Equal(t, "", *unknownQuery.Spec.Datasource.Type,
-					"unknown legacy string datasource should have empty type (no index match)")
+				assert.Nil(t, unknownQuery.Spec.Datasource.Type,
+					"unknown legacy string datasource should omit Type (UID-only ref, matches omitempty semantics)")
 			},
 		},
 	}

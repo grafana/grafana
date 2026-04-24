@@ -1359,11 +1359,14 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		queryVar.Spec.Datasource = dsRef
 	}
@@ -1748,11 +1751,14 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		adhocVar.Spec.Datasource = dsRef
 	}
@@ -2196,9 +2202,12 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			}
 		} else if dsStr, ok := ds.(string); ok && dsStr != "" {
 			dsUID, dsType := resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
+			// Omit Type when empty so unresolved legacy strings serialize as UID-only refs.
 			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
-				Type: &dsType,
-				Uid:  &dsUID,
+				Uid: &dsUID,
+			}
+			if dsType != "" {
+				panelDatasource.Type = &dsType
 			}
 		}
 	}
@@ -2328,11 +2337,14 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
 
-	// Only include datasource reference if UID is provided
+	// Only include datasource reference if UID is provided.
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if queryDatasourceUID != "" {
 		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &queryDatasourceType,
-			Uid:  &queryDatasourceUID,
+			Uid: &queryDatasourceUID,
+		}
+		if queryDatasourceType != "" {
+			panelQuerySpec.Datasource.Type = &queryDatasourceType
 		}
 	}
 
