@@ -127,7 +127,7 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	assert.Equal(t, be.opts.BuildVersion, store.uploadMeta.GrafanaBuildVersion)
 	assert.NotEmpty(t, store.uploaded)
 
-	snapshotParent := filepath.Join(be.opts.Root, "snapshots", cleanFileSegment(key.Namespace), cleanFileSegment(key.Resource+"."+key.Group))
+	snapshotParent := filepath.Join(be.opts.Root, "snapshots", resourceSubPath(key))
 	entries, err := os.ReadDir(snapshotParent)
 	require.NoError(t, err)
 	assert.Empty(t, entries)
@@ -153,7 +153,7 @@ func TestUploadSnapshot_UploadErrorCleansStagingDir(t *testing.T) {
 	err := be.uploadSnapshot(context.Background(), key, idx)
 	require.Error(t, err)
 
-	snapshotParent := filepath.Join(be.opts.Root, "snapshots", cleanFileSegment(key.Namespace), cleanFileSegment(key.Resource+"."+key.Group))
+	snapshotParent := filepath.Join(be.opts.Root, "snapshots", resourceSubPath(key))
 	entries, readErr := os.ReadDir(snapshotParent)
 	require.NoError(t, readErr)
 	assert.Empty(t, entries)

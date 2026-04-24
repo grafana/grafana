@@ -13,20 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (b *bleveBackend) snapshotIndex(idx bleve.Index, destDir string) error {
-	copyable, ok := idx.(bleve.IndexCopyable)
-	if !ok {
-		return fmt.Errorf("index does not support snapshot copy")
-	}
-	if err := os.MkdirAll(destDir, 0o700); err != nil {
-		return fmt.Errorf("creating snapshot dir: %w", err)
-	}
-	if err := copyable.CopyTo(bleve.FileSystemDirectory(destDir)); err != nil {
-		return fmt.Errorf("copying index snapshot: %w", err)
-	}
-	return nil
-}
-
 func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex) (retErr error) {
 	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key)
 	if err != nil {
@@ -62,6 +48,9 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		return err
 	}
 
+	// Read RV/build info from the staged snapshot instead of the live index so
+	// the uploaded metadata matches the copied snapshot contents even if the live
+	// index advanced while CopyTo was running.
 	snapshotIdx, err := bleve.OpenUsing(stagingDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 	if err != nil {
 		return fmt.Errorf("opening staged snapshot: %w", err)
@@ -95,8 +84,19 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	return nil
 }
 
+func (b *bleveBackend) snapshotIndex(idx bleve.Index, destDir string) error {
+	copyable, ok := idx.(bleve.IndexCopyable)
+	if !ok {
+		return fmt.Errorf("index does not support snapshot copy")
+	}
+	if err := copyable.CopyTo(bleve.FileSystemDirectory(destDir)); err != nil {
+		return fmt.Errorf("copying index snapshot: %w", err)
+	}
+	return nil
+}
+
 func (b *bleveBackend) newSnapshotStagingDir(key resource.NamespacedResource) (string, error) {
-	parent := filepath.Join(b.opts.Root, "snapshots", cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	parent := filepath.Join(b.opts.Root, "snapshots", resourceSubPath(key))
 	if !isPathWithinRoot(parent, b.opts.Root) {
 		return "", fmt.Errorf("invalid path %s", parent)
 	}
