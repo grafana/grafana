@@ -363,6 +363,7 @@ function NotificationSummary({
           status={status}
           notifications={items}
           onOpenContactPoint={onOpenContactPoint}
+          contactPointPermissionText={contactPointPermissionText}
         />
       ))}
     </Stack>
