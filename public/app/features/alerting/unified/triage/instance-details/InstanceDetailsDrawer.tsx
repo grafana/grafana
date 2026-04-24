@@ -408,7 +408,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   }
 
-  /** One stable `InstanceMainDrawer` + conditional drilldowns avoids remounting the instance layer when opening/closing contact or silence (same DOM stacking as before, single React subtree). */
+  /** One stable main `Drawer` (instance body) + conditional drilldowns avoids remounting the instance layer when opening/closing contact or silence. */
   const showSilenceLayer = activeView.type === 'silence' || isClosingSilenceDrawer;
   const showContactLayer =
     activeView.type === 'contact-point-list' ||
@@ -440,7 +440,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   return (
     <>
-      {/* Same structure as `InstanceMainDrawer` in the shell; inlined so we do not depend on optional `title` in shell types. */}
+      {/* Main instance panel: `Drawer` + `InstanceDetailsDrawerTitle` (same idea as a dedicated shell wrapper, kept inline here). */}
       <Drawer
         title={mainDrawerTitle ?? <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule.grafana_alert} />}
         onClose={handleDrawerClose}
