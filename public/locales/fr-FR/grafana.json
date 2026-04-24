@@ -5636,6 +5636,7 @@
         "panels": "Panneaux",
         "row": "Ligne",
         "rows": "Lignes",
+        "section-filters-set": "",
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
@@ -6453,7 +6454,6 @@
         "save-library-panel": "Enregistrer le panneau de la bibliothèque",
         "share": {
           "arrow": "Partager",
-          "title": "Partager",
           "tooltip": "Copier le lien"
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
@@ -8655,6 +8655,7 @@
         "copy-link": "Copier le lien vers la ligne de journal",
         "copy-to-clipboard": "Copier dans le presse-papier",
         "inspect-value": "Inspecter la valeur",
+        "show-details": "",
         "view-log-line": "Afficher la ligne de journal"
       }
     },
@@ -11329,6 +11330,8 @@
       "fields-section": "Champs",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valeur du lien",
       "links-section": "Liens",
       "log-attributes-field": "Attributs du journal",
@@ -11577,13 +11580,13 @@
   "logstable": {
     "category-table": "Tableau des journaux",
     "description-show-controls": "Afficher les commandes du tableau",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Active ou désactive le bouton de lien vers la ligne de journal dans la première colonne de chaque ligne",
       "name": "Afficher le bouton de lien pour copier le journal"
-    },
-    "show-inspect-button": {
-      "description": "Active ou désactive le bouton d’inspection de la ligne de journal dans la première colonne de chaque ligne",
-      "name": "Afficher le bouton d’inspection"
     }
   },
   "manage-dashbaords": {
@@ -13147,6 +13150,7 @@
       "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au référentiel avec le jeton d’API",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
+      "url-pattern": "",
       "url-required": "L’URL du dépôt est requise"
     },
     "bootstrap-step": {
@@ -14100,7 +14104,6 @@
       "hide": "Masquer {{type}}",
       "hide-help": "Masquer l’aide sur la source de données",
       "hide-transformation-help": "Masquer l’aide sur la transformation",
-      "inspector": "Inspecteur de requêtes",
       "more-actions": "Plus d’actions {{type}}",
       "remove": "Supprimer {{type}}",
       "remove-transformation-filter": "Supprimer le filtre",
@@ -14112,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Aucune règle d’alerte pour ce panneau",
       "no-alerts-description": "Créez une règle d’alerte pour recevoir une notification lorsque vos données remplissent certaines conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Voulez-vous vraiment supprimer cette requête ?",
@@ -14149,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Modifier {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalle",
         "max-data-points": "Points de données max.",
@@ -14159,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Aucune limite"
       },
+      "query-inspector": "",
       "query-options": "Options de requête"
     },
     "header": {
@@ -15930,6 +15956,7 @@
           "group-by": "Regrouper par"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoré",
       "placeholder-select-stats": "Sélectionner les statistiques"
     },
@@ -15941,6 +15968,16 @@
         "group-by": "Regrouper par"
       },
       "title-calc-alert": "Les calculs n’auront aucun effet si aucun champ n’est groupé"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

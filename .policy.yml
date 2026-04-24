@@ -36,6 +36,7 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
+            - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
@@ -43,15 +44,18 @@ policy:
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
             - Workflow .github/workflows/storybook-a11y.yml succeeded or skipped
             - Workflow .github/workflows/swagger-gen.yml succeeded or skipped
-            - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
-        - require patches
         - override policies
     - policy bot config is valid when modified
 approval_rules:
   - name: Workflow .github/workflows/actionlint.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^\.github\/workflows\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actionlint\.yaml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/actionlint\.yml$
@@ -96,6 +100,25 @@ approval_rules:
             - .github/workflows/backend-unit-tests.yml
   - name: Workflow .github/workflows/build-go-matrix.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:[^/]*)\.go$
+          - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^Makefile$
+          - ^packaging\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/build-rpm\.sh$
+          - ^scripts\/build-deb\.sh$
+          - ^scripts\/build-targz\.sh$
+          - ^scripts\/verify-pkg-stig\.sh$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-fpm\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/build-go-matrix\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/build-go-matrix\.yml$
@@ -535,6 +558,36 @@ approval_rules:
             - .github/workflows/pr-patch-check-event.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^Dockerfile$
+          - ^public\/(?:(?:[^/]*(?:/|$))*)$
+          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)package\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)project\.json$
+          - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
+          - ^conf\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.yarnrc\.yml$
+          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
+          - ^tsconfig\.json$
+          - ^(?:[^/]*)\.js$
+          - ^(?:[^/]*)\.ts$
+          - ^(?:[^/]*)\.config\.ts$
+          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
+          - ^emails\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
+          - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
+          - ^kindsv2\/(?:(?:[^/]*(?:/|$))*)$
+          - ^embed\.go$
+          - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-docker\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$
@@ -548,6 +601,21 @@ approval_rules:
             - .github/workflows/pr-test-docker.yml
   - name: Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^(?:[^/]*)\.go$
+          - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
+          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/ci\/backend-tests\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-integration\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-integration\.yml$
@@ -626,23 +694,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/swagger-gen.yml
-  - name: Workflow .github/workflows/trivy-scan.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^go\.(?:[^/]*)$
-          - ^\.github\/workflows\/trivy-scan\.yml$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/trivy-scan\.yml$
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/trivy-scan.yml
   - name: Workflow .github/workflows/trufflehog.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -666,19 +717,6 @@ approval_rules:
       conditions:
         has_successful_status:
           - Check .policy.yml is valid
-  - name: require patches
-    description: |
-      Ensure that all grafana security patches are still valid after this PR is merged.
-      If this is not the case, ask for help. We can regenerate the patch, or we can block this PR until ready.
-    if:
-      targets_branch:
-        pattern: ^(main|release-(?:[^/]*))$
-      from_branch:
-        pattern: ^[^:]+$
-    requires:
-      conditions:
-        has_successful_status:
-          - Test patches (event)
   - name: override policies
     description: |
       Policy-bot can be overridden in emergency situations.

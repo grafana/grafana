@@ -40,6 +40,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -202,19 +203,27 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Pull:   options,
 	})
 
-	result := h.AdminREST.Post().
-		Namespace(h.Namespace).
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context())
+	post := func() rest.Result {
+		return h.AdminREST.Post().
+			Namespace(h.Namespace).
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+	}
 
-	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
+	// A controller-triggered sync (e.g. the auto-resync when a repo first
+	// becomes healthy) may already be in flight when the caller invokes us.
+	// That sync may not observe state changes the caller just made (e.g.
+	// files copied to the provisioning path), so we drain any in-flight
+	// jobs and retry the POST to guarantee a sync runs against current state.
+	result := post()
+	const maxRetries = 3
+	for i := 0; apierrors.IsAlreadyExists(result.Error()) && i < maxRetries; i++ {
 		h.AwaitJobs(t, repo)
-		return
+		result = post()
 	}
 
 	obj, err := result.Get()
@@ -755,6 +764,7 @@ type TestRepo struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -1056,6 +1066,51 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForRepositoryDeleted polls until the named repository reports NotFound.
+// Repository deletion is finalizer-driven (cleanup → release/remove orphan
+// resources); on loaded CI runners the chain routinely exceeds short bounds.
+func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, ctx context.Context, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// WaitForResourcesReleased polls until every item returned by client no longer
+// carries provisioning-manager annotations — i.e. the release-orphan-resources
+// finalizer has finished handing the objects back to the user.
+func WaitForResourcesReleased(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		for _, v := range items.Items {
+			annotations := v.GetAnnotations()
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerKind, "%s %q still has manager kind annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerIdentity, "%s %q still has manager identity annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourcePath, "%s %q still has source path annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourceChecksum, "%s %q still has source checksum annotation", resourceKind, v.GetName())
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be released", resourceKind)
+}
+
+// WaitForResourcesDeleted polls until the given client lists zero items.
+// Use this after a repository delete when the remove-orphan-resources
+// finalizer should have swept the managed resources away.
+func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
@@ -1077,6 +1132,17 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 func WithFolderAPIVersion(version string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
 	}
 }
 
@@ -1111,7 +1177,9 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 				EnableMigration: true,
 			},
 		},
-		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Longer batched RV WithTx deadline via [unified_storage] resource_version_batch_transaction_timeout.
+		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
+		PermittedProvisioningPaths:                           ".|" + provisioningPath,
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
@@ -1284,6 +1352,12 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
+//
+// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// eventually-consistent signal: repository finalizers draining orphan
+// resources, dashboards freeing their folder reference in the search index,
+// and folder admission rejecting deletion until that index catches up. Under
+// SQLite write contention these lags routinely exceed short timeouts.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
@@ -1295,7 +1369,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -2132,13 +2206,27 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
 
 // HasState returns a matcher that asserts the job finished in the given state.
+// On mismatch it dumps the full job (spec + status) so the top-level error
+// message, errors list, summary counts, and warnings are visible in CI logs.
 func HasState(expected provisioning.JobState) JobMatcher {
 	return func(t *testing.T, job *unstructured.Unstructured) {
 		t.Helper()
 		actual := MustNestedString(job.Object, "status", "state")
 		require.Equal(t, string(expected), actual,
-			"job %q should have state %s", job.GetName(), expected)
+			"job %q should have state %s; full job:\n%s",
+			job.GetName(), expected, jobDump(job))
 	}
+}
+
+// jobDump renders a job as indented JSON for failure messages. Falls back to
+// the default formatter if marshalling fails (which should not happen for a
+// server-returned object).
+func jobDump(job *unstructured.Unstructured) string {
+	b, err := json.MarshalIndent(job.Object, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v (marshal error: %v)", job.Object, err)
+	}
+	return string(b)
 }
 
 // HasNoErrors returns a matcher that asserts the job completed without errors.
@@ -2550,7 +2638,37 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
 }
 
+// CreateGithubRepo creates a github-type repository backed by the gittest server.
+// The repo will NOT become healthy (git auth uses default "git" user which doesn't
+// exist on gittest), but webhooks are created before the health check runs, so
+// Status.Webhook will be populated if the GitHub API mock is configured.
+// workflows is optional; defaults to ["write"].
+// webhookBaseURL is optional; pass it to enable webhook creation on the repo.
+func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", false, initialFiles, extraValues, workflows...)
+}
+
 func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "git", syncTarget, true, initialFiles, nil, workflows...)
+}
+
+// createRepo is the shared implementation for creating git-backed repositories.
+// repoType is "git" or "github", which determines the template used.
+// waitForReady controls whether to wait for the repo to become healthy.
+func (h *GitTestHelper) createRepo(
+	t *testing.T,
+	repoName string,
+	repoType string,
+	syncTarget string,
+	waitForReady bool,
+	initialFiles map[string][]byte,
+	extraTemplateValues map[string]any,
+	workflows ...string,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -2592,7 +2710,7 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+	templateValues := map[string]any{
 		"Name":          repoName,
 		"Title":         fmt.Sprintf("Test Repository %s", repoName),
 		"URL":           remote.URL,
@@ -2601,12 +2719,20 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 		"SyncTarget":    syncTarget,
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
-	})
+	}
+	for k, v := range extraTemplateValues {
+		templateValues[k] = v
+	}
+
+	tmpl := TestdataPath(repoType + ".json.tmpl")
+	repoObj := h.RenderObject(t, tmpl, templateValues)
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
-	h.waitForReadyRepository(t, repoName)
+	if waitForReady {
+		h.waitForReadyRepository(t, repoName)
+	}
 
 	return remote, local
 }

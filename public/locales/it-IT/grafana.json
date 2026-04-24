@@ -5636,6 +5636,7 @@
         "panels": "Pannelli",
         "row": "Riga",
         "rows": "Righe",
+        "section-filters-set": "",
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
@@ -6453,7 +6454,6 @@
         "save-library-panel": "Salva pannello della libreria",
         "share": {
           "arrow": "Condividi",
-          "title": "Condividi",
           "tooltip": "Copia link"
         },
         "unlink-library-panel": "Scollega pannello della libreria"
@@ -8655,6 +8655,7 @@
         "copy-link": "Copia il link alla riga del registro",
         "copy-to-clipboard": "Copia negli appunti",
         "inspect-value": "Ispeziona valore",
+        "show-details": "",
         "view-log-line": "Visualizza riga di registro"
       }
     },
@@ -11329,6 +11330,8 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Collega il valore",
       "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
@@ -11577,13 +11580,13 @@
   "logstable": {
     "category-table": "Tabella dei registri",
     "description-show-controls": "Visualizza i controlli della tabella",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Abilita/disabilita il pulsante di collegamento alla riga registro nella prima colonna di ogni riga",
       "name": "Mostra il pulsante collegamento al registro delle copie"
-    },
-    "show-inspect-button": {
-      "description": "Abilita/disabilita il pulsante di ispezione della riga registro nella prima colonna di ogni riga",
-      "name": "Mostra pulsante di ispezione"
     }
   },
   "manage-dashbaords": {
@@ -13147,6 +13150,7 @@
       "token-user-description": "Il nome utente che verrà utilizzato per accedere al repository con il token API",
       "token-user-required": "Il nome utente è obbligatorio",
       "url-description": "L'URL del repository Bitbucket",
+      "url-pattern": "",
       "url-required": "L'URL del repository è obbligatorio"
     },
     "bootstrap-step": {
@@ -14100,7 +14104,6 @@
       "hide": "Nascondi {{type}}",
       "hide-help": "Nascondi la guida dell'origine dei dati",
       "hide-transformation-help": "Nascondi guida alla trasformazione",
-      "inspector": "Ispettore query",
       "more-actions": "Altre {{type}} azioni",
       "remove": "Rimuovi {{type}}",
       "remove-transformation-filter": "Rimuovi filtro",
@@ -14112,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Nessuna regola di avviso per questo pannello",
       "no-alerts-description": "Crea una regola di avviso per ricevere una notifica quando i tuoi dati soddisfano determinate condizioni."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Vuoi davvero eliminare questa query?",
@@ -14149,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Modifica {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervallo",
         "max-data-points": "Punti dati massimi",
@@ -14159,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Nessun limite"
       },
+      "query-inspector": "",
       "query-options": "Opzioni della query"
     },
     "header": {
@@ -15930,6 +15956,7 @@
           "group-by": "Raggruppa per"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorato",
       "placeholder-select-stats": "Seleziona statistiche"
     },
@@ -15941,6 +15968,16 @@
         "group-by": "Raggruppa per"
       },
       "title-calc-alert": "I calcoli non avranno alcun effetto se non sono presenti campi da raggruppare"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

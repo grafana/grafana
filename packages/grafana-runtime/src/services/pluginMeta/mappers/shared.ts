@@ -4,6 +4,8 @@ import {
   type PluginExtensions,
   PluginLoadingStrategy,
   type PluginMetaInfo,
+  PluginSignatureStatus,
+  PluginState,
   type PluginType,
 } from '@grafana/data';
 
@@ -23,7 +25,7 @@ export function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy
   return PluginLoadingStrategy.fetch;
 }
 
-function toCDNUrl(spec: v0alpha1Spec, path: string): string {
+export function toCDNUrl(spec: v0alpha1Spec, path: string): string {
   try {
     const normalizedBase = spec.baseURL.endsWith('/') ? spec.baseURL : `${spec.baseURL}/`;
     const url = new URL(path, normalizedBase);
@@ -33,7 +35,7 @@ function toCDNUrl(spec: v0alpha1Spec, path: string): string {
   }
 }
 
-function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
+export function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
   if (!spec.pluginJson.info.screenshots) {
     return [];
   }
@@ -45,7 +47,7 @@ function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
   }));
 }
 
-function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
+export function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
   return {
     ...spec.pluginJson.info.logos,
     large: toCDNUrl(spec, spec.pluginJson.info.logos.large),
@@ -55,11 +57,7 @@ function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
 
 export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
   const { updated, version, description = '', keywords } = spec.pluginJson.info;
-  const author = {
-    ...spec.pluginJson.info.author,
-    name: spec.pluginJson.info.author?.name ?? '',
-    url: spec.pluginJson.info.author?.url ?? '',
-  };
+  const author = { ...spec.pluginJson.info.author, name: spec.pluginJson.info.author?.name ?? '' };
   const links = (spec.pluginJson.info.links || []).map((l) => ({ ...l, name: l.name ?? '', url: l.url ?? '' }));
   const screenshots = screenshotsMapper(spec);
   const build = {};
@@ -76,6 +74,53 @@ export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
     version,
     keywords,
   };
+}
+
+export function stateMapper(spec: v0alpha1Spec): PluginState | undefined {
+  const state = spec.pluginJson.state;
+
+  if (state === PluginState.alpha) {
+    return PluginState.alpha;
+  }
+
+  if (state === PluginState.beta) {
+    return PluginState.beta;
+  }
+
+  if (state === PluginState.deprecated) {
+    return PluginState.deprecated;
+  }
+
+  if (state === PluginState.stable) {
+    return PluginState.stable;
+  }
+
+  return;
+}
+
+export function signatureMapper(spec: v0alpha1Spec): PluginSignatureStatus | undefined {
+  const signature = spec.signature?.status;
+  if (!signature) {
+    return;
+  }
+
+  if (signature === PluginSignatureStatus.internal) {
+    return PluginSignatureStatus.internal;
+  }
+
+  if (signature === PluginSignatureStatus.invalid) {
+    return PluginSignatureStatus.invalid;
+  }
+
+  if (signature === PluginSignatureStatus.modified) {
+    return PluginSignatureStatus.modified;
+  }
+
+  if (signature === PluginSignatureStatus.valid) {
+    return PluginSignatureStatus.valid;
+  }
+
+  return;
 }
 
 export function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {

@@ -32,7 +32,7 @@ func BenchmarkThreshold(b *testing.B) {
 			b.Fatalf("error: %s", err)
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
@@ -42,7 +42,7 @@ func BenchmarkThreshold(b *testing.B) {
 			b.Fatalf("error: %s", err)
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
@@ -52,7 +52,7 @@ func BenchmarkThreshold(b *testing.B) {
 			b.Fatalf("error: %s", err)
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
@@ -71,7 +71,7 @@ func BenchmarkThreshold(b *testing.B) {
 			"A": newResults(results...),
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
@@ -81,7 +81,7 @@ func BenchmarkThreshold(b *testing.B) {
 			b.Fatalf("error: %s", err)
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})

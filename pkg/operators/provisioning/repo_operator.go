@@ -125,6 +125,8 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		quotaGetter,
 		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

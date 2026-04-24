@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -59,7 +60,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+		UserID: userID,
+		OrgID:  c.GetOrgID(),
+		Teams:  c.TeamIDs, // nolint:staticcheck
+	}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err

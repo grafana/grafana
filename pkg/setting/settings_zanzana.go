@@ -80,6 +80,8 @@ type ZanzanaReconcilerSettings struct {
 	WriteBatchSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
+	// Page size when listing CRDs from the Kubernetes API.
+	ListPageSize int
 
 	// --- HA leader election (standalone mode in K8s) ---
 
@@ -403,6 +405,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.ListPageSize = reconcilerSec.Key("list_page_size").MustInt(1000)
 	zr.LeaderElection = leaderelection.Config{
 		Enabled:       reconcilerSec.Key("leader_election_enabled").MustBool(false),
 		LeaseName:     reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler"),
