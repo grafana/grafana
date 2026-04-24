@@ -199,6 +199,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
 				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
 				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
+				ListPageSize:        cfg.ZanzanaReconciler.ListPageSize,
 				CRDs:                reconcileCRDs,
 			},
 			reconcilerLogger,

@@ -5606,6 +5606,7 @@
         "panels": "面板",
         "row": "列",
         "rows": "列",
+        "section-filters-set": "",
         "tab": "分頁",
         "tabs": "分頁",
         "variable": "{{type}}變數",
@@ -13080,6 +13081,7 @@
       "token-user-description": "將用於存取具有 API 權杖的儲存庫的使用者名稱",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Bitbucket 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "bootstrap-step": {
@@ -14018,7 +14020,6 @@
       "hide": "隱藏 {{type}}",
       "hide-help": "隱藏資料來源說明",
       "hide-transformation-help": "隱藏轉換說明",
-      "inspector": "查詢檢查器",
       "more-actions": "更多 {{type}} 動作",
       "remove": "移除 {{type}}",
       "remove-transformation-filter": "移除篩選條件",
@@ -14030,6 +14031,25 @@
     "alerts": {
       "no-alerts": "此面板沒有警示規則",
       "no-alerts-description": "建立警示規則，以便在您的資料符合特定條件時收到通知。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "確定要刪除此查詢嗎？",
@@ -14067,6 +14087,7 @@
     },
     "footer": {
       "edit-option": "編輯 {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大資料點",
@@ -14077,6 +14098,7 @@
       "placeholder": {
         "no-limit": "無限制"
       },
+      "query-inspector": "",
       "query-options": "查詢選項"
     },
     "header": {

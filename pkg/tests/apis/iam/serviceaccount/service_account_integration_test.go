@@ -1,4 +1,4 @@
-package identity
+package serviceaccount
 
 import (
 	"context"
@@ -66,7 +66,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrServiceAccounts,
 		})
 
-		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -116,7 +116,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 					GVR:       gvrServiceAccounts,
 				})
 
-				_, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+				_, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
 				require.Error(t, err)
 				var statusErr *errors.StatusError
 				require.ErrorAs(t, err, &statusErr)
@@ -133,7 +133,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrServiceAccounts,
 		})
 
-		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-invalid-role-v0.yaml")
+		saToCreate := helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-invalid-role-v0.yaml")
 
 		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -151,7 +151,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrServiceAccounts,
 		})
 
-		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-no-title-v0.yaml")
+		saToCreate := helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-no-title-v0.yaml")
 
 		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -169,7 +169,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrServiceAccounts,
 		})
 
-		saToCreate := helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-external-v0.yaml")
+		saToCreate := helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-external-v0.yaml")
 
 		_, err := saClient.Resource.Create(ctx, saToCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -188,7 +188,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrServiceAccounts,
 		})
 
-		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-generate-name-v0.yaml"), metav1.CreateOptions{})
+		created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-generate-name-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 

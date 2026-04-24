@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
@@ -46,8 +47,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     value,
     width,
     enableAllOption,
-    invalid,
-    disabled,
+    invalid: invalidProp,
+    disabled: disabledProp,
+    loading: loadingProp,
     minWidth,
     maxWidth,
     isClearable,
@@ -56,11 +58,18 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     prefixIcon,
-    id,
+    id: idProp,
+    options: optionsProp,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
+
+  const fieldContext = useFieldContext();
+  const id = idProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const invalid = invalidProp ?? fieldContext.invalid;
+  const ariaDescribedBy = fieldContext['aria-describedby'];
 
   const allOptionItem = useMemo(() => {
     return {
@@ -79,21 +88,21 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue, customValueDescription);
+  } = useOptions(optionsProp, createCustomValue, customValueDescription);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
     return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
   }, [baseOptions, enableAllOption, allOptionItem]);
-  const loading = props.loading || asyncLoading;
+  const loading = loadingProp || fieldContext.loading || asyncLoading;
 
   const selectedItems = useMemo(() => {
     if (!value) {
       return [];
     }
 
-    return getSelectedItemsFromValue<T>(value, typeof props.options !== 'function' ? props.options : baseOptions);
-  }, [value, props.options, baseOptions]);
+    return getSelectedItemsFromValue<T>(value, typeof optionsProp !== 'function' ? optionsProp : baseOptions);
+  }, [value, optionsProp, baseOptions]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -314,6 +323,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 ref: inputRef,
                 style: { width: inputWidth },
               }),
+              'aria-describedby': ariaDescribedBy, // Description should be handled with the Field component
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
               onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {

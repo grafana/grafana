@@ -5636,6 +5636,7 @@
         "panels": "Fenster",
         "row": "Zeile",
         "rows": "Zeilen",
+        "section-filters-set": "",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} Variable",
@@ -13149,6 +13150,7 @@
       "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem API-Token verwendet wird",
       "token-user-required": "Benutzername erforderlich",
       "url-description": "Die Bitbucket-Repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL erforderlich"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "{{type}} ausblenden",
       "hide-help": "Datenquellen-Hilfe ausblenden",
       "hide-transformation-help": "Hilfe zur Transformation ausblenden",
-      "inspector": "Abfrage-Inspektor",
       "more-actions": "Weitere {{type}} Aktionen",
       "remove": "{{type}} entfernen",
       "remove-transformation-filter": "Filter entfernen",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Keine Warnregeln für dieses Panel",
       "no-alerts-description": "Erstellen Sie eine Warnregel, um benachrichtigt zu werden, wenn Ihre Daten bestimmte Bedingungen erfüllen."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Möchten Sie diese Abfrage wirklich löschen?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "{{label}} bearbeiten",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervall",
         "max-data-points": "Max. Datenpunkte",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Kein Limit"
       },
+      "query-inspector": "",
       "query-options": "Abfrageoptionen"
     },
     "header": {

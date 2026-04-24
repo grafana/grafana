@@ -6,6 +6,7 @@ import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, type Props as InputProps } from '../Input/Input';
@@ -152,7 +153,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     isClearable, // this should be default false, but TS can't infer the conditional type if you do
     createCustomValue = false,
     customValueDescription,
-    id,
+    id: idProp,
     width,
     minWidth,
     maxWidth,
@@ -160,13 +161,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     'data-testid': dataTestId,
     autoFocus,
     onBlur,
-    disabled,
-    invalid,
+    disabled: disabledProp,
+    invalid: invalidProp,
     prefixIcon,
     noOptionsMessage,
     isOpen: isOpenProp,
     onIsOpenChange: onIsOpenChangeProp,
+    loading: loadingProp,
   } = props;
+  const fieldContext = useFieldContext();
+  const id = idProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const invalid = invalidProp ?? fieldContext.invalid;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
@@ -180,7 +186,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     asyncLoading,
     asyncError,
     resetSearch,
-  } = useOptions(props.options, createCustomValue, customValueDescription);
+  } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {
@@ -381,7 +387,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
-  const loading = props.loading || asyncLoading;
+  const loading = loadingProp || fieldContext.loading || asyncLoading;
 
   const inputSuffix = (
     <>
