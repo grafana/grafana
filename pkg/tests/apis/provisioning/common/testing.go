@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -999,48 +1000,44 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms).
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// by touching its status (aging the health timestamp by 1ms). A merge patch on the
+// status subresource carries no resourceVersion, so it never conflicts with
+// concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get connection %s", name) {
-			return
-		}
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on connection %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for connection %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Connections.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// A merge patch on the status subresource carries no resourceVersion, so it never
+// conflicts with concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repository %s", name) {
-			return
-		}
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on repository %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for repository %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Repositories.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
