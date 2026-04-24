@@ -346,6 +346,14 @@ func TestIdentityQueries(t *testing.T) {
 						External: boolPtr(true),
 					}),
 				},
+				{
+					Name: "team_bindings_team_uids",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID:      1,
+						TeamUIDs:   []string{"team-1", "team-2"},
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
 			},
 			sqlUpdateTeamMemberQuery: {
 				{

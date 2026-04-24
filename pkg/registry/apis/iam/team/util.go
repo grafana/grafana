@@ -8,18 +8,32 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
+// mapTeamPermission translates a legacy team.PermissionType to the generated
+// enum on the Team CRD. Any unknown variant panics so that adding a new
+// permission upstream without updating this mapping fails loud at startup
+// rather than silently collapsing the new value to "member".
 func mapTeamPermission(p team.PermissionType) iamv0alpha1.TeamTeamPermission {
-	if p == team.PermissionTypeAdmin {
+	switch p {
+	case team.PermissionTypeAdmin:
 		return iamv0alpha1.TeamTeamPermissionAdmin
+	case team.PermissionTypeMember:
+		return iamv0alpha1.TeamTeamPermissionMember
+	default:
+		panic(fmt.Sprintf("team: unhandled legacy PermissionType %d", p))
 	}
-	return iamv0alpha1.TeamTeamPermissionMember
 }
 
+// toLegacyPermission is the inverse of mapTeamPermission with the same
+// unknown-variant panic guarantee.
 func toLegacyPermission(p iamv0alpha1.TeamTeamPermission) team.PermissionType {
-	if p == iamv0alpha1.TeamTeamPermissionAdmin {
+	switch p {
+	case iamv0alpha1.TeamTeamPermissionAdmin:
 		return team.PermissionTypeAdmin
+	case iamv0alpha1.TeamTeamPermissionMember:
+		return team.PermissionTypeMember
+	default:
+		panic(fmt.Sprintf("team: unhandled TeamTeamPermission %q", p))
 	}
-	return team.PermissionTypeMember
 }
 
 func mapToTeamMember(tm legacy.TeamMember) iamv0alpha1.TeamTeamMember {

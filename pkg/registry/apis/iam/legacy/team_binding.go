@@ -15,9 +15,13 @@ import (
 )
 
 type ListTeamBindingsQuery struct {
-	UID        string
-	OrgID      int64
-	TeamUID    string
+	UID     string
+	OrgID   int64
+	TeamUID string
+	// TeamUIDs lets callers fetch bindings for many teams in one query.
+	// Mutually exclusive with TeamUID — if both are set the single-UID
+	// filter wins (see team_bindings_query.sql).
+	TeamUIDs   []string
 	UserUID    string
 	External   *bool
 	Pagination common.Pagination

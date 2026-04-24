@@ -278,6 +278,13 @@ type CreateTeamCommand struct {
 	ExternalID    string
 	IsProvisioned bool
 	ExternalUID   string
+
+	// MemberCreates optionally seeds members alongside the team in the same
+	// SQL transaction as the team row insert. Only UserID needs to be
+	// pre-resolved by the caller; TeamID, TeamUID, OrgID and timestamps are
+	// populated here from the team row that was just inserted, so if the
+	// team insert rolls back the member inserts roll back with it.
+	MemberCreates []CreateTeamMemberCommand
 }
 
 type CreateTeamResult struct {
@@ -337,6 +344,25 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to create team: %w", err)
 		}
 
+		for i := range cmd.MemberCreates {
+			cmd.MemberCreates[i].TeamID = teamID
+			cmd.MemberCreates[i].TeamUID = cmd.UID
+			cmd.MemberCreates[i].OrgID = ns.OrgID
+			cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+			cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
+			mreq := newCreateTeamMember(sql, &cmd.MemberCreates[i])
+			mq, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, mreq)
+			if err != nil {
+				return fmt.Errorf("failed to execute create team member template: %w", err)
+			}
+			if _, err := st.ExecWithReturningId(ctx, mq, mreq.GetArgs()...); err != nil {
+				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+					return team.ErrTeamMemberAlreadyAdded
+				}
+				return fmt.Errorf("failed to create team member: %w", err)
+			}
+		}
+
 		createdTeam = team.Team{
 			ID:            teamID,
 			UID:           cmd.UID,
@@ -368,9 +394,10 @@ type UpdateTeamCommand struct {
 	IsProvisioned bool
 	ExternalUID   string
 
-	// Optional member reconciliation. When any of these are non-empty, they
-	// are applied in the same SQL transaction as the team row update. Callers
-	// must pre-resolve TeamID and UserID on MemberCreates entries.
+	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
+	// members in the same SQL transaction as the team row update. Callers
+	// must pre-resolve both TeamID and UserID on MemberCreates entries;
+	// OrgID and timestamps are filled in here.
 	MemberDeletes []DeleteTeamMemberCommand
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
