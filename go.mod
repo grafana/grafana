@@ -113,7 +113,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // @grafana/identity-access-team
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
@@ -202,12 +202,12 @@ require (
 	golang.org/x/net v0.52.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
-	golang.org/x/text v0.35.0 // @grafana/grafana-backend-group
+	golang.org/x/text v0.36.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.256.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
 	google.golang.org/grpc v1.80.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.11 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.1 // @grafana/alerting-backend
