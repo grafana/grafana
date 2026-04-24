@@ -2,6 +2,7 @@ import {
   type AngularMeta,
   type PluginMetaInfo,
   PluginLoadingStrategy,
+  type PluginMeta,
   PluginSignatureStatus,
   PluginState,
 } from '@grafana/data';
@@ -144,4 +145,37 @@ export function combinePathAndUrl(url: string, path: string): string {
   } catch (error) {
     return `${normalized}${path}`;
   }
+}
+
+function getPublicPath(): string {
+  return typeof window !== 'undefined' && window.__grafana_public_path__ ? window.__grafana_public_path__ : '';
+}
+
+export function prependPublicPathToCorePlugins<T extends PluginMeta>(meta: T, spec: v0alpha1Spec): T {
+  const publicPath = getPublicPath();
+
+  if (!publicPath) {
+    return meta;
+  }
+
+  return {
+    ...meta,
+    baseUrl: combinePathAndUrl(publicPath, spec.baseURL),
+    module: isDecoupledCorePlugin(spec) ? combinePathAndUrl(publicPath, spec.module.path) : spec.module.path,
+    info: {
+      ...meta.info,
+      logos: {
+        ...spec.pluginJson.info.logos,
+        large: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.large),
+        small: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.small),
+      },
+      screenshots: spec.pluginJson.info.screenshots
+        ? spec.pluginJson.info.screenshots.map((s) => ({
+            ...s,
+            name: s.name ?? '',
+            path: combinePathAndUrl(publicPath, s.path ?? ''),
+          }))
+        : [],
+    },
+  };
 }

@@ -5,13 +5,12 @@ import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import {
   angularMapper,
-  combinePathAndUrl,
   isCorePlugin,
-  isDecoupledCorePlugin,
   loadingStrategyMapper,
   stateMapper,
   infoMapper,
   signatureMapper,
+  prependPublicPathToCorePlugins,
 } from './shared';
 
 const idToSortMap: Record<string, number> = {
@@ -74,38 +73,9 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   };
 }
 
-function getPublicPath(): string {
-  return typeof window !== 'undefined' && window.__grafana_public_path__ ? window.__grafana_public_path__ : '';
-}
-
 export function coreSpecMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const mapped = specMapper(spec);
-  const publicPath = getPublicPath();
-
-  if (!publicPath) {
-    return mapped;
-  }
-
-  return {
-    ...mapped,
-    baseUrl: combinePathAndUrl(publicPath, spec.baseURL),
-    module: isDecoupledCorePlugin(spec) ? combinePathAndUrl(publicPath, spec.module.path) : spec.module.path,
-    info: {
-      ...mapped.info,
-      logos: {
-        ...spec.pluginJson.info.logos,
-        large: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.large),
-        small: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.small),
-      },
-      screenshots: spec.pluginJson.info.screenshots
-        ? spec.pluginJson.info.screenshots.map((s) => ({
-            ...s,
-            name: s.name ?? '',
-            path: combinePathAndUrl(publicPath, s.path ?? ''),
-          }))
-        : [],
-    },
-  };
+  return prependPublicPathToCorePlugins(mapped, spec);
 }
 
 export const v0alpha1PanelMapper: PanelPluginMetasMapper<PluginMetasResponse> = (response) => {
