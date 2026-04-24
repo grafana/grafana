@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Align } from 'react-window';
 
 import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,7 +21,7 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
   containerElement: HTMLDivElement;
-  focusLogLine: (log: LogListModel) => void;
+  focusLogLine: (log: LogListModel, align?: Align) => void;
   logs: LogListModel[];
   timeRange: TimeRange;
   timeZone: string;
@@ -130,7 +131,7 @@ const LogLineDetailsTabs = memo(
           return;
         }
         replaceDetails(nextLog);
-        focusLogLine(nextLog);
+        focusLogLine(nextLog, 'auto');
       }
       document.addEventListener('keydown', handleKeydown);
       return () => document.removeEventListener('keydown', handleKeydown);
