@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -954,6 +954,17 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
+function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
+  if (!ds) {
+    return undefined;
+  }
+  if (typeof ds === 'string') {
+    const instance = getDataSourceSrv().getInstanceSettings(ds);
+    return instance ? getDataSourceRef(instance) : { uid: ds };
+  }
+  return ds;
+}
+
 /**
  * Returns the datasource value that should be persisted for a panel query, variable or annotation
  * - Undefined if the datasource was not defined in the initial save model
@@ -971,15 +982,15 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
 
   // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
-    if ('datasource' in element && element.datasource) {
-      const isEmptyDatasourceObject =
-        typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
+    const elementDS = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
+    if (elementDS) {
+      const isEmptyDatasourceObject = Object.keys(elementDS).length === 0;
       if (!isEmptyDatasourceObject) {
-        datasource = element.datasource;
+        datasource = elementDS;
       }
     }
 
-    const panelDS = context?.state?.datasource;
+    const panelDS = normalizeDataSourceRef(context?.state?.datasource);
     if (panelDS?.uid) {
       const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
       const notExpr =
@@ -993,11 +1004,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    datasource = element.state.datasource || undefined;
+    datasource = normalizeDataSourceRef(element.state.datasource);
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    datasource = element.datasource || undefined;
+    datasource = normalizeDataSourceRef(element.datasource);
   }
 
   // If a datasource was resolved from the element, use it
