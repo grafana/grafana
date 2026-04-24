@@ -13150,6 +13150,7 @@
       "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -14103,7 +14104,6 @@
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
-      "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
       "remove-transformation-filter": "Remove filter",
@@ -14115,6 +14115,27 @@
     "alerts": {
       "no-alerts": "No alert rules for this panel",
       "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "Change data source for selected queries",
+      "clear-selection": "Clear selection",
+      "datasource": "Data source",
+      "delete": "Delete",
+      "delete-confirm-body": "This action cannot be undone.",
+      "delete-confirm-title_one": "Delete {{count}} item?",
+      "delete-confirm-title_other": "Delete {{count}} items?",
+      "delete-tooltip": "Delete selected",
+      "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
+      "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
+      "disable-all": "Disable all",
+      "disable-all-tooltip": "Disable all selected",
+      "enable-all": "Enable all",
+      "enable-all-tooltip": "Enable all selected",
+      "hide": "Hide",
+      "hide-all-tooltip": "Hide all selected",
+      "show": "Show",
+      "show-all-tooltip": "Show all selected",
+      "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
@@ -14152,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max data points",
@@ -14162,6 +14184,7 @@
       "placeholder": {
         "no-limit": "No limit"
       },
+      "query-inspector": "Query inspector",
       "query-options": "Query Options"
     },
     "header": {

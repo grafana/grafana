@@ -1,4 +1,4 @@
-package identity
+package teambinding
 
 import (
 	"context"
@@ -58,7 +58,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 				GVR:       gvrTeams,
 			})
 
-			team, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+			team, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, team)
 
@@ -69,7 +69,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 				GVR:       gvrUsers,
 			})
 
-			user, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+			user, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, user)
 
@@ -601,7 +601,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		})
 
 		createTeam := func(name string, email string) *unstructured.Unstructured {
-			obj := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
+			obj := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
 			obj.SetName(name)
 
 			spec := obj.Object["spec"].(map[string]interface{})
@@ -615,7 +615,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		}
 
 		createUser := func(name string, email string, login string) *unstructured.Unstructured {
-			obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+			obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
 
 			spec := obj.Object["spec"].(map[string]interface{})
@@ -634,7 +634,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		user2 := createUser("tb-user-2", "tb-user2@example.com", "tb-user2")
 
 		createBinding := func(user *unstructured.Unstructured, team *unstructured.Unstructured, external bool) {
-			toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+			toCreate := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
 			toCreate.SetName("")
 			toCreate.SetGenerateName("binding-")
 			toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
@@ -705,7 +705,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 }
 
 func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
-	obj := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
 	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
 	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
 	return obj

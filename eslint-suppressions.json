@@ -468,12 +468,12 @@
   },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-ui/src/components/Forms/InlineField.story.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx": {
@@ -2419,11 +2419,6 @@
   "public/app/features/plugins/admin/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/plugins/datasource_srv.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
     }
   },
   "public/app/features/plugins/datasource_srv.ts": {

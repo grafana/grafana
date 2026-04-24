@@ -5636,6 +5636,7 @@
         "panels": "Panelek",
         "row": "Sor",
         "rows": "Sorok",
+        "section-filters-set": "",
         "tab": "Lap",
         "tabs": "Lapok",
         "variable": "{{type}} változó",
@@ -13149,6 +13150,7 @@
       "token-user-description": "Az API-tokennel az adattár eléréséhez használt felhasználónév",
       "token-user-required": "A felhasználónév megadása kötelező",
       "url-description": "A Bitbucket adattár URL-címe",
+      "url-pattern": "",
       "url-required": "Az adattár URL-címének megadása kötelező"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "{{type}} elrejtése",
       "hide-help": "Adatforrás súgójának elrejtése",
       "hide-transformation-help": "Transzformációs súgó elrejtése",
-      "inspector": "Lekérdezés-ellenőrző",
       "more-actions": "További {{type}}-műveletek",
       "remove": "{{type}} eltávolítása",
       "remove-transformation-filter": "Szűrő eltávolítása",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Nincsenek riasztási szabályok ehhez a panelhez",
       "no-alerts-description": "Hozzon létre egy riasztási szabályt, hogy értesítést kapjon, amikor az adatai megfelelnek bizonyos feltételeknek."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Biztosan törli ezt a lekérdezést?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "{{label}} szerkesztése",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervallum",
         "max-data-points": "Adatpontok max. száma",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Nincs korlát"
       },
+      "query-inspector": "",
       "query-options": "Lekérdezési beállítások"
     },
     "header": {
