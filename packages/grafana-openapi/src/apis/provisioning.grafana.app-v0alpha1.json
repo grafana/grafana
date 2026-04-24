@@ -5945,6 +5945,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "lastRotated": {
+            "type": "integer",
+            "format": "int64"
+          },
           "subscribedEvents": {
             "type": "array",
             "items": {

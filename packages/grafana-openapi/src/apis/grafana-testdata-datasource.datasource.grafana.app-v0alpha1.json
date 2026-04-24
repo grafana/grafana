@@ -196,11 +196,65 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DataSource"
+              },
+              "examples": {
+                "": {
+                  "summary": "Empty testdata",
+                  "value": {
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "my-testdata-datasource"
+                    },
+                    "spec": {
+                      "title": "My TestData Datasource"
+                    }
+                  }
+                },
+                "with-url": {
+                  "summary": "Testdata with URL (not used)",
+                  "value": {
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "testdata-with-url"
+                    },
+                    "spec": {
+                      "title": "TestData with URL",
+                      "url": "http://example.com"
+                    }
+                  }
+                }
               }
             },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/DataSource"
+              },
+              "examples": {
+                "": {
+                  "summary": "Empty testdata",
+                  "value": {
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "my-testdata-datasource"
+                    },
+                    "spec": {
+                      "title": "My TestData Datasource"
+                    }
+                  }
+                },
+                "with-url": {
+                  "summary": "Testdata with URL (not used)",
+                  "value": {
+                    "kind": "DataSource",
+                    "metadata": {
+                      "name": "testdata-with-url"
+                    },
+                    "spec": {
+                      "title": "TestData with URL",
+                      "url": "http://example.com"
+                    }
+                  }
+                }
               }
             }
           },
@@ -880,172 +934,27 @@
       ]
     },
     "/datasources/{name}/resources": {
+      "summary": "hello world",
       "get": {
-        "tags": ["DataSource"],
-        "description": "connect GET requests to resources of DataSource",
-        "operationId": "getDataSourceResources",
+        "tags": ["Resources"],
+        "operationId": "get_resources",
         "responses": {
-          "200": {
-            "description": "OK",
+          "default": {
             "content": {
-              "*/*": {
+              "text/plain": {
                 "schema": {
                   "type": "string"
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "put": {
-        "tags": ["DataSource"],
-        "description": "connect PUT requests to resources of DataSource",
-        "operationId": "replaceDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "post": {
-        "tags": ["DataSource"],
-        "description": "connect POST requests to resources of DataSource",
-        "operationId": "createDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "delete": {
-        "tags": ["DataSource"],
-        "description": "connect DELETE requests to resources of DataSource",
-        "operationId": "deleteDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "options": {
-        "tags": ["DataSource"],
-        "description": "connect OPTIONS requests to resources of DataSource",
-        "operationId": "optionsDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "head": {
-        "tags": ["DataSource"],
-        "description": "connect HEAD requests to resources of DataSource",
-        "operationId": "headDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "patch": {
-        "tags": ["DataSource"],
-        "description": "connect PATCH requests to resources of DataSource",
-        "operationId": "updateDataSourceResources",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Status",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1054,173 +963,133 @@
         }
       ]
     },
-    "/datasources/{name}/resources/{path}": {
+    "/datasources/{name}/resources/boom": {
+      "summary": "force a panic",
       "get": {
-        "tags": ["DataSource"],
-        "description": "connect GET requests to resources of DataSource",
-        "operationId": "getDataSourceResourcesWithPath",
+        "tags": ["Resources"],
+        "operationId": "get_resources_boom",
         "responses": {
-          "200": {
-            "description": "OK",
+          "default": {
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "put": {
-        "tags": ["DataSource"],
-        "description": "connect PUT requests to resources of DataSource",
-        "operationId": "replaceDataSourceResourcesWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
         }
       },
       "post": {
-        "tags": ["DataSource"],
-        "description": "connect POST requests to resources of DataSource",
-        "operationId": "createDataSourceResourcesWithPath",
+        "tags": ["Resources"],
+        "operationId": "post_resources_boom",
         "responses": {
-          "200": {
-            "description": "OK",
+          "default": {
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "delete": {
-        "tags": ["DataSource"],
-        "description": "connect DELETE requests to resources of DataSource",
-        "operationId": "deleteDataSourceResourcesWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "options": {
-        "tags": ["DataSource"],
-        "description": "connect OPTIONS requests to resources of DataSource",
-        "operationId": "optionsDataSourceResourcesWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "head": {
-        "tags": ["DataSource"],
-        "description": "connect HEAD requests to resources of DataSource",
-        "operationId": "headDataSourceResourcesWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
-        }
-      },
-      "patch": {
-        "tags": ["DataSource"],
-        "description": "connect PATCH requests to resources of DataSource",
-        "operationId": "updateDataSourceResourcesWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "Status",
-          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Status",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/scenarios": {
+      "summary": "hello world",
+      "get": {
+        "tags": ["Resources"],
+        "operationId": "get_resources_scenarios",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/sim/{key}": {
+      "description": "Get list of simulations",
+      "get": {
+        "tags": ["Resources"],
+        "operationId": "get_resources_sim_key",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Resources"],
+        "operationId": "post_resources_sim_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1228,9 +1097,212 @@
           }
         },
         {
-          "name": "path",
+          "name": "key",
           "in": "path",
-          "description": "path to the resource",
+          "description": "simulation key (should include hz)",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "examples": {
+            "10hz": {
+              "summary": "10 times a second",
+              "value": "10hz"
+            },
+            "1hz": {
+              "summary": "Once every second",
+              "value": "1hz"
+            }
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/sims": {
+      "description": "Get list of simulations",
+      "get": {
+        "tags": ["Resources"],
+        "operationId": "get_resources_sims",
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/stream": {
+      "summary": "Get streaming response",
+      "get": {
+        "tags": ["Resources"],
+        "operationId": "get_resources_stream",
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "description": "number of points that will be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "the start value",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "flush",
+            "in": "query",
+            "description": "How often the result is flushed (1-100%)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 100
+          },
+          {
+            "name": "speed",
+            "in": "query",
+            "description": "the clock cycle",
+            "schema": {
+              "type": "string"
+            },
+            "example": "100ms"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "the response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "influx"]
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/test": {
+      "summary": "Echo any request",
+      "post": {
+        "tags": ["Resources"],
+        "operationId": "post_resources_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/datasources/{name}/resources/test/json": {
+      "summary": "Echo json request",
+      "post": {
+        "tags": ["Resources"],
+        "operationId": "post_resources_test_json",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1279,6 +1351,22 @@
   },
   "components": {
     "schemas": {
+      "DataSourceSpec": {
+        "description": "Test data does not require any explicit configuration",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "description": "display name",
+            "type": "string"
+          },
+          "url": {
+            "description": "not used",
+            "type": "string",
+            "example": "http://xxxx"
+          }
+        },
+        "additionalProperties": false
+      },
       "QueryRequestSchema": {
         "description": "Schema for a set of queries sent to the query method",
         "type": "object",
@@ -1388,12 +1476,7 @@
             }
           },
           "spec": {
-            "description": "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UnstructuredSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/DataSourceSpec"
           }
         },
         "x-kubernetes-group-version-kind": [

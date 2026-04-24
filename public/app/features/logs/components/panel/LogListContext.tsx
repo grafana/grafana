@@ -73,6 +73,7 @@ export interface LogListContextData
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -144,6 +145,7 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
@@ -191,6 +193,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -594,6 +597,7 @@ export const LogListContextProvider = ({
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,

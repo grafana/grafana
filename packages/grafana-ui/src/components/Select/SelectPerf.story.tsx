@@ -33,9 +33,6 @@ function customFilter(opt: SelectableValue, searchQuery: string) {
 }
 
 export function PerformanceScenarios({ numberOfOptions }: { numberOfOptions: number }) {
-  const virtualId = useId();
-  const virtualIgnoreAccentsId = useId();
-  const normalId = useId();
   const standardId = useId();
   const options = useMemo(() => {
     const opts: SelectableValue[] = [];
@@ -52,22 +49,17 @@ export function PerformanceScenarios({ numberOfOptions }: { numberOfOptions: num
   return (
     <div>
       <Field label="Virtual:">
-        <VirtualizedSelect inputId={virtualId} options={options} onChange={() => {}} />
+        <VirtualizedSelect options={options} onChange={() => {}} />
       </Field>
       <br />
 
       <Field label="Virtual with ignoreAccents false:">
-        <VirtualizedSelect
-          inputId={virtualIgnoreAccentsId}
-          filterOption={customFilter}
-          options={options}
-          onChange={() => {}}
-        />
+        <VirtualizedSelect filterOption={customFilter} options={options} onChange={() => {}} />
       </Field>
       <br />
 
       <Field label="Normal:">
-        <Select inputId={normalId} options={options} onChange={() => {}} />
+        <Select options={options} onChange={() => {}} />
       </Field>
       <br />
 

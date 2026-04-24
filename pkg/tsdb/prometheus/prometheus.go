@@ -2,26 +2,33 @@ package prometheus
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
+
 	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
 
+type prometheusLib interface {
+	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
+	CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error
+	GetBuildInfo(ctx context.Context, req promlib.BuildInfoRequest) (*promlib.BuildInfoResponse, error)
+	GetHeuristics(ctx context.Context, req promlib.HeuristicsRequest) (*promlib.Heuristics, error)
+	CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error)
+	ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error)
+	MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error)
+	ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error)
+}
+
 type Service struct {
-	lib *promlib.Service
+	lib prometheusLib
 }
 
 func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		lib: promlib.NewService(httpClientProvider, plog, extendClientOpts),
+		lib: promlib.NewService(httpClientProvider, plog, nil),
 	}
 }
 
@@ -55,28 +62,4 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 }
 func (s *Service) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return s.lib.ConvertObjects(ctx, req)
-}
-
-func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, plog log.Logger) error {
-	// Set SigV4 service namespace
-	if clientOpts.SigV4 != nil {
-		clientOpts.SigV4.Service = "aps"
-	}
-
-	azureSettings, err := azsettings.ReadSettings(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
-	}
-
-	audienceOverride := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("prometheusAzureOverrideAudience")
-
-	// Set Azure authentication
-	if azureSettings.AzureAuthEnabled {
-		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, clientOpts, audienceOverride, plog)
-		if err != nil {
-			return fmt.Errorf("error configuring Azure auth: %v", err)
-		}
-	}
-
-	return nil
 }

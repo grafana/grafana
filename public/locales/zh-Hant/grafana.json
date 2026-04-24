@@ -5606,6 +5606,7 @@
         "panels": "面板",
         "row": "列",
         "rows": "列",
+        "section-filters-set": "",
         "tab": "分頁",
         "tabs": "分頁",
         "variable": "{{type}}變數",
@@ -6422,7 +6423,6 @@
         "save-library-panel": "儲存資料庫面板",
         "share": {
           "arrow": "分享",
-          "title": "分享",
           "tooltip": "複製網址"
         },
         "unlink-library-panel": "取消連結資料庫面板"
@@ -8609,6 +8609,7 @@
         "copy-link": "將連結複製到日誌行",
         "copy-to-clipboard": "複製到剪貼簿",
         "inspect-value": "檢查值",
+        "show-details": "",
         "view-log-line": "檢視記錄行"
       }
     },
@@ -11263,6 +11264,8 @@
       "fields-section": "欄位",
       "hide-log-line": "隱藏記錄行",
       "inline-mode": "顯示內嵌",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "連結值",
       "links-section": "連結",
       "log-attributes-field": "記錄屬性",
@@ -11511,13 +11514,13 @@
   "logstable": {
     "category-table": "記錄表格",
     "description-show-controls": "顯示表格控制項",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "啟用/停用每列第一欄中的記錄行連結按鈕",
       "name": "顯示「複製記錄連結」按鈕"
-    },
-    "show-inspect-button": {
-      "description": "啟用/停用每列第一欄中的記錄行檢查按鈕",
-      "name": "顯示檢查按鈕"
     }
   },
   "manage-dashbaords": {
@@ -13078,6 +13081,7 @@
       "token-user-description": "將用於存取具有 API 權杖的儲存庫的使用者名稱",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Bitbucket 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "bootstrap-step": {
@@ -14016,7 +14020,6 @@
       "hide": "隱藏 {{type}}",
       "hide-help": "隱藏資料來源說明",
       "hide-transformation-help": "隱藏轉換說明",
-      "inspector": "查詢檢查器",
       "more-actions": "更多 {{type}} 動作",
       "remove": "移除 {{type}}",
       "remove-transformation-filter": "移除篩選條件",
@@ -14028,6 +14031,25 @@
     "alerts": {
       "no-alerts": "此面板沒有警示規則",
       "no-alerts-description": "建立警示規則，以便在您的資料符合特定條件時收到通知。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "確定要刪除此查詢嗎？",
@@ -14065,6 +14087,7 @@
     },
     "footer": {
       "edit-option": "編輯 {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大資料點",
@@ -14075,6 +14098,7 @@
       "placeholder": {
         "no-limit": "無限制"
       },
+      "query-inspector": "",
       "query-options": "查詢選項"
     },
     "header": {
@@ -15839,6 +15863,7 @@
           "group-by": "分組依據"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "已略過",
       "placeholder-select-stats": "選擇統計資料"
     },
@@ -15850,6 +15875,16 @@
         "group-by": "分組依據"
       },
       "title-calc-alert": "如未將任何欄位分組，則計算將無效"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
