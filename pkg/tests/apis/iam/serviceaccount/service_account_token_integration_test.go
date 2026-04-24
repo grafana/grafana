@@ -1,4 +1,4 @@
-package identity
+package serviceaccount
 
 import (
 	"context"
@@ -90,7 +90,7 @@ func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper) string {
 		GVR:       gvrServiceAccounts,
 	})
 
-	created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+	created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
