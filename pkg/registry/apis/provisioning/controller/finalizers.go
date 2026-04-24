@@ -102,9 +102,10 @@ func (f *finalizer) newItemProcessor(
 	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) itemProcessor {
-	logger := logging.FromContext(ctx)
+	baseLogger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
 		// If the item is a folder, use the configured folder API version.
+		logger := baseLogger
 		var version string
 		if item.Group == resources.FolderResource.Group && item.Resource == resources.FolderResource.Resource {
 			version = f.folderAPIVersion
