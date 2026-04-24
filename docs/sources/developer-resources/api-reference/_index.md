@@ -29,6 +29,26 @@ cards:
 
 # Grafana APIs
 
+Grafana APIs allow you to interact with resources from your Grafana on-prem instance or Cloud Stack programmatically.
+
 Refer to the following API reference guides:
 
 {{< card-grid key="cards" type="simple" >}}
+
+## API rate limits
+
+Grafana APIs don't have a single global API rate limit. This is because Grafana is not a single API surface, but rather a combination of multiple systems such as OSS backends (Mimir, Loki, Tempo), a SaaS control plane (for Grafana Cloud), hosted Grafana instances (for Grafana on-prem), and multiple gateways and edge layers.
+
+### How are limits calculated?
+
+Limits depend on the specific API and product, and are enforced at different layers, including backend services and gateway infrastructure. Most limits are not simple request-per-second limits, but are based on ingestion rate, query complexity, or general resource usage, and are configured per tenant.
+
+### Available limits
+
+In general rate-limits are handled at the gateway and are based on User-Agent, IP, or session cookie. In most cases Grafana enforces a maximum of 100 requests per second with a 1,000 of burst. Moreover, these limits usually scale with the number of gateway replicas, so a cluster running 10–15 replicas can effectively handle significantly higher aggregate throughput.
+
+{{< admonition type="note" >}}
+
+**If you encounter rate limiting, contact Support to verify the specific API or service you're using**, as limits vary and may be adjusted per environment.
+
+{{< /admonition >}}
