@@ -112,7 +112,29 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	// TODO: setup remote alertmanager uid
+	if body.ExternalAlertmanagerUID != nil && ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+		if *body.ExternalAlertmanagerUID != "" {
+			ds, err := srv.datasourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				UID:   *body.ExternalAlertmanagerUID,
+				OrgID: c.GetOrgID(),
+			})
+			if err != nil {
+				if errors.Is(err, datasources.ErrDataSourceNotFound) {
+					return response.Error(http.StatusBadRequest, "datasource not found", err)
+				}
+				return response.Error(http.StatusInternalServerError, "failed to look up datasource", err)
+			}
+			if ds.Type != datasources.DS_ALERTMANAGER {
+				return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
+			}
+			impl := ds.JsonData.Get("implementation").MustString("")
+			if impl != "mimir" && impl != "cortex" {
+				return response.Error(http.StatusBadRequest, "datasource implementation must be mimir or cortex", nil)
+			}
+		}
+
+		adminConfig.ExternalAlertmanagerUID = body.ExternalAlertmanagerUID
+	}
 
 	if err := srv.store.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
 		AdminConfiguration: &adminConfig,
