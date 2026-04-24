@@ -3589,9 +3589,9 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "section-silence": "Silence",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences",
-        "silence-title-with-name": "Silence {{name}}"
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Numbers",
       "label-signature": "Signature"
     },
+    "description-allow-download": "When controls are enabled, show an option to download the logs on display.",
     "description-enable-field-selector": "Experimental. Show a component to manage the displayed fields from the logs.",
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Common labels:"
       }
     },
+    "name-allow-download": "Display download control",
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "Error loading preferences",
+      "update-preferences": "Error updating preferences"
+    },
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",

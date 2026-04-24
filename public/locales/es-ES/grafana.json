@@ -5636,6 +5636,7 @@
         "panels": "Paneles",
         "row": "Fila",
         "rows": "Filas",
+        "section-filters-set": "",
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
@@ -13149,6 +13150,7 @@
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con el token de API.",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio de Bitbucket",
+      "url-pattern": "",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ayuda de la fuente de datos",
       "hide-transformation-help": "Ocultar ayuda para la transformación",
-      "inspector": "Inspector de consultas",
       "more-actions": "Más acciones de {{type}}",
       "remove": "Eliminar {{type}}",
       "remove-transformation-filter": "Eliminar filtro",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "No hay reglas de alerta para este panel.",
       "no-alerts-description": "Crea una regla de alerta para recibir notificaciones cuando tus datos cumplan determinadas condiciones."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "¿Seguro que quieres eliminar esta consulta?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Puntos de datos máximos",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Sin límite"
       },
+      "query-inspector": "",
       "query-options": "Opciones de consulta"
     },
     "header": {
