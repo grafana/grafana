@@ -587,9 +587,7 @@ export function buildPanelKind(p: Panel): PanelKind {
   // V1 panels can store datasource as a plain string (variable expression or legacy name).
   // Normalize to DataSourceRef so the uid is preserved through V1→V2 conversion.
   const panelDatasource =
-    typeof p.datasource === 'string'
-      ? { uid: p.datasource, type: '' }
-      : (p.datasource ?? { type: '', uid: '' });
+    typeof p.datasource === 'string' ? { uid: p.datasource, type: '' } : (p.datasource ?? { type: '', uid: '' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const queries = getPanelQueries((p.targets as any) || [], panelDatasource);
 
