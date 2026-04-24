@@ -125,6 +125,57 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testi
 	require.True(t, folderHandler.accessSubresourceChecked)
 }
 
+func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRequiresFolderAccess(t *testing.T) {
+	oldVariable := newCustomVariable("region", "region")
+	newVariable := newCustomVariable("region", "region")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgRole: identity.RoleEditor,
+		OrgID:   1,
+	})
+
+	folderHandler := &variableFolderAccessHandler{
+		forbiddenAccessSubresource: true,
+	}
+
+	builder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+	}
+
+	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+
+	require.Error(t, err)
+	require.True(t, apierrors.IsForbidden(err))
+	require.True(t, folderHandler.accessSubresourceChecked)
+}
+
+func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalSkipsFolderAccessCheck(t *testing.T) {
+	oldVariable := newCustomVariable("region", "region")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
+	newVariable := newCustomVariable("region", "region")
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgRole: identity.RoleEditor,
+		OrgID:   1,
+	})
+
+	folderHandler := &variableFolderAccessHandler{
+		forbiddenAccessSubresource: true,
+	}
+
+	builder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+	}
+
+	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+
+	require.NoError(t, err)
+	require.False(t, folderHandler.accessSubresourceChecked)
+}
+
 func TestVariableMutationPermissionsByRole(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
 	oldVariable := newCustomVariable("region", "region")
