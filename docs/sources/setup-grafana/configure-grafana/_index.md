@@ -21,7 +21,7 @@ Grafana has default and custom configuration files.
 
 You can customize your Grafana instance by modifying the custom configuration file or by using environment variables.
 
-- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
+- To see the list of settings for a Grafana instance, refer to [View server settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license#view-server-settings).
 - After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file and restart Grafana for your changes to take effect.
 
 {{< admonition type="note" >}}
@@ -2027,6 +2027,18 @@ If a rule frequency is lower than this value, then this value is enforced.
 Defines the limits for how many alert rule versions are stored in the database per alert rule.
 
 The default `0` value means there's no limit.
+
+<hr>
+
+#### `limit_email_to_org_members`
+
+When enabled, email contact point recipients are restricted to users that belong to the organization (including disabled users).
+This validation is applied only when creating or updating contact points, not at notification send time.
+
+Enabling this flag does not retroactively validate existing contact points.
+Admins should manually audit existing contact points after enabling this setting to ensure all recipients are org members.
+
+The default value is `false`.
 
 ### `[unified_alerting.screenshots]`
 

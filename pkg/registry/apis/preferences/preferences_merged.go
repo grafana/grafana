@@ -10,9 +10,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -20,12 +20,12 @@ import (
 
 type merger struct {
 	defaults preferences.PreferencesSpec
-	sql      *legacy.LegacySQL
+	client   *clientGetter
 }
 
-func newMerger(cfg *setting.Cfg, sql *legacy.LegacySQL) *merger {
+func newMerger(cfg *setting.Cfg, client *clientGetter) *merger {
 	return &merger{
-		sql: sql,
+		client: client,
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -95,7 +95,14 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ns := user.GetNamespace() // namespace not in context!
-	list, err := s.sql.ListPreferences(ctx, ns, user, false)
+
+	client, err := s.client.Get()
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	list, err := client.List(ctx, ns, resource.ListOptions{})
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

@@ -4454,12 +4454,13 @@
       "button-label": "Wybierz folder",
       "clear-selection": "Usuń zaznaczone",
       "empty-message": "Nie znaleziono folderów",
-      "error-title": "Błąd podczas ładowania folderów",
+      "error-title": "",
       "non-folder-item": "Element {{itemKind}} {{itemUID}} poza folderem",
       "root-title": "Pulpity",
       "search-placeholder": "Przeszukaj foldery",
       "shared-with-me": "Udostępnione mnie",
       "team-folders": "Foldery zespołu",
+      "team-folders-error-title": "",
       "unknown-error": "Nieznany błąd"
     },
     "manage-folder-nav": {
@@ -5682,6 +5683,8 @@
         "annotation-set": "Adnotacje i alerty",
         "dashboard": "Pulpit",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Linki",
         "local-variable": "Zmienna lokalna",
         "multiple-elements": "Wiele elementów",
@@ -5693,6 +5696,7 @@
         "panels": "Panele",
         "row": "Wiersz",
         "rows": "Wiersze",
+        "section-filters-set": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
@@ -5710,8 +5714,10 @@
           "title": "Nagłówek wiersza"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Dodaj zmienną",
         "title": "Zmienne"
       },
       "variable": {
@@ -6265,6 +6271,9 @@
           "hide-header": "Ukryj nagłówek wiersza",
           "title": "Tytuł"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Zmienne"
         },
@@ -6424,6 +6433,9 @@
             "title": "Powtórz według zmiennej"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Zmienne"
         },
@@ -6504,7 +6516,6 @@
         "save-library-panel": "Zapisz panel biblioteki",
         "share": {
           "arrow": "Udostępnij",
-          "title": "Udostępnij",
           "tooltip": "Kopiuj link"
         },
         "unlink-library-panel": "Rozłącz panel biblioteki"
@@ -7144,6 +7155,22 @@
       "sql-name": "Przekształć za pomocą SQL",
       "sql-transformation-description": "Manipuluj danymi przy użyciu składni podobnej do stosowanej w MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_few": "",
+      "title-hidden_many": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7600,6 +7627,7 @@
       "affected-dashboards_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpitu.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Anuluj",
       "cannot-be-saved": "Nie można zapisać tego pulpitu z poziomu interfejsu Grafany, ponieważ został on skonfigurowany z innego źródła. Skopiuj treść JSON lub zapisz ją w poniższym pliku, a następnie zaktualizuj pulpit w źródle aprowizacji.",
       "copy-json-to-clipboard": "Kopiuj JSON do schowka",
@@ -7607,6 +7635,11 @@
       "file-path": "<strong>Ścieżka do pliku:</strong> {{filePath}}",
       "form-loading-error": "Błąd podczas wczytywania formularza",
       "form-loading-error-unknown": "Podczas wczytywania formularza wystąpił nieoczekiwany błąd.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Opis",
       "label-target-folder": "Katalog docelowy",
       "label-title": "Tytuł",
@@ -7624,6 +7657,9 @@
       "disabled-tooltip": "Zapisz pulpit przed utworzeniem reguł alertów",
       "new-alert-rule": "Nowa reguła alertu",
       "title-no-alerting-capable-query-found": "Nie znaleziono zapytania obsługującego alerty"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Umożliwia wybór wielu wartości jednocześnie",
@@ -7720,6 +7756,13 @@
       "page-nav": {
         "text": {
           "settings": "Ustawienia"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8704,6 +8747,7 @@
         "copy-link": "Kopiuj link do wiersza logu",
         "copy-to-clipboard": "Kopiuj do schowka",
         "inspect-value": "Sprawdź wartość",
+        "show-details": "",
         "view-log-line": "Wyświetl wiersz logu"
       }
     },
@@ -11207,6 +11251,12 @@
       "num-affected_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
       "num-affected_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11412,6 +11462,8 @@
       "fields-section": "Pola",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Wartość linku",
       "links-section": "Linki",
       "log-attributes-field": "Atrybuty logów",
@@ -11660,13 +11712,13 @@
   "logstable": {
     "category-table": "Tabela logów",
     "description-show-controls": "Wyświetl opcje tabeli",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Włącza/wyłącza przycisk linku do wiersza logu w pierwszej kolumnie każdego wiersza",
       "name": "Pokaż przycisk kopiowania linku do logu"
-    },
-    "show-inspect-button": {
-      "description": "Włącza/wyłącza przycisk sprawdzania wiersza logu w pierwszej kolumnie każdego wiersza",
-      "name": "Pokaż przycisk sprawdzania"
     }
   },
   "manage-dashbaords": {
@@ -13088,9 +13140,7 @@
       "update-available": "Dostępna aktualizacja!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Wtyczka wymaga nowego indeksu wyszukiwania, aby można było znaleźć informacje o jej wykorzystaniu na różnych pulpitach. Włącz przełącznik funkcji",
       "num-usages": "Wtyczka {{pluginName}} została użyta <2>{{numUsages}}</2> razy.",
-      "title-missing-feature-toggle-panel-title-search": "Brak przełącznika funkcji: {{toggle}}",
       "title-not-used-yet": "Wtyczka {{pluginName}} nie jest jeszcze używana w żadnych pulpitach"
     },
     "plugins-errors-info": {
@@ -13238,6 +13288,7 @@
       "token-user-description": "Nazwa użytkownika, która będzie używana do uzyskiwania dostępu do repozytorium za pomocą tokena API",
       "token-user-required": "Nazwa użytkownika jest wymagana",
       "url-description": "Adres URL repozytorium Bitbucket",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "bootstrap-step": {
@@ -14221,7 +14272,6 @@
       "hide": "Ukryj: {{type}}",
       "hide-help": "Ukryj pomoc dotyczącą źródła danych",
       "hide-transformation-help": "Ukryj pomoc dotyczącą transformacji",
-      "inspector": "Inspektor zapytań",
       "more-actions": "Więcej działań: {{type}}",
       "remove": "Usuń: {{type}}",
       "remove-transformation-filter": "Usuń filtr",
@@ -14233,6 +14283,31 @@
     "alerts": {
       "no-alerts": "Brak reguł alertów dla tego panelu",
       "no-alerts-description": "Utwórz regułę alertów, aby otrzymywać powiadomienia, gdy dane spełniają określone warunki."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Czy na pewno chcesz usunąć to zapytanie?",
@@ -14270,6 +14345,7 @@
     },
     "footer": {
       "edit-option": "Edytuj: {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Odstęp czasu",
         "max-data-points": "Maks. liczba punktów danych",
@@ -14280,6 +14356,7 @@
       "placeholder": {
         "no-limit": "Bez limitu"
       },
+      "query-inspector": "",
       "query-options": "Opcje zapytania"
     },
     "header": {
@@ -16065,6 +16142,7 @@
           "group-by": "Grupuj według"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorowane",
       "placeholder-select-stats": "Wybierz statystyki"
     },
@@ -16076,6 +16154,16 @@
         "group-by": "Grupuj według"
       },
       "title-calc-alert": "Obliczenia nie będą miały żadnego wpływu, jeśli nie zostaną pogrupowane żadne pola"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

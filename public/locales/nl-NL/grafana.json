@@ -4400,12 +4400,13 @@
       "button-label": "Map selecteren",
       "clear-selection": "Selectie wissen",
       "empty-message": "Geen mappen gevonden",
-      "error-title": "Fout bij laden van mappen",
+      "error-title": "",
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Mappen doorzoeken",
       "shared-with-me": "Gedeeld met mij",
       "team-folders": "Teammappen",
+      "team-folders-error-title": "",
       "unknown-error": "Onbekende fout"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotaties en waarschuwingen",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
@@ -5633,6 +5636,7 @@
         "panels": "Panelen",
         "row": "Rij",
         "rows": "Rijen",
+        "section-filters-set": "",
         "tab": "Tabblad",
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
@@ -5650,8 +5654,10 @@
           "title": "Rijkoptekst"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Variabele toevoegen",
         "title": "Variabelen"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Rij-koptekst verbergen",
           "title": "Titel"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabelen"
         },
@@ -6362,6 +6371,9 @@
             "title": "Herhalen per variabele"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabelen"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Bibliotheekpaneel",
         "share": {
           "arrow": "Delen",
-          "title": "Delen",
           "tooltip": "Link kopiëren"
         },
         "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformeren met SQL",
       "sql-transformation-description": "Manipuleer je gegevens met MySQL-achtige syntaxis"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Annuleren",
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Bestandspad:</strong> {{filePath}}",
       "form-loading-error": "Er is een fout opgetreden bij het laden van het formulier",
       "form-loading-error-unknown": "Er is een onverwachte fout opgetreden bij het laden van het formulier.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Beschrijving",
       "label-target-folder": "Doelmap",
       "label-title": "Titel",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Sla het dashboard op voordat je waarschuwingsregels aanmaakt",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Maakt het mogelijk om meerdere waarden tegelijkertijd te selecteren",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Instellingen"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8618,6 +8655,7 @@
         "copy-link": "Link naar logboekregel kopiëren",
         "copy-to-clipboard": "Naar klembord kopiëren",
         "inspect-value": "Waarde inspecteren",
+        "show-details": "",
         "view-log-line": "Logregel bekijken"
       }
     },
@@ -11087,6 +11125,12 @@
       "update-all": "Alles bijwerken",
       "num-affected_one": "Deze update is van invloed op <1>{{count}} dashboards.</1>",
       "num-affected_other": "Deze update is van invloed op <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11286,6 +11330,8 @@
       "fields-section": "Velden",
       "hide-log-line": "Logregel verbergen",
       "inline-mode": "Inline weergave",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Linkwaarde",
       "links-section": "Links",
       "log-attributes-field": "Logattributen",
@@ -11534,13 +11580,13 @@
   "logstable": {
     "category-table": "Logtabel",
     "description-show-controls": "Besturingselementen van tabel weergeven",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Schakelt de knop voor de logregellink in de eerste kolom van elke rij in/uit",
       "name": "Knop voor kopiëren van loglink weergeven"
-    },
-    "show-inspect-button": {
-      "description": "Schakelt de knop 'Logregel inspecteren' in de eerste kolom van elke rij in/uit",
-      "name": "Knop Inspecteren weergeven"
     }
   },
   "manage-dashbaords": {
@@ -12956,9 +13002,7 @@
       "update-available": "Er is een update beschikbaar."
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Gebruik van plug-ins vereist de nieuwe zoekindex om gebruik over dashboards te vinden. Schakel de functieschakelaar in",
       "num-usages": "{{pluginName}} wordt <2>{{numUsages}}</2> keer gebruikt.",
-      "title-missing-feature-toggle-panel-title-search": "Ontbrekende functieschakelaar: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wordt nog niet gebruikt in een dashboard"
     },
     "plugins-errors-info": {
@@ -13106,6 +13150,7 @@
       "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het API-token",
       "token-user-required": "Gebruikersnaam is vereist",
       "url-description": "De Bitbucket-repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL is vereist"
     },
     "bootstrap-step": {
@@ -14059,7 +14104,6 @@
       "hide": "{{type}} verbergen",
       "hide-help": "Hulp bij gegevensbron verbergen",
       "hide-transformation-help": "Help bij transformatie verbergen",
-      "inspector": "Querycontrole",
       "more-actions": "Meer acties voor {{type}}",
       "remove": "{{type}} verwijderen",
       "remove-transformation-filter": "Filter verwijderen",
@@ -14071,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Geen waarschuwingsregels voor dit paneel",
       "no-alerts-description": "Maak een waarschuwingsregel om een melding te krijgen wanneer je gegevens aan bepaalde voorwaarden voldoen."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Weet je zeker dat je deze query wilt verwijderen?",
@@ -14108,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "{{label}} bewerken",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Maximale datapunten",
@@ -14118,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Geen limiet"
       },
+      "query-inspector": "",
       "query-options": "Query-opties"
     },
     "header": {
@@ -15889,6 +15956,7 @@
           "group-by": "Groeperen op"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Genegeerd",
       "placeholder-select-stats": "Selecteer statistieken"
     },
@@ -15900,6 +15968,16 @@
         "group-by": "Groeperen op"
       },
       "title-calc-alert": "Berekeningen hebben geen effect als er geen velden worden gegroepeerd"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

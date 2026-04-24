@@ -4400,12 +4400,13 @@
       "button-label": "Seleziona la cartella",
       "clear-selection": "Cancella selezione",
       "empty-message": "Nessuna cartella trovata",
-      "error-title": "Errore durante il caricamento delle cartelle",
+      "error-title": "",
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
       "shared-with-me": "Condiviso con me",
       "team-folders": "Cartelle del team",
+      "team-folders-error-title": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotazioni e avvisi",
         "dashboard": "Dashboard",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Collegamenti",
         "local-variable": "Variabile locale",
         "multiple-elements": "Elementi multipli",
@@ -5633,6 +5636,7 @@
         "panels": "Pannelli",
         "row": "Riga",
         "rows": "Righe",
+        "section-filters-set": "",
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
@@ -5650,8 +5654,10 @@
           "title": "Intestazione di riga"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Aggiungi variabile",
         "title": "Variabili"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Nascondi intestazione riga",
           "title": "Titolo"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabili"
         },
@@ -6362,6 +6371,9 @@
             "title": "Ripeti per variabile"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variabili"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Salva pannello della libreria",
         "share": {
           "arrow": "Condividi",
-          "title": "Condividi",
           "tooltip": "Copia link"
         },
         "unlink-library-panel": "Scollega pannello della libreria"
@@ -7074,6 +7085,16 @@
       "sql-name": "Trasforma con SQL",
       "sql-transformation-description": "Manipola i tuoi dati utilizzando una sintassi simile a quella di MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Annulla",
       "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
       "copy-json-to-clipboard": "Copia JSON negli appunti",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Percorso file:</strong> {{filePath}}",
       "form-loading-error": "Errore durante il caricamento del modulo",
       "form-loading-error-unknown": "Si è verificato un errore inatteso durante il caricamento del modulo.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descrizione",
       "label-target-folder": "Cartella di destinazione",
       "label-title": "Titolo",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Salva la dashboard prima di creare regole di avviso",
       "new-alert-rule": "Nuova regola di avviso",
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Consente di selezionare più valori contemporaneamente",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Impostazioni"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8618,6 +8655,7 @@
         "copy-link": "Copia il link alla riga del registro",
         "copy-to-clipboard": "Copia negli appunti",
         "inspect-value": "Ispeziona valore",
+        "show-details": "",
         "view-log-line": "Visualizza riga di registro"
       }
     },
@@ -11087,6 +11125,12 @@
       "update-all": "Aggiorna tutto",
       "num-affected_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>",
       "num-affected_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11286,6 +11330,8 @@
       "fields-section": "Campi",
       "hide-log-line": "Nascondi riga registro",
       "inline-mode": "Visualizza in linea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Collega il valore",
       "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
@@ -11534,13 +11580,13 @@
   "logstable": {
     "category-table": "Tabella dei registri",
     "description-show-controls": "Visualizza i controlli della tabella",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Abilita/disabilita il pulsante di collegamento alla riga registro nella prima colonna di ogni riga",
       "name": "Mostra il pulsante collegamento al registro delle copie"
-    },
-    "show-inspect-button": {
-      "description": "Abilita/disabilita il pulsante di ispezione della riga registro nella prima colonna di ogni riga",
-      "name": "Mostra pulsante di ispezione"
     }
   },
   "manage-dashbaords": {
@@ -12956,9 +13002,7 @@
       "update-available": "Aggiornamento disponibile!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "L'utilizzo del componente aggiuntivo richiede il nuovo indice di ricerca per trovare l'utilizzo tra le dashboard. Abilita il toggle della funzionalità",
       "num-usages": "{{pluginName}} è utilizzato <2>{{numUsages}}</2> volte.",
-      "title-missing-feature-toggle-panel-title-search": "Toggle della funzionalità mancante: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} non è ancora utilizzato in nessuna dashboard"
     },
     "plugins-errors-info": {
@@ -13106,6 +13150,7 @@
       "token-user-description": "Il nome utente che verrà utilizzato per accedere al repository con il token API",
       "token-user-required": "Il nome utente è obbligatorio",
       "url-description": "L'URL del repository Bitbucket",
+      "url-pattern": "",
       "url-required": "L'URL del repository è obbligatorio"
     },
     "bootstrap-step": {
@@ -14059,7 +14104,6 @@
       "hide": "Nascondi {{type}}",
       "hide-help": "Nascondi la guida dell'origine dei dati",
       "hide-transformation-help": "Nascondi guida alla trasformazione",
-      "inspector": "Ispettore query",
       "more-actions": "Altre {{type}} azioni",
       "remove": "Rimuovi {{type}}",
       "remove-transformation-filter": "Rimuovi filtro",
@@ -14071,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Nessuna regola di avviso per questo pannello",
       "no-alerts-description": "Crea una regola di avviso per ricevere una notifica quando i tuoi dati soddisfano determinate condizioni."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Vuoi davvero eliminare questa query?",
@@ -14108,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Modifica {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervallo",
         "max-data-points": "Punti dati massimi",
@@ -14118,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Nessun limite"
       },
+      "query-inspector": "",
       "query-options": "Opzioni della query"
     },
     "header": {
@@ -15889,6 +15956,7 @@
           "group-by": "Raggruppa per"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorato",
       "placeholder-select-stats": "Seleziona statistiche"
     },
@@ -15900,6 +15968,16 @@
         "group-by": "Raggruppa per"
       },
       "title-calc-alert": "I calcoli non avranno alcun effetto se non sono presenti campi da raggruppare"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

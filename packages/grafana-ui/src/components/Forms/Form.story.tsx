@@ -57,15 +57,8 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const nameId = useId();
-  const emailId = useId();
-  const usernameId = useId();
-  const nestedPathId = useId();
   const textId = useId();
-  const checkboxId = useId();
-  const switchId = useId();
   const radioId = useId();
-  const selectId = useId();
   return (
     <Form
       defaultValues={defaultValues}
@@ -80,18 +73,18 @@ const renderForm = (defaultValues?: FormDTO) => {
             <Legend>Edit user</Legend>
 
             <Field label="Name" invalid={!!errors.name} error="Name is required">
-              <Input {...register('name', { required: true })} placeholder="Roger Waters" id={nameId} />
+              <Input {...register('name', { required: true })} placeholder="Roger Waters" />
             </Field>
 
             <Field label="Email" invalid={!!errors.email} error="E-mail is required">
-              <Input {...register('email', { required: true })} id={emailId} placeholder="roger.waters@grafana.com" />
+              <Input {...register('email', { required: true })} placeholder="roger.waters@grafana.com" />
             </Field>
 
             <Field label="Username">
-              <Input {...register('username')} placeholder="mr.waters" id={usernameId} />
+              <Input {...register('username')} placeholder="mr.waters" />
             </Field>
             <Field label="Nested object">
-              <Input {...register('nested.path')} placeholder="Nested path" id={nestedPathId} />
+              <Input {...register('nested.path')} placeholder="Nested path" />
             </Field>
 
             <Field label="Textarea" invalid={!!errors.text} error="Text is required">
@@ -99,11 +92,11 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
-              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" id={checkboxId} />
+              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" />
             </Field>
 
             <Field label="Switch">
-              <Switch name="switch" {...register} id={switchId} />
+              <Switch name="switch" {...register} />
             </Field>
 
             <Field label="RadioButton" htmlFor={radioId}>
@@ -114,14 +107,14 @@ const renderForm = (defaultValues?: FormDTO) => {
               />
             </Field>
 
-            <Field label="Select" invalid={!!errors.select} error="Select is required" htmlFor={selectId}>
+            <Field label="Select" invalid={!!errors.select} error="Select is required">
               <InputControl
                 name="select"
                 control={control}
                 rules={{
                   required: true,
                 }}
-                render={({ field }) => <Select {...field} options={selectOptions} inputId={selectId} />}
+                render={({ field }) => <Select {...field} options={selectOptions} />}
               />
             </Field>
 

@@ -116,15 +116,6 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return dashFolder, nil
 	}
 
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
-	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, folder.ErrAccessDenied
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
 		q.ID = nil
@@ -481,14 +472,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return nil, err
-		}
-		return nil, toFolderError(dashboards.ErrDashboardUpdateAccessDenied)
 	}
 
 	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{

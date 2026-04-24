@@ -4400,12 +4400,13 @@
       "button-label": "Selecionar a pasta",
       "clear-selection": "Limpar a seleção",
       "empty-message": "Nenhuma pasta encontrada",
-      "error-title": "Erro ao carregar pastas",
+      "error-title": "",
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
       "shared-with-me": "Partilhado comigo",
       "team-folders": "Pastas da equipa",
+      "team-folders-error-title": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anotações e alertas",
         "dashboard": "Painel de controlo",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
@@ -5633,6 +5636,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-filters-set": "",
         "tab": "Separador",
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
@@ -5650,8 +5654,10 @@
           "title": "Cabeçalho da linha"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Adicionar variável",
         "title": "Variáveis"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Ocultar cabeçalho da linha",
           "title": "Título"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variáveis"
         },
@@ -6362,6 +6371,9 @@
             "title": "Repetir por variável"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variáveis"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Guardar painel de biblioteca",
         "share": {
           "arrow": "Partilhar",
-          "title": "Partilhar",
           "tooltip": "Copiar link"
         },
         "unlink-library-panel": "Desassociar painel de biblioteca"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformar com SQL",
       "sql-transformation-description": "Manipule os seus dados usando sintaxe semelhante a MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
       "form-loading-error": "Erro ao carregar o formulário",
       "form-loading-error-unknown": "Ocorreu um erro inesperado ao carregar o formulário.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Guardar o painel de controlo antes de criar regras de alertas",
       "new-alert-rule": "Nova regra de alerta",
       "title-no-alerting-capable-query-found": "Não foi encontrada qualquer consulta com capacidade de alerta"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite que vários valores sejam selecionados ao mesmo tempo",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Definições"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8618,6 +8655,7 @@
         "copy-link": "Copiar link para a linha de registo",
         "copy-to-clipboard": "Copiar para a área de transferência",
         "inspect-value": "Inspecionar valor",
+        "show-details": "",
         "view-log-line": "Ver linha de registo"
       }
     },
@@ -11087,6 +11125,12 @@
       "update-all": "Atualizar tudo",
       "num-affected_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>",
       "num-affected_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11286,6 +11330,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de registo",
       "inline-mode": "Mostrar em linha",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de registo",
@@ -11534,13 +11580,13 @@
   "logstable": {
     "category-table": "Tabela de registos",
     "description-show-controls": "Mostrar controlos da tabela",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de ligação à linha de registo na primeira coluna de cada linha",
       "name": "Mostrar botão de cópia do link do registo"
-    },
-    "show-inspect-button": {
-      "description": "Ativa/desativa o botão de inspeção da linha de registo na primeira coluna de cada linha",
-      "name": "Mostrar botão de inspeção"
     }
   },
   "manage-dashbaords": {
@@ -12956,9 +13002,7 @@
       "update-available": "Atualização disponível!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "A utilização do plugin requer o novo índice de pesquisa para encontrar a utilização nos painéis. Ative a alternância de funcionalidades",
       "num-usages": " {{pluginName}} é utilizado <2>{{numUsages}}</2> vezes.",
-      "title-missing-feature-toggle-panel-title-search": "Alternância de funcionalidade em falta: {{toggle}}",
       "title-not-used-yet": "O plugin {{pluginName}} ainda não foi utilizado em nenhum painel de controlo"
     },
     "plugins-errors-info": {
@@ -13106,6 +13150,7 @@
       "token-user-description": "O nome de utilizador que será utilizado para aceder ao repositório com o token de API",
       "token-user-required": "O utilizador é obrigatório",
       "url-description": "O URL do repositório Bitbucket",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "bootstrap-step": {
@@ -14059,7 +14104,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ajuda da origem de dados",
       "hide-transformation-help": "Ocultar ajuda para a transformação",
-      "inspector": "Inspetor de consultas",
       "more-actions": "Mais ações de {{type}}",
       "remove": "Remover {{type}}",
       "remove-transformation-filter": "Remover filtro",
@@ -14071,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Nenhuma regra de alertas para este painel",
       "no-alerts-description": "Criar uma regra de alertas para receber notificações quando os seus dados cumprirem determinadas condições."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
@@ -14108,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Pontos de dados máximos",
@@ -14118,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Sem limite"
       },
+      "query-inspector": "",
       "query-options": "Opções de consulta"
     },
     "header": {
@@ -15889,6 +15956,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Selecionar estatísticas"
     },
@@ -15900,6 +15968,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Os cálculos não terão efeito se nenhum campo for agrupado"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
