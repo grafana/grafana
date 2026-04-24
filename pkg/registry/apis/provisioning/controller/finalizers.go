@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -102,13 +103,15 @@ func (f *finalizer) newItemProcessor(
 	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) itemProcessor {
-	logger := logging.FromContext(ctx)
+	baseLogger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
 		// If the item is a folder, use the configured folder API version.
+		// Use a per-item logger so fields don't accumulate across items.
+		itemLogger := baseLogger
 		var version string
 		if item.Group == resources.FolderResource.Group && item.Resource == resources.FolderResource.Resource {
 			version = f.folderAPIVersion
-			logger = logger.With("version", version)
+			itemLogger = baseLogger.With("version", version)
 		}
 
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
@@ -117,17 +120,23 @@ func (f *finalizer) newItemProcessor(
 			Version:  version,
 		})
 		if err != nil {
-			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
+			itemLogger.Error("error getting client for resource", "resource", item.Resource, "error", err)
 			return err
 		}
 
-		err = cb(res, item)
+		// Retry on optimistic-concurrency conflicts from the unified storage
+		// layer ("requested RV does not match current RV"). The finalizer races
+		// with other reconciles/syncs that may mutate the same resource, and a
+		// transient RV mismatch should not fail the whole finalizer run.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return cb(res, item)
+		})
 		if err != nil {
 			if errors.IsNotFound(err) {
-				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
+				itemLogger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
 				return nil
 			}
-			logger.Error("error processing item", "name", item.Name, "error", err)
+			itemLogger.Error("error processing item", "name", item.Name, "error", err)
 			return fmt.Errorf("processing item: %w", err)
 		}
 		return nil
