@@ -383,7 +383,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
-	logger := rs.log.FromContext(ctx).New("receiver", result.Name, "integrations", result.GetIntegrationTypes())
+	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "integrations", r.GetIntegrationTypes())
 
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
