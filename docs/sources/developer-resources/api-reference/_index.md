@@ -52,3 +52,7 @@ In general rate-limits are handled at the gateway and are based on User-Agent, I
 **If you encounter rate limiting, contact Support to verify the specific API or service you're using**, as limits vary and may be adjusted per environment.
 
 {{< /admonition >}}
+
+Known limits include:
+
+- `/api/annotations` - 1 request / second / Grafana replica
