@@ -253,8 +253,42 @@ func (s *Sweeper) promote(ctx context.Context, parent, namespace string) error {
 
 // ensureHNSW builds the HNSW index on a partition if it doesn't already exist
 // as a valid index. CREATE INDEX CONCURRENTLY can't run in a transaction.
+// Also ensures a GIN on metadata for JSONB containment filters.
 func (s *Sweeper) ensureHNSW(ctx context.Context, parent, partition string) error {
-	idxName := partition + "_hnsw"
+	hnswName := partition + "_hnsw"
+	if err := s.ensureIndex(ctx, hnswName, fmt.Sprintf(
+		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
+			ON %s USING hnsw (embedding halfvec_cosine_ops)
+			WITH (m = 16, ef_construction = 64)`,
+		hnswName, partition,
+	)); err != nil {
+		return err
+	}
+
+	// GIN on metadata — otherwise a restrictive JSONB containment filter has
+	// to post-filter the HNSW's top-K results and can return fewer than N
+	// matches.
+	metadataName := partition + "_metadata"
+	if err := s.ensureIndex(ctx, metadataName, fmt.Sprintf(
+		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
+			ON %s USING GIN (metadata)`,
+		metadataName, partition,
+	)); err != nil {
+		return err
+	}
+
+	// ANALYZE so the planner's row estimate reflects reality (otherwise it
+	// may default to ~1 row and prefer other indexes).
+	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, partition)); err != nil {
+		s.log.Warn("ANALYZE after promote failed", "partition", partition, "err", err)
+	}
+	return nil
+}
+
+// ensureIndex creates an index via the given DDL if it doesn't already exist
+// as a valid index. DDL must be a CREATE INDEX [CONCURRENTLY] IF NOT EXISTS
+// targeting `idxName`.
+func (s *Sweeper) ensureIndex(ctx context.Context, idxName, ddl string) error {
 	exists, err := s.indexExistsValid(ctx, idxName)
 	if err != nil {
 		return err
@@ -262,21 +296,9 @@ func (s *Sweeper) ensureHNSW(ctx context.Context, parent, partition string) erro
 	if exists {
 		return nil
 	}
-	ddl := fmt.Sprintf(
-		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
-			ON %s USING hnsw (embedding halfvec_cosine_ops)
-			WITH (m = 16, ef_construction = 64)`,
-		idxName, partition,
-	)
-	s.log.Info("creating HNSW index on partition", "partition", partition, "index", idxName)
+	s.log.Info("creating index on partition", "index", idxName)
 	if _, err := s.db.ExecContext(ctx, ddl); err != nil {
 		return fmt.Errorf("create index %s: %w", idxName, err)
-	}
-
-	// ANALYZE so the planner's row estimate reflects reality (otherwise it
-	// may default to ~1 row and prefer other indexes).
-	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, partition)); err != nil {
-		s.log.Warn("ANALYZE after promote failed", "partition", partition, "err", err)
 	}
 	return nil
 }

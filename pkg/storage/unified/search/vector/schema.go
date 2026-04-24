@@ -67,14 +67,10 @@ func initVectorTables(mg *migrator.Migrator) {
 				PARTITION OF dashboard_embeddings DEFAULT;
 		`))
 
-	// btree on namespace narrows seq scans for tenants in DEFAULT. No HNSW on
-	// DEFAULT — small tenants don't need one; promoted tenants get a per-
-	// partition HNSW attached at promotion time.
-	mg.AddMigration("create namespace btree on dashboard_embeddings_default",
-		migrator.NewRawSQLMigration("").Postgres(
-			`CREATE INDEX IF NOT EXISTS dashboard_embeddings_default_namespace_idx
-				ON dashboard_embeddings_default (namespace);`,
-		))
+	// No dedicated namespace btree — the PK (namespace, model, name,
+	// subresource) already has `namespace` as its leading column, so any
+	// namespace-filtered query uses the PK index. GIN on metadata below
+	// handles JSONB containment filters.
 
 	mg.AddMigration("create metadata GIN on dashboard_embeddings_default",
 		migrator.NewRawSQLMigration("").Postgres(
