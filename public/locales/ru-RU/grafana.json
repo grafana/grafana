@@ -5696,6 +5696,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-filters-set": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -13287,6 +13288,7 @@
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном API",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
@@ -14270,7 +14272,6 @@
       "hide": "Скрыть {{type}}",
       "hide-help": "Скрыть справку по источнику данных",
       "hide-transformation-help": "Скрыть справку по преобразованию",
-      "inspector": "Проверка запросов",
       "more-actions": "Другие действия с {{type}}",
       "remove": "Удалить {{type}}",
       "remove-transformation-filter": "Удалить фильтр",
@@ -14282,6 +14283,31 @@
     "alerts": {
       "no-alerts": "Для этой панели нет правил оповещений",
       "no-alerts-description": "Создайте правило оповещений, чтобы получать уведомления, когда ваши данные будут соответствовать определенным условиям."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Удалить запрос?",
@@ -14319,6 +14345,7 @@
     },
     "footer": {
       "edit-option": "Редактировать {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Интервал",
         "max-data-points": "Макс. количество точек данных",
@@ -14329,6 +14356,7 @@
       "placeholder": {
         "no-limit": "Без ограничения"
       },
+      "query-inspector": "",
       "query-options": "Параметры запроса"
     },
     "header": {

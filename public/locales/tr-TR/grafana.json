@@ -5636,6 +5636,7 @@
         "panels": "Paneller",
         "row": "Satır",
         "rows": "Satırlar",
+        "section-filters-set": "",
         "tab": "Sekme",
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
@@ -13149,6 +13150,7 @@
       "token-user-description": "Depoya API belirteciyle erişmek için kullanılacak kullanıcı adı",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Bitbucket depo URL'si",
+      "url-pattern": "",
       "url-required": "Depo URL'si gereklidir"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "{{type}} ögesini gizle",
       "hide-help": "Veri kaynağı yardımını gizle",
       "hide-transformation-help": "Dönüştürme yardımını gizle",
-      "inspector": "Sorgu denetçisi",
       "more-actions": "Diğer {{type}} işlemleri",
       "remove": "{{type}} ögesini kaldır",
       "remove-transformation-filter": "Filtreyi kaldır",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Bu panel için uyarı kuralı yok",
       "no-alerts-description": "Verileriniz belirli koşulları karşıladığında bildirim almak için bir uyarı kuralı oluşturun."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Bu sorguyu silmek istediğinizden emin misiniz?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "{{label}} ögesini düzenle",
+      "inspect-queries": "",
       "label": {
         "interval": "Aralık",
         "max-data-points": "Maksimum veri noktaları",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Sınır yok"
       },
+      "query-inspector": "",
       "query-options": "Sorgu Seçenekleri"
     },
     "header": {

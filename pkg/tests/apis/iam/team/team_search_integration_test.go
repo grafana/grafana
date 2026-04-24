@@ -1,4 +1,4 @@
-package identity
+package team
 
 import (
 	"context"
@@ -59,11 +59,11 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		GVR:       gvrTeams,
 	})
 
-	team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+	team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, team1)
 
-	team2YAML := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
+	team2YAML := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
 	team2YAML.Object["metadata"].(map[string]interface{})["name"] = "testteam2"
 	team2YAML.Object["spec"].(map[string]interface{})["title"] = "Another Team"
 	team2YAML.Object["spec"].(map[string]interface{})["email"] = "anotherteam@example.com"
@@ -500,7 +500,7 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	// Create 3 users and bind them to teamA
 	for i := 1; i <= 3; i++ {
-		uObj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		uObj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 		uObj.Object["metadata"].(map[string]any)["name"] = fmt.Sprintf("mc-user-%d", i)
 		uObj.Object["spec"].(map[string]any)["login"] = fmt.Sprintf("mc-user-%d", i)
 		uObj.Object["spec"].(map[string]any)["email"] = fmt.Sprintf("mc-user-%d@example.com", i)
@@ -611,7 +611,7 @@ func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
 				GVR:       gvrTeams,
 			})
 
-			team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+			team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, team1)
 

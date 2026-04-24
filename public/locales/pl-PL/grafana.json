@@ -5696,6 +5696,7 @@
         "panels": "Panele",
         "row": "Wiersz",
         "rows": "Wiersze",
+        "section-filters-set": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
@@ -13287,6 +13288,7 @@
       "token-user-description": "Nazwa użytkownika, która będzie używana do uzyskiwania dostępu do repozytorium za pomocą tokena API",
       "token-user-required": "Nazwa użytkownika jest wymagana",
       "url-description": "Adres URL repozytorium Bitbucket",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "bootstrap-step": {
@@ -14270,7 +14272,6 @@
       "hide": "Ukryj: {{type}}",
       "hide-help": "Ukryj pomoc dotyczącą źródła danych",
       "hide-transformation-help": "Ukryj pomoc dotyczącą transformacji",
-      "inspector": "Inspektor zapytań",
       "more-actions": "Więcej działań: {{type}}",
       "remove": "Usuń: {{type}}",
       "remove-transformation-filter": "Usuń filtr",
@@ -14282,6 +14283,31 @@
     "alerts": {
       "no-alerts": "Brak reguł alertów dla tego panelu",
       "no-alerts-description": "Utwórz regułę alertów, aby otrzymywać powiadomienia, gdy dane spełniają określone warunki."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Czy na pewno chcesz usunąć to zapytanie?",
@@ -14319,6 +14345,7 @@
     },
     "footer": {
       "edit-option": "Edytuj: {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Odstęp czasu",
         "max-data-points": "Maks. liczba punktów danych",
@@ -14329,6 +14356,7 @@
       "placeholder": {
         "no-limit": "Bez limitu"
       },
+      "query-inspector": "",
       "query-options": "Opcje zapytania"
     },
     "header": {

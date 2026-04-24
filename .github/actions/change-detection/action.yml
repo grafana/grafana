@@ -157,7 +157,6 @@ runs:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
             - '**.sh'
-            - '.trivyignore'
             - '.prettierrc.js'
             - '**/Makefile'
             - 'proto/**.yaml'
