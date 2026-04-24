@@ -2946,14 +2946,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:        "enableDatasourceMetaApiPluginLoading",
-			Description: "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "enableColorblindSafePanelOptions",
 			Description: "Enables new colorblind safe palette and line fill patterns for panels",
 			Stage:       FeatureStageExperimental,
@@ -3044,6 +3036,15 @@ var (
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:         "alerting.rulesAPIV2",
+			Description:  "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

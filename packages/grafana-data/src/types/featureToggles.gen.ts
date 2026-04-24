@@ -1707,11 +1707,6 @@ export interface FeatureToggles {
   */
   clearPreviousFieldValues?: boolean;
   /**
-  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
-  * @default false
-  */
-  enableDatasourceMetaApiPluginLoading?: boolean;
-  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */
@@ -1736,4 +1731,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+  * @default false
+  */
+  ['alerting.rulesAPIV2']?: boolean;
 }

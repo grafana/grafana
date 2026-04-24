@@ -8,7 +8,7 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type LinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { resolveLinks, searchForTags, DashboardLinksDashboard } from './DashboardLinksDashboard';
+import { DashboardLinksDashboard, resolveLinks, searchForTags } from './DashboardLinksDashboard';
 
 const [_, { dashbdD }] = getFolderFixtures();
 setBackendSrv(backendSrv);
@@ -124,7 +124,7 @@ describe('resolveLinks', () => {
     const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
     const { view: searchHits, totalRows } = await searchForTags([]);
 
-    const results = resolveLinks(dashbdD.item.uid, link, searchHits, {
+    const results = resolveLinks(link, searchHits, dashbdD.item.uid, {
       getLinkSrv: () => linkSrv,
       sanitize,
       sanitizeUrl,
@@ -143,7 +143,7 @@ describe('resolveLinks', () => {
     const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
     const { view: searchHits, totalRows } = await searchForTags([]);
 
-    const results = resolveLinks(dashboardUID, link, searchHits, {
+    const results = resolveLinks(link, searchHits, dashboardUID, {
       getLinkSrv: () => linkSrv,
       sanitize,
       sanitizeUrl,
@@ -158,7 +158,7 @@ describe('resolveLinks', () => {
     const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
     const { view: searchHits, totalRows } = await searchForTags([]);
 
-    const results = resolveLinks(dashboardUID, link, searchHits, {
+    const results = resolveLinks(link, searchHits, dashboardUID, {
       getLinkSrv: () => linkSrv,
       sanitize,
       sanitizeUrl,
@@ -173,7 +173,7 @@ describe('resolveLinks', () => {
     const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
     const result = await searchForTags([]);
     const { view: searchHits, totalRows } = result;
-    const results = resolveLinks(dashboardUID, link, searchHits, {
+    const results = resolveLinks(link, searchHits, dashboardUID, {
       getLinkSrv: () => linkSrv,
       sanitize,
       sanitizeUrl,
