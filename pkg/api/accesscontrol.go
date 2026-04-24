@@ -45,18 +45,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	roles := FixedRoleRegistrations()
 
-	for i := range roles {
-		switch roles[i].Role.Name {
-		case datasourcesExplorerRoleName:
-			//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-			if hs.Cfg.ViewersCanEdit {
-				roles[i].Grants = append(roles[i].Grants, string(org.RoleViewer))
-			}
-		case datasourcesReaderRoleName:
-			if !hs.License.FeatureEnabled("dspermissions.enforcement") {
-				roles[i].Grants = []string{string(org.RoleViewer)}
-			}
-		}
+	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+	if hs.Cfg.ViewersCanEdit {
+		roles = addGrant(roles, datasourcesExplorerRoleName, string(org.RoleViewer))
+	}
+
+	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
+		roles = setGrants(roles, datasourcesReaderRoleName, []string{string(org.RoleViewer)})
 	}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
@@ -634,6 +629,24 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
+}
+
+func addGrant(roles []ac.RoleRegistration, name, grant string) []ac.RoleRegistration {
+	for i := range roles {
+		if roles[i].Role.Name == name {
+			roles[i].Grants = append(roles[i].Grants, grant)
+		}
+	}
+	return roles
+}
+
+func setGrants(roles []ac.RoleRegistration, name string, grants []string) []ac.RoleRegistration {
+	for i := range roles {
+		if roles[i].Role.Name == name {
+			roles[i].Grants = grants
+		}
+	}
+	return roles
 }
 
 // Metadata helpers

@@ -19,6 +19,8 @@ const (
 
 	// App Plugins actions
 	ActionAppAccess = "plugins.app:access"
+
+	pluginsMaintainerRoleName = ac.FixedRolePrefix + "plugins:maintainer"
 )
 
 var (
@@ -73,7 +75,7 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 	}
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        ac.FixedRolePrefix + "plugins:maintainer",
+			Name:        pluginsMaintainerRoleName,
 			DisplayName: "Maintainer",
 			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
@@ -91,7 +93,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 	roles := FixedRoleRegistrations()
 	if !cfg.PluginAdminEnabled {
 		for i := range roles {
-			if roles[i].Role.Name == ac.FixedRolePrefix+"plugins:maintainer" {
+			if roles[i].Role.Name == pluginsMaintainerRoleName {
 				roles[i].Grants = []string{}
 			}
 		}
