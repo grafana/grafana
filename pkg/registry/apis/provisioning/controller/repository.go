@@ -39,12 +39,6 @@ const (
 	maxAttempts = 3
 )
 
-type queueItem struct {
-	key      string
-	obj      interface{}
-	attempts int
-}
-
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
 	process(ctx context.Context, repo repository.Repository, finalizers []string) error
@@ -69,11 +63,11 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(item *queueItem) error
+	processFn         func(key string) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue           workqueue.TypedRateLimitingInterface[*queueItem]
+	queue           workqueue.TypedRateLimitingInterface[string]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
@@ -121,8 +115,8 @@ func NewRepositoryController(
 		repoLister: repoInformer.Lister(),
 		repoSynced: repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "provisioningRepositoryController",
 			},
 		),
@@ -236,50 +230,49 @@ func (rc *RepositoryController) enqueue(obj interface{}) {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-
-	item := queueItem{key: key, obj: obj}
-	rc.queue.Add(&item)
+	rc.queue.Add(key)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	item, quit := rc.queue.Get()
+	key, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
-	defer rc.queue.Done(item)
+	defer rc.queue.Done(key)
 
-	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
-	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "repository", name)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
-	err := rc.processFn(item)
+	err := rc.processFn(key)
 	if err == nil {
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	}
 
-	item.attempts++
-	logger = logger.With("error", err, "attempts", item.attempts)
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := rc.queue.NumRequeues(key) + 1
+	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
-	if item.attempts >= maxAttempts {
+	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
 	}
 
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
-	rc.queue.AddRateLimited(item)
+	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	rc.queue.AddRateLimited(key)
 
 	return true
 }
@@ -569,11 +562,11 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 }
 
 //nolint:gocyclo
-func (rc *RepositoryController) process(item *queueItem) error {
-	logger := rc.logger.With("key", item.key)
+func (rc *RepositoryController) process(key string) error {
+	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
-	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}

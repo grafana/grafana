@@ -59,7 +59,6 @@ interface FormDTO {
 const renderForm = (defaultValues?: FormDTO) => {
   const textId = useId();
   const radioId = useId();
-  const selectId = useId();
   return (
     <Form
       defaultValues={defaultValues}
@@ -108,14 +107,14 @@ const renderForm = (defaultValues?: FormDTO) => {
               />
             </Field>
 
-            <Field label="Select" invalid={!!errors.select} error="Select is required" htmlFor={selectId}>
+            <Field label="Select" invalid={!!errors.select} error="Select is required">
               <InputControl
                 name="select"
                 control={control}
                 rules={{
                   required: true,
                 }}
-                render={({ field }) => <Select {...field} options={selectOptions} inputId={selectId} />}
+                render={({ field }) => <Select {...field} options={selectOptions} />}
               />
             </Field>
 

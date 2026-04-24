@@ -1,4 +1,4 @@
-package identity
+package user
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -119,7 +119,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 		t.Cleanup(func() {
@@ -174,7 +174,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 				})
 
 				// Create the user
-				_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+				_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 				require.Error(t, err)
 				var statusErr *errors.StatusError
 				require.ErrorAs(t, err, &statusErr)
@@ -192,12 +192,12 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the first user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-email-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-email-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		// Attempt to create another user with the same email
-		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-email-other.yaml"), metav1.CreateOptions{})
+		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-email-other.yaml"), metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -218,12 +218,12 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the first user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-login-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-login-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		// Attempt to create a second user with the same login
-		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-login-other.yaml"), metav1.CreateOptions{})
+		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-login-other.yaml"), metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -244,12 +244,12 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the first user
-		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user1)
 
 		// Create the second user
-		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user2)
 
@@ -287,12 +287,12 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the first user
-		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user1)
 
 		// Create the second user
-		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user2)
 
@@ -392,7 +392,7 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the user before marking it as hidden so BeforeCreate does not block it.
-		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 		spec := obj.Object["spec"].(map[string]interface{})
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
@@ -460,7 +460,7 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
 		})
 
-		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 		spec := obj.Object["spec"].(map[string]interface{})
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
@@ -488,7 +488,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		createUser := func(name string, email string, login string) {
-			obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+			obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
 
 			spec := obj.Object["spec"].(map[string]interface{})
@@ -551,7 +551,7 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create a user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 		createdUID := created.GetName()
