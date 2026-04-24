@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -296,13 +297,19 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			return fmt.Errorf("process finalizers: %w", err)
 		}
 
-		// remove the finalizers
-		_, err = rc.client.Repositories(obj.GetNamespace()).
-			Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
+		// remove the finalizers. Retry on optimistic-concurrency conflicts:
+		// the apiserver translates this JSON Patch into a read-modify-write
+		// with PreviousRV set, so concurrent writes on the repository race
+		// with this call and legitimately succeed on retry.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			_, err := rc.client.Repositories(obj.GetNamespace()).
+				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
 					{ "op": "remove", "path": "/metadata/finalizers" }
 				]`), v1.PatchOptions{
-				FieldManager: "provisioning-controller",
-			})
+					FieldManager: "provisioning-controller",
+				})
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
