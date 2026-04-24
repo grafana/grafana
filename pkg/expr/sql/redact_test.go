@@ -97,8 +97,8 @@ func TestRedactedQuery(t *testing.T) {
 			mustContain: []string{"row_number", "over", "partition by", "order by"},
 		},
 		{
-			name: "qualified column references collapse to same placeholder",
-			sql: `SELECT a.x, b.x FROM a JOIN b ON a.x = b.x`,
+			name:           "qualified column references collapse to same placeholder",
+			sql:            `SELECT a.x, b.x FROM a JOIN b ON a.x = b.x`,
 			mustNotContain: []string{
 				// don't assert "a", "b", or "x" individually because these
 				// short tokens occur in keywords and placeholders.
