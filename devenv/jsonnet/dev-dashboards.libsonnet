@@ -103,6 +103,7 @@
     "section-variables": (import '../dev-dashboards/section-variables/section-variables.json'),
     "shared_queries": (import '../dev-dashboards/panel-common/shared_queries.json'),
     "slow_queries_and_annotations": (import '../dev-dashboards/scenarios/slow_queries_and_annotations.json'),
+    "smoke": (import '../dev-dashboards/transforms/smoke.json'),
     "status-history-thresholds-mappings": (import '../dev-dashboards/panel-status-history/status-history-thresholds-mappings.json'),
     "table_footer": (import '../dev-dashboards/panel-table/table_footer.json'),
     "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
