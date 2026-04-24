@@ -77,7 +77,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
-		reqCtx, reqSpan := tracing.Start(req.Context(), "datasource.resource.request",
+		reqCtx, reqSpan := tracing.Start(ctx, "datasource.resource.request",
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
 			attribute.String("http_method", req.Method),
