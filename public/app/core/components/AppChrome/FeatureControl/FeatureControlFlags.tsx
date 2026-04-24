@@ -4,7 +4,7 @@ import { type PointerEventHandler, useCallback, useEffect, useRef, useState } fr
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getLocalStorageProvider } from '@grafana/runtime/internal';
+import { getLocalStorageProvider, getOFREPWebProvider } from '@grafana/runtime/internal';
 import {
   Card,
   Icon,
@@ -19,6 +19,7 @@ import {
   RadioButtonGroup,
   CodeEditor,
   type BadgeColor,
+  type ComboboxOption,
 } from '@grafana/ui';
 
 import { useFeatureControlContext } from './FeatureControlProvider';
@@ -77,6 +78,37 @@ const getBadgeColor = (value: string): BadgeColor => {
     case 'object':
       return 'blue';
   }
+};
+
+const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  const [keys, setKeys] = useState<Array<ComboboxOption<string>>>([]);
+
+  useEffect(() => {
+    const loadKeys = () => {
+      setKeys(
+        Object.keys(getOFREPWebProvider().flagCache)
+          .sort((a, b) => compare(a, b))
+          .map((k) => ({ label: k, value: k }))
+      );
+    };
+    loadKeys();
+
+    getOFREPWebProvider().events.addHandler(ClientProviderEvents.ConfigurationChanged, loadKeys);
+    return () => {
+      getOFREPWebProvider().events.removeHandler(ClientProviderEvents.ConfigurationChanged, loadKeys);
+    };
+  }, []);
+
+  return (
+    <Combobox
+      options={keys}
+      value={value}
+      aria-label={t('feature-control.flag-key', 'Flag key')}
+      placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
+      onChange={(v) => onChange(v.value)}
+      createCustomValue
+    />
+  );
 };
 
 const FeatureControlFlag = ({ flag }: { flag?: OpenFeatureFlag }) => {
@@ -171,14 +203,19 @@ const FeatureControlFlag = ({ flag }: { flag?: OpenFeatureFlag }) => {
       </summary>
 
       <div className={styles.fields}>
-        <Field noMargin disabled={!!flag}>
-          <Input
-            value={key}
-            aria-label={t('feature-control.flag-key', 'Flag key')}
-            placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
-            onChange={(e) => setKey(e.currentTarget.value)}
-          />
-        </Field>
+        {flag ? (
+          <Field noMargin disabled>
+            <Input
+              value={key}
+              aria-label={t('feature-control.flag-key', 'Flag key')}
+              placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
+            />
+          </Field>
+        ) : (
+          <Field noMargin>
+            <FeatureControlKey value={key} onChange={setKey} />
+          </Field>
+        )}
 
         <Stack direction="row" gap={1} alignItems="center">
           <Combobox

@@ -49,19 +49,23 @@ export function getLocalStorageProvider() {
   }));
 }
 
+// Allow direct access to a singleton OFREP provider,
+//  to allow the feature control developer UI to discover flags from the provider
+let ofrepWebProvider: OFREPWebProvider;
+export function getOFREPWebProvider() {
+  return (ofrepWebProvider ??= new OFREPWebProvider({
+    baseUrl: `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`,
+    pollInterval: -1, // disable polling
+    timeoutMs: 5_000,
+  }));
+}
+
 export async function initOpenFeature() {
   OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
   OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
 
-  const subPath = config.appSubUrl || '';
-  const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
-
   const lsProvider = getLocalStorageProvider();
-  const ofProvider = new OFREPWebProvider({
-    baseUrl: baseUrl,
-    pollInterval: -1, // disable polling
-    timeoutMs: 5_000,
-  });
+  const ofProvider = getOFREPWebProvider();
 
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,

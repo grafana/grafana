@@ -1,5 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 
+import * as runtimeInternal from '@grafana/runtime/internal';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
 
 import { FeatureControlFlags } from './FeatureControlFlags';
@@ -38,6 +41,8 @@ const expandFlag = async (flagName: string) => {
 };
 
 describe('FeatureControlFlags', () => {
+  comboboxTestSetup();
+
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
@@ -97,5 +102,30 @@ describe('FeatureControlFlags', () => {
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
+  });
+
+  it('shows known flag names in the flag key combobox', async () => {
+    const user = userEvent.setup();
+    const mockOFREPProvider = {
+      flagCache: { 'feature-alpha': true, 'feature-beta': false } as Record<string, unknown>,
+      events: { addHandler: jest.fn(), removeHandler: jest.fn() },
+    };
+    jest.spyOn(runtimeInternal, 'getOFREPWebProvider').mockReturnValue(mockOFREPProvider as never);
+
+    renderComponent();
+
+    // Expand the new-flag entry at the bottom of the list
+    fireEvent.click(screen.getByText('new-flag-override'));
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Save' })[0]).toBeVisible();
+    });
+
+    // The first combobox in the new-flag section is the flag-key selector
+    const flagKeyCombobox = screen.getAllByRole('combobox')[0];
+    await user.click(flagKeyCombobox);
+
+    // Verify the OFREP provider's flag names appear as options
+    expect(await screen.findByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'feature-beta' })).toBeInTheDocument();
   });
 });
