@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -142,12 +143,18 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		}
 	}
 
-	updateCmd := legacy.UpdateTeamCommand{
-		UID:           teamObj.Name,
-		Name:          teamObj.Spec.Title,
-		Email:         teamObj.Spec.Email,
-		IsProvisioned: teamObj.Spec.Provisioned,
-		ExternalUID:   teamObj.Spec.ExternalUID,
+	currentMembers, err := s.listAllTeamMembers(ctx, ns, teamObj.Name)
+	if err != nil {
+		return oldObj, false, err
+	}
+	diff, err := diffMembers(currentMembers, teamObj.Spec.Members)
+	if err != nil {
+		return oldObj, false, apierrors.NewBadRequest(err.Error())
+	}
+
+	updateCmd, err := s.buildUpdateCommand(ctx, ns, teamObj, diff)
+	if err != nil {
+		return oldObj, false, err
 	}
 
 	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
@@ -155,7 +162,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		return oldObj, false, err
 	}
 
-	iamTeam := toTeamObject(result.Team, ns)
+	members, err := s.listAllTeamMembers(ctx, ns, teamObj.Name)
+	if err != nil {
+		return oldObj, false, err
+	}
+	iamTeam := toTeamObject(result.Team, ns, members)
 
 	return &iamTeam, false, nil
 }
@@ -180,8 +191,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 			teams := make([]*iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
-				team := toTeamObject(t, ns)
-				teams = append(teams, &team)
+				// N+1 per team; follow-up to add a bulk ListTeamBindingsByTeams.
+				members, err := s.listAllTeamMembers(ctx, ns, t.UID)
+				if err != nil {
+					return nil, err
+				}
+				teamObj := toTeamObject(t, ns, members)
+				teams = append(teams, &teamObj)
 			}
 
 			return &common.ListResponse[*iamv0alpha1.Team]{
@@ -229,7 +245,11 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, teamResource.NewNotFound(name)
 	}
 
-	obj := toTeamObject(found.Teams[0], ns)
+	members, err := s.listAllTeamMembers(ctx, ns, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list members for team %s: %w", name, err)
+	}
+	obj := toTeamObject(found.Teams[0], ns, members)
 	return &obj, nil
 }
 
@@ -271,7 +291,24 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, err
 	}
 
-	iamTeam := toTeamObject(result.Team, ns)
+	if len(teamObj.Spec.Members) > 0 {
+		diff, err := diffMembers(nil, teamObj.Spec.Members)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(err.Error())
+		}
+		if err := s.applyMemberDiff(ctx, ns, result.Team.UID, diff); err != nil {
+			if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+				return nil, apierrors.NewConflict(teamResource.GroupResource(), result.Team.UID, err)
+			}
+			return nil, err
+		}
+	}
+
+	members, err := s.listAllTeamMembers(ctx, ns, result.Team.UID)
+	if err != nil {
+		return nil, err
+	}
+	iamTeam := toTeamObject(result.Team, ns, members)
 	return &iamTeam, nil
 }
 
@@ -304,7 +341,11 @@ func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOpti
 	return 0
 }
 
-func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
+func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMember) iamv0alpha1.Team {
+	specMembers := make([]iamv0alpha1.TeamTeamMember, 0, len(members))
+	for _, m := range members {
+		specMembers = append(specMembers, mapToTeamMember(m))
+	}
 	obj := iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              t.UID,
@@ -317,6 +358,7 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
 			Email:       t.Email,
 			Provisioned: t.IsProvisioned,
 			ExternalUID: t.ExternalUID,
+			Members:     specMembers,
 		},
 	}
 	meta, _ := utils.MetaAccessor(&obj)
@@ -324,4 +366,125 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
 	meta.SetDeprecatedInternalID(t.ID) // nolint:staticcheck
 
 	return obj
+}
+
+// listAllTeamMembers paginates ListTeamBindings to completion for a given team.
+// NOTE: callers typically invoke this per team during List, resulting in N+1
+// queries. A bulk `ListTeamBindingsByTeams` in the legacy store would fix this;
+// tracked as follow-up.
+func (s *LegacyStore) listAllTeamMembers(ctx context.Context, ns claims.NamespaceInfo, teamUID string) ([]legacy.TeamMember, error) {
+	var all []legacy.TeamMember
+	var continueToken int64
+	for {
+		page, err := s.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
+			TeamUID:    teamUID,
+			Pagination: common.Pagination{Limit: 500, Continue: continueToken},
+		})
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page.Bindings...)
+		if page.Continue == 0 {
+			break
+		}
+		continueToken = page.Continue
+	}
+	return all, nil
+}
+
+// buildUpdateCommand assembles the legacy UpdateTeamCommand — the team row
+// update and all member-level changes — so the legacy store can apply them
+// atomically in one SQL transaction.
+func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.NamespaceInfo, teamObj *iamv0alpha1.Team, diff memberDiff) (legacy.UpdateTeamCommand, error) {
+	cmd := legacy.UpdateTeamCommand{
+		UID:           teamObj.Name,
+		Name:          teamObj.Spec.Title,
+		Email:         teamObj.Spec.Email,
+		IsProvisioned: teamObj.Spec.Provisioned,
+		ExternalUID:   teamObj.Spec.ExternalUID,
+	}
+
+	for _, del := range diff.toDelete {
+		cmd.MemberDeletes = append(cmd.MemberDeletes, legacy.DeleteTeamMemberCommand{UID: del.UID})
+	}
+	for _, up := range diff.toUpdate {
+		cmd.MemberUpdates = append(cmd.MemberUpdates, legacy.UpdateTeamMemberCommand{
+			UID:        up.binding.UID,
+			Permission: toLegacyPermission(up.permission),
+		})
+	}
+	if len(diff.toAdd) == 0 {
+		return cmd, nil
+	}
+
+	teamInfo, err := s.store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{UID: teamObj.Name})
+	if err != nil {
+		return cmd, fmt.Errorf("failed to fetch team %s: %w", teamObj.Name, err)
+	}
+	for _, add := range diff.toAdd {
+		userObj, err := s.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{UID: add.Name})
+		if err != nil {
+			return cmd, fmt.Errorf("failed to resolve user %s: %w", add.Name, err)
+		}
+		cmd.MemberCreates = append(cmd.MemberCreates, legacy.CreateTeamMemberCommand{
+			UID:        util.GenerateShortUID(),
+			TeamID:     teamInfo.ID,
+			TeamUID:    teamObj.Name,
+			UserID:     userObj.ID,
+			UserUID:    add.Name,
+			Permission: toLegacyPermission(add.Permission),
+			External:   add.External,
+		})
+	}
+	return cmd, nil
+}
+
+// applyMemberDiff applies adds/updates/deletes via legacy team-member calls.
+// Used on Create only; Update uses UpdateTeamWithMembers for transactional safety.
+// On error the partial progress is surfaced to the caller — no rollback.
+func (s *LegacyStore) applyMemberDiff(ctx context.Context, ns claims.NamespaceInfo, teamUID string, diff memberDiff) error {
+	var teamID int64
+	if len(diff.toAdd) > 0 {
+		t, err := s.store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{UID: teamUID})
+		if err != nil {
+			return fmt.Errorf("failed to fetch team %s: %w", teamUID, err)
+		}
+		teamID = t.ID
+	}
+
+	for _, del := range diff.toDelete {
+		if err := s.store.DeleteTeamMember(ctx, ns, legacy.DeleteTeamMemberCommand{UID: del.UID}); err != nil {
+			return fmt.Errorf("failed to remove member %s: %w", del.UserUID, err)
+		}
+	}
+
+	for _, up := range diff.toUpdate {
+		_, err := s.store.UpdateTeamMember(ctx, ns, legacy.UpdateTeamMemberCommand{
+			UID:        up.binding.UID,
+			Permission: toLegacyPermission(up.permission),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update member %s: %w", up.binding.UserUID, err)
+		}
+	}
+
+	for _, add := range diff.toAdd {
+		userObj, err := s.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{UID: add.Name})
+		if err != nil {
+			return fmt.Errorf("failed to resolve user %s: %w", add.Name, err)
+		}
+		_, err = s.store.CreateTeamMember(ctx, ns, legacy.CreateTeamMemberCommand{
+			UID:        util.GenerateShortUID(),
+			TeamID:     teamID,
+			TeamUID:    teamUID,
+			UserID:     userObj.ID,
+			UserUID:    add.Name,
+			Permission: toLegacyPermission(add.Permission),
+			External:   add.External,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add member %s: %w", add.Name, err)
+		}
+	}
+	return nil
 }

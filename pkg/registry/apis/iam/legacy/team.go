@@ -7,6 +7,9 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -328,6 +331,9 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 		teamID, err := st.ExecWithReturningId(ctx, teamQuery, req.GetArgs()...)
 		if err != nil {
+			if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+				return apierrors.NewAlreadyExists(iamv0.TeamResourceInfo.GroupResource(), cmd.UID)
+			}
 			return fmt.Errorf("failed to create team: %w", err)
 		}
 
@@ -361,6 +367,13 @@ type UpdateTeamCommand struct {
 	ExternalID    string
 	IsProvisioned bool
 	ExternalUID   string
+
+	// Optional member reconciliation. When any of these are non-empty, they
+	// are applied in the same SQL transaction as the team row update. Callers
+	// must pre-resolve TeamID and UserID on MemberCreates entries.
+	MemberDeletes []DeleteTeamMemberCommand
+	MemberUpdates []UpdateTeamMemberCommand
+	MemberCreates []CreateTeamMemberCommand
 }
 
 type UpdateTeamResult struct {
@@ -387,9 +400,11 @@ func (r updateTeamQuery) Validate() error {
 	return nil
 }
 
+// UpdateTeam updates a team and, when the command carries member changes,
+// also reconciles those members (deletes, permission updates, additions) in
+// the same SQL transaction.
 func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
 	now := time.Now().UTC()
-
 	cmd.Updated = legacysql.NewDBTime(now)
 
 	sql, err := s.getDB(ctx)
@@ -397,26 +412,63 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	req := newUpdateTeam(sql, &cmd)
+	// Resolve the team's internal ID before opening the write transaction. Doing
+	// the read inside WithTransaction would acquire a second DB connection while
+	// the tx holds the write lock, which deadlocks on SQLite.
+	if _, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID}); err != nil {
+		return nil, fmt.Errorf("team not found: %w", err)
+	}
 
+	teamReq := newUpdateTeam(sql, &cmd)
 	var updatedTeam team.Team
-	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   cmd.UID,
-		})
-		if err != nil {
-			return fmt.Errorf("team not found: %w", err)
-		}
 
-		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, req)
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, teamReq)
 		if err != nil {
 			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
 		}
-
-		_, err = st.Exec(ctx, teamQuery, req.GetArgs()...)
-		if err != nil {
+		if _, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
+		}
+
+		for i := range cmd.MemberDeletes {
+			dreq := newDeleteTeamMember(sql, &cmd.MemberDeletes[i])
+			dq, err := sqltemplate.Execute(sqlDeleteTeamMemberQuery, dreq)
+			if err != nil {
+				return fmt.Errorf("failed to execute delete team member template: %w", err)
+			}
+			if _, err := st.Exec(ctx, dq, dreq.GetArgs()...); err != nil {
+				return fmt.Errorf("failed to delete team member: %w", err)
+			}
+		}
+
+		for i := range cmd.MemberUpdates {
+			cmd.MemberUpdates[i].Updated = legacysql.NewDBTime(now)
+			ureq := newUpdateTeamMember(sql, &cmd.MemberUpdates[i])
+			uq, err := sqltemplate.Execute(sqlUpdateTeamMemberQuery, ureq)
+			if err != nil {
+				return fmt.Errorf("failed to execute update team member template: %w", err)
+			}
+			if _, err := st.Exec(ctx, uq, ureq.GetArgs()...); err != nil {
+				return fmt.Errorf("failed to update team member: %w", err)
+			}
+		}
+
+		for i := range cmd.MemberCreates {
+			cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+			cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
+			cmd.MemberCreates[i].OrgID = ns.OrgID
+			creq := newCreateTeamMember(sql, &cmd.MemberCreates[i])
+			cq, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, creq)
+			if err != nil {
+				return fmt.Errorf("failed to execute create team member template: %w", err)
+			}
+			if _, err := st.ExecWithReturningId(ctx, cq, creq.GetArgs()...); err != nil {
+				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+					return team.ErrTeamMemberAlreadyAdded
+				}
+				return fmt.Errorf("failed to create team member: %w", err)
+			}
 		}
 
 		updatedTeam = team.Team{
@@ -427,14 +479,12 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			IsProvisioned: cmd.IsProvisioned,
 			Updated:       cmd.Updated.Time,
 		}
-
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
 	return &UpdateTeamResult{Team: updatedTeam}, nil
 }
 
