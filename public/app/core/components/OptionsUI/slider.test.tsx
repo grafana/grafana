@@ -36,7 +36,7 @@ describe('SliderValueEditor', () => {
       />
     );
 
-   const input = screen.getByRole('spinbutton');
+    const input = screen.getByRole('spinbutton');
     await user.clear(input);
     await user.type(input, '42');
     fireEvent.blur(input);
