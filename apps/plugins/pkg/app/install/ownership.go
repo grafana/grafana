@@ -81,13 +81,14 @@ type ownershipInstance interface {
 }
 
 type HashRingOwnershipFilter struct {
-	readRing  ownershipReadRing
-	instance  ownershipInstance
-	manager   *services.Manager
-	ready     chan struct{}
-	readyOnce sync.Once
-	minPeers  int
-	logger    kitlog.Logger
+	readRing        ownershipReadRing
+	instance        ownershipInstance
+	manager         *services.Manager
+	ready           chan struct{}
+	readyOnce       sync.Once
+	minPeers        int
+	heartbeatPeriod time.Duration
+	logger          kitlog.Logger
 }
 
 func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog.Logger, reg prometheus.Registerer) (*HashRingOwnershipFilter, error) {
@@ -181,12 +182,13 @@ func NewHashRingOwnershipFilter(cfg HashRingOwnershipFilterConfig, logger kitlog
 	}
 
 	return &HashRingOwnershipFilter{
-		readRing: readRing,
-		instance: lifecycler,
-		manager:  manager,
-		ready:    make(chan struct{}),
-		minPeers: cfg.MinPeers,
-		logger:   logger,
+		readRing:        readRing,
+		instance:        lifecycler,
+		manager:         manager,
+		ready:           make(chan struct{}),
+		minPeers:        cfg.MinPeers,
+		heartbeatPeriod: cfg.HeartbeatPeriod,
+		logger:          logger,
 	}, nil
 }
 
@@ -216,6 +218,12 @@ func (f *HashRingOwnershipFilter) waitForMinPeers(ctx context.Context, minPeers 
 	for {
 		set, err := f.readRing.GetAllHealthy(childReconcilerRingOp)
 		if err == nil && len(set.Instances) >= minPeers {
+			_ = f.logger.Log("msg", "ring has required peers, waiting for token convergence", "peers", len(set.Instances), "convergence_wait", f.heartbeatPeriod)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(f.heartbeatPeriod):
+			}
 			_ = f.logger.Log("msg", "ring has required peers, releasing informer", "peers", len(set.Instances))
 			return nil
 		}

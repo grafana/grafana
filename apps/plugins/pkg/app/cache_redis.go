@@ -253,7 +253,34 @@ func (s *RedisStore) getByExternalKey(ctx context.Context, externalKey string) (
 	}
 }
 
-func (*RedisStore) Replace([]any, string) error {
+func (s *RedisStore) Replace(items []any, _ string) error {
+	newKeys := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		key, err := s.externalKey(item)
+		if err != nil {
+			return err
+		}
+		newKeys[key] = struct{}{}
+	}
+
+	for _, key := range s.ListKeys() {
+		if _, ok := newKeys[key]; !ok {
+			_, err := s.client.TxPipelined(s.ctx, func(pipe redis.Pipeliner) error {
+				pipe.Del(s.ctx, s.objectKey(key))
+				pipe.SRem(s.ctx, s.indexKey(key), key)
+				return nil
+			})
+			if err != nil {
+				logging.DefaultLogger.Error("error removing stale key during replace", "key", key, "error", err)
+			}
+		}
+	}
+
+	for _, item := range items {
+		if err := s.upsert(item); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
