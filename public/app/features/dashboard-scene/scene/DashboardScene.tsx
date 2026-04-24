@@ -376,6 +376,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     replaceVariableSet(this, currentVariables);
   }
 
+  public updateVariable(name: string, variable: VariableKind): void {
+    const varSet = sceneGraph.getVariables(this);
+    const currentVariables = [...varSet.state.variables];
+    const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
+    if (existingIndex === -1) {
+      throw new Error(`Variable '${name}' not found`);
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
+    currentVariables[existingIndex] = createSceneVariableFromVariableModelV2(variable);
+    replaceVariableSet(this, currentVariables);
+  }
+
+  public removeVariable(name: string): void {
+    const varSet = sceneGraph.getVariables(this);
+    const existing = varSet.state.variables.find((v) => v.state.name === name);
+    if (!existing) {
+      throw new Error(`Variable '${name}' not found`);
+    }
+    replaceVariableSet(
+      this,
+      varSet.state.variables.filter((v) => v.state.name !== name)
+    );
+  }
+
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
     const userLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: [...defaultLinks, ...userLinks] });

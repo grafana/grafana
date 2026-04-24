@@ -7,9 +7,6 @@
 import { type z } from 'zod';
 
 import { sceneGraph } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
-import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -33,33 +30,24 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind } = payload;
-
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
-
-      const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
-      if (existingIndex === -1) {
+      const existingVar = varSet.state.variables.find((v) => v.state.name === name);
+      if (!existingVar) {
         throw new Error(`Variable '${name}' not found`);
       }
+      const previousState = existingVar.state;
+      const variablesBeforeUpdate = varSet.state.variables.slice();
 
-      const previousState = currentVariables[existingIndex].state;
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
-      const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
-      currentVariables[existingIndex] = newSceneVariable;
-
-      replaceVariableSet(scene, currentVariables);
+      scene.updateVariable(name, variableKind);
 
       return {
         success: true,
         data: { variable: variableKind },
-        changes: [
-          {
-            path: `/variables/${name}`,
-            previousValue: previousState,
-            newValue: variableKind,
-          },
-        ],
+        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: variableKind }],
+        _description: `Update variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeUpdate);
+        },
       };
     } catch (error) {
       return {
