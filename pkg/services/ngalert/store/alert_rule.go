@@ -648,7 +648,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		case ngmodels.RuleTypeFilterAll:
 			// no additional filter
 		default:
-			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
+			return fmt.Errorf("unknown rule type filter %v", query.RuleType)
 		}
 
 		// Order by group first, then by rule index within group
@@ -845,7 +845,7 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		case ngmodels.RuleTypeFilterAll:
 			// no additional filter
 		default:
-			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
+			return fmt.Errorf("unknown rule type filter %v", query.RuleType)
 		}
 
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
