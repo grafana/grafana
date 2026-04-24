@@ -19,6 +19,7 @@
   "info": {
     "description": "Open source time series database",
     "version": "%VERSION%",
+    "updated": "%TODAY%",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
