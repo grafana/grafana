@@ -6,7 +6,7 @@
   },
   "spec": {
     "schemaVersion": 41,
-    "title": "String DS Ref (legacy bare names)",
+    "title": "String DS Ref (legacy bare strings)",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "timezone": "utc",
@@ -35,7 +35,7 @@
       "list": [
         {
           "type": "query",
-          "name": "query_known_name",
+          "name": "query_known",
           "label": "Query (known name)",
           "datasource": "Existing Target Name",
           "query": "label_values(foo)",
@@ -44,9 +44,9 @@
         },
         {
           "type": "query",
-          "name": "query_unknown_name",
-          "label": "Query (unknown name)",
-          "datasource": "UnknownThing",
+          "name": "query_unknown",
+          "label": "Query (unknown name, preserved as UID-only)",
+          "datasource": "UnknownQueryDS",
           "query": "label_values(bar)",
           "hide": 0,
           "refresh": 1
@@ -64,15 +64,15 @@
         },
         {
           "type": "adhoc",
-          "name": "adhoc_known_name",
+          "name": "adhoc_known",
           "label": "Adhoc (known name)",
           "datasource": "Existing Target Name"
         },
         {
-          "type": "groupby",
-          "name": "groupby_known_name",
-          "label": "GroupBy (known name)",
-          "datasource": "Existing Target Name"
+          "type": "adhoc",
+          "name": "adhoc_unknown",
+          "label": "Adhoc (unknown name, preserved as UID-only)",
+          "datasource": "UnknownAdhocDS"
         }
       ]
     },
@@ -80,7 +80,7 @@
       {
         "id": 1,
         "type": "timeseries",
-        "title": "Panel: bare known datasource name",
+        "title": "Panel: bare-string datasource resolvable via the index",
         "datasource": "Existing Target Name",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
         "fieldConfig": { "defaults": {}, "overrides": [] },
@@ -96,15 +96,15 @@
       {
         "id": 2,
         "type": "timeseries",
-        "title": "Panel: bare unknown datasource name",
-        "datasource": "TEST_DB",
+        "title": "Panel: bare-string datasource NOT in the index, preserved as UID-only ref",
+        "datasource": "UnknownPanelDS",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
         "fieldConfig": { "defaults": {}, "overrides": [] },
         "options": {},
         "targets": [
           {
             "refId": "A",
-            "datasource": "TEST_DB",
+            "datasource": "UnknownPanelDS",
             "expr": "up"
           }
         ]
@@ -112,7 +112,7 @@
       {
         "id": 3,
         "type": "timeseries",
-        "title": "Panel: template variable datasource (unchanged behavior)",
+        "title": "Panel: template-variable datasource (unchanged behavior)",
         "datasource": "${datasource}",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
         "fieldConfig": { "defaults": {}, "overrides": [] },
@@ -121,6 +121,22 @@
           {
             "refId": "A",
             "datasource": "${datasource}",
+            "expr": "up"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "type": "timeseries",
+        "title": "Panel: \"default\" sentinel resolves to the configured default datasource",
+        "datasource": "default",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+        "fieldConfig": { "defaults": {}, "overrides": [] },
+        "options": {},
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": "default",
             "expr": "up"
           }
         ]

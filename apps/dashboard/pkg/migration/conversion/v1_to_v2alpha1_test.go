@@ -608,7 +608,7 @@ func TestV1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "legacy bare-string panel datasource is preserved as a ref (not dropped) when unknown to the index",
+			name: "legacy bare-string panel datasource: known names resolve, unknown names are preserved as UID-only refs, \"default\" sentinel resolves to the default datasource",
 			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
@@ -616,6 +616,18 @@ func TestV1ToV2alpha1(t *testing.T) {
 							"title": "Test Dashboard",
 							"panels": []interface{}{
 								map[string]interface{}{
+									// Known name -> resolves to (existing-target-uid, elasticsearch)
+									"id":         101,
+									"type":       "timeseries",
+									"datasource": "Existing Target Name",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId": "A",
+										},
+									},
+								},
+								map[string]interface{}{
+									// Unknown name -> preserved as a UID-only ref (empty type),
 									"id":         103,
 									"type":       "timeseries",
 									"datasource": "TEST_DB",
@@ -631,19 +643,32 @@ func TestV1ToV2alpha1(t *testing.T) {
 				}
 			},
 			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Contains(t, v2alpha1.Spec.Elements, "panel-101")
+				known := v2alpha1.Spec.Elements["panel-101"].PanelKind
+				require.NotNil(t, known)
+				require.Len(t, known.Spec.Data.Spec.Queries, 1)
+				knownQuery := known.Spec.Data.Spec.Queries[0]
+				require.NotNil(t, knownQuery.Spec.Datasource,
+					"bare-string panel datasource matching the index should produce a ref")
+				require.NotNil(t, knownQuery.Spec.Datasource.Uid)
+				require.NotNil(t, knownQuery.Spec.Datasource.Type)
+				assert.Equal(t, "existing-target-uid", *knownQuery.Spec.Datasource.Uid,
+					"known legacy string datasource should resolve to the indexed UID")
+				assert.Equal(t, "elasticsearch", *knownQuery.Spec.Datasource.Type,
+					"known legacy string datasource should resolve to the indexed type")
+
 				require.Contains(t, v2alpha1.Spec.Elements, "panel-103")
-				panel := v2alpha1.Spec.Elements["panel-103"].PanelKind
-				require.NotNil(t, panel)
-
-				require.Len(t, panel.Spec.Data.Spec.Queries, 1)
-				query := panel.Spec.Data.Spec.Queries[0]
-				require.NotNil(t, query.Spec.Datasource, "bare-string panel datasource should be preserved as a ref, not dropped")
-
-				require.NotNil(t, query.Spec.Datasource.Uid)
-				require.NotNil(t, query.Spec.Datasource.Type)
-				assert.Equal(t, "TEST_DB", *query.Spec.Datasource.Uid,
-					"unknown legacy string datasource should be preserved as the UID")
-				assert.Equal(t, "", *query.Spec.Datasource.Type,
+				unknown := v2alpha1.Spec.Elements["panel-103"].PanelKind
+				require.NotNil(t, unknown)
+				require.Len(t, unknown.Spec.Data.Spec.Queries, 1)
+				unknownQuery := unknown.Spec.Data.Spec.Queries[0]
+				require.NotNil(t, unknownQuery.Spec.Datasource,
+					"unknown legacy string datasource should be preserved as a ref, not dropped")
+				require.NotNil(t, unknownQuery.Spec.Datasource.Uid)
+				require.NotNil(t, unknownQuery.Spec.Datasource.Type)
+				assert.Equal(t, "TEST_DB", *unknownQuery.Spec.Datasource.Uid,
+					"unknown legacy string datasource should preserve the name as UID")
+				assert.Equal(t, "", *unknownQuery.Spec.Datasource.Type,
 					"unknown legacy string datasource should have empty type (no index match)")
 			},
 		},
