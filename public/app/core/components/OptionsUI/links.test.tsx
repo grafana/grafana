@@ -40,7 +40,12 @@ describe('DataLinksValueEditor', () => {
 
   it('opens the edit modal (without crashing) when context.getSuggestions is absent', async () => {
     render(
-      <DataLinksValueEditor value={[makeLink('Grafana Homepage')]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />
+      <DataLinksValueEditor
+        value={[makeLink('Grafana Homepage')]}
+        onChange={jest.fn()}
+        context={{ data: [] }}
+        item={editorItem}
+      />
     );
 
     await userEvent.click(screen.getByRole('button', { name: /^edit$/i }));

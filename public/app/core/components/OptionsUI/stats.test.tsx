@@ -10,7 +10,13 @@ const baseItem = { settings: {} } as EditorItem;
 describe('StatsPickerEditor', () => {
   it('renders a combobox and shows the selected stat label', () => {
     render(
-      <StatsPickerEditor id="stats-1" value={[ReducerID.mean]} onChange={jest.fn()} item={baseItem} context={{ data: [] }} />
+      <StatsPickerEditor
+        id="stats-1"
+        value={[ReducerID.mean]}
+        onChange={jest.fn()}
+        item={baseItem}
+        context={{ data: [] }}
+      />
     );
 
     expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -19,7 +25,13 @@ describe('StatsPickerEditor', () => {
 
   it('forwards the id prop to the combobox input', () => {
     render(
-      <StatsPickerEditor id="my-stats" value={[ReducerID.sum]} onChange={jest.fn()} item={baseItem} context={{ data: [] }} />
+      <StatsPickerEditor
+        id="my-stats"
+        value={[ReducerID.sum]}
+        onChange={jest.fn()}
+        item={baseItem}
+        context={{ data: [] }}
+      />
     );
 
     expect(screen.getByRole('combobox')).toHaveAttribute('id', 'my-stats');
@@ -29,7 +41,13 @@ describe('StatsPickerEditor', () => {
     const item = { settings: { allowMultiple: true } } as EditorItem;
 
     render(
-      <StatsPickerEditor id="stats-multi" value={[ReducerID.sum]} onChange={jest.fn()} item={item} context={{ data: [] }} />
+      <StatsPickerEditor
+        id="stats-multi"
+        value={[ReducerID.sum]}
+        onChange={jest.fn()}
+        item={item}
+        context={{ data: [] }}
+      />
     );
 
     expect(screen.getByRole('combobox')).toBeInTheDocument();
