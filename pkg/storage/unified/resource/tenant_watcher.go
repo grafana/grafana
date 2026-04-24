@@ -49,6 +49,11 @@ const (
 
 	defaultPollInterval = 1 * time.Hour
 	pollPageSize        = 2000
+
+	// reconcileTraceThreshold controls whether a span is emitted for
+	// reconcileTenantPendingDelete. Reconciles below this duration are noise in
+	// traces (mostly just the LabelingComplete fast-path).
+	reconcileTraceThreshold = 1 * time.Second
 )
 
 // TenantWatcher watches Tenant CRDs and syncs pending-delete state to the KV
@@ -365,6 +370,17 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 			span.SetStatus(codes.Error, "failed to list kv records")
 			return
 		}
+		select {
+		case <-clearCtx.Done():
+			clearSpan.AddEvent("clear phase cancelled", trace.WithAttributes(attribute.Int("scanned", scanned)))
+			clearSpan.End()
+			return
+		case <-tw.stopCh:
+			clearSpan.AddEvent("clear phase stopped", trace.WithAttributes(attribute.Int("scanned", scanned)))
+			clearSpan.End()
+			return
+		default:
+		}
 		scanned++
 		if _, live := liveNames[name]; live {
 			continue
@@ -438,21 +454,6 @@ func (tw *TenantWatcher) runPollCycle(ctx context.Context) {
 	)
 }
 
-// tenantAPIGetForClear wraps the tenant API GET in a span so the clear phase
-// trace shows the per-tenant API latency distribution.
-func (tw *TenantWatcher) tenantAPIGetForClear(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	ctx, span := tracer.Start(ctx, "resource.TenantWatcher.clearTenantAPIGet", trace.WithAttributes(
-		attribute.String("tenant", name),
-	))
-	defer span.End()
-	got, err := tw.client.Resource(tenantGVR).Get(ctx, name, metav1.GetOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "get failed")
-	}
-	return got, err
-}
-
 // Stop stops the tenant watcher and waits for the informer goroutines to exit.
 func (tw *TenantWatcher) Stop() {
 	close(tw.stopCh)
@@ -483,10 +484,22 @@ func (tw *TenantWatcher) handleTenant(ctx context.Context, tenant *unstructured.
 // reconcileTenantPendingDelete ensures a pending-delete record exists for the
 // tenant and that all of its resources have been labelled.
 func (tw *TenantWatcher) reconcileTenantPendingDelete(ctx context.Context, name string, deleteAfter string) {
-	ctx, span := tracer.Start(ctx, "resource.TenantWatcher.reconcileTenantPendingDelete", trace.WithAttributes(
-		attribute.String("tenant", name),
-	))
-	defer span.End()
+	// only emit span when over threshold or else this gets really spammy
+	reconcileStart := time.Now()
+	defer func() {
+		d := time.Since(reconcileStart)
+		if d < reconcileTraceThreshold {
+			return
+		}
+		_, span := tracer.Start(ctx, "resource.TenantWatcher.reconcileTenantPendingDelete",
+			trace.WithTimestamp(reconcileStart),
+			trace.WithAttributes(
+				attribute.String("tenant", name),
+				attribute.Int64("duration_ms", d.Milliseconds()),
+			),
+		)
+		span.End()
+	}()
 
 	// Fast path: if the record exists and labelling is complete, nothing to do.
 	record, err := tw.pendingDeleteStore.Get(ctx, name)
