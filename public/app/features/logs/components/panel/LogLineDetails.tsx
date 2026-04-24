@@ -70,7 +70,13 @@ export const LogLineDetails = memo(
         maxWidth={maxWidth}
       >
         <div className={styles.container} ref={containerRef}>
-          <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
+          <LogLineDetailsTabs
+            containerElement={containerElement}
+            focusLogLine={focusLogLine}
+            logs={logs}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         </div>
       </Resizable>
     );
@@ -79,7 +85,13 @@ export const LogLineDetails = memo(
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
-  ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
+  ({
+    containerElement,
+    focusLogLine,
+    logs,
+    timeRange,
+    timeZone,
+  }: Pick<Props, 'containerElement' | 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
     const {
       currentLog,
@@ -114,6 +126,13 @@ const LogLineDetailsTabs = memo(
 
     useEffect(() => {
       function handleKeydown(e: KeyboardEvent) {
+        if (
+          e.target instanceof Element &&
+          e.target.contains(containerElement) === false &&
+          containerElement.contains(e.target) === false
+        ) {
+          return;
+        }
         let delta: number;
         if (e.key === 'ArrowDown') {
           delta = 1;
@@ -135,7 +154,7 @@ const LogLineDetailsTabs = memo(
       }
       document.addEventListener('keydown', handleKeydown);
       return () => document.removeEventListener('keydown', handleKeydown);
-    }, [currentLog, focusLogLine, logs, replaceDetails]);
+    }, [containerElement, currentLog, focusLogLine, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {
       inputRef.current = newSearch;
