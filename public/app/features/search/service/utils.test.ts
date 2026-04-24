@@ -4,7 +4,14 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from '../../apiserver/types';
 
 import { type SearchHit } from './unified';
-import { appendFrame, filterSearchResults, resourceToSearchResult } from './utils';
+import {
+  appendFrame,
+  DELETED_BY_REMOVED,
+  DELETED_BY_UNKNOWN,
+  filterSearchResults,
+  formatDeletedByDisplayValue,
+  resourceToSearchResult,
+} from './utils';
 
 function makeField(name: string, values: unknown[], type = FieldType.string) {
   return { name, type, config: {}, values };
@@ -177,13 +184,35 @@ describe('resourceToSearchResult', () => {
     expect(hit.field.deletedBy).toBe('Alice');
   });
 
-  it('falls back to the raw UID when the display map has no matching entry', () => {
+  it('uses the displayMap value verbatim (including sentinels) when mapped', () => {
     const list = makeResourceList([makeDeletedItem({ name: 'a', deletedByUid: 'user:bob' })]);
-    const displayMap = new Map<string, string>([['user:alice', 'Alice']]);
+    const displayMap = new Map<string, string>([['user:bob', DELETED_BY_REMOVED]]);
 
     const [hit] = resourceToSearchResult(list, displayMap);
 
-    expect(hit.field.deletedBy).toBe('user:bob');
+    expect(hit.field.deletedBy).toBe(DELETED_BY_REMOVED);
+  });
+});
+
+describe('formatDeletedByDisplayValue', () => {
+  const t = (_key: string, defaultValue: string) => defaultValue;
+
+  it('maps DELETED_BY_REMOVED to the translated "Deleted account" label', () => {
+    expect(formatDeletedByDisplayValue(DELETED_BY_REMOVED, t)).toBe('Deleted account');
+  });
+
+  it('maps DELETED_BY_UNKNOWN to the translated "Unknown account" label', () => {
+    expect(formatDeletedByDisplayValue(DELETED_BY_UNKNOWN, t)).toBe('Unknown account');
+  });
+
+  it('passes through non-sentinel display names verbatim', () => {
+    expect(formatDeletedByDisplayValue('Alice', t)).toBe('Alice');
+  });
+
+  it('renders a dash for empty/missing values', () => {
+    expect(formatDeletedByDisplayValue('', t)).toBe('-');
+    expect(formatDeletedByDisplayValue(undefined, t)).toBe('-');
+    expect(formatDeletedByDisplayValue(null, t)).toBe('-');
   });
 });
 

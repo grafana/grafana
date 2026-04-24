@@ -20,7 +20,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { getIconForKind } from '../../service/utils';
+import { formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -170,8 +170,7 @@ export const generateColumns = (
       Header: t('search.results-table.deleted-by-header', 'Deleted by'),
       width,
       Cell: (p) => {
-        const rawValue = deletedByField.values[p.row.index];
-        const displayValue = typeof rawValue === 'string' && rawValue ? rawValue : '-';
+        const displayValue = formatDeletedByDisplayValue(deletedByField.values[p.row.index], t);
         const { key, ...cellProps } = p.cellProps;
         return (
           <div key={key} {...cellProps} className={styles.cell}>

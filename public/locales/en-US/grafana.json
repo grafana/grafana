@@ -14412,6 +14412,8 @@
     "results-table": {
       "datasource-header": "Data source",
       "deleted-by-header": "Deleted by",
+      "deleted-by-removed": "Deleted account",
+      "deleted-by-unknown": "Unknown account",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
