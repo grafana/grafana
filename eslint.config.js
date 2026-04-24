@@ -197,6 +197,16 @@ module.exports = [
       ],
       'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
+      // React 19 related TransitionGroup rules to prevent usage of findDomNode. Remove once React 19 is the default
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
+          message:
+            'CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details.',
+        },
+      ],
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
