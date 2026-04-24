@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -163,7 +164,7 @@ func TestImportDashboardAPI(t *testing.T) {
 	t.Run("Import service returns a library panel permission error", func(t *testing.T) {
 		service := &serviceMock{
 			importDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-				return nil, libraryelementsmodel.ErrLibraryElementInsufficientPermissions.Errorf("insufficient permissions for creating library panel in folder with UID: 'abc'")
+				return nil, fmt.Errorf("%w: folder UID 'abc'", libraryelementsmodel.ErrLibraryElementInsufficientPermissions)
 			},
 		}
 		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
