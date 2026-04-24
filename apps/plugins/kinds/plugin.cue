@@ -11,5 +11,9 @@ pluginV0Alpha1: {
 			url?:      string
 			parentId?: string
 		}
+		status: {
+			childAppliedChildren?: [...string]
+			childObservedGeneration?: int64
+		}
 	}
 }

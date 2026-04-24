@@ -18,9 +18,11 @@ export const defaultOperatorState = (): OperatorState => ({
 });
 
 export interface Status {
+	childAppliedChildren?: string[];
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	operatorStates?: Record<string, OperatorState>;
+	childObservedGeneration?: number;
 	// additionalFields is reserved for future use
 	additionalFields?: Record<string, any>;
 }

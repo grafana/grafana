@@ -1,11 +1,11 @@
 package meta
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"path"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"

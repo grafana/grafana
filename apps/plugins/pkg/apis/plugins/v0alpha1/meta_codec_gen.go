@@ -5,9 +5,9 @@
 package v0alpha1
 
 import (
-	"encoding/json"
 	"io"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 

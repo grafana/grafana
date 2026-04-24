@@ -2,7 +2,6 @@ package meta
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"

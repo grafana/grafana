@@ -90,10 +90,11 @@ func TestInstallRegistrar_Register(t *testing.T) {
 	tests := []struct {
 		name            string
 		install         *PluginInstall
+		createErr       error
 		existing        *pluginsv0alpha1.Plugin
-		existingErr     error
 		expectedCreates int
-		expectedUpdates int
+		expectedGets    int
+		expectedPatches int
 		expectError     bool
 	}{
 		{
@@ -103,11 +104,10 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Version: "1.0.0",
 				Source:  SourcePluginStore,
 			},
-			existingErr:     errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1"),
 			expectedCreates: 1,
 		},
 		{
-			name: "updates plugin when fields change",
+			name: "patches plugin when create races with existing object",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "2.0.0",
@@ -115,9 +115,8 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			},
 			existing: &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace:       "org-1",
-					Name:            "plugin-1",
-					ResourceVersion: "7",
+					Namespace: "org-1",
+					Name:      "plugin-1",
 					Annotations: map[string]string{
 						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
@@ -127,10 +126,13 @@ func TestInstallRegistrar_Register(t *testing.T) {
 					Version: "1.0.0",
 				},
 			},
-			expectedUpdates: 1,
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectedPatches: 1,
 		},
 		{
-			name: "skips create when plugin matches",
+			name: "skips patch when existing plugin already matches desired state",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
@@ -138,9 +140,8 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			},
 			existing: &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace:       "org-1",
-					Name:            "plugin-1",
-					ResourceVersion: "9",
+					Namespace: "org-1",
+					Name:      "plugin-1",
 					Annotations: map[string]string{
 						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
@@ -150,16 +151,92 @@ func TestInstallRegistrar_Register(t *testing.T) {
 					Version: "1.0.0",
 				},
 			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
 		},
 		{
-			name: "returns error on unexpected get failure",
+			name: "returns error on unexpected create failure",
 			install: &PluginInstall{
 				ID:      "plugin-err",
 				Version: "1.0.0",
 				Source:  SourcePluginStore,
 			},
-			existingErr: errorsK8s.NewInternalError(errors.New("boom")),
+			createErr:   errorsK8s.NewInternalError(errors.New("boom")),
 			expectError: true,
+		},
+		{
+			name: "plugin store refuses to patch object owned by another non-empty source",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourceChildPluginReconciler,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectError:     true,
+		},
+		{
+			name: "plugin store may patch object with empty existing source",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "org-1",
+					Name:        "plugin-1",
+					Annotations: map[string]string{},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectedPatches: 1,
+		},
+		{
+			name: "non-plugin-store source may patch plugin-store-owned object",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourceChildPluginReconciler,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			createErr:       errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1"),
+			expectedCreates: 1,
+			expectedGets:    1,
+			expectedPatches: 1,
 		},
 	}
 
@@ -167,29 +244,29 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			createCalls := 0
-			updateCalls := 0
-			var receivedResourceVersions []string
-			var updatedPlugins []*pluginsv0alpha1.Plugin
+			getCalls := 0
+			patchCalls := 0
+			var patchRequests []resource.PatchRequest
 
 			fakeClient := &fakePluginInstallClient{
-				getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
-					if tt.existingErr != nil {
-						return nil, tt.existingErr
-					}
-					if tt.existing == nil {
-						return nil, errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1")
-					}
-					return tt.existing.DeepCopy(), nil
-				},
 				createFunc: func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					createCalls++
+					if tt.createErr != nil {
+						return nil, tt.createErr
+					}
 					return tt.install.ToPluginInstallV0Alpha1("org-1"), nil
 				},
-				updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
-					updateCalls++
-					receivedResourceVersions = append(receivedResourceVersions, opts.ResourceVersion)
-					updatedPlugins = append(updatedPlugins, obj)
-					return obj, nil
+				getFunc: func(_ context.Context, _ resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					getCalls++
+					if tt.existing != nil {
+						return tt.existing.DeepCopy(), nil
+					}
+					return nil, errorsK8s.NewNotFound(pluginGroupResource(), tt.install.ID)
+				},
+				patchFunc: func(_ context.Context, _ resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					patchCalls++
+					patchRequests = append(patchRequests, req)
+					return tt.install.ToPluginInstallV0Alpha1("org-1"), nil
 				},
 			}
 
@@ -202,15 +279,127 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.expectedCreates, createCalls)
-			require.Equal(t, tt.expectedUpdates, updateCalls)
+			require.Equal(t, tt.expectedGets, getCalls)
+			require.Equal(t, tt.expectedPatches, patchCalls)
 
-			if tt.expectedUpdates > 0 {
-				require.Equal(t, []string{tt.existing.ResourceVersion}, receivedResourceVersions)
-				require.Len(t, updatedPlugins, 1)
-				require.Equal(t, tt.install.Version, updatedPlugins[0].Spec.Version)
+			if tt.expectedPatches > 0 {
+				require.Len(t, patchRequests, 1)
+				require.Equal(t, tt.install.ToOwnedPatchRequest(), patchRequests[0])
 			}
 		})
 	}
+}
+
+func TestInstallRegistrar_UpdateStatus_RebuildsFromLatestPluginAfterConflict(t *testing.T) {
+	ctx := context.Background()
+
+	stale := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "org-1",
+			Name:            "plugin-1",
+			ResourceVersion: "1",
+		},
+	}
+	refreshed := stale.DeepCopy()
+	refreshed.ResourceVersion = "2"
+	refreshed.Status = pluginsv0alpha1.PluginStatus{
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			"other-reconciler": {State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess},
+		},
+	}
+
+	updateCalls := 0
+	fakeClient := &fakePluginInstallClient{
+		getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			return refreshed.DeepCopy(), nil
+		},
+		updateFunc: func(_ context.Context, plugin *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+			updateCalls++
+			switch updateCalls {
+			case 1:
+				require.Equal(t, "1", opts.ResourceVersion)
+				require.Equal(t, "status", opts.Subresource)
+				require.NotContains(t, plugin.Status.OperatorStates, "other-reconciler")
+				return nil, errorsK8s.NewConflict(pluginGroupResource(), "plugin-1", errors.New("conflict"))
+			case 2:
+				require.Equal(t, "2", opts.ResourceVersion)
+				require.Equal(t, "status", opts.Subresource)
+				require.Contains(t, plugin.Status.OperatorStates, "other-reconciler")
+				require.Equal(t, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, plugin.Status.OperatorStates["other-reconciler"].State)
+				require.Contains(t, plugin.Status.OperatorStates, childReconcilerStatusKey)
+				return refreshed.DeepCopy(), nil
+			default:
+				t.Fatalf("unexpected update call %d", updateCalls)
+				return nil, nil
+			}
+		},
+	}
+
+	registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+	err := registrar.UpdateStatus(ctx, stale, func(current *pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool) {
+		status := current.Status
+		if status.OperatorStates == nil {
+			status.OperatorStates = make(map[string]pluginsv0alpha1.PluginstatusOperatorState)
+		} else {
+			status.OperatorStates = cloneOperatorStates(status.OperatorStates)
+		}
+		status.OperatorStates[childReconcilerStatusKey] = pluginsv0alpha1.PluginstatusOperatorState{
+			State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess,
+		}
+		return status, true
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 2, updateCalls)
+}
+
+func TestInstallRegistrar_UpdateStatus_SkipsRetryWhenRefreshedPluginAlreadyMatches(t *testing.T) {
+	ctx := context.Background()
+
+	stale := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "org-1",
+			Name:            "plugin-1",
+			ResourceVersion: "1",
+		},
+	}
+	refreshed := stale.DeepCopy()
+	refreshed.ResourceVersion = "2"
+	refreshed.Status = pluginsv0alpha1.PluginStatus{
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			childReconcilerStatusKey: {State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess},
+		},
+	}
+
+	updateCalls := 0
+	fakeClient := &fakePluginInstallClient{
+		getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			return refreshed.DeepCopy(), nil
+		},
+		updateFunc: func(_ context.Context, _ *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+			updateCalls++
+			require.Equal(t, "1", opts.ResourceVersion)
+			require.Equal(t, "status", opts.Subresource)
+			return nil, errorsK8s.NewConflict(pluginGroupResource(), "plugin-1", errors.New("conflict"))
+		},
+	}
+
+	registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+	err := registrar.UpdateStatus(ctx, stale, func(current *pluginsv0alpha1.Plugin) (pluginsv0alpha1.PluginStatus, bool) {
+		status := current.Status
+		if status.OperatorStates == nil {
+			status.OperatorStates = make(map[string]pluginsv0alpha1.PluginstatusOperatorState)
+		} else {
+			status.OperatorStates = cloneOperatorStates(status.OperatorStates)
+		}
+		status.OperatorStates[childReconcilerStatusKey] = pluginsv0alpha1.PluginstatusOperatorState{
+			State: pluginsv0alpha1.PluginStatusOperatorStateStateSuccess,
+		}
+		return status, current.Status.OperatorStates[childReconcilerStatusKey].State != pluginsv0alpha1.PluginStatusOperatorStateStateSuccess
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, updateCalls)
 }
 
 func pluginGroupResource() schema.GroupResource {
@@ -222,6 +411,7 @@ type fakePluginInstallClient struct {
 	getFunc     func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error)
 	createFunc  func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error)
 	updateFunc  func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error)
+	patchFunc   func(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*pluginsv0alpha1.Plugin, error)
 	deleteFunc  func(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error
 }
 
@@ -262,6 +452,9 @@ func (f *fakePluginInstallClient) UpdateStatus(ctx context.Context, identifier r
 }
 
 func (f *fakePluginInstallClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+	if f.patchFunc != nil {
+		return f.patchFunc(ctx, identifier, req, opts)
+	}
 	return nil, nil
 }
 
@@ -359,10 +552,19 @@ func (f *fakeResourceClient) UpdateInto(ctx context.Context, identifier resource
 }
 
 func (f *fakeResourceClient) Patch(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions) (resource.Object, error) {
-	return nil, nil
+	return f.client.Patch(ctx, identifier, patch, options)
 }
 
 func (f *fakeResourceClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
+	patched, err := f.Patch(ctx, identifier, patch, options)
+	if err != nil {
+		return err
+	}
+	if plugin, ok := patched.(*pluginsv0alpha1.Plugin); ok {
+		if target, ok := into.(*pluginsv0alpha1.Plugin); ok {
+			*target = *plugin
+		}
+	}
 	return nil
 }
 
@@ -641,9 +843,6 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
-				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
-					return nil, errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1")
-				}
 				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					return nil, errors.New("create failed")
 				}
@@ -658,29 +857,34 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 				Source:  SourceChildPluginReconciler,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
-				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
-					return nil, errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1")
-				}
 				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+				}
+				fc.patchFunc = func(context.Context, resource.Identifier, resource.PatchRequest, resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					return &pluginsv0alpha1.Plugin{}, nil
 				}
 			},
 			expectError: false,
 		},
 		{
-			name: "update fails",
+			name: "patch fails",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "2.0.0",
 				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
+				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+				}
+				fc.patchFunc = func(context.Context, resource.Identifier, resource.PatchRequest, resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errors.New("patch failed")
+				}
 				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
 					return &pluginsv0alpha1.Plugin{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace:       "org-1",
-							Name:            "plugin-1",
-							ResourceVersion: "5",
+							Namespace: "org-1",
+							Name:      "plugin-1",
 							Annotations: map[string]string{
 								PluginInstallSourceAnnotation: SourcePluginStore,
 							},
@@ -691,8 +895,91 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 						},
 					}, nil
 				}
-				fc.updateFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
-					return nil, errors.New("update failed")
+			},
+			expectError: true,
+		},
+		{
+			name: "retries create when patch loses an existence race",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			setupClient: func(fc *fakePluginInstallClient) {
+				createCalls := 0
+				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					createCalls++
+					if createCalls == 1 {
+						return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+					}
+					return &pluginsv0alpha1.Plugin{}, nil
+				}
+				fc.patchFunc = func(context.Context, resource.Identifier, resource.PatchRequest, resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1")
+				}
+			},
+			expectError: false,
+		},
+		{
+			name: "plugin store skips conflicting ownership when spec already matches",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "1.0.0",
+				Source:  SourcePluginStore,
+			},
+			setupClient: func(fc *fakePluginInstallClient) {
+				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+				}
+				fc.patchFunc = func(context.Context, resource.Identifier, resource.PatchRequest, resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errors.New("test op failed")
+				}
+				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					return &pluginsv0alpha1.Plugin{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "org-1",
+							Name:      "plugin-1",
+							Annotations: map[string]string{
+								PluginInstallSourceAnnotation: SourceChildPluginReconciler,
+							},
+						},
+						Spec: pluginsv0alpha1.PluginSpec{
+							Id:      "plugin-1",
+							Version: "1.0.0",
+						},
+					}, nil
+				}
+			},
+			expectError: false,
+		},
+		{
+			name: "returns conflict when another source owns a different spec",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourceChildPluginReconciler,
+			},
+			setupClient: func(fc *fakePluginInstallClient) {
+				fc.createFunc = func(context.Context, *pluginsv0alpha1.Plugin, resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), "plugin-1")
+				}
+				fc.patchFunc = func(context.Context, resource.Identifier, resource.PatchRequest, resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
+					return nil, errors.New("test op failed")
+				}
+				fc.getFunc = func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					return &pluginsv0alpha1.Plugin{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "org-1",
+							Name:      "plugin-1",
+							Annotations: map[string]string{
+								PluginInstallSourceAnnotation: SourcePluginStore,
+							},
+						},
+						Spec: pluginsv0alpha1.PluginSpec{
+							Id:      "plugin-1",
+							Version: "1.0.0",
+						},
+					}, nil
 				}
 			},
 			expectError: true,
