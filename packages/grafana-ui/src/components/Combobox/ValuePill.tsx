@@ -65,7 +65,6 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     padding: theme.spacing(0, 1, 0, 0.75),
-    height: theme.spacing(2),
   }),
 
   separator: css({
