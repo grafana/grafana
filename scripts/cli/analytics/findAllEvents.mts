@@ -6,21 +6,23 @@ import { parseEvents } from './eventParser.mts';
 import { resolveType } from './typeResolution.mts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
-  const allEvents: EventData[] = files.flatMap((file) => {
-    // Get the local imported name of defineFeatureEvents
+  const eventMap = new Map<string, EventData>();
+
+  for (const file of files) {
     const createEventFactoryImportedName = getDefineFeatureEventsLocalName(file, defineFeatureEventsPath);
     if (!createEventFactoryImportedName) {
-      return [];
+      continue;
     }
-    // Find all calls to defineFeatureEvents and the namespaces they create
+
     const eventNamespaces = findEventNamespaces(file, createEventFactoryImportedName);
-
-    // Find all events defined in the file
     const events = parseEvents(file, eventNamespaces);
-    return events;
-  });
 
-  return allEvents;
+    for (const event of events) {
+      eventMap.set(event.fullEventName, event);
+    }
+  }
+
+  return [...eventMap.values()];
 };
 
 /**
