@@ -381,6 +381,95 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 	}
 }
 
+// TestRepositoryController_handleDelete_RetriesOnConflict verifies that a
+// transient RV conflict from the unified storage backend when removing
+// finalizers is retried rather than failing the deletion flow. The apiserver
+// translates this JSON Patch into a read-modify-write with PreviousRV set, so
+// concurrent writes on the same Repository object legitimately race with it.
+func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
+	finalizer := NewMockFinalizerProcessor(t)
+	finalizer.
+		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		Once().
+		Return(nil)
+
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+
+	var calls int32
+	repoClient := &mockRepoInterface{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+			n := atomic.AddInt32(&calls, 1)
+			if n == 1 {
+				return nil, apierrors.NewConflict(
+					schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
+					name,
+					errors.New("requested RV does not match current RV"),
+				)
+			}
+			return &provisioning.Repository{}, nil
+		},
+	}
+
+	c := &RepositoryController{
+		repoFactory: factory,
+		finalizer:   finalizer,
+		client: &mockProvisioningV0alpha1Interface{
+			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+		},
+	}
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	require.Equal(t, int32(2), atomic.LoadInt32(&calls), "finalizer-removal patch should retry once after a conflict")
+}
+
+func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
+	finalizer := NewMockFinalizerProcessor(t)
+	finalizer.
+		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		Once().
+		Return(nil)
+
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+
+	var calls int32
+	repoClient := &mockRepoInterface{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+			atomic.AddInt32(&calls, 1)
+			return nil, apierrors.NewConflict(
+				schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
+				name,
+				errors.New("requested RV does not match current RV"),
+			)
+		},
+	}
+
+	c := &RepositoryController{
+		repoFactory: factory,
+		finalizer:   finalizer,
+		client: &mockProvisioningV0alpha1Interface{
+			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+		},
+	}
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "remove finalizers")
+	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
+}
+
 func TestShouldUseIncrementalSync(t *testing.T) {
 	versioned := repository.NewMockVersioned(t)
 	obj := &provisioning.Repository{
