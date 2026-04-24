@@ -34,24 +34,6 @@
     "templating": {
       "list": [
         {
-          "type": "query",
-          "name": "query_known",
-          "label": "Query (known name)",
-          "datasource": "Existing Target Name",
-          "query": "label_values(foo)",
-          "hide": 0,
-          "refresh": 1
-        },
-        {
-          "type": "query",
-          "name": "query_unknown",
-          "label": "Query (unknown name, preserved as UID-only)",
-          "datasource": "UnknownQueryDS",
-          "query": "label_values(bar)",
-          "hide": 0,
-          "refresh": 1
-        },
-        {
           "type": "datasource",
           "name": "datasource",
           "label": "Datasource",
@@ -61,18 +43,6 @@
             "text": "prom",
             "value": "prom"
           }
-        },
-        {
-          "type": "adhoc",
-          "name": "adhoc_known",
-          "label": "Adhoc (known name)",
-          "datasource": "Existing Target Name"
-        },
-        {
-          "type": "adhoc",
-          "name": "adhoc_unknown",
-          "label": "Adhoc (unknown name, preserved as UID-only)",
-          "datasource": "UnknownAdhocDS"
         }
       ]
     },

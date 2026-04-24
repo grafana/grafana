@@ -92,18 +92,7 @@ func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 }
 
 // resolveLegacyStringDatasource resolves a bare-string datasource name/UID
-// (e.g. "IDPA_DB") to the (uid, type) pair that the v2alpha1
-// DashboardDataSourceRef expects. It is a thin, strongly-typed adapter over
-// schemaversion.MigrateDatasourceNameToRef so this conversion stays in
-// lock-step with the v33/v36 schema migrations: a dashboard whose
-// schemaVersion is >= 36 (and therefore skips v33/v36) produces the same
-// v2alpha1 output as a dashboard that was upgraded through the schema chain.
-//
-// We pass returnDefaultAsNull=false because v2alpha1 refs should always be
-// preserved when present; dropping the "default" sentinel would lose data.
-// If the provider is nil (no index available), we fall back to preserving the
-// bare string as a UID-only ref, matching MigrateDatasourceNameToRef's
-// treatment of unknown names.
+// (e.g. "TEST_DB") to a (uid, type) pair via the datasource index
 func resolveLegacyStringDatasource(ctx context.Context, name string, provider schemaversion.DataSourceIndexProvider) (uid, typ string) {
 	if provider == nil {
 		return name, ""
