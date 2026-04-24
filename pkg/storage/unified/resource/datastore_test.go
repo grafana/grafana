@@ -689,7 +689,7 @@ func TestDataStore_List(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		results := make([]DataKey, 0)
+		results := make([]DataKey, 0) // nolint:prealloc
 		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
 			results = append(results, key)
@@ -910,7 +910,7 @@ func TestDataStore_Keys(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		keys := make([]DataKey, 0)
+		keys := make([]DataKey, 0) // nolint:prealloc
 		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
