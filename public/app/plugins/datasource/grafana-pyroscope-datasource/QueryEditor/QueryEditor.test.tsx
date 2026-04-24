@@ -10,6 +10,70 @@ import { type ProfileTypeMessage } from '../types';
 
 import { type Props, QueryEditor } from './QueryEditor';
 
+describe('createSelector (UTF-8 label names)', () => {
+  beforeEach(() => {
+    mockFetchPyroscopeDatasourceSettings();
+  });
+
+  it('should include UTF-8 label name in the selector sent to getLabelNames', async () => {
+    const ds = setupDs();
+    render(
+      <QueryEditor
+        query={{
+          queryType: 'both',
+          labelSelector: '{"k8s.namespace"="prod"}',
+          profileTypeId: 'process_cpu:cpu',
+          refId: 'A',
+          maxNodes: 1000,
+          groupBy: [],
+          includeExemplars: false,
+        }}
+        datasource={ds}
+        onChange={jest.fn()}
+        onRunQuery={() => {}}
+        app={CoreApp.Explore}
+      />
+    );
+
+    await waitFor(() => {
+      expect(ds.getLabelNames).toHaveBeenCalledWith(
+        expect.stringContaining('"k8s.namespace"="prod"'),
+        expect.any(Number),
+        expect.any(Number)
+      );
+    });
+  });
+
+  it('should include both UTF-8 and regular label names in the selector sent to getLabelNames', async () => {
+    const ds = setupDs();
+    render(
+      <QueryEditor
+        query={{
+          queryType: 'both',
+          labelSelector: '{"k8s.namespace"="prod",foo="bar"}',
+          profileTypeId: 'process_cpu:cpu',
+          refId: 'A',
+          maxNodes: 1000,
+          groupBy: [],
+          includeExemplars: false,
+        }}
+        datasource={ds}
+        onChange={jest.fn()}
+        onRunQuery={() => {}}
+        app={CoreApp.Explore}
+      />
+    );
+
+    await waitFor(() => {
+      expect(ds.getLabelNames).toHaveBeenCalledWith(
+        expect.stringMatching(/\"k8s\.namespace\"="prod".*foo="bar"|foo="bar".*\"k8s\.namespace\"="prod"/),
+        expect.any(Number),
+        expect.any(Number)
+      );
+    });
+  });
+});
+
 describe('QueryEditor', () => {
   beforeEach(() => {
     mockFetchPyroscopeDatasourceSettings();
