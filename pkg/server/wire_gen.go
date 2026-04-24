@@ -418,9 +418,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService()
-	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	systemUsers := store.ProvideSystemUsersService()
-	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
+	storageService, err := store.ProvideService(sqlStore, cfg, systemUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -432,6 +431,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -1117,9 +1117,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService()
-	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	systemUsers := store.ProvideSystemUsersService()
-	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
+	storageService, err := store.ProvideService(sqlStore, cfg, systemUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -1131,6 +1130,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, cloudmonitoringService, graphiteService, influxdbService, lokiService, opentsdbService, prometheusService, tempoService, testdatasourceService, postgresService, mysqlService, mssqlService, grafanadsService, pyroscopeService, parcaService, zipkinService, jaegerService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err

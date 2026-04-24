@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -117,7 +116,6 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.New(false, nil)
 
 	return store, mockStorage, storageName
 }
@@ -281,7 +279,6 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.New(false, nil)
 	fileName := "file.jpg"
 
 	tests := []struct {

@@ -15,9 +15,6 @@ func UploadErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrValidationFailed):
 		return 400
 
-	case errors.Is(err, ErrQuotaReached):
-		return 400
-
 	case errors.Is(err, ErrFileAlreadyExists):
 		return 400
 

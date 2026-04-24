@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +20,6 @@ var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
 var ErrUnsupportedStorage = errors.New("storage does not support this operation")
 var ErrUploadInternalError = errors.New("upload internal error")
-var ErrQuotaReached = errors.New("file quota reached")
 var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 var ErrStorageNotFound = errors.New("storage not found")
@@ -67,22 +64,19 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql          db.DB
-	tree         *nestedTree
-	cfg          *GlobalStorageConfig
-	authService  storageAuthService
-	quotaService quota.Service
-	systemUsers  SystemUsersFilterProvider
+	sql         db.DB
+	tree        *nestedTree
+	cfg         *GlobalStorageConfig
+	authService storageAuthService
+	systemUsers SystemUsersFilterProvider
 }
 
 func ProvideService(
 	sql db.DB,
-	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
-	quotaService quota.Service,
 	systemUsersService SystemUsers,
 ) (StorageService, error) {
-	settings, err := LoadStorageConfig(cfg, features)
+	settings, err := LoadStorageConfig(cfg)
 	if err != nil {
 		grafanaStorageLogger.Warn("Error loading storage config", "error", err)
 	}
@@ -238,7 +232,6 @@ func ProvideService(
 	})
 
 	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, systemUsersService)
-	s.quotaService = quotaService
 	s.cfg = settings
 
 	return s, nil
