@@ -959,6 +959,10 @@ export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undef
     return undefined;
   }
   if (typeof ds === 'string') {
+    if (ds.startsWith('$')) {
+      return { uid: ds };
+    }
+
     const instance = getDataSourceSrv().getInstanceSettings(ds);
     return instance ? getDataSourceRef(instance) : { uid: ds };
   }
