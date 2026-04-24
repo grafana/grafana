@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   type DataSourceApi,
@@ -45,7 +46,7 @@ export interface UseDataSourcePluginResult {
 
 /**
  * React hook wrapping {@link getInstanceSettings}. Re-fetches when `ref`
- * changes. Avoids setting state after unmount or after `ref` changes.
+ * changes.
  *
  * @public
  */
@@ -53,34 +54,12 @@ export function useInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): UseInstanceSettingsResult {
-  const [result, setResult] = useState<UseInstanceSettingsResult>({ isLoading: true });
   const refKey = useRefKey(ref);
-
-  useEffect(() => {
-    let cancelled = false;
-    setResult({ isLoading: true });
-
-    getInstanceSettings(ref, scopedVars)
-      .then((data) => {
-        if (!cancelled) {
-          setResult({ isLoading: false, data });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setResult({ isLoading: false, error: toError(error) });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // scopedVars is intentionally not a dep — callers typically pass a stable
-    // reference or interpolation has already happened before the hook runs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refKey]);
-
-  return result;
+  // scopedVars is intentionally not a dep — callers typically pass an unstable
+  // reference and interpolation has already happened before the hook runs.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getInstanceSettings(ref, scopedVars), [refKey]);
+  return { isLoading: loading, error, data: value };
 }
 
 /**
@@ -161,32 +140,10 @@ export function useDataSourcePlugin(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): UseDataSourcePluginResult {
-  const [result, setResult] = useState<UseDataSourcePluginResult>({ isLoading: true });
   const refKey = useRefKey(ref);
-
-  useEffect(() => {
-    let cancelled = false;
-    setResult({ isLoading: true });
-
-    getDataSourcePlugin(ref, scopedVars)
-      .then((data) => {
-        if (!cancelled) {
-          setResult({ isLoading: false, data });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setResult({ isLoading: false, error: toError(error) });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refKey]);
-
-  return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref, scopedVars), [refKey]);
+  return { isLoading: loading, error, data: value };
 }
 
 function useRefKey(ref: DataSourceRef | string | null | undefined): string {
