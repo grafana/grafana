@@ -19,32 +19,32 @@ image_maps:
           **Login background** (`login_background`)
 
           The full-page background behind the login card. Accepts any valid CSS `background` value, including `url()` for images.
-      - x_coord: 64
+      - x_coord: 65
         y_coord: 20
         content: |
           **Login box background** (`login_box_background`)
 
           The background of the login form card. Accepts any valid CSS `background` expression.
-      - x_coord: 53
+      - x_coord: 55
         y_coord: 27
         content: |
           **Login logo** (`login_logo`)
 
           The logo at the top of the login card. Grafana recommends SVG files, 48x48 pixels or smaller. When set, the login title and subtitle don't appear.
-      - x_coord: 60
+      - x_coord: 62
         y_coord: 40
         content: |
           **Login title** (`login_title`)
 
           The main heading on the login page. Defaults to "Welcome to Grafana". Doesn't appear if a login logo is set.
-      - x_coord: 60
+      - x_coord: 62
         y_coord: 45
         content: |
           **Login subtitle** (`login_subtitle`)
 
           Secondary text below the login title. Empty by default. Doesn't appear if a login logo is set.
-      - x_coord: 68
-        y_coord: 97
+      - x_coord: 71
+        y_coord: 96
         content: |
           **Footer and help menu links** (`footer_links`)
 
@@ -59,7 +59,7 @@ image_maps:
           **Fav icon** (`fav_icon`)
 
           The small icon in the browser tab. Defaults to the Grafana sunburst icon.
-      - x_coord: 38
+      - x_coord: 40
         y_coord: 4
         content: |
           **Application title** (`app_title`)
@@ -71,7 +71,7 @@ image_maps:
           **Side menu top logo** (`menu_logo`)
 
           The logo in the top-left corner of the application, also shown in the main menu header.
-      - x_coord: 22
+      - x_coord: 23
         y_coord: 29
         content: |
           **Application title** (`app_title`)
@@ -96,7 +96,7 @@ With custom branding, you can modify the following elements. Hover your cursor o
 
 {{< image-map key="branding-home-page" >}}
 
-You can also customize the **loading logo**, which appears during the initial page load splash screen.
+You can also customize the **loading logo** (`loading_logo`), which appears during the initial page load splash screen.
 
 > You will have to host your logo and other images used by the custom branding feature separately. Make sure Grafana can access the URL where the assets are stored.
 
