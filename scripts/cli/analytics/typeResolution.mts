@@ -1,4 +1,4 @@
-import { Node, type JSDoc, type Type } from 'ts-morph';
+import { Node, type JSDoc, type PropertyAssignment, type Type } from 'ts-morph';
 
 /**
  * Resolves a TypeScript type to a string representation. For example for:
@@ -69,7 +69,7 @@ export function getMetadataFromJSDocs(docs: JSDoc[]): JSDocMetadata {
   let owner: string | undefined;
 
   if (docs.length > 1) {
-    // TODO: Do we need to handle multiple JSDoc comments? Why would there be more than one?
+    // TypeScript allows stacking JSDoc blocks but we treat that as a bug in the event definition.
     throw new Error('Expected only one JSDoc comment');
   }
 
@@ -85,6 +85,39 @@ export function getMetadataFromJSDocs(docs: JSDoc[]): JSDocMetadata {
         const tagText = tag.getCommentText();
         owner = tagText && trimString(tagText);
       }
+    }
+  }
+
+  return { description, owner };
+}
+
+// PropertyAssignment doesn't implement JSDocableNode in ts-morph, so .getJsDocs() isn't available — we parse the raw comment text instead.
+export function getMetadataFromPropertyComments(property: PropertyAssignment): JSDocMetadata {
+  const jsdocRange = property
+    .getLeadingCommentRanges()
+    .filter((r) => r.getText().startsWith('/**'))
+    .at(-1);
+
+  if (!jsdocRange) {
+    return {};
+  }
+
+  const lines = jsdocRange
+    .getText()
+    .replace(/^\/\*\*/, '')
+    .replace(/\*\/$/, '')
+    .split('\n')
+    .map((l) => l.replace(/^\s*\*\s?/, '').trim())
+    .filter(Boolean);
+
+  let description: string | undefined;
+  let owner: string | undefined;
+
+  for (const line of lines) {
+    if (line.startsWith('@owner ')) {
+      owner = line.slice('@owner '.length).trim();
+    } else if (!line.startsWith('@') && description === undefined) {
+      description = line;
     }
   }
 

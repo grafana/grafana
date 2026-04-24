@@ -5,7 +5,6 @@ import {
   SyntaxKind,
   type CallExpression,
   type ObjectLiteralExpression,
-  type PropertyAssignment,
   type SourceFile,
   type ts,
   type Type,
@@ -14,13 +13,8 @@ import {
 
 import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
-import { getMetadataFromJSDocs, resolveType } from './typeResolution.mts';
+import { getMetadataFromJSDocs, getMetadataFromPropertyComments, resolveType } from './typeResolution.mts';
 import { resolveOwner } from './codeowners.mts';
-
-//TODO
-//1. get function calls : within the obj they are also function calls
-//2. just description => owner using code owner of the file
-//3. find default property description
 
 /**
  * Finds all events declared in a file by locating calls to known factory functions
@@ -150,7 +144,6 @@ const parseEventFromCall = (
  *     trackClick: createNavEvent<ClickProperties>('click'), // overrides the spread
  *   };
  *
- * Owner falls back to the containing object's JSDoc `@owner` tag.
  */
 const parseEventsFromObjectLiteral = (
   objectLiteral: ObjectLiteralExpression,
@@ -203,8 +196,8 @@ const parseEventsFromObjectLiteral = (
 /**
  * Given the type of an event function (e.g. `(props: ClickProperties) => void`),
  * returns the schema of its properties, or undefined if the event takes no properties.
+ * Reads from the TypeScript type system rather than source text.
  */
-// Reads the TypeScript type system rather than source text to get property names, types, and descriptions.
 const resolveEventProperties = (type: Type): EventPropertySchema[] | undefined => {
   // The factory call returns a function like (props: ClickProperties) => void — we want the parameter type.
   const [callSignature, ...restCallSignatures] = type.getCallSignatures();
@@ -231,39 +224,6 @@ const resolveEventProperties = (type: Type): EventPropertySchema[] | undefined =
   }
 
   throw new Error(`Expected parameter type to be an object or void, got ${parameterType.getText()}`);
-};
-
-// PropertyAssignment doesn't implement JSDocableNode in ts-morph, so .getJsDocs() isn't available — we parse the raw comment text instead.
-const getMetadataFromPropertyComments = (property: PropertyAssignment): { description?: string; owner?: string } => {
-  const jsdocRange = property
-    .getLeadingCommentRanges()
-    .filter((r) => r.getText().startsWith('/**'))
-    .at(-1);
-
-  if (!jsdocRange) {
-    return {};
-  }
-
-  const lines = jsdocRange
-    .getText()
-    .replace(/^\/\*\*/, '')
-    .replace(/\*\/$/, '')
-    .split('\n')
-    .map((l) => l.replace(/^\s*\*\s?/, '').trim())
-    .filter(Boolean);
-
-  let description: string | undefined;
-  let owner: string | undefined;
-
-  for (const line of lines) {
-    if (line.startsWith('@owner ')) {
-      owner = line.slice('@owner '.length).trim();
-    } else if (!line.startsWith('@') && description === undefined) {
-      description = line;
-    }
-  }
-
-  return { description, owner };
 };
 
 // JSDoc attaches to the VariableStatement (the whole `const x = ...` line), not the VariableDeclaration inside it, so we walk up until we find one.

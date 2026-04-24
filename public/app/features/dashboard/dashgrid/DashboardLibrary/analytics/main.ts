@@ -14,6 +14,7 @@ import {
 const SCHEMA_VERSION = 1;
 
 const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard_library', {
+  /** Version of the event schema, used to handle breaking changes in the properties contract. */
   schema_version: SCHEMA_VERSION,
 });
 
