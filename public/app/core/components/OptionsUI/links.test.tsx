@@ -1,66 +1,88 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import { VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
+import { type DataLink, VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
 
 import { DataLinksValueEditor } from './links';
 
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  return {
-    ...actual,
-    DataLinksInlineEditor: jest.fn(() => <div data-testid="links-inline" />),
-  };
-});
+type EditorItem = Parameters<typeof DataLinksValueEditor>[0]['item'];
+const editorItem = { settings: {} } as EditorItem;
 
-const { DataLinksInlineEditor } = jest.requireMock('@grafana/ui');
+const makeLink = (title: string): DataLink => ({ title, url: 'https://grafana.com' });
 
 describe('DataLinksValueEditor', () => {
-  beforeEach(() => {
-    jest.mocked(DataLinksInlineEditor).mockClear();
+  it('renders the links editor container and add button', () => {
+    render(<DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    expect(screen.getByTestId('links-inline')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add link/i })).toBeInTheDocument();
   });
 
-  it('passes links, data, showOneClick, and suggestion scope to DataLinksInlineEditor', () => {
-    const getSuggestions = jest.fn(() => [{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
-    const onChange = jest.fn();
-    const links = [{ title: 't', url: 'u' }];
+  it('displays existing link titles in the list', () => {
+    const links: DataLink[] = [
+      { title: 'Grafana Homepage', url: 'https://grafana.com' },
+      { title: 'Docs', url: 'https://grafana.com/docs' },
+    ];
 
+    render(<DataLinksValueEditor value={links} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    expect(screen.getByText('Grafana Homepage')).toBeInTheDocument();
+    expect(screen.getByText('Docs')).toBeInTheDocument();
+  });
+
+  it('opens the add modal (without crashing) when context.getSuggestions is absent', async () => {
+    render(<DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /add link/i }));
+
+    expect(screen.getByRole('dialog', { name: /add link/i })).toBeInTheDocument();
+  });
+
+  it('opens the edit modal (without crashing) when context.getSuggestions is absent', async () => {
     render(
       <DataLinksValueEditor
-        value={links as Parameters<typeof DataLinksValueEditor>[0]['value']}
-        onChange={onChange}
-        context={{ data: [], getSuggestions }}
-        item={{ settings: { showOneClick: true } } as Parameters<typeof DataLinksValueEditor>[0]['item']}
+        value={[makeLink('Grafana Homepage')]}
+        onChange={jest.fn()}
+        context={{ data: [] }}
+        item={editorItem}
       />
     );
 
-    expect(screen.getByTestId('links-inline')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }));
 
-    expect(DataLinksInlineEditor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        links,
-        data: [],
-        showOneClick: true,
-      }),
-      expect.anything()
+    expect(screen.getByRole('dialog', { name: /edit link/i })).toBeInTheDocument();
+  });
+
+  it('calls getSuggestions with Values scope when the add modal opens', async () => {
+    const suggestions = [{ value: '${__value.text}', label: 'Value', origin: VariableOrigin.Value }];
+    const getSuggestions = jest.fn().mockReturnValue(suggestions);
+
+    render(
+      <DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [], getSuggestions }} item={editorItem} />
     );
 
-    const getSuggestionsProp = DataLinksInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(typeof getSuggestionsProp).toBe('function');
-    expect(getSuggestionsProp()).toEqual([{ label: 's', value: 'v', origin: VariableOrigin.Value }]);
+    await userEvent.click(screen.getByRole('button', { name: /add link/i }));
+
+    expect(screen.getByRole('dialog', { name: /add link/i })).toBeInTheDocument();
     expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
   });
 
-  it('uses empty suggestions when context.getSuggestions is missing', () => {
+  it('calls getSuggestions with Values scope when the edit modal opens', async () => {
+    const suggestions = [{ value: '${__value.text}', label: 'Value', origin: VariableOrigin.Value }];
+    const getSuggestions = jest.fn().mockReturnValue(suggestions);
+
     render(
       <DataLinksValueEditor
-        value={[]}
+        value={[makeLink('Grafana Homepage')]}
         onChange={jest.fn()}
-        context={{ data: [] }}
-        item={{ settings: {} } as Parameters<typeof DataLinksValueEditor>[0]['item']}
+        context={{ data: [], getSuggestions }}
+        item={editorItem}
       />
     );
 
-    const getSuggestionsProp = DataLinksInlineEditor.mock.calls[0][0].getSuggestions;
-    expect(getSuggestionsProp()).toEqual([]);
+    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }));
+
+    expect(screen.getByRole('dialog', { name: /edit link/i })).toBeInTheDocument();
+    expect(getSuggestions).toHaveBeenCalledWith(VariableSuggestionsScope.Values);
   });
 });

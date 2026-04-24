@@ -1,45 +1,56 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
-import { StatsPicker } from '@grafana/ui';
+import { ReducerID } from '@grafana/data';
 
 import { StatsPickerEditor } from './stats';
 
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  return {
-    ...actual,
-    StatsPicker: jest.fn(() => null),
-  };
-});
+type EditorItem = Parameters<typeof StatsPickerEditor>[0]['item'];
+const baseItem = { settings: {} } as EditorItem;
 
 describe('StatsPickerEditor', () => {
-  beforeEach(() => {
-    jest.mocked(StatsPicker).mockClear();
-  });
-
-  it('passes stats, allowMultiple, and defaultStat to StatsPicker', () => {
-    const onChange = jest.fn();
+  it('renders a combobox and shows the selected stat label', () => {
     render(
       <StatsPickerEditor
         id="stats-1"
-        value={['mean']}
-        onChange={onChange}
-        item={
-          { settings: { allowMultiple: true, defaultStat: 'sum' } } as Parameters<typeof StatsPickerEditor>[0]['item']
-        }
+        value={[ReducerID.mean]}
+        onChange={jest.fn()}
+        item={baseItem}
         context={{ data: [] }}
       />
     );
 
-    expect(StatsPicker).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'stats-1',
-        stats: ['mean'],
-        onChange,
-        allowMultiple: true,
-        defaultStat: 'sum',
-      }),
-      expect.anything()
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Mean')).toBeInTheDocument();
+  });
+
+  it('forwards the id prop to the combobox input', () => {
+    render(
+      <StatsPickerEditor
+        id="my-stats"
+        value={[ReducerID.sum]}
+        onChange={jest.fn()}
+        item={baseItem}
+        context={{ data: [] }}
+      />
     );
+
+    expect(screen.getByRole('combobox')).toHaveAttribute('id', 'my-stats');
+  });
+
+  it('renders a multi-select combobox when allowMultiple is true', () => {
+    const item = { settings: { allowMultiple: true } } as EditorItem;
+
+    render(
+      <StatsPickerEditor
+        id="stats-multi"
+        value={[ReducerID.sum]}
+        onChange={jest.fn()}
+        item={item}
+        context={{ data: [] }}
+      />
+    );
+
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /remove total/i })).toBeInTheDocument();
   });
 });
