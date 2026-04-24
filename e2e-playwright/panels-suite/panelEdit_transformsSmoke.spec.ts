@@ -62,8 +62,9 @@ async function assertEditorMountsFor(page: Page, selectors: E2ESelectorGroups, n
   const card = await pickTransformationCard(page, selectors, name);
   await card.click();
 
-  await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor(name))).toBeVisible();
-  await expect(page.getByTestId(selectors.components.Panels.Panel.PanelDataErrorMessage)).toBeHidden();
+  const editor = page.getByTestId(selectors.components.TransformTab.transformationEditor(name));
+  await expect(editor).toBeVisible();
+  await expect(editor.getByRole('alert', { name: 'An unexpected error happened' })).toBeHidden();
 }
 
 async function assertTransformationPickerDisabled(
@@ -90,6 +91,15 @@ async function assertTransformationPickerDisabled(
 // All mount assertions run against the multi-field time-series panel, which has
 // three fields including a time column — enough to satisfy every transformation's
 // applicability check so the picker click lands on an enabled card.
+const mountSmokeTransformations = [
+  'Reduce',
+  'Convert field type',
+  'Group by',
+  'Group to nested tables',
+  'Format time',
+  'Grouping to matrix',
+];
+
 test.describe('Query Editor Next: Transformation editor mount smoke', { tag: ['@panels', '@queryEditorNext'] }, () => {
   test.beforeEach(async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
@@ -99,29 +109,11 @@ test.describe('Query Editor Next: Transformation editor mount smoke', { tag: ['@
     await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
   });
 
-  test('Reduce editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Reduce');
-  });
-
-  test('Convert field type editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Convert field type');
-  });
-
-  test('Group by editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Group by');
-  });
-
-  test('Group to nested tables editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Group to nested tables');
-  });
-
-  test('Format time editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Format time');
-  });
-
-  test('Grouping to matrix editor mounts with default options', async ({ page, selectors }) => {
-    await assertEditorMountsFor(page, selectors, 'Grouping to matrix');
-  });
+  for (const name of mountSmokeTransformations) {
+    test(`${name} editor mounts with default options`, async ({ page, selectors }) => {
+      await assertEditorMountsFor(page, selectors, name);
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------

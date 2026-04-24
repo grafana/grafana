@@ -54,12 +54,11 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.TransformTab.newTransform('Group by')).click();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group by'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)
-      ).toBeHidden();
+      const editor = dashboardPage.getByGrafanaSelector(
+        selectors.components.TransformTab.transformationEditor('Group by')
+      );
+      await expect(editor).toBeVisible();
+      await expect(editor.getByRole('alert', { name: 'An unexpected error happened' })).toBeHidden();
     });
 
     test('Merge series/tables is flagged as not applicable in the legacy picker', async ({
