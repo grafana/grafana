@@ -259,4 +259,56 @@ describe('filterSearchResults deletedby sort', () => {
     const desc = filterSearchResults([...hits], { sort: 'deletedby-desc' });
     expect(desc.map((h) => h.title)).toEqual(['D', 'B', 'A', 'C']);
   });
+
+  it('sorts diacritic names via Intl.Collator', () => {
+    const names = ['Ëmïlÿ', 'Öskar', 'Zoë', 'Alice'];
+    const collator = new Intl.Collator();
+    const expectedAsc = [...names].sort((a, b) => collator.compare(a, b));
+
+    const hits = names.map((name, i) => makeHit(String.fromCharCode(65 + i), name));
+    const sorted = filterSearchResults([...hits], { sort: 'deletedby-asc' });
+
+    expect(sorted.map((h) => h.field.deletedBy)).toEqual(expectedAsc);
+  });
+
+  it('sorts Japanese names via Intl.Collator', () => {
+    const names = ['田中', '鈴木', '佐藤', '高橋'];
+    const collator = new Intl.Collator();
+    const expectedAsc = [...names].sort((a, b) => collator.compare(a, b));
+
+    const hits = names.map((name, i) => makeHit(String.fromCharCode(65 + i), name));
+    const sorted = filterSearchResults([...hits], { sort: 'deletedby-asc' });
+
+    expect(sorted.map((h) => h.field.deletedBy)).toEqual(expectedAsc);
+  });
+
+  it('sorts Arabic names via Intl.Collator', () => {
+    const names = ['محمد', 'علي', 'أحمد', 'فاطمة'];
+    const collator = new Intl.Collator();
+    const expectedAsc = [...names].sort((a, b) => collator.compare(a, b));
+
+    const hits = names.map((name, i) => makeHit(String.fromCharCode(65 + i), name));
+    const sorted = filterSearchResults([...hits], { sort: 'deletedby-asc' });
+
+    expect(sorted.map((h) => h.field.deletedBy)).toEqual(expectedAsc);
+  });
+
+  it('sends both sentinel kinds to the end in both directions', () => {
+    const hits = [
+      makeHit('A', 'Carla'),
+      makeHit('B', DELETED_BY_REMOVED),
+      makeHit('C', 'Alice'),
+      makeHit('D', DELETED_BY_UNKNOWN),
+      makeHit('E', 'Bob'),
+    ];
+
+    const asc = filterSearchResults([...hits], { sort: 'deletedby-asc' });
+    // Non-sentinels sorted ascending, sentinels clustered at end (relative order unspecified).
+    expect(asc.slice(0, 3).map((h) => h.title)).toEqual(['C', 'E', 'A']);
+    expect(new Set(asc.slice(3).map((h) => h.title))).toEqual(new Set(['B', 'D']));
+
+    const desc = filterSearchResults([...hits], { sort: 'deletedby-desc' });
+    expect(desc.slice(0, 3).map((h) => h.title)).toEqual(['A', 'E', 'C']);
+    expect(new Set(desc.slice(3).map((h) => h.title))).toEqual(new Set(['B', 'D']));
+  });
 });
