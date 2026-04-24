@@ -6193,7 +6193,7 @@
       },
       "TeamSpec": {
         "type": "object",
-        "required": ["title", "email", "provisioned", "externalUID"],
+        "required": ["title", "email", "provisioned", "externalUID", "members"],
         "properties": {
           "email": {
             "type": "string",
@@ -6203,11 +6203,48 @@
             "type": "string",
             "default": ""
           },
+          "members": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/TeamTeamMember"
+                }
+              ]
+            }
+          },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TeamTeamMember": {
+        "type": "object",
+        "required": ["kind", "name", "permission", "external"],
+        "properties": {
+          "external": {
+            "description": "whether the member was added externally (e.g. team sync)",
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "permission": {
+            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }

@@ -96,6 +96,7 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
+            allowDownload={options.allowDownload}
             logOptionsStorageKey={logOptionsStorageKey}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}

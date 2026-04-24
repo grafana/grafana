@@ -2045,9 +2045,20 @@ export type TeamBindingList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type TeamTeamMember = {
+  /** whether the member was added externally (e.g. team sync) */
+  external: boolean;
+  /** kind of the identity */
+  kind: string;
+  /** uid of the identity */
+  name: string;
+  /** permission of the identity in the team */
+  permission: string;
+};
 export type TeamSpec = {
   email: string;
   externalUID: string;
+  members: TeamTeamMember[];
   provisioned: boolean;
   title: string;
 };
