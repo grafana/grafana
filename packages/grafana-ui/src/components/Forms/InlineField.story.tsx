@@ -1,5 +1,5 @@
 import { type Meta, type StoryFn } from '@storybook/react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
@@ -81,10 +81,9 @@ export const withCombobox: StoryFn<typeof InlineField> = (args) => {
     { value: 2, label: 'Two' },
   ];
   const [selected, setSelected] = useState(1);
-  const id = useId();
   return (
     <InlineField {...args}>
-      <Combobox width={16} onChange={(v) => setSelected(v.value)} options={comboboxOptions} value={selected} id={id} />
+      <Combobox width={16} onChange={(v) => setSelected(v.value)} options={comboboxOptions} value={selected} />
     </InlineField>
   );
 };

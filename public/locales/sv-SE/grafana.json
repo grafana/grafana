@@ -5636,6 +5636,7 @@
         "panels": "Paneler",
         "row": "Rad",
         "rows": "Rader",
+        "section-filters-set": "",
         "tab": "Flik",
         "tabs": "Flikar",
         "variable": "{{type}}-variabel",
@@ -13149,6 +13150,7 @@
       "token-user-description": "Det användarnamn som kommer att användas för att komma åt lagringsplatsen med API-token",
       "token-user-required": "Användarnamn krävs",
       "url-description": "Webbadress för Bitbucket-lagringsplatsen",
+      "url-pattern": "",
       "url-required": "Webbadress för lagringsplats krävs"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "Dölj {{type}}",
       "hide-help": "Dölj hjälp med datakälla",
       "hide-transformation-help": "Dölj hjälp för transformering",
-      "inspector": "Frågeinspektör",
       "more-actions": "Fler {{type}}-åtgärder",
       "remove": "Ta bort {{type}}",
       "remove-transformation-filter": "Ta bort filter",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Inga varningsregler för den här panelen",
       "no-alerts-description": "Skapa en larmregel för att få ett meddelande när dina data uppfyller vissa villkor."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Är du säker på att du vill radera denna fråga?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Redigera {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervall",
         "max-data-points": "Max datapunkter",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Ingen gräns"
       },
+      "query-inspector": "",
       "query-options": "Alternativ för fråga"
     },
     "header": {

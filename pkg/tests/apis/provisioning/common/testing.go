@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -973,65 +974,70 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
 }
 
-// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
+// RequireRepoDashboardCount polls the dashboards list until the number of
+// dashboards managed by the given repo matches the expected count, or the
+// default wait timeout elapses. Polling is required because SyncAndWait only
+// waits for the sync job resource to complete; the dashboards-list API may
+// not yet reflect newly-created/deleted resources at that instant.
 func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list dashboards")
-
-	var count int
-	for _, d := range dashboards.Items {
-		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID == repoName {
-			count++
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
 		}
-	}
-	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+
+		var count int
+		for _, d := range dashboards.Items {
+			managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repoName {
+				count++
+			}
+		}
+		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms).
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// by touching its status (aging the health timestamp by 1ms). A merge patch on the
+// status subresource carries no resourceVersion, so it never conflicts with
+// concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get connection %s", name) {
-			return
-		}
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on connection %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for connection %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Connections.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// A merge patch on the status subresource carries no resourceVersion, so it never
+// conflicts with concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repository %s", name) {
-			return
-		}
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on repository %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for repository %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Repositories.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
