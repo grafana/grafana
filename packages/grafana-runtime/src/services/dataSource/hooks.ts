@@ -54,11 +54,10 @@ export function useInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): UseInstanceSettingsResult {
-  const refKey = serializeRef(ref);
   // scopedVars is intentionally not a dep — callers typically pass an unstable
   // reference and interpolation has already happened before the hook runs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getInstanceSettings(ref, scopedVars), [refKey]);
+  const { loading, error, value } = useAsync(() => getInstanceSettings(ref, scopedVars), [ref]);
   return { isLoading: loading, error, data: value };
 }
 
@@ -118,18 +117,7 @@ export function useDataSourcePlugin(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): UseDataSourcePluginResult {
-  const refKey = serializeRef(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref, scopedVars), [refKey]);
+  const { loading, error, value } = useAsync(() => getDataSourcePlugin(ref, scopedVars), [ref]);
   return { isLoading: loading, error, data: value };
-}
-
-function serializeRef(ref: DataSourceRef | string | null | undefined): string {
-  if (ref == null) {
-    return '__default__';
-  }
-  if (typeof ref === 'string') {
-    return `s:${ref}`;
-  }
-  return `r:${ref.uid ?? ''}|${ref.type ?? ''}`;
 }
