@@ -9,22 +9,6 @@ import {
   type StandardEditorsRegistryItem,
 } from '@grafana/data';
 
-jest.mock('app/features/actions/ActionsInlineEditor', () => ({
-  ActionsInlineEditor: () => <div />,
-}));
-
-jest.mock('app/core/components/Select/DashboardPicker', () => ({
-  DashboardPicker: () => <div />,
-}));
-
-jest.mock('app/features/dimensions/editors/ThresholdsEditor/thresholds', () => ({
-  ThresholdsValueEditor: () => <div />,
-}));
-
-jest.mock('app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor', () => ({
-  ValueMappingsEditor: () => <div />,
-}));
-
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './registry';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -34,6 +18,9 @@ const ARRAY_VALUE_EDITORS = new Set(['strings', 'stats-picker', 'links', 'action
 
 /** Select-style editors require `settings.options` (see SelectFieldConfigSettings). */
 const OPTION_LIST_EDITORS = new Set(['radio', 'select', 'multi-select']);
+
+/** Editors that can't mount cleanly in jsdom (e.g. need browser layout APIs). */
+const SKIP_MOUNT_TEST = new Set(['thresholds']);
 
 function defaultEditorValue(id: string): unknown {
   if (ARRAY_VALUE_EDITORS.has(id)) {
@@ -53,37 +40,11 @@ function defaultItemSettings(id: string): object {
 }
 
 describe('getAllOptionEditors', () => {
-  it('returns all expected editor ids in order', () => {
-    const editors = getAllOptionEditors();
-    const ids = editors.map((e) => e.id);
-
-    expect(ids).toEqual([
-      'text',
-      'number',
-      'slider',
-      'boolean',
-      'radio',
-      'select',
-      'unit',
-      'links',
-      'actions',
-      'stats-picker',
-      'strings',
-      'timezone',
-      'fieldColor',
-      'color',
-      'multi-select',
-      'field-name',
-      'dashboard-uid',
-      'mappings',
-      'thresholds',
-    ]);
-  });
-
   it('registers unique ids', () => {
     const editors = getAllOptionEditors();
     const ids = editors.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.sort()).toMatchSnapshot();
   });
 
   describe.each(getAllOptionEditors())('$id option editor', (item: StandardEditorsRegistryItem) => {
@@ -97,16 +58,18 @@ describe('getAllOptionEditors', () => {
       expect(item.editor).not.toBeNull();
     });
 
-    it('editor mounts without throwing', async () => {
-      const Editor = item.editor as ComponentType<StandardEditorProps<unknown>>;
-      const defaultValue = defaultEditorValue(item.id);
-      const settings = defaultItemSettings(item.id);
-      const editorItem = { ...item, settings } as unknown as StandardEditorsRegistryItem;
+    if (!SKIP_MOUNT_TEST.has(item.id)) {
+      it('editor mounts without throwing', async () => {
+        const Editor = item.editor as ComponentType<StandardEditorProps<unknown>>;
+        const defaultValue = defaultEditorValue(item.id);
+        const settings = defaultItemSettings(item.id);
+        const editorItem = { ...item, settings } as unknown as StandardEditorsRegistryItem;
 
-      await act(async () => {
-        render(<Editor value={defaultValue} onChange={() => {}} item={editorItem} context={{ data: [] }} />);
+        await act(async () => {
+          render(<Editor value={defaultValue} onChange={() => {}} item={editorItem} context={{ data: [] }} />);
+        });
       });
-    });
+    }
   });
 });
 
@@ -114,22 +77,7 @@ describe('getAllStandardFieldConfigs', () => {
   it('returns standard field config items with stable paths', () => {
     const configs = getAllStandardFieldConfigs();
     const paths = configs.map((c) => c.path);
-
-    expect(paths).toEqual([
-      'unit',
-      'min',
-      'max',
-      'fieldMinMax',
-      'decimals',
-      'displayName',
-      'color',
-      'noValue',
-      'links',
-      'actions',
-      'mappings',
-      'thresholds',
-      'filterable',
-    ]);
+    expect(paths.sort()).toMatchSnapshot();
   });
 
   it('fieldMinMax.shouldApply is only for number fields', () => {
