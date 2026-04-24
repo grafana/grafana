@@ -67,6 +67,9 @@ export interface AlertRuleListItemProps {
   // group-header level instead. Distinct from `evaluationInterval` above which is a Prometheus
   // duration string consumed by `EvaluationMetadata`.
   evalIntervalSeconds?: number;
+  // V3 chain pill; when present, the per-rule evaluation interval chip is omitted
+  // because chained rules share a chain-level interval surfaced in the drawer.
+  chainPill?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -95,6 +98,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     showLocation = true,
     querySourceUIDs = [],
     evalIntervalSeconds,
+    chainPill,
   } = props;
 
   const listItemAriaId = useId();
@@ -119,7 +123,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   }
 
   if (!isPaused) {
-    if (lastEvaluation && evaluationInterval) {
+    if (lastEvaluation && evaluationInterval && !chainPill) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
@@ -158,6 +162,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </TextLink>
       </MetaText>
     );
+  }
+
+  if (chainPill) {
+    metadata.push(chainPill);
   }
 
   const ruleHealth = normalizeHealth(health);
@@ -215,6 +223,7 @@ export function RecordingRuleListItem({
   showLocation = true,
   querySourceUIDs = [],
   evalIntervalSeconds,
+  chainPill,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -233,6 +242,10 @@ export function RecordingRuleListItem({
 
   if (querySourceUIDs.length > 0) {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
+  }
+
+  if (chainPill) {
+    metadata.push(chainPill);
   }
 
   const ruleHealth = normalizeHealth(health);
