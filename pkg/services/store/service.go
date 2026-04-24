@@ -43,7 +43,7 @@ type UploadRequest struct {
 	OverwriteExistingFile bool
 }
 
-// Deprecated: This service will be removed in the future -- do not write anythign new that depends on it.
+// Deprecated: This service will be removed in the future -- do not write anything new that depends on it.
 // Currently used for:
 // - "grafana" datasource, will list static files from the public static root
 // - pkg/extensions/report/brandingstorage/storage.go to upload custom branding
