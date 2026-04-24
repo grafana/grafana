@@ -3755,6 +3755,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/systemjs": "npm:6.15.3"
     esbuild: "npm:0.25.8"
+    fast-json-patch: "npm:3.1.1"
     history: "npm:4.10.1"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
