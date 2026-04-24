@@ -1,4 +1,4 @@
-package identity
+package team
 
 import (
 	"context"
@@ -100,7 +100,7 @@ func doTeamMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// Create 5 users
 	users := make([]*unstructured.Unstructured, 0, 5)
 	for i := 1; i <= 5; i++ {
-		uObj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		uObj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 		uObj.Object["metadata"].(map[string]any)["name"] = fmt.Sprintf("user-member-%d", i)
 		uObj.Object["spec"].(map[string]any)["login"] = fmt.Sprintf("user-member-%d", i)
 		uObj.Object["spec"].(map[string]any)["email"] = fmt.Sprintf("user-member-%d@example.com", i)

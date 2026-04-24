@@ -5636,6 +5636,7 @@
         "panels": "Panneaux",
         "row": "Ligne",
         "rows": "Lignes",
+        "section-filters-set": "",
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
@@ -13149,6 +13150,7 @@
       "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au référentiel avec le jeton d’API",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
+      "url-pattern": "",
       "url-required": "L’URL du dépôt est requise"
     },
     "bootstrap-step": {
@@ -14102,7 +14104,6 @@
       "hide": "Masquer {{type}}",
       "hide-help": "Masquer l’aide sur la source de données",
       "hide-transformation-help": "Masquer l’aide sur la transformation",
-      "inspector": "Inspecteur de requêtes",
       "more-actions": "Plus d’actions {{type}}",
       "remove": "Supprimer {{type}}",
       "remove-transformation-filter": "Supprimer le filtre",
@@ -14114,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Aucune règle d’alerte pour ce panneau",
       "no-alerts-description": "Créez une règle d’alerte pour recevoir une notification lorsque vos données remplissent certaines conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Voulez-vous vraiment supprimer cette requête ?",
@@ -14151,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Modifier {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalle",
         "max-data-points": "Points de données max.",
@@ -14161,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Aucune limite"
       },
+      "query-inspector": "",
       "query-options": "Options de requête"
     },
     "header": {
