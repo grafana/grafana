@@ -457,6 +457,7 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+	LastRotated      int64    `json:"lastRotated,omitempty"`
 }
 
 func (WebhookStatus) OpenAPIModelName() string {

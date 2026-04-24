@@ -1209,6 +1209,98 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
 }
 
+func TestShouldRotateWebhookSecret(t *testing.T) {
+	t.Run("returns false when rotation interval is zero (disabled)", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 0}
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: 1},
+			},
+		}
+		require.False(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns false when no workflows", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: 1},
+			},
+		}
+		require.False(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns false when no webhook", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+		}
+		require.False(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns false when webhook ID is zero", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 0},
+			},
+		}
+		require.False(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns true when LastRotated is zero (never rotated)", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: 0},
+			},
+		}
+		require.True(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns true when rotation interval has elapsed", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		expired := time.Now().Add(-31 * 24 * time.Hour).UnixMilli()
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: expired},
+			},
+		}
+		require.True(t, rc.shouldRotateWebhookSecret(obj))
+	})
+
+	t.Run("returns false when rotation interval has not elapsed", func(t *testing.T) {
+		rc := &RepositoryController{webhookSecretRotationInterval: 30 * 24 * time.Hour}
+		recent := time.Now().Add(-1 * 24 * time.Hour).UnixMilli()
+		obj := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: recent},
+			},
+		}
+		require.False(t, rc.shouldRotateWebhookSecret(obj))
+	})
+}
+
 // hookRepoStub implements repository.Repository and repository.Hooks so we can
 // observe whether the reconcile path attempts to run webhook hooks.
 //

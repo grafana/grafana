@@ -126,7 +126,7 @@ jobs:
     continue-on-error: true  # tsgo is in preview; we don't want to block PRs if it fails, but we want to gather data on how it performs in CI
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    name: Typecheck
+    name: Typecheck (TSGO/TS7)
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: --max-old-space-size=8192
