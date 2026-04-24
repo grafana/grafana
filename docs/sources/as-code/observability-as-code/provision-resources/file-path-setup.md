@@ -20,8 +20,8 @@ aliases:
 
 {{< admonition type="note" >}}
 
-On-prem file provisioning is available in Grafana v12 and later for open source and Enterprise editions. It's **not available in Grafana Cloud**.
-The new file provisioning  is only available for dashboard and does not fully replace classic provisioning for the time being.
+On-prem file provisioning is available in Grafana v12 and later for open source and Enterprise editions. It's **not available in Grafana Cloud**. This new file provisioning feature is only available for dashboards and doesn't replace classic provisioning for the time being.
+
 For classic provisioning using configuration files refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< /admonition >}}
