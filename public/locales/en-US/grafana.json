@@ -11908,8 +11908,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All",
-      "title-filtered": "All (filtered)"
+      "title-deselect": "Deselect all",
+      "title-deselect-filtered": "Deselect all (filtered)",
+      "title-select": "Select all",
+      "title-select-filtered": "Select all (filtered)"
     },
     "clear": {
       "title": "Clear all"
