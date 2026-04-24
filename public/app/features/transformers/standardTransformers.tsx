@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 
 import {
+  standardTransformers,
   DataTransformerID,
   PluginState,
   TransformerCategory,
@@ -12,7 +13,6 @@ import { config } from '@grafana/runtime';
 
 // Direct source import - standardTransformers was removed from @grafana/data's public API
 // to keep it out of the plugin-facing shared chunk.
-import { standardTransformers } from '../../../../packages/grafana-data/src/transformations/transformers';
 
 import { isHeatmapApplicable } from './calculateHeatmap/applicability';
 // SVG images - dark
