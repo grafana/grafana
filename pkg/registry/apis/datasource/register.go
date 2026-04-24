@@ -21,6 +21,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
@@ -30,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -333,11 +336,28 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
+	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
+		attribute.String("plugin_id", b.pluginJSON.ID),
+		attribute.String("datasource_uid", uid),
+	)
+	defer span.End()
+
+	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
+	instance, err := b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	getInstanceSpan.End()
 	if err != nil {
+		err = tracing.Error(span, err)
 		return backend.PluginContext{}, err
 	}
-	return b.contextProvider.PluginContextForDataSource(ctx, instance)
+
+	buildContextCtx, buildContextSpan := tracing.Start(ctx, "datasource.getPluginContext.buildPluginContext")
+	pluginCtx, err := b.contextProvider.PluginContextForDataSource(buildContextCtx, instance)
+	buildContextSpan.End()
+	if err != nil {
+		err = tracing.Error(span, err)
+		return backend.PluginContext{}, err
+	}
+	return pluginCtx, nil
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {

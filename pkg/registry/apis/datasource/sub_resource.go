@@ -15,8 +15,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type subResourceREST struct {
@@ -50,10 +52,17 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	ctx, connectSpan := tracing.Start(ctx, "datasource.resource.connect",
+		attribute.String("plugin_id", r.builder.pluginJSON.ID),
+		attribute.String("datasource_uid", name),
+	)
+	defer connectSpan.End()
+
 	m := newConnectMetric("resource", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		err = tracing.Error(connectSpan, err)
 		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			m.SetNotFound()
@@ -65,29 +74,45 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		return nil, err
 	}
 
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-	ctx = contextualMiddlewares(ctx)
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
+		reqCtx, reqSpan := tracing.Start(req.Context(), "datasource.resource.request",
+			attribute.String("plugin_id", r.builder.pluginJSON.ID),
+			attribute.String("datasource_uid", name),
+			attribute.String("http_method", req.Method),
+		)
+		defer reqSpan.End()
+
+		callCtx := config.WithGrafanaConfig(reqCtx, pluginCtx.GrafanaConfig)
+		callCtx = contextualMiddlewares(callCtx)
+
+		_, cloneSpan := tracing.Start(reqCtx, "datasource.resource.normalizeRequest")
 		clonedReq, err := resourceRequest(req)
+		cloneSpan.End()
 		if err != nil {
+			_ = tracing.Error(reqSpan, err)
 			backend.Logger.Error("failed to create resource request", "error", err)
 			m.SetError()
 			responder.Error(err)
 			return
 		}
 
+		_, readBodySpan := tracing.Start(reqCtx, "datasource.resource.readRequestBody")
 		body, err := io.ReadAll(req.Body)
+		readBodySpan.End()
 		if err != nil {
+			_ = tracing.Error(reqSpan, err)
 			backend.Logger.Error("failed to read request body", "error", err)
 			m.SetError()
 			responder.Error(err)
 			return
 		}
 
-		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+		resourceCtx, resourceSpan := tracing.Start(callCtx, "datasource.resource.pluginClient.CallResource",
+			attribute.String("plugin_resource_path", clonedReq.URL.Path),
+		)
+		err = r.builder.client.CallResource(resourceCtx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          clonedReq.URL.Path,
 			Method:        req.Method,
@@ -95,8 +120,10 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			Body:          body,
 			Headers:       req.Header,
 		}, httpresponsesender.New(w))
+		resourceSpan.End()
 
 		if err != nil {
+			_ = tracing.Error(reqSpan, err)
 			backend.Logger.Error("plugin resource request failed", "error", err)
 			m.SetError()
 			responder.Error(err)
