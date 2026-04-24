@@ -62,6 +62,7 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { replaceVariableSet } from '../mutation-api/commands/variableUtils';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -349,6 +350,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       .filter((v): v is SceneVariable => Boolean(v));
 
     variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+  }
+
+  public addVariable(variable: VariableKind, position?: number): void {
+    const name = variable.spec.name;
+    const existingVariables = this.state.$variables;
+    if (existingVariables) {
+      const existing = existingVariables.state.variables.find((v) => v.state.name === name);
+      if (existing) {
+        throw new Error(`Variable '${name}' already exists`);
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
+    const sceneVariable = createSceneVariableFromVariableModelV2(variable);
+    const varSet = sceneGraph.getVariables(this);
+    const currentVariables = [...varSet.state.variables];
+
+    if (position !== undefined && position >= 0 && position < currentVariables.length) {
+      currentVariables.splice(position, 0, sceneVariable);
+    } else {
+      currentVariables.push(sceneVariable);
+    }
+
+    replaceVariableSet(this, currentVariables);
   }
 
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
