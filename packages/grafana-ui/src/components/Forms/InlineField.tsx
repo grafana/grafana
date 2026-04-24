@@ -59,6 +59,7 @@ export const InlineField = ({
   const styles = getStyles(theme, grow, shrink);
   const fieldId = useId();
   const labelId = useId();
+  const errorId = useId();
   const inputId = htmlFor ?? getChildId(children) ?? fieldId;
   const useFieldset = children.type === RadioButtonGroup;
 
@@ -89,20 +90,27 @@ export const InlineField = ({
         disabled,
         loading,
         'aria-labelledby': useFieldset ? labelId : undefined,
+        'aria-describedby': invalid && error ? errorId : undefined,
       }}
     >
       <Wrapper className={cx(styles.container, className)} {...htmlProps}>
         {labelElement}
         <div className={styles.childContainer}>
           {/* @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead */}
-          {cloneElement(children, { invalid, disabled, loading, 'aria-labelledby': useFieldset ? labelId : undefined })}
+          {cloneElement(children, {
+            invalid,
+            disabled,
+            loading,
+            'aria-labelledby': useFieldset ? labelId : undefined,
+            'aria-describedby': invalid && error ? errorId : undefined,
+          })}
           {invalid && error && (
             <div
               className={cx(styles.fieldValidationWrapper, {
                 [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
               })}
             >
-              <FieldValidationMessage>{error}</FieldValidationMessage>
+              <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
             </div>
           )}
         </div>

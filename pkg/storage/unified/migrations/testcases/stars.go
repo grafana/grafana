@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,15 +79,12 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 		})
 		require.NoError(t, err)
 
-		// Use Eventually to handle potential read-your-own-writes delay with connection pooling.
-		// Each Add uses its own transaction, and GetByUser may run on a different connection
-		// that doesn't immediately see the committed data.
-		require.Eventually(t, func() bool {
-			res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
-				UserID: userID,
-			})
-			return err == nil && res != nil && len(res.UserStars) == 2
-		}, 5*time.Second, 100*time.Millisecond, "expected 2 stars for user %d", userID)
+		res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
+			UserID: userID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		require.Len(t, res.UserStars, 2)
 	}
 
 	return true // will exist in mode0
