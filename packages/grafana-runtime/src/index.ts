@@ -7,14 +7,7 @@ export * from './services';
 export * from './config';
 export * from './analytics/types';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
-export {
-  MAX_PAGE_URL_LENGTH,
-  TRUNCATION_MARKER,
-  reportMetaAnalytics,
-  reportInteraction,
-  reportPageview,
-  reportExperimentView,
-} from './analytics/utils';
+export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export {
   logInfo,

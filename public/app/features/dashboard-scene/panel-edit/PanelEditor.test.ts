@@ -14,6 +14,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -25,6 +26,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
@@ -213,6 +215,43 @@ describe('PanelEditor', () => {
 
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
+      expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('When panel has pre-existing unsaved changes (e.g. styles pasted from dashboard view)', () => {
+    it('Should set isDirty to true immediately when entering panel edit', async () => {
+      const { panelEditor } = await setupWithPreExistingStyleChanges();
+      expect(panelEditor.state.isDirty).toBe(true);
+    });
+
+    it('Should not set isDirty when panel has no pre-existing changes', async () => {
+      const { panelEditor } = await setup({});
+      // No paste, so isDirty should remain undefined (not set)
+      expect(panelEditor.state.isDirty).toBe(undefined);
+    });
+
+    it('Should revert pasted fieldConfig when discarding panel changes', async () => {
+      const originalFieldConfig = { defaults: { color: { mode: 'fixed' } }, overrides: [] };
+      const { panelEditor, panel, dashboard } = await setupWithPreExistingStyleChanges({ originalFieldConfig });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+
+      panelEditor.onDiscard();
+
+      const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect(discardedPanel.state.fieldConfig).toEqual(originalFieldConfig);
+    });
+
+    it('Should track further changes relative to the initial (saved) state after entering panel edit', async () => {
+      const originalFieldConfig = { defaults: { color: { mode: 'fixed' } }, overrides: [] };
+      const { panelEditor, panel } = await setupWithPreExistingStyleChanges({ originalFieldConfig });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+
+      // Restoring to the original fieldConfig via setState (same path as how the original was captured)
+      // should make the panel no longer dirty.
+      panel.setState({ fieldConfig: originalFieldConfig });
       expect(panelEditor.state.isDirty).toBe(false);
     });
   });
@@ -501,4 +540,86 @@ async function setup(options: SetupOptions = {}) {
   }
 
   return { dashboard, panel, gridItem, panelEditor, pluginResolve };
+}
+
+interface SetupWithPreExistingStyleChangesOptions {
+  originalFieldConfig?: { defaults: Record<string, unknown>; overrides: unknown[] };
+}
+
+/**
+ * Sets up a panel editor scenario where styles were pasted from dashboard view
+ * before entering panel edit. This simulates the bug where the discard button
+ * is disabled even though the panel has unsaved changes.
+ */
+async function setupWithPreExistingStyleChanges(options: SetupWithPreExistingStyleChangesOptions = {}) {
+  const originalFieldConfig = options.originalFieldConfig ?? {
+    defaults: { color: { mode: 'palette-classic' } },
+    overrides: [],
+  };
+  const pastedFieldConfig = { defaults: { color: { mode: 'fixed' }, custom: { lineWidth: 3 } }, overrides: [] };
+
+  const pluginToLoad = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
+  pluginPromise = Promise.resolve(pluginToLoad);
+
+  // Create the panel with original fieldConfig
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'timeseries',
+    title: 'original title',
+    fieldConfig: originalFieldConfig as any,
+    $data: new SceneDataTransformer({
+      transformations: [],
+      $data: new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        maxDataPoints: 500,
+        datasource: { uid: 'ds1' },
+      }),
+    }),
+  });
+
+  const gridItem = new DashboardGridItem({ body: panel });
+
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [gridItem],
+      }),
+    }),
+  });
+
+  // Set the initial save model to represent what was last saved (with the original fieldConfig)
+  const initialSaveModel: Dashboard = {
+    schemaVersion: 36,
+    title: 'test dashboard',
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        title: 'original title',
+        fieldConfig: originalFieldConfig as any,
+        options: {},
+        targets: [{ refId: 'A', datasource: { uid: 'ds1' } }],
+        datasource: { uid: 'ds1' },
+        gridPos: { x: 0, y: 0, h: 8, w: 12 },
+      },
+    ],
+  };
+  dashboard.setInitialSaveModel(initialSaveModel);
+
+  // Simulate paste styles from dashboard view (before entering panel edit).
+  // Use setState directly because onFieldConfigChange requires the panel plugin to be loaded,
+  // which is not the case when pasting from dashboard view (mirrors how DashboardScene.pastePanelStyles works).
+  panel.setState({ fieldConfig: pastedFieldConfig });
+
+  // Now enter panel edit (AFTER the paste — this is the bug scenario)
+  const panelEditor = buildPanelEditScene(panel);
+  dashboard.setState({ editPanel: panelEditor });
+
+  panelEditor.debounceSaveModelDiff = false;
+  deactivate = activateFullSceneTree(dashboard);
+  await new Promise((r) => setTimeout(r, 1));
+
+  return { dashboard, panel, gridItem, panelEditor };
 }
