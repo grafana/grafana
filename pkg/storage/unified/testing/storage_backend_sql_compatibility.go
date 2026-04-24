@@ -197,7 +197,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 	// Delete the 3 resources
 	for i := 1; i <= 3; i++ {
 		name := fmt.Sprintf("test-playlist-%d", i)
-		deleted := deletePlaylistResource(t, server, ctx, nsPrefix, name, currentRVs[i-1])
+		deleted := deletePlaylistResource(t, server, ctx, nsPrefix, name, currentRVs[i-1]) //nolint:gosec // i-1 is bounded by loop range [0,2]
 
 		// Verify deleted resource key_path (with folder for resource 2)
 		key := createPlaylistKey(nsPrefix, name)

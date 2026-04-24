@@ -649,7 +649,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	mtis := []definitions.MuteTimeInterval{}
+	mtis := make([]definitions.MuteTimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range amConfig.AlertmanagerConfig.MuteTimeIntervals {
 		mtis = append(mtis, definitions.MuteTimeInterval{
 			MuteTimeInterval: interval,

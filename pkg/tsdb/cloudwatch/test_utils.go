@@ -158,7 +158,7 @@ type oldEC2Client struct {
 }
 
 func (c oldEC2Client) DescribeRegions(_ context.Context, _ *ec2.DescribeRegionsInput, _ ...func(*ec2.Options)) (*ec2.DescribeRegionsOutput, error) {
-	regions := []ec2types.Region{}
+	regions := make([]ec2types.Region, 0, len(c.regions))
 	for _, region := range c.regions {
 		regions = append(regions, ec2types.Region{
 			RegionName: aws.String(region),
@@ -170,7 +170,7 @@ func (c oldEC2Client) DescribeRegions(_ context.Context, _ *ec2.DescribeRegionsI
 }
 
 func (c oldEC2Client) DescribeInstances(_ context.Context, in *ec2.DescribeInstancesInput, _ ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error) {
-	reservations := []ec2types.Reservation{}
+	reservations := make([]ec2types.Reservation, 0, len(c.reservations))
 	for _, r := range c.reservations {
 		instances := []ec2types.Instance{}
 		for _, inst := range r.Instances {

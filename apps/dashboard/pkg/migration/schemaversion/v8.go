@@ -188,7 +188,7 @@ func V8(_ context.Context, dashboard map[string]interface{}) error {
 
 					// Add fill to groupBy if present
 					if fill, hasFill := target["fill"]; hasFill {
-						newGroupByArray := make([]interface{}, len(groupByArray))
+						newGroupByArray := make([]interface{}, len(groupByArray)) //nolint:prealloc
 						copy(newGroupByArray, groupByArray)
 						newGroupByArray = append(newGroupByArray, map[string]interface{}{
 							"type":   "fill",
