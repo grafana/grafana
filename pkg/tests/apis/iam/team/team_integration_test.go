@@ -3,6 +3,7 @@ package team
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -488,5 +489,66 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.ErrorAs(t, err, &se)
 		require.Equal(t, int32(400), se.ErrStatus.Code)
 		require.Contains(t, se.ErrStatus.Message, "external")
+	})
+
+	// Guards the ErrTeamMemberAlreadyAdded → apierrors.NewConflict mapping on
+	// the Update path. Several goroutines race to add the same user; if two
+	// reach legacy.UpdateTeam before either commits, the second INSERT hits the
+	// UNIQUE(org_id, team_id, user_id) constraint and the store must surface a
+	// 409 (not a 500) so the client can retry.
+	t.Run("concurrent adds of the same member never return 500", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-race-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		const parallel = 10
+		var wg sync.WaitGroup
+		errs := make([]error, parallel)
+		start := make(chan struct{})
+		for i := 0; i < parallel; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				fetched, getErr := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+				if getErr != nil {
+					errs[i] = getErr
+					return
+				}
+				if err := unstructured.SetNestedSlice(fetched.Object, []interface{}{
+					memberSpec(editorUID, "member", false),
+				}, "spec", "members"); err != nil {
+					errs[i] = err
+					return
+				}
+				_, errs[i] = teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		successes := 0
+		for i, e := range errs {
+			if e == nil {
+				successes++
+				continue
+			}
+			var se *errors.StatusError
+			require.ErrorAs(t, e, &se, "goroutine %d returned non-status error: %v", i, e)
+			require.NotEqual(t, int32(500), se.ErrStatus.Code,
+				"goroutine %d got 500 (%q); member-add race must surface as 409", i, se.ErrStatus.Message)
+		}
+		require.Greater(t, successes, 0, "expected at least one goroutine to succeed")
+
+		// Final state must contain the user exactly once regardless of race
+		// outcomes, proving the retries converge.
+		final, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
+		require.Len(t, members, 1)
+		m := members[0].(map[string]interface{})
+		require.Equal(t, editorUID, m["name"])
 	})
 }
