@@ -103,15 +103,13 @@ func (f *finalizer) newItemProcessor(
 	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) itemProcessor {
-	baseLogger := logging.FromContext(ctx)
+	logger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
 		// If the item is a folder, use the configured folder API version.
-		// Use a per-item logger so fields don't accumulate across items.
-		itemLogger := baseLogger
 		var version string
 		if item.Group == resources.FolderResource.Group && item.Resource == resources.FolderResource.Resource {
 			version = f.folderAPIVersion
-			itemLogger = baseLogger.With("version", version)
+			logger = logger.With("version", version)
 		}
 
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
@@ -120,7 +118,7 @@ func (f *finalizer) newItemProcessor(
 			Version:  version,
 		})
 		if err != nil {
-			itemLogger.Error("error getting client for resource", "resource", item.Resource, "error", err)
+			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
 			return err
 		}
 
@@ -133,10 +131,10 @@ func (f *finalizer) newItemProcessor(
 		})
 		if err != nil {
 			if errors.IsNotFound(err) {
-				itemLogger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
+				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
 				return nil
 			}
-			itemLogger.Error("error processing item", "name", item.Name, "error", err)
+			logger.Error("error processing item", "name", item.Name, "error", err)
 			return fmt.Errorf("processing item: %w", err)
 		}
 		return nil
