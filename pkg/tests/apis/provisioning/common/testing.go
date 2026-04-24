@@ -35,6 +35,7 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardsV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -98,6 +99,7 @@ type ProvisioningTestHelper struct {
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
+	DashboardsV2       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
 	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
@@ -145,6 +147,11 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 			Namespace: namespace,
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 		}),
+		DashboardsV2: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+		}),
 		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
 			Namespace: namespace,
@@ -182,8 +189,8 @@ func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
 		t.Logf("warning: failed to delete folders: %v", err)
 	}
 
-	// Delete all dashboards (V0, V1, V2alpha1, V2beta1)
-	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+	// Delete all dashboards (V0, V1, V2, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
 		if client != nil {
 			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
 				t.Logf("warning: failed to delete dashboards: %v", err)
@@ -1210,6 +1217,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Namespace: "default",
 		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
+	dashboardsV2Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
+		GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+	})
 	dashboardsV2alpha1Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
 		User:      k8sHelper.Org1.Admin,
 		Namespace: "default",
@@ -1240,6 +1252,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Folders:            foldersClient,
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
+		DashboardsV2:       dashboardsV2Client,
 		DashboardsV2alpha1: dashboardsV2alpha1Client,
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}

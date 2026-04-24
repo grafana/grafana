@@ -25,7 +25,9 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	// Three dashboards across versions; only two will be selectively exported.
+	// Five dashboards across every supported version; v0, v1, v2, v2beta1 are
+	// named in Resources and expected to land in the repo, v2alpha1 is left
+	// out to prove non-selected dashboards stay excluded.
 	v0Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
 	_, err := helper.DashboardsV0.Resource.Create(ctx, v0Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
@@ -34,8 +36,16 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	_, err = helper.DashboardsV1.Resource.Create(ctx, v1Dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
-	v2Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, v2Dash, metav1.CreateOptions{})
+	v2Dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2.yaml")
+	_, err = helper.DashboardsV2.Resource.Create(ctx, v2Dash, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2 dashboard")
+
+	v2alphaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
+	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, v2alphaDash, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
+
+	v2betaDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, v2betaDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	const repo = "selective-export-repo"
@@ -44,7 +54,7 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 		SyncTarget:         "instance",
 		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
-		ExpectedDashboards: 3,
+		ExpectedDashboards: 5,
 		ExpectedFolders:    0,
 	}
 	helper.CreateLocalRepo(t, testRepo)
@@ -58,6 +68,8 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 			Resources: []provisioning.ResourceRef{
 				{Name: "test-v0", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: "test-v2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: "test-v2beta1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},
 	}
@@ -77,6 +89,8 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	for _, tt := range []expected{
 		{title: "Test dashboard. Created at v0", origName: "test-v0", apiVersion: "dashboard.grafana.app/v0alpha1", fileName: "test-dashboard-created-at-v0.json"},
 		{title: "Test dashboard. Created at v1", origName: "test-v1", apiVersion: "dashboard.grafana.app/v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v2", origName: "test-v2", apiVersion: "dashboard.grafana.app/v2", fileName: "test-dashboard-created-at-v2.json"},
+		{title: "Test dashboard. Created at v2beta1", origName: "test-v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
 	} {
 		fpath := filepath.Join(helper.ProvisioningPath, tt.fileName)
 		//nolint:gosec // reading known test output path
@@ -100,8 +114,8 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 		require.NotEqual(t, tt.origName, val, "standalone export should regenerate UID")
 	}
 
-	// The v2beta1 dashboard was NOT named in Resources; its file must not exist.
-	excluded := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v2beta1.json")
+	// The v2alpha1 dashboard was NOT named in Resources; its file must not exist.
+	excluded := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v2alpha1.json")
 	_, err = os.Stat(excluded)
 	require.True(t, os.IsNotExist(err), "non-selected dashboard file should not be written: %s", excluded)
 }

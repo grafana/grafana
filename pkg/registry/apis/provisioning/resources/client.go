@@ -26,6 +26,7 @@ var (
 	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = provisioningresources.DashboardResource
 	DashboardKind             = provisioningresources.DashboardKind
+	DashboardResourceV2       = provisioningresources.DashboardResourceV2
 	DashboardResourceV2alpha1 = provisioningresources.DashboardResourceV2alpha1
 	DashboardResourceV2beta1  = provisioningresources.DashboardResourceV2beta1
 
