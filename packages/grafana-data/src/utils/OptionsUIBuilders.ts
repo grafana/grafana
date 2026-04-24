@@ -302,6 +302,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
+      useFieldset: true,
       editor: standardEditorsRegistry.get('radio').editor,
     });
   }

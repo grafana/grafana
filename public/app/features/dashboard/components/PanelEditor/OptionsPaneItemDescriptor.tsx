@@ -18,6 +18,7 @@ export interface OptionsPaneItemInfo {
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;
+  useFieldset?: boolean;
   showIf?: () => boolean;
   /** Hook for controlling visibility */
   useShowIf?: () => boolean;
@@ -61,7 +62,7 @@ interface OptionsPaneItemProps {
 }
 
 function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) {
-  const { title, description, id, render, skipField } = itemDescriptor.props;
+  const { title, description, id, render, skipField, useFieldset } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
 
@@ -80,6 +81,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       key={key}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       htmlFor={id}
+      useFieldset={useFieldset}
     >
       {render(itemDescriptor)}
     </Field>
