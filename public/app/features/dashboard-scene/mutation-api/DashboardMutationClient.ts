@@ -13,6 +13,7 @@
  * 3. Payload validation (does the payload match the Zod schema?)
  */
 
+import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
@@ -69,7 +70,48 @@ export class DashboardMutationClient implements MutationClient {
         this.scene.forceRender();
       }
 
-      return result;
+      // Wire undo/redo into the DashboardEditPane event system when the command
+      // provides an _undo callback. The mutation has already been applied at this
+      // point, so perform() is a no-op for the initial registration. The DashboardEditPane
+      // handleEditAction calls perform() immediately then pushes to undoStack.
+      // When redo is invoked, performAction calls perform() again -- at that point
+      // the _undo has already restored the previous state, so perform() must
+      // re-apply the mutation. We capture the current variables state here to
+      // use as the "redo" snapshot (state after the mutation).
+      if (result.success && result._undo && typeof this.scene.publishEvent === 'function') {
+        const undoFn = result._undo;
+        const description = result._description ?? mutation.type;
+        // Capture the post-mutation variable state for redo.
+        const varSet = this.scene.state.$variables;
+        const variablesAfterMutation = varSet ? varSet.state.variables.slice() : [];
+        const scene = this.scene;
+
+        let alreadyPerformed = true;
+
+        this.scene.publishEvent(
+          new DashboardEditActionEvent({
+            source: this.scene,
+            description,
+            perform: () => {
+              // First call is a no-op because mutation was already applied.
+              if (alreadyPerformed) {
+                alreadyPerformed = false;
+                return;
+              }
+              // Subsequent calls (redo): restore the post-mutation state.
+              if (scene.state.$variables) {
+                scene.state.$variables.setState({ variables: variablesAfterMutation });
+              }
+            },
+            undo: undoFn,
+          }),
+          true
+        );
+      }
+
+      // Strip internal fields before returning to callers.
+      const { _undo: _u, _description: _d, ...publicResult } = result;
+      return publicResult;
     } catch (error) {
       return {
         success: false,

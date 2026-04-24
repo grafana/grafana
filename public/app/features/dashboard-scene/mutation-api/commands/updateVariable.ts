@@ -35,7 +35,8 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       const { name, variable: variableKind } = payload;
 
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      const variablesBeforeUpdate = varSet.state.variables.slice();
+      const currentVariables = [...variablesBeforeUpdate];
 
       const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
       if (existingIndex === -1) {
@@ -60,6 +61,10 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
             newValue: variableKind,
           },
         ],
+        _description: `Update variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeUpdate);
+        },
       };
     } catch (error) {
       return {

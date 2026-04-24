@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -11,6 +12,9 @@ import {
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
+import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
+import { cmd } from '../mutation-api/cmd';
+import { createVariableKindFromSceneVariable } from '../mutation-api/commands/variableUtils';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -27,6 +31,7 @@ import {
   type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
+  getNextAvailableId,
   getVariableDefault,
   getVariableScene,
   isVariableEditable,
@@ -76,7 +81,14 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.getVariableSet().setState({ variables: updatedVariables });
   };
 
-  public onDelete = (identifier: string) => {
+  public onDelete = async (identifier: string) => {
+    if (config.featureToggles.dashboardMutationApiVariablePilot) {
+      const client = new DashboardMutationClient(this.getDashboard());
+      await client.execute(cmd.removeVariable({ name: identifier }));
+      this.setState({ editIndex: undefined });
+      return;
+    }
+
     // Find the index of the variable to be deleted
     const variableIndex = this.getVariableIndex(identifier);
     const { variables } = this.getVariableSet().state;
@@ -157,12 +169,47 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onAdd = () => {
+  public onAdd = async () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
-    //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
 
+    if (config.featureToggles.dashboardMutationApiVariablePilot) {
+      // Build a default QueryVariable as a VariableKind for the Mutation API.
+      const nextName = getNextAvailableId('query', variables);
+      const defaultVariableKind = {
+        kind: 'QueryVariable' as const,
+        spec: {
+          name: nextName,
+          query: {
+            kind: 'DataQuery' as const,
+            version: 'v0',
+            group: '',
+            spec: {},
+          },
+          refresh: 'onDashboardLoad' as const,
+          regex: '',
+          sort: 'disabled' as const,
+          multi: false,
+          includeAll: false,
+          allowCustomValue: true,
+          current: { text: '', value: '' },
+          options: [],
+          skipUrlSync: false,
+          hide: 'dontHide' as const,
+        },
+      };
+
+      const client = new DashboardMutationClient(this.getDashboard());
+      const result = await client.execute(cmd.addVariable({ variable: defaultVariableKind }));
+
+      if (result.success) {
+        this.setState({ editIndex: variableIndex });
+      }
+      return;
+    }
+
+    // Fallback: direct Scenes mutation.
+    const defaultNewVariable = getVariableDefault(variables);
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
   };
@@ -184,7 +231,31 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.replaceEditVariable(newVariable);
   };
 
-  public onGoBack = () => {
+  public onGoBack = async () => {
+    if (config.featureToggles.dashboardMutationApiVariablePilot) {
+      const editIndex = this.state.editIndex;
+
+      // Only call UPDATE_VARIABLE when going back from an existing variable.
+      // New variables added via onAdd already have their state registered via ADD_VARIABLE.
+      if (editIndex !== undefined) {
+        const variables = this.getVariables();
+        const variable = variables[editIndex];
+        if (variable) {
+          try {
+            const variableKind = createVariableKindFromSceneVariable(variable, this.getDashboard());
+            const client = new DashboardMutationClient(this.getDashboard());
+            await client.execute(cmd.updateVariable({ name: variable.state.name, variable: variableKind }));
+          } catch (error) {
+            // Non-fatal: if serialization fails, fall through to navigation.
+            console.error('Failed to call UPDATE_VARIABLE on goBack:', error);
+          }
+        }
+      }
+
+      this.setState({ editIndex: undefined });
+      return;
+    }
+
     this.setState({ editIndex: undefined });
   };
 

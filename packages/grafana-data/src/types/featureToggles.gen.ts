@@ -379,6 +379,11 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
+  * Routes variable editor add/update/delete through the Dashboard Mutation API instead of direct Scenes mutations
+  * @default false
+  */
+  dashboardMutationApiVariablePilot?: boolean;
+  /**
   * Enables unlimited dashboard panel grouping
   * @default false
   */

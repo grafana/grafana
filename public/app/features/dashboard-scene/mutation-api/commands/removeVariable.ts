@@ -39,14 +39,18 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
       }
 
       const previousState = variable.state;
-
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
+      const variablesBeforeRemove = variables.state.variables.slice();
+      const updatedVariables = variablesBeforeRemove.filter((v) => v.state.name !== name);
       replaceVariableSet(scene, updatedVariables);
 
       return {
         success: true,
         data: { name },
         changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
+        _description: `Remove variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeRemove);
+        },
       };
     } catch (error) {
       return {

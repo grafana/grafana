@@ -47,7 +47,8 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      const variablesBeforeAdd = varSet.state.variables.slice();
+      const currentVariables = [...variablesBeforeAdd];
 
       if (position !== undefined && position >= 0 && position < currentVariables.length) {
         currentVariables.splice(position, 0, sceneVariable);
@@ -61,6 +62,10 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
         success: true,
         data: { variable: variableKind },
         changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
+        _description: `Add variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeAdd);
+        },
       };
     } catch (error) {
       return {
