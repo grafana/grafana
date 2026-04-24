@@ -77,8 +77,10 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	shim := newDashboardConversionShim(dashGVR, clients)
 
 	for _, ref := range options.Resources {
-		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind).
-			WithAction(repository.FileActionIgnored)
+		// Leave the action unset on the error paths below: the recorder
+		// treats FileActionIgnored results as non-fatal, and we want the
+		// caller's bad/unresolvable reference to escalate the job state.
+		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
 
 		if ref.Kind != "" && ref.Kind != resources.DashboardKind.Kind {
 			result.WithError(fmt.Errorf("resource %s/%s is not a %s", ref.Kind, ref.Name, resources.DashboardKind.Kind))
@@ -155,12 +157,14 @@ func exportItem(ctx context.Context,
 
 	manager, _ := meta.GetManagerProperties()
 	if manager.Identity != "" {
-		resultBuilder.WithAction(repository.FileActionIgnored)
 		if explicitlyRequested {
+			// Leave the default action in place: the recorder discards errors
+			// on FileActionIgnored results, and we want this failure to count.
 			resultBuilder.WithError(fmt.Errorf("dashboard %q is managed by %q and cannot be exported", name, manager.Identity))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}
+		resultBuilder.WithAction(repository.FileActionIgnored)
 		progress.Record(ctx, resultBuilder.Build())
 		return nil
 	}

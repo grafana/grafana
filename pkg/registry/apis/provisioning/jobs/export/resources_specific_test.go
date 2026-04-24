@@ -130,9 +130,11 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		// Caller named a dashboard that another manager already owns: the
 		// export cannot fulfil the request, so the result must carry an error
-		// (not a warning) so the job surfaces the failure.
+		// (not a warning) so the job surfaces the failure. The action is NOT
+		// Ignored because the recorder silently discards errors on ignored
+		// results — we need this one to escalate the job state.
 		return r.Name() == "managed-dash" &&
-			r.Action() == repository.FileActionIgnored &&
+			r.Action() != repository.FileActionIgnored &&
 			r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
@@ -160,8 +162,10 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		// Caller named a dashboard that does not exist: the export cannot
 		// fulfil the request, so the job must surface an error rather than
-		// silently drop the reference.
-		return r.Name() == "missing" && r.Action() == repository.FileActionIgnored && r.Error() != nil
+		// silently drop the reference. The action is NOT Ignored because the
+		// recorder silently discards errors on ignored results — we need
+		// this one to escalate the job state.
+		return r.Name() == "missing" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
@@ -189,7 +193,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Name() == "boom" && r.Action() == repository.FileActionIgnored && r.Error() != nil
+		return r.Name() == "boom" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
@@ -246,8 +250,10 @@ func TestExportSpecificResources_NonDashboardKindIsErroredAndSkipped(t *testing.
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		// A non-Dashboard kind is a caller mistake (admission would normally
 		// reject it); if it still reaches the worker, fail the item rather
-		// than quietly warn so the job surfaces the bad input.
-		return r.Name() == "folder-ref" && r.Action() == repository.FileActionIgnored && r.Error() != nil
+		// than quietly warn so the job surfaces the bad input. The action is
+		// NOT Ignored because the recorder silently discards errors on
+		// ignored results — we need this one to escalate the job state.
+		return r.Name() == "folder-ref" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
