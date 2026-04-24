@@ -45,7 +45,7 @@ func Checker(user identity.Requester, action string) func(scopes ...string) bool
 }
 
 func wildcardsFromScopes(scopes ...string) Wildcards {
-	prefixes := make([]string, len(scopes))
+	prefixes := make([]string, 0, len(scopes))
 	for _, scope := range scopes {
 		prefixes = append(prefixes, ScopePrefix(scope))
 	}

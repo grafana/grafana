@@ -190,7 +190,7 @@ func TestProcessTicks(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 		require.Len(t, scheduled, 2)
-		var keys []models.AlertRuleKey
+		keys := make([]models.AlertRuleKey, 0, len(scheduled))
 		for _, item := range scheduled {
 			keys = append(keys, item.rule.GetKey())
 			require.Equal(t, tick, item.scheduledAt)
@@ -270,7 +270,7 @@ func TestProcessTicks(t *testing.T) {
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 2)
-		var keys []models.AlertRuleKey
+		keys := make([]models.AlertRuleKey, 0, len(scheduled))
 		for _, item := range scheduled {
 			keys = append(keys, item.rule.GetKey())
 			require.Equal(t, tick, item.scheduledAt)

@@ -24,9 +24,9 @@ jobs:
         with:
           go-version-file: ./go.mod
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
+        uses: golangci/golangci-lint-action@b002b6ecfcabe6ac0e2c6cba1bcc779eb34ac51f # v9
         with:
-          version: v2.5.0
+          version: v2.9.0
           # CI Migration: Non-blocking linting allows infrastructure validation without requiring code cleanup
           # Issues are still reported in logs for developer feedback, but don't fail the CI pipeline
           args: |

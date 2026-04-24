@@ -29,7 +29,7 @@ type GrafanaAuthorizer struct {
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
 func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
-	authorizers := []authorizer.Authorizer{
+	authorizers := []authorizer.Authorizer{ //nolint:prealloc
 		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
 		newNamespaceAuthorizer(),
