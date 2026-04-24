@@ -1,5 +1,5 @@
 import { type Meta, type StoryFn } from '@storybook/react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
 import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';

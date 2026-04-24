@@ -106,7 +106,7 @@ const renderForm = (defaultValues?: FormDTO) => {
               />
             </Field>
 
-            <Field label="Select" invalid={!!errors.select} error="Select is required" htmlFor={selectId}>
+            <Field label="Select" invalid={!!errors.select} error="Select is required">
               <InputControl
                 name="select"
                 control={control}

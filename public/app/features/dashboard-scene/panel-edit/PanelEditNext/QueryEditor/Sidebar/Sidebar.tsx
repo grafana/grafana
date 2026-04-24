@@ -12,6 +12,7 @@ import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorConte
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
+import { BulkActionsBar } from './BulkActionsBar';
 import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
@@ -53,6 +54,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           showBackground={false}
         />
       </SidebarHeaderActions>
+      <BulkActionsBar />
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>

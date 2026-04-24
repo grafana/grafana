@@ -343,7 +343,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-04-01,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-04-01,clearPreviousFieldValues,experimental,@grafana/dataviz-squad,false,false,true
-2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -355,3 +354,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-04-17,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
+2026-04-14,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false

@@ -5636,6 +5636,7 @@
         "panels": "Paneles",
         "row": "Fila",
         "rows": "Filas",
+        "section-filters-set": "",
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
@@ -6453,7 +6454,6 @@
         "save-library-panel": "Guardar panel de librería",
         "share": {
           "arrow": "Compartir",
-          "title": "Compartir",
           "tooltip": "Copiar enlace"
         },
         "unlink-library-panel": "Desvincular panel de librería"
@@ -8655,6 +8655,7 @@
         "copy-link": "Copiar enlace a línea de log",
         "copy-to-clipboard": "Copiar al portapapeles",
         "inspect-value": "Inspeccionar valor",
+        "show-details": "",
         "view-log-line": "Ver línea de log"
       }
     },
@@ -11329,6 +11330,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar línea de log",
       "inline-mode": "Mostrar en línea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor del enlace",
       "links-section": "Enlaces",
       "log-attributes-field": "Atributos del log",
@@ -11577,13 +11580,13 @@
   "logstable": {
     "category-table": "Tabla de logs",
     "description-show-controls": "Mostrar controles de la tabla",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Habilita/deshabilita el botón de enlace a la línea de log en la primera columna de cada fila.",
       "name": "Mostrar botón para copiar enlace del log"
-    },
-    "show-inspect-button": {
-      "description": "Habilita/deshabilita el botón de inspección de la línea de log en la primera columna de cada fila.",
-      "name": "Mostrar botón de inspección"
     }
   },
   "manage-dashbaords": {
@@ -13147,6 +13150,7 @@
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con el token de API.",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio de Bitbucket",
+      "url-pattern": "",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "bootstrap-step": {
@@ -14100,7 +14104,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ayuda de la fuente de datos",
       "hide-transformation-help": "Ocultar ayuda para la transformación",
-      "inspector": "Inspector de consultas",
       "more-actions": "Más acciones de {{type}}",
       "remove": "Eliminar {{type}}",
       "remove-transformation-filter": "Eliminar filtro",
@@ -14112,6 +14115,27 @@
     "alerts": {
       "no-alerts": "No hay reglas de alerta para este panel.",
       "no-alerts-description": "Crea una regla de alerta para recibir notificaciones cuando tus datos cumplan determinadas condiciones."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "¿Seguro que quieres eliminar esta consulta?",
@@ -14149,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Puntos de datos máximos",
@@ -14159,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Sin límite"
       },
+      "query-inspector": "",
       "query-options": "Opciones de consulta"
     },
     "header": {
@@ -15930,6 +15956,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Seleccionar estadísticas"
     },
@@ -15941,6 +15968,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Los cálculos no tendrán efecto si no se agrupan campos"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

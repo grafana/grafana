@@ -444,6 +444,32 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
@@ -897,6 +923,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		validation.ValidateProvenanceRelaxed,
 		false,
 		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 
 	return NewContactPointService(
@@ -910,6 +937,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
 		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 }
 
@@ -918,6 +946,15 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
 		Settings: settings,
 	}
 }

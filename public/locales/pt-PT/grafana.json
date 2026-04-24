@@ -5636,6 +5636,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-filters-set": "",
         "tab": "Separador",
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
@@ -6453,7 +6454,6 @@
         "save-library-panel": "Guardar painel de biblioteca",
         "share": {
           "arrow": "Partilhar",
-          "title": "Partilhar",
           "tooltip": "Copiar link"
         },
         "unlink-library-panel": "Desassociar painel de biblioteca"
@@ -8655,6 +8655,7 @@
         "copy-link": "Copiar link para a linha de registo",
         "copy-to-clipboard": "Copiar para a área de transferência",
         "inspect-value": "Inspecionar valor",
+        "show-details": "",
         "view-log-line": "Ver linha de registo"
       }
     },
@@ -11329,6 +11330,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de registo",
       "inline-mode": "Mostrar em linha",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de registo",
@@ -11577,13 +11580,13 @@
   "logstable": {
     "category-table": "Tabela de registos",
     "description-show-controls": "Mostrar controlos da tabela",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de ligação à linha de registo na primeira coluna de cada linha",
       "name": "Mostrar botão de cópia do link do registo"
-    },
-    "show-inspect-button": {
-      "description": "Ativa/desativa o botão de inspeção da linha de registo na primeira coluna de cada linha",
-      "name": "Mostrar botão de inspeção"
     }
   },
   "manage-dashbaords": {
@@ -13147,6 +13150,7 @@
       "token-user-description": "O nome de utilizador que será utilizado para aceder ao repositório com o token de API",
       "token-user-required": "O utilizador é obrigatório",
       "url-description": "O URL do repositório Bitbucket",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "bootstrap-step": {
@@ -14100,7 +14104,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ajuda da origem de dados",
       "hide-transformation-help": "Ocultar ajuda para a transformação",
-      "inspector": "Inspetor de consultas",
       "more-actions": "Mais ações de {{type}}",
       "remove": "Remover {{type}}",
       "remove-transformation-filter": "Remover filtro",
@@ -14112,6 +14115,27 @@
     "alerts": {
       "no-alerts": "Nenhuma regra de alertas para este painel",
       "no-alerts-description": "Criar uma regra de alertas para receber notificações quando os seus dados cumprirem determinadas condições."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
@@ -14149,6 +14173,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Pontos de dados máximos",
@@ -14159,6 +14184,7 @@
       "placeholder": {
         "no-limit": "Sem limite"
       },
+      "query-inspector": "",
       "query-options": "Opções de consulta"
     },
     "header": {
@@ -15930,6 +15956,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Selecionar estatísticas"
     },
@@ -15941,6 +15968,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Os cálculos não terão efeito se nenhum campo for agrupado"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
