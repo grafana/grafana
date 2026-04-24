@@ -126,6 +126,12 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => Promise<void>;
 }
 
 export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;

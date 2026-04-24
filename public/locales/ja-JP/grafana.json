@@ -5606,6 +5606,7 @@
         "panels": "パネル",
         "row": "行",
         "rows": "行",
+        "section-filters-set": "",
         "tab": "タブ",
         "tabs": "タブ",
         "variable": "{{type}}変数",
@@ -6422,7 +6423,6 @@
         "save-library-panel": "ライブラリパネルを保存",
         "share": {
           "arrow": "共有",
-          "title": "共有",
           "tooltip": "リンクをコピー"
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
@@ -8609,6 +8609,7 @@
         "copy-link": "ログ行へのリンクをコピー",
         "copy-to-clipboard": "クリップボードにコピー",
         "inspect-value": "値を検査",
+        "show-details": "",
         "view-log-line": "ログ行を表示"
       }
     },
@@ -11061,6 +11062,12 @@
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
       "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11257,6 +11264,8 @@
       "fields-section": "フィールド",
       "hide-log-line": "ログ行を非表示",
       "inline-mode": "インラインで表示",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "リンク値",
       "links-section": "リンク",
       "log-attributes-field": "ログ属性",
@@ -11505,13 +11514,13 @@
   "logstable": {
     "category-table": "ログテーブル",
     "description-show-controls": "テーブル操作を表示",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "各行の最初の列にあるログ行リンクボタンを有効/無効化",
       "name": "ログリンクのコピーボタンを表示"
-    },
-    "show-inspect-button": {
-      "description": "各行の最初の列にあるログ行の検査ボタンを有効/無効化",
-      "name": "検査ボタンを表示"
     }
   },
   "manage-dashbaords": {
@@ -12924,9 +12933,7 @@
       "update-available": "更新が利用可能です！"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "プラグイン使用状況を確認するには、ダッシュボード全体を検索するための新しい検索インデックスが必要です。機能トグルを有効にしてください",
       "num-usages": "{{pluginName}}は<2>{{numUsages}}</2>回使用されています。",
-      "title-missing-feature-toggle-panel-title-search": "機能トグルがありません：{{toggle}}",
       "title-not-used-yet": "{{pluginName}}はまだどのダッシュボードでも使用されていません"
     },
     "plugins-errors-info": {
@@ -13074,6 +13081,7 @@
       "token-user-description": "APIトークンでリポジトリにアクセスする際のユーザー名",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "BitbucketリポジトリURL",
+      "url-pattern": "",
       "url-required": "リポジトリURLが必要です"
     },
     "bootstrap-step": {
@@ -14012,7 +14020,6 @@
       "hide": "{{type}}を非表示",
       "hide-help": "データソースヘルプを非表示",
       "hide-transformation-help": "変換ヘルプを非表示",
-      "inspector": "クエリ検査ツール",
       "more-actions": "その他の{{type}}操作",
       "remove": "{{type}}を削除",
       "remove-transformation-filter": "フィルターを削除",
@@ -14024,6 +14031,25 @@
     "alerts": {
       "no-alerts": "このパネルのアラートルールはありません",
       "no-alerts-description": "データが特定の条件を満たしたときに通知を受け取るためのアラートルールを作成します。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "本当にこのクエリを削除してもよろしいですか？",
@@ -14061,6 +14087,7 @@
     },
     "footer": {
       "edit-option": "{{label}}を編集",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大データポイント数",
@@ -14071,6 +14098,7 @@
       "placeholder": {
         "no-limit": "制限なし"
       },
+      "query-inspector": "",
       "query-options": "クエリオプション"
     },
     "header": {
@@ -15835,6 +15863,7 @@
           "group-by": "グループ化"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "無視",
       "placeholder-select-stats": "統計を選択"
     },
@@ -15846,6 +15875,16 @@
         "group-by": "グループ化"
       },
       "title-calc-alert": "グループ化されているフィールドがない場合、計算は効果がありません"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

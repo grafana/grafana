@@ -5606,6 +5606,7 @@
         "panels": "패널",
         "row": "행",
         "rows": "행",
+        "section-filters-set": "",
         "tab": "탭",
         "tabs": "탭",
         "variable": "{{type}} 변수",
@@ -6422,7 +6423,6 @@
         "save-library-panel": "라이브러리 패널 저장",
         "share": {
           "arrow": "공유",
-          "title": "공유",
           "tooltip": "링크 복사"
         },
         "unlink-library-panel": "라이브러리 패널 연결 해제"
@@ -8609,6 +8609,7 @@
         "copy-link": "링크를 로그 라인에 복사",
         "copy-to-clipboard": "클립보드로 복사",
         "inspect-value": "값 검사",
+        "show-details": "",
         "view-log-line": "로그 라인 보기"
       }
     },
@@ -11061,6 +11062,12 @@
       "placeholder-search-affected-dashboards": "영향을 받는 대시보드 검색",
       "update-all": "모두 업데이트",
       "num-affected_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11257,6 +11264,8 @@
       "fields-section": "필드",
       "hide-log-line": "로그 라인 숨기기",
       "inline-mode": "인라인 표시",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "링크 값",
       "links-section": "링크",
       "log-attributes-field": "로그 속성",
@@ -11505,13 +11514,13 @@
   "logstable": {
     "category-table": "로그 테이블",
     "description-show-controls": "테이블 제어 표시",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "각 행의 첫 번째 열에 있는 로그 라인 링크 버튼을 활성화/비활성화합니다.",
       "name": "로그 링크 복사 버튼 표시"
-    },
-    "show-inspect-button": {
-      "description": "각 행의 첫 번째 열에 있는 로그 라인 검사 버튼을 활성화/비활성화합니다.",
-      "name": "점검 버튼 표시"
     }
   },
   "manage-dashbaords": {
@@ -12924,9 +12933,7 @@
       "update-available": "업데이트를 사용할 수 있습니다!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "플러그인을 사용하려면 모든 대시보드에서 사용량을 확인하기 위한 새로운 검색 인덱스가 필요합니다. 기능 토글을 활성화하세요",
       "num-usages": "{{pluginName}} 플러그인을 <2>{{numUsages}}</2>번 사용하였습니다.",
-      "title-missing-feature-toggle-panel-title-search": "누락된 기능 토글: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} 플러그인은 아직 대시보드에서 사용하지 않고 있습니다"
     },
     "plugins-errors-info": {
@@ -13074,6 +13081,7 @@
       "token-user-description": "API 토큰을 사용하여 리포지토리에 액세스하는 데 사용할 사용자 이름",
       "token-user-required": "사용자 이름은 필수 항목입니다",
       "url-description": "Bitbucket 리포지토리 URL",
+      "url-pattern": "",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "bootstrap-step": {
@@ -14012,7 +14020,6 @@
       "hide": "{{type}} 숨기기",
       "hide-help": "데이터 소스 도움말 숨기기",
       "hide-transformation-help": "변환 도움말 숨기기",
-      "inspector": "쿼리 검사기",
       "more-actions": "추가 {{type}} 동작",
       "remove": "{{type}} 제거",
       "remove-transformation-filter": "필터 제거",
@@ -14024,6 +14031,25 @@
     "alerts": {
       "no-alerts": "이 패널에 대한 경고 규칙이 없습니다.",
       "no-alerts-description": "데이터가 특정 조건을 충족할 때 알림을 받으려면 경고 규칙을 생성하세요."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "정말 이 쿼리를 삭제하시겠어요?",
@@ -14061,6 +14087,7 @@
     },
     "footer": {
       "edit-option": "{{label}} 편집",
+      "inspect-queries": "",
       "label": {
         "interval": "간격",
         "max-data-points": "최대 데이터 포인트",
@@ -14071,6 +14098,7 @@
       "placeholder": {
         "no-limit": "한도 없음"
       },
+      "query-inspector": "",
       "query-options": "쿼리 옵션"
     },
     "header": {
@@ -15835,6 +15863,7 @@
           "group-by": "그룹화 기준"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "무시됨",
       "placeholder-select-stats": "통계 선택"
     },
@@ -15846,6 +15875,16 @@
         "group-by": "그룹화 기준"
       },
       "title-calc-alert": "그룹화된 필드가 없는 경우 계산이 영향을 미치지 않습니다"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

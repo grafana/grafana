@@ -60,11 +60,26 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const importDataSourceMock = jest.fn((_meta?: any) => Promise.resolve(new DataSourcePlugin(TestDataSource as any)));
+
 jest.mock('./importer/pluginImporter', () => ({
   pluginImporter: {
-    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    importDataSource: (meta: any) => importDataSourceMock(meta),
   },
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourcePluginMeta: jest.fn(),
+  refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
+  logPluginMetaError: jest.fn(),
+  logPluginMetaWarning: jest.fn(),
+}));
+
+const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError, logPluginMetaWarning } =
+  jest.requireMock('@grafana/runtime/internal');
 
 const getBackendSrvGetMock = jest.fn();
 
@@ -176,11 +191,21 @@ describe('datasource_srv', () => {
     });
 
     beforeEach(() => {
+      importDataSourceMock.mockClear();
+      getDatasourcePluginMeta.mockReset();
+      // Mirrors production semantics: one plugin meta per plugin type, shared across instances.
+      getDatasourcePluginMeta.mockImplementation(async (type: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const entry = Object.values(dataSourceInit).find((d: any) => d.type === type) as any;
+        return entry?.meta ?? { id: type };
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dataSourceSrv.init(dataSourceInit as any, 'BBB');
     });
 
     describe('when getting data source class instance', () => {
       it('should load plugin and create instance and set meta', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ds = (await dataSourceSrv.get('mmm')) as any;
         expect(ds.meta).toBe(dataSourceInit.mmm.meta);
         expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
@@ -208,7 +233,7 @@ describe('datasource_srv', () => {
 
       it('Can get by variable', async () => {
         const ds = await dataSourceSrv.get('${datasource}');
-        expect(ds.meta).toBe(dataSourceInit.BBB.meta);
+        expect(ds.uid).toBe(dataSourceInit.BBB.uid);
 
         const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
         expect(ds2.uid).toBe(dataSourceInit.aaa.uid);
@@ -326,13 +351,45 @@ describe('datasource_srv', () => {
       });
 
       it('should load by variable', async () => {
-        const api = await dataSourceSrv.loadDatasource('${datasource}');
-        expect(api.meta).toBe(dataSourceInit.BBB.meta);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const api = (await dataSourceSrv.loadDatasource('${datasource}')) as any;
+        expect(api.instanceSettings.rawRef.uid).toBe(dataSourceInit.BBB.uid);
       });
 
       it('should load by name', async () => {
-        let api = await dataSourceSrv.loadDatasource('ZZZ');
-        expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
+        const api = await dataSourceSrv.loadDatasource('ZZZ');
+        expect(api.uid).toBe(dataSourceInit.ZZZ.uid);
+      });
+
+      it('should use meta from getDatasourcePluginMeta when available', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        const apiMeta = { id: 'test-db', metrics: true, fromApi: true };
+        getDatasourcePluginMeta.mockResolvedValueOnce(apiMeta);
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(apiMeta);
+      });
+
+      it('should fall back to instanceSettings.meta when getDatasourcePluginMeta returns null', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        getDatasourcePluginMeta.mockResolvedValueOnce(null);
+        importDataSourceMock.mockClear();
+        logPluginMetaWarning.mockClear();
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
+        expect(logPluginMetaWarning).toHaveBeenCalledWith(
+          expect.stringContaining('falling back to instanceSettings.meta'),
+          'datasource'
+        );
       });
     });
 
@@ -566,6 +623,36 @@ describe('datasource_srv', () => {
         await dataSourceSrv.reload();
         const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
         expect(ds).toBe(runtimeDataSource);
+      });
+
+      it('should forward the fetched settings to refetchDatasourcePluginMetas to avoid a second /api/frontend/settings request', async () => {
+        const settings = {
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        };
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce(settings);
+        refetchDatasourcePluginMetas.mockClear();
+
+        await dataSourceSrv.reload();
+
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
+        expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+      });
+
+      it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+        const error = new Error('boom');
+        refetchDatasourcePluginMetas.mockReturnValueOnce(Promise.reject(error));
+        logPluginMetaError.mockClear();
+
+        await dataSourceSrv.reload();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(logPluginMetaError).toHaveBeenCalledWith('Failed to refresh datasource plugin metadata', error);
       });
     });
 

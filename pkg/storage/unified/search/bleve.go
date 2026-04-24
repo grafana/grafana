@@ -85,6 +85,30 @@ type BleveOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
+
+	// Snapshot configures remote index snapshot download at build time.
+	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
+	Snapshot SnapshotOptions
+}
+
+// SnapshotOptions configures remote index snapshot handling in BuildIndex.
+type SnapshotOptions struct {
+	// Store is the remote index store. When nil, the snapshot feature is disabled
+	// and no remote download is attempted.
+	Store RemoteIndexStore
+
+	// MinDocCount is the minimum document count at which a remote snapshot download is attempted.
+	// Must be >= FileThreshold to be meaningful; smaller resources are built in-process.
+	MinDocCount int64
+
+	// MaxIndexAge is the maximum age of a remote snapshot that can be downloaded.
+	// Older snapshots are skipped (hard filter).
+	MaxIndexAge time.Duration
+
+	// MinBuildVersion, if non-nil, is the preferred lower bound on the Grafana
+	// build version of a remote snapshot. Snapshots with a lower version are
+	// considered only if no snapshot at or above this version is available.
+	MinBuildVersion *semver.Version
 }
 
 type bleveBackend struct {
@@ -100,6 +124,9 @@ type bleveBackend struct {
 	indexMetrics *resource.BleveIndexMetrics
 
 	selectableFields map[string][]string
+
+	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion is empty.
+	runningBuildVersion *semver.Version
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
@@ -123,12 +150,14 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	var runningBuildVersion *semver.Version
 	if opts.BuildVersion != "" {
 		// Don't allow storing invalid versions to the index.
-		_, err := semver.NewVersion(opts.BuildVersion)
+		v, err := semver.NewVersion(opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
 		}
+		runningBuildVersion = v
 	}
 
 	l := opts.Logger
@@ -143,12 +172,13 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be := &bleveBackend{
-		log:              l,
-		cache:            map[resource.NamespacedResource]*bleveIndex{},
-		opts:             opts,
-		ownsIndexFn:      ownFn,
-		indexMetrics:     indexMetrics,
-		selectableFields: opts.SelectableFieldsForKinds,
+		log:                 l,
+		cache:               map[resource.NamespacedResource]*bleveIndex{},
+		opts:                opts,
+		ownsIndexFn:         ownFn,
+		indexMetrics:        indexMetrics,
+		selectableFields:    opts.SelectableFieldsForKinds,
+		runningBuildVersion: runningBuildVersion,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -454,6 +484,17 @@ func (b *bleveBackend) BuildIndex(
 					}
 				}
 			}
+
+			// No valid local index — if a remote snapshot store is configured and the
+			// index is large enough to justify a round-trip, try downloading one.
+			if index == nil && b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount {
+				dlIdx, dlName, dlRV, dlErr := b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logWithDetails)
+				if dlErr != nil {
+					logWithDetails.Warn("Failed to download remote snapshot, will build from scratch", "err", dlErr)
+				} else if dlIdx != nil {
+					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
+				}
+			}
 		}
 
 		if index != nil {
@@ -581,7 +622,13 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
-	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	return filepath.Join(b.opts.Root, resourceSubPath(key))
+}
+
+// resourceSubPath returns the namespaced on-disk/object-store path for a resource,
+// for example: default/dashboards.dashboard.grafana.app
+func resourceSubPath(key resource.NamespacedResource) string {
+	return filepath.Join(cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {

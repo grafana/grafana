@@ -5696,6 +5696,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-filters-set": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -6515,7 +6516,6 @@
         "save-library-panel": "Сохранить панель библиотеки",
         "share": {
           "arrow": "Общий доступ",
-          "title": "Общий доступ",
           "tooltip": "Копировать ссылку"
         },
         "unlink-library-panel": "Отсоединить панель библиотеки"
@@ -8747,6 +8747,7 @@
         "copy-link": "Копировать ссылку в строку журнала",
         "copy-to-clipboard": "Копировать в буфер обмена",
         "inspect-value": "Проверить значение",
+        "show-details": "",
         "view-log-line": "Просмотр строки журнала"
       }
     },
@@ -11250,6 +11251,12 @@
       "num-affected_few": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_many": "Обновление затронет <1>{{count}} дашбордов.</1>",
       "num-affected_other": "Обновление затронет <1>{{count}} дашбордов.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11455,6 +11462,8 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -11703,13 +11712,13 @@
   "logstable": {
     "category-table": "Таблица журналов",
     "description-show-controls": "Отображение элементов управления таблицами",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
       "name": "Отображение кнопки копирования ссылки на журнал"
-    },
-    "show-inspect-button": {
-      "description": "Включает/отключает кнопку проверки строки журнала в первом столбце каждой строки",
-      "name": "Отображение кнопки проверки"
     }
   },
   "manage-dashbaords": {
@@ -13131,9 +13140,7 @@
       "update-available": "Доступно обновление"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Для использования плагина требуется новый индекс поиска, чтобы найти варианты использования на дашбордах. Включите переключатель функциональности",
       "num-usages": "Количество использований {{pluginName}}: <2>{{numUsages}}</2>.",
-      "title-missing-feature-toggle-panel-title-search": "Отсутствует переключатель функциональности: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} еще не используется ни на одном дашборде"
     },
     "plugins-errors-info": {
@@ -13281,6 +13288,7 @@
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном API",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
@@ -14264,7 +14272,6 @@
       "hide": "Скрыть {{type}}",
       "hide-help": "Скрыть справку по источнику данных",
       "hide-transformation-help": "Скрыть справку по преобразованию",
-      "inspector": "Проверка запросов",
       "more-actions": "Другие действия с {{type}}",
       "remove": "Удалить {{type}}",
       "remove-transformation-filter": "Удалить фильтр",
@@ -14276,6 +14283,31 @@
     "alerts": {
       "no-alerts": "Для этой панели нет правил оповещений",
       "no-alerts-description": "Создайте правило оповещений, чтобы получать уведомления, когда ваши данные будут соответствовать определенным условиям."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Удалить запрос?",
@@ -14313,6 +14345,7 @@
     },
     "footer": {
       "edit-option": "Редактировать {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Интервал",
         "max-data-points": "Макс. количество точек данных",
@@ -14323,6 +14356,7 @@
       "placeholder": {
         "no-limit": "Без ограничения"
       },
+      "query-inspector": "",
       "query-options": "Параметры запроса"
     },
     "header": {
@@ -16108,6 +16142,7 @@
           "group-by": "Группировать по"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Пропущено",
       "placeholder-select-stats": "Выбрать статистику"
     },
@@ -16119,6 +16154,16 @@
         "group-by": "Группировать по"
       },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
