@@ -186,7 +186,10 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
-	iamTeam := toTeamObject(result.Team, ns, members)
+	iamTeam, err := toTeamObject(result.Team, ns, members)
+	if err != nil {
+		return oldObj, false, err
+	}
 
 	return &iamTeam, false, nil
 }
@@ -220,7 +223,10 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 			teams := make([]*iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
-				teamObj := toTeamObject(t, ns, membersByTeam[t.UID])
+				teamObj, err := toTeamObject(t, ns, membersByTeam[t.UID])
+				if err != nil {
+					return nil, err
+				}
 				teams = append(teams, &teamObj)
 			}
 
@@ -273,7 +279,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, fmt.Errorf("failed to list members for team %s: %w", name, err)
 	}
-	obj := toTeamObject(found.Teams[0], ns, members)
+	obj, err := toTeamObject(found.Teams[0], ns, members)
+	if err != nil {
+		return nil, err
+	}
 	return &obj, nil
 }
 
@@ -319,7 +328,10 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	iamTeam := toTeamObject(result.Team, ns, members)
+	iamTeam, err := toTeamObject(result.Team, ns, members)
+	if err != nil {
+		return nil, err
+	}
 	return &iamTeam, nil
 }
 
@@ -352,10 +364,14 @@ func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOpti
 	return 0
 }
 
-func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMember) iamv0alpha1.Team {
+func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMember) (iamv0alpha1.Team, error) {
 	specMembers := make([]iamv0alpha1.TeamTeamMember, 0, len(members))
 	for _, m := range members {
-		specMembers = append(specMembers, mapToTeamMember(m))
+		mapped, err := mapToTeamMember(m)
+		if err != nil {
+			return iamv0alpha1.Team{}, err
+		}
+		specMembers = append(specMembers, mapped)
 	}
 	obj := iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{
@@ -376,7 +392,7 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMem
 	meta.SetUpdatedTimestamp(&t.Updated)
 	meta.SetDeprecatedInternalID(t.ID) // nolint:staticcheck
 
-	return obj
+	return obj, nil
 }
 
 // listAllTeamMembers paginates ListTeamBindings to completion for a given
@@ -450,11 +466,15 @@ func (s *LegacyStore) buildCreateCommand(ctx context.Context, ns claims.Namespac
 		if err != nil {
 			return cmd, apierrors.NewBadRequest(fmt.Sprintf("unknown user %q in spec.members", add.Name))
 		}
+		perm, err := toLegacyPermission(add.Permission)
+		if err != nil {
+			return cmd, err
+		}
 		cmd.MemberCreates = append(cmd.MemberCreates, legacy.CreateTeamMemberCommand{
 			UID:        util.GenerateShortUID(),
 			UserID:     userObj.ID,
 			UserUID:    add.Name,
-			Permission: toLegacyPermission(add.Permission),
+			Permission: perm,
 			External:   add.External,
 		})
 	}
@@ -478,9 +498,13 @@ func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.Namespac
 		cmd.MemberDeletes = append(cmd.MemberDeletes, legacy.DeleteTeamMemberCommand{UID: del.UID})
 	}
 	for _, up := range diff.toUpdate {
+		perm, err := toLegacyPermission(up.permission)
+		if err != nil {
+			return cmd, err
+		}
 		cmd.MemberUpdates = append(cmd.MemberUpdates, legacy.UpdateTeamMemberCommand{
 			UID:        up.binding.UID,
-			Permission: toLegacyPermission(up.permission),
+			Permission: perm,
 		})
 	}
 	if len(diff.toAdd) == 0 {
@@ -496,13 +520,17 @@ func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.Namespac
 		if err != nil {
 			return cmd, apierrors.NewBadRequest(fmt.Sprintf("unknown user %q in spec.members", add.Name))
 		}
+		perm, err := toLegacyPermission(add.Permission)
+		if err != nil {
+			return cmd, err
+		}
 		cmd.MemberCreates = append(cmd.MemberCreates, legacy.CreateTeamMemberCommand{
 			UID:        util.GenerateShortUID(),
 			TeamID:     teamInfo.ID,
 			TeamUID:    teamObj.Name,
 			UserID:     userObj.ID,
 			UserUID:    add.Name,
-			Permission: toLegacyPermission(add.Permission),
+			Permission: perm,
 			External:   add.External,
 		})
 	}

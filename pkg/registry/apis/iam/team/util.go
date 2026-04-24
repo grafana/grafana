@@ -9,40 +9,45 @@ import (
 )
 
 // mapTeamPermission translates a legacy team.PermissionType to the generated
-// enum on the Team CRD. Any unknown variant panics so that adding a new
-// permission upstream without updating this mapping fails loud at startup
-// rather than silently collapsing the new value to "member".
-func mapTeamPermission(p team.PermissionType) iamv0alpha1.TeamTeamPermission {
+// enum on the Team CRD. An unknown variant returns an error instead of
+// silently collapsing to "member" — callers surface this as a 500 at the
+// HTTP boundary so a buggy row / new upstream variant is visible rather
+// than silently corrupt.
+func mapTeamPermission(p team.PermissionType) (iamv0alpha1.TeamTeamPermission, error) {
 	switch p {
 	case team.PermissionTypeAdmin:
-		return iamv0alpha1.TeamTeamPermissionAdmin
+		return iamv0alpha1.TeamTeamPermissionAdmin, nil
 	case team.PermissionTypeMember:
-		return iamv0alpha1.TeamTeamPermissionMember
+		return iamv0alpha1.TeamTeamPermissionMember, nil
 	default:
-		panic(fmt.Sprintf("team: unhandled legacy PermissionType %d", p))
+		return "", fmt.Errorf("team: unhandled legacy PermissionType %d", p)
 	}
 }
 
 // toLegacyPermission is the inverse of mapTeamPermission with the same
-// unknown-variant panic guarantee.
-func toLegacyPermission(p iamv0alpha1.TeamTeamPermission) team.PermissionType {
+// unknown-variant behavior.
+func toLegacyPermission(p iamv0alpha1.TeamTeamPermission) (team.PermissionType, error) {
 	switch p {
 	case iamv0alpha1.TeamTeamPermissionAdmin:
-		return team.PermissionTypeAdmin
+		return team.PermissionTypeAdmin, nil
 	case iamv0alpha1.TeamTeamPermissionMember:
-		return team.PermissionTypeMember
+		return team.PermissionTypeMember, nil
 	default:
-		panic(fmt.Sprintf("team: unhandled TeamTeamPermission %q", p))
+		return 0, fmt.Errorf("team: unhandled TeamTeamPermission %q", p)
 	}
 }
 
-func mapToTeamMember(tm legacy.TeamMember) iamv0alpha1.TeamTeamMember {
+func mapToTeamMember(tm legacy.TeamMember) (iamv0alpha1.TeamTeamMember, error) {
+	perm, err := mapTeamPermission(tm.Permission)
+	if err != nil {
+		return iamv0alpha1.TeamTeamMember{}, err
+	}
 	return iamv0alpha1.TeamTeamMember{
 		Kind:       "User",
 		Name:       tm.UserUID,
-		Permission: mapTeamPermission(tm.Permission),
+		Permission: perm,
 		External:   tm.External,
-	}
+	}, nil
 }
 
 type memberDiff struct {
@@ -81,7 +86,11 @@ func diffMembers(current []legacy.TeamMember, desired []iamv0alpha1.TeamTeamMemb
 		if want.External != have.External {
 			return memberDiff{}, fmt.Errorf("cannot change external flag for member %q", want.Name)
 		}
-		if mapTeamPermission(have.Permission) != want.Permission {
+		havePerm, err := mapTeamPermission(have.Permission)
+		if err != nil {
+			return memberDiff{}, err
+		}
+		if havePerm != want.Permission {
 			out.toUpdate = append(out.toUpdate, memberUpdate{binding: have, permission: want.Permission})
 		}
 	}

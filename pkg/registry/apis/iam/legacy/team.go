@@ -344,22 +344,25 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to create team: %w", err)
 		}
 
-		for i := range cmd.MemberCreates {
-			cmd.MemberCreates[i].TeamID = teamID
-			cmd.MemberCreates[i].TeamUID = cmd.UID
-			cmd.MemberCreates[i].OrgID = ns.OrgID
-			cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
-			cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
-			mreq := newCreateTeamMember(sql, &cmd.MemberCreates[i])
-			mq, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, mreq)
-			if err != nil {
-				return fmt.Errorf("failed to execute create team member template: %w", err)
+		if len(cmd.MemberCreates) > 0 {
+			for i := range cmd.MemberCreates {
+				cmd.MemberCreates[i].TeamID = teamID
+				cmd.MemberCreates[i].TeamUID = cmd.UID
+				cmd.MemberCreates[i].OrgID = ns.OrgID
+				cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
 			}
-			if _, err := st.ExecWithReturningId(ctx, mq, mreq.GetArgs()...); err != nil {
+			bulk := CreateTeamMembersBulkCommand{Members: cmd.MemberCreates}
+			breq := newCreateTeamMembersBulk(sql, &bulk)
+			bq, err := sqltemplate.Execute(sqlCreateTeamMembersBulkQuery, breq)
+			if err != nil {
+				return fmt.Errorf("failed to execute bulk create team members template: %w", err)
+			}
+			if _, err := st.Exec(ctx, bq, breq.GetArgs()...); err != nil {
 				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
 					return team.ErrTeamMemberAlreadyAdded
 				}
-				return fmt.Errorf("failed to create team member: %w", err)
+				return fmt.Errorf("failed to create team members: %w", err)
 			}
 		}
 
@@ -458,17 +461,26 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to update team: %w", err)
 		}
 
-		for i := range cmd.MemberDeletes {
-			dreq := newDeleteTeamMember(sql, &cmd.MemberDeletes[i])
-			dq, err := sqltemplate.Execute(sqlDeleteTeamMemberQuery, dreq)
+		if len(cmd.MemberDeletes) > 0 {
+			uids := make([]string, len(cmd.MemberDeletes))
+			for i, d := range cmd.MemberDeletes {
+				uids[i] = d.UID
+			}
+			bulk := DeleteTeamMembersBulkCommand{OrgID: ns.OrgID, UIDs: uids}
+			dreq := newDeleteTeamMembersBulk(sql, &bulk)
+			dq, err := sqltemplate.Execute(sqlDeleteTeamMembersBulkQuery, dreq)
 			if err != nil {
-				return fmt.Errorf("failed to execute delete team member template: %w", err)
+				return fmt.Errorf("failed to execute bulk delete team members template: %w", err)
 			}
 			if _, err := st.Exec(ctx, dq, dreq.GetArgs()...); err != nil {
-				return fmt.Errorf("failed to delete team member: %w", err)
+				return fmt.Errorf("failed to delete team members: %w", err)
 			}
 		}
 
+		// Permission updates stay as one statement per row: each row changes to
+		// a different target value, so a single bulk UPDATE would need CASE
+		// WHEN scaffolding that's not worth the complexity until a profile
+		// shows it.
 		for i := range cmd.MemberUpdates {
 			cmd.MemberUpdates[i].Updated = legacysql.NewDBTime(now)
 			ureq := newUpdateTeamMember(sql, &cmd.MemberUpdates[i])
@@ -481,20 +493,23 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			}
 		}
 
-		for i := range cmd.MemberCreates {
-			cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
-			cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
-			cmd.MemberCreates[i].OrgID = ns.OrgID
-			creq := newCreateTeamMember(sql, &cmd.MemberCreates[i])
-			cq, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, creq)
-			if err != nil {
-				return fmt.Errorf("failed to execute create team member template: %w", err)
+		if len(cmd.MemberCreates) > 0 {
+			for i := range cmd.MemberCreates {
+				cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].OrgID = ns.OrgID
 			}
-			if _, err := st.ExecWithReturningId(ctx, cq, creq.GetArgs()...); err != nil {
+			bulk := CreateTeamMembersBulkCommand{Members: cmd.MemberCreates}
+			creq := newCreateTeamMembersBulk(sql, &bulk)
+			cq, err := sqltemplate.Execute(sqlCreateTeamMembersBulkQuery, creq)
+			if err != nil {
+				return fmt.Errorf("failed to execute bulk create team members template: %w", err)
+			}
+			if _, err := st.Exec(ctx, cq, creq.GetArgs()...); err != nil {
 				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
 					return team.ErrTeamMemberAlreadyAdded
 				}
-				return fmt.Errorf("failed to create team member: %w", err)
+				return fmt.Errorf("failed to create team members: %w", err)
 			}
 		}
 

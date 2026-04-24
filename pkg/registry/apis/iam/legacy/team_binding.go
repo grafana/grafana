@@ -394,7 +394,60 @@ type DeleteTeamMemberCommand struct {
 	UID string
 }
 
+// DeleteTeamMembersBulkCommand removes multiple team_member rows by binding
+// UID in a single SQL DELETE. OrgID scopes the DELETE so a UID from another
+// org cannot be deleted even if it happens to collide.
+type DeleteTeamMembersBulkCommand struct {
+	OrgID int64
+	UIDs  []string
+}
+
+// CreateTeamMembersBulkCommand inserts multiple team_member rows in a single
+// multi-row INSERT. Each member must be fully populated (TeamID/TeamUID/UserID
+// already resolved, OrgID set, timestamps filled).
+type CreateTeamMembersBulkCommand struct {
+	Members []CreateTeamMemberCommand
+}
+
 var sqlDeleteTeamMemberQuery = mustTemplate("delete_team_member_query.sql")
+var sqlDeleteTeamMembersBulkQuery = mustTemplate("delete_team_members_bulk.sql")
+var sqlCreateTeamMembersBulkQuery = mustTemplate("create_team_members_bulk.sql")
+
+type deleteTeamMembersBulkQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *DeleteTeamMembersBulkCommand
+}
+
+func (r deleteTeamMembersBulkQuery) Validate() error {
+	return nil
+}
+
+func newDeleteTeamMembersBulk(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMembersBulkCommand) deleteTeamMembersBulkQuery {
+	return deleteTeamMembersBulkQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type createTeamMembersBulkQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *CreateTeamMembersBulkCommand
+}
+
+func (r createTeamMembersBulkQuery) Validate() error {
+	return nil
+}
+
+func newCreateTeamMembersBulk(sql *legacysql.LegacyDatabaseHelper, cmd *CreateTeamMembersBulkCommand) createTeamMembersBulkQuery {
+	return createTeamMembersBulkQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
 
 func newDeleteTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMemberCommand) deleteTeamMemberQuery {
 	return deleteTeamMemberQuery{
