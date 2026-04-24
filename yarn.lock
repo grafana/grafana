@@ -3776,13 +3776,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.4.1":
-  version: 7.4.1
-  resolution: "@grafana/scenes-react@npm:7.4.1"
+"@grafana/scenes-react@npm:7.4.2":
+  version: 7.4.2
+  resolution: "@grafana/scenes-react@npm:7.4.2"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.4.1"
+    "@grafana/scenes": "npm:7.4.2"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3796,7 +3796,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/25f170f300eff78bb23b942f982294cfe63ff2a7d03c7eaf5abfa7a200dcfa9475edf9bddb21632c21e89b0022ff739ac410ac55c75cfeca1f468f208408ccc9
+  checksum: 10/6efdddc8bb3304bc9827cddd76721e5119dcf7a0b117a73daa397777331f1ed671b10bb8010956fa3739d09b39258804394f1f414ce9f09f30279f54a852e722
   languageName: node
   linkType: hard
 
@@ -3831,9 +3831,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.4.1":
-  version: 7.4.1
-  resolution: "@grafana/scenes@npm:7.4.1"
+"@grafana/scenes@npm:7.4.2":
+  version: 7.4.2
+  resolution: "@grafana/scenes@npm:7.4.2"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3858,7 +3858,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/decad6ee4ad4f81a96f89d708b9d61ce03b875cc4cfbe65befe3d1319d85461760f1a7d05f11f140e3c4b305b157b908b8f2bcd2de31106c899971aaf5cfcc10
+  checksum: 10/3310741c21adafa163fe66b499281c8a7902678fd5c300e56cfbdeca6916f50b72e0e7c310013aad71758c690fce8d0c2c4993063b2765f1eac04c1a6ff2c678
   languageName: node
   linkType: hard
 
@@ -11974,6 +11974,87 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260421.2"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260421.2"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260421.2"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260421.2"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260421.2"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260421.2"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260421.2"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview@npm:7.0.0-dev.20260421.2":
+  version: 7.0.0-dev.20260421.2
+  resolution: "@typescript/native-preview@npm:7.0.0-dev.20260421.2"
+  dependencies:
+    "@typescript/native-preview-darwin-arm64": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-darwin-x64": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-arm": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-arm64": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-x64": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-win32-arm64": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native-preview-win32-x64": "npm:7.0.0-dev.20260421.2"
+  dependenciesMeta:
+    "@typescript/native-preview-darwin-arm64":
+      optional: true
+    "@typescript/native-preview-darwin-x64":
+      optional: true
+    "@typescript/native-preview-linux-arm":
+      optional: true
+    "@typescript/native-preview-linux-arm64":
+      optional: true
+    "@typescript/native-preview-linux-x64":
+      optional: true
+    "@typescript/native-preview-win32-arm64":
+      optional: true
+    "@typescript/native-preview-win32-x64":
+      optional: true
+  bin:
+    tsgo: bin/tsgo.js
+  checksum: 10/3b205eb08ac5a7e7d5c18c277e1595b2cc150975d550403d6a7714c728a7f1c6057a14731c3da291feddbbbeef8e93c81d782d7935a06f1e268261b1c6236bf3
+  languageName: node
+  linkType: hard
+
 "@ungap/structured-clone@npm:^1.3.0":
   version: 1.3.0
   resolution: "@ungap/structured-clone@npm:1.3.0"
@@ -19794,8 +19875,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.4.1"
-    "@grafana/scenes-react": "npm:7.4.1"
+    "@grafana/scenes": "npm:7.4.2"
+    "@grafana/scenes-react": "npm:7.4.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -19897,6 +19978,7 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
+    "@typescript/native-preview": "npm:7.0.0-dev.20260421.2"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"
@@ -20911,14 +20993,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:^3.8.2, immutable@npm:^3.x.x":
+"immutable@npm:^3.x.x":
   version: 3.8.3
   resolution: "immutable@npm:3.8.3"
   checksum: 10/29db366d4dff83b0b296150c351b08db24837005909a71c123d860c1d2a40605f19a3ecd56d1e96be9799e947ddf7906897a28fa2e81f0b8c63c652b6bfe5550
   languageName: node
   linkType: hard
 
-"immutable@npm:^4.3.6":
+"immutable@npm:^4.0.0, immutable@npm:^4.3.6":
   version: 4.3.8
   resolution: "immutable@npm:4.3.8"
   checksum: 10/27a134cec0089ba60c5f50fdd08a0296533c9ce6d112188461c89a6bb3c720368e4363dc5f8d40440c6f9120400867e9cf86bd7463c7d3ee12d4ad44f797d4cc

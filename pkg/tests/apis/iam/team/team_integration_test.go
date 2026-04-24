@@ -1,4 +1,4 @@
-package identity
+package team
 
 import (
 	"context"
@@ -62,7 +62,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the team
-		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -88,7 +88,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, "default", fetched.GetNamespace())
 
 		// Update the team
-		updatedTeam, err := teamClient.Resource.Update(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-update-v0.yaml"), metav1.UpdateOptions{})
+		updatedTeam, err := teamClient.Resource.Update(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-update-v0.yaml"), metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updatedTeam)
 
@@ -131,7 +131,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 					GVR:       gvrTeams,
 				})
 
-				_, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+				_, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
 				require.Error(t, err)
 				var statusErr *errors.StatusError
 				require.ErrorAs(t, err, &statusErr)
@@ -148,7 +148,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/team-test-no-title-v0.yaml")
+		toCreate := helper.LoadYAMLOrJSONFile("../testdata/team-test-no-title-v0.yaml")
 
 		_, err := teamClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -166,7 +166,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/team-test-provisioned-v0.yaml")
+		toCreate := helper.LoadYAMLOrJSONFile("../testdata/team-test-provisioned-v0.yaml")
 
 		_, err := teamClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -184,7 +184,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/team-test-external-uid-without-provisioned-v0.yaml")
+		toCreate := helper.LoadYAMLOrJSONFile("../testdata/team-test-external-uid-without-provisioned-v0.yaml")
 
 		_, err := teamClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -222,7 +222,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
-		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-generate-name-v0.yaml"), metav1.CreateOptions{})
+		created, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/team-test-generate-name-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
