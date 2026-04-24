@@ -1473,7 +1473,7 @@ func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contextmodel.ReqContext) r
 
 // Write to the standard log15 logger
 func handleLog(msg centrifuge.LogEntry) {
-	arr := make([]interface{}, 0)
+	arr := make([]interface{}, 0) //nolint:prealloc
 	for k, v := range msg.Fields {
 		switch v {
 		case nil:

@@ -27,7 +27,7 @@ func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
 
 func (s *CacheSegmentedTree) updatePeriodically() {
 	for {
-		var orgIDs []int64
+		orgIDs := make([]int64, 0, len(s.radix))
 		s.radixMu.Lock()
 		for orgID := range s.radix {
 			orgIDs = append(orgIDs, orgID)

@@ -502,7 +502,7 @@ func getReducerForValueName(valueName string) string {
 func migrateThresholdsAndColors(defaults map[string]interface{}, thresholdsStr string, colors []interface{}) {
 	// Parse thresholds string (e.g., "10,20,30")
 	// Based on sharedSingleStatPanelChangedHandler lines ~145-165: Convert thresholds and color values
-	thresholds := []interface{}{}
+	thresholds := make([]interface{}, 0, len(colors))
 	thresholdValues := strings.Split(thresholdsStr, ",")
 
 	// Create threshold steps

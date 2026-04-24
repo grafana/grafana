@@ -648,7 +648,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		case ngmodels.RuleTypeFilterAll:
 			// no additional filter
 		default:
-			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
+			return fmt.Errorf("unknown rule type filter %v", query.RuleType)
 		}
 
 		// Order by group first, then by rule index within group
@@ -845,7 +845,7 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		case ngmodels.RuleTypeFilterAll:
 			// no additional filter
 		default:
-			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
+			return fmt.Errorf("unknown rule type filter %v", query.RuleType)
 		}
 
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
@@ -1025,7 +1025,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
@@ -1048,7 +1048,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
 		}

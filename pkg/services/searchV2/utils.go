@@ -33,7 +33,8 @@ func formatBytes(numBytes uint64) string {
 		return fmt.Sprintf("%d B", numBytes)
 	}
 	e := math.Floor(logN(float64(numBytes), base))
-	suffix := sizes[int(e)]
+	idx := min(max(int(e), 0), len(sizes)-1)
+	suffix := sizes[idx] //nolint:gosec // G602: idx is clamped to [0, len(sizes)-1] above.
 	val := math.Floor(float64(numBytes)/math.Pow(base, e)*10+0.5) / 10
 	return fmt.Sprintf("%.1f %s", val, suffix)
 }

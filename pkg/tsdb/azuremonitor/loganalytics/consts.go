@@ -115,7 +115,7 @@ var TablesSchema = map[string]map[string]string{
 
 func getTagsForTable(table string) []string {
 	tagsMap := TablesSchema[table]
-	tags := []string{}
+	tags := make([]string, 0, len(tagsMap))
 
 	for k := range tagsMap {
 		tags = append(tags, k)

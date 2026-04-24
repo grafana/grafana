@@ -669,7 +669,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
-	scopes := []string{}
+	scopes := make([]string, 0, len(folderIds))
 	for _, folderId := range folderIds {
 		scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderId))
 	}

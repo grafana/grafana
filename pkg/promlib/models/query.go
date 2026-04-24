@@ -224,7 +224,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 
 		if len(scopeFilters) > 0 {
 			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-				var filters []string
+				var filters []string //nolint:prealloc
 				for _, f := range scopeFilters {
 					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 				}
@@ -234,7 +234,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 
 		if len(model.AdhocFilters) > 0 {
 			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-				var filters []string
+				var filters []string //nolint:prealloc
 				for _, f := range model.AdhocFilters {
 					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 				}

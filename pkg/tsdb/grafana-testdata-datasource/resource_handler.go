@@ -44,9 +44,9 @@ func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {
 
 func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
 	ctxLogger := s.logger.FromContext(req.Context())
-	result := make([]any, 0)
+	result := make([]any, 0) //nolint:prealloc
 
-	scenarioIds := make([]string, 0)
+	scenarioIds := make([]string, 0, len(s.scenarios))
 	for id := range s.scenarios {
 		scenarioIds = append(scenarioIds, string(id))
 	}

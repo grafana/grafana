@@ -401,7 +401,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// List events when store is empty
-	retrievedEvents := make([]Event, 0)
+	retrievedEvents := make([]Event, 0) //nolint:prealloc
 	for event, err := range store.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)

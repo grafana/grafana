@@ -232,7 +232,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -259,7 +259,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Use a different section with no keys
 		emptySection := nsPrefix + "-empty-keys"
 
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, emptySection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -280,7 +280,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -289,7 +289,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{StartKey: "b", EndKey: "d"}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -298,7 +298,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "c",
 			EndKey:   resource.PrefixRangeEnd("c"),
@@ -310,7 +310,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with limit and range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "a",
 			EndKey:   "c",
@@ -334,7 +334,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Sort: resource.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -343,7 +343,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Sort: resource.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -352,7 +352,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "a",
 			EndKey:   resource.PrefixRangeEnd("a"),
@@ -365,7 +365,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			Sort:  resource.SortOrderDesc,
 			Limit: 3,

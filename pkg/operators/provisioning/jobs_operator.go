@@ -171,7 +171,7 @@ func setupWorkers(controllerCfg *jobsControllerConfig) ([]jobs.Worker, error) {
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 
-	workers := make([]jobs.Worker, 0)
+	workers := make([]jobs.Worker, 0, 5)
 
 	// Sync
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
