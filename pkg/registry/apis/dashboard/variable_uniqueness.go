@@ -55,6 +55,9 @@ func findVariableNameConflict(list *unstructured.UnstructuredList, folderUID, ex
 			}
 		} else if itemFolderUID != folderUID {
 			// Folder scope only considers entries in the same folder.
+			// Intentional shadowing: names may repeat across scopes. This matches
+			// hierarchical resolution (section -> dashboard -> folder -> global org),
+			// where the closest scope wins.
 			continue
 		}
 

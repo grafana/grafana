@@ -45,6 +45,16 @@ func TestValidateVariable(t *testing.T) {
 		require.ErrorContains(t, validateVariable(v), "must not start with '__'")
 	})
 
+	t.Run("name with spaces is rejected", func(t *testing.T) {
+		v := newCustomVariable("my variable", "my-variable")
+		require.ErrorContains(t, validateVariable(v), "must contain only letters, digits, and underscores")
+	})
+
+	t.Run("name with dot is rejected", func(t *testing.T) {
+		v := newCustomVariable("my.var", "my-var")
+		require.ErrorContains(t, validateVariable(v), "must contain only letters, digits, and underscores")
+	})
+
 	t.Run("multiple variable kinds are rejected", func(t *testing.T) {
 		v := newCustomVariable("region", "region")
 		queryVariable := dashv2.NewDashboardQueryVariableKind()
@@ -553,7 +563,9 @@ func (h *variableFolderAccessHandler) Update(_ context.Context, _ *unstructured.
 func (h *variableFolderAccessHandler) Delete(_ context.Context, _ string, _ int64, _ metav1.DeleteOptions) error {
 	return nil
 }
-func (h *variableFolderAccessHandler) DeleteCollection(_ context.Context, _ int64) error { return nil }
+func (h *variableFolderAccessHandler) DeleteCollection(_ context.Context, _ int64, _ metav1.ListOptions) error {
+	return nil
+}
 func (h *variableFolderAccessHandler) List(_ context.Context, _ int64, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	return nil, nil
 }

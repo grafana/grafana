@@ -2,10 +2,13 @@ package dashboard
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 )
+
+var variableNameFormat = regexp.MustCompile(`^\w+$`)
 
 // walkVariableKinds traverses the VariableSpec union in a single pass and
 // returns the spec name of whichever kind is populated (empty if none) along
@@ -74,6 +77,10 @@ func validateVariable(variable *dashv2.Variable) error {
 
 	if strings.HasPrefix(name, "__") {
 		return fmt.Errorf("variable name %q must not start with '__' (reserved for built-in macros)", name)
+	}
+
+	if !variableNameFormat.MatchString(name) {
+		return fmt.Errorf("variable name %q must contain only letters, digits, and underscores", name)
 	}
 
 	return nil
