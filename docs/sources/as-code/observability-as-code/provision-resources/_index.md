@@ -27,7 +27,7 @@ For classic provisioning using configuration files refer to [Provision Grafana](
 {{< /admonition >}}
 
 On-prem local file provisioning allows you to add resources that are stored in your local file system to your Grafana instance. You can
-configure how to save your dashboard JSONs and other files from your local file system into a single or multiple folders in a different repository, with up to 10 connections.
+configure how to save your dashboards' JSON and other files from your local file system into a single or multiple folders in a different repository, with up to 10 connections.
 
 To set it up, refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/file-path-setup).
 
