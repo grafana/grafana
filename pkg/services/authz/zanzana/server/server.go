@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/semaphore"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -65,6 +66,10 @@ type Server struct {
 	logger  log.Logger
 	tracer  tracing.Tracer
 	metrics *metrics
+
+	globalSem         *semaphore.Weighted
+	namespaceLimiters sync.Map
+	nsLimiterSize     int64
 }
 
 func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
@@ -102,6 +107,11 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		logger:        logger,
 		tracer:        tracer,
 		metrics:       newZanzanaServerMetrics(reg),
+		nsLimiterSize: int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
+	}
+
+	if zanzanaCfg.MaxConcurrentRequests > 0 {
+		s.globalSem = semaphore.NewWeighted(int64(zanzanaCfg.MaxConcurrentRequests))
 	}
 
 	var clientFactory resources.ClientFactory
