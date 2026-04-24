@@ -406,7 +406,7 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
-	aggIDs := make([]string, 0)
+	aggIDs := make([]string, 0, len(aggs))
 	for k := range aggs {
 		aggIDs = append(aggIDs, k)
 	}
@@ -607,8 +607,8 @@ func processTopMetricsMetric(metric *MetricAgg, buckets []*simplejson.Json, prop
 }
 
 func processExtendedStatsMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
-	metaKeys := make([]string, 0)
 	meta := metric.Meta.MustMap()
+	metaKeys := make([]string, 0, len(meta))
 	for k := range meta {
 		metaKeys = append(metaKeys, k)
 	}
@@ -811,7 +811,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 			}
 		}
 
-		var dataFields []*data.Field
+		dataFields := make([]*data.Field, 0, len(fields))
 		dataFields = append(dataFields, fields...)
 
 		frames = data.Frames{
@@ -1249,7 +1249,7 @@ func getSortedKeys(data map[string]interface{}) []string {
 }
 
 func createPropKeys(props map[string]string) []string {
-	propKeys := make([]string, 0)
+	propKeys := make([]string, 0, len(props))
 	for k := range props {
 		propKeys = append(propKeys, k)
 	}
@@ -1285,8 +1285,8 @@ func addPercentilesToFields(fields *[]*data.Field, bucket *simplejson.Json, metr
 }
 
 func addExtendedStatsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
-	metaKeys := make([]string, 0)
 	meta := metric.Meta.MustMap()
+	metaKeys := make([]string, 0, len(meta))
 	for k := range meta {
 		metaKeys = append(metaKeys, k)
 	}

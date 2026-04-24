@@ -103,7 +103,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 
 	out := make([][]allowedActions, 0, len(references))
 	for _, ref := range references {
-		var actions []allowedActions
+		var actions []allowedActions // nolint:prealloc
 
 		selfActions := make([]string, 0)
 		if selfKindActions, ok := allowedActionsByUid[ref.entityKind]; ok {

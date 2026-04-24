@@ -603,7 +603,7 @@ func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
 }
 
 func dashboardsWithTitles(names ...string) []dashboard {
-	out := make([]dashboard, 0)
+	out := make([]dashboard, 0, len(names))
 	for i, name := range names {
 		no := int64(i + 1)
 		out = append(out, dashboard{

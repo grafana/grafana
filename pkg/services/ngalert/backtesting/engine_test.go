@@ -199,7 +199,7 @@ func TestEvaluatorTest(t *testing.T) {
 		to := from.Add(5 * ruleInterval)
 		allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
 
-		var states []state.StateTransition
+		states := make([]state.StateTransition, 0, len(allStates))
 
 		for _, s := range allStates {
 			labels := models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-")

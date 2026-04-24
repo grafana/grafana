@@ -263,7 +263,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Use a different section with no keys
 		emptySection := nsPrefix + "-empty-keys"
 
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, emptySection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -284,7 +284,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -293,7 +293,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{StartKey: "b", EndKey: "d"}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -302,7 +302,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "c",
 			EndKey:   resource.PrefixRangeEnd("c"),
@@ -314,7 +314,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with limit and range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "a",
 			EndKey:   "c",
@@ -338,7 +338,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Sort: resource.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -347,7 +347,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{Sort: resource.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -356,7 +356,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			StartKey: "a",
 			EndKey:   resource.PrefixRangeEnd("a"),
@@ -369,7 +369,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{
 			Sort:  resource.SortOrderDesc,
 			Limit: 3,
@@ -554,7 +554,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		results := make([]result, 0, len(keys))
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -591,7 +591,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		results := make([]result, 0, len(keys))
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -609,7 +609,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
 		keys := []string{"non-existent-1", "non-existent-2", "non-existent-3"}
-		var results []resource.KeyValue
+		results := make([]resource.KeyValue, 0, len(keys))
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -621,7 +621,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with empty keys list", func(t *testing.T) {
 		keys := []string{}
-		var results []resource.KeyValue
+		results := make([]resource.KeyValue, 0, len(keys))
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -660,7 +660,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get in specific order
 		keys := []string{"z-key", "a-key", "m-key"}
-		var results []string
+		results := make([]string, 0, len(keys))
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
 			err = kv.Value.Close()
