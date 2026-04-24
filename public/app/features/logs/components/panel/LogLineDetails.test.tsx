@@ -762,7 +762,7 @@ describe('LogLineDetails', () => {
 
       expect(replaceDetails).toHaveBeenCalledTimes(1);
       expect(replaceDetails).toHaveBeenCalledWith(logs[1]);
-      expect(focusLogLine).toHaveBeenCalledWith(logs[1]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[1], 'auto');
     });
 
     test('Can be keyboard navigated up', async () => {
@@ -779,7 +779,7 @@ describe('LogLineDetails', () => {
 
       expect(replaceDetails).toHaveBeenCalledTimes(1);
       expect(replaceDetails).toHaveBeenCalledWith(logs[0]);
-      expect(focusLogLine).toHaveBeenCalledWith(logs[0]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[0], 'auto');
     });
   });
 
