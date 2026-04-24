@@ -91,6 +91,18 @@ func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	return dsUID
 }
 
+// resolveLegacyStringDatasource resolves a bare-string datasource name/UID
+// (e.g. "TEST_DB") to a (uid, type) pair via the datasource index
+func resolveLegacyStringDatasource(ctx context.Context, name string, provider schemaversion.DataSourceIndexProvider) (uid, typ string) {
+	if provider == nil {
+		return name, ""
+	}
+	if ds := schemaversion.ResolveDatasourceRef(name, provider.Index(ctx)); ds != nil {
+		return ds.UID, ds.Type
+	}
+	return name, ""
+}
+
 // prepareV1ConversionContext sets up the context with namespace and service identity
 // for v1 dashboard conversions. This context is needed to retrieve datasources for
 // converting dashboard datasource references.
@@ -1317,8 +1329,9 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1350,11 +1363,14 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		queryVar.Spec.Datasource = dsRef
 	}
@@ -1681,8 +1697,9 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1738,11 +1755,14 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		adhocVar.Spec.Datasource = dsRef
 	}
@@ -1874,8 +1894,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1898,8 +1919,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 	// Only include datasource if datasourceUID exists
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
+			Uid: &datasourceUID,
+		}
+		if datasourceType != "" {
+			dsRef.Type = &datasourceType
 		}
 		groupByVar.Spec.Datasource = dsRef
 	}
@@ -2180,9 +2203,17 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			}
 		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
 			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
-			// Only process template variables - other string values are not supported in V2 format
 			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
 				Uid: &dsStr,
+			}
+		} else if dsStr, ok := ds.(string); ok && dsStr != "" {
+			dsUID, dsType := resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
+			// Omit Type when empty so unresolved legacy strings serialize as UID-only refs.
+			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+				Uid: &dsUID,
+			}
+			if dsType != "" {
+				panelDatasource.Type = &dsType
 			}
 		}
 	}
@@ -2272,8 +2303,9 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		}
 	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
 		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		queryDatasourceUID = dsStr
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && dsStr != "" {
+		queryDatasourceUID, queryDatasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	}
 	// Apply panel ref when panel has a concrete UID (non-empty, not mixed) and query has no ref or differs (same rule as frontend).
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
@@ -2311,11 +2343,14 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
 
-	// Only include datasource reference if UID is provided
+	// Only include datasource reference if UID is provided.
+	// Omit Type when empty so UID-only refs (unresolved strings, template vars) don't serialize "type": "".
 	if queryDatasourceUID != "" {
 		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &queryDatasourceType,
-			Uid:  &queryDatasourceUID,
+			Uid: &queryDatasourceUID,
+		}
+		if queryDatasourceType != "" {
+			panelQuerySpec.Datasource.Type = &queryDatasourceType
 		}
 	}
 
