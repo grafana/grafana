@@ -35,26 +35,22 @@ var (
 	}
 )
 
-// FixedRoleRegistrations returns the support bundle role registrations.
-// When serverAdminOnly is true, grants are restricted to GrafanaAdmin only.
-func FixedRoleRegistrations(serverAdminOnly bool) []accesscontrol.RoleRegistration {
+// FixedRoleRegistrations returns support-bundle role registrations with default
+// grants. The default includes both OrgAdmin and GrafanaAdmin.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	grants := []string{string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}
-	if serverAdminOnly {
-		grants = []string{accesscontrol.RoleGrafanaAdmin}
+	return []accesscontrol.RoleRegistration{
+		{Role: bundleWriterRole, Grants: grants},
+		{Role: bundleReaderRole, Grants: grants},
 	}
-
-	bundleReader := accesscontrol.RoleRegistration{
-		Role:   bundleReaderRole,
-		Grants: grants,
-	}
-	bundleWriter := accesscontrol.RoleRegistration{
-		Role:   bundleWriterRole,
-		Grants: grants,
-	}
-
-	return []accesscontrol.RoleRegistration{bundleWriter, bundleReader}
 }
 
 func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
-	return ac.DeclareFixedRoles(FixedRoleRegistrations(s.serverAdminOnly)...)
+	roles := FixedRoleRegistrations()
+	if s.serverAdminOnly {
+		for i := range roles {
+			roles[i].Grants = []string{accesscontrol.RoleGrafanaAdmin}
+		}
+	}
+	return ac.DeclareFixedRoles(roles...)
 }

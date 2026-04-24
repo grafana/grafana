@@ -30,23 +30,11 @@ var (
 	ScopeProvisionersAlertRules    = ac.Scope("provisioners", "alerting")
 )
 
-// declareFixedRoles declares to the AccessControl service fixed roles and their
-// grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-// that HTTPServer needs
-func (hs *HTTPServer) declareFixedRoles() error {
-	// Declare plugins roles
-	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
-		return err
-	}
-
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	return hs.accesscontrolService.DeclareFixedRoles(
-		FixedRoleRegistrations(hs.Cfg.ViewersCanEdit, hs.License.FeatureEnabled("dspermissions.enforcement"))...,
-	)
-}
-
-// FixedRoleRegistrations returns all HTTP API fixed role registrations.
-func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.RoleRegistration {
+// FixedRoleRegistrations returns all HTTP API role registrations with their
+// default grants. This must be unconditional — instance-specific overrides
+// (e.g. ViewersCanEdit, dspermissions enforcement) belong in namespace-scoped
+// Role resources.
+func FixedRoleRegistrations() []ac.RoleRegistration {
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -76,10 +64,6 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
-	}
-
-	if viewersCanEdit {
-		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
 	datasourcesReaderRole := ac.RoleRegistration{
@@ -121,11 +105,6 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 			Hidden: true,
 		},
 		Grants: []string{string(org.RoleViewer)},
-	}
-
-	// when running oss or enterprise without a license all users should be able to query data sources
-	if !dsPermissionsEnforced {
-		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 
 	datasourcesCreatorRole := ac.RoleRegistration{
@@ -613,7 +592,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
 	}
 
-	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
+	return []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, annotationsWriterRole,
@@ -623,8 +602,33 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
+}
 
-	return roles
+// declareFixedRoles declares to the AccessControl service fixed roles and their
+// grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// that HTTPServer needs
+func (hs *HTTPServer) declareFixedRoles() error {
+	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
+		return err
+	}
+
+	roles := FixedRoleRegistrations()
+
+	for i := range roles {
+		switch roles[i].Role.Name {
+		case "fixed:datasources:explorer":
+			//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+			if hs.Cfg.ViewersCanEdit {
+				roles[i].Grants = append(roles[i].Grants, string(org.RoleViewer))
+			}
+		case "fixed:datasources:reader":
+			if !hs.License.FeatureEnabled("dspermissions.enforcement") {
+				roles[i].Grants = []string{string(org.RoleViewer)}
+			}
+		}
+	}
+
+	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }
 
 // Metadata helpers
