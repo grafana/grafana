@@ -76,10 +76,7 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
   const [hasMore, setHasMore] = useState(true);
 
   const [fetchState, fetchPage] = useAsyncFn(
-    async (nextCursor?: string, reset?: boolean) => {
-      const page = await getInstanceSettingsList({ filters, cursor: nextCursor });
-      return { page, reset };
-    },
+    (nextCursor?: string) => getInstanceSettingsList({ filters, cursor: nextCursor }),
     [filters], // object equality — pass a stable ref to avoid extra fetches
     { loading: true }
   );
@@ -88,8 +85,8 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
     if (!fetchState.value) {
       return;
     }
-    const { page, reset } = fetchState.value;
-    setItems((prev) => (reset ? page.items : prev.concat(page.items)));
+    const page = fetchState.value;
+    setItems((prev) => prev.concat(page.items));
     setCursor(page.nextCursor);
     setHasMore(page.hasMore);
   }, [fetchState.value]);
@@ -98,14 +95,14 @@ export function useInstanceSettingsList(filters?: GetDataSourceListFilters): Use
     setItems([]);
     setCursor(undefined);
     setHasMore(true);
-    fetchPage(undefined, true);
+    fetchPage();
   }, [fetchPage]);
 
   const fetchMore = useCallback(() => {
     if (!hasMore || fetchState.loading) {
       return;
     }
-    fetchPage(cursor, false);
+    fetchPage(cursor);
   }, [fetchPage, cursor, hasMore, fetchState.loading]);
 
   return { isLoading: fetchState.loading, error: fetchState.error, items, hasMore, fetchMore };
