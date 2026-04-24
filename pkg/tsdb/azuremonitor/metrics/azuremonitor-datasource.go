@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -31,6 +33,31 @@ import (
 type AzureMonitorDatasource struct {
 	Proxy  types.ServiceProxy
 	Logger log.Logger
+
+	// subscriptionCache maps cacheKey (see subscriptionCacheKey) to a
+	// subscriptionCacheEntry. Values are inserted on successful fetch and
+	// served until expiresAt. Zero-value-ready.
+	subscriptionCache sync.Map
+	// subscriptionFlights coalesces concurrent lookups for the same cacheKey
+	// so that a burst of queries against the same subscription only performs
+	// one upstream HTTP call.
+	subscriptionFlights singleflight.Group
+}
+
+// subscriptionCacheTTL is the lifetime of a cached subscription display name.
+// Display names change rarely and are only used for legend formatting, so
+// brief staleness after a rename is acceptable.
+const subscriptionCacheTTL = 5 * time.Minute
+
+type subscriptionCacheEntry struct {
+	displayName string
+	expiresAt   time.Time
+}
+
+// subscriptionCacheKey composes the fields that disambiguate a subscription
+// lookup across datasource instances and Azure clouds.
+func subscriptionCacheKey(dsId int64, baseUrl, subscriptionId string) string {
+	return fmt.Sprintf("%d|%s|%s", dsId, baseUrl, subscriptionId)
 }
 
 var (
@@ -265,6 +292,53 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 }
 
 func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
+	cacheKey := subscriptionCacheKey(dsId, baseUrl, subscriptionId)
+	if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+		return entry.displayName, nil
+	}
+
+	// Coalesce concurrent misses for the same cacheKey. Callers that arrive
+	// while a fetch is in flight will share its result (and its error), which
+	// is acceptable for this short-lived lookup.
+	result, err, _ := e.subscriptionFlights.Do(cacheKey, func() (any, error) {
+		// Re-check under the flight: another caller may have refreshed the
+		// entry between the fast-path miss and acquiring the flight slot.
+		if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+			return entry.displayName, nil
+		}
+
+		displayName, err := e.fetchSubscriptionDisplayName(cli, ctx, subscriptionId, baseUrl, dsId, orgId)
+		if err != nil {
+			return "", err
+		}
+
+		e.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+			displayName: displayName,
+			expiresAt:   time.Now().Add(subscriptionCacheTTL),
+		})
+		return displayName, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
+// loadSubscriptionCacheEntry returns the unexpired cache entry for cacheKey,
+// if one exists.
+func (e *AzureMonitorDatasource) loadSubscriptionCacheEntry(cacheKey string) (subscriptionCacheEntry, bool) {
+	v, ok := e.subscriptionCache.Load(cacheKey)
+	if !ok {
+		return subscriptionCacheEntry{}, false
+	}
+	entry := v.(subscriptionCacheEntry)
+	if time.Now().After(entry.expiresAt) {
+		return subscriptionCacheEntry{}, false
+	}
+	return entry, true
+}
+
+func (e *AzureMonitorDatasource) fetchSubscriptionDisplayName(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
