@@ -1,4 +1,4 @@
-package identity
+package user
 
 import (
 	"context"
@@ -88,12 +88,12 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	// Create u1 - will be bound to all 5 teams
-	u1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+	u1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, u1)
 
 	// Create u2 - no bindings
-	u2Obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+	u2Obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 	u2Obj.Object["metadata"].(map[string]any)["name"] = "user-no-binding"
 	u2Obj.Object["spec"].(map[string]any)["login"] = "user-no-binding"
 	u2Obj.Object["spec"].(map[string]any)["email"] = "user-no-binding@example.com"
@@ -223,7 +223,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 func createTeamObject(helper *apis.K8sTestHelper, teamName string, title string, email string) *unstructured.Unstructured {
-	teamObj := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
+	teamObj := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
 	teamObj.Object["metadata"].(map[string]any)["name"] = teamName
 	teamObj.Object["spec"].(map[string]any)["title"] = title
 	teamObj.Object["spec"].(map[string]any)["email"] = email
@@ -266,6 +266,13 @@ func getUserTeamsWithPaging(t *testing.T, helper *apis.K8sTestHelper, userName s
 
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
 	return res
+}
+
+func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
+	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
+	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
+	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
+	return obj
 }
 
 func getUserTeamsWithOffset(t *testing.T, helper *apis.K8sTestHelper, userName string, offset, limit int) userTeamsResponse {

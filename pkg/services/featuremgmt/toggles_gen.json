@@ -2141,7 +2141,8 @@
       "metadata": {
         "name": "enableDatasourceMetaApiPluginLoading",
         "resourceVersion": "1775045310507",
-        "creationTimestamp": "2026-04-01T12:08:30Z"
+        "creationTimestamp": "2026-04-01T12:08:30Z",
+        "deletionTimestamp": "2026-04-16T13:41:08Z"
       },
       "spec": {
         "description": "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
