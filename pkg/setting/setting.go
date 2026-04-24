@@ -691,7 +691,7 @@ type Cfg struct {
 	VectorDBPassword                  string
 	VectorDBSSLMode                   string
 	VectorPromotionThreshold          int           // per-tenant row count above which a partial HNSW index is built
-	VectorSweeperInterval             time.Duration // how often the sweeper scans for tenants to promote; 0 disables
+	VectorPromoterInterval            time.Duration // how often the promoter scans for tenants to promote; 0 disables
 	OverridesFilePath                 string
 	OverridesReloadInterval           time.Duration
 	EnforcedQuotaResources            []string

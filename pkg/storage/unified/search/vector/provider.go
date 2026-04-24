@@ -3,7 +3,6 @@ package vector
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,6 +18,11 @@ func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
 // config section. It opens a connection to the separate pgvector database
 // and returns a ready-to-use VectorBackend. When runMigrations is true, the
 // schema migrations are applied before the backend is returned.
+//
+// The returned backend owns a Promoter configured from
+// cfg.VectorPromotionThreshold and cfg.VectorPromoterInterval. Callers start
+// the promotion loop by calling backend.Run(ctx); gate on schema ownership
+// (see module_server).
 //
 // Returns (nil, nil) if the vector backend is disabled via the
 // [unified_storage] vector_backend flag. Returns an error if the flag is
@@ -52,22 +56,5 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool
 	}
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	return NewPgvectorBackend(database), nil
-}
-
-// NewSweeperForBackend returns a Sweeper that shares the given backend's DB
-// connection. Callers (e.g. module_server) should call this only on targets
-// that own the vector schema — otherwise `CREATE INDEX CONCURRENTLY` will
-// fail under read-only credentials.
-//
-// Returns nil if the backend is nil (vector feature disabled).
-func NewSweeperForBackend(backend VectorBackend, threshold int, interval time.Duration) *Sweeper {
-	if backend == nil {
-		return nil
-	}
-	pg, ok := backend.(*pgvectorBackend)
-	if !ok {
-		return nil
-	}
-	return NewSweeper(pg.db, threshold, interval)
+	return NewPgvectorBackend(database, cfg.VectorPromotionThreshold, cfg.VectorPromoterInterval), nil
 }

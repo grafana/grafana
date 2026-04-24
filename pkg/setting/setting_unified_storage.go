@@ -272,13 +272,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()
 	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
-	// Per-tenant row count in a shared vector table above which the sweeper
-	// builds a partial HNSW index for that tenant. Below this, queries
-	// seq-scan the namespace-filtered subset (sub-ms at <1000 rows).
-	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(1000)
-	// How often the background sweeper runs. 0 disables it (useful for
-	// targets that don't own the vector schema).
-	cfg.VectorSweeperInterval = vectorSection.Key("sweeper_interval").MustDuration(5 * time.Minute)
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // high number so essentially disabled by default
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

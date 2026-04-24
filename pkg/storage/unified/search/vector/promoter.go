@@ -32,34 +32,34 @@ func partitionName(parent, namespace string) string {
 	return fmt.Sprintf("%s_%s", parent, sanitizeIdentifier(namespace))
 }
 
-// Sweeper promotes over-threshold tenants from the DEFAULT partition into
-// dedicated partitions with their own HNSW index. Runs on a timer; does
-// nothing on the write path.
-type Sweeper struct {
+// Promoter moves over-threshold tenants from the DEFAULT partition into
+// dedicated partitions with their own HNSW + GIN indexes. Runs on a timer;
+// does nothing on the write path.
+type Promoter struct {
 	db        db.DB
 	threshold int
 	interval  time.Duration
 	log       log.Logger
 }
 
-func NewSweeper(database db.DB, threshold int, interval time.Duration) *Sweeper {
-	return &Sweeper{
+func NewPromoter(database db.DB, threshold int, interval time.Duration) *Promoter {
+	return &Promoter{
 		db:        database,
 		threshold: threshold,
 		interval:  interval,
-		log:       log.New("vector-sweeper"),
+		log:       log.New("vector-promoter"),
 	}
 }
 
-// Run blocks until ctx is cancelled. Ticks every s.interval and calls Sweep.
-// Sweep errors are logged but don't stop the loop.
-func (s *Sweeper) Run(ctx context.Context) error {
+// Run blocks until ctx is cancelled. Ticks every s.interval and calls Promote.
+// Promote errors are logged but don't stop the loop.
+func (s *Promoter) Run(ctx context.Context) error {
 	if s.interval <= 0 {
-		s.log.Info("vector sweeper disabled (interval <= 0)")
+		s.log.Info("vector promoter disabled (interval <= 0)")
 		<-ctx.Done()
 		return nil
 	}
-	s.log.Info("vector sweeper starting", "interval", s.interval, "threshold", s.threshold)
+	s.log.Info("vector promoter starting", "interval", s.interval, "threshold", s.threshold)
 	t := time.NewTicker(s.interval)
 	defer t.Stop()
 	for {
@@ -67,8 +67,8 @@ func (s *Sweeper) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-t.C:
-			if err := s.Sweep(ctx); err != nil {
-				s.log.Warn("vector sweeper iteration failed", "err", err)
+			if err := s.Promote(ctx); err != nil {
+				s.log.Warn("vector promoter iteration failed", "err", err)
 			}
 		}
 	}
@@ -76,16 +76,16 @@ func (s *Sweeper) Run(ctx context.Context) error {
 
 // Sweep runs one pass over every partitioned table. Exported so tests can
 // trigger a pass inline.
-func (s *Sweeper) Sweep(ctx context.Context) error {
+func (s *Promoter) Promote(ctx context.Context) error {
 	for _, parent := range partitionedTables {
-		if err := s.sweepParent(ctx, parent); err != nil {
-			return fmt.Errorf("sweep %s: %w", parent, err)
+		if err := s.promoteParent(ctx, parent); err != nil {
+			return fmt.Errorf("promote %s: %w", parent, err)
 		}
 	}
 	return nil
 }
 
-func (s *Sweeper) sweepParent(ctx context.Context, parent string) error {
+func (s *Promoter) promoteParent(ctx context.Context, parent string) error {
 	defaultName := parent + "_default"
 
 	// Drop INVALID HNSW indexes left behind by prior failed
@@ -169,7 +169,7 @@ func (s *Sweeper) sweepParent(ctx context.Context, parent string) error {
 //     the lock window to ~tens of ms regardless of tenant size.
 //   - Postgres 17+ SPLIT PARTITION is cleaner to code but takes
 //     ACCESS EXCLUSIVE on DEFAULT (blocks reads too) — worse than this.
-func (s *Sweeper) promote(ctx context.Context, parent, namespace string) error {
+func (s *Promoter) promote(ctx context.Context, parent, namespace string) error {
 	newPart := partitionName(parent, namespace)
 
 	// Already attached? Check pg_inherits.
@@ -179,7 +179,7 @@ func (s *Sweeper) promote(ctx context.Context, parent, namespace string) error {
 	}
 	if exists {
 		// Partition exists; ensure its HNSW is valid.
-		return s.ensureHNSW(ctx, parent, newPart)
+		return s.ensureHNSW(ctx, newPart)
 	}
 
 	nsLit := "'" + strings.ReplaceAll(namespace, "'", "''") + "'"
@@ -235,7 +235,7 @@ func (s *Sweeper) promote(ctx context.Context, parent, namespace string) error {
 	s.log.Info("promoted tenant", "parent", parent, "namespace", namespace, "partition", newPart)
 
 	// HNSW + ANALYZE outside the tx.
-	if err := s.ensureHNSW(ctx, parent, newPart); err != nil {
+	if err := s.ensureHNSW(ctx, newPart); err != nil {
 		return err
 	}
 
@@ -254,7 +254,7 @@ func (s *Sweeper) promote(ctx context.Context, parent, namespace string) error {
 // ensureHNSW builds the HNSW index on a partition if it doesn't already exist
 // as a valid index. CREATE INDEX CONCURRENTLY can't run in a transaction.
 // Also ensures a GIN on metadata for JSONB containment filters.
-func (s *Sweeper) ensureHNSW(ctx context.Context, parent, partition string) error {
+func (s *Promoter) ensureHNSW(ctx context.Context, partition string) error {
 	hnswName := partition + "_hnsw"
 	if err := s.ensureIndex(ctx, hnswName, fmt.Sprintf(
 		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
@@ -288,7 +288,7 @@ func (s *Sweeper) ensureHNSW(ctx context.Context, parent, partition string) erro
 // ensureIndex creates an index via the given DDL if it doesn't already exist
 // as a valid index. DDL must be a CREATE INDEX [CONCURRENTLY] IF NOT EXISTS
 // targeting `idxName`.
-func (s *Sweeper) ensureIndex(ctx context.Context, idxName, ddl string) error {
+func (s *Promoter) ensureIndex(ctx context.Context, idxName, ddl string) error {
 	exists, err := s.indexExistsValid(ctx, idxName)
 	if err != nil {
 		return err
@@ -305,7 +305,7 @@ func (s *Sweeper) ensureIndex(ctx context.Context, idxName, ddl string) error {
 
 // partitionExists returns true if `partition` is currently attached to
 // `parent`.
-func (s *Sweeper) partitionExists(ctx context.Context, parent, partition string) (bool, error) {
+func (s *Promoter) partitionExists(ctx context.Context, parent, partition string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRowContext(ctx, `
 		SELECT EXISTS (
@@ -320,7 +320,7 @@ func (s *Sweeper) partitionExists(ctx context.Context, parent, partition string)
 	return exists, nil
 }
 
-func (s *Sweeper) indexExistsValid(ctx context.Context, idxName string) (bool, error) {
+func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, error) {
 	var valid bool
 	err := s.db.QueryRowContext(ctx, `
 		SELECT i.indisvalid FROM pg_class c
@@ -339,7 +339,7 @@ func (s *Sweeper) indexExistsValid(ctx context.Context, idxName string) (bool, e
 // dropInvalidIndexes cleans up any INVALID HNSW indexes left behind by prior
 // failed CREATE INDEX CONCURRENTLY attempts. Looks across every partition of
 // `parent`.
-func (s *Sweeper) dropInvalidIndexes(ctx context.Context, parent string) error {
+func (s *Promoter) dropInvalidIndexes(ctx context.Context, parent string) error {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.relname FROM pg_class c
 		JOIN pg_index i ON i.indexrelid = c.oid

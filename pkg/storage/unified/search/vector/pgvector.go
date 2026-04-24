@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	pgvector "github.com/pgvector/pgvector-go"
 
@@ -19,17 +20,29 @@ import (
 var _ VectorBackend = (*pgvectorBackend)(nil)
 
 type pgvectorBackend struct {
-	db      db.DB
-	dialect sqltemplate.Dialect
-	log     log.Logger
+	db       db.DB
+	dialect  sqltemplate.Dialect
+	log      log.Logger
+	promoter *Promoter
 }
 
-func NewPgvectorBackend(database db.DB) *pgvectorBackend {
+// NewPgvectorBackend builds a VectorBackend backed by pgvector. The backend
+// owns its own Promoter; call Run(ctx) on a target that owns the vector
+// schema to start the background promotion loop. `interval=0` leaves the
+// promoter idle — safe to call on any target.
+func NewPgvectorBackend(database db.DB, promotionThreshold int, promoterInterval time.Duration) *pgvectorBackend {
 	return &pgvectorBackend{
-		db:      database,
-		dialect: sqltemplate.PostgreSQL,
-		log:     log.New("vector-pgvector"),
+		db:       database,
+		dialect:  sqltemplate.PostgreSQL,
+		log:      log.New("vector-pgvector"),
+		promoter: NewPromoter(database, promotionThreshold, promoterInterval),
 	}
+}
+
+// Run starts the background promotion loop and blocks until ctx is cancelled.
+// Returns once ctx is done; interval=0 keeps it idle without issuing DDL.
+func (b *pgvectorBackend) Run(ctx context.Context) error {
+	return b.promoter.Run(ctx)
 }
 
 // tableForCollection maps a CollectionID ("<group>/<resource>") to the
@@ -145,10 +158,10 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	return err
 }
 
-// GetCurrentContent returns (subresource -> content) for every row stored
+// GetSubresourceContent returns (subresource -> content) for every row stored
 // under (namespace, model, collectionID, name). Callers compare against
 // candidate content and only re-embed what differs.
-func (b *pgvectorBackend) GetCurrentContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error) {
+func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error) {
 	table, err := tableForCollection(collectionID)
 	if err != nil {
 		return nil, err

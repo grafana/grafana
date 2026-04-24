@@ -49,7 +49,9 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	require.NoError(t, err)
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	backend := NewPgvectorBackend(database)
+	// interval=0 keeps Run idle; tests that exercise promotion construct
+	// a standalone Promoter and call Promote(ctx) synchronously.
+	backend := NewPgvectorBackend(database, 1000, 0)
 
 	cleanIntegrationState(t, engine)
 
@@ -162,7 +164,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, err := backend.GetCurrentContent(ctx, "integration-test", testModel, testCollectionID, "dash")
+	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testCollectionID, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -206,7 +208,7 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	assert.Equal(t, int64(42), rv)
 }
 
-func TestIntegrationSweeperPromotesLargeTenant(t *testing.T) {
+func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
 	// Seed a namespace past the threshold → sweeper attaches a dedicated
 	// partition with its own HNSW.
 	backend, engine, ctx := setupIntegrationTest(t)
@@ -231,8 +233,8 @@ func TestIntegrationSweeperPromotesLargeTenant(t *testing.T) {
 	require.Equal(t, nRows, countRowsIn(t, engine, testParent+"_default", ns))
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	sweeper := NewSweeper(database, threshold, 0 /* interval=0 disables Run; Sweep runs inline */)
-	require.NoError(t, sweeper.Sweep(ctx))
+	promoter := NewPromoter(database, threshold, 0 /* interval=0 disables Run; Promote runs inline */)
+	require.NoError(t, promoter.Promote(ctx))
 
 	// After sweep: dedicated partition attached, DEFAULT is empty for ns.
 	require.True(t, partitionAttached(t, engine, testParent, partName))
@@ -245,7 +247,7 @@ func TestIntegrationSweeperPromotesLargeTenant(t *testing.T) {
 	assert.Len(t, results, 5)
 }
 
-func TestIntegrationSweeperSkipsSmallTenant(t *testing.T) {
+func TestIntegrationPromoterSkipsSmallTenant(t *testing.T) {
 	backend, engine, ctx := setupIntegrationTest(t)
 
 	const ns = "integration-test-small"
@@ -256,8 +258,8 @@ func TestIntegrationSweeperSkipsSmallTenant(t *testing.T) {
 	}))
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	sweeper := NewSweeper(database, 100, 0)
-	require.NoError(t, sweeper.Sweep(ctx))
+	promoter := NewPromoter(database, 100, 0)
+	require.NoError(t, promoter.Promote(ctx))
 
 	partName := partitionName(testParent, ns)
 	require.False(t, partitionAttached(t, engine, testParent, partName),

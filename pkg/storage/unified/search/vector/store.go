@@ -36,21 +36,27 @@ type VectorBackend interface {
 
 	// DeleteSubresources removes specific subresources under `name` in a
 	// collection. Callers use this for stale-subresource cleanup after diffing
-	// GetCurrentContent against the desired set. model must be non-empty.
+	// GetSubresourceContent against the desired set. model must be non-empty.
 	// An empty subresources slice is a no-op (no rows removed).
 	DeleteSubresources(ctx context.Context, namespace, model, collectionID, name string, subresources []string) error
 
-	// GetCurrentContent returns the currently-stored content for each
+	// GetSubresourceContent returns the currently-stored content for each
 	// subresource under (namespace, model, collectionID, name), keyed by
 	// subresource. Missing or empty collections return a nil map with no
 	// error. Callers compare against candidate content to decide which
 	// subresources actually need re-embedding.
-	GetCurrentContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error)
+	GetSubresourceContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error)
 
 	// GetLatestRV returns the maximum resource_version seen by any Upsert
 	// across the entire backend. Returns 0 if no vectors have been written.
 	// Used by the write pipeline to resume polling from a global checkpoint.
 	GetLatestRV(ctx context.Context) (int64, error)
+
+	// Run starts any background maintenance the backend needs (currently the
+	// partition promoter) and blocks until ctx is cancelled. Callers should
+	// gate this on ownership of the vector schema — non-owning targets can
+	// either skip calling Run or rely on interval=0 to no-op.
+	Run(ctx context.Context) error
 }
 
 // Vector represents a single embeddable subresource (e.g. one dashboard panel).
