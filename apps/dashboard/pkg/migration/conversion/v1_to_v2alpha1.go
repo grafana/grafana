@@ -103,6 +103,18 @@ func resolveLegacyStringDatasource(ctx context.Context, name string, provider sc
 	return name, ""
 }
 
+// buildDashboardDataSourceRef builds a DashboardDataSourceRef from a (uid, type) pair.
+func buildDashboardDataSourceRef(uid, typ string) *dashv2alpha1.DashboardDataSourceRef {
+	if uid == "" {
+		return nil
+	}
+	ref := &dashv2alpha1.DashboardDataSourceRef{Uid: &uid}
+	if typ != "" {
+		ref.Type = &typ
+	}
+	return ref
+}
+
 // prepareV1ConversionContext sets up the context with namespace and service identity
 // for v1 dashboard conversions. This context is needed to retrieve datasources for
 // converting dashboard datasource references.
@@ -1364,15 +1376,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior).
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Uid: &datasourceUID,
-		}
-		if datasourceType != "" {
-			dsRef.Type = &datasourceType
-		}
-		queryVar.Spec.Datasource = dsRef
-	}
+	queryVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
@@ -1755,15 +1759,7 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior).
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Uid: &datasourceUID,
-		}
-		if datasourceType != "" {
-			dsRef.Type = &datasourceType
-		}
-		adhocVar.Spec.Datasource = dsRef
-	}
+	adhocVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	return dashv2alpha1.DashboardVariableKind{
 		AdhocVariableKind: adhocVar,
@@ -1915,15 +1911,7 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 	}
 
 	// Only include datasource if datasourceUID exists
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Uid: &datasourceUID,
-		}
-		if datasourceType != "" {
-			dsRef.Type = &datasourceType
-		}
-		groupByVar.Spec.Datasource = dsRef
-	}
+	groupByVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	// Always set options (matching frontend behavior)
 	groupByVar.Spec.Options = buildVariableOptions(varMap["options"])
@@ -2206,12 +2194,7 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			}
 		} else if dsStr, ok := ds.(string); ok && dsStr != "" {
 			dsUID, dsType := resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
-			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
-				Uid: &dsUID,
-			}
-			if dsType != "" {
-				panelDatasource.Type = &dsType
-			}
+			panelDatasource = buildDashboardDataSourceRef(dsUID, dsType)
 		}
 	}
 
@@ -2341,14 +2324,7 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 	}
 
 	// Only include datasource reference if UID is provided.
-	if queryDatasourceUID != "" {
-		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
-			Uid: &queryDatasourceUID,
-		}
-		if queryDatasourceType != "" {
-			panelQuerySpec.Datasource.Type = &queryDatasourceType
-		}
-	}
+	panelQuerySpec.Datasource = buildDashboardDataSourceRef(queryDatasourceUID, queryDatasourceType)
 
 	return dashv2alpha1.DashboardPanelQueryKind{
 		Kind: "PanelQuery",
