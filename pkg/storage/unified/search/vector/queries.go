@@ -25,33 +25,12 @@ func mustTemplate(filename string) *template.Template {
 }
 
 var (
-	sqlVectorCollectionCreateTable       = mustTemplate("vector_collection_create_table.sql")
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
 	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 )
-
-// -- Create table request --
-
-// sqlVectorCollectionCreateTableRequest renders the DDL for a single per-collection
-// vec_<id> table plus its HNSW and GIN indexes. Table and index names are
-// computed Go-side from the catalog id (vec_<id>, vec_<id>_hnsw, vec_<id>_metadata)
-// and inlined raw; they're always valid identifiers because the id is an integer.
-type sqlVectorCollectionCreateTableRequest struct {
-	sqltemplate.SQLTemplate
-	Table             string
-	HNSWIndexName     string
-	MetadataIndexName string
-}
-
-func (r *sqlVectorCollectionCreateTableRequest) Validate() error {
-	if r.Table == "" || r.HNSWIndexName == "" || r.MetadataIndexName == "" {
-		return fmt.Errorf("missing required fields")
-	}
-	return nil
-}
 
 // -- Upsert request --
 
@@ -72,16 +51,18 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	return nil
 }
 
-// -- Delete request (whole resource) --
+// -- Delete request (whole resource in one namespace+model) --
 
 type sqlVectorCollectionDeleteRequest struct {
 	sqltemplate.SQLTemplate
-	Table string
-	Name  string
+	Table     string
+	Namespace string
+	Model     string
+	Name      string
 }
 
 func (r *sqlVectorCollectionDeleteRequest) Validate() error {
-	if r.Table == "" || r.Name == "" {
+	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
@@ -92,12 +73,14 @@ func (r *sqlVectorCollectionDeleteRequest) Validate() error {
 type sqlVectorCollectionDeleteSubresourcesRequest struct {
 	sqltemplate.SQLTemplate
 	Table        string
+	Namespace    string
+	Model        string
 	Name         string
 	Subresources []string
 }
 
 func (r *sqlVectorCollectionDeleteSubresourcesRequest) Validate() error {
-	if r.Table == "" || r.Name == "" {
+	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	if len(r.Subresources) == 0 {
@@ -119,13 +102,15 @@ type sqlVectorCollectionGetContentResponse struct {
 
 type sqlVectorCollectionGetContentRequest struct {
 	sqltemplate.SQLTemplate
-	Table    string
-	Name     string
-	Response *sqlVectorCollectionGetContentResponse
+	Table     string
+	Namespace string
+	Model     string
+	Name      string
+	Response  *sqlVectorCollectionGetContentResponse
 }
 
 func (r *sqlVectorCollectionGetContentRequest) Validate() error {
-	if r.Table == "" || r.Name == "" {
+	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
@@ -155,6 +140,8 @@ type MetadataFilterEntry struct {
 type sqlVectorCollectionSearchRequest struct {
 	sqltemplate.SQLTemplate
 	Table          string
+	Namespace      string
+	Model          string
 	QueryEmbedding any // pgvector.HalfVector
 	Limit          int64
 	Response       *sqlVectorCollectionSearchResponse
@@ -166,8 +153,8 @@ type sqlVectorCollectionSearchRequest struct {
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {
-	if r.Table == "" {
-		return fmt.Errorf("missing table")
+	if r.Table == "" || r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
 	}
 	if r.Limit <= 0 {
 		return fmt.Errorf("limit must be positive")

@@ -17,23 +17,12 @@ func TestVectorQueries(t *testing.T) {
 		SQLTemplatesFS: sqlTemplatesFS,
 		Dialects:       []sqltemplate.Dialect{sqltemplate.PostgreSQL},
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlVectorCollectionCreateTable: {
-				{
-					Name: "simple",
-					Data: &sqlVectorCollectionCreateTableRequest{
-						SQLTemplate:       mocks.NewTestingSQLTemplate(),
-						Table:             "vec_42",
-						HNSWIndexName:     "vec_42_hnsw",
-						MetadataIndexName: "vec_42_metadata",
-					},
-				},
-			},
 			sqlVectorCollectionUpsert: {
 				{
 					Name: "simple",
 					Data: &sqlVectorCollectionUpsertRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Table:       "vec_42",
+						Table:       "dashboard_embeddings",
 						Vector: &Vector{
 							Namespace:       "stacks-123",
 							CollectionID:    "dashboard.grafana.app/dashboards",
@@ -55,7 +44,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "simple",
 					Data: &sqlVectorCollectionDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Table:       "vec_42",
+						Table:       "dashboard_embeddings",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
 						Name:        "abc-uid",
 					},
 				},
@@ -65,7 +56,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "simple",
 					Data: &sqlVectorCollectionDeleteSubresourcesRequest{
 						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Table:        "vec_42",
+						Table:        "dashboard_embeddings",
+						Namespace:    "stacks-123",
+						Model:        "text-embedding-005",
 						Name:         "abc-uid",
 						Subresources: []string{"panel/1", "panel/2"},
 					},
@@ -76,7 +69,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "simple",
 					Data: &sqlVectorCollectionGetContentRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Table:       "vec_42",
+						Table:       "dashboard_embeddings",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
 						Name:        "abc-uid",
 						Response:    &sqlVectorCollectionGetContentResponse{},
 					},
@@ -87,7 +82,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "no filters",
 					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Table:          "vec_42",
+						Table:          "dashboard_embeddings",
+						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          10,
 						Response:       &sqlVectorCollectionSearchResponse{},
@@ -97,7 +94,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "with name filter",
 					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Table:          "vec_42",
+						Table:          "dashboard_embeddings",
+						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          10,
 						NameValues:     []string{"dash-1", "dash-2"},
@@ -108,7 +107,9 @@ func TestVectorQueries(t *testing.T) {
 					Name: "with all filters",
 					Data: &sqlVectorCollectionSearchRequest{
 						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Table:          "vec_42",
+						Table:          "dashboard_embeddings",
+						Namespace:      "stacks-123",
+						Model:          "text-embedding-005",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          5,
 						NameValues:     []string{"dash-1"},

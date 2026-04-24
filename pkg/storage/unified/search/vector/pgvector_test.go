@@ -10,24 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
-	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB)
-
-	ctx := testutil.NewDefaultTestContext(t)
-
-	// nil slice: no-op, no DB interaction.
-	err := backend.Upsert(ctx, nil)
-	require.NoError(t, err)
-
-	// empty slice: no-op, no DB interaction.
-	err = backend.Upsert(ctx, []Vector{})
-	require.NoError(t, err)
-
-	// sqlmock will fail the test if any unexpected queries were issued.
-	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
-}
-
 func TestVector_Validate(t *testing.T) {
 	ok := Vector{Namespace: "ns", Model: "m", CollectionID: "c", Name: "n"}
 	require.NoError(t, ok.Validate())
@@ -53,17 +35,67 @@ func TestVector_Validate(t *testing.T) {
 	}
 }
 
+func TestTableForCollection(t *testing.T) {
+	cases := []struct {
+		in      string
+		want    string
+		wantErr bool
+	}{
+		{"dashboard.grafana.app/dashboards", "dashboard_embeddings", false},
+		{"dashboards", "dashboard_embeddings", false},
+		{"folder.grafana.app/folders", "", true}, // not provisioned yet
+		{"", "", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.in, func(t *testing.T) {
+			got, err := tableForCollection(tc.in)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(rdb.DB)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.Upsert(ctx, nil))
+	require.NoError(t, backend.Upsert(ctx, []Vector{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
-	// One bad vector fails the whole batch before any DB work happens.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(rdb.DB)
 	ctx := testutil.NewDefaultTestContext(t)
 
 	err := backend.Upsert(ctx, []Vector{
-		{Namespace: "ns", Model: "m", CollectionID: "c", Name: "", Content: "x", Embedding: []float32{0.1}},
+		{Namespace: "ns", Model: "m", CollectionID: "dashboard.grafana.app/dashboards", Name: "", Content: "x", Embedding: []float32{0.1}},
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "name must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
+	// Unknown resource has no shared table; Upsert errors before any DB work.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(rdb.DB)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectBegin()
+	rdb.SQLMock.ExpectRollback()
+
+	err := backend.Upsert(ctx, []Vector{
+		{Namespace: "ns", Model: "m", CollectionID: "folder.grafana.app/folders", Name: "x", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -72,51 +104,19 @@ func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	backend := NewPgvectorBackend(rdb.DB)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.Delete(ctx, "stacks-123", "", "dashboard.grafana.app/dashboards", "abc-uid")
+	err := backend.Delete(ctx, "ns", "", "dashboard.grafana.app/dashboards", "dash-1")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "model must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPgvectorBackend_Delete_MissingCollection(t *testing.T) {
-	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB)
-	ctx := testutil.NewDefaultTestContext(t)
-
-	rdb.SQLMock.ExpectQuery("SELECT id FROM vector_collections WHERE namespace").
-		WithArgs("stacks-123", "test-model", "dashboard.grafana.app/dashboards").
-		WillReturnError(sql.ErrNoRows)
-
-	err := backend.Delete(ctx, "stacks-123", "test-model", "dashboard.grafana.app/dashboards", "abc-uid")
-	require.NoError(t, err)
-	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
-}
-
 func TestPgvectorBackend_DeleteSubresources_EmptySlice_NoOp(t *testing.T) {
-	// Empty subresources should be a no-op without even looking at the catalog.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(rdb.DB)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.DeleteSubresources(ctx, "stacks-123", "test-model", "dashboard.grafana.app/dashboards", "abc-uid", nil)
-	require.NoError(t, err)
-	err = backend.DeleteSubresources(ctx, "stacks-123", "test-model", "dashboard.grafana.app/dashboards", "abc-uid", []string{})
-	require.NoError(t, err)
-	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
-}
-
-func TestPgvectorBackend_GetCurrentContent_MissingCollection(t *testing.T) {
-	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB)
-	ctx := testutil.NewDefaultTestContext(t)
-
-	rdb.SQLMock.ExpectQuery("SELECT id FROM vector_collections WHERE namespace").
-		WithArgs("stacks-123", "test-model", "dashboard.grafana.app/dashboards").
-		WillReturnError(sql.ErrNoRows)
-
-	content, err := backend.GetCurrentContent(ctx, "stacks-123", "test-model", "dashboard.grafana.app/dashboards", "abc-uid")
-	require.NoError(t, err)
-	require.Nil(t, content)
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboard.grafana.app/dashboards", "dash-1", nil))
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboard.grafana.app/dashboards", "dash-1", []string{}))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -135,7 +135,6 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 }
 
 func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
-	// If the single-row seed ever vanishes, fall back to 0 rather than error.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(rdb.DB)
 	ctx := testutil.NewDefaultTestContext(t)
@@ -149,19 +148,8 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPgvectorBackend_Search_MissingCollection(t *testing.T) {
-	// Search against a non-existent collection returns empty without error.
-	rdb := test.NewDBProviderNopSQL(t)
-	backend := NewPgvectorBackend(rdb.DB)
-	ctx := testutil.NewDefaultTestContext(t)
-
-	rdb.SQLMock.ExpectQuery("SELECT id FROM vector_collections WHERE namespace").
-		WithArgs("stacks-123", "test-model", "dashboard.grafana.app/dashboards").
-		WillReturnError(sql.ErrNoRows)
-
-	results, err := backend.Search(ctx, "stacks-123", "test-model", "dashboard.grafana.app/dashboards",
-		[]float32{0.1, 0.2}, 10)
-	require.NoError(t, err)
-	require.Empty(t, results)
-	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+func TestPartitionName(t *testing.T) {
+	require.Equal(t, "dashboard_embeddings_stacks_123", partitionName("dashboard_embeddings", "stacks-123"))
+	require.Equal(t, "dashboard_embeddings_weird__name", partitionName("dashboard_embeddings", "weird!!name"))
+	require.Equal(t, "dashboard_embeddings_upper_ns", partitionName("dashboard_embeddings", "UPPER-NS"))
 }

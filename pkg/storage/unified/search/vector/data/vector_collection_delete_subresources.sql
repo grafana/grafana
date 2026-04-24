@@ -1,4 +1,6 @@
 DELETE FROM {{ .Table }}
-    WHERE {{ .Ident "name" }} = {{ .Arg .Name }}
+    WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+    AND {{ .Ident "model" }}       = {{ .Arg .Model }}
+    AND {{ .Ident "name" }}        = {{ .Arg .Name }}
     AND {{ .Ident "subresource" }} IN ({{ .ArgList .SubresourcesSlice }})
 ;

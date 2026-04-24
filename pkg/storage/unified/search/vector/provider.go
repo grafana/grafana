@@ -3,6 +3,7 @@ package vector
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,4 +53,21 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
 	return NewPgvectorBackend(database), nil
+}
+
+// NewSweeperForBackend returns a Sweeper that shares the given backend's DB
+// connection. Callers (e.g. module_server) should call this only on targets
+// that own the vector schema — otherwise `CREATE INDEX CONCURRENTLY` will
+// fail under read-only credentials.
+//
+// Returns nil if the backend is nil (vector feature disabled).
+func NewSweeperForBackend(backend VectorBackend, threshold int, interval time.Duration) *Sweeper {
+	if backend == nil {
+		return nil
+	}
+	pg, ok := backend.(*pgvectorBackend)
+	if !ok {
+		return nil
+	}
+	return NewSweeper(pg.db, threshold, interval)
 }

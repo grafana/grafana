@@ -1,4 +1,6 @@
 INSERT INTO {{ .Table }} (
+    {{ .Ident "namespace" }},
+    {{ .Ident "model" }},
     {{ .Ident "name" }},
     {{ .Ident "subresource" }},
     {{ .Ident "folder" }},
@@ -7,6 +9,8 @@ INSERT INTO {{ .Table }} (
     {{ .Ident "embedding" }}
 )
 VALUES (
+    {{ .Arg .Vector.Namespace }},
+    {{ .Arg .Vector.Model }},
     {{ .Arg .Vector.Name }},
     {{ .Arg .Vector.Subresource }},
     {{ .Arg .Vector.Folder }},
@@ -14,7 +18,7 @@ VALUES (
     {{ .Arg .Vector.Metadata }},
     {{ .Arg .Embedding }}
 )
-ON CONFLICT ({{ .Ident "name" }}, {{ .Ident "subresource" }})
+ON CONFLICT ({{ .Ident "namespace" }}, {{ .Ident "model" }}, {{ .Ident "name" }}, {{ .Ident "subresource" }})
 DO UPDATE SET
     {{ .Ident "folder" }}    = {{ .Arg .Vector.Folder }},
     {{ .Ident "content" }}   = {{ .Arg .Vector.Content }},

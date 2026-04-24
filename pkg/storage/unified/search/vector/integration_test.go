@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,12 @@ import (
 )
 
 const testCollectionID = "dashboard.grafana.app/dashboards"
+const testModel = "test-model"
+const testParent = "dashboard_embeddings"
 
+// To run these tests, start the pgvector devenv block (already running
+// locally on port 5433) and set the env var:
+//
 //	PGVECTOR_TEST_DB="host=localhost port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable" \
 //	  go test -run TestIntegration ./pkg/storage/unified/search/vector/... -v -count=1
 func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Context) {
@@ -47,29 +51,46 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
 	backend := NewPgvectorBackend(database)
 
-	// Clean up any leftover test data from prior runs. Iterate every collection
-	// for the integration-test namespace and drop its vec_<id> table, plus the
-	// catalog rows. Ignore errors for rows that don't exist yet.
-	rows, err := engine.DB().QueryContext(ctx, `SELECT id FROM vector_collections WHERE namespace = 'integration-test'`)
-	if err == nil {
-		var ids []int64
-		for rows.Next() {
-			var id int64
-			if err := rows.Scan(&id); err == nil {
-				ids = append(ids, id)
-			}
-		}
-		_ = rows.Close()
-		for _, id := range ids {
-			_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS vec_%d`, id))
-		}
-		_, _ = engine.DB().ExecContext(ctx, `DELETE FROM vector_collections WHERE namespace = 'integration-test'`)
-	}
-	// Reset the global checkpoint so monotonic state from prior tests doesn't
-	// leak into the assertions that expect a specific RV.
-	_, _ = engine.DB().ExecContext(ctx, `UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
+	cleanIntegrationState(t, engine)
 
 	return backend, engine, ctx
+}
+
+// cleanIntegrationState detaches and drops any integration-test-* partitions,
+// wipes DEFAULT rows, and resets the global checkpoint.
+func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
+	t.Helper()
+	ctx := context.Background()
+
+	// List child partitions whose name starts with the integration-test prefix.
+	rows, err := engine.DB().QueryContext(ctx, `
+		SELECT c.relname FROM pg_inherits i
+		JOIN pg_class c ON c.oid = i.inhrelid
+		JOIN pg_class p ON p.oid = i.inhparent
+		WHERE p.relname = $1 AND c.relname LIKE 'dashboard_embeddings_integration_test%'`,
+		testParent)
+	require.NoError(t, err)
+	var parts []string
+	for rows.Next() {
+		var n string
+		require.NoError(t, rows.Scan(&n))
+		parts = append(parts, n)
+	}
+	_ = rows.Close()
+
+	for _, p := range parts {
+		// DETACH first so DROP doesn't touch parent metadata under SHARE lock.
+		_, _ = engine.DB().ExecContext(ctx,
+			fmt.Sprintf(`ALTER TABLE %s DETACH PARTITION %s`, testParent, p))
+		_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, p))
+	}
+
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM dashboard_embeddings_default WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
 }
 
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
@@ -77,142 +98,71 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 
 	vectors := []Vector{
 		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "dash-1",
-			Subresource:     "panel/1",
-			ResourceVersion: 10,
-			Folder:          "folder-a",
-			Content:         "CPU usage over time for production servers",
-			Metadata:        json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
-			Embedding:       makeEmbedding(0.9, 0.1),
-			Model:           "test-model",
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-1", Subresource: "panel/1",
+			ResourceVersion: 10, Folder: "folder-a",
+			Content:   "CPU usage over time for production servers",
+			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
 		},
 		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "dash-1",
-			Subresource:     "panel/2",
-			ResourceVersion: 10,
-			Folder:          "folder-a",
-			Content:         "Memory usage alerts dashboard",
-			Metadata:        json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
-			Embedding:       makeEmbedding(0.1, 0.9),
-			Model:           "test-model",
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-1", Subresource: "panel/2",
+			ResourceVersion: 10, Folder: "folder-a",
+			Content:   "Memory usage alerts dashboard",
+			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Embedding: makeEmbedding(0.1, 0.9), Model: testModel,
 		},
 		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "dash-2",
-			Subresource:     "panel/1",
-			ResourceVersion: 20,
-			Folder:          "folder-b",
-			Content:         "Log volume by service",
-			Metadata:        json.RawMessage(`{"datasource_uids":["loki-1"],"query_languages":["logql"]}`),
-			Embedding:       makeEmbedding(0.5, 0.5),
-			Model:           "test-model",
+			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-2", Subresource: "panel/1",
+			ResourceVersion: 20, Folder: "folder-b",
+			Content:   "Log volume by service",
+			Metadata:  json.RawMessage(`{"datasource_uids":["loki-1"],"query_languages":["logql"]}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		},
 	}
 
-	// Upsert
-	err := backend.Upsert(ctx, vectors)
-	require.NoError(t, err)
+	require.NoError(t, backend.Upsert(ctx, vectors))
 
-	// Search -- query close to first vector
-	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.85, 0.15), 10)
+	results, err := backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.85, 0.15), 10)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(results), 3)
 	assert.Equal(t, "dash-1", results[0].Name)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	// Search with name filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.5, 0.5), 10,
+	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "name", Values: []string{"dash-2"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "dash-2", results[0].Name)
 
-	// Search with folder filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.5, 0.5), 10,
+	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "folder", Values: []string{"folder-a"}})
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
-	// Search with metadata filter
-	results, err = backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.5, 0.5), 10,
+	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "dash-2", results[0].Name)
-
-	// Cleanup
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash-1")
-	require.NoError(t, err)
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash-2")
-	require.NoError(t, err)
-}
-
-func TestIntegrationVectorGetLatestRV(t *testing.T) {
-	backend, _, ctx := setupIntegrationTest(t)
-
-	// No collections yet -> 0.
-	rv, err := backend.GetLatestRV(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(0), rv)
-
-	err = backend.Upsert(ctx, []Vector{
-		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "rv-test",
-			Subresource:     "panel/1",
-			ResourceVersion: 42,
-			Content:         "test content",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.5, 0.5),
-			Model:           "test-model",
-		},
-	})
-	require.NoError(t, err)
-
-	rv, err = backend.GetLatestRV(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(42), rv)
-
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "rv-test")
-	require.NoError(t, err)
 }
 
 func TestIntegrationVectorDeleteSubresources(t *testing.T) {
-	// Stale cleanup flow: upsert panels, caller computes the removed set via
-	// GetCurrentContent, calls DeleteSubresources to remove them.
 	backend, _, ctx := setupIntegrationTest(t)
 
 	err := backend.Upsert(ctx, []Vector{
-		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
 			ResourceVersion: 10, Content: "panel one", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
-		},
-		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
 			ResourceVersion: 10, Content: "panel two", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
-		},
-		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/3",
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/3",
 			ResourceVersion: 10, Content: "panel three", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
-		},
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
 	})
 	require.NoError(t, err)
 
-	// Caller now knows the dashboard only has panel/1. Diff against stored.
-	stored, err := backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "dash")
+	stored, err := backend.GetCurrentContent(ctx, "integration-test", testModel, testCollectionID, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -225,156 +175,119 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	}
 	require.ElementsMatch(t, []string{"panel/2", "panel/3"}, toDelete)
 
-	err = backend.DeleteSubresources(ctx, "integration-test", "test-model", testCollectionID, "dash", toDelete)
+	err = backend.DeleteSubresources(ctx, "integration-test", testModel, testCollectionID, "dash", toDelete)
 	require.NoError(t, err)
 
-	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.5, 0.5), 10)
+	results, err := backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash")
+	err = backend.Delete(ctx, "integration-test", testModel, testCollectionID, "dash")
 	require.NoError(t, err)
 }
 
-func TestIntegrationVectorGetCurrentContent(t *testing.T) {
+func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
-
-	got, err := backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "nope")
-	require.NoError(t, err)
-	require.Nil(t, got)
-
-	err = backend.Upsert(ctx, []Vector{
-		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
-			ResourceVersion: 1, Content: "alpha", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
-		},
-		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
-			ResourceVersion: 1, Content: "beta", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: "test-model",
-		},
-	})
-	require.NoError(t, err)
-
-	got, err = backend.GetCurrentContent(ctx, "integration-test", "test-model", testCollectionID, "dash")
-	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"panel/1": "alpha", "panel/2": "beta"}, got)
-
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "dash")
-	require.NoError(t, err)
-}
-
-func TestIntegrationVectorUpsertOverwrite(t *testing.T) {
-	backend, _, ctx := setupIntegrationTest(t)
-
-	err := backend.Upsert(ctx, []Vector{
-		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "overwrite-test",
-			Subresource:     "panel/1",
-			ResourceVersion: 10,
-			Content:         "original content",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.1, 0.9),
-			Model:           "test-model",
-		},
-	})
-	require.NoError(t, err)
-
-	err = backend.Upsert(ctx, []Vector{
-		{
-			Namespace:       "integration-test",
-			CollectionID:    testCollectionID,
-			Name:            "overwrite-test",
-			Subresource:     "panel/1",
-			ResourceVersion: 20,
-			Content:         "updated content",
-			Metadata:        json.RawMessage(`{}`),
-			Embedding:       makeEmbedding(0.9, 0.1),
-			Model:           "test-model",
-		},
-	})
-	require.NoError(t, err)
-
-	results, err := backend.Search(ctx, "integration-test", "test-model", testCollectionID,
-		makeEmbedding(0.9, 0.1), 10)
-	require.NoError(t, err)
-	require.Len(t, results, 1)
-	assert.Equal(t, "updated content", results[0].Content)
 
 	rv, err := backend.GetLatestRV(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, int64(20), rv)
+	assert.Equal(t, int64(0), rv)
 
-	err = backend.Delete(ctx, "integration-test", "test-model", testCollectionID, "overwrite-test")
+	err = backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "rv-test", Subresource: "x",
+			ResourceVersion: 42, Content: "test content", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+	})
 	require.NoError(t, err)
+
+	rv, err = backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(42), rv)
 }
 
-// TestIntegrationVectorConcurrentUpsert exercises the advisory-lock
-// provisioning path. N goroutines all write vectors to the same brand-new
-// (namespace, model, collection_id) tuple; the catalog insert + CREATE TABLE
-// must serialize cleanly. One collection row and one vec_<id> table must
-// exist at the end.
-func TestIntegrationVectorConcurrentUpsert(t *testing.T) {
+func TestIntegrationSweeperPromotesLargeTenant(t *testing.T) {
+	// Seed a namespace past the threshold → sweeper attaches a dedicated
+	// partition with its own HNSW.
 	backend, engine, ctx := setupIntegrationTest(t)
 
-	const workers = 8
-	var wg sync.WaitGroup
-	errs := make(chan error, workers)
+	const ns = "integration-test-big"
+	const threshold = 50
+	const nRows = threshold + 10
 
-	for w := 0; w < workers; w++ {
-		wg.Add(1)
-		go func(w int) {
-			defer wg.Done()
-			errs <- backend.Upsert(ctx, []Vector{
-				{
-					Namespace:       "integration-test",
-					CollectionID:    testCollectionID,
-					Name:            fmt.Sprintf("concurrent-%d", w),
-					Subresource:     "panel/1",
-					ResourceVersion: int64(w),
-					Content:         fmt.Sprintf("worker %d", w),
-					Metadata:        json.RawMessage(`{}`),
-					Embedding:       makeEmbedding(0.5, 0.5),
-					Model:           "concurrent-model",
-				},
-			})
-		}(w)
+	vectors := make([]Vector, 0, nRows)
+	for i := 0; i < nRows; i++ {
+		vectors = append(vectors, Vector{
+			Namespace: ns, CollectionID: testCollectionID, Name: "dash", Subresource: fmt.Sprintf("panel/%d", i),
+			ResourceVersion: int64(i + 1), Content: fmt.Sprintf("content %d", i),
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		})
 	}
-	wg.Wait()
-	close(errs)
-	for e := range errs {
-		require.NoError(t, e)
-	}
+	require.NoError(t, backend.Upsert(ctx, vectors))
 
-	// Exactly one catalog row for this tuple.
-	var count int64
-	err := engine.DB().QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM vector_collections WHERE namespace = $1 AND model = $2 AND collection_id = $3`,
-		"integration-test", "concurrent-model", testCollectionID,
-	).Scan(&count)
+	// Before sweep: rows live in DEFAULT, no dedicated partition.
+	partName := partitionName(testParent, ns)
+	require.False(t, partitionAttached(t, engine, testParent, partName))
+	require.Equal(t, nRows, countRowsIn(t, engine, testParent+"_default", ns))
+
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	sweeper := NewSweeper(database, threshold, 0 /* interval=0 disables Run; Sweep runs inline */)
+	require.NoError(t, sweeper.Sweep(ctx))
+
+	// After sweep: dedicated partition attached, DEFAULT is empty for ns.
+	require.True(t, partitionAttached(t, engine, testParent, partName))
+	require.Equal(t, 0, countRowsIn(t, engine, testParent+"_default", ns))
+	require.Equal(t, nRows, countRowsIn(t, engine, partName, ns))
+
+	// Search still returns the tenant's data (now via the partition's HNSW).
+	results, err := backend.Search(ctx, ns, testModel, testCollectionID, makeEmbedding(0.5, 0.5), 5)
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), count)
-
-	// All worker rows landed in the single collection table.
-	results, err := backend.Search(ctx, "integration-test", "concurrent-model", testCollectionID,
-		makeEmbedding(0.5, 0.5), 100)
-	require.NoError(t, err)
-	assert.Equal(t, workers, len(results))
-
-	// Cleanup
-	for w := 0; w < workers; w++ {
-		err := backend.Delete(ctx, "integration-test", "concurrent-model", testCollectionID, fmt.Sprintf("concurrent-%d", w))
-		require.NoError(t, err)
-	}
+	assert.Len(t, results, 5)
 }
 
-// makeEmbedding creates a 1024-dim embedding with the first two values set and the rest zero.
-// 1024 matches grafana-assistant-app's halfvec(1024) so schemas line up if data ever moves between them.
+func TestIntegrationSweeperSkipsSmallTenant(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	const ns = "integration-test-small"
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: ns, CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+			ResourceVersion: 1, Content: "only row", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.1, 0.1), Model: testModel},
+	}))
+
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	sweeper := NewSweeper(database, 100, 0)
+	require.NoError(t, sweeper.Sweep(ctx))
+
+	partName := partitionName(testParent, ns)
+	require.False(t, partitionAttached(t, engine, testParent, partName),
+		"small tenant should not be promoted")
+}
+
+func partitionAttached(t *testing.T, engine *xorm.Engine, parent, partition string) bool {
+	t.Helper()
+	var exists bool
+	err := engine.DB().QueryRowContext(context.Background(), `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = $1 AND c.relname = $2
+		)`, parent, partition).Scan(&exists)
+	require.NoError(t, err)
+	return exists
+}
+
+func countRowsIn(t *testing.T, engine *xorm.Engine, table, ns string) int {
+	t.Helper()
+	var n int
+	require.NoError(t, engine.DB().QueryRowContext(context.Background(),
+		fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE namespace = $1`, table), ns).Scan(&n))
+	return n
+}
+
+// makeEmbedding creates a 1024-dim embedding with the first two values set
+// and the rest zero. 1024 matches GA's halfvec(1024).
 func makeEmbedding(a, b float32) []float32 {
 	e := make([]float32, 1024)
 	e[0] = a

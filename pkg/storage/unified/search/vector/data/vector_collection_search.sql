@@ -6,7 +6,8 @@ SELECT
     {{ .Ident "folder" | .Into .Response.Folder }},
     {{ .Ident "metadata" | .Into .Response.Metadata }}
     FROM {{ .Table }}
-    WHERE 1=1
+    WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+    AND {{ .Ident "model" }}       = {{ .Arg .Model }}
     {{ if .NameFilter }}
     AND {{ .Ident "name" }} IN ({{ .ArgList .NameFilterSlice }})
     {{ end }}
