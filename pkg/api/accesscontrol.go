@@ -30,6 +30,38 @@ var (
 	ScopeProvisionersAlertRules    = ac.Scope("provisioners", "alerting")
 )
 
+const (
+	datasourcesExplorerRoleName = "fixed:datasources:explorer"
+	datasourcesReaderRoleName   = "fixed:datasources:reader"
+)
+
+// declareFixedRoles declares to the AccessControl service fixed roles and their
+// grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// that HTTPServer needs
+func (hs *HTTPServer) declareFixedRoles() error {
+	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
+		return err
+	}
+
+	roles := FixedRoleRegistrations()
+
+	for i := range roles {
+		switch roles[i].Role.Name {
+		case datasourcesExplorerRoleName:
+			//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+			if hs.Cfg.ViewersCanEdit {
+				roles[i].Grants = append(roles[i].Grants, string(org.RoleViewer))
+			}
+		case datasourcesReaderRoleName:
+			if !hs.License.FeatureEnabled("dspermissions.enforcement") {
+				roles[i].Grants = []string{string(org.RoleViewer)}
+			}
+		}
+	}
+
+	return hs.accesscontrolService.DeclareFixedRoles(roles...)
+}
+
 // FixedRoleRegistrations returns all HTTP API role registrations with their
 // default grants. This must be unconditional — instance-specific overrides
 // (e.g. ViewersCanEdit, dspermissions enforcement) belong in namespace-scoped
@@ -53,7 +85,7 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 
 	datasourcesExplorerRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:datasources:explorer",
+			Name:        datasourcesExplorerRoleName,
 			DisplayName: "Explorer",
 			Description: "Enable the Explore and Drilldown features. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 			Group:       "Data sources",
@@ -68,7 +100,7 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 
 	datasourcesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:datasources:reader",
+			Name:        datasourcesReaderRoleName,
 			DisplayName: "Reader",
 			Description: "Read and query all data sources.",
 			Group:       "Data sources",
@@ -602,33 +634,6 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
-}
-
-// declareFixedRoles declares to the AccessControl service fixed roles and their
-// grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-// that HTTPServer needs
-func (hs *HTTPServer) declareFixedRoles() error {
-	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
-		return err
-	}
-
-	roles := FixedRoleRegistrations()
-
-	for i := range roles {
-		switch roles[i].Role.Name {
-		case "fixed:datasources:explorer":
-			//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-			if hs.Cfg.ViewersCanEdit {
-				roles[i].Grants = append(roles[i].Grants, string(org.RoleViewer))
-			}
-		case "fixed:datasources:reader":
-			if !hs.License.FeatureEnabled("dspermissions.enforcement") {
-				roles[i].Grants = []string{string(org.RoleViewer)}
-			}
-		}
-	}
-
-	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }
 
 // Metadata helpers
