@@ -5606,6 +5606,7 @@
         "panels": "面板",
         "row": "行",
         "rows": "行",
+        "section-filters-set": "",
         "tab": "标签页",
         "tabs": "标签页",
         "variable": "{{type}} 变量",
@@ -13080,6 +13081,7 @@
       "token-user-description": "将用于通过 API 令牌访问存储库的用户名",
       "token-user-required": "用户名为必填项",
       "url-description": "Bitbucket 存储库 URL",
+      "url-pattern": "",
       "url-required": "存储库 URL 为必填项"
     },
     "bootstrap-step": {
@@ -14018,7 +14020,6 @@
       "hide": "隐藏{{type}}",
       "hide-help": "隐藏数据源帮助",
       "hide-transformation-help": "隐藏转换帮助",
-      "inspector": "查询检查器",
       "more-actions": "更多{{type}}操作",
       "remove": "移除{{type}}",
       "remove-transformation-filter": "移除筛选条件",
@@ -14030,6 +14031,25 @@
     "alerts": {
       "no-alerts": "此面板没有警报规则",
       "no-alerts-description": "创建警报规则，以便在您的数据满足特定条件时收到通知。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "您确定要删除此查询吗？",
@@ -14067,6 +14087,7 @@
     },
     "footer": {
       "edit-option": "编辑 {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "间隔",
         "max-data-points": "最大数据点",
@@ -14077,6 +14098,7 @@
       "placeholder": {
         "no-limit": "无限制"
       },
+      "query-inspector": "",
       "query-options": "查询选项"
     },
     "header": {
