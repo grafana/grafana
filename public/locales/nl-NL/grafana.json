@@ -3589,9 +3589,9 @@
         "declare-incident": "Incident melden",
         "declare-incident-no-permission": "Je hebt geen toestemming om het incident te openen",
         "instance-details": "Instantiedetails",
+        "section-silence": "",
         "silence-button": "Stilte",
-        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Je hebt geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Nummers",
       "label-signature": "Handtekening"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimenteel. Toon een onderdeel om de weergegeven velden uit de logs te beheren.",
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Gemeenschappelijke labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Gemeenschappelijke labels",
     "name-deduplication": "Dedupliceren",
     "name-details-mode": "Paneelmodus logdetails",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Startpagina dashboard",
       "home-dashboard-placeholder": "Standaard dashboard",

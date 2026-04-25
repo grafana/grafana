@@ -3589,9 +3589,9 @@
         "declare-incident": "Vorfall angeben",
         "declare-incident-no-permission": "Sie haben keine Berechtigung, auf den Incident zuzugreifen",
         "instance-details": "Instanzdetails",
+        "section-silence": "",
         "silence-button": "Stummschaltung",
-        "silence-no-permission": "Sie haben keine Berechtigung zur Erstellung von Stummschaltungen",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Sie haben keine Berechtigung zur Erstellung von Stummschaltungen"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Zahlen",
       "label-signature": "Signatur"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentell. Eine Komponente anzeigen, um die angezeigten Felder aus den Logs zu verwalten.",
     "description-enable-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
     "description-enable-logs-highlighting": "Nutzen Sie ein vordefiniertes Farbschema, um relevante Teile der Logzeilen hervorzuheben.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Allgemeine Labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Allgemeine Labels",
     "name-deduplication": "Deduplizierung",
     "name-details-mode": "Panel-Modus für Log-Details",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Home-Dashboard",
       "home-dashboard-placeholder": "Standard-Dashboard",
