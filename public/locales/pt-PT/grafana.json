@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "Não tem permissão para aceder ao incidente",
         "instance-details": "Detalhes da instância",
+        "section-silence": "",
         "silence-button": "Silêncio",
-        "silence-no-permission": "Não tem permissão para criar silêncios",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Não tem permissão para criar silêncios"
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "Não tem instâncias de alerta num estado de disparo ou pendente para o intervalo de tempo selecionado.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Números",
       "label-signature": "Assinatura"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Mostrar um componente para gerir os campos exibidos dos registos.",
     "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
     "description-enable-logs-highlighting": "Utilizar um esquema de cores predefinido para destacar as partes relevantes das linhas de registo.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Etiquetas comuns:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comuns",
     "name-deduplication": "Desduplicação",
     "name-details-mode": "Modo de painel de detalhes de registo",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Painel de controlo inicial",
       "home-dashboard-placeholder": "Painel de controlo predefinido",
