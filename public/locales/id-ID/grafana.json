@@ -3570,9 +3570,9 @@
         "declare-incident": "Nyatakan insiden",
         "declare-incident-no-permission": "Anda tidak memiliki izin untuk mengakses Insiden",
         "instance-details": "Detail instance",
+        "section-silence": "",
         "silence-button": "Mode Senyap",
-        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap"
       },
       "labels-column-title": "Label",
       "no-firing-or-pending-instances": "Anda tidak memiliki instance peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
@@ -11158,6 +11158,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
@@ -11452,6 +11453,7 @@
         "common-labels": "Label umum:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
     "name-details-mode": "Mode panel detail log",
@@ -14695,6 +14697,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",

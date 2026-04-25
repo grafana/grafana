@@ -15,7 +15,7 @@ export const ActionsInlineEditor = ({
   showOneClick = false,
   ...rest
 }: DataLinksInlineEditorProps) => (
-  <DataLinksInlineEditorBase<Action> type="action" items={actions} {...rest}>
+  <DataLinksInlineEditorBase<Action> type="action" items={actions} data-testid="actions-inline" {...rest}>
     {(item, index, onSave, onCancel) => (
       <ActionEditorModalContent
         index={index}

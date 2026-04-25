@@ -23,10 +23,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagStorage
-	// Configurable storage for dashboards, datasources, and resources
-	FlagStorage = "storage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
