@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { Field, FieldType } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data';
 
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '../types';
 
