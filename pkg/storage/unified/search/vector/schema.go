@@ -13,13 +13,12 @@ import (
 // Nested LIST partitioning under one parent:
 //
 //	embeddings                               PARTITION BY LIST (resource)
-//	├── embeddings_default
 //	└── embeddings_dashboards                PARTITION BY LIST (namespace)
 //	    ├── embeddings_dashboards_default    un-promoted tenants
 //	    └── embeddings_dashboards_<ns>       per-tenant leaf (HNSW via promoter)
 //
 // Each leaf holds one (resource, namespace), so its HNSW is single-purpose.
-// Future resource sub-trees will be attached at runtime via advisory-lock.
+// Future resource subtrees will be attached at runtime via advisory-lock.
 func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "vector")
 	mg.AddCreateMigration()
@@ -57,12 +56,6 @@ func initVectorTables(mg *migrator.Migrator) {
 				PRIMARY KEY (resource, namespace, model, uid, subresource)
 			) PARTITION BY LIST (resource);
 		`))
-
-	// Catch-all for resources without a sub-tree. Normal flow bypasses this.
-	mg.AddMigration("create embeddings top-level default",
-		migrator.NewRawSQLMigration("").Postgres(
-			`CREATE TABLE IF NOT EXISTS embeddings_default PARTITION OF embeddings DEFAULT;`,
-		))
 
 	mg.AddMigration("create embeddings_dashboards sub-tree",
 		migrator.NewRawSQLMigration("").Postgres(`
