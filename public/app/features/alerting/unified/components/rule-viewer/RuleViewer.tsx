@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { chain, truncate } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -89,6 +89,7 @@ export enum ActiveTab {
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
+const ENRICHMENT_DRAWER_NAME_PARAM = 'enrichment';
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
@@ -431,7 +432,12 @@ const PrometheusConsistencyCheck = withErrorBoundary(
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
-export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+export function useActiveTab(): [
+  ActiveTab,
+  (tab: ActiveTab) => void,
+  UrlQueryMap,
+  (values: UrlQueryMap, replace?: boolean) => void,
+] {
   const [queryParams, setQueryParams] = useQueryParams();
   const tabFromQuery = queryParams.tab;
 
@@ -441,7 +447,7 @@ export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
     setQueryParams({ tab });
   };
 
-  return [activeTab, setActiveTab];
+  return [activeTab, setActiveTab, queryParams, setQueryParams];
 }
 
 function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
@@ -451,7 +457,30 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 }
 
 function usePageNav(rule: CombinedRule) {
-  const [activeTab, setActiveTab] = useActiveTab();
+  const [activeTab, setActiveTab, queryParams, setQueryParams] = useActiveTab();
+  const previousActiveTab = useRef<ActiveTab | null>(null);
+
+  // Deep-link: `?enrichment=<metadata.name>` should open the Alert Enrichment tab even if `tab` is omitted.
+  useEffect(() => {
+    const raw = queryParams[ENRICHMENT_DRAWER_NAME_PARAM];
+    let nameFromQuery: string | undefined;
+    if (typeof raw === 'string') {
+      nameFromQuery = raw;
+    } else if (Array.isArray(raw) && raw.length > 0) {
+      nameFromQuery = String(raw[0]);
+    }
+    if (nameFromQuery && activeTab !== ActiveTab.Enrichment) {
+      setActiveTab(ActiveTab.Enrichment);
+    }
+  }, [queryParams, activeTab, setActiveTab]);
+
+  // Drop `?enrichment=` so it does not linger on other tabs or after full navigation to another rule.
+  useEffect(() => {
+    if (previousActiveTab.current === ActiveTab.Enrichment && activeTab !== ActiveTab.Enrichment) {
+      setQueryParams({ [ENRICHMENT_DRAWER_NAME_PARAM]: undefined }, true);
+    }
+    previousActiveTab.current = activeTab;
+  }, [activeTab, setQueryParams]);
 
   const { annotations, promRule, rulerRule } = rule;
 
