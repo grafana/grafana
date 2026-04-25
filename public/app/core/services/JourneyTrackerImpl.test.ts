@@ -1,16 +1,16 @@
 import { type Span, SpanStatusCode } from '@opentelemetry/api';
 
-import { config } from '@grafana/runtime';
-import { getJourneyTracker } from '@grafana/runtime';
+import { config, getJourneyTracker } from '@grafana/runtime';
 
 import { JourneyTrackerImpl } from './JourneyTrackerImpl';
 
 // Polyfill for jsdom which lacks crypto.randomUUID
 if (typeof crypto.randomUUID !== 'function') {
   Object.defineProperty(crypto, 'randomUUID', {
-    value: () => '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
-      (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16)
-    ),
+    value: () =>
+      '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+        (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16)
+      ),
   });
 }
 
@@ -25,9 +25,12 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 // Minimal span mock
-function createMockSpan(traceId = 'abc123def456'): jest.Mocked<Span> {
+let spanIdCounter = 0;
+function createMockSpan(traceId = 'abc123def456', spanId?: string): jest.Mocked<Span> {
+  spanIdCounter++;
+  const sid = spanId ?? `span-${spanIdCounter}`;
   return {
-    spanContext: jest.fn().mockReturnValue({ traceId, spanId: 'span-1', traceFlags: 1 }),
+    spanContext: jest.fn().mockReturnValue({ traceId, spanId: sid, traceFlags: 1 }),
     setAttribute: jest.fn(),
     setAttributes: jest.fn(),
     setStatus: jest.fn(),
@@ -39,20 +42,19 @@ function createMockSpan(traceId = 'abc123def456'): jest.Mocked<Span> {
   } as unknown as jest.Mocked<Span>;
 }
 
-const mockRootSpan = createMockSpan('trace-id-root');
-const mockChildSpan = createMockSpan('trace-id-root');
+const mockRootSpan = createMockSpan('trace-id-root', 'span-root');
+const mockChildSpan = createMockSpan('trace-id-root', 'span-child');
 let rootSpanCounter = 0;
 
 const mockStartSpan = jest.fn().mockImplementation((_name: string, _opts?: unknown, _ctx?: unknown) => {
   if (typeof _name === 'string' && _name.startsWith('journey:')) {
-    // Return a unique span per journey to simulate unique traceIds.
-    // Most tests rely on mockRootSpan assertions, so return it for the first call.
-    // For concurrent journeys (cancelOnRestart: false), each needs its own traceId.
+    // Each journey instance needs its own unique spanId — that's now what
+    // JourneyTrackerImpl uses to key the active-journey map.
     rootSpanCounter++;
     if (rootSpanCounter === 1) {
       return mockRootSpan;
     }
-    return createMockSpan(`trace-id-root-${rootSpanCounter}`);
+    return createMockSpan(`trace-id-root-${rootSpanCounter}`, `span-root-${rootSpanCounter}`);
   }
   return mockChildSpan;
 });
@@ -80,14 +82,18 @@ jest.mock('@opentelemetry/api', () => {
 // ---------------------------------------------------------------------------
 
 function enableTracing() {
-  (config as any).grafanaJavascriptAgent = {
+  (
+    config as unknown as { grafanaJavascriptAgent: { enabled: boolean; tracingInstrumentalizationEnabled: boolean } }
+  ).grafanaJavascriptAgent = {
     enabled: true,
     tracingInstrumentalizationEnabled: true,
   };
 }
 
 function disableTracing() {
-  (config as any).grafanaJavascriptAgent = {
+  (
+    config as unknown as { grafanaJavascriptAgent: { enabled: boolean; tracingInstrumentalizationEnabled: boolean } }
+  ).grafanaJavascriptAgent = {
     enabled: false,
     tracingInstrumentalizationEnabled: false,
   };
@@ -132,7 +138,10 @@ describe('JourneyTrackerImpl', () => {
     const handle = tracker.startJourney('dashboard_save');
     expect(handle.isActive).toBe(true);
     expect(handle.journeyType).toBe('dashboard_save');
-    expect(handle.journeyId).toBe('trace-id-root');
+    // journeyId is the spanId (unique per instance, even for nested journeys)
+    expect(handle.journeyId).toBe('span-root');
+    // traceId stays accessible for trace deep-links
+    expect(handle.traceId).toBe('trace-id-root');
   });
 
   it('should create a root OTel span for the journey', () => {
@@ -227,7 +236,8 @@ describe('JourneyTrackerImpl', () => {
     expect(values.totalDuration).toBeGreaterThanOrEqual(0);
     expect(values.stepCount).toBe(1);
     expect(ctx.journeyType).toBe('dashboard_save');
-    expect(ctx.journeyId).toBe('trace-id-root');
+    expect(ctx.journeyId).toBe('span-root');
+    expect(ctx.traceId).toBe('trace-id-root');
     expect(ctx.outcome).toBe('success');
     expect(ctx.dashboardUid).toBe('xyz');
     expect(ctx.savedVersion).toBe('3');
@@ -379,6 +389,145 @@ describe('JourneyTrackerImpl', () => {
       (call: unknown[]) => (call[0] as string) === 'journey:panel_edit'
     );
     expect(panelEditCall![1].links).toHaveLength(1);
+  });
+
+  // -------------------------------------------------------------------------
+  // Parent journey nesting
+  // -------------------------------------------------------------------------
+
+  describe('parent journey nesting', () => {
+    it('nests under an active parent journey when one is declared and active', () => {
+      const parent = tracker.startJourney('dashboard_edit', { cancelOnRestart: false });
+      const child = tracker.startJourney('panel_edit', {
+        cancelOnRestart: false,
+        parents: ['dashboard_edit'],
+      });
+
+      const childCall = mockStartSpan.mock.calls.find(
+        (call: unknown[]) => (call[0] as string) === 'journey:panel_edit'
+      );
+      expect(childCall).toBeDefined();
+      // No `root: true` when nesting — child span is created in parent's context
+      expect(childCall![1].root).toBeUndefined();
+      // A non-null parent context is passed as the third arg
+      expect(childCall![2]).toBeDefined();
+      // parent_journey.* attributes are set for queryability even with nesting
+      expect(childCall![1].attributes).toMatchObject({
+        'parent_journey.type': 'dashboard_edit',
+        'parent_journey.id': parent.journeyId,
+      });
+      // Concurrent attributes should NOT include the parent — the parent is
+      // structural, not coincidental concurrency.
+      expect(childCall![1].attributes).not.toMatchObject({
+        concurrent_journey_0_type: 'dashboard_edit',
+      });
+      // No span link to the parent either (links are reserved for non-parent
+      // concurrent journeys).
+      expect(childCall![1].links).toHaveLength(0);
+      child.end('success');
+      parent.end('success');
+    });
+
+    it('falls back to a new root span when no declared parent is active', () => {
+      const child = tracker.startJourney('panel_edit', {
+        parents: ['dashboard_edit'],
+      });
+
+      const childCall = mockStartSpan.mock.calls.find(
+        (call: unknown[]) => (call[0] as string) === 'journey:panel_edit'
+      );
+      expect(childCall![1].root).toBe(true);
+      expect(childCall![1].attributes).not.toHaveProperty('parent_journey.type');
+      child.end('success');
+    });
+
+    it('still records concurrent links for non-parent journeys when nested', () => {
+      tracker.startJourney('dashboard_edit', { cancelOnRestart: false });
+      tracker.startJourney('search_to_resource', { cancelOnRestart: false });
+      tracker.startJourney('panel_edit', {
+        cancelOnRestart: false,
+        parents: ['dashboard_edit'],
+      });
+
+      const childCall = mockStartSpan.mock.calls.find(
+        (call: unknown[]) => (call[0] as string) === 'journey:panel_edit'
+      );
+      // search_to_resource is concurrent and not the parent — shows up
+      expect(childCall![1].attributes).toMatchObject({
+        concurrent_journey_0_type: 'search_to_resource',
+      });
+      // dashboard_edit is the parent — does NOT show up in concurrent slots
+      // (it appears in parent_journey.type, that's the right place for it)
+      const attrs = childCall![1].attributes as Record<string, string>;
+      const concurrentSlots = Object.entries(attrs).filter(([k]) => k.startsWith('concurrent_journey_'));
+      const concurrentValues = concurrentSlots.map(([, v]) => v).join(' ');
+      expect(concurrentValues).not.toContain('dashboard_edit');
+    });
+
+    it('parent and nested child get distinct journeyIds even though they share traceId', () => {
+      const parent = tracker.startJourney('dashboard_edit', { cancelOnRestart: false });
+      const child = tracker.startJourney('panel_edit', {
+        cancelOnRestart: false,
+        parents: ['dashboard_edit'],
+      });
+
+      // Different journeyIds — keyed by spanId, even when nested in same trace.
+      // (The mock doesn't simulate OTel parent-context traceId inheritance; in
+      // real runtime parent.traceId === child.traceId. The pivotal assertion
+      // here is that journeyIds are distinct so neither overwrites the other.)
+      expect(parent.journeyId).not.toBe(child.journeyId);
+      // Both still active. If journeyIds collided, the activeJourneys map would
+      // have evicted the parent and getActiveJourney would miss it.
+      expect(tracker.getActiveJourney('dashboard_edit')).not.toBeNull();
+      expect(tracker.getActiveJourney('panel_edit')).not.toBeNull();
+
+      child.end('success');
+      parent.end('success');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Pending step closure on journey end
+  // -------------------------------------------------------------------------
+
+  describe('pending step closure', () => {
+    it('closes still-open steps when the journey ends', () => {
+      const handle = tracker.startJourney('dashboard_save');
+      handle.startStep('open_step_1');
+      handle.startStep('open_step_2');
+      mockChildSpan.end.mockClear();
+
+      handle.end('timeout');
+
+      // Both step spans should have been closed by the journey
+      expect(mockChildSpan.end.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('marks closed-by-journey steps with step.outcome=unended', () => {
+      const handle = tracker.startJourney('dashboard_save');
+      handle.startStep('left_open');
+      mockChildSpan.setAttribute.mockClear();
+
+      handle.end('canceled');
+
+      const calls = mockChildSpan.setAttribute.mock.calls;
+      const outcomeCall = calls.find((c: unknown[]) => c[0] === 'step.outcome');
+      expect(outcomeCall?.[1]).toBe('unended');
+      const journeyOutcomeCall = calls.find((c: unknown[]) => c[0] === 'step.unended_journey_outcome');
+      expect(journeyOutcomeCall?.[1]).toBe('canceled');
+    });
+
+    it('does not double-close steps that ended explicitly', () => {
+      const handle = tracker.startJourney('dashboard_save');
+      const step = handle.startStep('proper_step');
+      step.end({ outcome: 'success' });
+      mockChildSpan.end.mockClear();
+
+      handle.end('success');
+
+      // Step was already closed; journey end shouldn't re-close it
+      expect(mockChildSpan.end).not.toHaveBeenCalled();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -545,7 +694,7 @@ describe('JourneyTrackerImpl', () => {
     expect(cleanupCb).toHaveBeenCalledTimes(1);
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining('[JourneyTracker] onEnd callback error'),
-      expect.any(Error),
+      expect.any(Error)
     );
 
     errorSpy.mockRestore();

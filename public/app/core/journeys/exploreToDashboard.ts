@@ -37,26 +37,32 @@ onJourneyInstance('explore_to_dashboard', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   // Pointwise event: form submitted
-  add(onInteraction('e_2_d_submit', (props) => {
-    handle.recordEvent('submit', {
-      saveTarget: str(props.saveTarget),
-      newTab: str(props.newTab),
-    });
-    handle.setAttributes({
-      saveTarget: str(props.saveTarget),
-      newTab: str(props.newTab),
-    });
-  }));
+  add(
+    onInteraction('e_2_d_submit', (props) => {
+      handle.recordEvent('submit', {
+        saveTarget: str(props.saveTarget),
+        newTab: str(props.newTab),
+      });
+      handle.setAttributes({
+        saveTarget: str(props.saveTarget),
+        newTab: str(props.newTab),
+      });
+    })
+  );
 
   // Success: panel applied on the dashboard side
-  add(onInteraction('explore_to_dashboard_panel_applied', () => {
-    handle.end('success');
-  }));
+  add(
+    onInteraction('explore_to_dashboard_panel_applied', () => {
+      handle.end('success');
+    })
+  );
 
   // Discarded: form closed without submitting
-  add(onInteraction('e_2_d_discarded', () => {
-    handle.end('discarded');
-  }));
+  add(
+    onInteraction('e_2_d_discarded', () => {
+      handle.end('discarded');
+    })
+  );
 
   return cleanup;
 });

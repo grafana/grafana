@@ -4,7 +4,6 @@ import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSo
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { trackAddQuery } from '../PanelEditNext/tracking';
 import {
   SafeSerializableSceneObject,
   type SceneComponentProps,
@@ -42,6 +41,7 @@ import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';

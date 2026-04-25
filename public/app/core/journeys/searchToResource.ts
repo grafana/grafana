@@ -32,53 +32,61 @@ onJourneyInstance('search_to_resource', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   // Track whether user selected something, enrich with resource type
-  add(onInteraction('command_palette_action_selected', (props) => {
-    actionSelected = true;
-    const actionId = str(props.actionId);
-    if (actionId.startsWith('go/dashboard')) {
-      selectedResourceType = 'dashboard';
-    } else if (actionId.startsWith('go/folder')) {
-      selectedResourceType = 'folder';
-    } else {
-      selectedResourceType = 'other';
-    }
-    handle.setAttributes({
-      resourceType: selectedResourceType,
-      actionId,
-      actionName: str(props.actionName),
-    });
-  }));
+  add(
+    onInteraction('command_palette_action_selected', (props) => {
+      actionSelected = true;
+      const actionId = str(props.actionId);
+      if (actionId.startsWith('go/dashboard')) {
+        selectedResourceType = 'dashboard';
+      } else if (actionId.startsWith('go/folder')) {
+        selectedResourceType = 'folder';
+      } else {
+        selectedResourceType = 'other';
+      }
+      handle.setAttributes({
+        resourceType: selectedResourceType,
+        actionId,
+        actionName: str(props.actionName),
+      });
+    })
+  );
 
   // Dashboard loaded -> success
-  add(onInteraction('dashboards_init_dashboard_completed', (props) => {
-    handle.setAttributes({
-      resourceType: 'dashboard',
-      dashboardUid: str(props.uid),
-    });
-    handle.end('success');
-  }));
-
-  // Browse page loaded after folder selection -> success
-  add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
-    if (selectedResourceType === 'folder') {
+  add(
+    onInteraction('dashboards_init_dashboard_completed', (props) => {
       handle.setAttributes({
-        folderUID: str(props.folderUID),
+        resourceType: 'dashboard',
+        dashboardUid: str(props.uid),
       });
       handle.end('success');
-    }
-  }));
+    })
+  );
+
+  // Browse page loaded after folder selection -> success
+  add(
+    onInteraction('grafana_browse_dashboards_page_view', (props) => {
+      if (selectedResourceType === 'folder') {
+        handle.setAttributes({
+          folderUID: str(props.folderUID),
+        });
+        handle.end('success');
+      }
+    })
+  );
 
   // Command palette closed:
   // - no action selected -> discarded
   // - nav action selected (resourceType 'other') -> success (palette closing IS the navigation)
-  add(onInteraction('command_palette_closed', () => {
-    if (!actionSelected) {
-      handle.end('discarded');
-    } else if (selectedResourceType === 'other') {
-      handle.end('success');
-    }
-    // dashboard/folder: don't end here, wait for their specific load events
-  }));
+  add(
+    onInteraction('command_palette_closed', () => {
+      if (!actionSelected) {
+        handle.end('discarded');
+      } else if (selectedResourceType === 'other') {
+        handle.end('success');
+      }
+      // dashboard/folder: don't end here, wait for their specific load events
+    })
+  );
 
   return cleanup;
 });

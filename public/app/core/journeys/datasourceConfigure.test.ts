@@ -10,7 +10,6 @@ import {
   setupJourneyTest,
 } from './__test-utils__/journeyTestHarness';
 
-
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
@@ -196,5 +195,4 @@ describe('datasourceConfigure journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
     expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
-
 });

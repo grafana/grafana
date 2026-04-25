@@ -5,7 +5,9 @@
 export function collectUnsubs() {
   const unsubs: Array<() => void> = [];
   return {
-    add: (unsub: () => void) => { unsubs.push(unsub); },
+    add: (unsub: () => void) => {
+      unsubs.push(unsub);
+    },
     cleanup: () => unsubs.forEach((fn) => fn()),
   };
 }

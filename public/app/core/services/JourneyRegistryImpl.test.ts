@@ -1,9 +1,4 @@
-import {
-  type JourneyHandle,
-  type JourneyMeta,
-  type JourneyTracker,
-  setJourneyTracker,
-} from '@grafana/runtime';
+import { type JourneyHandle, type JourneyMeta, type JourneyTracker, setJourneyTracker } from '@grafana/runtime';
 
 import { JourneyRegistryImpl } from './JourneyRegistryImpl';
 
@@ -30,6 +25,7 @@ const TEST_META: JourneyMeta[] = [
 function createMockHandle(overrides?: Partial<JourneyHandle>): JourneyHandle {
   return {
     journeyId: `journey-${Math.random().toString(36).slice(2)}`,
+    traceId: `trace-${Math.random().toString(36).slice(2)}`,
     journeyType: 'test_journey',
     isActive: true,
     recordEvent: jest.fn(),
@@ -81,7 +77,6 @@ describe('JourneyRegistryImpl', () => {
   // init and metadata
   // -------------------------------------------------------------------------
 
-
   // -------------------------------------------------------------------------
   // registerTriggers - validation
   // -------------------------------------------------------------------------
@@ -89,9 +84,7 @@ describe('JourneyRegistryImpl', () => {
   it('should throw when registering start for unknown journey type', () => {
     const triggersFn = jest.fn<() => void, [JourneyTracker]>(() => jest.fn());
 
-    expect(() => registry.registerTriggers('unknown_type', triggersFn)).toThrow(
-      /unknown journey type "unknown_type"/
-    );
+    expect(() => registry.registerTriggers('unknown_type', triggersFn)).toThrow(/unknown journey type "unknown_type"/);
     expect(triggersFn).not.toHaveBeenCalled();
   });
 
@@ -272,6 +265,7 @@ describe('JourneyRegistryImpl', () => {
     const customTracker: jest.Mocked<JourneyTracker> = {
       startJourney: jest.fn((type) => ({
         journeyId: `journey-${type}`,
+        traceId: `trace-${type}`,
         journeyType: type,
         isActive: true,
         recordEvent: jest.fn(),
@@ -311,9 +305,7 @@ describe('JourneyRegistryImpl', () => {
   it('should throw when registering end for unknown journey type', () => {
     const instanceFn = jest.fn<() => void, [JourneyHandle]>(() => jest.fn());
 
-    expect(() => registry.onInstance('unknown_type', instanceFn)).toThrow(
-      /unknown journey type "unknown_type"/
-    );
+    expect(() => registry.onInstance('unknown_type', instanceFn)).toThrow(/unknown journey type "unknown_type"/);
     expect(instanceFn).not.toHaveBeenCalled();
   });
 
@@ -323,9 +315,7 @@ describe('JourneyRegistryImpl', () => {
 
     registry.onInstance('test_journey', instanceFn1);
 
-    expect(() => registry.onInstance('test_journey', instanceFn2)).toThrow(
-      /already has an end handler registered/
-    );
+    expect(() => registry.onInstance('test_journey', instanceFn2)).toThrow(/already has an end handler registered/);
   });
 
   // -------------------------------------------------------------------------

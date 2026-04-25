@@ -1,12 +1,37 @@
 import { type Span, type Tracer, context, trace, SpanStatusCode, type Link } from '@opentelemetry/api';
 
-import { type JourneyHandle, type JourneyOptions, type JourneyOutcome, type JourneyTracker, type StepHandle, config, logMeasurement } from '@grafana/runtime';
+import {
+  type JourneyHandle,
+  type JourneyOptions,
+  type JourneyOutcome,
+  type JourneyTracker,
+  type StepHandle,
+  config,
+  logMeasurement,
+} from '@grafana/runtime';
 import { createDebugLog } from 'app/core/utils/debugLog';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const ABANDONED_TAB_HIDDEN_MS = 60 * 1000; // 60 seconds
 
 const debugLog = createDebugLog('journeyTracker', 'JourneyTracker');
+
+/**
+ * RFC4122 v4 UUID. Prefers `crypto.randomUUID` and falls back to `getRandomValues` for
+ * browsers / environments where randomUUID isn't exposed (HTTP contexts, older WebViews).
+ * The framework runs in many environments and we'd rather degrade than throw.
+ */
+function uuidv4(): string {
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 /**
  * Real JourneyTracker implementation backed by OTel spans (when available)
@@ -43,6 +68,20 @@ export class JourneyTrackerImpl implements JourneyTracker {
       }
     }
 
+    // Resolve a parent journey, if the registry declared one. The first listed
+    // parent that is currently active wins. The parent is excluded from concurrent
+    // bookkeeping below — it's a structural relationship, not a coincidence.
+    let parentHandle: JourneyHandleImpl | null = null;
+    if (options?.parents?.length) {
+      for (const parentType of options.parents) {
+        const candidate = this.getActiveJourneyImpl(parentType);
+        if (candidate) {
+          parentHandle = candidate;
+          break;
+        }
+      }
+    }
+
     // Collect links to all other active journeys for concurrent context
     const MAX_CONCURRENT_LINKS = 5;
     const concurrentLinks: Link[] = [];
@@ -51,6 +90,9 @@ export class JourneyTrackerImpl implements JourneyTracker {
     let totalConcurrent = 0;
 
     for (const handle of this.activeJourneys.values()) {
+      if (handle === parentHandle) {
+        continue;
+      }
       if (handle.journeyType !== journeyType || !cancelOnRestart) {
         if (concurrentIdx < MAX_CONCURRENT_LINKS) {
           concurrentAttributes[`concurrent_journey_${concurrentIdx}_type`] = handle.journeyType;
@@ -67,8 +109,15 @@ export class JourneyTrackerImpl implements JourneyTracker {
       concurrentAttributes['concurrent_journey_count'] = String(totalConcurrent);
     }
 
+    const parentAttributes: Record<string, string> = parentHandle
+      ? {
+          'parent_journey.type': parentHandle.journeyType,
+          'parent_journey.id': parentHandle.journeyId,
+        }
+      : {};
+
     const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const mergedAttributes = { ...concurrentAttributes, ...options?.attributes };
+    const mergedAttributes = { ...concurrentAttributes, ...parentAttributes, ...options?.attributes };
 
     const handle = new JourneyHandleImpl(
       journeyType,
@@ -76,7 +125,8 @@ export class JourneyTrackerImpl implements JourneyTracker {
       mergedAttributes,
       concurrentLinks,
       timeoutMs,
-      () => this.activeJourneys.delete(handle.journeyId)
+      () => this.activeJourneys.delete(handle.journeyId),
+      parentHandle?.span ?? null
     );
 
     this.activeJourneys.set(handle.journeyId, handle);
@@ -91,8 +141,11 @@ export class JourneyTrackerImpl implements JourneyTracker {
   }
 
   getActiveJourney(journeyType: string): JourneyHandle | null {
-    // Return the most recently added active journey of this type.
-    // Iterate in reverse insertion order by collecting matches.
+    return this.getActiveJourneyImpl(journeyType);
+  }
+
+  /** Internal variant returning the concrete handle (with `span` access). */
+  private getActiveJourneyImpl(journeyType: string): JourneyHandleImpl | null {
     let latest: JourneyHandleImpl | null = null;
     for (const handle of this.activeJourneys.values()) {
       if (handle.journeyType === journeyType && handle.isActive) {
@@ -158,6 +211,7 @@ export class JourneyTrackerImpl implements JourneyTracker {
 
 class JourneyHandleImpl implements JourneyHandle {
   readonly journeyId: string;
+  readonly traceId: string;
   readonly journeyType: string;
 
   /** Exposed internally for concurrent-journey span links. */
@@ -171,6 +225,11 @@ class JourneyHandleImpl implements JourneyHandle {
   private timeoutTimer: ReturnType<typeof setTimeout> | null;
   private readonly onCleanup: () => void;
   private readonly onEndCallbacks: Array<() => void> = [];
+  /**
+   * Step handles that have been started but not ended. Closed by the journey at end()
+   * so a journey that times out / is canceled mid-step doesn't leave dangling spans.
+   */
+  private readonly pendingSteps = new Set<StepHandleImpl>();
 
   constructor(
     journeyType: string,
@@ -178,7 +237,8 @@ class JourneyHandleImpl implements JourneyHandle {
     attributes: Record<string, string>,
     concurrentLinks: Link[],
     timeoutMs: number,
-    onCleanup: () => void
+    onCleanup: () => void,
+    parentSpan: Span | null = null
   ) {
     this.journeyType = journeyType;
     this.tracer = tracer;
@@ -186,20 +246,36 @@ class JourneyHandleImpl implements JourneyHandle {
     this.onCleanup = onCleanup;
     this.startTime = performance.now();
 
-    // Create the root span for the journey
+    // Create the span for the journey. When a parent journey is active and this
+    // journey type declares it as a parent, the span is created under the parent
+    // span's context — same trace, native Tempo waterfall. Otherwise the span is
+    // a new trace root.
     if (tracer) {
-      this.span = tracer.startSpan(`journey:${journeyType}`, {
+      const spanOptions = {
         attributes: {
           'journey.type': journeyType,
           ...attributes,
         },
         links: concurrentLinks,
-        root: true,
-      });
-      this.journeyId = this.span.spanContext().traceId;
+        ...(parentSpan ? {} : { root: true }),
+      } as const;
+
+      if (parentSpan) {
+        const parentCtx = trace.setSpan(context.active(), parentSpan);
+        this.span = tracer.startSpan(`journey:${journeyType}`, spanOptions, parentCtx);
+      } else {
+        this.span = tracer.startSpan(`journey:${journeyType}`, spanOptions);
+      }
+      const ctx = this.span.spanContext();
+      // Use spanId for the journey instance id. Nested journeys share their parent's
+      // traceId so traceId would collide in activeJourneys / cleanup maps; spanId is
+      // unique per journey instance. traceId is exposed separately for trace deep-links.
+      this.journeyId = ctx.spanId;
+      this.traceId = ctx.traceId;
     } else {
       this.span = null;
-      this.journeyId = crypto.randomUUID();
+      this.journeyId = uuidv4();
+      this.traceId = '';
     }
 
     // Set up timeout
@@ -265,7 +341,9 @@ class JourneyHandleImpl implements JourneyHandle {
         },
         parentCtx
       );
-      return new StepHandleImpl(childSpan);
+      const stepHandle = new StepHandleImpl(childSpan, () => this.pendingSteps.delete(stepHandle));
+      this.pendingSteps.add(stepHandle);
+      return stepHandle;
     }
 
     return NOOP_STEP_INTERNAL;
@@ -292,6 +370,16 @@ class JourneyHandleImpl implements JourneyHandle {
     const totalDuration = performance.now() - this.startTime;
     const allAttributes = { ...this.attributes, ...endAttributes };
 
+    // Close any duration steps that haven't been ended explicitly. Otherwise their
+    // child spans dangle and never reach Tempo. Callers should still match their own
+    // start/end events; this is a backstop for timeout / cancel / abandon paths.
+    if (this.pendingSteps.size > 0) {
+      for (const step of [...this.pendingSteps]) {
+        step.endByJourney(outcome);
+      }
+      this.pendingSteps.clear();
+    }
+
     // End the OTel span
     if (this.span) {
       this.span.setAttributes(allAttributes);
@@ -314,6 +402,7 @@ class JourneyHandleImpl implements JourneyHandle {
       {
         journeyType: this.journeyType,
         journeyId: this.journeyId,
+        traceId: this.traceId,
         outcome,
         ...allAttributes,
       }
@@ -361,7 +450,10 @@ class JourneyHandleImpl implements JourneyHandle {
 class StepHandleImpl implements StepHandle {
   private ended = false;
 
-  constructor(private readonly span: Span) {}
+  constructor(
+    private readonly span: Span,
+    private readonly onEnd: () => void
+  ) {}
 
   end(attributes?: Record<string, string>): void {
     if (this.ended) {
@@ -372,6 +464,22 @@ class StepHandleImpl implements StepHandle {
       this.span.setAttributes(attributes);
     }
     this.span.end();
+    this.onEnd();
+  }
+
+  /**
+   * Called by the journey when it ends with a still-open step. Marks the step as
+   * unfinished (so the duration is honest) and closes the span. Idempotent.
+   */
+  endByJourney(journeyOutcome: JourneyOutcome): void {
+    if (this.ended) {
+      return;
+    }
+    this.ended = true;
+    this.span.setAttribute('step.outcome', 'unended');
+    this.span.setAttribute('step.unended_journey_outcome', journeyOutcome);
+    this.span.end();
+    this.onEnd();
   }
 }
 

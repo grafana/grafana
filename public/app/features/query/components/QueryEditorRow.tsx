@@ -21,8 +21,6 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
-import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
-import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -34,6 +32,8 @@ import {
   QueryOperationRow,
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
+import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../expressions/types';

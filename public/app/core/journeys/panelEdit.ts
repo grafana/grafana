@@ -33,6 +33,7 @@ registerJourneyTriggers('panel_edit', (tracker) => {
         attributes: {
           panelId: str(props.id),
           source: str(props.source),
+          'grafana.panel.type': str(props.panelType),
         },
       });
     }
@@ -44,42 +45,48 @@ onJourneyInstance('panel_edit', (handle) => {
 
   // Track panel edit interactions as pointwise events (no duration).
   // recordEvent is the fire-and-forget form - no StepHandle to leak.
-  add(onInteraction('grafana_panel_edit_next_interaction', (props) => {
-    const action = str(props.action ?? 'unknown');
+  add(
+    onInteraction('grafana_panel_edit_next_interaction', (props) => {
+      const action = str(props.action ?? 'unknown');
 
-    switch (action) {
-      case 'add_query':
-        handle.recordEvent('add_query', {
-          source: str(props.source),
-          card_source: str(props.card_source),
-        });
-        break;
-      case 'add_transformation_initiated':
-        handle.recordEvent('add_transformation', {
-          source: str(props.source),
-        });
-        break;
-      case 'change_sidebar_view':
-        handle.recordEvent('change_view', {
-          view: str(props.view),
-        });
-        break;
-      default:
-        handle.recordEvent(action);
-        break;
-    }
-  }));
+      switch (action) {
+        case 'add_query':
+          handle.recordEvent('add_query', {
+            source: str(props.source),
+            card_source: str(props.card_source),
+          });
+          break;
+        case 'add_transformation_initiated':
+          handle.recordEvent('add_transformation', {
+            source: str(props.source),
+          });
+          break;
+        case 'change_sidebar_view':
+          handle.recordEvent('change_view', {
+            view: str(props.view),
+          });
+          break;
+        default:
+          handle.recordEvent(action);
+          break;
+      }
+    })
+  );
 
   // Discard fires before close - mark the outcome
   let discarded = false;
-  add(onInteraction('panel_edit_discarded', () => {
-    discarded = true;
-  }));
+  add(
+    onInteraction('panel_edit_discarded', () => {
+      discarded = true;
+    })
+  );
 
   // End journey when panel edit mode closes
-  add(onInteraction('panel_edit_closed', () => {
-    handle.end(discarded ? 'discarded' : 'success');
-  }));
+  add(
+    onInteraction('panel_edit_closed', () => {
+      handle.end(discarded ? 'discarded' : 'success');
+    })
+  );
 
   return cleanup;
 });

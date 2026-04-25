@@ -7,7 +7,6 @@ import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { trackAddTransformationInitiated, trackCardAction, trackReorder } from '../PanelEditNext/tracking';
 import {
   type SceneComponentProps,
   SceneDataTransformer,
@@ -22,7 +21,7 @@ import { TransformationOperationRows } from 'app/features/dashboard/components/T
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
-import { QueryEditorType, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
+import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
@@ -148,7 +147,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         if (selected.value === undefined) {
           return;
         }
-        trackAddTransformationInitiated('legacy', { silent: true });
         model.onChangeTransformations([...transformations, { id: selected.value, options: {} }]);
         closeDrawer();
       }}
@@ -248,7 +246,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     model.onChangeTransformations(update.map((t) => t.transformation));
-    trackReorder('transformation', { silent: true });
   };
 
   return (
@@ -276,7 +273,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                       total_transformations: transformations.length - 1,
                     });
                   }
-                  trackCardAction('delete', QueryEditorType.Transformation, 'content_header', { silent: true });
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index, 1);
                   model.onChangeTransformations(newTransformations);

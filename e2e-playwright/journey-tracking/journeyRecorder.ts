@@ -1,3 +1,9 @@
+/* eslint-disable @grafana/no-direct-local-storage-access, @typescript-eslint/consistent-type-assertions --
+ * This module runs both in the test process (Node) and in the browser via page.addInitScript /
+ * page.evaluate. localStorage is the only way to set the debug-log flag before Grafana boots,
+ * and the type assertions cross the test/browser context boundary where @grafana/data utilities
+ * aren't available.
+ */
 import { type Page } from '@playwright/test';
 
 import type { JourneyOutcome, JourneyRecord, JourneyRecorder, JourneyStepRecord } from './types';

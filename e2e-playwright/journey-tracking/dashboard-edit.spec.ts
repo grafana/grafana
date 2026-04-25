@@ -48,16 +48,12 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
     await page.waitForLoadState('networkidle');
 
     // Click the edit button - this fires dashboards_edit_button_clicked which starts the journey
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
     await journeyRecorder.waitForJourneyStart('dashboard_edit');
 
     // Make a trivial change: open settings and modify the dashboard title
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton).click();
 
     const titleInput = page.getByLabel('Title');
     if (await titleInput.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -70,14 +66,10 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
     }
 
     // Save the dashboard - this fires grafana_dashboard_saved which ends the journey
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
     // Confirm save in the drawer
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
 
     // Wait for the save confirmation toast
     const toast = page.getByRole('status', { name: 'Dashboard saved' });
@@ -101,9 +93,7 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
     await page.waitForLoadState('networkidle');
 
     // Click edit button to enter edit mode
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
     await journeyRecorder.waitForJourneyStart('dashboard_edit');
 
@@ -111,35 +101,40 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
     // change, exitEditMode bypasses the discard dialog because hasActualSaveChanges
     // returns false (title-only changes via settings aren't counted).
     // Add a visualization via the toolbar Add button which creates a real panel diff.
+    // Timeouts bumped from 3-5s to 10s — CI runners are slower than local and the
+    // dashboard-edit → panel-edit → back-to-dashboard transition has multiple scene
+    // renders that can take longer than the original tighter budget.
     const addButton = page.getByRole('button', { name: /^Add$/ });
-    await expect(addButton).toBeVisible({ timeout: 3000 });
+    await expect(addButton).toBeVisible({ timeout: 10_000 });
     await addButton.click();
 
     const addVisualization = page.getByRole('menuitem', { name: /visualization/i });
-    await expect(addVisualization).toBeVisible({ timeout: 3000 });
+    await expect(addVisualization).toBeVisible({ timeout: 10_000 });
     await addVisualization.click();
 
     // This opens panel edit mode. Go back to the dashboard without saving the panel
     // to keep the dashboard dirty with the new panel addition.
     const backToDashboard = page.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton);
-    await expect(backToDashboard).toBeVisible({ timeout: 5000 });
+    await expect(backToDashboard).toBeVisible({ timeout: 10_000 });
     await backToDashboard.click();
+
+    // Let the scene settle on the dashboard view before triggering exit. Without
+    // this the click on Exit can race the panel-edit-close transition.
+    await page.waitForLoadState('networkidle');
 
     // Wait for the dashboard canvas with the Exit edit button
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton)
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10_000 });
 
     // Click the "Exit edit" button. Because the dashboard has an actual save change
     // (new panel), a confirmation dialog appears and clicking Discard fires
     // dashboards_edit_discarded which ends the journey.
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton).click();
 
     // Confirm discard in the confirmation dialog
     const discardButton = page.getByRole('button', { name: /discard/i });
-    await expect(discardButton).toBeVisible({ timeout: 5000 });
+    await expect(discardButton).toBeVisible({ timeout: 10_000 });
     await discardButton.click();
 
     const journey = await journeyRecorder.waitForJourneyEnd('dashboard_edit');
@@ -168,16 +163,12 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
     await page.waitForLoadState('networkidle');
 
     // Enter edit mode on existing dashboard
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
     await journeyRecorder.waitForJourneyStart('dashboard_edit');
 
     // Save as new dashboard - this fires grafana_dashboard_created
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
-      .click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
     // Click "Save As" in the save drawer to create a new dashboard
     const saveAsButton = page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsButton);

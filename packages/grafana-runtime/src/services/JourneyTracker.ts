@@ -22,6 +22,16 @@ export interface JourneyMeta {
   timeoutMs: number;
   /** If true (default), starting a journey of the same type cancels the previous instance. */
   cancelOnRestart?: boolean;
+  /**
+   * Other journey types that should be treated as parents. When any of these is
+   * active at journey start, this journey's root span nests under it (same trace,
+   * native Tempo waterfall) and `parent_journey.id` / `parent_journey.type`
+   * attributes are recorded for queryability.
+   *
+   * Order matters: the first listed parent that is currently active wins. If
+   * none are active, the journey starts a new trace as usual.
+   */
+  parents?: string[];
 }
 
 /**
@@ -36,6 +46,8 @@ export interface JourneyOptions {
   timeoutMs?: number;
   /** @internal - set by registry, not by callers */
   cancelOnRestart?: boolean;
+  /** @internal - set by registry from JourneyMeta.parents, not by callers */
+  parents?: string[];
 }
 
 /**
@@ -54,8 +66,20 @@ export interface StepHandle {
  * @public
  */
 export interface JourneyHandle {
-  /** Trace-level identifier for this journey instance. */
+  /**
+   * Unique identifier for this journey instance. Stable across the lifetime of the journey.
+   *
+   * When OTel tracing is enabled this is the journey's root span ID, which is unique even
+   * for journeys that nest under a parent (those share the parent's traceId, not the spanId).
+   * When tracing is disabled this is a UUID generated at start time.
+   */
   readonly journeyId: string;
+  /**
+   * OTel trace ID for the journey's root span, when tracing is enabled.
+   * Empty string when tracing is disabled. Use this (not journeyId) to deep-link to a Tempo trace.
+   * Nested journeys share their parent's traceId.
+   */
+  readonly traceId: string;
   /** The journey type name passed to startJourney. */
   readonly journeyType: string;
   /** False after end() has been called. */
@@ -109,6 +133,7 @@ const NOOP_STEP = new NoopStepHandle();
 
 class NoopJourneyHandle implements JourneyHandle {
   readonly journeyId = '';
+  readonly traceId = '';
   readonly journeyType = '';
   readonly isActive = false;
 

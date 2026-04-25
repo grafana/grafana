@@ -184,7 +184,7 @@ export class FakeEchoSrv implements EchoSrv {
 
     // Dispatch to interaction subscribers
     if (event.type === EchoEventType.Interaction) {
-      const payload = event.payload as { interactionName?: string; properties?: Record<string, unknown> };
+      const payload: { interactionName?: string; properties?: Record<string, unknown> } = event.payload;
       if (payload.interactionName) {
         const subscribers = this.interactionSubscribers.get(payload.interactionName);
         if (subscribers) {

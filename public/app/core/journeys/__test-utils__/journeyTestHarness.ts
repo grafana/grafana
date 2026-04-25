@@ -35,6 +35,7 @@ export function createMockStepHandle(): jest.Mocked<StepHandle> {
 export function createMockHandle(type: string): jest.Mocked<JourneyHandle> {
   return {
     journeyId: `mock-${type}-${Date.now()}`,
+    traceId: `trace-${type}-${Date.now()}`,
     journeyType: type,
     isActive: true,
     recordEvent: jest.fn(),
@@ -57,9 +58,7 @@ export function createMockTracker(): jest.Mocked<JourneyTracker> {
  * Set up the journey registry and tracker for a test suite.
  * Returns the registry so the caller can destroy() it in afterEach.
  */
-export function setupJourneyTest(
-  mockTracker: jest.Mocked<JourneyTracker>
-): JourneyRegistryImpl {
+export function setupJourneyTest(mockTracker: jest.Mocked<JourneyTracker>): JourneyRegistryImpl {
   interactionCallbacks.clear();
   setJourneyTracker(mockTracker);
 

@@ -1,4 +1,11 @@
-import { type JourneyHandle, type JourneyMeta, type JourneyRegistry, type JourneyTriggersFn, type JourneyInstanceFn, getJourneyTracker } from '@grafana/runtime';
+import {
+  type JourneyHandle,
+  type JourneyMeta,
+  type JourneyRegistry,
+  type JourneyTriggersFn,
+  type JourneyInstanceFn,
+  getJourneyTracker,
+} from '@grafana/runtime';
 import { createDebugLog } from 'app/core/utils/debugLog';
 
 const debugLog = createDebugLog('journeyTracker', 'JourneyRegistry');
@@ -121,7 +128,6 @@ export class JourneyRegistryImpl implements JourneyRegistry {
     this.registeredTriggers.clear();
   }
 
-
   /**
    * Log a warning for each registry entry that has no triggers registered.
    * Call this at the end of bootstrap to surface misconfigured journeys.
@@ -155,6 +161,7 @@ export class JourneyRegistryImpl implements JourneyRegistry {
         const mergedOptions = {
           timeoutMs: meta.timeoutMs,
           cancelOnRestart: meta.cancelOnRestart ?? true,
+          parents: meta.parents,
           ...Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== undefined)),
         };
 

@@ -41,47 +41,53 @@ onJourneyInstance('browse_to_resource', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   // Folder click starts a navigate_folder duration step; non-folder click starts select_resource.
-  add(onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
-    if (props.itemKind === 'folder') {
-      pendingFolderStep = handle.startStep('navigate_folder', {
-        folderUID: str(props.uid),
-      });
-    } else {
-      pendingSelectStep = handle.startStep('select_resource', {
-        resourceType: str(props.itemKind ?? 'unknown'),
-        resourceUID: str(props.uid),
-      });
-      handle.setAttributes({
-        resourceType: str(props.itemKind ?? 'unknown'),
-        resourceUID: str(props.uid),
-      });
-    }
-  }));
+  add(
+    onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
+      if (props.itemKind === 'folder') {
+        pendingFolderStep = handle.startStep('navigate_folder', {
+          folderUID: str(props.uid),
+        });
+      } else {
+        pendingSelectStep = handle.startStep('select_resource', {
+          resourceType: str(props.itemKind ?? 'unknown'),
+          resourceUID: str(props.uid),
+        });
+        handle.setAttributes({
+          resourceType: str(props.itemKind ?? 'unknown'),
+          resourceUID: str(props.uid),
+        });
+      }
+    })
+  );
 
   // Subsequent page_views end the pending folder step and enrich the journey.
-  add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
-    const folderUID = str(props.folderUID);
-    if (pendingFolderStep) {
-      pendingFolderStep.end({ folderUID });
-      pendingFolderStep = null;
-    }
-    handle.setAttributes({ folderUID });
-  }));
+  add(
+    onInteraction('grafana_browse_dashboards_page_view', (props) => {
+      const folderUID = str(props.folderUID);
+      if (pendingFolderStep) {
+        pendingFolderStep.end({ folderUID });
+        pendingFolderStep = null;
+      }
+      handle.setAttributes({ folderUID });
+    })
+  );
 
   // Dashboard loads -> end the select step and the journey.
-  add(onInteraction('dashboards_init_dashboard_completed', (props) => {
-    if (pendingSelectStep) {
-      pendingSelectStep.end({
+  add(
+    onInteraction('dashboards_init_dashboard_completed', (props) => {
+      if (pendingSelectStep) {
+        pendingSelectStep.end({
+          dashboardUid: str(props.uid),
+        });
+        pendingSelectStep = null;
+      }
+      handle.setAttributes({
+        resourceType: 'dashboard',
         dashboardUid: str(props.uid),
       });
-      pendingSelectStep = null;
-    }
-    handle.setAttributes({
-      resourceType: 'dashboard',
-      dashboardUid: str(props.uid),
-    });
-    handle.end('success');
-  }));
+      handle.end('success');
+    })
+  );
 
   return cleanup;
 });

@@ -156,9 +156,10 @@ export const DashboardInteractions = {
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard'
+    source: 'panel' | 'edit_pane' | 'keyboard',
+    panelType?: string
   ) {
-    reportDashboardInteraction('panel_action_clicked', { item, id, source });
+    reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
 
   // Panel styles copy/paste interactions

@@ -10,7 +10,12 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  reportInteraction,
+  usePluginComponents,
+  type UsePluginComponentsResult,
+} from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';

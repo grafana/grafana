@@ -98,11 +98,7 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
     }
   });
 
-  test('direct browse to dashboard records a successful journey', async ({
-    page,
-    journeyRecorder,
-    selectors,
-  }) => {
+  test('direct browse to dashboard records a successful journey', async ({ page, journeyRecorder, selectors }) => {
     // Navigate to the browse dashboards page - this fires grafana_browse_dashboards_page_view
     // which starts the browse_to_resource journey
     await page.goto('/dashboards');
@@ -147,9 +143,7 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
     await journeyRecorder.waitForJourneyStart('browse_to_resource');
 
     // Click into the test folder (navigates to /dashboards/f/{folderAUID}/)
-    const folderRow = page.getByTestId(
-      selectors.pages.BrowseDashboards.table.row(folderATitle)
-    );
+    const folderRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderATitle));
     await expect(folderRow).toBeVisible();
     await folderRow.locator('a').first().click();
 
@@ -158,9 +152,7 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
     await page.waitForLoadState('networkidle');
 
     // Click the dashboard inside the folder
-    const dashboardRow = page.getByTestId(
-      selectors.pages.BrowseDashboards.table.row(dashInATitle)
-    );
+    const dashboardRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(dashInATitle));
     await expect(dashboardRow).toBeVisible();
     await dashboardRow.locator('a').first().click();
 
@@ -181,38 +173,28 @@ test.describe('browse_to_resource journey tracking', { tag: ['@journey-tracking'
     expect(journey.steps[1].name).toBe('select_resource');
   });
 
-  test('multiple folder navigations records correct step count', async ({
-    page,
-    journeyRecorder,
-    selectors,
-  }) => {
+  test('multiple folder navigations records correct step count', async ({ page, journeyRecorder, selectors }) => {
     await page.goto('/dashboards');
     await page.waitForLoadState('networkidle');
 
     await journeyRecorder.waitForJourneyStart('browse_to_resource');
 
     // Step 1: Navigate into folder A
-    const folderARow = page.getByTestId(
-      selectors.pages.BrowseDashboards.table.row(folderATitle)
-    );
+    const folderARow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderATitle));
     await expect(folderARow).toBeVisible();
     await folderARow.locator('a').first().click();
     await page.waitForURL(`**/dashboards/f/${folderAUID}/**`);
     await page.waitForLoadState('networkidle');
 
     // Step 2: Navigate into folder B (nested inside A)
-    const folderBRow = page.getByTestId(
-      selectors.pages.BrowseDashboards.table.row(folderBTitle)
-    );
+    const folderBRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderBTitle));
     await expect(folderBRow).toBeVisible();
     await folderBRow.locator('a').first().click();
     await page.waitForURL(`**/dashboards/f/${folderBUID}/**`);
     await page.waitForLoadState('networkidle');
 
     // Step 3: Click the dashboard inside folder B
-    const dashboardRow = page.getByTestId(
-      selectors.pages.BrowseDashboards.table.row(dashInBTitle)
-    );
+    const dashboardRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(dashInBTitle));
     await expect(dashboardRow).toBeVisible();
     await dashboardRow.locator('a').first().click();
 

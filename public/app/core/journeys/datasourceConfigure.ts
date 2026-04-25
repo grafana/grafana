@@ -34,40 +34,46 @@ registerJourneyTriggers('datasource_configure', (tracker) => {
   const { add, cleanup } = collectUnsubs();
 
   // "Add new data source" button on the datasource list page
-  add(onInteraction('connections_datasource_list_add_datasource_clicked', () => {
-    tracker.startJourney('datasource_configure', {
-      attributes: { source: 'datasource_list' },
-    });
-  }));
+  add(
+    onInteraction('connections_datasource_list_add_datasource_clicked', () => {
+      tracker.startJourney('datasource_configure', {
+        attributes: { source: 'datasource_list' },
+      });
+    })
+  );
 
   // New datasource page opened directly (e.g. from advanced datasource picker link)
-  add(onInteraction('connections_new_datasource_page_view', () => {
-    if (!tracker.getActiveJourney('datasource_configure')) {
-      tracker.startJourney('datasource_configure', {
-        attributes: { source: 'datasource_picker' },
-      });
-    }
-  }));
+  add(
+    onInteraction('connections_new_datasource_page_view', () => {
+      if (!tracker.getActiveJourney('datasource_configure')) {
+        tracker.startJourney('datasource_configure', {
+          attributes: { source: 'datasource_picker' },
+        });
+      }
+    })
+  );
 
   // Picking a type from the catalog - starts journey if not already active
-  add(onInteraction('grafana_ds_add_datasource_clicked', (props) => {
-    const existing = tracker.getActiveJourney('datasource_configure');
-    if (existing) {
-      existing.recordEvent('select_type', {
-        pluginId: str(props.plugin_id),
-      });
-      existing.setAttributes({
-        pluginId: str(props.plugin_id),
-      });
-    } else {
-      tracker.startJourney('datasource_configure', {
-        attributes: {
-          source: 'catalog',
+  add(
+    onInteraction('grafana_ds_add_datasource_clicked', (props) => {
+      const existing = tracker.getActiveJourney('datasource_configure');
+      if (existing) {
+        existing.recordEvent('select_type', {
           pluginId: str(props.plugin_id),
-        },
-      });
-    }
-  }));
+        });
+        existing.setAttributes({
+          pluginId: str(props.plugin_id),
+        });
+      } else {
+        tracker.startJourney('datasource_configure', {
+          attributes: {
+            source: 'catalog',
+            pluginId: str(props.plugin_id),
+          },
+        });
+      }
+    })
+  );
 
   return cleanup;
 });
@@ -76,35 +82,45 @@ onJourneyInstance('datasource_configure', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   // User saved datasource config
-  add(onInteraction('connections_datasources_ds_configured', () => {
-    handle.recordEvent('save_config');
-  }));
+  add(
+    onInteraction('connections_datasources_ds_configured', () => {
+      handle.recordEvent('save_config');
+    })
+  );
 
   // User tested datasource connection
-  add(onInteraction('grafana_ds_test_datasource_clicked', (props) => {
-    const success = props.success === true || props.success === 'true';
+  add(
+    onInteraction('grafana_ds_test_datasource_clicked', (props) => {
+      const success = props.success === true || props.success === 'true';
 
-    if (success) {
-      handle.end('success');
-    } else {
-      handle.recordEvent('test_failed');
-    }
-  }));
+      if (success) {
+        handle.end('success');
+      } else {
+        handle.recordEvent('test_failed');
+      }
+    })
+  );
 
   // User clicked Cancel on the new datasource page
-  add(onInteraction('connections_new_datasource_cancelled', () => {
-    handle.end('discarded');
-  }));
+  add(
+    onInteraction('connections_new_datasource_cancelled', () => {
+      handle.end('discarded');
+    })
+  );
 
   // User deleted the datasource instead of completing setup
-  add(onInteraction('connections_datasource_deleted', () => {
-    handle.end('discarded');
-  }));
+  add(
+    onInteraction('connections_datasource_deleted', () => {
+      handle.end('discarded');
+    })
+  );
 
   // User navigated away from config page without completing test
-  add(onInteraction('connections_datasource_config_page_left', () => {
-    handle.end('abandoned');
-  }));
+  add(
+    onInteraction('connections_datasource_config_page_left', () => {
+      handle.end('abandoned');
+    })
+  );
 
   return cleanup;
 });

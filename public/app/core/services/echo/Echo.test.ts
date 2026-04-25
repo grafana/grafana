@@ -216,5 +216,4 @@ describe('Echo onInteraction', () => {
 
     expect(mockBackend.addEvent).not.toHaveBeenCalled();
   });
-
 });

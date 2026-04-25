@@ -8,10 +8,7 @@ test.use({
 });
 
 test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'] }, () => {
-  test('command palette search to dashboard records a successful journey', async ({
-    page,
-    journeyRecorder,
-  }) => {
+  test('command palette search to dashboard records a successful journey', async ({ page, journeyRecorder }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -31,7 +28,10 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
 
     // Wait for search results to load, then select a dashboard result.
     // kbar renders results inside a listbox with role="option" items.
-    const dashboardResult = page.getByRole('option').filter({ hasText: /Panel Tests - Bar Gauge/i }).first();
+    const dashboardResult = page
+      .getByRole('option')
+      .filter({ hasText: /Panel Tests - Bar Gauge/i })
+      .first();
     await expect(dashboardResult).toBeVisible({ timeout: 10_000 });
     await dashboardResult.click();
 
@@ -75,10 +75,7 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     expect(journey.stepCount).toBe(0);
   });
 
-  test('selecting a non-dashboard action sets resourceType to other', async ({
-    page,
-    journeyRecorder,
-  }) => {
+  test('selecting a non-dashboard action sets resourceType to other', async ({ page, journeyRecorder }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -95,7 +92,10 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     await searchInput.fill('Explore');
 
     // Select the Explore navigation action from the results
-    const exploreResult = page.getByRole('option').filter({ hasText: /^Explore/ }).first();
+    const exploreResult = page
+      .getByRole('option')
+      .filter({ hasText: /^Explore/ })
+      .first();
     await expect(exploreResult).toBeVisible({ timeout: 10_000 });
     await exploreResult.click();
 
@@ -114,17 +114,13 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     // raw console output captured by the recorder. This confirms the mid-journey
     // attribute enrichment path works correctly for non-dashboard actions.
     const logs = journeyRecorder.getRawLogs();
-    const setAttributesLog = logs.find(
-      (log) => log.includes('setAttributes') && log.includes('search_to_resource')
-    );
+    const setAttributesLog = logs.find((log) => log.includes('setAttributes') && log.includes('search_to_resource'));
     expect(setAttributesLog).toBeDefined();
     expect(setAttributesLog).toContain('other');
 
     // Verify the journey was started (source=command_palette is validated via structured
     // attributes in the other tests; raw log serializes nested objects as "Object")
-    const startLog = logs.find(
-      (log) => log.includes('startJourney') && log.includes('search_to_resource')
-    );
+    const startLog = logs.find((log) => log.includes('startJourney') && log.includes('search_to_resource'));
     expect(startLog).toBeDefined();
   });
 });

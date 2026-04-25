@@ -30,6 +30,8 @@ export const JOURNEY_REGISTRY: JourneyMeta[] = [
     description: 'User edits a panel - configures queries, transformations, and visualization',
     owner: 'grafana-dashboards',
     timeoutMs: 30 * 60_000,
+    // When dashboard_edit is active, panel_edit nests under it in the same trace.
+    parents: ['dashboard_edit'],
   },
   {
     type: 'datasource_configure',

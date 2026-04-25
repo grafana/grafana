@@ -10,7 +10,6 @@ import {
   setupJourneyTest,
 } from './__test-utils__/journeyTestHarness';
 
-
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
@@ -138,9 +137,7 @@ describe('searchToResource journey wiring', () => {
     simulateInteraction('command_palette_opened', {});
     simulateInteraction('dashboards_init_dashboard_completed', { uid: 'dash-1' });
 
-    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
-      expect.objectContaining({ resourceType: 'dashboard' })
-    );
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'dashboard' }));
   });
 
   it('should end with success when folder action selected and browse page loads', () => {
@@ -158,9 +155,7 @@ describe('searchToResource journey wiring', () => {
     });
 
     expect(mockHandle.end).toHaveBeenCalledWith('success');
-    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
-      expect.objectContaining({ folderUID: 'folder-uid-1' })
-    );
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(expect.objectContaining({ folderUID: 'folder-uid-1' }));
   });
 
   it('should end with success when nav action selected and palette closes', () => {

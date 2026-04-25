@@ -96,9 +96,6 @@ export const reportExperimentView = (id: string, group: string, variant: string)
  * @returns unsubscribe function
  * @public
  */
-export const onInteraction = (
-  name: string,
-  callback: (properties: Record<string, unknown>) => void
-): (() => void) => {
+export const onInteraction = (name: string, callback: (properties: Record<string, unknown>) => void): (() => void) => {
   return getEchoSrv().onInteraction(name, callback);
 };

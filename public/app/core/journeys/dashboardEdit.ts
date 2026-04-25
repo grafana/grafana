@@ -30,17 +30,23 @@ registerJourneyTriggers('dashboard_edit', (tracker) => {
 onJourneyInstance('dashboard_edit', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
-  add(onInteraction('grafana_dashboard_saved', () => {
-    handle.end('success');
-  }));
+  add(
+    onInteraction('grafana_dashboard_saved', () => {
+      handle.end('success');
+    })
+  );
 
-  add(onInteraction('grafana_dashboard_created', () => {
-    handle.end('success');
-  }));
+  add(
+    onInteraction('grafana_dashboard_created', () => {
+      handle.end('success');
+    })
+  );
 
-  add(onInteraction('dashboards_edit_discarded', () => {
-    handle.end('discarded');
-  }));
+  add(
+    onInteraction('dashboards_edit_discarded', () => {
+      handle.end('discarded');
+    })
+  );
 
   return cleanup;
 });
