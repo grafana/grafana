@@ -356,6 +356,7 @@ describe('LogsTable', () => {
       expect(onAddAdHocFilter).toHaveBeenCalledTimes(1);
       expect(onAddAdHocFilter).toHaveBeenCalledWith({
         key: 'level',
+        keyLabel: 'level',
         value: 'info',
         operator: '=',
       });
@@ -365,6 +366,7 @@ describe('LogsTable', () => {
       expect(onAddAdHocFilter).toHaveBeenCalledTimes(2);
       expect(onAddAdHocFilter).toHaveBeenCalledWith({
         key: 'level',
+        keyLabel: 'level',
         value: 'info',
         operator: '!=',
       });
