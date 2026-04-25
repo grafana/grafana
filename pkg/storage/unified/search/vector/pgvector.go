@@ -42,13 +42,12 @@ func (b *pgvectorBackend) Run(ctx context.Context) error {
 
 // validateResource rejects resources that don't have a sub-tree attached.
 // Adding a resource means attaching an `embeddings_<R>` sub-tree.
+// TODO dynamically add new partition if for resource if one doesnt exist
 func validateResource(resource string) error {
-	switch resource {
-	case "dashboards":
-		return nil
-	default:
+	if resource != "dashboards" {
 		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
 	}
+	return nil
 }
 
 func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
@@ -62,6 +61,7 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 		}
 	}
 
+	// track max rv so we can update global db rv
 	var batchMaxRV int64
 	for i := range vectors {
 		if vectors[i].ResourceVersion > batchMaxRV {
@@ -170,6 +170,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		return nil, err
 	}
 
+	// TODO Search is currently single resource but we will need to support cross-resource search eventually
 	req := &sqlVectorCollectionSearchRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Resource:       resource,

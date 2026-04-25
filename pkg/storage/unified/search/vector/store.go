@@ -16,7 +16,7 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// Delete wipes every subresource under `uid`. model must be non-empty.
+	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error
 
 	// DeleteSubresources removes specific subresources under `uid`. Empty
@@ -25,6 +25,7 @@ type VectorBackend interface {
 
 	// GetSubresourceContent returns subresource → stored content. Callers
 	// diff against candidate content to skip re-embedding unchanged rows.
+	// Used for deleting stale subresource embeddings.
 	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error)
 
 	// GetLatestRV is the global write-pipeline checkpoint. 0 if empty.
