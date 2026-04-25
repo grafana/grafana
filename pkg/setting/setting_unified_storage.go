@@ -264,7 +264,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
 	}
 
-	// Vector storage config (separate pgvector database)
+	// Vector storage (separate pgvector database)
 	vectorSection := cfg.Raw.Section("database_vector")
 	cfg.VectorDBHost = vectorSection.Key("db_host").String()
 	cfg.VectorDBPort = vectorSection.Key("db_port").MustString("5432")
@@ -272,7 +272,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()
 	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
-	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // high number so essentially disabled by default
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
 	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
 }
 

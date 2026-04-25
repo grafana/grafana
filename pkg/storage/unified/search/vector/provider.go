@@ -14,19 +14,10 @@ func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
 	return InitVectorBackend(context.Background(), cfg, true)
 }
 
-// InitVectorBackend creates a pgvectorBackend from the [database_vector]
-// config section. It opens a connection to the separate pgvector database
-// and returns a ready-to-use VectorBackend. When runMigrations is true, the
-// schema migrations are applied before the backend is returned.
-//
-// The returned backend owns a Promoter configured from
-// cfg.VectorPromotionThreshold and cfg.VectorPromoterInterval. Callers start
-// the promotion loop by calling backend.Run(ctx); gate on schema ownership
-// (see module_server).
-//
-// Returns (nil, nil) if the vector backend is disabled via the
-// [unified_storage] vector_backend flag. Returns an error if the flag is
-// enabled but VectorDBHost is unset, so silent misconfiguration fails loud.
+// InitVectorBackend opens the [database_vector] connection and returns a
+// pgvectorBackend. runMigrations=true applies schema migrations before
+// returning. Returns (nil, nil) when EnableVectorBackend is false.
+// Caller starts the promoter via backend.Run(ctx); gate on schema ownership.
 func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
 	if !cfg.EnableVectorBackend {
 		return nil, nil
@@ -52,7 +43,7 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool
 			return nil, fmt.Errorf("migrate vector database: %w", err)
 		}
 	} else {
-		logger.Info("Skipping vector database migrations (not eligible on this target)")
+		logger.Info("Skipping vector database migrations")
 	}
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())

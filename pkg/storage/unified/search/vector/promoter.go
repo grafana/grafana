@@ -13,28 +13,32 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-// partitionedTables lists the partitioned parent tables the sweeper scans.
-// Add more as new resource types get their own partitioned table.
-var partitionedTables = []string{"dashboard_embeddings"}
+const unifiedParent = "embeddings"
 
 var sanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
+// sanitizeIdentifier folds non-alphanumerics to underscore and lowercases —
+// stable across Postgres's case-folding.
 func sanitizeIdentifier(s string) string {
-	// Non-alphanumerics → underscore, lowercased so identifiers are
-	// consistent regardless of Postgres's case-folding rules.
 	return strings.ToLower(sanitizeRe.ReplaceAllString(s, "_"))
 }
 
-// partitionName for (parent, namespace). Postgres identifier limit is 63
-// chars; with short namespaces this fits. Hash-suffix strategy would be the
-// fallback if identifiers ever overflow.
-func partitionName(parent, namespace string) string {
-	return fmt.Sprintf("%s_%s", parent, sanitizeIdentifier(namespace))
+func subtreeName(resource string) string {
+	return fmt.Sprintf("%s_%s", unifiedParent, resource)
 }
 
-// Promoter moves over-threshold tenants from the DEFAULT partition into
-// dedicated partitions with their own HNSW + GIN indexes. Runs on a timer;
-// does nothing on the write path.
+func subtreeDefaultName(resource string) string {
+	return fmt.Sprintf("%s_%s_default", unifiedParent, resource)
+}
+
+// leafName builds `embeddings_<R>_<ns>`. Postgres caps identifiers at 63
+// chars; long namespaces need a hash-suffix fallback (not yet implemented).
+func leafName(resource, namespace string) string {
+	return fmt.Sprintf("%s_%s_%s", unifiedParent, resource, sanitizeIdentifier(namespace))
+}
+
+// Promoter moves over-threshold tenants from each sub-tree's DEFAULT into
+// dedicated leaves with HNSW + GIN. Timer-driven; off the write path.
 type Promoter struct {
 	db        db.DB
 	threshold int
@@ -51,8 +55,8 @@ func NewPromoter(database db.DB, threshold int, interval time.Duration) *Promote
 	}
 }
 
-// Run blocks until ctx is cancelled. Ticks every s.interval and calls Promote.
-// Promote errors are logged but don't stop the loop.
+// Run ticks every s.interval until ctx is cancelled. Per-iteration errors
+// are logged; the loop keeps running.
 func (s *Promoter) Run(ctx context.Context) error {
 	if s.interval <= 0 {
 		s.log.Info("vector promoter disabled (interval <= 0)")
@@ -74,28 +78,56 @@ func (s *Promoter) Run(ctx context.Context) error {
 	}
 }
 
-// Sweep runs one pass over every partitioned table. Exported so tests can
-// trigger a pass inline.
+// Promote runs one pass over every resource sub-tree. Exported for tests.
 func (s *Promoter) Promote(ctx context.Context) error {
-	for _, parent := range partitionedTables {
-		if err := s.promoteParent(ctx, parent); err != nil {
-			return fmt.Errorf("promote %s: %w", parent, err)
+	resources, err := s.discoverResources(ctx)
+	if err != nil {
+		return fmt.Errorf("discover resource sub-trees: %w", err)
+	}
+	for _, resource := range resources {
+		if err := s.promoteResource(ctx, resource); err != nil {
+			return fmt.Errorf("promote %s: %w", resource, err)
 		}
 	}
 	return nil
 }
 
-func (s *Promoter) promoteParent(ctx context.Context, parent string) error {
-	defaultName := parent + "_default"
+// discoverResources returns resource names from sub-trees attached to the
+// unified parent. Filters relkind='p' to skip the top-level DEFAULT.
+func (s *Promoter) discoverResources(ctx context.Context) ([]string, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT c.relname FROM pg_inherits i
+		JOIN pg_class c ON c.oid = i.inhrelid
+		JOIN pg_class p ON p.oid = i.inhparent
+		WHERE p.relname = $1 AND c.relkind = 'p'
+	`, unifiedParent)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
 
-	// Drop INVALID HNSW indexes left behind by prior failed
-	// CREATE INDEX CONCURRENTLY attempts. Safe to DROP even mid-build.
-	if err := s.dropInvalidIndexes(ctx, parent); err != nil {
+	prefix := unifiedParent + "_"
+	var resources []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		resources = append(resources, strings.TrimPrefix(name, prefix))
+	}
+	return resources, rows.Err()
+}
+
+func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
+	subtree := subtreeName(resource)
+	defaultName := subtreeDefaultName(resource)
+
+	if err := s.dropInvalidIndexes(ctx, subtree); err != nil {
 		return err
 	}
 
-	// Enumerate namespaces over threshold in the DEFAULT partition. Only
-	// DEFAULT can contain small tenants; promoted tenants are already out.
+	// Promoted tenants live in their own leaves, so DEFAULT is the only
+	// place over-threshold tenants can be hiding.
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(
 		`SELECT namespace FROM %s GROUP BY namespace HAVING COUNT(*) > $1`, defaultName),
 		s.threshold)
@@ -123,108 +155,74 @@ func (s *Promoter) promoteParent(ctx context.Context, parent string) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if err := s.promote(ctx, parent, ns); err != nil {
-			// Log and continue; one bad tenant shouldn't stop the pass.
-			s.log.Warn("promote failed", "parent", parent, "namespace", ns, "err", err)
+		if err := s.promote(ctx, resource, ns); err != nil {
+			// One bad tenant shouldn't stop the pass.
+			s.log.Warn("promote failed", "resource", resource, "namespace", ns, "err", err)
 		}
 	}
 	return nil
 }
 
-// promote detaches a tenant's rows from the DEFAULT partition and attaches
-// them as a new dedicated partition with its own HNSW index.
+// promote moves a tenant's rows from the sub-tree's DEFAULT into a new
+// dedicated leaf with its own HNSW.
 //
-// Steps (the first 5 run in one tx under EXCLUSIVE lock on DEFAULT;
-// HNSW build runs outside the tx because CREATE INDEX CONCURRENTLY
-// can't be in a transaction):
+// In-tx under EXCLUSIVE on DEFAULT: create staging, INSERT, DELETE, ATTACH.
+// Outside tx (CREATE INDEX CONCURRENTLY can't run in one): build HNSW + GIN,
+// ANALYZE. Idempotent via the partitionExists check.
 //
-//  1. LOCK the DEFAULT partition EXCLUSIVE. Writers targeting DEFAULT block
-//     for the duration of the tx — which is only small-tenant writers, plus
-//     any new writer for the tenant being promoted.
-//     Writers for already-promoted tenants route to their own partitions
-//     and are unaffected.
-//  2. CREATE standalone staging table with the same schema as the parent.
-//  3. INSERT rows matching `namespace` from DEFAULT → staging.
-//  4. DELETE rows matching `namespace` from DEFAULT.
-//  5. ATTACH the staging table as a partition FOR VALUES IN ('<ns>').
-//  6. (outside tx) CREATE INDEX CONCURRENTLY HNSW on the new partition.
-//  7. ANALYZE so the planner knows the partition's row count.
-//
-// Idempotent: if the partition already exists the function returns immediately.
-//
-// Known tradeoff — small-tenant writes block during steps 1-5:
-//
-// The EXCLUSIVE lock on DEFAULT pauses every writer whose namespace still
-// lives there (all small tenants + the tenant being promoted). Duration is
-// bounded by the INSERT + DELETE on matching rows — sub-second for a
-// tenant with a few thousand rows on SSD. Accepted for MVP because
-// promotions are infrequent (threshold-crossing events, not per-request).
-//
-// Optimization paths if this becomes painful:
-//   - Rate-limit the sweeper (max N promotions per cycle) to cap
-//     accumulated block time during initial backlog drain.
-//   - Two-phase promote: bulk-copy outside the lock (unblocked), then
-//     briefly lock to sync updates + ATTACH. Needs an updated_at column
-//     and a way to detect rows modified during the copy window. Shrinks
-//     the lock window to ~tens of ms regardless of tenant size.
-//   - Postgres 17+ SPLIT PARTITION is cleaner to code but takes
-//     ACCESS EXCLUSIVE on DEFAULT (blocks reads too) — worse than this.
-func (s *Promoter) promote(ctx context.Context, parent, namespace string) error {
-	newPart := partitionName(parent, namespace)
+// The EXCLUSIVE lock blocks only writers still landing in this sub-tree's
+// DEFAULT — small tenants of this resource plus the tenant being promoted.
+// Already-promoted tenants and other resources are unaffected. Duration
+// tracks the INSERT+DELETE, usually sub-second. Optimizations if this hurts:
+// rate-limit the sweeper, or two-phase promote with an updated_at column.
+func (s *Promoter) promote(ctx context.Context, resource, namespace string) error {
+	subtree := subtreeName(resource)
+	defaultName := subtreeDefaultName(resource)
+	newLeaf := leafName(resource, namespace)
 
-	// Already attached? Check pg_inherits.
-	exists, err := s.partitionExists(ctx, parent, newPart)
+	exists, err := s.partitionExists(ctx, subtree, newLeaf)
 	if err != nil {
 		return err
 	}
 	if exists {
-		// Partition exists; ensure its HNSW is valid.
-		return s.ensureHNSW(ctx, newPart)
+		// Leaf exists from a prior run; HNSW may still be INVALID.
+		return s.ensureHNSW(ctx, newLeaf)
 	}
 
 	nsLit := "'" + strings.ReplaceAll(namespace, "'", "''") + "'"
 
 	err = s.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		// Block only writers that would land in DEFAULT: small tenants plus
-		// any new write for the tenant being promoted (which still routes
-		// there until ATTACH runs). Writers for already-promoted tenants
-		// target their own partitions and aren't affected. SELECTs proceed.
-		defaultName := parent + "_default"
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(`LOCK TABLE %s IN EXCLUSIVE MODE`, defaultName)); err != nil {
 			return fmt.Errorf("lock %s: %w", defaultName, err)
 		}
 
-		// Standalone staging table with the same schema as the parent.
-		// INCLUDING DEFAULTS preserves DEFAULTs; no INCLUDING INDEXES so we
-		// don't inherit indexes from the parent (we build HNSW after attach).
+		// Standalone staging (no INCLUDING INDEXES — we build HNSW after ATTACH).
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
 			`CREATE TABLE %s (LIKE %s INCLUDING DEFAULTS INCLUDING CONSTRAINTS)`,
-			newPart, parent,
+			newLeaf, subtree,
 		)); err != nil {
-			return fmt.Errorf("create staging %s: %w", newPart, err)
+			return fmt.Errorf("create staging %s: %w", newLeaf, err)
 		}
 
-		// Move rows from DEFAULT → staging.
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`INSERT INTO %s SELECT * FROM %s_default WHERE namespace = $1`,
-			newPart, parent,
+			`INSERT INTO %s SELECT * FROM %s WHERE namespace = $1`,
+			newLeaf, defaultName,
 		), namespace); err != nil {
-			return fmt.Errorf("move rows into %s: %w", newPart, err)
+			return fmt.Errorf("move rows into %s: %w", newLeaf, err)
 		}
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`DELETE FROM %s_default WHERE namespace = $1`, parent,
+			`DELETE FROM %s WHERE namespace = $1`, defaultName,
 		), namespace); err != nil {
-			return fmt.Errorf("delete moved rows from %s_default: %w", parent, err)
+			return fmt.Errorf("delete moved rows from %s: %w", defaultName, err)
 		}
 
-		// Attach. Postgres validates the constraint (all rows in staging
-		// have namespace = <ns>) and ensures DEFAULT has no conflicting
-		// rows — since we just moved them, it passes.
+		// ATTACH to the sub-tree. DEFAULT must be empty of conflicting rows
+		// — the DELETE above guarantees that.
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
 			`ALTER TABLE %s ATTACH PARTITION %s FOR VALUES IN (%s)`,
-			parent, newPart, nsLit,
+			subtree, newLeaf, nsLit,
 		)); err != nil {
-			return fmt.Errorf("attach partition %s: %w", newPart, err)
+			return fmt.Errorf("attach partition %s: %w", newLeaf, err)
 		}
 		return nil
 	})
@@ -232,28 +230,25 @@ func (s *Promoter) promote(ctx context.Context, parent, namespace string) error 
 		return err
 	}
 
-	s.log.Info("promoted tenant", "parent", parent, "namespace", namespace, "partition", newPart)
+	s.log.Info("promoted tenant", "resource", resource, "namespace", namespace, "partition", newLeaf)
 
-	// HNSW + ANALYZE outside the tx.
-	if err := s.ensureHNSW(ctx, newPart); err != nil {
+	if err := s.ensureHNSW(ctx, newLeaf); err != nil {
 		return err
 	}
 
-	// Best-effort observability.
+	// Best-effort observability — pg_inherits is the source of truth.
 	if _, err := s.db.ExecContext(ctx,
 		`INSERT INTO vector_promoted (namespace, resource, promoted_at)
 		 VALUES ($1, $2, CURRENT_TIMESTAMP)
 		 ON CONFLICT (namespace, resource) DO UPDATE SET promoted_at = EXCLUDED.promoted_at`,
-		namespace, strings.TrimSuffix(parent, "_embeddings"),
+		namespace, resource,
 	); err != nil {
 		s.log.Warn("vector_promoted upsert failed", "err", err)
 	}
 	return nil
 }
 
-// ensureHNSW builds the HNSW index on a partition if it doesn't already exist
-// as a valid index. CREATE INDEX CONCURRENTLY can't run in a transaction.
-// Also ensures a GIN on metadata for JSONB containment filters.
+// ensureHNSW builds HNSW + GIN indexes on a leaf. Must run outside a tx.
 func (s *Promoter) ensureHNSW(ctx context.Context, partition string) error {
 	hnswName := partition + "_hnsw"
 	if err := s.ensureIndex(ctx, hnswName, fmt.Sprintf(
@@ -265,9 +260,8 @@ func (s *Promoter) ensureHNSW(ctx context.Context, partition string) error {
 		return err
 	}
 
-	// GIN on metadata — otherwise a restrictive JSONB containment filter has
-	// to post-filter the HNSW's top-K results and can return fewer than N
-	// matches.
+	// Without GIN, a restrictive JSONB filter post-filters HNSW's top-K and
+	// can return fewer than N matches.
 	metadataName := partition + "_metadata"
 	if err := s.ensureIndex(ctx, metadataName, fmt.Sprintf(
 		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
@@ -277,17 +271,15 @@ func (s *Promoter) ensureHNSW(ctx context.Context, partition string) error {
 		return err
 	}
 
-	// ANALYZE so the planner's row estimate reflects reality (otherwise it
-	// may default to ~1 row and prefer other indexes).
+	// Without ANALYZE the planner estimates ~1 row and may skip the HNSW.
 	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, partition)); err != nil {
 		s.log.Warn("ANALYZE after promote failed", "partition", partition, "err", err)
 	}
 	return nil
 }
 
-// ensureIndex creates an index via the given DDL if it doesn't already exist
-// as a valid index. DDL must be a CREATE INDEX [CONCURRENTLY] IF NOT EXISTS
-// targeting `idxName`.
+// ensureIndex runs `ddl` unless `idxName` already exists as a valid index.
+// `ddl` must target `idxName`.
 func (s *Promoter) ensureIndex(ctx context.Context, idxName, ddl string) error {
 	exists, err := s.indexExistsValid(ctx, idxName)
 	if err != nil {
@@ -303,8 +295,6 @@ func (s *Promoter) ensureIndex(ctx context.Context, idxName, ddl string) error {
 	return nil
 }
 
-// partitionExists returns true if `partition` is currently attached to
-// `parent`.
 func (s *Promoter) partitionExists(ctx context.Context, parent, partition string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRowContext(ctx, `
@@ -336,9 +326,8 @@ func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, 
 	return valid, nil
 }
 
-// dropInvalidIndexes cleans up any INVALID HNSW indexes left behind by prior
-// failed CREATE INDEX CONCURRENTLY attempts. Looks across every partition of
-// `parent`.
+// dropInvalidIndexes drops any INVALID indexes on the sub-tree's leaves —
+// leftovers from a prior CREATE INDEX CONCURRENTLY that failed mid-build.
 func (s *Promoter) dropInvalidIndexes(ctx context.Context, parent string) error {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.relname FROM pg_class c
@@ -366,7 +355,7 @@ func (s *Promoter) dropInvalidIndexes(ctx context.Context, parent string) error 
 	}
 	_ = rows.Close()
 	for _, n := range names {
-		s.log.Warn("dropping invalid index from failed CREATE INDEX CONCURRENTLY", "index", n)
+		s.log.Warn("dropping invalid index", "index", n)
 		if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`DROP INDEX CONCURRENTLY IF EXISTS %s`, n)); err != nil {
 			s.log.Warn("DROP INDEX failed", "index", n, "err", err)
 		}

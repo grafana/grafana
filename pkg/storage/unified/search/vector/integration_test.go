@@ -16,12 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-const testCollectionID = "dashboard.grafana.app/dashboards"
 const testModel = "test-model"
-const testParent = "dashboard_embeddings"
+const testResource = "dashboards"
 
-// To run these tests, start the pgvector devenv block (already running
-// locally on port 5433) and set the env var:
+var (
+	testSubtree = subtreeName(testResource)
+	testDefault = subtreeDefaultName(testResource)
+)
+
+// To run: start the pgvector devenv (localhost:5433) and
 //
 //	PGVECTOR_TEST_DB="host=localhost port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable" \
 //	  go test -run TestIntegration ./pkg/storage/unified/search/vector/... -v -count=1
@@ -49,8 +52,7 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	require.NoError(t, err)
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	// interval=0 keeps Run idle; tests that exercise promotion construct
-	// a standalone Promoter and call Promote(ctx) synchronously.
+	// interval=0 keeps Run idle; promotion tests call Promote(ctx) directly.
 	backend := NewPgvectorBackend(database, 1000, 0)
 
 	cleanIntegrationState(t, engine)
@@ -58,19 +60,19 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	return backend, engine, ctx
 }
 
-// cleanIntegrationState detaches and drops any integration-test-* partitions,
-// wipes DEFAULT rows, and resets the global checkpoint.
+// cleanIntegrationState drops any `integration-test*` leaves, clears DEFAULT
+// rows, and resets the checkpoint.
 func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	t.Helper()
 	ctx := context.Background()
 
-	// List child partitions whose name starts with the integration-test prefix.
+	prefix := fmt.Sprintf("%s_integration_test", testSubtree)
 	rows, err := engine.DB().QueryContext(ctx, `
 		SELECT c.relname FROM pg_inherits i
 		JOIN pg_class c ON c.oid = i.inhrelid
 		JOIN pg_class p ON p.oid = i.inhparent
-		WHERE p.relname = $1 AND c.relname LIKE 'dashboard_embeddings_integration_test%'`,
-		testParent)
+		WHERE p.relname = $1 AND c.relname LIKE $2`,
+		testSubtree, prefix+"%")
 	require.NoError(t, err)
 	var parts []string
 	for rows.Next() {
@@ -81,14 +83,14 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	_ = rows.Close()
 
 	for _, p := range parts {
-		// DETACH first so DROP doesn't touch parent metadata under SHARE lock.
+		// DETACH before DROP so cleanup doesn't lock the parent metadata.
 		_, _ = engine.DB().ExecContext(ctx,
-			fmt.Sprintf(`ALTER TABLE %s DETACH PARTITION %s`, testParent, p))
+			fmt.Sprintf(`ALTER TABLE %s DETACH PARTITION %s`, testSubtree, p))
 		_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, p))
 	}
 
 	_, _ = engine.DB().ExecContext(ctx,
-		`DELETE FROM dashboard_embeddings_default WHERE namespace LIKE 'integration-test%'`)
+		fmt.Sprintf(`DELETE FROM %s WHERE namespace LIKE 'integration-test%%'`, testDefault))
 	_, _ = engine.DB().ExecContext(ctx,
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
@@ -100,21 +102,21 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 
 	vectors := []Vector{
 		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-1", Subresource: "panel/1",
+			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/1",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "CPU usage over time for production servers",
 			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
 			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
 		},
 		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-1", Subresource: "panel/2",
+			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/2",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "Memory usage alerts dashboard",
 			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
 			Embedding: makeEmbedding(0.1, 0.9), Model: testModel,
 		},
 		{
-			Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash-2", Subresource: "panel/1",
+			Namespace: "integration-test", Resource: testResource, UID: "dash-2", Title: "Logs Dashboard", Subresource: "panel/1",
 			ResourceVersion: 20, Folder: "folder-b",
 			Content:   "Log volume by service",
 			Metadata:  json.RawMessage(`{"datasource_uids":["loki-1"],"query_languages":["logql"]}`),
@@ -124,47 +126,48 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 
 	require.NoError(t, backend.Upsert(ctx, vectors))
 
-	results, err := backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.85, 0.15), 10)
+	results, err := backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.85, 0.15), 10)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(results), 3)
-	assert.Equal(t, "dash-1", results[0].Name)
+	assert.Equal(t, "dash-1", results[0].UID)
+	assert.Equal(t, "CPU Dashboard", results[0].Title)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
-		SearchFilter{Field: "name", Values: []string{"dash-2"}})
+	results, err = backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "uid", Values: []string{"dash-2"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, "dash-2", results[0].Name)
+	assert.Equal(t, "dash-2", results[0].UID)
 
-	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
+	results, err = backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "folder", Values: []string{"folder-a"}})
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
-	results, err = backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10,
+	results, err = backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
 		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, "dash-2", results[0].Name)
+	assert.Equal(t, "dash-2", results[0].UID)
 }
 
 func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
 	err := backend.Upsert(ctx, []Vector{
-		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+		{Namespace: "integration-test", Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/1",
 			ResourceVersion: 10, Content: "panel one", Metadata: json.RawMessage(`{}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
-		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/2",
+		{Namespace: "integration-test", Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/2",
 			ResourceVersion: 10, Content: "panel two", Metadata: json.RawMessage(`{}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
-		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "dash", Subresource: "panel/3",
+		{Namespace: "integration-test", Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/3",
 			ResourceVersion: 10, Content: "panel three", Metadata: json.RawMessage(`{}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
 	})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testCollectionID, "dash")
+	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -177,15 +180,15 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	}
 	require.ElementsMatch(t, []string{"panel/2", "panel/3"}, toDelete)
 
-	err = backend.DeleteSubresources(ctx, "integration-test", testModel, testCollectionID, "dash", toDelete)
+	err = backend.DeleteSubresources(ctx, "integration-test", testModel, testResource, "dash", toDelete)
 	require.NoError(t, err)
 
-	results, err := backend.Search(ctx, "integration-test", testModel, testCollectionID, makeEmbedding(0.5, 0.5), 10)
+	results, err := backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	err = backend.Delete(ctx, "integration-test", testModel, testCollectionID, "dash")
+	err = backend.Delete(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 }
 
@@ -197,7 +200,7 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	assert.Equal(t, int64(0), rv)
 
 	err = backend.Upsert(ctx, []Vector{
-		{Namespace: "integration-test", CollectionID: testCollectionID, Name: "rv-test", Subresource: "x",
+		{Namespace: "integration-test", Resource: testResource, UID: "rv-test", Title: "RV Test", Subresource: "x",
 			ResourceVersion: 42, Content: "test content", Metadata: json.RawMessage(`{}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
 	})
@@ -209,8 +212,6 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 }
 
 func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
-	// Seed a namespace past the threshold → sweeper attaches a dedicated
-	// partition with its own HNSW.
 	backend, engine, ctx := setupIntegrationTest(t)
 
 	const ns = "integration-test-big"
@@ -220,29 +221,28 @@ func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
 	vectors := make([]Vector, 0, nRows)
 	for i := 0; i < nRows; i++ {
 		vectors = append(vectors, Vector{
-			Namespace: ns, CollectionID: testCollectionID, Name: "dash", Subresource: fmt.Sprintf("panel/%d", i),
+			Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: fmt.Sprintf("panel/%d", i),
 			ResourceVersion: int64(i + 1), Content: fmt.Sprintf("content %d", i),
 			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		})
 	}
 	require.NoError(t, backend.Upsert(ctx, vectors))
 
-	// Before sweep: rows live in DEFAULT, no dedicated partition.
-	partName := partitionName(testParent, ns)
-	require.False(t, partitionAttached(t, engine, testParent, partName))
-	require.Equal(t, nRows, countRowsIn(t, engine, testParent+"_default", ns))
+	// Before: rows in DEFAULT, no leaf.
+	partName := leafName(testResource, ns)
+	require.False(t, partitionAttached(t, engine, testSubtree, partName))
+	require.Equal(t, nRows, countRowsIn(t, engine, testDefault, ns))
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	promoter := NewPromoter(database, threshold, 0 /* interval=0 disables Run; Promote runs inline */)
+	promoter := NewPromoter(database, threshold, 0)
 	require.NoError(t, promoter.Promote(ctx))
 
-	// After sweep: dedicated partition attached, DEFAULT is empty for ns.
-	require.True(t, partitionAttached(t, engine, testParent, partName))
-	require.Equal(t, 0, countRowsIn(t, engine, testParent+"_default", ns))
+	// After: leaf attached, DEFAULT empty for ns, rows landed in the leaf.
+	require.True(t, partitionAttached(t, engine, testSubtree, partName))
+	require.Equal(t, 0, countRowsIn(t, engine, testDefault, ns))
 	require.Equal(t, nRows, countRowsIn(t, engine, partName, ns))
 
-	// Search still returns the tenant's data (now via the partition's HNSW).
-	results, err := backend.Search(ctx, ns, testModel, testCollectionID, makeEmbedding(0.5, 0.5), 5)
+	results, err := backend.Search(ctx, ns, testModel, testResource, makeEmbedding(0.5, 0.5), 5)
 	require.NoError(t, err)
 	assert.Len(t, results, 5)
 }
@@ -252,7 +252,7 @@ func TestIntegrationPromoterSkipsSmallTenant(t *testing.T) {
 
 	const ns = "integration-test-small"
 	require.NoError(t, backend.Upsert(ctx, []Vector{
-		{Namespace: ns, CollectionID: testCollectionID, Name: "dash", Subresource: "panel/1",
+		{Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/1",
 			ResourceVersion: 1, Content: "only row", Metadata: json.RawMessage(`{}`),
 			Embedding: makeEmbedding(0.1, 0.1), Model: testModel},
 	}))
@@ -261,8 +261,8 @@ func TestIntegrationPromoterSkipsSmallTenant(t *testing.T) {
 	promoter := NewPromoter(database, 100, 0)
 	require.NoError(t, promoter.Promote(ctx))
 
-	partName := partitionName(testParent, ns)
-	require.False(t, partitionAttached(t, engine, testParent, partName),
+	partName := leafName(testResource, ns)
+	require.False(t, partitionAttached(t, engine, testSubtree, partName),
 		"small tenant should not be promoted")
 }
 
@@ -288,8 +288,7 @@ func countRowsIn(t *testing.T, engine *xorm.Engine, table, ns string) int {
 	return n
 }
 
-// makeEmbedding creates a 1024-dim embedding with the first two values set
-// and the rest zero. 1024 matches GA's halfvec(1024).
+// makeEmbedding builds a 1024-dim halfvec with the first two values set.
 func makeEmbedding(a, b float32) []float32 {
 	e := make([]float32, 1024)
 	e[0] = a

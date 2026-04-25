@@ -1,14 +1,16 @@
 SELECT
-    "name",
+    "uid",
+    "title",
     "subresource",
     "content",
     "embedding" <=> '[0.1 0.2 0.3]' AS "score",
     "folder",
     "metadata"
-    FROM dashboard_embeddings
-    WHERE "namespace" = 'stacks-123'
-    AND "model"       = 'text-embedding-005'
-    AND "name" IN ('dash-1')
+    FROM embeddings
+    WHERE "resource"  = 'dashboards'
+    AND "namespace" = 'stacks-123'
+    AND "model"     = 'text-embedding-005'
+    AND "uid" IN ('dash-1')
     AND "folder" IN ('folder-a', 'folder-b')
     AND "metadata" @> '{"datasource_uids":["ds-uid-1"]}'
     AND "metadata" @> '{"query_languages":["promql"]}'

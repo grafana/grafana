@@ -11,7 +11,7 @@ import (
 )
 
 func TestVector_Validate(t *testing.T) {
-	ok := Vector{Namespace: "ns", Model: "m", CollectionID: "c", Name: "n"}
+	ok := Vector{Namespace: "ns", Model: "m", Resource: "r", UID: "u", Title: "t"}
 	require.NoError(t, ok.Validate())
 
 	cases := []struct {
@@ -21,8 +21,9 @@ func TestVector_Validate(t *testing.T) {
 	}{
 		{"empty namespace", func(v *Vector) { v.Namespace = "" }, "namespace must not be empty"},
 		{"empty model", func(v *Vector) { v.Model = "" }, "model must not be empty"},
-		{"empty collectionID", func(v *Vector) { v.CollectionID = "" }, "collectionID must not be empty"},
-		{"empty name", func(v *Vector) { v.Name = "" }, "name must not be empty"},
+		{"empty resource", func(v *Vector) { v.Resource = "" }, "resource must not be empty"},
+		{"empty uid", func(v *Vector) { v.UID = "" }, "uid must not be empty"},
+		{"empty title", func(v *Vector) { v.Title = "" }, "title must not be empty"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -35,26 +36,23 @@ func TestVector_Validate(t *testing.T) {
 	}
 }
 
-func TestTableForCollection(t *testing.T) {
+func TestValidateResource(t *testing.T) {
 	cases := []struct {
 		in      string
-		want    string
 		wantErr bool
 	}{
-		{"dashboard.grafana.app/dashboards", "dashboard_embeddings", false},
-		{"dashboards", "dashboard_embeddings", false},
-		{"folder.grafana.app/folders", "", true}, // not provisioned yet
-		{"", "", true},
+		{"dashboards", false},
+		{"folders", true}, // not provisioned yet
+		{"", true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.in, func(t *testing.T) {
-			got, err := tableForCollection(tc.in)
+			err := validateResource(tc.in)
 			if tc.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -75,10 +73,10 @@ func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 	ctx := testutil.NewDefaultTestContext(t)
 
 	err := backend.Upsert(ctx, []Vector{
-		{Namespace: "ns", Model: "m", CollectionID: "dashboard.grafana.app/dashboards", Name: "", Content: "x", Embedding: []float32{0.1}},
+		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Content: "x", Embedding: []float32{0.1}},
 	})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "name must not be empty")
+	require.Contains(t, err.Error(), "uid must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -92,7 +90,7 @@ func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
 	rdb.SQLMock.ExpectRollback()
 
 	err := backend.Upsert(ctx, []Vector{
-		{Namespace: "ns", Model: "m", CollectionID: "folder.grafana.app/folders", Name: "x", Embedding: []float32{0.1}},
+		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
@@ -104,7 +102,7 @@ func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.Delete(ctx, "ns", "", "dashboard.grafana.app/dashboards", "dash-1")
+	err := backend.Delete(ctx, "ns", "", "dashboards", "dash-1")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "model must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -115,8 +113,8 @@ func TestPgvectorBackend_DeleteSubresources_EmptySlice_NoOp(t *testing.T) {
 	backend := NewPgvectorBackend(rdb.DB, 1000, 0)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboard.grafana.app/dashboards", "dash-1", nil))
-	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboard.grafana.app/dashboards", "dash-1", []string{}))
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboards", "dash-1", nil))
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboards", "dash-1", []string{}))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -148,8 +146,8 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPartitionName(t *testing.T) {
-	require.Equal(t, "dashboard_embeddings_stacks_123", partitionName("dashboard_embeddings", "stacks-123"))
-	require.Equal(t, "dashboard_embeddings_weird__name", partitionName("dashboard_embeddings", "weird!!name"))
-	require.Equal(t, "dashboard_embeddings_upper_ns", partitionName("dashboard_embeddings", "UPPER-NS"))
+func TestLeafName(t *testing.T) {
+	require.Equal(t, "embeddings_dashboards_stacks_123", leafName("dashboards", "stacks-123"))
+	require.Equal(t, "embeddings_dashboards_weird__name", leafName("dashboards", "weird!!name"))
+	require.Equal(t, "embeddings_dashboards_upper_ns", leafName("dashboards", "UPPER-NS"))
 }

@@ -246,9 +246,8 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, func() (services.Service, error) {
-		// StorageServer target owns the vector schema: runs migrations and
-		// the promotion loop. Other targets get a read-only backend and an
-		// IdleService wrapper.
+		// StorageServer owns the schema and runs the promoter; other targets
+		// get a read-only backend.
 		ownsSchema := m.IsModuleEnabled(modules.StorageServer)
 		if s.vectorBackend == nil {
 			var err error
@@ -257,7 +256,6 @@ func (s *ModuleServer) Run() error {
 				return nil, err
 			}
 		}
-		// only storage server should be running the vector backend background jobs like the promoter
 		if s.vectorBackend != nil && ownsSchema {
 			runFn := func(ctx context.Context) error { return s.vectorBackend.Run(ctx) }
 			return services.NewBasicService(nil, runFn, nil).WithName(modules.UnifiedVectorBackend), nil

@@ -32,18 +32,19 @@ var (
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 )
 
-// -- Upsert request --
+// All queries target `embeddings` and include `resource = $1 AND
+// namespace = $2` so nested partition pruning routes to one leaf.
 
 type sqlVectorCollectionUpsertRequest struct {
 	sqltemplate.SQLTemplate
-	Table     string
+	Resource  string
 	Vector    *Vector
 	Embedding any // pgvector.HalfVector
 }
 
 func (r *sqlVectorCollectionUpsertRequest) Validate() error {
-	if r.Table == "" {
-		return fmt.Errorf("missing table")
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
 	}
 	if r.Vector == nil {
 		return fmt.Errorf("missing vector")
@@ -51,36 +52,32 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	return nil
 }
 
-// -- Delete request (whole resource in one namespace+model) --
-
 type sqlVectorCollectionDeleteRequest struct {
 	sqltemplate.SQLTemplate
-	Table     string
+	Resource  string
 	Namespace string
 	Model     string
-	Name      string
+	UID       string
 }
 
 func (r *sqlVectorCollectionDeleteRequest) Validate() error {
-	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
 }
 
-// -- DeleteSubresources request (targeted cleanup) --
-
 type sqlVectorCollectionDeleteSubresourcesRequest struct {
 	sqltemplate.SQLTemplate
-	Table        string
+	Resource     string
 	Namespace    string
 	Model        string
-	Name         string
+	UID          string
 	Subresources []string
 }
 
 func (r *sqlVectorCollectionDeleteSubresourcesRequest) Validate() error {
-	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	if len(r.Subresources) == 0 {
@@ -93,8 +90,6 @@ func (r *sqlVectorCollectionDeleteSubresourcesRequest) SubresourcesSlice() refle
 	return reflect.ValueOf(r.Subresources)
 }
 
-// -- GetContent request --
-
 type sqlVectorCollectionGetContentResponse struct {
 	Subresource string
 	Content     string
@@ -102,15 +97,15 @@ type sqlVectorCollectionGetContentResponse struct {
 
 type sqlVectorCollectionGetContentRequest struct {
 	sqltemplate.SQLTemplate
-	Table     string
+	Resource  string
 	Namespace string
 	Model     string
-	Name      string
+	UID       string
 	Response  *sqlVectorCollectionGetContentResponse
 }
 
 func (r *sqlVectorCollectionGetContentRequest) Validate() error {
-	if r.Table == "" || r.Namespace == "" || r.Model == "" || r.Name == "" {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	return nil
@@ -121,10 +116,9 @@ func (r *sqlVectorCollectionGetContentRequest) Results() (*sqlVectorCollectionGe
 	return &cp, nil
 }
 
-// -- Search request --
-
 type sqlVectorCollectionSearchResponse struct {
-	Name        string
+	UID         string
+	Title       string
 	Subresource string
 	Content     string
 	Score       float64
@@ -132,28 +126,28 @@ type sqlVectorCollectionSearchResponse struct {
 	Metadata    json.RawMessage
 }
 
-// MetadataFilterEntry is a pre-built JSONB containment filter for the search template.
+// MetadataFilterEntry is a pre-built JSONB containment filter.
 type MetadataFilterEntry struct {
 	JSON string // e.g. `{"datasource_uids":["ds1"]}`
 }
 
 type sqlVectorCollectionSearchRequest struct {
 	sqltemplate.SQLTemplate
-	Table          string
+	Resource       string
 	Namespace      string
 	Model          string
 	QueryEmbedding any // pgvector.HalfVector
 	Limit          int64
 	Response       *sqlVectorCollectionSearchResponse
 
-	// Filters (nil means no filter)
-	NameValues      []string
+	// nil/empty means no filter on that field.
+	UIDValues       []string
 	FolderValues    []string
 	MetadataFilters []MetadataFilterEntry
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {
-	if r.Table == "" || r.Namespace == "" || r.Model == "" {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
 		return fmt.Errorf("missing required fields")
 	}
 	if r.Limit <= 0 {
@@ -163,19 +157,18 @@ func (r *sqlVectorCollectionSearchRequest) Validate() error {
 }
 
 func (r *sqlVectorCollectionSearchRequest) Results() (*sqlVectorCollectionSearchResponse, error) {
-	// Set-returning query: return a copy because Response is reused for each
-	// Scan call. Scan allocates a fresh []byte for Metadata, so a shallow copy
-	// is safe.
+	// Response is reused across Scan calls; shallow copy is safe because Scan
+	// allocates a fresh []byte for Metadata.
 	cp := *r.Response
 	return &cp, nil
 }
 
-func (r *sqlVectorCollectionSearchRequest) NameFilter() bool {
-	return len(r.NameValues) > 0
+func (r *sqlVectorCollectionSearchRequest) UIDFilter() bool {
+	return len(r.UIDValues) > 0
 }
 
-func (r *sqlVectorCollectionSearchRequest) NameFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.NameValues)
+func (r *sqlVectorCollectionSearchRequest) UIDFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDValues)
 }
 
 func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {

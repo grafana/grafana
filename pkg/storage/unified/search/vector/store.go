@@ -6,71 +6,47 @@ import (
 	"errors"
 )
 
-// VectorBackend abstracts vector storage operations. The pgvector implementation
-// is the only backend for now, but the interface allows testing with mocks.
-//
-// Storage is isolated per (namespace, model, collectionID): each tuple gets
-// its own standalone table with its own HNSW index. Different models produce
-// embeddings in different vector spaces, so mixing them in one index would
-// yield meaningless nearest-neighbor results. Different collections (resource
-// types) are also kept in separate indexes to avoid cross-type recall
-// degradation.
+// VectorBackend is vector storage isolated per (namespace, model) so an HNSW
+// never mixes embeddings from different vector spaces.
 type VectorBackend interface {
-	// Search performs vector similarity search within a single
-	// (namespace, model, collectionID) collection. The query embedding must
-	// come from the same model as the stored vectors for results to be
-	// meaningful.
-	Search(ctx context.Context, namespace, model, collectionID string,
+	// Search returns top-N nearest neighbors by cosine distance. Query
+	// embedding must come from the same model as stored vectors.
+	Search(ctx context.Context, namespace, model, resource string,
 		embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error)
 
-	// Upsert inserts or updates vectors. Vectors are grouped by
-	// (namespace, model, collectionID) internally so each combination lands
-	// in its own collection table. Collection tables are created lazily on
-	// first write.
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// Delete removes every row for a resource within a specific collection —
-	// i.e. wipes all subresources under `name`. Used when a resource is
-	// hard-deleted. model must be non-empty.
-	Delete(ctx context.Context, namespace, model, collectionID, name string) error
+	// Delete wipes every subresource under `uid`. model must be non-empty.
+	Delete(ctx context.Context, namespace, model, resource, uid string) error
 
-	// DeleteSubresources removes specific subresources under `name` in a
-	// collection. Callers use this for stale-subresource cleanup after diffing
-	// GetSubresourceContent against the desired set. model must be non-empty.
-	// An empty subresources slice is a no-op (no rows removed).
-	DeleteSubresources(ctx context.Context, namespace, model, collectionID, name string, subresources []string) error
+	// DeleteSubresources removes specific subresources under `uid`. Empty
+	// slice is a no-op. model must be non-empty.
+	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
-	// GetSubresourceContent returns the currently-stored content for each
-	// subresource under (namespace, model, collectionID, name), keyed by
-	// subresource. Missing or empty collections return a nil map with no
-	// error. Callers compare against candidate content to decide which
-	// subresources actually need re-embedding.
-	GetSubresourceContent(ctx context.Context, namespace, model, collectionID, name string) (map[string]string, error)
+	// GetSubresourceContent returns subresource → stored content. Callers
+	// diff against candidate content to skip re-embedding unchanged rows.
+	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error)
 
-	// GetLatestRV returns the maximum resource_version seen by any Upsert
-	// across the entire backend. Returns 0 if no vectors have been written.
-	// Used by the write pipeline to resume polling from a global checkpoint.
+	// GetLatestRV is the global write-pipeline checkpoint. 0 if empty.
 	GetLatestRV(ctx context.Context) (int64, error)
 
-	// Run starts any background maintenance the backend needs (currently the
-	// partition promoter) and blocks until ctx is cancelled. Callers should
-	// gate this on ownership of the vector schema — non-owning targets can
-	// either skip calling Run or rely on interval=0 to no-op.
+	// Run starts background maintenance (promoter). Gate on schema ownership.
 	Run(ctx context.Context) error
 }
 
-// Vector represents a single embeddable subresource (e.g. one dashboard panel).
+// Vector is one embeddable subresource (e.g. a dashboard panel).
 type Vector struct {
 	Namespace       string
-	CollectionID    string          // "<group>/<resource>", e.g. "dashboard.grafana.app/dashboards"
-	Name            string          // resource name (e.g. dashboard UID)
-	Subresource     string          // unique subresource ID, e.g. "panel/5"
-	ResourceVersion int64           // RV at time of embedding; fed into the global checkpoint (not stored per-row). Will be deprecated.
-	Folder          string          // folder UID for authz filtering
-	Content         string          // text that was embedded
-	Metadata        json.RawMessage // structured fields for filtering (JSONB)
-	Embedding       []float32       // vector embedding
-	Model           string          // embedding model name, e.g. "text-embedding-005"
+	Resource        string // e.g. "dashboards"
+	UID             string // stable resource identifier (e.g. dashboard UID)
+	Title           string // human-readable title for search results
+	Subresource     string // e.g. "panel/5"
+	ResourceVersion int64  // feeds the global checkpoint; not stored per-row
+	Folder          string // folder UID for authz filtering
+	Content         string // text that was embedded
+	Metadata        json.RawMessage
+	Embedding       []float32
+	Model           string
 }
 
 func (v *Vector) Validate() error {
@@ -79,17 +55,19 @@ func (v *Vector) Validate() error {
 		return errors.New("namespace must not be empty")
 	case v.Model == "":
 		return errors.New("model must not be empty")
-	case v.CollectionID == "":
-		return errors.New("collectionID must not be empty")
-	case v.Name == "":
-		return errors.New("name must not be empty")
+	case v.Resource == "":
+		return errors.New("resource must not be empty")
+	case v.UID == "":
+		return errors.New("uid must not be empty")
+	case v.Title == "":
+		return errors.New("title must not be empty")
 	}
 	return nil
 }
 
-// VectorSearchResult is a single result from a vector similarity search.
 type VectorSearchResult struct {
-	Name        string
+	UID         string
+	Title       string
 	Subresource string
 	Content     string
 	Score       float64
@@ -97,9 +75,8 @@ type VectorSearchResult struct {
 	Metadata    json.RawMessage
 }
 
-// SearchFilter constrains vector search results.
-// Field is either a top-level column ("name", "folder") or a JSONB metadata
-// key ("datasource_uids", "query_languages").
+// SearchFilter constrains results. Field is a top-level column
+// ("uid", "folder") or a JSONB metadata key.
 type SearchFilter struct {
 	Field  string
 	Values []string

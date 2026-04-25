@@ -10,18 +10,16 @@ import (
 
 // MigrateVectorStore runs migrations for the vector database.
 //
-// The core table is `dashboard_embeddings`, `PARTITION BY LIST (namespace)`.
-// Every tenant starts in `dashboard_embeddings_default` (no HNSW — searches
-// seq-scan a namespace-filtered subset, which is sub-ms while the tenant is
-// small). Tenants that cross `cfg.VectorPromotionThreshold` rows get promoted
-// by the sweeper: a dedicated partition with its own HNSW index. Postgres's
-// partition pruning picks the right partition per query — plan time is flat
-// regardless of how many tenants are promoted, unlike the partial-index
-// approach this replaced.
+// Nested LIST partitioning under one parent:
 //
-// Structured migrator + raw SQL mix: raw SQL is unavoidable where the xorm
-// migrator can't express the DDL (halfvec column type, PARTITION BY LIST,
-// single-row CHECK + seed).
+//	embeddings                               PARTITION BY LIST (resource)
+//	├── embeddings_default
+//	└── embeddings_dashboards                PARTITION BY LIST (namespace)
+//	    ├── embeddings_dashboards_default    un-promoted tenants
+//	    └── embeddings_dashboards_<ns>       per-tenant leaf (HNSW via promoter)
+//
+// Each leaf holds one (resource, namespace), so its HNSW is single-purpose.
+// Future resource sub-trees will be attached at runtime via advisory-lock.
 func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "vector")
 	mg.AddCreateMigration()
@@ -40,48 +38,55 @@ func initVectorTables(mg *migrator.Migrator) {
 	mg.AddMigration("create pgvector extension",
 		migrator.NewRawSQLMigration("").Postgres(`CREATE EXTENSION IF NOT EXISTS vector;`))
 
-	// Partitioned parent. DEFAULT partition catches every tenant until they're
-	// promoted. Columns chosen to be storage-neutral — `namespace` and `model`
-	// are opaque strings; `collectionID` is not stored (the table's identity
-	// implies the resource type).
-	mg.AddMigration("create dashboard_embeddings partitioned table",
+	// (resource, namespace) lead the PK so partition pruning can use it.
+	// halfvec + nested partitioning aren't expressible via xorm, so raw SQL.
+	mg.AddMigration("create embeddings parent",
 		migrator.NewRawSQLMigration("").Postgres(`
-			CREATE TABLE IF NOT EXISTS dashboard_embeddings (
+			CREATE TABLE IF NOT EXISTS embeddings (
 				id BIGSERIAL,
+				resource VARCHAR(256) NOT NULL,
 				namespace VARCHAR(256) NOT NULL,
 				model VARCHAR(256) NOT NULL,
-				name VARCHAR(256) NOT NULL,
+				uid VARCHAR(256) NOT NULL,
+				title VARCHAR(1024) NOT NULL,
 				subresource VARCHAR(256) NOT NULL DEFAULT '',
 				folder VARCHAR(256),
 				content TEXT NOT NULL,
 				metadata JSONB,
 				embedding halfvec(1024) NOT NULL,
-				PRIMARY KEY (namespace, model, name, subresource)
-			) PARTITION BY LIST (namespace);
+				PRIMARY KEY (resource, namespace, model, uid, subresource)
+			) PARTITION BY LIST (resource);
 		`))
 
-	// DEFAULT partition holds all un-promoted tenants.
-	mg.AddMigration("create dashboard_embeddings default partition",
-		migrator.NewRawSQLMigration("").Postgres(`
-			CREATE TABLE IF NOT EXISTS dashboard_embeddings_default
-				PARTITION OF dashboard_embeddings DEFAULT;
-		`))
-
-	// No dedicated namespace btree — the PK (namespace, model, name,
-	// subresource) already has `namespace` as its leading column, so any
-	// namespace-filtered query uses the PK index. GIN on metadata below
-	// handles JSONB containment filters.
-
-	mg.AddMigration("create metadata GIN on dashboard_embeddings_default",
+	// Catch-all for resources without a sub-tree. Normal flow bypasses this.
+	mg.AddMigration("create embeddings top-level default",
 		migrator.NewRawSQLMigration("").Postgres(
-			`CREATE INDEX IF NOT EXISTS dashboard_embeddings_default_metadata_idx
-				ON dashboard_embeddings_default USING GIN (metadata);`,
+			`CREATE TABLE IF NOT EXISTS embeddings_default PARTITION OF embeddings DEFAULT;`,
 		))
 
-	// vector_promoted: observability log of which (namespace, resource)
-	// tuples have a dedicated partition. pg_inherits is the authority on
-	// whether the partition actually exists; this just records when the
-	// sweeper acted.
+	mg.AddMigration("create embeddings_dashboards sub-tree",
+		migrator.NewRawSQLMigration("").Postgres(`
+			CREATE TABLE IF NOT EXISTS embeddings_dashboards
+				PARTITION OF embeddings
+				FOR VALUES IN ('dashboards')
+				PARTITION BY LIST (namespace);
+		`))
+
+	// Un-promoted tenants. Small-tenant search narrows via the PK prefix
+	// then seq-scans — sub-ms below the promotion threshold.
+	mg.AddMigration("create embeddings_dashboards default partition",
+		migrator.NewRawSQLMigration("").Postgres(
+			`CREATE TABLE IF NOT EXISTS embeddings_dashboards_default
+				PARTITION OF embeddings_dashboards DEFAULT;`,
+		))
+
+	mg.AddMigration("create metadata GIN on embeddings_dashboards_default",
+		migrator.NewRawSQLMigration("").Postgres(
+			`CREATE INDEX IF NOT EXISTS embeddings_dashboards_default_metadata_idx
+				ON embeddings_dashboards_default USING GIN (metadata);`,
+		))
+
+	// Observability log. pg_inherits is the source of truth for leaf existence.
 	vectorPromoted := migrator.Table{
 		Name: "vector_promoted",
 		Columns: []*migrator.Column{
@@ -93,8 +98,8 @@ func initVectorTables(mg *migrator.Migrator) {
 	mg.AddMigration("create vector_promoted table",
 		migrator.NewAddTableMigration(vectorPromoted))
 
-	// vector_latest_rv: single-row global checkpoint for unified-storage
-	// startup recovery. Will go away when a persistent queue lands.
+	// Single-row global checkpoint for startup recovery. Retired once we
+	// have a persistent queue.
 	vectorLatestRV := migrator.Table{
 		Name: "vector_latest_rv",
 		Columns: []*migrator.Column{
