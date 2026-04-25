@@ -1,50 +1,42 @@
-import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
-import { act, renderHook, screen } from 'test/test-utils';
+import { act, renderHook } from 'test/test-utils';
 
 import { useSyncedUrlDrawerParam } from './useSyncedUrlDrawerParam';
+import { useURLSearchParams } from './useURLSearchParams';
 
-function LocationProbe() {
-  const { search } = useLocation();
-  return <div data-testid="search">{search}</div>;
-}
+jest.mock('./useURLSearchParams', () => ({
+  useURLSearchParams: jest.fn(),
+}));
+
+const useURLSearchParamsMock = useURLSearchParams as jest.MockedFunction<typeof useURLSearchParams>;
+const setSearchParamsMock = jest.fn();
 
 describe('useSyncedUrlDrawerParam', () => {
+  beforeEach(() => {
+    setSearchParamsMock.mockReset();
+  });
+
   it('reads the param from the current search string', () => {
-    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'), {
-      wrapper: ({ children }) => (
-        <MemoryRouter initialEntries={[{ pathname: '/alerting/grafana/abc/view', search: '?enrichment=foo' }]}>
-          {children}
-        </MemoryRouter>
-      ),
-    });
+    useURLSearchParamsMock.mockReturnValue([new URLSearchParams('?enrichment=foo'), setSearchParamsMock]);
+    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'));
 
     expect(result.current.value).toBe('foo');
   });
 
   it('returns null when the param is absent', () => {
-    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'), {
-      wrapper: ({ children }) => <MemoryRouter initialEntries={[{ pathname: '/x' }]}>{children}</MemoryRouter>,
-    });
+    useURLSearchParamsMock.mockReturnValue([new URLSearchParams(''), setSearchParamsMock]);
+    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'));
 
     expect(result.current.value).toBeNull();
   });
 
-  it('clears the param in the location when setValue is called with null (integration with locationService)', async () => {
-    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'), {
-      wrapper: ({ children }) => (
-        <MemoryRouter initialEntries={[{ pathname: '/x', search: '?enrichment=bar&tab=enrichment' }]}>
-          <LocationProbe />
-          {children}
-        </MemoryRouter>
-      ),
-    });
-
-    expect(result.current.value).toBe('bar');
+  it('clears the param when setValue is called with null', async () => {
+    useURLSearchParamsMock.mockReturnValue([new URLSearchParams('?enrichment=bar'), setSearchParamsMock]);
+    const { result } = renderHook(() => useSyncedUrlDrawerParam('enrichment'));
 
     await act(async () => {
       result.current.setValue(null, true);
     });
 
-    expect(screen.getByTestId('search')).not.toHaveTextContent(/enrichment=bar/);
+    expect(setSearchParamsMock).toHaveBeenCalledWith({ enrichment: undefined }, true);
   });
 });

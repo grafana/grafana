@@ -89,7 +89,7 @@ export enum ActiveTab {
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
-const ENRICHMENT_DRAWER_NAME_PARAM = 'enrichment';
+const ENRICHMENT_NAME_QUERY_PARAM = 'enrichment';
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
@@ -462,14 +462,15 @@ function usePageNav(rule: CombinedRule) {
 
   // Deep-link: `?enrichment=<metadata.name>` should open the Alert Enrichment tab even if `tab` is omitted.
   useEffect(() => {
-    const raw = queryParams[ENRICHMENT_DRAWER_NAME_PARAM];
+    const raw = queryParams[ENRICHMENT_NAME_QUERY_PARAM];
+    const hasExplicitValidTab = isValidTab(queryParams.tab);
     let nameFromQuery: string | undefined;
     if (typeof raw === 'string') {
       nameFromQuery = raw;
     } else if (Array.isArray(raw) && raw.length > 0) {
       nameFromQuery = String(raw[0]);
     }
-    if (nameFromQuery && activeTab !== ActiveTab.Enrichment) {
+    if (nameFromQuery && !hasExplicitValidTab && activeTab !== ActiveTab.Enrichment) {
       setActiveTab(ActiveTab.Enrichment);
     }
   }, [queryParams, activeTab, setActiveTab]);
@@ -477,7 +478,7 @@ function usePageNav(rule: CombinedRule) {
   // Drop `?enrichment=` so it does not linger on other tabs or after full navigation to another rule.
   useEffect(() => {
     if (previousActiveTab.current === ActiveTab.Enrichment && activeTab !== ActiveTab.Enrichment) {
-      setQueryParams({ [ENRICHMENT_DRAWER_NAME_PARAM]: undefined }, true);
+      setQueryParams({ [ENRICHMENT_NAME_QUERY_PARAM]: undefined }, true);
     }
     previousActiveTab.current = activeTab;
   }, [activeTab, setQueryParams]);
