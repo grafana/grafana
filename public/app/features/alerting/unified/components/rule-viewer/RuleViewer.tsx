@@ -89,7 +89,9 @@ export enum ActiveTab {
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
-const ENRICHMENT_NAME_QUERY_PARAM = 'enrichment';
+
+const ENRICHMENT_VIEW_NAME_QUERY_PARAM = 'enrichment';
+const ENRICHMENT_EDIT_NAME_QUERY_PARAM = 'enrichment_edit';
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
@@ -460,25 +462,40 @@ function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab, queryParams, setQueryParams] = useActiveTab();
   const previousActiveTab = useRef<ActiveTab | null>(null);
 
-  // Deep-link: `?enrichment=<metadata.name>` should open the Alert Enrichment tab even if `tab` is omitted.
+  // Deep-link: `?enrichment=<metadata.name>` or `?enrichment_edit=<metadata.name>` should open the Alert Enrichment tab
+  // even if `tab` is omitted.
   useEffect(() => {
-    const raw = queryParams[ENRICHMENT_NAME_QUERY_PARAM];
+    const rawView = queryParams[ENRICHMENT_VIEW_NAME_QUERY_PARAM];
+    const rawEdit = queryParams[ENRICHMENT_EDIT_NAME_QUERY_PARAM];
     const hasExplicitValidTab = isValidTab(queryParams.tab);
-    let nameFromQuery: string | undefined;
-    if (typeof raw === 'string') {
-      nameFromQuery = raw;
-    } else if (Array.isArray(raw) && raw.length > 0) {
-      nameFromQuery = String(raw[0]);
+    let readName: string | undefined;
+    if (typeof rawView === 'string') {
+      readName = rawView;
+    } else if (Array.isArray(rawView) && rawView.length > 0) {
+      readName = String(rawView[0]);
     }
-    if (nameFromQuery && !hasExplicitValidTab && activeTab !== ActiveTab.Enrichment) {
+
+    let editName: string | undefined;
+    if (typeof rawEdit === 'string') {
+      editName = rawEdit;
+    } else if (Array.isArray(rawEdit) && rawEdit.length > 0) {
+      editName = String(rawEdit[0]);
+    }
+    if ((readName || editName) && !hasExplicitValidTab && activeTab !== ActiveTab.Enrichment) {
       setActiveTab(ActiveTab.Enrichment);
     }
   }, [queryParams, activeTab, setActiveTab]);
 
-  // Drop `?enrichment=` so it does not linger on other tabs or after full navigation to another rule.
+  // Drop enrichment query params so they do not linger on other tabs.
   useEffect(() => {
     if (previousActiveTab.current === ActiveTab.Enrichment && activeTab !== ActiveTab.Enrichment) {
-      setQueryParams({ [ENRICHMENT_NAME_QUERY_PARAM]: undefined }, true);
+      setQueryParams(
+        {
+          [ENRICHMENT_VIEW_NAME_QUERY_PARAM]: undefined,
+          [ENRICHMENT_EDIT_NAME_QUERY_PARAM]: undefined,
+        },
+        true
+      );
     }
     previousActiveTab.current = activeTab;
   }, [activeTab, setQueryParams]);
