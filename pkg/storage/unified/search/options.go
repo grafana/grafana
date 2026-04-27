@@ -177,5 +177,7 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
 		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
 		MinBuildVersion: minBuildVersion,
+		UploadInterval:  DefaultSnapshotUploadInterval,
+		MinDocChanges:   DefaultSnapshotMinDocChanges,
 	}, nil
 }
