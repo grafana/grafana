@@ -33,7 +33,7 @@ To migrate from `grafanactl` to `gcx`, search-and-replace `grafanactl` with `gcx
 
 {{< /admonition >}}
 
-The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.
+The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.
 
 ## Install the Grafana CLI `grafanactl`
 
