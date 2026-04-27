@@ -5345,6 +5345,14 @@
         "paste": {
           "description": "Click or drag to paste panel",
           "title": "Paste panel"
+        },
+        "paste-row": {
+          "description": "Click to paste row from clipboard",
+          "title": "Paste row"
+        },
+        "paste-tab": {
+          "description": "Click to paste tab from clipboard",
+          "title": "Paste tab"
         }
       },
       "add-panel": "Add panel",
@@ -5976,7 +5984,9 @@
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",
-        "paste": "Paste"
+        "paste": "Paste",
+        "paste-row": "Paste row",
+        "paste-tab": "Paste tab"
       },
       "continue": "Continue",
       "panel": {
