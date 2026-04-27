@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "Você não tem permissão para acessar o incidente",
         "instance-details": "Detalhes da instância",
+        "section-silence": "",
         "silence-button": "Silenciamento",
-        "silence-no-permission": "Você não tem permissão para criar silenciamentos",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Você não tem permissão para criar silenciamentos"
       },
       "labels-column-title": "Rótulos",
       "no-firing-or-pending-instances": "Você não tem instâncias de alerta em estado pendente ou sendo disparadas no intervalo de tempo selecionado.",
@@ -4400,12 +4400,13 @@
       "button-label": "Selecionar pasta",
       "clear-selection": "Limpar seleção",
       "empty-message": "Nenhuma pasta encontrada",
-      "error-title": "Erro ao carregar pastas",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} não é uma pasta",
       "root-title": "Painéis",
       "search-placeholder": "Buscar pastas",
       "shared-with-me": "Compartilhado comigo",
       "team-folders": "Pastas da equipe",
+      "team-folders-error-title": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anotações e alertas",
         "dashboard": "Painel de controle",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Links",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
@@ -5633,6 +5636,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-filters-set": "",
         "tab": "Aba",
         "tabs": "Abas",
         "variable": "Variável {{type}}",
@@ -5650,8 +5654,10 @@
           "title": "Cabeçalho de linha"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Adicionar variável",
         "title": "Variáveis"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Ocultar cabeçalho de linha",
           "title": "Título"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variáveis"
         },
@@ -6362,6 +6371,9 @@
             "title": "Repetir por variável"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variáveis"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Salvar painel da biblioteca",
         "share": {
           "arrow": "Compartilhar",
-          "title": "Compartilhar",
           "tooltip": "Copiar link"
         },
         "unlink-library-panel": "Desvincular painel de biblioteca"
@@ -7074,6 +7085,16 @@
       "sql-name": "Transformar com SQL",
       "sql-transformation-description": "Manipule seus dados usando uma sintaxe semelhante ao MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7543,7 @@
       "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis.</1> Os seguintes painéis de controle que estão usando o painel serão afetados:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este painel não pode ser salvo a partir da interface do usuário da Grafana porque foi provisionado a partir de outra fonte. Copie o JSON ou salve-o em um arquivo abaixo e você poderá atualizar seu painel na fonte de provisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
@@ -7529,6 +7551,11 @@
       "file-path": "<strong>Caminho do arquivo:</strong> {{filePath}}",
       "form-loading-error": "Erro ao carregar o formulário",
       "form-loading-error-unknown": "Ocorreu um erro inesperado ao carregar o formulário.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
@@ -7546,6 +7573,9 @@
       "disabled-tooltip": "Salve o painel antes de criar regras de alerta",
       "new-alert-rule": "Nova regra de alerta",
       "title-no-alerting-capable-query-found": "Nenhuma consulta que possa enviar alertas foi encontrada"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite que vários valores sejam selecionados ao mesmo tempo",
@@ -7642,6 +7672,13 @@
       "page-nav": {
         "text": {
           "settings": "Configurações"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8618,6 +8655,7 @@
         "copy-link": "Copiar link para a linha do log",
         "copy-to-clipboard": "Copiar para a área de transferência",
         "inspect-value": "Inspecionar valor",
+        "show-details": "",
         "view-log-line": "Visualizar linha de log"
       }
     },
@@ -11087,6 +11125,12 @@
       "update-all": "Atualizar tudo",
       "num-affected_one": "Esta atualização afetará <1>{{count}} painéis.</1>",
       "num-affected_other": "Esta atualização afetará <1>{{count}} painéis.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11177,6 +11221,7 @@
       "label-numbers": "Números",
       "label-signature": "Assinatura"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Em teste. Mostre um componente para gerenciar os campos exibidos nos logs.",
     "description-enable-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
     "description-enable-logs-highlighting": "Use um sistema de cores predefinido para destacar partes relevantes das linhas de log.",
@@ -11286,6 +11331,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de log",
       "inline-mode": "Exibir em linha",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de log",
@@ -11472,6 +11519,7 @@
         "common-labels": "Rótulos comuns:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Rótulos comuns",
     "name-deduplication": "Desduplicação",
     "name-details-mode": "Modo de painel de detalhes dos logs",
@@ -11534,13 +11582,13 @@
   "logstable": {
     "category-table": "Tabela de logs",
     "description-show-controls": "Exibir controles da tabela",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de link da linha de log na primeira coluna de cada linha",
       "name": "Exibir botão de cópia do link do log"
-    },
-    "show-inspect-button": {
-      "description": "Ativa/desativa o botão de inspeção da linha de log na primeira coluna de cada linha",
-      "name": "Mostrar botão de inspeção"
     }
   },
   "manage-dashbaords": {
@@ -12956,9 +13004,7 @@
       "update-available": "Atualização disponível!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "O uso do plug-in requer o novo índice de pesquisa para encontrar o uso nos painéis. Ative a alternância de recurso",
       "num-usages": "{{pluginName}} é usado <2>{{numUsages}}</2> vezes.",
-      "title-missing-feature-toggle-panel-title-search": "Ausência do alternador de recursos: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} ainda não está em uso em nenhum painel"
     },
     "plugins-errors-info": {
@@ -13106,6 +13152,7 @@
       "token-user-description": "O nome de usuário que será usado para acessar o repositório com o token de API",
       "token-user-required": "O nome de usuário é obrigatório",
       "url-description": "O URL do repositório do Bitbucket",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "bootstrap-step": {
@@ -14059,7 +14106,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ajuda da fonte de dados",
       "hide-transformation-help": "Ocultar ajuda para transformação",
-      "inspector": "Inspetor de consultas",
       "more-actions": "Mais ações de {{type}}",
       "remove": "Remover {{type}}",
       "remove-transformation-filter": "Remover filtro",
@@ -14071,6 +14117,27 @@
     "alerts": {
       "no-alerts": "Nenhuma regra de alerta para este painel",
       "no-alerts-description": "Crie uma regra de alerta para receber notificações quando seus dados atenderem a determinadas condições."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Tem certeza de que deseja excluir esta consulta?",
@@ -14108,6 +14175,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Máximo de pontos de dados",
@@ -14118,6 +14186,7 @@
       "placeholder": {
         "no-limit": "Sem limite"
       },
+      "query-inspector": "",
       "query-options": "Opções de consulta"
     },
     "header": {
@@ -14720,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Painel de controle inicial",
       "home-dashboard-placeholder": "Painel de controle padrão",
@@ -15889,6 +15962,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Selecionar estatísticas"
     },
@@ -15900,6 +15974,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Os cálculos não terão efeito se nenhum campo estiver sendo agrupado em"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

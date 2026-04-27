@@ -385,7 +385,10 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		}, "")
 
 		require.Error(t, err)
-		require.ErrorContains(t, err, "not managed by a repository")
+		var unmanagedErr *ResourceUnmanagedConflictError
+		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
+		require.ErrorContains(t, err, "folder-id")
+		require.ErrorContains(t, err, "already exists and is not managed")
 		require.Empty(t, client.updateCalls)
 	})
 

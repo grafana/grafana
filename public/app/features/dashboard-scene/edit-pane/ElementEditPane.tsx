@@ -19,17 +19,19 @@ export class ElementEditPane extends SceneObjectBase {
 }
 
 export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const styles = useStyles2(getStyles);
+
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+
   const element = useMemo(() => {
     return getEditableElementForSelection(editPane, editPane.state.selectionContext.selected);
   }, [editPane]);
 
+  const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
+
   if (!element) {
     return null;
   }
-
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
 
   return (
     <div className={styles.wrapper}>

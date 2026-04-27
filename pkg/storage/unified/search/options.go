@@ -1,11 +1,16 @@
 package search
 
 import (
+	"context"
+	"crypto/rand"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/oklog/ulid/v2"
+	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,6 +61,21 @@ func NewSearchOptions(
 			}
 		}
 
+		var buildVersion *semver.Version
+		if cfg.BuildVersion != "" {
+			v, err := semver.NewVersion(cfg.BuildVersion)
+			if err != nil {
+				cfg.Logger.Error("Failed to parse build_version, ignoring it.", "version", cfg.BuildVersion, "err", err)
+			} else {
+				buildVersion = v
+			}
+		}
+
+		snapshot, err := buildSnapshotOptions(cfg, minVersion)
+		if err != nil {
+			return resource.SearchOptions{}, err
+		}
+
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                     root,
 			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -64,6 +84,7 @@ func NewSearchOptions(
 			OwnsIndex:                ownsIndexFn,
 			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
 			SelectableFieldsForKinds: resource.SelectableFields(),
+			Snapshot:                 snapshot,
 		}, indexMetrics)
 
 		if err != nil {
@@ -79,6 +100,7 @@ func NewSearchOptions(
 			DashboardIndexMaxAge:      cfg.IndexRebuildInterval,
 			MaxIndexAge:               cfg.MaxFileIndexAge,
 			MinBuildVersion:           minVersion,
+			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
@@ -99,5 +121,61 @@ func NewSearchOptions(
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 		MaxIndexAge:               cfg.MaxFileIndexAge,
+	}, nil
+}
+
+func snapshotLockHeartbeat(ttl time.Duration) time.Duration {
+	hb := ttl / 3
+	if hb <= 0 || hb*2 > ttl {
+		hb = ttl / 2
+	}
+	if hb <= 0 {
+		hb = time.Second
+	}
+	return hb
+}
+
+// buildSnapshotOptions opens the configured object-storage bucket and wraps it
+// as a RemoteIndexStore. Returns a zero SnapshotOptions (Store==nil) when the
+// feature is not enabled, so the backend short-circuits all new paths.
+func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (SnapshotOptions, error) {
+	if !cfg.IndexSnapshotEnabled || cfg.IndexSnapshotBucketURL == "" {
+		return SnapshotOptions{}, nil
+	}
+
+	bucket, err := blob.OpenBucket(context.Background(), cfg.IndexSnapshotBucketURL)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
+	}
+
+	lockOpts, err := cdkLockOptionsFromBucket(bucket, cfg.IndexSnapshotBucketURL)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("snapshot lock backend options: %w", err)
+	}
+	lockBackend := newCDKLockBackend(bucket, lockOpts)
+
+	ownerBase := cfg.InstanceID
+	if ownerBase == "" {
+		ownerBase = cfg.InstanceName
+	}
+	if ownerBase == "" {
+		ownerBase = "unknown-instance"
+	}
+	lockOwnerSuffix, err := ulid.New(ulid.Now(), rand.Reader)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("creating lock owner suffix: %w", err)
+	}
+	// Include a per-process ULID suffix to avoid owner collisions across instances
+	// that share the same configured instance_id/instance_name.
+	owner := fmt.Sprintf("%s/%s", ownerBase, lockOwnerSuffix.String())
+
+	lockTTL := DefaultSnapshotLockTTL
+	lockHeartbeat := snapshotLockHeartbeat(lockTTL)
+
+	return SnapshotOptions{
+		Store:           NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
+		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
+		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
+		MinBuildVersion: minBuildVersion,
 	}, nil
 }

@@ -969,6 +969,9 @@ export const versionedComponents = {
     card: {
       '10.1.0': (name: string) => `data-testid New transform ${name}`,
     },
+    applicabilityInfo: {
+      '13.1.0': 'data-testid Transformation applicability info',
+    },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
     },

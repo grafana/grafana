@@ -52,7 +52,7 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 
 	// 1. Collect all GlobalRole objects into a map for two-pass resolution.
 	allGlobalRoles := make(map[string]*iamv0.GlobalRole)
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		var gr iamv0.GlobalRole
 		if err := convertUnstructured(item, &gr); err != nil {
 			return err
@@ -195,7 +195,7 @@ func (r *Reconciler) fetchAndTranslateCRD(
 	}
 
 	// Stream through pages using the Kubernetes dynamic client
-	err = listAndProcess(ctx, resourceClient, func(item *unstructured.Unstructured) error {
+	err = listAndProcess(ctx, resourceClient, r.cfg.listPageSize(), func(item *unstructured.Unstructured) error {
 		objectsFetched++
 		tuples, err := translator(item)
 		if err != nil {
@@ -225,12 +225,12 @@ func (r *Reconciler) fetchAndTranslateCRD(
 
 // listAndProcess is a helper function that lists all resources and processes each one.
 // It handles pagination using Kubernetes continuation tokens.
-func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn func(*unstructured.Unstructured) error) error {
+func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, pageSize int64, fn func(*unstructured.Unstructured) error) error {
 	var continueToken string
 
 	for {
 		list, err := client.List(ctx, metav1.ListOptions{
-			Limit:    10000, // Page size
+			Limit:    pageSize,
 			Continue: continueToken,
 		})
 		if err != nil {
@@ -264,25 +264,25 @@ func (r *Reconciler) computeDiffStreaming(
 	))
 	defer span.End()
 
-	pagesRead := 0
-
-	// Get store info for the namespace
+	// Get store info for the namespace. The reconciler runs as a background
+	// worker without end-user claims, so it calls the internal ReadTuples helper
+	// (mirroring WriteTuples) to bypass the public-API authorization check.
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
 	}
 
+	pagesRead := 0
 	var continuationToken string
 
 	// Read current tuples page-by-page and diff against expected
 	for {
 		req := &openfgav1.ReadRequest{
-			StoreId:           storeInfo.ID,
 			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 
-		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
+		resp, err := r.server.ReadTuples(ctx, storeInfo, req)
 		if err != nil {
 			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}
