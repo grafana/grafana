@@ -103,7 +103,7 @@ refs:
 # Role-based access control (RBAC) overview
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud).
 {{< /admonition >}}
 
 Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources such as dashboards, reports, and administrative settings. RBAC extends the permissions of basic roles included in Grafana OSS, and enables more granular control of users’ actions.
@@ -161,7 +161,7 @@ For a comprehensive list of the basic role permissions refer to [Permissions ass
 
 You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, [the change is not propagated to the other basic roles](#permission-propagation). You can't delete basic roles.
 
-You can modify basic roles via the UI or using the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
+You can modify basic roles using the configuration file or with the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
 
 Note that:
 

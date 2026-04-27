@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 export interface FileImportResult {
   dataFrames: DataFrame[];

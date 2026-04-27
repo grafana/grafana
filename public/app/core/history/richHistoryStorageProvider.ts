@@ -5,7 +5,7 @@ import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryLocalStorage from './RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from './RichHistoryRemoteStorage';
-import RichHistoryStorage from './RichHistoryStorage';
+import type RichHistoryStorage from './RichHistoryStorage';
 
 const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();

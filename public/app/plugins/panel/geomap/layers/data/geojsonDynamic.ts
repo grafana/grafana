@@ -1,5 +1,5 @@
-import { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -9,22 +9,22 @@ import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
 import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type PanelData,
+  type GrafanaTheme2,
   PluginState,
-  EventBus,
-  DataFrame,
+  type EventBus,
+  type DataFrame,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
 
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
+import { defaultStyleConfig, type StyleConfig, type StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
-import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';

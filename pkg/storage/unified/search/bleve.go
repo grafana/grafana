@@ -18,7 +18,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -86,6 +85,30 @@ type BleveOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
+
+	// Snapshot configures remote index snapshot download at build time.
+	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
+	Snapshot SnapshotOptions
+}
+
+// SnapshotOptions configures remote index snapshot handling in BuildIndex.
+type SnapshotOptions struct {
+	// Store is the remote index store. When nil, the snapshot feature is disabled
+	// and no remote download is attempted.
+	Store RemoteIndexStore
+
+	// MinDocCount is the minimum document count at which a remote snapshot download is attempted.
+	// Must be >= FileThreshold to be meaningful; smaller resources are built in-process.
+	MinDocCount int64
+
+	// MaxIndexAge is the maximum age of a remote snapshot that can be downloaded.
+	// Older snapshots are skipped (hard filter).
+	MaxIndexAge time.Duration
+
+	// MinBuildVersion, if non-nil, is the preferred lower bound on the Grafana
+	// build version of a remote snapshot. Snapshots with a lower version are
+	// considered only if no snapshot at or above this version is available.
+	MinBuildVersion *semver.Version
 }
 
 type bleveBackend struct {
@@ -101,6 +124,10 @@ type bleveBackend struct {
 	indexMetrics *resource.BleveIndexMetrics
 
 	selectableFields map[string][]string
+
+	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
+	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
+	runningBuildVersion *semver.Version
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
@@ -124,12 +151,21 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	var runningBuildVersion *semver.Version
 	if opts.BuildVersion != "" {
 		// Don't allow storing invalid versions to the index.
-		_, err := semver.NewVersion(opts.BuildVersion)
+		v, err := semver.NewVersion(opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
 		}
+		runningBuildVersion = v
+	}
+
+	// Snapshot selection compares against runningBuildVersion, so we require it
+	// to be set when the feature is enabled. This keeps the snapshot code free
+	// of nil checks.
+	if opts.Snapshot.Store != nil && runningBuildVersion == nil {
+		return nil, fmt.Errorf("bleve backend requires non-empty BuildVersion when snapshot store is configured")
 	}
 
 	l := opts.Logger
@@ -144,12 +180,13 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be := &bleveBackend{
-		log:              l,
-		cache:            map[resource.NamespacedResource]*bleveIndex{},
-		opts:             opts,
-		ownsIndexFn:      ownFn,
-		indexMetrics:     indexMetrics,
-		selectableFields: opts.SelectableFieldsForKinds,
+		log:                 l,
+		cache:               map[resource.NamespacedResource]*bleveIndex{},
+		opts:                opts,
+		ownsIndexFn:         ownFn,
+		indexMetrics:        indexMetrics,
+		selectableFields:    opts.SelectableFieldsForKinds,
+		runningBuildVersion: runningBuildVersion,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -315,7 +352,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -327,8 +364,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:    buildTime.Unix(),
-		BuildVersion: buildVersion,
+		BuildTime:        buildTime.Unix(),
+		BuildVersion:     buildVersion,
+		SelectableFields: selectableFields,
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -345,8 +383,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
-	BuildVersion string `json:"build_version"` // Grafana version used when building the index
+	BuildTime        int64    `json:"build_time"`                  // Unix seconds timestamp of time when the index was built
+	BuildVersion     string   `json:"build_version"`               // Grafana version used when building the index
+	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -453,6 +492,17 @@ func (b *bleveBackend) BuildIndex(
 					}
 				}
 			}
+
+			// No valid local index — if a remote snapshot store is configured and the
+			// index is large enough to justify a round-trip, try downloading one.
+			if index == nil && b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount {
+				dlIdx, dlName, dlRV, dlErr := b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logWithDetails)
+				if dlErr != nil {
+					logWithDetails.Warn("Failed to download remote snapshot, will build from scratch", "err", dlErr)
+				} else if dlIdx != nil {
+					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
+				}
+			}
 		}
 
 		if index != nil {
@@ -472,7 +522,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -487,7 +537,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -580,7 +630,13 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
-	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	return filepath.Join(b.opts.Root, resourceSubPath(key))
+}
+
+// resourceSubPath returns the namespaced on-disk/object-store path for a resource,
+// for example: default/dashboards.dashboard.grafana.app
+func resourceSubPath(key resource.NamespacedResource) string {
+	return filepath.Join(cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {
@@ -765,6 +821,7 @@ type bleveIndex struct {
 	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
+	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
 
@@ -792,6 +849,7 @@ func (b *bleveBackend) newBleveIndex(
 		logger:            logger,
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
+		indexMetrics:      b.indexMetrics,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -899,8 +957,9 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	}
 
 	return resource.IndexBuildInfo{
-		BuildTime:    bt,
-		BuildVersion: bv,
+		BuildTime:        bt,
+		BuildVersion:     bv,
+		SelectableFields: bi.SelectableFields,
 	}, nil
 }
 
@@ -1087,22 +1146,15 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected
+	// Show all fields when nothing is selected.
+	// Individual field names tell bleve which stored values to load.
+	// The sentinel triggers hitsToTable to use the curated allFields column list.
 	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
 		if err != nil {
 			return nil, err
 		}
-		if len(f) > 0 {
-			searchrequest.Fields = f
-		} else {
-			searchrequest.Fields = []string{
-				resource.SEARCH_FIELD_TITLE,
-				resource.SEARCH_FIELD_FOLDER,
-				resource.SEARCH_FIELD_SOURCE_PATH,
-				resource.SEARCH_FIELD_MANAGED_BY,
-			}
-		}
+		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
@@ -1280,9 +1332,29 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	if len(req.Query) > 1 {
 		if strings.Contains(req.Query, "*") {
-			// wildcard query is expensive - should be used with caution
-			wildcard := bleve.NewWildcardQuery(req.Query)
-			queries = append(queries, wildcard)
+			// Wildcard query is expensive, should be used with caution.
+			// When QueryFields is set, search across each named field (only Name is
+			// used; Type and Boost are ignored because bleve wildcards don't support
+			// analyzers or meaningful relevance scoring).
+			// When QueryFields is empty, default to title + IAM identity fields
+			// (email, login) for backward compatibility with older clients that
+			// don't set QueryFields.
+			disjoin := bleve.NewDisjunctionQuery()
+			if len(req.QueryFields) > 0 {
+				for _, field := range req.QueryFields {
+					addWildcardQueries(disjoin, req.Query, field.Name)
+				}
+			} else {
+				// Default: search title and IAM identity fields (email, login).
+				// IAM user search wraps queries as "*<query>*" — older clients
+				// may not set QueryFields, so we include email/login here for
+				// backward compatibility during the deployment gap.
+				// TODO: remove email and login fields once IAM only sends requests with QueryFields.
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
+			}
+			queries = append(queries, disjoin)
 		} else {
 			// When using a
 			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
@@ -1293,18 +1365,31 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			if len(queryFields) == 0 {
 				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (with ngrams!)
-					}, {
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 5, // standard analyzer
+						Boost: 2, // standard analyzer (word-level matching)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+						Type:  resourcepb.QueryFieldType_TEXT,
+						Boost: 1, // ngram analyzer (partial/prefix matching)
 					},
+				}
+			} else if b.indexMetrics != nil && b.indexMetrics.SearchLegacyQueryFields != nil {
+				// Track requests from clients that don't yet include title_ngram in their query fields.
+				// When this counter stops incrementing, it is safe to remove the ngram mapping from the title field.
+				hasNgram := false
+				for _, f := range queryFields {
+					if f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						hasNgram = true
+						break
+					}
+				}
+				if !hasNgram {
+					b.indexMetrics.SearchLegacyQueryFields.Inc()
 				}
 			}
 
@@ -1319,10 +1404,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
-					q := bleve.NewMatchQuery(req.Query)
+					q := bleve.NewTermQuery(strings.ToLower(req.Query))
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_PHRASE:
@@ -1402,7 +1486,7 @@ func removeSmallTerms(query string) string {
 	validWords := make([]string, 0, len(words))
 
 	for _, word := range words {
-		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+		if len(word) >= NGRAM_MIN_TOKEN {
 			validWords = append(validWords, word)
 		}
 	}
@@ -1631,7 +1715,20 @@ var exactTermFields = []string{
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
-	case selection.Equals, selection.DoubleEquals:
+	case selection.DoubleEquals:
+		// DoubleEquals does exact matching via TermQuery (single value only).
+		// For title, route to the pre-lowered title_phrase field.
+		if len(req.Values) == 1 {
+			key := req.Key
+			value := req.Values[0]
+			if key == resource.SEARCH_FIELD_TITLE {
+				key = resource.SEARCH_FIELD_TITLE_PHRASE
+				value = strings.ToLower(value)
+			}
+			return newExactTermsQuery(key, value, prefix), nil
+		}
+
+	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
@@ -1707,6 +1804,22 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	)
 }
 
+// addWildcardQueries adds wildcard queries for the given field to the disjunction.
+// When the field is "title", it adds queries for both "title" (standard-analyzed,
+// matches word-level wildcards like "hell*") and "title_phrase" (keyword-analyzed,
+// matches full-phrase wildcards like "*grafana dev overview*").
+func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field string) {
+	wq := bleve.NewWildcardQuery(pattern)
+	wq.SetField(field)
+	disjoin.AddQuery(wq)
+
+	if field == resource.SEARCH_FIELD_TITLE {
+		wPhrase := bleve.NewWildcardQuery(pattern)
+		wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+		disjoin.AddQuery(wPhrase)
+	}
+}
+
 // newQuery will create a query that will match the value or the tokens of the value
 func newQuery(key string, value string, prefix string) query.Query {
 	if value == "*" {
@@ -1714,7 +1827,9 @@ func newQuery(key string, value string, prefix string) query.Query {
 	}
 	if strings.Contains(value, "*") {
 		// wildcard query is expensive - should be used with caution
-		return bleve.NewWildcardQuery(value)
+		q := bleve.NewWildcardQuery(value)
+		q.SetField(prefix + key)
+		return q
 	}
 	delimiter, ok := hasTerms(value)
 	if slices.Contains(termFields, key) && ok {
@@ -1776,7 +1891,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 
 	fields := []*resourcepb.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
-		if name == "_all" {
+		if name == resource.SEARCH_FIELD_ALL_FIELDS {
 			fields = b.allFields
 			break
 		}

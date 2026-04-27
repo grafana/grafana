@@ -1,11 +1,11 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   initLastUsedDatasourceKeyForDashboard,
   setLastUsedDatasourceKeyForDashboard,
 } from 'app/features/dashboard/utils/dashboard';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { QueryGroupDataSource } from 'app/types/query';
+import { type QueryGroupDataSource } from 'app/types/query';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,

@@ -59,7 +59,7 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) error {
 	default:
 		return fmt.Errorf("unknown dialect: %v", k.dialect.Name())
 	}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to save last import time: %w", err)
 	}
@@ -85,7 +85,7 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 		k.dialect.QuoteIdent("resource"),
 	)
 
-	rows, err := k.db.QueryContext(ctx, query)
+	rows, err := k.conn(ctx).QueryContext(ctx, query)
 	if err != nil {
 		yield("", err)
 		return
@@ -130,7 +130,7 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 		k.dialect.QuoteIdent("last_import_time"),
 	)
 	args := []any{group, resource, ns, lastImportTime}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete last import time: %w", err)
 	}

@@ -1,4 +1,4 @@
-import { Correlation } from '../types';
+import { type Correlation } from '../types';
 
 type CorrelationBaseData = Pick<Correlation, 'uid' | 'sourceUID'>;
 

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
-import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';

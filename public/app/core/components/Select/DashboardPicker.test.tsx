@@ -12,22 +12,11 @@ setupMockServer();
 
 const [_, { folderA, folderA_dashbdD }] = getFolderFixtures();
 
-const fixtures: Array<
-  [
-    // Test title
-    string,
-    // Feature toggle setup
-    Parameters<typeof testWithFeatureToggles>[0],
-  ]
-> = [
-  ['app platform APIs enabled', { enable: ['kubernetesDashboards'] }],
-  ['app platform APIs disabled', {}],
-];
 describe('DashboardPicker', () => {
-  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
+  describe('using app platform', () => {
     const onChange = jest.fn();
 
-    testWithFeatureToggles(featureToggleSetup);
+    testWithFeatureToggles({ enable: [] });
 
     it('should fetch and display dashboards', async () => {
       render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
@@ -59,7 +48,7 @@ describe('DashboardPicker', () => {
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
-    testWithFeatureToggles({ enable: ['dashboardNewLayouts', 'kubernetesDashboards'] });
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
     it('renders dashboard correctly', async () => {
       render(<DashboardPicker value="v2-special-case-override" />);
       expect(await screen.findByText('TODO')).toBeInTheDocument();

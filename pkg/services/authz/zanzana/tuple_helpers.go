@@ -147,9 +147,6 @@ func GetRoleBindingTuple(subjectKind string, subjectName string, roleName string
 		subjectRelation = RelationTeamMember
 	case string(iamv0.RoleBindingSpecSubjectKindServiceAccount):
 		zanzanaType = TypeServiceAccount
-	case string(iamv0.RoleBindingSpecSubjectKindBasicRole):
-		zanzanaType = TypeRole
-		subjectRelation = RelationAssignee
 	default:
 		return nil, fmt.Errorf("invalid subject kind: %s", subjectKind)
 	}

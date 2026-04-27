@@ -29,12 +29,6 @@ func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
 			},
 		},
 		{
-			name: "data migrations disabled",
-			cfgFunc: func(cfg *setting.Cfg) {
-				cfg.DisableDataMigrations = true
-			},
-		},
-		{
 			name: "target is not all or core",
 			cfgFunc: func(cfg *setting.Cfg) {
 				cfg.Target = []string{"storage-server"}
@@ -53,17 +47,17 @@ func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
 			cfg := setting.NewCfg()
 			tt.cfgFunc(cfg)
 
-			migrator := NewMockUnifiedMigrator(t)
+			fake := &fakeUnifiedMigrator{}
 
 			svc := &UnifiedStorageMigrationServiceImpl{
 				cfg:      cfg,
-				migrator: migrator,
+				migrator: fake,
 			}
 
 			err := svc.Run(context.Background())
 			require.NoError(t, err)
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.MUnifiedStorageMigrationStatus))
-			migrator.AssertNotCalled(t, "Migrate")
+			require.Equal(t, 0, fake.migrateCalled)
 		})
 	}
 }

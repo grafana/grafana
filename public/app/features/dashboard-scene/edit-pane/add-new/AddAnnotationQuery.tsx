@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { annotationEditActions } from '../../settings/annotations/actions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 

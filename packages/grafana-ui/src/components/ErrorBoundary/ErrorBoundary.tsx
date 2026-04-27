@@ -1,4 +1,4 @@
-import { PureComponent, ReactNode, ComponentType, ErrorInfo, memo } from 'react';
+import { PureComponent, type ReactNode, type ComponentType, type ErrorInfo, memo } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 import { t } from '@grafana/i18n';

@@ -30,13 +30,13 @@ func TestSlugify(t *testing.T) {
 }
 
 func BenchmarkSlugify(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		Slugify("Hello, world!")
 	}
 }
 
 func BenchmarkSlugifyLongString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		Slugify(`
 			😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬 Hello, it's paradise
 			😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬 Hello, it's paradise

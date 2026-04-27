@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { Stack, Text, TextLink } from '@grafana/ui';
 

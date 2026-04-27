@@ -3,7 +3,7 @@ package v0alpha1
 RoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
-		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
+		kind: "User" | "ServiceAccount" | "Team"
 		// uid of the identity
 		name: string
 	}
@@ -21,7 +21,7 @@ RoleBindingSpec: {
 GlobalRoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
-		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
+		kind: "User" | "ServiceAccount" | "Team"
 		// uid of the identity
 		name: string
 	}

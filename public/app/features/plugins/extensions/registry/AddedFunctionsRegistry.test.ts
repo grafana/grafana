@@ -1,6 +1,6 @@
 import { firstValueFrom, take } from 'rxjs';
 
-import { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { log } from '../logs/log';

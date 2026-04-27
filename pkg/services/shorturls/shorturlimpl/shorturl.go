@@ -3,7 +3,6 @@ package shorturlimpl
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 	"time"
 
@@ -43,11 +42,8 @@ func (s ShortURLService) List(ctx context.Context, orgID int64) ([]*shorturls.Sh
 func (s ShortURLService) CreateShortURL(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 	relPath := strings.TrimSpace(cmd.Path)
 
-	if path.IsAbs(relPath) {
-		return nil, shorturls.ErrShortURLAbsolutePath.Errorf("expected relative path: %s", relPath)
-	}
-	if strings.Contains(relPath, "../") {
-		return nil, shorturls.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
+	if err := shorturls.ValidateRelativePath(relPath); err != nil {
+		return nil, err
 	}
 
 	uid := cmd.UID

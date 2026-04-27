@@ -5,20 +5,20 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrame,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   dateTime,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
+import { type Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import {
   defaultProfilingKeys,
@@ -28,9 +28,9 @@ import {
   scopedVarsFromTags,
   scopedVarsFromTrace,
 } from '../../../createSpanLink';
-import { TraceSpan } from '../../types/trace';
+import { type TraceSpan } from '../../types/trace';
 
-import { TraceFlameGraphs } from '.';
+import { type TraceFlameGraphs } from '.';
 
 export type SpanFlameGraphProps = {
   span: TraceSpan;
@@ -133,6 +133,8 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
               uid: profilesDataSourceSettings.uid,
             },
             includeExemplars: false,
+            heatmapType: 'individual' as const,
+            includeHeatmap: false,
           },
         ],
       };

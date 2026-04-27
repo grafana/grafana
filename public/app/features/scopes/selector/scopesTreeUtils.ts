@@ -1,6 +1,6 @@
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 
-import { NodesMap, TreeNode } from './types';
+import { type NodesMap, type TreeNode } from './types';
 
 /**
  * Creates a deep copy of the node tree with expanded prop set to false.

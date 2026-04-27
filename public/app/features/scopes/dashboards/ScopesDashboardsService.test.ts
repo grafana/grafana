@@ -1,9 +1,9 @@
-import { Location } from 'history';
+import { type Location } from 'history';
 import { Subject } from 'rxjs';
 
 import { config, locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
 import {
   navigationWithSubScope,
@@ -12,7 +12,7 @@ import {
 } from '../tests/utils/mockData';
 
 import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
-import { ScopeNavigation } from './types';
+import { type ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -1040,8 +1040,8 @@ describe('ScopesDashboardsService', () => {
       // Wait for the preload to complete
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      // Verify that fetchScopeNavigations was called for the subScope
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir']);
+      // rootScope is always forScopeNames[0] — the top-level scope the navigation tree was built for.
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'scope1' });
 
       // Verify the folder now has content from the preloaded items
       const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('mimir'));
@@ -1053,6 +1053,53 @@ describe('ScopesDashboardsService', () => {
         expect(folder.folders['General']).toBeDefined();
         expect(folder.folders['General'].suggestedNavigations['/d/mimir-dashboard-1']).toBeDefined();
       }
+    });
+
+    it('should pass rootScope from forScopeNames regardless of navigationScope', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'mimir',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Mimir Dashboards',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      const mimirItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: { scope: 'mimir', url: '/d/mimir-dashboard-1' },
+          status: { title: 'Mimir Dashboard 1', groups: ['General'] },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      // rootScope comes from forScopeNames[0], which is set by fetchDashboards regardless
+      // of whether setNavigationScope was called.
+      await service.setNavigationScope('scope1');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], {
+        depth: 1,
+        rootScope: 'scope1',
+      });
     });
 
     it('should not fetch subScope items for folders without preLoadSubScopeChildren', async () => {
@@ -1153,8 +1200,8 @@ describe('ScopesDashboardsService', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify all levels were fetched
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level1']);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level2']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level1'], { depth: 1, rootScope: 'scope1' });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level2'], { depth: 2, rootScope: 'scope1' });
     });
 
     it('should handle multiple folders with preLoadSubScopeChildren', async () => {
@@ -1224,8 +1271,8 @@ describe('ScopesDashboardsService', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify both subScopes were fetched
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir']);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['loki']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'scope1' });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['loki'], { depth: 1, rootScope: 'scope1' });
     });
 
     it('should handle preload errors gracefully', async () => {
@@ -1335,8 +1382,8 @@ describe('ScopesDashboardsService', () => {
 
       // Verify the chain of preloads occurred
       expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['scope1']);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['parent']);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['child']);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['parent'], { depth: 1, rootScope: 'scope1' });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['child'], { depth: 2, rootScope: 'scope1' });
     });
   });
 

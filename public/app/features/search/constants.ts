@@ -19,4 +19,6 @@ export const TYPE_KIND_MAP: { [key: string]: DashboardSearchItemType } = {
   home: DashboardSearchItemType.DashHome,
 };
 
+export const TEAM_FOLDERS_UID = 'teamfolders';
+
 export const DEFAULT_MAX_VALUES = 1000;

@@ -1,19 +1,20 @@
+/* istanbul ignore file */
 import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  SetFieldConfigOptionsArgs,
-  Field,
+  type SetFieldConfigOptionsArgs,
+  type Field,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  LineStyle,
+  type LineStyle,
   VisibilityMode,
   StackingMode,
   GraphThresholdsStyleMode,
@@ -25,7 +26,6 @@ import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
-
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
@@ -43,54 +43,6 @@ export const defaultGraphConfig: GraphFieldConfig = {
   axisBorderShow: false,
   showValues: false,
 };
-
-/**
- * Defines graph style configuration properties. Properties from GraphFieldConfig.
- * Temporary config - PoC.
- */
-export const defaultGraphStyleConfig = {
-  fieldConfig: {
-    defaultsProps: ['color'],
-    defaults: [
-      // Line config
-      'lineColor',
-      'lineInterpolation',
-      'lineStyle',
-      'lineWidth',
-      'spanNulls',
-      // Fill config
-      'fillBelowTo',
-      'fillColor',
-      'fillOpacity',
-      // Points config
-      'pointColor',
-      'pointSize',
-      'pointSymbol',
-      'showPoints',
-      // Axis config
-      'axisBorderShow',
-      'axisCenteredZero',
-      'axisColorMode',
-      'axisGridShow',
-      'axisLabel',
-      'axisPlacement',
-      'axisSoftMax',
-      'axisSoftMin',
-      'axisWidth',
-      // Graph field config
-      'drawStyle',
-      'gradientMode',
-      'insertNulls',
-      'showValues',
-      // Stacking
-      'stacking',
-      // Bar config
-      'barAlignment',
-      'barWidthFactor',
-      'barMaxWidth',
-    ],
-  },
-} as const;
 
 export type NullEditorSettings = { isTime: boolean };
 

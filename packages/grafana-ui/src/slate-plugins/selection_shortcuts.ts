@@ -1,5 +1,5 @@
 import { isKeyHotkey } from 'is-hotkey';
-import { Plugin } from 'slate-react';
+import { type Plugin } from 'slate-react';
 
 const isSelectLineHotkey = isKeyHotkey('mod+l');
 

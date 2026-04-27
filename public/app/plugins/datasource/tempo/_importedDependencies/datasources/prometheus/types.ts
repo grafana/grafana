@@ -1,15 +1,15 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceJsonData,
-  MetricFindValue,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceJsonData,
+  type MetricFindValue,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { Prometheus as GenPromQuery } from './dataquery.gen';
+import { type Prometheus as GenPromQuery } from './dataquery.gen';
 
 // import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 export interface QueryBuilderLabelFilter {

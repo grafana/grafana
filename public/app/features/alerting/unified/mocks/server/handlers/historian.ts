@@ -1,10 +1,10 @@
 import { HttpResponse, http } from 'msw';
 
 import {
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryResponse,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
-  CreateNotificationsqueryalertsResponse,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationqueryResponse,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationsqueryalertsResponse,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 export const HISTORIAN_BASE = '/apis/historian.alerting.grafana.app/v0alpha1/namespaces/default';

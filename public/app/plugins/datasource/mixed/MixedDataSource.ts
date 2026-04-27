@@ -1,19 +1,19 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
+import { forkJoin, from, type Observable, of, type OperatorFunction } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   LoadingState,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
-import { CustomFormatterVariable } from '@grafana/scenes';
+import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
 

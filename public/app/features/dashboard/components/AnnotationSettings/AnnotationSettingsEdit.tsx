@@ -4,23 +4,23 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  AnnotationQuery,
-  DataSourceInstanceSettings,
+  type AnnotationQuery,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { AnnotationPanelFilter } from '@grafana/schema';
+import { type AnnotationPanelFilter } from '@grafana/schema';
 import { Button, Checkbox, Field, FieldSet, Input, MultiSelect, Select, useStyles2, Stack, Alert } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 type Props = {
   editIdx: number;

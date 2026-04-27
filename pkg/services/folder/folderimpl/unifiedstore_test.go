@@ -214,6 +214,11 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
@@ -273,6 +278,11 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
@@ -319,6 +329,11 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder2"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
 			Limit:  10,
@@ -356,29 +371,31 @@ func TestGetChildren(t *testing.T) {
 		require.Equal(t, "folder2", result[0].UID)
 	})
 
-	t.Run("k6 folder should only be returned to service accounts", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+	t.Run("k6 folder should be excluded via NotIn filter for non-service accounts", func(t *testing.T) {
+		// For non-service-account users, the search request should include a NotIn filter for k6-app
+		hasK6NotInFilter := func(req *resourcepb.ResourceSearchRequest) bool {
+			for _, f := range req.Options.Fields {
+				if f.Key == resource.SEARCH_FIELD_NAME &&
+					f.Operator == string(selection.NotIn) &&
+					len(f.Values) == 1 && f.Values[0] == accesscontrol.K6FolderUID {
+					return true
+				}
+			}
+			return false
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
-				},
+				Rows: []*resourcepb.ResourceTableRow{},
 			},
-			TotalHits: 1,
-		}, nil)
+			TotalHits: 0,
+		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{"name": "folder"},
-			},
-		}, nil)
-		mockCli.On("Get", mock.Anything, accesscontrol.K6FolderUID, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": accesscontrol.K6FolderUID},
 			},
 		}, nil)
 
@@ -388,14 +405,48 @@ func TestGetChildren(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 0)
+	})
 
-		result, err = store.GetChildren(ctx, folder.GetChildrenQuery{
+	t.Run("k6 folder should be returned for service accounts (no NotIn filter)", func(t *testing.T) {
+		// For service accounts, the search request should NOT include a NotIn filter for k6-app
+		hasNoK6NotInFilter := func(req *resourcepb.ResourceSearchRequest) bool {
+			for _, f := range req.Options.Fields {
+				if f.Key == resource.SEARCH_FIELD_NAME &&
+					f.Operator == string(selection.NotIn) {
+					return false
+				}
+			}
+			return true
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasNoK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
+						Cells: [][]byte{[]byte("folder")},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, accesscontrol.K6FolderUID, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{"name": accesscontrol.K6FolderUID},
+			},
+		}, nil)
+
+		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
 			UID:          "folder",
 			OrgID:        orgID,
 			SignedInUser: &identity.StaticRequester{Type: claims.TypeServiceAccount},
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
+		require.Equal(t, accesscontrol.K6FolderUID, result[0].UID)
 	})
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
@@ -406,6 +457,11 @@ func TestGetChildren(t *testing.T) {
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
 					},
 				},
 			},

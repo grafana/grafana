@@ -87,7 +87,7 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 }
 
 type GitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -457,6 +457,7 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+	LastRotated      int64    `json:"lastRotated,omitempty"`
 }
 
 func (WebhookStatus) OpenAPIModelName() string {

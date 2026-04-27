@@ -1,6 +1,6 @@
 import { Cron } from 'croner';
 
-import { AbsoluteTimeRange, TimeRange, durationToMilliseconds, parseDuration } from '@grafana/data';
+import { type AbsoluteTimeRange, type TimeRange, durationToMilliseconds, parseDuration } from '@grafana/data';
 
 export type TimeRegionMode = null | 'cron';
 export interface TimeRegionConfig {

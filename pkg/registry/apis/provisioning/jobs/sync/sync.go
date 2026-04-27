@@ -17,7 +17,7 @@ import (
 type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error
 
 //go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
-type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, []string, error)
+type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error)
 
 //go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
 type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error

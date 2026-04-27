@@ -1,9 +1,12 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
-import { ComboboxOption } from './types';
+import { Drawer } from '../Drawer/Drawer';
+import { Modal } from '../Modal/Modal';
+
+import { MultiCombobox, type MultiComboboxProps } from './MultiCombobox';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
@@ -209,6 +212,22 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'a'));
   });
 
+  it('should remove value when clicking on the close icon of the pill when pills are collapsed due to width constraint', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+      { label: 'D', value: 'd' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox width={40} options={options} value={['a', 'b', 'c', 'd']} onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    const removeButton = await screen.findByRole('button', { name: 'Remove D' });
+    await user.click(removeButton);
+    expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'd'));
+  });
+
   it('should remove all selected items when clicking on clear all button', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -232,10 +251,29 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      expect(await screen.findByRole('option', { name: 'All' })).toBeInTheDocument();
+      expect(await screen.findByRole('option', { name: 'Deselect all' })).toBeInTheDocument();
     });
 
-    it('should select all option', async () => {
+    it('should select all when no items are selected', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={[]} onChange={onChange} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.click(await screen.findByRole('option', { name: 'Select all' }));
+
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ]);
+    });
+
+    it('should deselect all when any items are selected', async () => {
       const options = [
         { label: 'A', value: 'a' },
         { label: 'B', value: 'b' },
@@ -245,16 +283,11 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} value={['a']} onChange={onChange} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      await user.click(await screen.findByText('All'));
-
-      expect(onChange).toHaveBeenCalledWith([
-        { label: 'A', value: 'a' },
-        { label: 'B', value: 'b' },
-        { label: 'C', value: 'c' },
-      ]);
+      await user.click(await screen.findByRole('option', { name: 'Deselect all' }));
+      expect(onChange).toHaveBeenCalledWith([]);
     });
 
-    it('should deselect all option', async () => {
+    it('should deselect all when all items are selected', async () => {
       const options = [
         { label: 'A', value: 'a' },
         { label: 'B', value: 'b' },
@@ -266,8 +299,45 @@ describe('MultiCombobox', () => {
       );
       const input = screen.getByRole('combobox');
       await user.click(input);
-      await user.click(await screen.findByRole('option', { name: 'All' }));
+      await user.click(await screen.findByRole('option', { name: 'Deselect all' }));
       expect(onChange).toHaveBeenCalledWith([]);
+    });
+
+    it('should select all filtered items when no filtered items are selected', async () => {
+      const options = [
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+        { label: 'Banana', value: 'banana' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={[]} onChange={onChange} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'Select all (filtered)' }));
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+      ]);
+    });
+
+    it('should deselect all filtered items when any filtered items are selected', async () => {
+      const options = [
+        { label: 'Apple', value: 'apple' },
+        { label: 'Apricot', value: 'apricot' },
+        { label: 'Banana', value: 'banana' },
+      ];
+      const onChange = jest.fn();
+      render(
+        <MultiCombobox width={200} options={options} value={['apple', 'banana']} onChange={onChange} enableAllOption />
+      );
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'Deselect all (filtered)' }));
+      // 'apple' and 'apricot' match the filter; only 'apple' was selected so both are deselected,
+      // leaving 'banana' (which was selected but not in the filter) intact
+      expect(onChange).toHaveBeenCalledWith([{ label: 'Banana', value: 'banana' }]);
     });
 
     it('should keep label names on selected items when searching', async () => {
@@ -288,7 +358,7 @@ describe('MultiCombobox', () => {
       render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
-      expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Select all' })).not.toBeInTheDocument();
     });
 
     it('should not select option when only one option is available and enableAll is true', async () => {
@@ -300,6 +370,32 @@ describe('MultiCombobox', () => {
       const checkbox = screen.getByTestId(`combobox-option-${options[0].value}-checkbox`);
       expect(checkbox).toBeInTheDocument();
       expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  describe('duplicate and undefined values', () => {
+    it('should render only unique pills when value array contains duplicates', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a', 'a', 'b']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.getByText('B')).toBeInTheDocument();
+      expect(screen.queryByText('C')).not.toBeInTheDocument();
+      expect(screen.getAllByText('A')).toHaveLength(1);
+    });
+
+    it('should render fallback pills for duplicate values not present in options', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['d', 'd', 'a']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      // 'd' is not in options but should appear once as a fallback pill, not twice
+      expect(screen.getAllByText('d')).toHaveLength(1);
     });
   });
 
@@ -517,6 +613,54 @@ describe('MultiCombobox', () => {
       await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    const options = [
+      { label: 'Option 1', value: 'a' },
+      { label: 'Option 2', value: 'b' },
+      { label: 'Option 3', value: 'c' },
+    ];
+
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <MultiCombobox options={options} value={[]} onChange={jest.fn()} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <MultiCombobox options={options} value={[]} onChange={jest.fn()} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;

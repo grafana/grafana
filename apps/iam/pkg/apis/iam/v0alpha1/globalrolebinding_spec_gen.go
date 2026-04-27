@@ -66,7 +66,6 @@ const (
 	GlobalRoleBindingSpecSubjectKindUser           GlobalRoleBindingSpecSubjectKind = "User"
 	GlobalRoleBindingSpecSubjectKindServiceAccount GlobalRoleBindingSpecSubjectKind = "ServiceAccount"
 	GlobalRoleBindingSpecSubjectKindTeam           GlobalRoleBindingSpecSubjectKind = "Team"
-	GlobalRoleBindingSpecSubjectKindBasicRole      GlobalRoleBindingSpecSubjectKind = "BasicRole"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for GlobalRoleBindingSpecSubjectKind.

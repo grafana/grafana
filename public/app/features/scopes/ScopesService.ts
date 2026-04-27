@@ -1,12 +1,13 @@
 import { isEqual } from 'lodash';
-import { BehaviorSubject, Observable, combineLatest, Subscription } from 'rxjs';
+import { BehaviorSubject, type Observable, combineLatest, type Subscription } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
-import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
 
-import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
-import { ScopesSelectorService } from './selector/ScopesSelectorService';
+import { type ScopesSelectorService } from './selector/ScopesSelectorService';
+import { type ScopesMap, type SelectedScope } from './selector/types';
 
 export interface State {
   enabled: boolean;
@@ -87,12 +88,28 @@ export class ScopesService implements ScopesContextValue {
       if (navScopePath && !navigationScope) {
         this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
       }
+
+      // If scope_node wasn't in the URL, derive it from defaultPath and preload the path
+      // so the badge and tree display correctly on initial load.
+      if (!scopeNodeId) {
+        const firstApplied = this.selectorService.state.appliedScopes[0];
+        const scope = firstApplied ? this.selectorService.state.scopes[firstApplied.scopeId] : undefined;
+        const defaultPath = scope?.spec.defaultPath || [];
+        if (defaultPath.length > 0) {
+          const derivedNodeId = defaultPath[defaultPath.length - 1];
+          const tree = this.selectorService.state.tree;
+          if (derivedNodeId && tree) {
+            this.selectorService.resolvePathToRoot(derivedNodeId, tree, firstApplied.scopeId).catch((error) => {
+              console.error('Failed to pre-load node path from defaultPath', error);
+            });
+          }
+        }
+      }
     });
 
-    // Pre-load scope node (which loads parent too)
-    const nodeToPreload = scopeNodeId;
-    if (nodeToPreload) {
-      this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
+    // Preload scope node (which loads parent too)
+    if (scopeNodeId) {
+      this.selectorService.resolvePathToRoot(scopeNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
       });
     }
@@ -154,22 +171,8 @@ export class ScopesService implements ScopesContextValue {
         const oldScopeNames = prevState.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
 
-        // Extract scopeNodeId from defaultPath when available
-        const getScopeNodeId = (appliedScopes: typeof state.appliedScopes, scopes: typeof state.scopes) => {
-          const firstScope = appliedScopes[0];
-          if (!firstScope) {
-            return undefined;
-          }
-          const scope = scopes[firstScope.scopeId];
-          // Prefer defaultPath when available
-          if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
-            return scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
-          }
-          return firstScope.scopeNodeId;
-        };
-
-        const oldScopeNodeId = getScopeNodeId(prevState.appliedScopes, prevState.scopes);
-        const newScopeNodeId = getScopeNodeId(state.appliedScopes, state.scopes);
+        const oldScopeNodeId = this.getScopeNodeIdForUrl(prevState.appliedScopes, prevState.scopes);
+        const newScopeNodeId = this.getScopeNodeIdForUrl(state.appliedScopes, state.scopes);
 
         const scopesChanged = !isEqual(oldScopeNames, newScopeNames);
         const scopeNodeChanged = oldScopeNodeId !== newScopeNodeId;
@@ -244,11 +247,12 @@ export class ScopesService implements ScopesContextValue {
     if (this.state.enabled !== enabled) {
       this.updateState({ enabled });
       if (enabled) {
-        const scopeNodeId = this.getScopeNodeIdForUrl();
+        const { appliedScopes, scopes } = this.selectorService.state;
+        const scopeNodeId = this.getScopeNodeIdForUrl(appliedScopes, scopes);
         this.locationService.partial(
           {
-            scopes: this.selectorService.state.appliedScopes.map((s) => s.scopeId),
-            scope_node: scopeNodeId,
+            scopes: appliedScopes.map((s) => s.scopeId),
+            scope_node: scopeNodeId ?? null,
             scope_parent: null,
           },
           true
@@ -258,25 +262,27 @@ export class ScopesService implements ScopesContextValue {
   };
 
   /**
-   * Extracts the scopeNodeId for URL syncing, preferring defaultPath when available.
-   * When a scope has defaultPath, that is the source of truth for the node ID.
+   * Returns the scope node id to sync with the URL, or `undefined` when the
+   * URL should not carry `scope_node` at all.
+   *
+   * We skip writing `scope_node` when the scope has a non-empty `defaultPath`,
+   * since that value is redundant — it is re-derived from `defaultPath` on load
+   * and kept in sync by the selector service. Bookmarked URLs that still carry
+   * `scope_node=...` continue to work via the read path.
    * @private
    */
-  private getScopeNodeIdForUrl(): string | undefined {
-    const firstScope = this.selectorService.state.appliedScopes[0];
+  private getScopeNodeIdForUrl(appliedScopes: SelectedScope[], scopes: ScopesMap): string | undefined {
+    const firstScope = appliedScopes[0];
     if (!firstScope) {
       return undefined;
     }
 
-    const scope = this.selectorService.state.scopes[firstScope.scopeId];
+    const scope = scopes[firstScope.scopeId];
 
-    // Prefer scopeNodeId from defaultPath if available (most reliable source)
     if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
-      // Extract scopeNodeId from the last element of defaultPath
-      return scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
+      return undefined;
     }
 
-    // Fallback to next in priority order: scopeNodeId from appliedScopes
     return firstScope.scopeNodeId;
   }
 

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -31,10 +31,15 @@ type RouteService interface {
 	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p alerting_models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
 }
 
+type MetadataService interface {
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*legacy_storage.ManagedRoute) (map[string]alerting_models.RoutePermissionSet, error)
+}
+
 type legacyStorage struct {
 	service        RouteService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	metadata       MetadataService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -74,7 +79,12 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer)
+
+	set, err := s.metadata.AccessControlMetadata(ctx, user, managedRoutes...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer, set)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -91,7 +101,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer)
+
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, &managedRoute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[managedRoute.GetUID()]; ok {
+		access = &a
+	}
+	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer, access)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -121,12 +140,24 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone, user)
+	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertToK8sResource(info.OrgID, created, s.namespacer)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[created.GetUID()]; ok {
+		access = &a
+	}
+	return ConvertToK8sResource(info.OrgID, created, s.namespacer, access)
 }
 
 func (s *legacyStorage) Update(
@@ -170,12 +201,24 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, err
 	}
-	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone, version, user)
+	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, version, user)
 	if err != nil {
 		return nil, false, err
 	}
 
-	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, updated)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[updated.GetUID()]; ok {
+		access = &a
+	}
+	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer, access)
 	return obj, false, err
 }
 
@@ -210,7 +253,15 @@ func (s *legacyStorage) Delete(
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, alerting_models.ProvenanceNone, version, user) // TODO add support for dry-run option
+	oldTree, ok := old.(*model.RoutingTree)
+	if !ok {
+		return nil, false, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), old.GetObjectKind().GroupVersionKind())
+	}
+	prov, err := alerting_models.ProvenanceFromString(oldTree.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, prov, version, user) // TODO add support for dry-run option
 	return old, false, err
 }
 

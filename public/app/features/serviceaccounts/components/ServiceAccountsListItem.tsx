@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
-import { Role, AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;

@@ -1,12 +1,12 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   formattedValueToString,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   usePluginContext,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
@@ -16,9 +16,9 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getContentItems,
-  VizTooltipItem,
-  AdHocFilterModel,
-  FilterByGroupedLabelsModel,
+  type VizTooltipItem,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';

@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {

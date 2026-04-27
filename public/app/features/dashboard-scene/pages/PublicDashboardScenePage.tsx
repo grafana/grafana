@@ -2,26 +2,27 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardBrandingFooter } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import {
-  PublicDashboardPageRouteParams,
-  PublicDashboardPageRouteSearchParams,
+  type PublicDashboardPageRouteParams,
+  type PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { getDashboardScenePageStateManager, LoadError } from './DashboardScenePageStateManager';
+import { getDashboardScenePageStateManager, type LoadError } from './DashboardScenePageStateManager';
 
 const selectors = e2eSelectors.pages.PublicDashboardScene;
 
@@ -37,10 +38,17 @@ export function PublicDashboardScenePage({ route }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
+    // Full page loads set this via boot data, but client-side navigation must set it here or panel queries will not use /api/public/dashboards/{token}/...
+    const previousToken = config.publicDashboardAccessToken;
+    if (accessToken) {
+      config.publicDashboardAccessToken = accessToken;
+    }
+
     stateManager.loadDashboard({ uid: accessToken, route: DashboardRoutes.Public });
 
     return () => {
       stateManager.clearState();
+      config.publicDashboardAccessToken = previousToken;
     };
   }, [stateManager, accessToken, route.routeName]);
 

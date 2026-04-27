@@ -122,7 +122,7 @@ For a reference of basic and fixed role assignments, refer to [RBAC role definit
 
 If the default basic role permissions don't meet your requirements you can change them.
 
-You can change basic roles' permissions via the configuration or using the API. Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
+You can change basic roles' permissions [via the configuration file](#update-basic-role-permissions-in-the-configuration-file) or [using the RBAC API](#update-basic-role-permissions-using-the-rbac-api).
 
 ### Update basic role permissions in the configuration file
 
@@ -191,6 +191,10 @@ roles:
 You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
 Make sure to **increment** the role version for the changes to be accounted for.
 {{< /admonition >}}
+
+### Update basic role permissions using the RBAC API
+
+Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
 
 ## Reset basic roles to their default
 

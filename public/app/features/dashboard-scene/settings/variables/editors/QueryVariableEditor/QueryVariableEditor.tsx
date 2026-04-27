@@ -1,19 +1,27 @@
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue, VariableRegexApplyTo } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  getDataSourceRef,
+  type SelectableValue,
+  type VariableRegexApplyTo,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable, sceneGraph } from '@grafana/scenes';
-import { VariableRefresh, VariableSort } from '@grafana/schema';
+import { type QueryVariable, sceneGraph } from '@grafana/scenes';
+import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, Stack } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
-import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
+import {
+  type StaticOptionsOrderType,
+  type StaticOptionsType,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../../components/QueryVariableForm';
 

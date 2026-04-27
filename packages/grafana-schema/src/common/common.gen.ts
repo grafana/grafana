@@ -317,7 +317,7 @@ export enum ScaleDirection {
  */
 export interface LineStyle {
   dash?: Array<number>;
-  fill?: ('solid' | 'dash' | 'dot' | 'square');
+  fill?: ('solid' | 'dash' | 'dot' | 'square' | 'accessible');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {
@@ -502,7 +502,7 @@ export enum VizOrientation {
   Vertical = 'vertical',
 }
 
-export interface VizAnnotations {
+export interface VizAnnotations extends AnnotationDisplayOptions {
   /**
    * Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
    */
@@ -511,6 +511,15 @@ export interface VizAnnotations {
    * Breaks out each annotation frame into multiple lanes on the x-axis
    */
   multiLane?: boolean;
+}
+
+export interface AnnotationDisplayOptions {
+  lines?: {
+    width?: number;
+  };
+  regions?: {
+    opacity?: number;
+  };
 }
 
 /**

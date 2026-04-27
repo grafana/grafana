@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 
-import InfluxDatasource from '../../../datasource';
+import type InfluxDatasource from '../../../datasource';
 import { buildRawQuery } from '../../../queryUtils';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from '../../../types';
+import { type InfluxOptions, type InfluxQuery, InfluxVersion } from '../../../types';
 
 import { FluxQueryEditor } from './flux/FluxQueryEditor';
 import { FSQLEditor } from './fsql/FSQLEditor';

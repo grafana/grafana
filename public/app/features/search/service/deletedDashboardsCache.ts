@@ -1,9 +1,9 @@
 import { isResourceList } from 'app/features/apiserver/guards';
-import { ResourceList } from 'app/features/apiserver/types';
+import { type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { SearchHit } from './unified';
+import { type SearchHit } from './unified';
 import { resourceToSearchResult } from './utils';
 
 /**
@@ -64,7 +64,7 @@ class DeletedDashboardsCache {
 
   private async fetchResourceList(): Promise<ResourceList<DashboardDataDTO>> {
     try {
-      const api = getDashboardAPI();
+      const api = await getDashboardAPI();
       const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
 
       if (isResourceList<DashboardDataDTO>(deletedResponse)) {

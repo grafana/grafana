@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
+import { forwardRef, type HTMLProps } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { StringSelector, selectors } from '@grafana/e2e-selectors';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type StringSelector, selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius, getMouseFocusStyles } from '../../../themes/mixins';
@@ -12,7 +12,7 @@ import { getPropertiesForButtonSize } from '../commonStyles';
 export const RADIO_GROUP_PADDING = 2;
 export type RadioButtonSize = 'sm' | 'md';
 
-export interface RadioButtonProps {
+export interface RadioButtonProps extends Omit<HTMLProps<HTMLInputElement>, 'size'> {
   size?: RadioButtonSize;
   disabled?: boolean;
   name?: string;
@@ -26,7 +26,7 @@ export interface RadioButtonProps {
   children?: React.ReactNode;
 }
 
-export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
+export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
   (
     {
       children,
@@ -40,6 +40,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       description,
       fullWidth,
       'aria-label': ariaLabel,
+      ...rest
     },
     ref
   ) => {
@@ -47,6 +48,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
     const inputRadioButton = (
       <input
+        {...rest}
         type="radio"
         className={styles.radio}
         onChange={onChange}

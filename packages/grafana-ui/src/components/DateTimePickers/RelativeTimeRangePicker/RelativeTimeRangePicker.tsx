@@ -3,9 +3,9 @@ import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { FormEvent, useCallback, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useRef, useState } from 'react';
 
-import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
+import { type RelativeTimeRange, type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -24,7 +24,7 @@ import {
   isRelativeFormat,
   mapOptionToRelativeTimeRange,
   mapRelativeTimeRangeToOption,
-  RangeValidation,
+  type RangeValidation,
 } from './utils';
 
 /**

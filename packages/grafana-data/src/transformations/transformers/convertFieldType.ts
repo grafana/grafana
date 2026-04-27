@@ -1,10 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 
-import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
-import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
-import { SynchronousDataTransformerInfo } from '../../types/transformations';
+import { dateTimeParse, type DateTimeOptionsWhenParsing } from '../../datetime/parser';
+import { type DataFrame, type EnumFieldConfig, type Field, FieldType } from '../../types/dataFrame';
+import { type SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -166,6 +166,11 @@ function fieldToNumberField(field: Field): Field {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
       toBeConverted = toBeConverted.replace(/,/g, '');
+    }
+
+    if (toBeConverted == null || toBeConverted === '') {
+      numValues[n] = null;
+      continue;
     }
 
     const number = +toBeConverted;

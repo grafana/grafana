@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,8 +25,6 @@ type MigrateOptions struct {
 }
 
 // Read from legacy and write into unified storage
-//
-//go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
@@ -111,13 +109,36 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	origResources := opts.Resources
+
+	// If a definition provides a dynamic group resolver, call it to discover
+	// which groups actually exist in this namespace. The resolver receives the
+	// SearchClient so it can also query unified storage for stale groups and
+	// merge them in — keeping all resource-specific logic in the resolver.
+	//
+	// If the result is empty (namespace has no data at all), keep
+	// opts.Resources unchanged so the stream can still open and close cleanly.
+	for _, res := range origResources {
+		resolveFn := m.registry.GetResourceGroupsFunc(res)
+		if resolveFn == nil {
+			continue
+		}
+		resolved, err := resolveFn(ctx, opts.Namespace, m.client)
+		if err != nil {
+			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
+		}
+		if len(resolved) > 0 {
+			opts.Resources = resolved
+		}
+	}
+
 	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
 
 	migratorFuncs := []MigratorFunc{}
-	for _, res := range opts.Resources {
+	for _, res := range origResources {
 		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
@@ -136,6 +157,19 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+// MergeGroupResources returns the union of a and b, deduplicated by Group.
+func MergeGroupResources(a, b []schema.GroupResource) []schema.GroupResource {
+	seen := make(map[string]bool, len(a)+len(b))
+	result := make([]schema.GroupResource, 0, len(a)+len(b))
+	for _, gr := range append(a, b...) {
+		if !seen[gr.Group] {
+			seen[gr.Group] = true
+			result = append(result, gr)
+		}
+	}
+	return result
 }
 
 type RebuildIndexOptions struct {

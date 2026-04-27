@@ -1,7 +1,7 @@
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  KeyValue,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type KeyValue,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';

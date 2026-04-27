@@ -2,12 +2,12 @@ import { set, cloneDeep } from 'lodash';
 import type { JSX } from 'react';
 
 import {
-  FieldNamePickerConfigSettings,
-  NumberFieldConfigSettings,
-  SelectFieldConfigSettings,
-  SliderFieldConfigSettings,
-  StringFieldConfigSettings,
-  UnitFieldConfigSettings,
+  type FieldNamePickerConfigSettings,
+  type NumberFieldConfigSettings,
+  type SelectFieldConfigSettings,
+  type SliderFieldConfigSettings,
+  type StringFieldConfigSettings,
+  type UnitFieldConfigSettings,
   booleanOverrideProcessor,
   identityOverrideProcessor,
   numberOverrideProcessor,
@@ -16,15 +16,15 @@ import {
   unitOverrideProcessor,
 } from '../field/overrides/processors';
 import {
-  StandardEditorContext,
-  StandardEditorProps,
+  type StandardEditorContext,
+  type StandardEditorProps,
   standardEditorsRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
-import { PanelOptionsSupplier } from '../panel/PanelPlugin';
-import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { type PanelOptionsSupplier } from '../panel/PanelPlugin';
+import { type OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import { isObject } from '../types/data';
-import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
-import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
+import { type FieldConfigPropertyItem, type FieldConfigEditorConfig } from '../types/fieldOverrides';
+import { type PanelOptionsEditorConfig, type PanelOptionsEditorItem } from '../types/panel';
 
 /**
  * Fluent API for declarative creation of field config option editors

@@ -1,16 +1,16 @@
 import Feature from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame, PanelProps } from '@grafana/data';
+import { DataHoverClearEvent, type DataFrame, type PanelProps } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
-import { GeomapHoverPayload, GeomapLayerHover } from '../event';
+import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
 import { type Options } from '../panelcfg.gen';
 
-import { pointerMoveListener } from './tooltip';
+import { pointerMoveListener, setTooltipListeners } from './tooltip';
 
 // Mock the GeomapPanel class
 jest.mock('../GeomapPanel', () => {
@@ -217,5 +217,75 @@ describe('tooltip utils', () => {
       // The last feature (feature4) has no rowIndex, so it should be at the end
       expect(layerHover.features[3].getProperties()['rowIndex']).toBeUndefined();
     });
+  });
+});
+
+describe('setTooltipListeners', () => {
+  function createPanelForSetListeners(overrides?: { tooltipPointerMoveDebounced?: { cancel: jest.Mock } }) {
+    let pointerLeaveHandler: () => void;
+    const viewport = {
+      addEventListener: jest.fn((type: string, fn: () => void) => {
+        if (type === 'pointerleave') {
+          pointerLeaveHandler = fn;
+        }
+      }),
+    };
+    const publish = jest.fn();
+    const clearTooltip = jest.fn();
+    const panel = {
+      tooltipPointerMoveDebounced: overrides?.tooltipPointerMoveDebounced,
+      map: {
+        on: jest.fn(),
+        getViewport: jest.fn().mockReturnValue(viewport),
+      },
+      props: { eventBus: { publish } },
+      clearTooltip,
+    } as unknown as GeomapPanel;
+
+    return {
+      panel,
+      viewport,
+      publish,
+      clearTooltip,
+      simulateViewportPointerLeave: () => pointerLeaveHandler(),
+    };
+  }
+
+  it('attaches pointerleave to the map viewport', () => {
+    const { panel, viewport } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+    expect(panel.map?.getViewport).toHaveBeenCalled();
+    expect(viewport.addEventListener).toHaveBeenCalledWith('pointerleave', expect.any(Function));
+  });
+
+  it('on viewport pointerleave, publishes DataHoverClearEvent and calls clearTooltip', () => {
+    const { panel, publish, clearTooltip, simulateViewportPointerLeave } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+    simulateViewportPointerLeave();
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenCalledWith(expect.any(DataHoverClearEvent));
+    expect(clearTooltip).toHaveBeenCalledTimes(1);
+  });
+
+  it('on viewport pointerleave, cancels the debounced pointermove handler', () => {
+    const { panel, simulateViewportPointerLeave } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+
+    const debounced = panel.tooltipPointerMoveDebounced;
+    expect(debounced).toBeDefined();
+    const cancelSpy = jest.spyOn(debounced!, 'cancel');
+    simulateViewportPointerLeave();
+
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels any existing debounced handler before replacing listeners', () => {
+    const previousCancel = jest.fn();
+    const { panel } = createPanelForSetListeners({
+      tooltipPointerMoveDebounced: { cancel: previousCancel },
+    });
+    setTooltipListeners(panel);
+    expect(previousCancel).toHaveBeenCalledTimes(1);
   });
 });

@@ -8,8 +8,8 @@ roleKind: {
 	kind:       "Role"
 	pluralName: "Roles"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
@@ -18,19 +18,19 @@ globalroleKind: {
 	pluralName: "GlobalRoles"
 	scope:      "Cluster"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
 rolev0alpha1: roleKind & {
 	schema: {
-		spec:   v0alpha1.RoleSpec
+		spec: v0alpha1.RoleSpec
 	}
 }
 
 globalrolev0alpha1: globalroleKind & {
 	schema: {
-		spec:   v0alpha1.GlobalRoleSpec
+		spec: v0alpha1.GlobalRoleSpec
 	}
 }

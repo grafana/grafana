@@ -1,4 +1,4 @@
-import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { NotificationsScene } from '../../../notifications/NotificationsScene';
 

@@ -1,7 +1,13 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
-import { SceneDataTransformer, SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  SceneDataTransformer,
+  SceneObjectBase,
+  type SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -13,8 +19,8 @@ import {
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
-import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
+import { type DashboardScene } from './DashboardScene';
+import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 

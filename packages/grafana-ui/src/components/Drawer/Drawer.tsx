@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

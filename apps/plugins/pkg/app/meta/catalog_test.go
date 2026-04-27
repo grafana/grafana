@@ -41,7 +41,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug:          "test-plugin",
 				Version:             "1.0.0",
-				JSON:                expectedMeta,
+				JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: expectedMeta},
 				SignatureType:       "grafana",
 				SignedByOrg:         "grafana",
 				CDNURL:              "https://cdn.grafana.com/plugins/test-plugin/1.0.0",
@@ -56,7 +56,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 					{
 						Slug: "test-child-plugin",
 						Path: "test-child-plugin",
-						JSON: childJSON,
+						JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: childJSON},
 					},
 				},
 			}
@@ -111,6 +111,46 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 			assert.Equal(t, defaultCatalogTTL, childResult.TTL)
 		})
+	})
+
+	t.Run("successfully fetches plugin with aliasIDs", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/api/plugins/grafana-postgresql-datasource/versions/5.0.0", r.URL.Path)
+
+			response := grafanaComPluginVersionMeta{
+				PluginSlug: "grafana-postgresql-datasource",
+				Version:    "5.0.0",
+				JSON: grafanaComPluginVersionMetaJSON{
+					MetaJSONData: pluginsv0alpha1.MetaJSONData{
+						Id:   "grafana-postgresql-datasource",
+						Name: "PostgreSQL",
+						Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+					},
+					AliasIDs: []string{"postgres"},
+				},
+				SignatureType:       "grafana",
+				SignedByOrg:         "grafana",
+				CDNURL:              "https://cdn.grafana.com/plugins/grafana-postgresql-datasource/5.0.0",
+				CreatePluginVersion: "4.15.0",
+				Manifest: grafanaComPluginManifest{
+					Files: map[string]string{
+						"module.js": "hash123",
+					},
+				},
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			require.NoError(t, json.NewEncoder(w).Encode(response))
+		}))
+		defer server.Close()
+
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "grafana-postgresql-datasource", Version: "5.0.0"})
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, "grafana-postgresql-datasource", result.Meta.PluginJson.Id)
+		assert.Equal(t, []string{"postgres"}, result.Meta.AliasIds)
 	})
 
 	t.Run("returns ErrMetaNotFound for 404 status", func(t *testing.T) {
@@ -178,7 +218,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
-				JSON:       expectedMeta,
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: expectedMeta},
 				CDNURL:     "https://cdn.grafana.com",
 			}
 
@@ -231,7 +271,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
-				JSON:       expectedMeta,
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: expectedMeta},
 				CDNURL:     "https://cdn.grafana.com",
 			}
 
@@ -255,7 +295,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
-				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
 				CDNURL:     "https://cdn.grafana.com",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{},
@@ -295,7 +335,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 					response := grafanaComPluginVersionMeta{
 						PluginSlug:          "test-plugin",
 						Version:             "1.0.0",
-						JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+						JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
 						CDNURL:              "https://cdn.grafana.com",
 						CreatePluginVersion: tc.createPluginVersion,
 						Manifest: grafanaComPluginManifest{
@@ -330,7 +370,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
-				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
 				CDNURL:     "https://cdn.grafana.com",
 				Children:   []grafanaComChildPluginVersion{},
 			}
@@ -353,7 +393,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: "test-plugin",
 				Version:    "1.0.0",
-				JSON:       pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}},
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Languages: []string{"en", "fr"}}},
 				CDNURL:     "https://cdn.grafana.com",
 			}
 
@@ -378,10 +418,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 			response := grafanaComPluginVersionMeta{
 				PluginSlug: parentID,
 				Version:    "1.0.0",
-				JSON:       pluginsv0alpha1.MetaJSONData{Id: parentID},
+				JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: parentID}},
 				CDNURL:     "https://cdn.grafana.com",
 				Children: []grafanaComChildPluginVersion{
-					{Slug: "other-child", JSON: pluginsv0alpha1.MetaJSONData{Id: "other-child"}},
+					{Slug: "other-child", JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "other-child"}}},
 				},
 			}
 

@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiVisualQueryBinary } from '../types';
+import { type LokiVisualQueryBinary } from '../types';
 
-import { NestedQuery, Props as NestedQueryProps } from './NestedQuery';
+import { NestedQuery, type Props as NestedQueryProps } from './NestedQuery';
 
 type Operator = '+' | '-' | '*' | '/' | '%' | '^' | '==' | '!=' | '>' | '<' | '>=' | '<=';
 type VectorMatchType = 'on' | 'ignoring';

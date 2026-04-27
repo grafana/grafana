@@ -11,7 +11,7 @@ import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
   const { setStepStatusInfo, hasStepError } = useStepStatus();

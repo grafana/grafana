@@ -2,14 +2,14 @@ import { first } from 'rxjs';
 
 import {
   arrayToDataFrame,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   getDefaultTimeRange,
   LoadingState,
   standardTransformersRegistry,
   FieldType,
-  DataFrame,
-  AdHocVariableFilter,
+  type DataFrame,
+  type AdHocVariableFilter,
   DataTopic,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -20,7 +20,7 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
-  SceneObject,
+  type SceneObject,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -29,7 +29,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { DashboardDatasource } from './datasource';
-import { DashboardQuery } from './types';
+import { type DashboardQuery } from './types';
 
 jest.mock('rxjs', () => {
   const original = jest.requireActual('rxjs');

@@ -2,7 +2,7 @@ import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
 import { getFeatureToggle } from '../../../utils/featureToggle';
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 const MIN_PAN_DIST = 5;
 

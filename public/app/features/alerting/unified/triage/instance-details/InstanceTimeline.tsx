@@ -1,23 +1,25 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationStatus,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationqueryNotificationStatus,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, LinkButton, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
+import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
+import { StateTag } from '../../components/StateTag';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { formatPrometheusDuration } from '../../utils/time';
 import { createRelativeUrl } from '../../utils/url';
 
-import { dateFormatter, noop } from './timelineUtils';
+import { formatTimelineDate, noop } from './timelineUtils';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
@@ -86,11 +88,6 @@ export function buildTimelineGroups(records: LogRecord[], notifications: Notific
   return stateGroups;
 }
 
-interface InstanceTimelineProps {
-  records: LogRecord[];
-  notifications: NotificationEntry[];
-}
-
 interface TimelineEntry {
   timestamp: number;
   type: 'state-change' | 'notifications';
@@ -125,33 +122,83 @@ export function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
   return entries;
 }
 
+/**
+ * Counts unique integrations that delivered successfully vs failed.
+ *
+ * An integration is identified by `integration:integrationIndex`. If any attempt
+ * (including retries) for an integration succeeded, it counts as delivered.
+ */
+export function computeIntegrationOutcomes(notifications: NotificationEntry[]): {
+  delivered: number;
+  failed: number;
+} {
+  const best = new Map<string, boolean>();
+  for (const n of notifications) {
+    const key = `${n.integration}:${n.integrationIndex}`;
+    if (n.outcome === 'success') {
+      best.set(key, true);
+    } else if (!best.has(key)) {
+      best.set(key, false);
+    }
+  }
+  let delivered = 0;
+  let failed = 0;
+  for (const success of best.values()) {
+    if (success) {
+      delivered++;
+    } else {
+      failed++;
+    }
+  }
+  return { delivered, failed };
+}
+
 function EntryDot({ entry }: { entry: TimelineEntry }) {
   const styles = useStyles2(getStyles);
 
-  if (entry.type !== 'notifications' || !entry.notifications) {
-    return <div className={styles.dot} />;
+  if (entry.type === 'state-change') {
+    if (entry.current === 'Pending') {
+      return <div className={cx(styles.dotBase, styles.dotPending)} />;
+    }
+    const isFiringTransition = entry.current === 'Alerting' || entry.current === 'NoData' || entry.current === 'Error';
+    return <div className={cx(styles.dotBase, isFiringTransition ? styles.dotFiring : styles.dotResolved)} />;
   }
-  const hasFailures = entry.notifications.some((n) => n.outcome !== 'success');
-  if (hasFailures) {
-    return <div className={styles.dotWarning} />;
+
+  if (!entry.notifications) {
+    return <div className={cx(styles.dotBase, styles.dotDefault)} />;
   }
-  const isFiring = entry.notifications.some((n) => n.status === 'firing');
-  return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
+
+  const allFailed = entry.notifications.every((n) => n.outcome === 'error');
+  const someFailed = entry.notifications.some((n) => n.outcome === 'error');
+
+  if (allFailed) {
+    return (
+      <Tooltip content={t('alerting.instance-details.timeline-dot-all-failed', 'All notifications failed')}>
+        <Icon name="exclamation-circle" size="sm" className={styles.dotIconError} />
+      </Tooltip>
+    );
+  }
+  if (someFailed) {
+    return (
+      <Tooltip content={t('alerting.instance-details.timeline-dot-some-failed', 'Some notifications failed')}>
+        <Icon name="exclamation-circle" size="sm" className={styles.dotIconError} />
+      </Tooltip>
+    );
+  }
+
+  return <div className={cx(styles.dotBase, styles.dotDefault)} />;
 }
 
-type TimelineFilter = 'all' | 'states' | 'notifications';
+export type TimelineFilter = 'all' | 'states' | 'notifications';
 
-export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
+interface InstanceTimelineProps {
+  records: LogRecord[];
+  notifications: NotificationEntry[];
+  filter?: TimelineFilter;
+}
+
+export function InstanceTimeline({ records, notifications, filter = 'all' }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
-  const [filter, setFilter] = useState<TimelineFilter>('all');
-  const filterOptions = [
-    { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
-    { label: t('alerting.instance-details.timeline-filter-states', 'State changes'), value: 'states' as const },
-    {
-      label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
-      value: 'notifications' as const,
-    },
-  ];
 
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
   const allEntries = useMemo(() => buildTimelineEntries(groups), [groups]);
@@ -176,43 +223,46 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
 
   return (
     <Stack direction="column" gap={1}>
-      <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
-
       {entries.length === 0 ? (
         <Text color="secondary">
           {t('alerting.instance-details.timeline-filter-empty', 'No matching events for this filter')}
         </Text>
       ) : (
-        <Stack direction="column">
+        <div className={styles.timelineGrid}>
           {entries.map((entry, index) => (
-            <Stack key={`${entry.type}-${entry.timestamp}-${index}`} direction="row">
-              <div className={styles.timestampCol}>
+            <React.Fragment key={`${entry.type}-${entry.timestamp}-${index}`}>
+              <div className={styles.timestampCell}>
                 <Text variant="bodySmall" color="secondary">
-                  {dateFormatter.format(new Date(entry.timestamp))}
+                  {formatTimelineDate(entry.timestamp)}
                 </Text>
               </div>
-
-              <div className={styles.connectorCol}>
+              <div className={styles.dotCell}>
                 <EntryDot entry={entry} />
-                {index < entries.length - 1 && <div className={styles.connectorLine} />}
               </div>
-
-              <div className={styles.contentCol}>
+              <div className={styles.contentCell}>
                 {entry.type === 'notifications' && entry.notifications && (
                   <NotificationSummary notifications={entry.notifications} />
                 )}
-
                 {entry.type === 'state-change' && entry.previous && entry.current && (
-                  <Stack direction="row" alignItems="center" gap={1}>
+                  <div className={styles.stateChangeRow}>
                     <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
                     <Icon name="arrow-right" size="sm" />
                     <EventState state={entry.current} showLabel addFilter={noop} type="to" />
-                  </Stack>
+                  </div>
                 )}
               </div>
-            </Stack>
+              {index < entries.length - 1 && (
+                <>
+                  <div />
+                  <div className={styles.connectorCell}>
+                    <div className={styles.connectorLine} />
+                  </div>
+                  <div />
+                </>
+              )}
+            </React.Fragment>
           ))}
-        </Stack>
+        </div>
       )}
     </Stack>
   );
@@ -251,43 +301,39 @@ function NotificationStatusGroup({
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
 
-  const successCount = notifications.filter((n) => n.outcome === 'success').length;
-  const failedCount = notifications.length - successCount;
+  const integrationOutcomes = useMemo(() => computeIntegrationOutcomes(notifications), [notifications]);
 
-  const receivers = [...new Set(notifications.map((n) => n.receiver))];
+  const { delivered: successCount, failed: failedCount } = integrationOutcomes;
+
+  const uniqueReceivers = [...new Set(notifications.map((n) => n.receiver))];
   const receiverLabel =
-    receivers.length === 1
-      ? receivers[0]
-      : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
-  const integrations = [...new Set(notifications.map((n) => n.integration))];
+    uniqueReceivers.length === 1
+      ? uniqueReceivers[0]
+      : t('alerting.instance-details.timeline-n-uniqueReceivers', '{{count}} uniqueReceivers', {
+          count: uniqueReceivers.length,
+        });
 
-  let outcomeLabel: string | undefined;
+  let deliveryLabel: string | undefined;
   if (failedCount > 0 && successCount === 0) {
-    outcomeLabel =
+    deliveryLabel =
       failedCount === 1
         ? t('alerting.instance-details.timeline-all-failed', 'failed')
         : t('alerting.instance-details.timeline-all-failed-plural', 'all failed');
   } else if (failedCount > 0) {
-    outcomeLabel = t(
-      'alerting.instance-details.timeline-mixed-outcome',
+    deliveryLabel = t(
+      'alerting.instance-details.timeline-partial-failure',
       '{{successCount}} delivered, {{failedCount}} failed',
       { successCount, failedCount }
     );
   }
 
   const isFiring = status === 'firing';
-  const hasFailures = failedCount > 0;
 
   const statusLabel = isFiring
     ? t('alerting.instance-details.timeline-status-firing', 'Firing')
     : t('alerting.instance-details.timeline-status-resolved', 'Resolved');
 
-  let variantStyle = styles.summaryRowFiring;
-  if (hasFailures) {
-    variantStyle = styles.summaryRowError;
-  } else if (!isFiring) {
-    variantStyle = styles.summaryRowResolved;
-  }
+  const variantStyle = isFiring ? styles.summaryRowFiring : styles.summaryRowResolved;
 
   return (
     <div>
@@ -299,32 +345,42 @@ function NotificationStatusGroup({
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
       >
         <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
-          <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
-          <Text variant="bodySmall" weight="medium">
-            {statusLabel}
-          </Text>
-          <Text variant="bodySmall" color="secondary">
-            ·
-          </Text>
-          <Text variant="bodySmall">
-            {notifications.length === 1
-              ? t('alerting.instance-details.timeline-one-notification', '1 notification')
-              : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
-                  count: notifications.length,
-                })}
-          </Text>
+          <StateTag state={isFiring ? 'bad' : 'good'} size="sm">
+            {statusLabel}{' '}
+            <span className={styles.lowercaseText}>
+              {t('alerting.instance-details.timeline-notification-label', 'notification')}
+            </span>
+          </StateTag>
+          {deliveryLabel && (
+            <>
+              <Text variant="bodySmall" color="secondary">
+                ·
+              </Text>
+              <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+              <Text variant="bodySmall" color="error" weight="medium">
+                {deliveryLabel}
+              </Text>
+            </>
+          )}
           <Text variant="bodySmall" color="secondary">
             →
           </Text>
-          {integrations.map((integration) => (
-            <IntegrationIcon key={integration} integration={integration} />
-          ))}
-          <Text variant="bodySmall" truncate>
-            {receiverLabel}
-          </Text>
-          {outcomeLabel && (
-            <Text variant="bodySmall" color="error">
-              ({outcomeLabel})
+          <Icon name="at" size="sm" />
+          {uniqueReceivers.length === 1 ? (
+            <a
+              href={textUtil.sanitizeUrl(
+                createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(uniqueReceivers[0])}`)
+              )}
+              className={styles.receiverLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Text variant="bodySmall">{receiverLabel}</Text>
+            </a>
+          ) : (
+            <Text variant="bodySmall" truncate>
+              {receiverLabel}
             </Text>
           )}
         </Stack>
@@ -333,7 +389,7 @@ function NotificationStatusGroup({
 
       {expanded && (
         <div className={styles.notificationDetails}>
-          {notifications.map((notification) => (
+          {[...notifications].reverse().map((notification) => (
             <NotificationRow key={notification.uuid} notification={notification} />
           ))}
         </div>
@@ -350,53 +406,46 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
     <div className={styles.notificationDetailRow}>
       <div className={styles.notificationRowMain}>
         <Text variant="bodySmall" color="secondary">
-          {dateFormatter.format(new Date(notification.timestamp))}
+          {formatTimelineDate(notification.timestamp)}
         </Text>
         <Stack direction="row" gap={0.5} alignItems="center">
           <IntegrationIcon integration={notification.integration} />
-          <Text variant="bodySmall" weight="medium" truncate>
-            {notification.receiver}
-          </Text>
-          <Text variant="bodySmall" color="secondary">
-            ({receiverTypeNames[notification.integration] ?? notification.integration})
+          <Text variant="bodySmall" weight="medium">
+            {receiverTypeNames[notification.integration] ?? notification.integration} #
+            {notification.integrationIndex + 1}
           </Text>
         </Stack>
-        {isSuccess ? (
+        {isSuccess && (
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name="check-circle" size="sm" className={styles.successIcon} />
             <Text variant="bodySmall" color="success">
               {t('alerting.instance-details.timeline-delivered', 'Delivered')}
             </Text>
           </Stack>
-        ) : (
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
-            <Text variant="bodySmall" color="error">
-              {t('alerting.instance-details.timeline-failed', 'Failed')}
-            </Text>
-          </Stack>
         )}
         <Text variant="bodySmall" color="secondary">
           {formatPrometheusDuration(Math.floor(notification.duration / 1_000_000))}
         </Text>
-        <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
-          <LinkButton
-            variant="secondary"
-            size="sm"
-            icon="eye"
-            href={createRelativeUrl(
-              `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
-            )}
-          >
-            {t('alerting.instance-details.view-notification-detail', 'Details')}
-          </LinkButton>
-        </Tooltip>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="eye"
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
+              )}
+            >
+              {t('alerting.instance-details.view-notification-detail', 'Details')}
+            </LinkButton>
+          </Tooltip>
+        )}
       </div>
-      {!isSuccess && notification.error && (
+      {!isSuccess && (
         <div className={styles.notificationRowError}>
-          <Icon name="exclamation-triangle" size="xs" className={styles.errorIcon} />
-          <Text variant="bodySmall" color="secondary" truncate={false}>
-            {notification.error}
+          <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+          <Text variant="bodySmall" color="error" truncate={false}>
+            {notification.error || t('alerting.instance-details.timeline-failed', 'Failed')}
           </Text>
         </div>
       )}
@@ -409,71 +458,76 @@ function IntegrationIcon({ integration }: { integration: string }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timestampCol: css({
-    width: 'auto',
-    flexShrink: 0,
-    paddingTop: theme.spacing(0.5),
-    textAlign: 'right',
+  timelineGrid: css({
+    display: 'grid',
+    gridTemplateColumns: `auto ${theme.spacing(2)} 1fr`,
+  }),
+
+  timestampCell: css({
+    display: 'flex',
+    alignItems: 'center',
+    alignSelf: 'start',
+    minHeight: theme.spacing(4),
     paddingRight: theme.spacing(1.5),
     whiteSpace: 'nowrap',
+    fontVariantNumeric: 'tabular-nums',
   }),
 
-  connectorCol: css({
+  dotCell: css({
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    width: theme.spacing(2),
-    flexShrink: 0,
+    justifyContent: 'center',
+    alignSelf: 'start',
+    minHeight: theme.spacing(4),
   }),
 
-  dot: css({
+  contentCell: css({
+    paddingLeft: theme.spacing(1.5),
+    minWidth: 0,
+  }),
+
+  dotBase: css({
     width: '10px',
     height: '10px',
     borderRadius: theme.shape.radius.circle,
+  }),
+
+  dotDefault: css({
     backgroundColor: theme.colors.text.secondary,
-    flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
   dotFiring: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.error.main,
-    flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
   dotResolved: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.success.main,
-    flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
-  dotWarning: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
+  dotPending: css({
     backgroundColor: theme.colors.warning.main,
-    flexShrink: 0,
-    marginTop: theme.spacing(0.75),
+  }),
+
+  dotIconError: css({
+    color: theme.colors.error.main,
+  }),
+
+  stateChangeRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: theme.spacing(4),
+    gap: theme.spacing(1),
+  }),
+
+  connectorCell: css({
+    display: 'flex',
+    justifyContent: 'center',
   }),
 
   connectorLine: css({
     width: '2px',
-    flex: 1,
+    minHeight: theme.spacing(1.5),
     backgroundColor: theme.colors.border.medium,
-    marginTop: theme.spacing(0.5),
-  }),
-
-  contentCol: css({
-    flex: 1,
-    paddingLeft: theme.spacing(1.5),
-    paddingBottom: theme.spacing(2),
-    minWidth: 0,
   }),
 
   summaryRowBase: css({
@@ -482,8 +536,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+    minHeight: theme.spacing(4),
     padding: theme.spacing(0.75, 1.5),
     borderRadius: theme.shape.radius.default,
+    border: 'none',
     cursor: 'pointer',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
@@ -491,18 +547,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   summaryRowFiring: css({
-    border: `1px solid ${theme.colors.error.border}`,
     backgroundColor: theme.colors.error.transparent,
   }),
 
   summaryRowResolved: css({
-    border: `1px solid ${theme.colors.success.border}`,
     backgroundColor: theme.colors.success.transparent,
-  }),
-
-  summaryRowError: css({
-    border: `1px solid ${theme.colors.warning.border}`,
-    backgroundColor: theme.colors.warning.transparent,
   }),
 
   notificationDetails: css({
@@ -546,5 +595,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   errorIcon: css({
     color: theme.colors.error.main,
+  }),
+
+  receiverLink: css({
+    color: theme.colors.text.link,
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+
+  lowercaseText: css({
+    textTransform: 'none',
   }),
 });

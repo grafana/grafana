@@ -1,4 +1,4 @@
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 
 import { UNKNOW_ERROR, messageFromError } from './redux';
 

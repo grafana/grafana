@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
+import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
@@ -15,13 +15,17 @@ import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
-import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
+import {
+  type ChannelValues,
+  type CommonSettingsComponentType,
+  type ReceiverFormValues,
+} from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
@@ -109,7 +113,6 @@ export function ReceiverForm<R extends ChannelValues>({
         error.cause = e;
         logError(error);
       }
-      throw e;
     }
   };
 

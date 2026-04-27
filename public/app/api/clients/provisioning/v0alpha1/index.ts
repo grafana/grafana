@@ -13,7 +13,7 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
-import { ThunkDispatch } from 'app/types/store';
+import { type ThunkDispatch } from 'app/types/store';
 
 import {
   createErrorNotification,
@@ -140,16 +140,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.delete-repository-button.error-repository-delete', 'Failed to delete repository'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.delete-repository-button.error-repository-delete', 'Failed to delete repository')
+          );
         }
         // Refetch dashboards and folders after deleting a provisioned repository.
         // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
@@ -171,16 +166,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.home-page.error-delete-all-repositories', 'Failed to delete all repositories'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.home-page.error-delete-all-repositories', 'Failed to delete all repositories')
+          );
         }
         setTimeout(() => {
           dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
@@ -208,16 +198,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources')
+          );
         }
       },
     },
@@ -233,16 +218,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.config-form.error-save-repository', 'Failed to save repository settings')
+          );
         }
       },
     },
@@ -258,16 +238,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.config-form.error-save-repository', 'Failed to save repository settings')
+          );
         }
         // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
@@ -357,16 +332,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection')
+          );
         }
       },
     },

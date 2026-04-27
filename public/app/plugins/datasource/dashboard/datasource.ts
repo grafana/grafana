@@ -1,26 +1,26 @@
-import { Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
+import { type Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  TestDataSourceResponse,
-  ScopedVar,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type TestDataSourceResponse,
+  type ScopedVar,
   DataTopic,
-  PanelData,
-  DataFrame,
+  type PanelData,
+  type DataFrame,
   LoadingState,
-  Field,
+  type Field,
   FieldType,
-  AdHocVariableFilter,
-  MetricFindValue,
+  type AdHocVariableFilter,
+  type MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  DataSourceGetDrilldownsApplicabilityOptions,
-  DrilldownsApplicability,
+  type DataSourceGetDrilldownsApplicabilityOptions,
+  type DrilldownsApplicability,
 } from '@grafana/data';
-import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -29,7 +29,7 @@ import {
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
-import { DashboardQuery } from './types';
+import { type DashboardQuery } from './types';
 
 /**
  * This should not really be called

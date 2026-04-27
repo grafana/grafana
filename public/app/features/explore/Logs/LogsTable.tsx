@@ -5,40 +5,40 @@ import { lastValueFrom } from 'rxjs';
 import {
   urlUtil,
   applyFieldOverrides,
-  CustomTransformOperator,
-  DataFrame,
+  type CustomTransformOperator,
+  type DataFrame,
   DataFrameType,
-  DataTransformerConfig,
-  Field,
+  type DataTransformerConfig,
+  type Field,
   FieldType,
   guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
-  SplitOpen,
-  TimeRange,
+  type SplitOpen,
+  type TimeRange,
   transformDataFrame,
-  ValueLinkConfig,
-  ExploreLogsPanelState,
-  AbsoluteTimeRange,
-  LogRowModel,
-  GrafanaTheme2,
+  type ValueLinkConfig,
+  type ExploreLogsPanelState,
+  type AbsoluteTimeRange,
+  type LogRowModel,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  AdHocFilterItem,
-  CustomCellRendererProps,
-  TableSortByFieldState,
+  type AdHocFilterItem,
+  type CustomCellRendererProps,
+  type TableSortByFieldState,
   Table,
   TableCellDisplayMode,
   useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
+import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { LogsTableActionButtons } from './LogsTableActionButtons';
-import { FieldNameMeta } from './LogsTableWrap';
+import { type FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   dataFrame: DataFrame;

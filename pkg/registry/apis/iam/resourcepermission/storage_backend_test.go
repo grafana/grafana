@@ -131,7 +131,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	}
 
 	t.Run("should error with invalid namespace", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_ADDED,
@@ -144,7 +144,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should error if resource name is empty", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -180,7 +180,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should error if the resource is unknown", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -216,7 +216,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should work with valid resource permission", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
@@ -670,7 +670,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	}
 
 	t.Run("should error with invalid namespace", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_MODIFIED,
@@ -683,7 +683,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should error if resource name is empty", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -719,7 +719,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should error if the resource is unknown", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -755,7 +755,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should work with valid resource permission", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{

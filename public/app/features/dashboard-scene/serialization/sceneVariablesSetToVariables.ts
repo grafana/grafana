@@ -1,38 +1,39 @@
 import { config } from '@grafana/runtime';
 import {
-  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
-  MultiValueVariable,
-  SceneVariables,
+  type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  type MultiValueVariable,
+  type SceneObject,
+  type SceneVariables,
   sceneUtils,
 } from '@grafana/scenes';
 import {
-  VariableModel,
+  type VariableModel,
   VariableRefresh as OldVariableRefresh,
   VariableHide as OldVariableHide,
   VariableSort as OldVariableSort,
 } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  DataQueryKind,
-  DatasourceVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type DataQueryKind,
+  type DatasourceVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
   defaultVariableHide,
-  VariableOption,
+  type VariableOption,
   defaultDataQueryKind,
-  AdHocFilterWithLabels,
-  SwitchVariableKind,
+  type AdHocFilterWithLabels,
+  type SwitchVariableKind,
   defaultIntervalVariableSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
@@ -48,12 +49,23 @@ import {
  *                           This should be set to `false` when variables are saved in the dashboard model,
  *                           but should be set to `true` when variables are used in the templateSrv to keep them in sync.
  *                           If `true`, the options for query variables are kept.
+ * @param excludeVariable - (Optional) Scene variable instance to omit. Is used to avoid self-reference in that variable's editor.
+ *                          e.g when editing it as a section variable.
+ *
+ *
  *  */
 
-export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
+export function sceneVariablesSetToVariables(
+  set: SceneVariables,
+  keepQueryOptions?: boolean,
+  excludedVariable?: SceneObject
+) {
   const variables: VariableModel[] = [];
 
   for (const variable of set.state.variables) {
+    if (excludedVariable !== undefined && variable === excludedVariable) {
+      continue;
+    }
     // Skipping default variables
     // (Default variables don't get persisted to the JSON schema.)
     if (variable.state.origin !== undefined) {
@@ -229,9 +241,19 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters || [],
-        filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
+        filters: [
+          ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+            ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+              return { key, origin, value, values, valueLabels, keyLabel, operator };
+            }
+          ),
+          ...validateFiltersOrigin(variable.state.filters),
+        ],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+          ? (variable.state.enableGroupBy ?? false)
+          : false,
       };
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {
@@ -578,6 +600,9 @@ export function sceneVariablesSetToSchemaV2Variables(
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+            ? (variable.state.enableGroupBy ?? false)
+            : false,
         },
       };
       variables.push(adhocVariable);

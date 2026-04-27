@@ -1,13 +1,13 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
+import { type DataSourcePluginMeta, type DataSourceSettings, type LayoutMode, LayoutModes } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TestingStatus } from '@grafana/runtime';
-import { DataSourcesState, DataSourceSettingsState } from 'app/types/datasources';
+import { type TestingStatus } from '@grafana/runtime';
+import { type DataSourcesState, type DataSourceSettingsState } from 'app/types/datasources';
 
-import { GenericDataSourcePlugin } from '../types';
+import { type GenericDataSourcePlugin } from '../types';
 
-import { DataSourceTypesLoadedPayload } from './actions';
+import { type DataSourceTypesLoadedPayload } from './actions';
 
 export const initialState: DataSourcesState = {
   dataSources: [],

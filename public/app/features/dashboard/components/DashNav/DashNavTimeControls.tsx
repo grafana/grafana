@@ -1,7 +1,6 @@
-import { Component } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { useEffect, useReducer } from 'react';
 
-import { dateMath, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, type TimeRange, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
@@ -11,7 +10,7 @@ import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -22,37 +21,40 @@ export interface Props {
   onToolbarTimePickerClick?: () => void;
 }
 
-export class DashNavTimeControls extends Component<Props> {
-  private sub?: Unsubscribable;
+export function DashNavTimeControls({
+  dashboard,
+  onChangeTimeZone,
+  isOnCanvas,
+  onToolbarRefreshClick,
+  onToolbarZoomClick,
+  onToolbarTimePickerClick,
+}: Props) {
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
-  componentDidMount() {
-    this.sub = this.props.dashboard.events.subscribe(TimeRangeUpdatedEvent, () => this.forceUpdate());
-  }
+  useEffect(() => {
+    const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, () => forceUpdate());
+    return () => sub.unsubscribe();
+  }, [dashboard.events]);
 
-  componentWillUnmount() {
-    this.sub?.unsubscribe();
-  }
-
-  onChangeRefreshInterval = (interval: string) => {
-    getTimeSrv().setAutoRefresh(interval);
-    this.forceUpdate();
-  };
-
-  onRefresh = () => {
+  const onRefresh = () => {
     getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
 
-  onMoveBack = () => {
+  const onChangeRefreshInterval = (interval: string) => {
+    getTimeSrv().setAutoRefresh(interval);
+    forceUpdate();
+  };
+
+  const onMoveBack = () => {
     appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left }));
   };
 
-  onMoveForward = () => {
+  const onMoveForward = () => {
     appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right }));
   };
 
-  onChangeTimePicker = (timeRange: TimeRange) => {
-    const { dashboard } = this.props;
+  const onChangeTimePicker = (timeRange: TimeRange) => {
     const panel = dashboard.timepicker;
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
@@ -66,76 +68,69 @@ export class DashNavTimeControls extends Component<Props> {
     getTimeSrv().setTime(nextRange);
   };
 
-  onChangeTimeZone = (timeZone: TimeZone) => {
-    this.props.dashboard.timezone = timeZone;
-    this.props.onChangeTimeZone(timeZone);
-    this.onRefresh();
+  const handleChangeTimeZone = (timeZone: TimeZone) => {
+    dashboard.timezone = timeZone;
+    onChangeTimeZone(timeZone);
+    onRefresh();
   };
 
-  onChangeFiscalYearStartMonth = (month: number) => {
-    this.props.dashboard.fiscalYearStartMonth = month;
-    this.onRefresh();
+  const onChangeFiscalYearStartMonth = (month: number) => {
+    dashboard.fiscalYearStartMonth = month;
+    onRefresh();
   };
 
-  onZoom = () => {
-    if (this.props.onToolbarZoomClick) {
-      this.props.onToolbarZoomClick();
-    }
+  const onZoom = () => {
+    onToolbarZoomClick?.();
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   };
 
-  onRefreshClick = () => {
-    if (this.props.onToolbarRefreshClick) {
-      this.props.onToolbarRefreshClick();
-    }
-    this.onRefresh();
+  const onRefreshClick = () => {
+    onToolbarRefreshClick?.();
+    onRefresh();
   };
 
-  render() {
-    const { dashboard, isOnCanvas } = this.props;
-    const { quick_ranges, refresh_intervals } = dashboard.timepicker;
-    const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
+  const { quick_ranges, refresh_intervals } = dashboard.timepicker;
+  const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
-    const timePickerValue = getTimeSrv().timeRange();
-    const timeZone = dashboard.getTimezone();
-    const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
-    const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
-    const weekStart = dashboard.weekStart;
+  const timePickerValue = getTimeSrv().timeRange();
+  const timeZone = dashboard.getTimezone();
+  const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
+  const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+  const weekStart = dashboard.weekStart;
 
-    let text: string | undefined = undefined;
-    if (dashboard.refresh === AutoRefreshInterval) {
-      text = getTimeSrv().getAutoRefreshInteval().interval;
-    }
-
-    return (
-      <>
-        <TimePickerWithHistory
-          value={timePickerValue}
-          onChange={this.onChangeTimePicker}
-          timeZone={timeZone}
-          fiscalYearStartMonth={fiscalYearStartMonth}
-          onMoveBackward={this.onMoveBack}
-          onMoveForward={this.onMoveForward}
-          onZoom={this.onZoom}
-          onChangeTimeZone={this.onChangeTimeZone}
-          onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
-          isOnCanvas={isOnCanvas}
-          onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
-          weekStart={isWeekStart(weekStart) ? weekStart : undefined}
-          quickRanges={quick_ranges}
-        />
-        <RefreshPicker
-          onIntervalChanged={this.onChangeRefreshInterval}
-          onRefresh={this.onRefreshClick}
-          value={dashboard.refresh}
-          intervals={intervals}
-          isOnCanvas={isOnCanvas}
-          tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
-          noIntervalPicker={hideIntervalPicker}
-          showAutoInterval={true}
-          text={text}
-        />
-      </>
-    );
+  let text: string | undefined = undefined;
+  if (dashboard.refresh === AutoRefreshInterval) {
+    text = getTimeSrv().getAutoRefreshInteval().interval;
   }
+
+  return (
+    <>
+      <TimePickerWithHistory
+        value={timePickerValue}
+        onChange={onChangeTimePicker}
+        timeZone={timeZone}
+        fiscalYearStartMonth={fiscalYearStartMonth}
+        onMoveBackward={onMoveBack}
+        onMoveForward={onMoveForward}
+        onZoom={onZoom}
+        onChangeTimeZone={handleChangeTimeZone}
+        onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+        isOnCanvas={isOnCanvas}
+        onToolbarTimePickerClick={onToolbarTimePickerClick}
+        weekStart={isWeekStart(weekStart) ? weekStart : undefined}
+        quickRanges={quick_ranges}
+      />
+      <RefreshPicker
+        onIntervalChanged={onChangeRefreshInterval}
+        onRefresh={onRefreshClick}
+        value={dashboard.refresh}
+        intervals={intervals}
+        isOnCanvas={isOnCanvas}
+        tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
+        noIntervalPicker={hideIntervalPicker}
+        showAutoInterval={true}
+        text={text}
+      />
+    </>
+  );
 }

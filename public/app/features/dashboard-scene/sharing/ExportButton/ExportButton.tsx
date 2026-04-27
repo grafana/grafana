@@ -4,7 +4,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Icon } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 import ExportMenu from './ExportMenu';
 

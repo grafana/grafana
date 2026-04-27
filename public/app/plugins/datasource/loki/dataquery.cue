@@ -48,7 +48,7 @@ composableKinds: DataQuery: {
 				#LimitsContext: {
 					expr: string
 					from: int64
-					to: int64
+					to:   int64
 				}
 
 				#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")

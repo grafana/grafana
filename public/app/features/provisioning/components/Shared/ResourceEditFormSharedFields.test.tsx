@@ -1,12 +1,12 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 // Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
@@ -60,10 +60,19 @@ interface SetupOptions {
   workflow?: 'write' | 'branch';
   repository?: RepositoryView;
   canPushToConfiguredBranch?: boolean;
+  allowPathEdit?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
-  const { formDefaultValues = {}, canPushToConfiguredBranch = true, isNew, readOnly, workflow, repository } = options;
+  const {
+    formDefaultValues = {},
+    canPushToConfiguredBranch = true,
+    isNew,
+    readOnly,
+    workflow,
+    repository,
+    allowPathEdit,
+  } = options;
 
   const user = userEvent.setup();
 
@@ -89,6 +98,7 @@ function setup(options: SetupOptions = {}) {
     readOnly,
     workflow,
     repository,
+    allowPathEdit,
   };
 
   return {
@@ -259,6 +269,25 @@ describe('ResourceEditFormSharedFields', () => {
 
       await user.type(filenameInput, 'test.json');
       expect(filenameInput).toHaveValue('test.json');
+    });
+
+    it('should render folder and filename fields for existing dashboards when allowPathEdit is true', () => {
+      setup({ isNew: false, allowPathEdit: true, formDefaultValues: { path: 'dashboards/my-dashboard.json' } });
+
+      expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveValue('dashboards');
+      expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('my-dashboard.json');
+      expect(screen.queryByRole('textbox', { name: /path/i })).not.toBeInTheDocument();
+    });
+
+    it('should render read-only path field for existing dashboards when allowPathEdit is false', () => {
+      setup({ isNew: false, formDefaultValues: { path: 'dashboards/my-dashboard.json' } });
+
+      const pathInput = screen.getByRole('textbox', { name: /path/i });
+      expect(pathInput).toHaveAttribute('readonly');
+      expect(screen.queryByRole('combobox', { name: /folder/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /filename/i })).not.toBeInTheDocument();
     });
 
     it('should allow typing in comment field', async () => {

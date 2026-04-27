@@ -1,13 +1,13 @@
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { dateTime } from '@grafana/data';
 import {
-  AlertRule,
-  AlertRuleDTO,
-  AlertRulesState,
-  NotificationChannelOption,
-  NotificationChannelState,
-  NotifierDTO,
+  type AlertRule,
+  type AlertRuleDTO,
+  type AlertRulesState,
+  type NotificationChannelOption,
+  type NotificationChannelState,
+  type NotifierDTO,
 } from 'app/features/alerting/unified/types/alerting';
 
 import unifiedAlertingReducer from '../unified/state/reducers';

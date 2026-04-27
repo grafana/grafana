@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -120,6 +120,22 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         // Title, App ID, Installation ID, and Private Key are all required
         expect(screen.getAllByText('This field is required')).toHaveLength(4);
+      });
+    });
+
+    it('should show validation error for private key containing hidden characters', async () => {
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
+      await user.paste('-----BEGIN RSA PRIVATE KEY-----\u200B...');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/hidden characters/i)).toBeInTheDocument();
       });
     });
   });
@@ -294,6 +310,27 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(screen.getByText('Invalid Private Key format')).toBeInTheDocument();
       });
+    });
+
+    it('should show generic error when a non-fetch error occurs during submission', async () => {
+      const btoaSpy = jest.spyOn(window, 'btoa').mockImplementation(() => {
+        throw new DOMException('The string contains characters outside Latin1 range');
+      });
+
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'some-valid-key');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      btoaSpy.mockRestore();
     });
   });
 });

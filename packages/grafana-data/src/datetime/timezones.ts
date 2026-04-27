@@ -1,7 +1,7 @@
 import { memoize } from 'lodash';
 import moment from 'moment-timezone';
 
-import { TimeZone } from '../types/time';
+import { type TimeZone } from '@grafana/schema';
 
 import { getTimeZone } from './common';
 
@@ -11,6 +11,9 @@ export enum InternalTimeZones {
   utc = 'utc',
 }
 
+/**
+ * @deprecated
+ */
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
     case 'browser':
@@ -426,7 +429,7 @@ const countryByCode: Record<string, string> = {
 };
 
 const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
+  return moment.tz.countries().reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
     const timeZones = moment.tz.zonesForCountry(code);
     return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
       if (!all[timeZone]) {
@@ -436,12 +439,6 @@ const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
       const name = countryByCode[code];
 
       if (!name) {
-        return all;
-      }
-
-      // Fix: Only include Antarctica if timezone starts with "Antarctica/"
-      // https://github.com/grafana/grafana/issues/104688
-      if (code === 'AQ' && !timeZone.startsWith('Antarctica/')) {
         return all;
       }
 

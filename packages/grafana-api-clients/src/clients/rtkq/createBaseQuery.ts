@@ -1,4 +1,4 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
+import { type BaseQueryFn } from '@reduxjs/toolkit/query';
 import { lastValueFrom } from 'rxjs';
 
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
@@ -10,18 +10,20 @@ export interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-interface CreateBaseQueryOptions {
-  baseURL: string;
-}
+export type CreateBaseQueryOptions = { baseURL: string } | { getBaseURL: () => Promise<string> };
 
-export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+  // Get the correct resolver once for all API calls
+  const resolveBaseURL = 'getBaseURL' in options ? options.getBaseURL : () => Promise.resolve(options.baseURL);
+
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
+      const baseURL = await resolveBaseURL();
       const headers: Record<string, string> = {
         ...requestOptions.headers,
       };
 
-      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL?.startsWith('/apis/')) {
+      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL.startsWith('/apis/')) {
         // If we're trying to do some `json-patch` operation, set Content-Type header accordingly
         if (requestOptions.body && Array.isArray(requestOptions.body) && requestOptions.body.some((item) => item.op)) {
           headers['Content-Type'] = 'application/json-patch+json';

@@ -3,9 +3,9 @@ import { useCallback, useMemo } from 'react';
 import {
   DataTransformerID,
   PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  type SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,13 +18,12 @@ import {
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/partitionByValues.svg';
 import lightImage from '../images/light/partitionByValues.svg';
 
-import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, type PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
@@ -32,7 +31,7 @@ export function PartitionByValuesEditor({
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
   const names = useFieldDisplayNames(input);
-  const allSelectOptions = useSelectOptions(names);
+  const allSelectOptions = useMatcherSelectOptions(names);
   const selectOptions = useMemo(() => {
     const fieldNames = new Set(options.fields);
 
@@ -192,7 +191,6 @@ export const getPartitionByValuesTransformRegistryItem: () => TransformerRegistr
       description: partitionByValuesTransformer.description,
       state: PluginState.alpha,
       categories: new Set([TransformerCategory.Reformat]),
-      help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
       imageDark: darkImage,
       imageLight: lightImage,
     };

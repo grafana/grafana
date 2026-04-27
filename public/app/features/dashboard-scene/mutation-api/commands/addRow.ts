@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -27,6 +27,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
   payloadSchema: payloads.addRow,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -96,8 +97,8 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
       return {
         success: true,
-        data: { path: newPath },
-        changes: [{ path: newPath, previousValue: undefined, newValue: { title: row.spec.title } }],
+        data: { path: newPath, row: { kind: 'RowsLayoutRow', spec: row.spec } },
+        changes: [{ path: newPath, previousValue: null, newValue: { title: row.spec.title } }],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {

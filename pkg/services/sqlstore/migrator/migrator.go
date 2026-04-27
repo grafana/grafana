@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/dskit/backoff"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -205,7 +204,7 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 	if err != nil {
 		return err
 	}
-	key, err := database.GenerateAdvisoryLockId(dbName)
+	key, err := GenerateAdvisoryLockID(dbName)
 	if err != nil {
 		return err
 	}

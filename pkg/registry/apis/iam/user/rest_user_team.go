@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -90,7 +91,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			return
 		}
 
-		limit := 50
+		limit := common.DefaultListLimit
 		offset := 0
 		page := 1
 		if queryParams.Has("limit") {
@@ -104,6 +105,15 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 		} else if queryParams.Has("page") {
 			page, _ = strconv.Atoi(queryParams.Get("page"))
 			offset = (page - 1) * limit
+		}
+
+		if limit > common.MaxListLimit {
+			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+			return
+		}
+
+		if limit < 1 {
+			limit = common.DefaultListLimit
 		}
 
 		span.SetAttributes(attribute.Int("limit", limit),

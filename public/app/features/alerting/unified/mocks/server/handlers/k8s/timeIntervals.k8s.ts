@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { base64UrlEncode } from '@grafana/alerting';
-import { API_GROUP, API_VERSION, TimeInterval } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type TimeInterval } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';

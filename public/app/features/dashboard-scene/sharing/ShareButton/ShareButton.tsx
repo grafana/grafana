@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import ShareMenu from './ShareMenu';
@@ -20,7 +20,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
-  const [_, buildUrl] = useAsyncFn(async () => {
+  const [{ loading }, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
     await buildShareUrl(dashboard, panel);
   }, [dashboard, panel]);
@@ -42,6 +42,8 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
         size="sm"
         tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
         onClick={buildUrl}
+        icon={loading ? 'spinner' : undefined}
+        disabled={loading}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>

@@ -3,11 +3,14 @@ import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { type CustomVariable, type VariableValueOption, type VariableValueSingle } from '@grafana/scenes';
 import { Alert, Button, Modal, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
-import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
+import {
+  VariableStaticOptionsForm,
+  type VariableStaticOptionsFormRef,
+} from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 

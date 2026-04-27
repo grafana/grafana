@@ -11,7 +11,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ALL_OPTION_VALUE, ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
@@ -24,6 +24,7 @@ interface ComboboxListProps<T extends string | number> {
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
+  noOptionsMessage?: string;
   error?: boolean;
   loading?: boolean;
 }
@@ -38,6 +39,7 @@ export const ComboboxList = <T extends string | number>({
   isMultiSelect = false,
   error = false,
   loading = false,
+  noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
@@ -168,7 +170,7 @@ export const ComboboxList = <T extends string | number>({
 
       <div aria-live="polite">
         {error && <AsyncError />}
-        {!loading && options.length === 0 && !error && <NotFoundError />}
+        {!loading && options.length === 0 && !error && <NotFoundError message={noOptionsMessage} />}
         {loading && options.length === 0 && <LoadingOptions />}
       </div>
     </ScrollContainer>

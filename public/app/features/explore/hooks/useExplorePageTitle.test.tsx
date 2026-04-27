@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 
 import { makeDatasourceSetup } from '../spec/helper/setup';

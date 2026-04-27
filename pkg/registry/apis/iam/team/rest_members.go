@@ -15,10 +15,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -32,23 +33,20 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles,
-	accessClient types.AccessClient) *TeamMembersREST {
+func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
 	return &TeamMembersREST{
-		log:          log.New("grafana-apiserver.team.members"),
-		client:       client,
-		tracer:       tracer,
-		features:     features,
-		accessClient: accessClient,
+		log:      log.New("grafana-apiserver.team.members"),
+		client:   client,
+		tracer:   tracer,
+		features: features,
 	}
 }
 
 type TeamMembersREST struct {
-	accessClient types.AccessClient
-	log          log.Logger
-	client       resourcepb.ResourceIndexClient
-	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
+	log      log.Logger
+	client   resourcepb.ResourceIndexClient
+	tracer   trace.Tracer
+	features featuremgmt.FeatureToggles
 }
 
 // New implements rest.Storage.
@@ -87,25 +85,8 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
 
-		authInfo, ok := types.AuthInfoFrom(ctx)
-		if !ok {
-			responder.Error(apierrors.NewUnauthorized("no identity found"))
-			return
-		}
-
-		// https://github.com/grafana/grafana/blob/8649534e37b4c3520af538e311fb3a84c7b9f29f/public/app/features/teams/TeamPages.tsx#L74
-		checkTeamAccess, err := s.accessClient.Check(ctx, authInfo, types.CheckRequest{
-			Namespace: authInfo.GetNamespace(),
-			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
-			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-			Verb:      utils.VerbGetPermissions,
-			Name:      name,
-		}, "")
-		if err != nil || !checkTeamAccess.Allowed {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
-				name, errors.New("you'll need additional permissions to perform this action. Permissions needed: \"GetPermissions\" on the \"Team\" resource")))
-			return
-		}
+		// Authorization is handled by the TeamAuthorizer at the K8s authorizer level.
+		// This handler assumes the request has already been authorized.
 
 		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
@@ -113,7 +94,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		limit := 50
+		limit := common.DefaultListLimit
 		offset := 0
 		page := 1
 		if queryParams.Has("limit") {
@@ -127,6 +108,22 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 		} else if queryParams.Has("page") {
 			page, _ = strconv.Atoi(queryParams.Get("page"))
 			offset = (page - 1) * limit
+		}
+
+		if limit > common.MaxListLimit {
+			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+			return
+		}
+
+		if limit < 1 {
+			limit = common.DefaultListLimit
+		}
+
+		// Get namespace from the request context
+		authInfo, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
+			return
 		}
 
 		searchRequest := &resourcepb.ResourceSearchRequest{

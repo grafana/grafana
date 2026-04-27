@@ -1,6 +1,6 @@
 import { getAPINamespace } from '@grafana/api-clients';
 import { getBackendSrv } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 /**
  * Represents a datasource mapping for compatibility checking.

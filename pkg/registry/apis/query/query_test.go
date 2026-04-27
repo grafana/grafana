@@ -27,6 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 )
 
 func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
@@ -167,8 +170,26 @@ func TestQueryAPI(t *testing.T) {
 		},
 	}
 
+	testProvider := oftesting.NewTestProvider()
+	err := openfeature.SetProviderAndWait(testProvider)
+	if err != nil {
+		t.Errorf("unable to set openfeature provider")
+	}
+
+	// first we test the responder-based output mode
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name+"-responder", func(t *testing.T) {
+			defer testProvider.Cleanup()
+			testProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagDatasourcesQuerierRawOutput: {
+					State:          memprovider.Enabled,
+					DefaultVariant: "disabled",
+					Variants: map[string]any{
+						"disabled": false,
+					},
+				},
+			})
+
 			builder := &QueryAPIBuilder{
 				converter: &expr.ResultConverter{
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
@@ -245,9 +266,107 @@ func TestQueryAPI(t *testing.T) {
 			t.Logf("Test case '%s' completed successfully", tc.name)
 		})
 	}
+
+	// next we test the raw output mode
+	for _, tc := range testCases {
+		t.Run(tc.name+"raw-output", func(t *testing.T) {
+			defer testProvider.Cleanup()
+			testProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagDatasourcesQuerierRawOutput: {
+					State:          memprovider.Enabled,
+					DefaultVariant: "enabled",
+					Variants: map[string]any{
+						"enabled": true,
+					},
+				},
+			})
+			builder := &QueryAPIBuilder{
+				converter: &expr.ResultConverter{
+					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+					Tracer:   tracing.InitializeTracerForTest(),
+				},
+				instanceProvider: mockClient{
+					stubbedFrame: tc.stubbedFrame,
+				},
+				tracer:                 tracing.InitializeTracerForTest(),
+				log:                    log.New("test"),
+				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
+				reportStatus:           func(context.Context, int) {},
+			}
+
+			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})
+
+			req := httptest.NewRequestWithContext(reqCtx, http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
+			req.Header.Set("Content-Type", "application/json")
+
+			// Set optional headers
+			for key, value := range tc.headers {
+				req.Header.Set(key, value)
+			}
+
+			ctx := context.Background()
+			mr := &mockResponder{}
+			qr := newQueryREST(builder)
+
+			handler, err := qr.Connect(ctx, "name", nil, mr)
+			require.NoError(t, err)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			result := rr.Result()
+			defer func() {
+				_ = result.Body.Close()
+			}()
+
+			require.False(t, mr.used, "Responder should be unused")
+
+			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
+
+			// Verify the response is the expected type
+			qdr := &queryapi.QueryDataResponse{}
+			err = json.NewDecoder(result.Body).Decode(qdr)
+			require.NoError(t, err, "Failed to decode response body")
+
+			require.NotNil(t, qdr.Responses, "Should have responses")
+
+			// Load expected frames from testdata if provided
+			if tc.testdataFile != "" {
+				expectedResponse := loadTestdataFrames(t, tc.testdataFile)
+
+				// get refids from expected response
+				expectedRefIds := make([]string, 0, len(expectedResponse.Responses))
+				for refID := range expectedResponse.Responses {
+					expectedRefIds = append(expectedRefIds, refID)
+				}
+
+				// Verify all expected refIDs are present
+				for _, refID := range expectedRefIds {
+					require.Contains(t, qdr.Responses, refID, "Should contain response for refId %s", refID)
+
+					actualResponse := qdr.Responses[refID]
+					expectedFrameResponse := expectedResponse.Responses[refID]
+
+					// Verify frame structure matches testdata
+					require.Len(t, actualResponse.Frames, len(expectedFrameResponse.Frames), "Frame count should match testdata for refId %s", refID)
+
+					for i, actualFrame := range actualResponse.Frames {
+						expectedFrame := expectedFrameResponse.Frames[i]
+						if diff := cmp.Diff(expectedFrame, actualFrame, data.FrameTestCompareOptions()...); diff != "" {
+							require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+						}
+					}
+				}
+			} else {
+				t.Fatalf("No testdata file provided for test case %s", tc.name)
+			}
+
+			t.Logf("Test case '%s' completed successfully", tc.name)
+		})
+	}
 }
 
 type mockResponder struct {
+	used       bool
 	statusCode int
 	response   runtime.Object
 	err        error
@@ -257,11 +376,13 @@ type mockResponder struct {
 func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
 	m.statusCode = statusCode
 	m.response = obj
+	m.used = true
 }
 
 // Error writes the provided error to the response. This method may only be invoked once.
 func (m *mockResponder) Error(err error) {
 	m.err = err
+	m.used = true
 }
 
 type mockClient struct {

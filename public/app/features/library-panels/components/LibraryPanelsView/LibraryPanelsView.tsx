@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';

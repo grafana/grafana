@@ -2192,7 +2192,7 @@
             }
           },
           "resource": {
-            "description": "Dashboard or folder",
+            "description": "Dashboards or folders",
             "type": "string",
             "default": ""
           },
@@ -2472,17 +2472,9 @@
       },
       "AnnotationPermission": {
         "type": "object",
-        "required": ["dashboard", "organization"],
+        "required": ["dashboard"],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {

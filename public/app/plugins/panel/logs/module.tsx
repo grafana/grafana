@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
@@ -179,16 +179,27 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     }
 
     if (config.featureToggles.newLogsPanel) {
-      builder.addBooleanSwitch({
-        path: 'showControls',
-        name: t('logs.name-show-controls', 'Show controls'),
-        category,
-        description: t(
-          'logs.description-show-controls',
-          'Display controls to jump to the last or first log line, and filters by log level.'
-        ),
-        defaultValue: false,
-      });
+      builder
+        .addBooleanSwitch({
+          path: 'showControls',
+          name: t('logs.name-show-controls', 'Show controls'),
+          category,
+          description: t(
+            'logs.description-show-controls',
+            'Display controls to jump to the last or first log line, and filters by log level.'
+          ),
+          defaultValue: false,
+        })
+        .addBooleanSwitch({
+          path: 'allowDownload',
+          name: t('logs.name-allow-download', 'Display download control'),
+          category,
+          description: t(
+            'logs.description-allow-download',
+            'When controls are enabled, show an option to download the logs on display.'
+          ),
+          showIf: (currentOptions) => Boolean(currentOptions.showControls),
+        });
     }
 
     builder.addBooleanSwitch({

@@ -1,17 +1,17 @@
-import { SceneObject } from '@grafana/scenes';
-import { VariableModel } from '@grafana/schema';
+import { type SceneObject } from '@grafana/scenes';
+import { type VariableModel } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  CustomVariableKind,
-  DatasourceVariableKind,
-  QueryVariableKind,
-  VariableKind,
+  type AdhocVariableKind,
+  type CustomVariableKind,
+  type DatasourceVariableKind,
+  type QueryVariableKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables

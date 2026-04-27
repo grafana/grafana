@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
-import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';

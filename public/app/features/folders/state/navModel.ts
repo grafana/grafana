@@ -1,11 +1,11 @@
-import { NavModel, NavModelItem } from '@grafana/data';
+import { type NavModel, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { FolderDTO, FolderParent } from 'app/types/folders';
+import { type FolderDTO, type FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
 

@@ -40,6 +40,7 @@ type SecureValueMetadataStorage interface {
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
 	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error
 	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
 }
 
@@ -49,6 +50,7 @@ type SecureValueService interface {
 	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	DeleteAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error
 }
 
 type SecureValueClient interface {

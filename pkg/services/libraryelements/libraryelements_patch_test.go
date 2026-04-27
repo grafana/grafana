@@ -1,6 +1,7 @@
 package libraryelements
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -89,7 +90,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/00c249f3bdb8ead55b7b551e293907924d644158062bddc4e29a578ec3f89018",
 						},
 					},
 				},
@@ -410,5 +411,95 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 412, resp.Status())
+		})
+
+	// Regression: getAllLibraryElements reads library_element.folder_uid directly from
+	// the table, so PATCH must keep that column in sync with folder_id or the list view
+	// diverges from GET-by-UID (which derives the UID from folder_id).
+	scenarioWithPanel(t, "When an admin moves a library panel to another folder, the list endpoint reflects the new folder",
+		func(t *testing.T, sc scenarioContext) {
+			destFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_DestFolder",
+				Title: "DestFolder",
+			}
+			sc.folderSvc.ExpectedFolder = destFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{sc.folder, destFolder}
+
+			moveCmd := model.PatchLibraryElementCommand{
+				FolderID:  destFolder.ID, // nolint:staticcheck
+				FolderUID: &destFolder.UID,
+				Kind:      int64(model.PanelElement),
+				Version:   1,
+			}
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.reqContext.Req.Body = mockRequestBody(moveCmd)
+			require.Equal(t, 200, sc.service.patchHandler(sc.reqContext).Status())
+
+			require.NoError(t, sc.reqContext.Req.ParseForm())
+			sc.reqContext.Req.Form.Set("folderFilterUIDs", destFolder.UID)
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var atDest libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &atDest))
+			require.Len(t, atDest.Result.Elements, 1, "moved panel should appear when filtering by destination folder")
+			require.Equal(t, sc.initialResult.Result.UID, atDest.Result.Elements[0].UID)
+			require.Equal(t, destFolder.UID, atDest.Result.Elements[0].FolderUID)
+			require.Equal(t, destFolder.UID, atDest.Result.Elements[0].Meta.FolderUID)
+
+			sc.reqContext.Req.Form.Set("folderFilterUIDs", sc.folder.UID)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var atOrig libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &atOrig))
+			require.Empty(t, atOrig.Result.Elements, "moved panel should not appear in original folder")
+		})
+
+	scenarioWithPanel(t, "When an admin moves a library panel to the root folder, the list endpoint reflects the move",
+		func(t *testing.T, sc scenarioContext) {
+			rootUID := ""
+			moveCmd := model.PatchLibraryElementCommand{
+				FolderUID: &rootUID,
+				Kind:      int64(model.PanelElement),
+				Version:   1,
+			}
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.reqContext.Req.Body = mockRequestBody(moveCmd)
+			require.Equal(t, 200, sc.service.patchHandler(sc.reqContext).Status())
+
+			require.NoError(t, sc.reqContext.Req.ParseForm())
+			sc.reqContext.Req.Form.Set("folderFilter", "0")
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var listed libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &listed))
+			require.Len(t, listed.Result.Elements, 1, "panel should appear in root after move-to-root")
+			require.Equal(t, sc.initialResult.Result.UID, listed.Result.Elements[0].UID)
+			require.Equal(t, "", listed.Result.Elements[0].FolderUID)
+			require.Equal(t, "", listed.Result.Elements[0].Meta.FolderUID)
+		})
+
+	scenarioWithPanel(t, "When an admin patches a library panel without folderUid, it should stay in its existing folder",
+		func(t *testing.T, sc scenarioContext) {
+			renameCmd := model.PatchLibraryElementCommand{
+				FolderID: -1, // nolint:staticcheck
+				Name:     "Renamed",
+				Kind:     int64(model.PanelElement),
+				Version:  1,
+			}
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.reqContext.Req.Body = mockRequestBody(renameCmd)
+			require.Equal(t, 200, sc.service.patchHandler(sc.reqContext).Status())
+
+			require.NoError(t, sc.reqContext.Req.ParseForm())
+			sc.reqContext.Req.Form.Set("folderFilterUIDs", sc.folder.UID)
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var listed libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &listed))
+			require.Len(t, listed.Result.Elements, 1, "panel should remain in its original folder when folderUid is not patched")
+			require.Equal(t, sc.folder.UID, listed.Result.Elements[0].FolderUID)
+			require.Equal(t, sc.folder.UID, listed.Result.Elements[0].Meta.FolderUID)
 		})
 }

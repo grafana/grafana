@@ -1,39 +1,39 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import OpenLayersMap from 'ol/Map';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
-import View, { ViewOptions } from 'ol/View';
+import type OpenLayersMap from 'ol/Map';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
+import View, { type ViewOptions } from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
-import { Coordinate } from 'ol/coordinate';
-import { EventsKey } from 'ol/events';
+import { type Coordinate } from 'ol/coordinate';
+import { type EventsKey } from 'ol/events';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import { fromLonLat, transformExtent } from 'ol/proj';
-import { Component, ReactNode } from 'react';
+import { Component, type ReactNode } from 'react';
 import * as React from 'react';
 import { Subscription } from 'rxjs';
 
-import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
+import { DataHoverEvent, type PanelData, type PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { type PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { VariablesChanged } from 'app/features/variables/types';
 import { PanelEditExitedEvent } from 'app/types/events';
 
-import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
+import { GeomapOverlay, type OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
 import { MeasureVectorLayer } from './components/MeasureVectorLayer';
-import { GeomapHoverPayload } from './event';
+import { type GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 import { type Options, type MapViewConfig, TooltipMode } from './panelcfg.gen';
-import { ControlsOptions, MapLayerState } from './types';
+import { type ControlsOptions, type MapLayerState } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
@@ -72,6 +72,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   map?: OpenLayersMap;
   mapDiv?: HTMLDivElement;
+  tooltipPointerMoveDebounced?: { cancel: () => void };
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
 
@@ -296,6 +297,7 @@ export class GeomapPanel extends Component<Props, State> {
       return;
     }
     this.mapDiv = div;
+    this.tooltipPointerMoveDebounced?.cancel();
     if (this.map) {
       this.map.dispose();
     }
@@ -357,6 +359,7 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   clearTooltip = () => {
+    this.tooltipPointerMoveDebounced?.cancel();
     if (this.state.ttip && !this.state.ttipOpen) {
       this.tooltipPopupClosed();
     }

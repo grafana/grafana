@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import {
-  MuteTiming,
+  type MuteTiming,
   useCreateMuteTiming,
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { MuteTimingFields } from '../../types/mute-timing-form';
+import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DefaultGroupByValueEditor, DefaultGroupByValueEditorProps } from './DefaultGroupByValueEditor';
+import { DefaultGroupByValueEditor, type DefaultGroupByValueEditorProps } from './DefaultGroupByValueEditor';
 
 describe('DefaultGroupByValueEditor', () => {
   const defaultProps: DefaultGroupByValueEditorProps = {

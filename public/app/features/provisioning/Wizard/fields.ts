@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { RepoType } from './types';
+import { type RepoType } from './types';
 
 export interface FieldConfig {
   label: string;
@@ -91,7 +91,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       prWorkflow: {
         label: t('provisioning.github.pr-workflow-label', 'Enable pull request option when saving'),
         description: t(
-          'provisioning.github.pr-workflow-description',
+          'provisioning.github.pr-workflow-description', // trufflehog:ignore
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
@@ -114,11 +114,17 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.url,
         description: t('provisioning.gitlab.url-description', 'The GitLab repository URL'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'https://gitlab.com/owner/repository',
+        placeholder: 'https://gitlab.com/group/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.gitlab.url-pattern',
+              'Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)'
+            ),
+          },
         },
       },
       branch: {
@@ -169,8 +175,14 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.bitbucket.url-pattern',
+              'Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)'
+            ),
+          },
         },
       },
       branch: {
@@ -213,7 +225,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       },
       url: {
         ...shared.url,
-        description: t('provisioning.git.url-description', 'The Git repository URL'),
+        description: t(
+          'provisioning.git.url-description',
+          'The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).'
+        ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'https://git.example.com/owner/repository.git',
         required: true,

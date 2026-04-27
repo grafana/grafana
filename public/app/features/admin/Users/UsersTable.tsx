@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
-  FetchDataFunc,
+  type CellProps,
+  type Column,
+  type FetchDataFunc,
   Icon,
   InteractiveTable,
   LinkButton,
@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { UserDTO } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 

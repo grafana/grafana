@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import { type FC } from 'react';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 export interface ToolbarAction {
   key: string;

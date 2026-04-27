@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { defaultSpec, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Form } from 'app/core/components/Form/Form';
 
-import { DashboardInputs, InputType, ImportFormDataV2 } from '../../types';
+import { type DashboardInputs, InputType, type ImportFormDataV2 } from '../../types';
 
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
 
@@ -35,6 +36,7 @@ const mockInputs: DashboardInputs = {
 
 jest.mock('../utils/validation', () => ({
   validateTitle: jest.fn().mockResolvedValue(true),
+  validateUid: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('app/core/components/Select/FolderPicker', () => ({
@@ -71,12 +73,16 @@ describe('ImportDashboardFormV2', () => {
   const mockOnCancel = jest.fn();
   const mockOnSubmit = jest.fn();
 
-  function renderForm(hasFloatGridItems = false, inputs: DashboardInputs = mockInputs) {
+  function renderForm(hasFloatGridItems = false, inputs: DashboardInputs = mockInputs, dashboardUid?: string) {
     const defaultDashboard: DashboardV2Spec = defaultSpec();
     return render(
       <Form<ImportFormDataV2>
         onSubmit={mockOnSubmit}
-        defaultValues={{ dashboard: defaultDashboard, folderUid: 'test-folder' }}
+        defaultValues={{
+          dashboard: defaultDashboard,
+          folderUid: 'test-folder',
+          ...(dashboardUid !== undefined ? { k8s: { name: dashboardUid } } : {}),
+        }}
       >
         {({ register, errors, control, watch, getValues }) => (
           <ImportDashboardFormV2
@@ -109,5 +115,19 @@ describe('ImportDashboardFormV2', () => {
     expect(
       screen.queryByTestId(selectors.components.ImportDashboardForm.floatGridItemsWarning)
     ).not.toBeInTheDocument();
+  });
+
+  it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, 'existing-uid');
+
+    const uidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+    expect(uidField).toHaveValue('existing-uid');
+    expect(uidField).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /change uid/i }));
+
+    const editableUidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+    expect(editableUidField).toBeEnabled();
   });
 });

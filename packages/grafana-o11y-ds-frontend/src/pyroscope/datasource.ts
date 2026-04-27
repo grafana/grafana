@@ -1,9 +1,9 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, DataQueryResponse, ScopedVars } from '@grafana/data';
+import { type CoreApp, type DataQueryRequest, type DataQueryResponse, type ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { PyroscopeDataSourceOptions, ProfileTypeMessage, Query } from './types';
+import { type PyroscopeDataSourceOptions, type ProfileTypeMessage, type Query } from './types';
 
 export abstract class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   abstract applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query;

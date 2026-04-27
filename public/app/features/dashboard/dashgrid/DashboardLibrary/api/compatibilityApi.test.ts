@@ -1,9 +1,9 @@
 import { getAPINamespace } from '@grafana/api-clients';
-import { BackendSrv, getBackendSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { checkDashboardCompatibility, CompatibilityCheckResult, DatasourceMapping } from './compatibilityApi';
+import { checkDashboardCompatibility, type CompatibilityCheckResult, type DatasourceMapping } from './compatibilityApi';
 
 // Mock dependencies
 jest.mock('@grafana/runtime', () => ({

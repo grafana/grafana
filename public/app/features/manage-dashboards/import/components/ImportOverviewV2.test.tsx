@@ -5,11 +5,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   defaultSpec,
   defaultGridLayoutKind,
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import { DashboardInputs, DashboardSource, InputType } from '../../types';
+import { type DashboardInputs, DashboardSource, InputType } from '../../types';
 
 import { ImportOverviewV2 } from './ImportOverviewV2';
 
@@ -19,6 +19,7 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 
 jest.mock('../utils/validation', () => ({
   validateTitle: jest.fn().mockResolvedValue(true),
+  validateUid: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('app/core/components/Select/FolderPicker', () => ({
@@ -72,11 +73,12 @@ describe('ImportOverviewV2', () => {
     libraryPanels: [],
   };
 
-  function renderCmp(layout: DashboardV2Spec['layout']) {
+  function renderCmp(layout: DashboardV2Spec['layout'], dashboardUid?: string) {
     const dashboard: DashboardV2Spec = { ...defaultSpec(), title: 'Test Dashboard', layout };
     render(
       <ImportOverviewV2
         dashboard={dashboard}
+        dashboardUid={dashboardUid}
         inputs={mockInputs}
         meta={{ updatedAt: '', orgName: '' }}
         source={DashboardSource.Json}
@@ -89,7 +91,7 @@ describe('ImportOverviewV2', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
-    mockGetDashboardAPI.mockReturnValue({
+    mockGetDashboardAPI.mockResolvedValue({
       saveDashboard,
       getDashboardDTO: jest.fn(),
       deleteDashboard: jest.fn(),
@@ -217,6 +219,44 @@ describe('ImportOverviewV2', () => {
       expect(savedLayout.spec.items[0].spec.y).toBe(0);
       expect(savedLayout.spec.items[0].spec.width).toBe(12);
       expect(savedLayout.spec.items[0].spec.height).toBe(8);
+    });
+
+    it('sends preserved resource uid in k8s.name when provided', async () => {
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout, 'resource-uid');
+
+      const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
+      await user.type(datasourcePicker, 'prom-uid');
+      await user.click(screen.getByRole('button', { name: /import/i }));
+
+      await waitFor(() => {
+        expect(saveDashboard).toHaveBeenCalled();
+      });
+
+      const savedData = saveDashboard.mock.calls[0][0];
+      expect(savedData.k8s?.name).toBe('resource-uid');
+    });
+
+    it('allows overriding preserved uid before save', async () => {
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout, 'resource-uid');
+
+      await user.click(screen.getByRole('button', { name: /change uid/i }));
+
+      const uidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+      await user.clear(uidField);
+      await user.type(uidField, 'custom-uid');
+
+      const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
+      await user.type(datasourcePicker, 'prom-uid');
+      await user.click(screen.getByRole('button', { name: /import/i }));
+
+      await waitFor(() => {
+        expect(saveDashboard).toHaveBeenCalled();
+      });
+
+      const savedData = saveDashboard.mock.calls[0][0];
+      expect(savedData.k8s?.name).toBe('custom-uid');
     });
   });
 });

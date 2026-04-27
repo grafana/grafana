@@ -3,7 +3,13 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  MappingType,
+  SpecialValueMatch,
+  type SelectableValue,
+  type ValueMappingResult,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
 
@@ -181,7 +187,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
         <tr className={styles.dragRow} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
+              />
             </div>
           </td>
           <td className={styles.typeColumn}>{mapping.type}</td>

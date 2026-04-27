@@ -1,9 +1,9 @@
 import { isObject } from 'lodash';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 
-import { CustomVariableModel, shallowCompare } from '@grafana/data';
+import { type CustomVariableModel, shallowCompare } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CustomVariable } from '@grafana/scenes';
+import { type CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableForm } from '../../components/CustomVariableForm';
 

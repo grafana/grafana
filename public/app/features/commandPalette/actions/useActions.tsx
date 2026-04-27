@@ -1,7 +1,7 @@
 import { useRegisterActions } from 'kbar';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
 import { useStaticActions } from './staticActions';

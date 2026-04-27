@@ -27,6 +27,7 @@ type Instance struct {
 	RegionSlug  string `json:"regionSlug"`
 	ClusterSlug string `json:"clusterSlug"`
 	OrgId       int    `json:"orgId"`
+	Status      string `json:"status"`
 }
 
 type Plugin struct {

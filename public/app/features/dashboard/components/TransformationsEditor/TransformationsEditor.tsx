@@ -1,16 +1,16 @@
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { ChangeEvent, createRef, RefObject } from 'react';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type ChangeEvent, createRef, type RefObject } from 'react';
 import * as React from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataTransformerConfig,
-  PanelData,
-  SelectableValue,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataTransformerConfig,
+  type PanelData,
+  type SelectableValue,
   standardTransformersRegistry,
-  TransformerCategory,
+  type TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import {
   Button,
   ConfirmModal,
   Container,
-  Themeable,
+  type Themeable,
   withTheme,
   IconButton,
   ButtonGroup,
@@ -27,12 +27,12 @@ import {
 } from '@grafana/ui';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationPickerNg } from './TransformationPickerNg';
-import { TransformationsEditorTransformation } from './types';
+import { type TransformationsEditorTransformation } from './types';
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;

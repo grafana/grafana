@@ -54,7 +54,7 @@ For a minimal setup, refer to [Example using an Access Key](#example-using-an-ac
 
 To create a contact point with a SNS integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **AWS SNS**.
