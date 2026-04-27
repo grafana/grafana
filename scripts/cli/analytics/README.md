@@ -26,20 +26,20 @@ The framework ensures that:
 
 ### 1. Create the factory
 
-Call `defineFeatureEvents` with two required string literals — the repo name and the feature name — and an optional object of default properties that are merged into every event fired through this factory:
+Call `defineFeatureEvents` with two required string literal arguments — the repo name and the feature name. A third argument with default properties (merged into every event in the namespace) is optional:
 
 ```ts
-import { defineFeatureEvents } from '@grafana/runtime/internal';
+// Without default properties
+const createPreferencesEvent = defineFeatureEvents('grafana', 'preferences');
 
-const SCHEMA_VERSION = 1;
-
-const newMyFeatureEvent = defineFeatureEvents('grafana', 'my_feature', {
+// With default properties (e.g. a schema version sent with every event)
+const createLibraryEvent = defineFeatureEvents('grafana', 'dashboard_library', {
   /** Version of the event schema, used to handle breaking changes in the properties contract. */
-  schema_version: SCHEMA_VERSION,
+  schema_version: 1,
 });
 ```
 
-This produces event names of the form `grafana_my_feature_{eventName}`.
+This produces event names of the form `grafana_{feature}_{eventName}`.
 
 ### 2. Define the property interfaces
 
@@ -48,64 +48,108 @@ Create a `types.ts` file next to your events file. Each interface must extend `E
 ```ts
 import { type EventProperty } from '@grafana/runtime/internal';
 
-export interface LoadedProperties extends EventProperty {
-  /** Total number of items visible at load time. */
-  numberOfItems: number;
-  /** Plugin IDs of data sources referenced by the loaded items. */
-  datasourceTypes: string[];
+export interface ThemeChanged extends EventProperty {
+  /** Whether the preference being changed belongs to an org, team, or individual user. */
+  preferenceType: 'org' | 'team' | 'user';
+  /** The theme the user switched to. */
+  toTheme: string;
 }
 ```
 
-### 3. Export the events object
+### 3. Export the events
 
-Create a `main.ts` (or similar) and export a `const` object grouping related events. Each entry must have a JSDoc comment describing when it fires:
+Events can be exported in two ways. Both are fully supported by the report script.
+
+#### Flat individual exports
+
+Each event is exported as its own `const`. This works well for small, cohesive sets of events. The JSDoc comment above each export becomes its description in the report.
+
+Real example — `public/app/core/components/SharedPreferences/analytics/main.ts`:
 
 ```ts
 import { defineFeatureEvents } from '@grafana/runtime/internal';
-import { type LoadedProperties } from './types';
+import { type ThemeChanged, type LanguageChanged } from './types';
 
-const newMyFeatureEvent = defineFeatureEvents('grafana', 'my_feature', {
+const createSharedPreferencesEvents = defineFeatureEvents('grafana', 'preferences');
+
+/** Fired immediately when the user selects a new theme from the theme picker, before saving. */
+export const themeChanged = createSharedPreferencesEvents<ThemeChanged>('theme_changed');
+
+/** Fired immediately when the user selects a new language from the language picker, before saving. */
+export const languageChanged = createSharedPreferencesEvents<LanguageChanged>('language_changed');
+```
+
+#### Grouped object export
+
+All events are collected into a single exported `const` object. This is useful for larger feature areas where events are used together. Each property of the object must have a JSDoc comment. The object can also spread another events object to inherit and override entries:
+
+Real example — `public/app/features/dashboard/dashgrid/DashboardLibrary/analytics/main.ts`:
+
+```ts
+import { defineFeatureEvents } from '@grafana/runtime/internal';
+import { type LoadedProperties, type ItemClickedProperties } from './types';
+
+const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard_library', {
   /** Version of the event schema. */
   schema_version: 1,
 });
 
 /**
- * Analytics events for My Feature.
+ * Analytics events for the Dashboard Library feature.
  */
-export const MyFeatureInteractions = {
-  /** Fired when the feature finishes loading and its content is visible. */
-  loaded: newMyFeatureEvent<LoadedProperties>('loaded'),
+export const NewDashboardLibraryInteractions = {
+  /** Fired when the library panel finishes rendering and its items are visible. */
+  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
+  /** Fired when the user selects an item from the library list. */
+  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
+};
 
-  /** Fired when the user clicks an item in the list. */
-  itemClicked: newMyFeatureEvent<ItemClickedProperties>('item_clicked'),
+/**
+ * Dashboard Library events scoped to the Template Dashboards variant.
+ */
+export const NewTemplateDashboardInteractions = {
+  ...NewDashboardLibraryInteractions,
+  /** Fired when the Template Dashboards view finishes loading. */
+  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
 };
 ```
 
-The exported object can also extend another interactions object using the spread operator. Direct property assignments override spread entries with the same event name, mirroring JavaScript spread semantics:
+Direct property assignments override spread entries with the same event name, mirroring JavaScript spread semantics.
 
-```ts
-export const MyVariantInteractions = {
-  ...MyFeatureInteractions,
-  /** Fired when the variant-specific list finishes loading. */
-  loaded: newMyFeatureEvent<LoadedProperties>('loaded'),
-};
+---
+
+## Where to put the event files
+
+Event files must live **inside the feature's own folder**, not in a shared or generic location. The report script resolves the owner of each event from `.github/CODEOWNERS` using the path of the file that declares the events. Placing the files inside the feature folder ensures ownership is assigned correctly without needing a manual `@owner` tag.
+
+The recommended structure is:
+
+```
+public/app/features/my-feature/
+  analytics/
+    main.ts    ← factory + event declarations
+    types.ts   ← EventProperty interfaces
+  MyFeatureComponent.tsx
+  ...
 ```
 
 ---
 
 ## How to call events
 
-Import the exported interactions object and call the method when the action occurs:
+Import the events and call them when the action occurs:
 
 ```ts
-import { MyFeatureInteractions } from './analytics/main';
+// Flat export
+import { themeChanged } from './analytics/main';
+themeChanged({ preferenceType: 'user', toTheme: 'dark' });
 
-// In a React component or handler:
-MyFeatureInteractions.loaded({ numberOfItems: 42, datasourceTypes: ['prometheus'] });
-MyFeatureInteractions.itemClicked({ itemId: 'abc', itemTitle: 'My dashboard' });
+// Grouped object export
+import { NewDashboardLibraryInteractions } from './analytics/main';
+NewDashboardLibraryInteractions.loaded({ numberOfItems: 42, datasourceTypes: ['prometheus'] });
 ```
 
-Each call internally calls `reportInteraction` from `@grafana/runtime`, forwarding all properties plus any default properties defined on the factory (e.g. `schema_version`).
+Each call internally invokes `reportInteraction` from `@grafana/runtime`, forwarding all properties plus any default properties defined on the factory (e.g. `schema_version`).
 
 ---
 
@@ -129,8 +173,8 @@ The output is a Markdown file (`analytics-report.md`) grouped by feature. Each e
 
 - **Full event name** — the complete string sent to the analytics backend (e.g. `grafana_dashboard_library_loaded`).
 - **Description** — taken from the JSDoc comment on the event entry.
-- **Owner** — resolved automatically from `.github/CODEOWNERS` based on which file declares the event.
-- **Properties table** — every property with its TypeScript type (resolved to primitive/union form) and its JSDoc description. Default properties (e.g. `schema_version`) are included and listed first.
+- **Owner** — resolved automatically from `.github/CODEOWNERS` based on the path of the file that declares the events.
+- **Properties table** — every property with its TypeScript type (resolved to primitive/union form) and its JSDoc description. Default properties (e.g. `schema_version`) are listed first.
 
 Example:
 
