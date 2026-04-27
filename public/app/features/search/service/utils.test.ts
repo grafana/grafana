@@ -201,10 +201,6 @@ describe('formatDeletedByDisplayValue', () => {
     expect(formatDeletedByDisplayValue(DELETED_BY_REMOVED, t)).toBe('Deleted account');
   });
 
-  it('maps DELETED_BY_UNKNOWN to the translated "Unknown account" label', () => {
-    expect(formatDeletedByDisplayValue(DELETED_BY_UNKNOWN, t)).toBe('Unknown account');
-  });
-
   it('passes through non-sentinel display names verbatim', () => {
     expect(formatDeletedByDisplayValue('Alice', t)).toBe('Alice');
   });

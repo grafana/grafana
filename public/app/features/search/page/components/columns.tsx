@@ -20,7 +20,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -170,15 +170,26 @@ export const generateColumns = (
       Header: t('search.results-table.deleted-by-header', 'Deleted by'),
       width,
       Cell: (p) => {
-        const displayValue = formatDeletedByDisplayValue(deletedByField.values[p.row.index], t);
+        const rawValue = deletedByField.values[p.row.index];
         const { key, ...cellProps } = p.cellProps;
         return (
           <div key={key} {...cellProps} className={styles.cell}>
             {!response.isItemLoaded(p.row.index) ? (
               <Skeleton width={150} />
+            ) : rawValue === DELETED_BY_UNKNOWN ? (
+              <Tooltip
+                content={t(
+                  'search.results-table.deleted-by-unknown-tooltip',
+                  'Failed to look up the account that deleted this dashboard'
+                )}
+              >
+                <Text variant="body" truncate>
+                  <Icon name="exclamation-triangle" /> {t('search.results-table.deleted-by-unknown-short', 'Unknown')}
+                </Text>
+              </Tooltip>
             ) : (
               <Text variant="body" truncate>
-                {displayValue}
+                {formatDeletedByDisplayValue(rawValue, t)}
               </Text>
             )}
           </div>

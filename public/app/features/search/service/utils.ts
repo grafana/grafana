@@ -26,7 +26,7 @@ export const DELETED_BY_REMOVED = '\u0000__grafana_deleted_account__\u0000';
 /**
  * Marker stored in `field.deletedBy` when the IAM batch containing the UID failed entirely
  * (network/timeout/server error). We cannot distinguish "account deleted" from "lookup failed"
- * for UIDs in a failed batch, so we surface the ambiguity in the UI.
+ * for UIDs in a failed batch, so we surface the ambiguity in the UI with an icon + tooltip.
  */
 export const DELETED_BY_UNKNOWN = '\u0000__grafana_unknown_account__\u0000';
 
@@ -36,9 +36,6 @@ export function formatDeletedByDisplayValue(
 ): string {
   if (rawValue === DELETED_BY_REMOVED) {
     return t('search.results-table.deleted-by-removed', 'Deleted account');
-  }
-  if (rawValue === DELETED_BY_UNKNOWN) {
-    return t('search.results-table.deleted-by-unknown', 'Unknown account');
   }
   if (typeof rawValue === 'string' && rawValue) {
     return rawValue;

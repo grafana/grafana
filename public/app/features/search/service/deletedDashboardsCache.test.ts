@@ -1,8 +1,5 @@
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 import { dispatch } from 'app/types/store';
-
-import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from '../../apiserver/types';
 
 import { resolveDeletedByDisplayMap } from './deletedDashboardsCache';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
@@ -24,35 +21,6 @@ jest.mock('app/types/store', () => ({
 
 const mockInitiate = iamAPIv0alpha1.endpoints.getDisplayMapping.initiate as unknown as jest.Mock;
 const mockDispatch = dispatch as unknown as jest.Mock;
-
-function makeItem(name: string, deletedByUid?: string): Resource<DashboardDataDTO> {
-  const annotations: Record<string, string> = {};
-  if (deletedByUid !== undefined) {
-    annotations[AnnoKeyUpdatedBy] = deletedByUid;
-  }
-  return {
-    apiVersion: 'dashboard.grafana.app/v1beta1',
-    kind: 'Dashboard',
-    metadata: {
-      name,
-      resourceVersion: '1',
-      creationTimestamp: '2024-01-01T00:00:00Z',
-      deletionTimestamp: '2024-06-01T00:00:00Z',
-      annotations,
-    },
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    spec: { title: name, uid: name } as DashboardDataDTO,
-  };
-}
-
-function makeResourceList(items: Array<Resource<DashboardDataDTO>>): ResourceList<DashboardDataDTO> {
-  return {
-    apiVersion: 'dashboard.grafana.app/v1beta1',
-    kind: 'DashboardList',
-    metadata: { resourceVersion: '0' },
-    items,
-  };
-}
 
 function makeDisplayList(display: Display[]): DisplayList {
   return {
@@ -88,33 +56,18 @@ describe('resolveDeletedByDisplayMap', () => {
     mockInitiate.mockReturnValue('initiate-thunk');
   });
 
-  it('returns undefined and does not dispatch when the list is empty', async () => {
-    const map = await resolveDeletedByDisplayMap(makeResourceList([]));
+  it('returns an empty map and does not dispatch when given no UIDs', async () => {
+    const map = await resolveDeletedByDisplayMap(new Set(), new Map());
 
-    expect(map).toBeUndefined();
+    expect(map.size).toBe(0);
     expect(mockInitiate).not.toHaveBeenCalled();
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  it('returns undefined and does not dispatch when no item has an updatedBy annotation', async () => {
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a'), makeItem('b')]));
-
-    expect(map).toBeUndefined();
-    expect(mockInitiate).not.toHaveBeenCalled();
-    expect(mockDispatch).not.toHaveBeenCalled();
-  });
-
-  it('dispatches getDisplayMapping with deduplicated UIDs and subscribe:false', async () => {
+  it('dispatches getDisplayMapping with sorted UIDs and subscribe:false', async () => {
     mockDispatch.mockReturnValue(mockSubscription({ data: makeDisplayList([]) }));
 
-    await resolveDeletedByDisplayMap(
-      makeResourceList([
-        makeItem('a', 'user:alice'),
-        makeItem('b', 'user:alice'), // duplicate UID
-        makeItem('c', 'user:bob'),
-        makeItem('d'), // no annotation
-      ])
-    );
+    await resolveDeletedByDisplayMap(new Set(['user:bob', 'user:alice']), new Map());
 
     expect(mockInitiate).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledTimes(1);
@@ -123,6 +76,69 @@ describe('resolveDeletedByDisplayMap', () => {
     // Keys are sorted before dispatch so equivalent UID sets produce stable RTKQ cache keys.
     expect(keyArg.key).toEqual(['user:alice', 'user:bob']);
     expect(optionsArg).toEqual({ subscribe: false });
+  });
+
+  it('skips UIDs already resolved in the cache', async () => {
+    const cache = new Map<string, string>([['user:alice', 'Alice']]);
+
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), cache);
+
+    expect(map.get('user:alice')).toBe('Alice');
+    expect(mockInitiate).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('dispatches only for the cache-miss subset', async () => {
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'bob' }, displayName: 'Bob' }]),
+      })
+    );
+    const cache = new Map<string, string>([['user:alice', 'Alice']]);
+
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice', 'user:bob']), cache);
+
+    expect(map.get('user:alice')).toBe('Alice');
+    expect(map.get('user:bob')).toBe('Bob');
+    const [keyArg] = mockInitiate.mock.calls[0] as [{ key: string[] }];
+    expect(keyArg.key).toEqual(['user:bob']);
+  });
+
+  it('re-fetches UIDs whose previous lookup yielded DELETED_BY_UNKNOWN', async () => {
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+    const cache = new Map<string, string>([['user:alice', DELETED_BY_UNKNOWN]]);
+
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), cache);
+
+    expect(map.get('user:alice')).toBe('Alice');
+    expect(mockInitiate).toHaveBeenCalledTimes(1);
+    expect(cache.get('user:alice')).toBe('Alice');
+  });
+
+  it('does not re-fetch UIDs cached as DELETED_BY_REMOVED (terminal state)', async () => {
+    const cache = new Map<string, string>([['user:alice', DELETED_BY_REMOVED]]);
+
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), cache);
+
+    expect(map.get('user:alice')).toBe(DELETED_BY_REMOVED);
+    expect(mockInitiate).not.toHaveBeenCalled();
+  });
+
+  it('writes resolved entries back to the shared cache', async () => {
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+    const cache = new Map<string, string>();
+
+    await resolveDeletedByDisplayMap(new Set(['user:alice']), cache);
+
+    expect(cache.get('user:alice')).toBe('Alice');
   });
 
   it('unsubscribes from the RTK Query cache entry after resolving', async () => {
@@ -134,7 +150,7 @@ describe('resolveDeletedByDisplayMap', () => {
       )
     );
 
-    await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
@@ -144,7 +160,7 @@ describe('resolveDeletedByDisplayMap', () => {
     const unsubscribe = jest.fn();
     mockDispatch.mockReturnValue(mockSubscription(new Error('boom'), unsubscribe));
 
-    await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
@@ -158,9 +174,9 @@ describe('resolveDeletedByDisplayMap', () => {
     const unsubscribe = jest.fn();
     mockDispatch.mockReturnValue(mockSubscription({ error: { status: 500, data: 'upstream failure' } }, unsubscribe));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
-    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
+    expect(map.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to resolve deleted dashboard user displays:',
@@ -174,23 +190,24 @@ describe('resolveDeletedByDisplayMap', () => {
       mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
     );
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
-    expect(map?.get('user:alice')).toBe('Alice');
+    expect(map.get('user:alice')).toBe('Alice');
   });
 
-  it('additionally keys the map by String(internalId) when provided', async () => {
+  it('additionally caches by String(internalId) when provided', async () => {
     mockDispatch.mockReturnValue(
       mockSubscription({
         data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice', internalId: 42 }]),
       })
     );
+    const cache = new Map<string, string>();
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    await resolveDeletedByDisplayMap(new Set(['user:alice']), cache);
 
-    expect(map?.get('user:alice')).toBe('Alice');
-    expect(map?.get('42')).toBe('Alice');
-    expect(map?.get('user:42')).toBe('Alice');
+    expect(cache.get('user:alice')).toBe('Alice');
+    expect(cache.get('42')).toBe('Alice');
+    expect(cache.get('user:42')).toBe('Alice');
   });
 
   it('aliases typed numeric annotations to the canonical entry via `<type>:<internalId>`', async () => {
@@ -203,12 +220,13 @@ describe('resolveDeletedByDisplayMap', () => {
         ]),
       })
     );
+    const cache = new Map<string, string>();
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:1')]));
+    const map = await resolveDeletedByDisplayMap(new Set(['user:1']), cache);
 
-    expect(map?.get('user:1')).toBe('Alice');
-    expect(map?.get('user:u000000001')).toBe('Alice');
-    expect(map?.get('1')).toBe('Alice');
+    expect(map.get('user:1')).toBe('Alice');
+    expect(cache.get('user:u000000001')).toBe('Alice');
+    expect(cache.get('1')).toBe('Alice');
   });
 
   it('preserves Unicode display names verbatim', async () => {
@@ -221,12 +239,10 @@ describe('resolveDeletedByDisplayMap', () => {
       })
     );
 
-    const map = await resolveDeletedByDisplayMap(
-      makeResourceList([makeItem('a', 'user:tanaka'), makeItem('b', 'user:mohamed')])
-    );
+    const map = await resolveDeletedByDisplayMap(new Set(['user:tanaka', 'user:mohamed']), new Map());
 
-    expect(map?.get('user:tanaka')).toBe('田中太郎');
-    expect(map?.get('user:mohamed')).toBe('محمد العربي');
+    expect(map.get('user:tanaka')).toBe('田中太郎');
+    expect(map.get('user:mohamed')).toBe('محمد العربي');
   });
 
   it('marks UIDs the server could not resolve with DELETED_BY_REMOVED', async () => {
@@ -234,45 +250,43 @@ describe('resolveDeletedByDisplayMap', () => {
       mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
     );
 
-    const map = await resolveDeletedByDisplayMap(
-      makeResourceList([makeItem('a', 'user:alice'), makeItem('b', 'user:missing')])
-    );
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice', 'user:missing']), new Map());
 
-    expect(map?.get('user:alice')).toBe('Alice');
+    expect(map.get('user:alice')).toBe('Alice');
     // Successful batch, no IAM entry for user:missing — account was deleted.
-    expect(map?.get('user:missing')).toBe(DELETED_BY_REMOVED);
+    expect(map.get('user:missing')).toBe(DELETED_BY_REMOVED);
   });
 
   it('marks requested UIDs as DELETED_BY_UNKNOWN when the dispatch resolves with no data', async () => {
     mockDispatch.mockReturnValue(mockSubscription({ data: undefined }));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
     // `data === undefined` is treated as batch failure so the UI renders a consistent placeholder
     // rather than a raw UID.
-    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
+    expect(map.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
   });
 
   it('marks requested UIDs as DELETED_BY_UNKNOWN and swallows errors when the dispatch rejects', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockDispatch.mockReturnValue(mockSubscription(new Error('boom')));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList([makeItem('a', 'user:alice')]));
+    const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
-    expect(map?.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
+    expect(map.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
   });
 
   it('chunks large UID sets into batches of at most IAM_DISPLAY_BATCH_SIZE keys', async () => {
     // Build 250 unique UIDs; at batch size 200 this must split into 2 dispatches.
-    const items: Array<Resource<DashboardDataDTO>> = [];
+    const uids = new Set<string>();
     for (let i = 0; i < 250; i++) {
-      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+      uids.add(`user:u${String(i).padStart(4, '0')}`);
     }
     mockDispatch.mockReturnValue(mockSubscription({ data: makeDisplayList([]) }));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+    const map = await resolveDeletedByDisplayMap(uids, new Map());
 
     expect(mockInitiate).toHaveBeenCalledTimes(2);
     const firstBatch = (mockInitiate.mock.calls[0][0] as { key: string[] }).key;
@@ -282,15 +296,15 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(firstBatch.length + secondBatch.length).toBe(250);
     // Every requested UID is present in the returned map; unresolved entries get a sentinel.
     for (let i = 0; i < 250; i++) {
-      expect(map?.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_REMOVED);
+      expect(map.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_REMOVED);
     }
   });
 
   it('preserves successful batches when a sibling batch fails', async () => {
     // Two batches: first succeeds with a display; second rejects.
-    const items: Array<Resource<DashboardDataDTO>> = [];
+    const uids = new Set<string>();
     for (let i = 0; i < 250; i++) {
-      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+      uids.add(`user:u${String(i).padStart(4, '0')}`);
     }
 
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -307,15 +321,15 @@ describe('resolveDeletedByDisplayMap', () => {
       )
       .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+    const map = await resolveDeletedByDisplayMap(uids, new Map());
 
     // First batch's resolved UID: real display name.
-    expect(map?.get('user:u0000')).toBe('Alice');
+    expect(map.get('user:u0000')).toBe('Alice');
     // First batch's unresolved UIDs: DELETED_BY_REMOVED (successful batch, no IAM entry).
-    expect(map?.get('user:u0001')).toBe(DELETED_BY_REMOVED);
+    expect(map.get('user:u0001')).toBe(DELETED_BY_REMOVED);
     // Second batch's UIDs: DELETED_BY_UNKNOWN (batch failed).
-    expect(map?.get('user:u0200')).toBe(DELETED_BY_UNKNOWN);
-    expect(map?.get('user:u0249')).toBe(DELETED_BY_UNKNOWN);
+    expect(map.get('user:u0200')).toBe(DELETED_BY_UNKNOWN);
+    expect(map.get('user:u0249')).toBe(DELETED_BY_UNKNOWN);
     // Both batches' subscriptions unsubscribed.
     expect(unsubscribeA).toHaveBeenCalledTimes(1);
     expect(unsubscribeB).toHaveBeenCalledTimes(1);
@@ -323,9 +337,9 @@ describe('resolveDeletedByDisplayMap', () => {
   });
 
   it('returns an all-unknown map when every batch fails', async () => {
-    const items: Array<Resource<DashboardDataDTO>> = [];
+    const uids = new Set<string>();
     for (let i = 0; i < 250; i++) {
-      items.push(makeItem(`dash-${i}`, `user:u${String(i).padStart(4, '0')}`));
+      uids.add(`user:u${String(i).padStart(4, '0')}`);
     }
 
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -335,10 +349,10 @@ describe('resolveDeletedByDisplayMap', () => {
       .mockReturnValueOnce(mockSubscription(new Error('batch-1 failed'), unsubscribeA))
       .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
 
-    const map = await resolveDeletedByDisplayMap(makeResourceList(items));
+    const map = await resolveDeletedByDisplayMap(uids, new Map());
 
     for (let i = 0; i < 250; i++) {
-      expect(map?.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_UNKNOWN);
+      expect(map.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_UNKNOWN);
     }
     expect(unsubscribeA).toHaveBeenCalledTimes(1);
     expect(unsubscribeB).toHaveBeenCalledTimes(1);

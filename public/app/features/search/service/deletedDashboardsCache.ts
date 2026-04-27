@@ -11,13 +11,16 @@ import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, resourceToSearchResult } from './utils';
 
 /**
- * Store deleted dashboards in the cache to avoid multiple calls to the API.
+ * Caches the deleted-dashboards list and the resolved deleter display names.
+ * `clear()` invalidates the list but keeps `displayNameCache` — display names are
+ * identity-scoped, so Restore/Delete actions don't stale them.
  */
 class DeletedDashboardsCache {
   private cache: SearchHit[] | null = null;
   private promise: Promise<SearchHit[]> | null = null;
   private resourceListCache: ResourceList<DashboardDataDTO> | null = null;
   private resourceListPromise: Promise<ResourceList<DashboardDataDTO>> | null = null;
+  private displayNameCache: Map<string, string> = new Map();
 
   async get(): Promise<SearchHit[]> {
     if (this.cache !== null) {
@@ -75,7 +78,6 @@ class DeletedDashboardsCache {
         return deletedResponse;
       }
 
-      // Return empty ResourceList if not a valid ResourceList
       return {
         apiVersion: 'v1',
         kind: 'List',
@@ -95,7 +97,14 @@ class DeletedDashboardsCache {
 
   private async fetch(): Promise<SearchHit[]> {
     const resourceList = await this.getAsResourceList();
-    const deletedByDisplayMap = await resolveDeletedByDisplayMap(resourceList);
+    const uids = new Set<string>();
+    for (const item of resourceList.items) {
+      const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+      if (uid) {
+        uids.add(uid);
+      }
+    }
+    const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
     return resourceToSearchResult(resourceList, deletedByDisplayMap);
   }
 }
@@ -103,94 +112,101 @@ class DeletedDashboardsCache {
 export const deletedDashboardsCache = new DeletedDashboardsCache();
 
 /**
- * Heuristic max UIDs per `getDisplayMapping` request. A typical `user:<uid>` key is ~27 bytes
- * URL-encoded (`&key=user:xxxxxxxxxxxxxx`); at 200 keys the query string stays well under nginx's
- * default 8 KB `client_header_buffer_size`. Tune down if proxies enforce smaller header limits.
+ * Max UIDs per `getDisplayMapping` request. Keeps the URL well under nginx's default
+ * 8 KB `client_header_buffer_size` (~27 bytes per `&key=user:<uid>`).
  */
 const IAM_DISPLAY_BATCH_SIZE = 200;
 
 /**
- * Resolves user display names for the `grafana.app/updatedBy` annotation on deleted dashboards.
+ * Resolves display names for `uids` in batches of `IAM_DISPLAY_BATCH_SIZE`.
  *
- * Returns `undefined` only when there is nothing to resolve (no annotated items). Otherwise
- * returns a map whose value for every requested UID is one of:
- *   - a real display name (IAM lookup hit)
- *   - `DELETED_BY_REMOVED` (successful batch, no entry for this UID — account was deleted)
- *   - `DELETED_BY_UNKNOWN` (batch for this UID failed)
+ * Reuses `cache` to skip already-resolved UIDs and re-tries any cached as
+ * `DELETED_BY_UNKNOWN`. Newly resolved entries are written back to `cache`.
  *
- * Callers can therefore do a single `map.get(uid)` lookup with no fallback interpretation.
+ * Returns a map keyed by every UID in `uids`. Each value is one of:
+ *   - a real display name (IAM hit)
+ *   - `DELETED_BY_REMOVED` (lookup succeeded, no entry — account was deleted)
+ *   - `DELETED_BY_UNKNOWN` (batch failed)
  */
 export async function resolveDeletedByDisplayMap(
-  resourceList: ResourceList<DashboardDataDTO>
-): Promise<Map<string, string> | undefined> {
-  const uids = new Set<string>();
-  for (const item of resourceList.items) {
-    const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
-    if (uid) {
-      uids.add(uid);
+  uids: Set<string>,
+  cache: Map<string, string>
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  const toFetch = new Set<string>();
+  for (const uid of uids) {
+    const cached = cache.get(uid);
+    // Re-fetch UIDs whose previous lookup failed transiently — DELETED_BY_REMOVED is terminal.
+    if (cached !== undefined && cached !== DELETED_BY_UNKNOWN) {
+      result.set(uid, cached);
+    } else {
+      toFetch.add(uid);
     }
   }
-  if (uids.size === 0) {
-    return undefined;
+
+  if (toFetch.size === 0) {
+    return result;
   }
 
   // Sort for stable cache keys across equivalent UID sets arriving in different order.
-  const keys = Array.from(uids).sort();
+  const keys = Array.from(toFetch).sort();
   const batches: string[][] = [];
   for (let i = 0; i < keys.length; i += IAM_DISPLAY_BATCH_SIZE) {
     batches.push(keys.slice(i, i + IAM_DISPLAY_BATCH_SIZE));
   }
 
-  // `dispatch(initiate(...))` returns RTK Query's `QueryActionCreatorResult` (thenable +
-  // `.unsubscribe()`). Explicitly typing the array lets TS pick the right `AppDispatch` overload,
-  // which otherwise collapses to `AnyAction` and loses `.unsubscribe()`.
+  // Explicit type so TS picks the AppDispatch overload that preserves `.unsubscribe()`.
   type Subscription = ReturnType<ReturnType<typeof iamAPIv0alpha1.endpoints.getDisplayMapping.initiate>>;
   const subscriptions: Subscription[] = [];
   try {
     for (const keyBatch of batches) {
-      // One-shot lookups: avoid registering RTK Query subscriptions so cache entries aren't kept
-      // alive across rebuilds (each rebuild passes a different `key` array). Pushing inside the
-      // `try` guarantees `finally` unsubscribes whatever was created before any synchronous throw.
+      // One-shot fetch — RTK Query keeps no cache entry; `.unsubscribe()` below is defensive.
       subscriptions.push(
         dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: keyBatch }, { subscribe: false }))
       );
     }
     const responses = await Promise.allSettled(subscriptions);
 
-    // Seed every requested UID with DELETED_BY_REMOVED; we overwrite below with the real display
-    // name when the batch returned one, or with DELETED_BY_UNKNOWN when the batch failed.
-    const map = new Map<string, string>();
+    const fetched = new Map<string, string>();
     for (const uid of keys) {
-      map.set(uid, DELETED_BY_REMOVED);
+      fetched.set(uid, DELETED_BY_REMOVED);
     }
 
     for (let i = 0; i < responses.length; i++) {
       const displayList = extractDisplayData(responses[i]);
       if (!displayList) {
         for (const key of batches[i]) {
-          map.set(key, DELETED_BY_UNKNOWN);
+          fetched.set(key, DELETED_BY_UNKNOWN);
         }
         continue;
       }
       for (const entry of displayList.display) {
-        map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
+        fetched.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
         if (entry.internalId !== undefined) {
-          map.set(String(entry.internalId), entry.displayName);
-          map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
+          fetched.set(String(entry.internalId), entry.displayName);
+          fetched.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
         }
       }
     }
-    return map;
-  } catch (error) {
-    // Defensive: `Promise.allSettled` does not reject, so this only catches synchronous throws
-    // from `dispatch()` itself. Return an all-unknown map so callers still render consistent
-    // placeholders rather than raw UIDs.
-    console.error('Failed to resolve deleted dashboard user displays:', getMessageFromError(error));
-    const map = new Map<string, string>();
-    for (const uid of keys) {
-      map.set(uid, DELETED_BY_UNKNOWN);
+
+    for (const [uid, display] of fetched) {
+      cache.set(uid, display);
     }
-    return map;
+    for (const uid of toFetch) {
+      const value = fetched.get(uid);
+      if (value !== undefined) {
+        result.set(uid, value);
+      }
+    }
+    return result;
+  } catch (error) {
+    // `Promise.allSettled` cannot reject; this catches synchronous throws from `dispatch()`
+    // itself. Mark every UID unknown so callers render placeholders, not raw UIDs.
+    console.error('Failed to resolve deleted dashboard user displays:', getMessageFromError(error));
+    for (const uid of toFetch) {
+      result.set(uid, DELETED_BY_UNKNOWN);
+    }
+    return result;
   } finally {
     for (const sub of subscriptions) {
       sub.unsubscribe();
@@ -198,11 +214,7 @@ export async function resolveDeletedByDisplayMap(
   }
 }
 
-/**
- * Normalizes a single batch's settled result into either a `DisplayList` (success) or
- * `undefined` (failure, already logged). Keeps `resolveDeletedByDisplayMap` free of nested
- * ternaries and routes all error messages through `getMessageFromError` for consistency.
- */
+/** Returns the `DisplayList` on success, or `undefined` after logging on failure. */
 function extractDisplayData(
   settled: PromiseSettledResult<{ data?: DisplayList; error?: unknown }>
 ): DisplayList | undefined {
