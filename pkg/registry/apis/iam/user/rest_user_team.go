@@ -246,7 +246,7 @@ func findMember(t *iamv0alpha1.Team, userName string) (iamv0alpha1.TeamTeamMembe
 }
 
 // cellIndexes resolves the column indexes for the permission and external
-// cells emitted by the LegacyTeamSearchClient member-filter branch. Returns -1, -1 when the
+// cells emitted by LegacyUserTeamsSearchClient. Returns -1, -1 when the
 // search response doesn't include them (unified-storage path).
 func cellIndexes(cols []*resourcepb.ResourceTableColumnDefinition) (permission, external int) {
 	permission, external = -1, -1

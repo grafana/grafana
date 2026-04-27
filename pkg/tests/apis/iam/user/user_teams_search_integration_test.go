@@ -93,8 +93,11 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NoError(t, err)
 	require.NotNil(t, u2)
 
-	// Create 5 teams and add u1 as an admin member via spec.members.
+	// Create 5 teams and add u1 as a member via spec.members. Alternate
+	// admin/member so the response permission strings are exercised across
+	// both legacy (Mode 0/1) and unified (Mode 5) paths.
 	teams := make([]*unstructured.Unstructured, 0, 5)
+	teamPermissions := []string{"admin", "member", "admin", "member", "admin"}
 	for i := 1; i <= 5; i++ {
 		teamObj := createTeamObject(helper,
 			fmt.Sprintf("team-%d", i),
@@ -109,7 +112,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 			map[string]interface{}{
 				"kind":       "User",
 				"name":       u1.GetName(),
-				"permission": "admin",
+				"permission": teamPermissions[i-1],
 				"external":   false,
 			},
 		}, "spec", "members"))
@@ -136,6 +139,29 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, teams[0].GetName(), item.Team)
 		require.Equal(t, "admin", item.Permission)
 		require.False(t, item.External)
+	})
+
+	t.Run("permission strings round-trip across both paths", func(t *testing.T) {
+		// Guards against legacy/unified divergence: the legacy adapter maps
+		// team.PermissionType via common.MapTeamPermission, while the unified
+		// path emits string(spec.members[i].Permission). Both must produce
+		// the same lowercase enum values for every dual-writer mode.
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
+
+		var res userTeamsResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &res)
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+
+		for i, expected := range teamPermissions {
+			teamName := teams[i].GetName()
+			item := findTeam(res, teamName)
+			require.Equal(t, teamName, item.Team, "expected team %q in response, got %#v", teamName, res.Items)
+			require.Equal(t, expected, item.Permission, "team %q: expected permission %q, got %q", teamName, expected, item.Permission)
+		}
 	})
 
 	t.Run("does not return the bound team for a different user", func(t *testing.T) {

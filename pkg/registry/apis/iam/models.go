@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	teamservice "github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -47,8 +46,7 @@ type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store       legacy.LegacyIdentityStore
-	teamService teamservice.Service
+	store legacy.LegacyIdentityStore
 
 	userLegacyStore                  *user.LegacyStore
 	saLegacyStore                    *serviceaccount.LegacyStore

@@ -2,8 +2,6 @@ package common
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/url"
 	"strconv"
 
@@ -39,57 +37,6 @@ func PaginationFromListQuery(query url.Values) Pagination {
 		Limit:    parseIntWithFallback(query.Get("limit"), 1, DefaultListLimit),
 		Continue: parseIntWithFallback(query.Get("continue"), 0, 0),
 	}
-}
-
-// ResourcePagination is the limit/offset/page tuple that the iam
-// resource HTTP handlers (e.g. /teams/{name}/members, /users/{name}/teams)
-// accept on their query string. Different handlers used to inline the same
-// parsing block; PaginationFromQuery centralizes it.
-type ResourcePagination struct {
-	Limit  int
-	Offset int
-	Page   int
-}
-
-// ErrLimitTooLarge signals the requested page size exceeds MaxListLimit.
-var ErrLimitTooLarge = errors.New("limit parameter exceeds maximum")
-
-// PaginationFromQuery parses limit / offset / page from a parsed query
-// string and applies the same defaults as the IAM resources used to
-// inline:
-//   - limit defaults to DefaultListLimit, capped at MaxListLimit
-//   - if offset is set, page is derived from it
-//   - if page is set, offset is derived from it
-//
-// Returns ErrLimitTooLarge if limit > MaxListLimit (callers usually map this
-// to a 400 Bad Request).
-func PaginationFromQuery(q url.Values) (ResourcePagination, error) {
-	p := ResourcePagination{Limit: DefaultListLimit, Page: 1}
-
-	if q.Has("limit") {
-		p.Limit, _ = strconv.Atoi(q.Get("limit"))
-	}
-	if p.Limit > MaxListLimit {
-		return p, fmt.Errorf("%w of %d", ErrLimitTooLarge, MaxListLimit)
-	}
-	if p.Limit < 1 {
-		p.Limit = DefaultListLimit
-	}
-
-	switch {
-	case q.Has("offset"):
-		p.Offset, _ = strconv.Atoi(q.Get("offset"))
-		if p.Offset > 0 {
-			p.Page = (p.Offset / p.Limit) + 1
-		}
-	case q.Has("page"):
-		p.Page, _ = strconv.Atoi(q.Get("page"))
-		if p.Page < 1 {
-			p.Page = 1
-		}
-		p.Offset = (p.Page - 1) * p.Limit
-	}
-	return p, nil
 }
 
 // WithSubresourceNamespace propagates the requesting user's namespace into
