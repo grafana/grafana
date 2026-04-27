@@ -22,6 +22,7 @@ import {
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 import { getFeatureFlagClient } from '../internal/openFeature';
+import { FlagKeys } from '../internal/openFeature/openfeature.gen';
 import {
   type BackendSrvRequest,
   type FetchResponse,
@@ -242,6 +243,7 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
+      // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
       const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
         types: [],
       });
@@ -401,7 +403,10 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend;
+    const useNewApi = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.DatasourcesApiServerEnableHealthEndpointFrontend,
+      false
+    );
     const healthCheckURL = useNewApi
       ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

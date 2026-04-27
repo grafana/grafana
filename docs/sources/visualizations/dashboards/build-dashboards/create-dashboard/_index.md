@@ -74,11 +74,17 @@ Each panel needs at least one query to display a visualization.
 
 To create a dashboard, follow these steps:
 
+{{< docs/list >}}
+
+{{< shared id="create-dashboard" >}}
+
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
 1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+
+{{< /shared >}}
 
 1. On the new panel, select one of the following options:
    - **Configure visualization**: Opens panel edit mode with the default data source for your instance preselected. Configure a query and set panel and visualization options.
@@ -137,6 +143,8 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Exit edit**.
+
+{{< /docs/list >}}
 
 ## Dashboard edit
 
@@ -226,8 +234,6 @@ To edit a dashboard, follow these steps:
 1. Click **Edit**.
 1. Do one of the following:
 
-   <!-- prettier-ignore-start -->
-
    | Update                 | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
    | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                     |
@@ -235,8 +241,6 @@ To edit a dashboard, follow these steps:
    | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                    |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links)</li></ul> |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                               |
-
-   <!-- prettier-ignore-end -->
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -288,11 +292,15 @@ This only applies to queries that include a multi-value variable.
 
 To configure repeats, follow these steps:
 
+{{< docs/list >}}
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
+{{< shared id="configure-repeat" >}}
 
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
@@ -307,6 +315,10 @@ To configure repeats, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /shared >}}
+
+{{< /docs/list >}}
 
 ### Repeating rows and tabs and the Dashboard special data source
 

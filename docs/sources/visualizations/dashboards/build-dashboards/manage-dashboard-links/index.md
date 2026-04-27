@@ -101,6 +101,7 @@ The default link type is **Dashboards**.
 
 {{< admonition type="tip" >}}
 To add links without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Link**.
+For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
 ### Add a URL link to a dashboard
@@ -135,7 +136,8 @@ To add a URL link to your dashboard, follow these steps:
 
 {{< /shared >}}
 
-1. Click **Save dashboard** in the top-right corner.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
 {{< /docs/list >}}
@@ -153,7 +155,8 @@ To edit, duplicate, or delete dashboard link, follow these steps:
    - **Duplicate** - Click the copy link icon next to the link that you want to duplicate.
    - **Delete** - Click the red **X** next to the link that you want to delete, and then **Delete**.
 
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Panel links
@@ -181,7 +184,8 @@ Click the icon next to the panel title to see available panel links.
    - `time` and `time.window` - Define a time range from `time-time.window/2` to `time+time.window/2`. Both params should be specified in ms. For example `?time=1500000000000&time.window=10000` will result in 10s time range from 1499999995000 to 1500000005000.
 1. If you want the link to open in a new tab, then select **Open in new tab**.
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard** in the top-right corner.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
 ### Update a panel link
@@ -196,7 +200,8 @@ Click the icon next to the panel title to see available panel links.
 1. Click the Edit (pencil) icon to open the Edit link window.
 1. Make any necessary changes.
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard** in the top-right corner.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
 ### Delete a panel link
@@ -209,5 +214,6 @@ Click the icon next to the panel title to see available panel links.
 1. Expand the **Panel options** section, scroll down to Panel links.
 1. Find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
-1. Click **Save dashboard** in the top-right corner.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.

@@ -108,6 +108,8 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
         openPopover();
         ev.stopPropagation();
       }}
+      onPointerDown={(ev) => ev.stopPropagation()}
+      onPointerUp={(ev) => ev.stopPropagation()}
     >
       <Trans i18nKey="panel-group-by.button">Group by</Trans>
       <Icon name="angle-down" />

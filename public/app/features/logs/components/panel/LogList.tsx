@@ -41,6 +41,7 @@ import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, type LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
+  allowDownload?: boolean;
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
@@ -123,6 +124,7 @@ type LogListComponentProps = Omit<
 
 export const LogList = ({
   app,
+  allowDownload,
   displayedFields,
   dataFrames,
   containerElement,
@@ -179,6 +181,7 @@ export const LogList = ({
 }: Props) => {
   return (
     <LogListContextProvider
+      allowDownload={allowDownload}
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
@@ -468,10 +471,10 @@ const LogListComponent = ({
   );
 
   const focusLogLine = useCallback(
-    (log: LogListModel) => {
+    (log: LogListModel, align: Align = 'start') => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
-        debouncedScrollToItem(index, 'start');
+        debouncedScrollToItem(index, align);
       }
     },
     [debouncedScrollToItem, filteredLogs]

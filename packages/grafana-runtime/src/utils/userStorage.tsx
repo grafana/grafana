@@ -308,7 +308,7 @@ export function usePluginUserStorage(): PluginUserStorage {
  * react component.
  */
 export function useUserStorage(service: string): UserStorageType {
-  const ref = useRef<[service: string, UserStorageType]>();
+  const ref = useRef<[service: string, UserStorageType] | undefined>(undefined);
 
   if (!ref.current || ref.current[0] !== service) {
     ref.current = [service, new UserStorage(service)];

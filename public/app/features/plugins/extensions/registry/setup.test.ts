@@ -57,10 +57,13 @@ describe('getPluginExtensionRegistries', () => {
     expect(first).not.toBe(third);
     expect(second).toBe(third);
     expect(logger.logError).toHaveBeenCalledTimes(1);
-    expect(logger.logError).toHaveBeenCalledWith(new Error('Something failed while resolving a cached promise'), {
-      message: 'Some error',
-      stack: expect.any(String),
-      key: 'initPluginExtensionRegistries',
-    });
+    expect(logger.logError).toHaveBeenCalledWith(
+      new Error('getCachedPromise: Something failed while resolving a cached promise'),
+      {
+        message: 'Some error',
+        stack: expect.any(String),
+        key: 'initPluginExtensionRegistries',
+      }
+    );
   });
 });

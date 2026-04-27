@@ -2,36 +2,46 @@ name: Test Dockerfile
 
 on:
   pull_request:
+    paths:
+      - Makefile
+      - Dockerfile
+      - public/**
+      - packages/**
+      - apps/**
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**/package.json'
+      - '**/nx.json'
+      - '**/project.json'
+      - '**/yarn.lock'
+      - conf/**
+      - .yarnrc.yml
+      - .yarn/**
+      - tsconfig.json
+      - '**.js'
+      # We only want the top directory here.
+      - '*.ts'
+      # But this one we want all
+      - '**.config.ts'
+      - scripts/**
+      - emails/**
+      - .citools/**
+      - kinds/**
+      - kindsv2/**
+      - embed.go
+      - packaging/docker/**
+      - .github/workflows/pr-test-docker.yml
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    name: Detect whether code changed
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.dockerfile == 'true' }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-test-docker.yml
-
   build-dockerfile:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4

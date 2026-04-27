@@ -69,14 +69,15 @@ func TestOrgService(t *testing.T) {
 }
 
 type FakeOrgStore struct {
-	ExpectedOrg                       *org.Org
-	ExpectedOrgID                     int64
-	ExpectedUserID                    int64
-	ExpectedError                     error
-	ExpectedUserOrgs                  []*org.UserOrgDTO
-	ExpectedOrgs                      []*org.OrgDTO
-	ExpectedOrgUsers                  []*org.OrgUserDTO
-	ExpectedSearchOrgUsersQueryResult *org.SearchOrgUsersQueryResult
+	ExpectedOrg                          *org.Org
+	ExpectedOrgID                        int64
+	ExpectedUserID                       int64
+	ExpectedError                        error
+	ExpectedUserOrgs                     []*org.UserOrgDTO
+	ExpectedOrgs                         []*org.OrgDTO
+	ExpectedOrgUsers                     []*org.OrgUserDTO
+	ExpectedSearchOrgUsersQueryResult    *org.SearchOrgUsersQueryResult
+	ExpectedSearchOrgUsersByEmailsResult []*org.OrgUserDTO
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -145,6 +146,10 @@ func (f *FakeOrgStore) GetByName(ctx context.Context, query *org.GetOrgByNameQue
 
 func (f *FakeOrgStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return f.ExpectedSearchOrgUsersQueryResult, f.ExpectedError
+}
+
+func (f *FakeOrgStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedSearchOrgUsersByEmailsResult, f.ExpectedError
 }
 
 func (f *FakeOrgStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {

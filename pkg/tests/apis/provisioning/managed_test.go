@@ -25,9 +25,9 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 	helper := sharedHelper(t)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -546,9 +546,9 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "managed-change-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -634,9 +634,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "admin-release-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -715,14 +715,177 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
+
+	// Create an unmanaged folder for testing
+	unmanagedFolder := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+			"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+			"metadata": map[string]interface{}{
+				"generateName": "terraform-test-folder-",
+			},
+			"spec": map[string]interface{}{
+				"title": "Terraform Test Folder",
+			},
+		},
+	}
+	createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+	require.NoError(t, err)
+	folderName := createdFolder.GetName()
+
+	t.Run("User-Agent to User-Agent allowed (version updates)", func(t *testing.T) {
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardAPIVersion,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "tf-ua-to-ua-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         folderName,
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Terraform Dashboard UA to UA",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations[utils.AnnoKeyManagerIdentity] = "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0"
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "should allow User-Agent to User-Agent transition")
+		require.Equal(t, "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
+			updated.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
+	t.Run("User-Agent to simple ID allowed (migration)", func(t *testing.T) {
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardAPIVersion,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "tf-ua-to-simple-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         folderName,
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Terraform Dashboard UA to Simple",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations[utils.AnnoKeyManagerIdentity] = "my-terraform-provider"
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "should allow User-Agent to simple ID transition (migration)")
+		require.Equal(t, "my-terraform-provider", updated.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
+	t.Run("simple ID to simple ID blocked (immutable)", func(t *testing.T) {
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardAPIVersion,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "tf-simple-to-simple-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         folderName,
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Terraform Dashboard Simple to Simple",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations[utils.AnnoKeyManagerIdentity] = "my-terraform-provider-v2"
+		fresh.SetAnnotations(annotations)
+
+		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "should block simple ID to simple ID transition")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "Cannot change Terraform manager ID")
+		require.Contains(t, err.Error(), "stable custom IDs are immutable")
+	})
+
+	t.Run("simple ID to User-Agent blocked (no reverting)", func(t *testing.T) {
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": dashboardAPIVersion,
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "tf-simple-to-ua-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         folderName,
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Terraform Dashboard Simple to UA",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations[utils.AnnoKeyManagerIdentity] = "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0"
+		fresh.SetAnnotations(annotations)
+
+		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "should block simple ID to User-Agent transition")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "Cannot change Terraform manager ID back to User-Agent format")
+	})
+}
+
 func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "admin-release-patch-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},

@@ -12,10 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -222,8 +221,8 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("list snapshots", func(t *testing.T) {
 				// Create multiple snapshots
-				createdSnapshots := []string{}
-				for i := 0; i < 3; i++ {
+				createdSnapshots := make([]string, 0, 3)
+				for range 3 {
 					resp := createSnapshotViaSubresource(t, helper, ns)
 					require.NotEmpty(t, resp.Key)
 					createdSnapshots = append(createdSnapshots, resp.Key)

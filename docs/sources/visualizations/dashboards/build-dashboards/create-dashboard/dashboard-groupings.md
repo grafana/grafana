@@ -94,6 +94,8 @@ The following table describes the options you can set for a row or tab:
 | Title           | Title of the row or tab.                                                    |
 | Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
+| Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Grouping-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by). |
+| Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Grouping-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
 | Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
@@ -217,3 +219,27 @@ In the following image, the panels are grouped into two rows, but the header of 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.0.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
+
+## Grouping-level variables and filters
+
+{{< admonition type="note" >}}
+Grouping-level variables and filters is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+To use this feature, enable the `dashboardSectionVariables` feature toggle in your Grafana configuration file.
+{{< /admonition >}}
+
+You can add variables and filters to groupings that apply only to the panels in that grouping.
+
+For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
+Grouping-level variables and filters address this by letting each row or tab have its own independent scope.
+In the API gateway and database scenario, the API gateway grouping can use one set of instances, while a database grouping uses another set.
+However, both groupings still share the same time range, and the underlying dashboard remains unchanged.
+
+The following image shows an example using two rows of panels:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+
+Panels in the grouping resolve grouping-level variables and filters first, then fall back to dashboard-level variables.
+
+The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
+Also, grouping-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.

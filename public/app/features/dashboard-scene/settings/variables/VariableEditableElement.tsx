@@ -10,6 +10,7 @@ import {
   type SceneObject,
   type SceneVariable,
   SceneVariableSet,
+  sceneUtils,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack, Alert } from '@grafana/ui';
@@ -115,6 +116,15 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
+
+    if (sceneUtils.isAdHocVariable(this.variable)) {
+      return {
+        typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
+        icon: 'filter',
+        instanceName: this.variable.state.name,
+        isHidden: this.variable.state.hide === VariableHide.hideVariable,
+      };
+    }
 
     return {
       typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),

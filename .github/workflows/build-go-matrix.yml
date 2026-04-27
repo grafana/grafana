@@ -4,6 +4,24 @@ name: Build Go (matrix)
 
 on:
   pull_request:
+    paths:
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**.go'
+      - 'pkg/**'
+      - 'apps/**'
+      - Makefile
+      - packaging/**
+      - scripts/build-rpm.sh
+      - scripts/build-deb.sh
+      - scripts/build-targz.sh
+      - scripts/verify-pkg-stig.sh
+      - .github/actions/setup-go/**
+      - .github/actions/setup-fpm/**
+      - .github/actions/setup-enterprise/**
+      - .github/workflows/build-go-matrix.yml
   push:
     branches:
       - main
@@ -16,29 +34,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  detect-changes:
-    name: Detect whether code changed
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.makefile == 'true' }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: true
-          fetch-depth: 2
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/build-go-matrix.yml
-
   build-go:
-    needs: detect-changes
-    # Run on `main` and on pull_requests where changes were detected
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true')
     name: ${{ matrix.name }}
     runs-on: ubuntu-x64-large-io
     permissions:
@@ -88,8 +84,7 @@ jobs:
         run: make build-go
 
   build-go-enterprise:
-    needs: detect-changes
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: ${{ matrix.name }} (enterprise)
     runs-on: ubuntu-x64-large-io
     permissions:
@@ -143,25 +138,40 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
-  # Job required by branch rules: runs even when detect-changes or build jobs were skipped,
-  # and fails if any build-go or build-go-enterprise matrix job failed.
-  required-build-go-matrix:
-    needs:
-      - detect-changes
-      - build-go
-      - build-go-enterprise
-    if: always()
-    name: All steps completed
-    runs-on: ubuntu-latest
+  # TODO: Build rpm in another workflow
+  verify-rpm-stig:
+    name: verify rpm stig (linux/amd64)
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Check jobs
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more build-go matrix jobs failed"
-          success-message: "All steps completed successfully"
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/setup-fpm
+      - name: Create stub artifacts
+        run: |
+          mkdir -p bin/linux/amd64 public/build data/plugins-bundled
+          printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
+          chmod 0755 bin/linux/amd64/grafana
+          touch data/plugins-bundled/.platform-linux-amd64.stamp
+      - name: Build tar.gz
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Build RPM
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Verify RPM permissions (DISA-STIG)
+        run: bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm

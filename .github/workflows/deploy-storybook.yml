@@ -8,13 +8,13 @@ on:
     inputs:
       version:
         required: true
-        description: The version being released (NO v prefix)
+        description: The version being released (with a v prefix)
         type: string
   workflow_dispatch:
     inputs:
       version:
         required: true
-        description: The version being released (NO v prefix)
+        description: The version being released (with a v prefix)
         type: string
 
 concurrency:
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
-          ref: ${{ inputs.version && format('v{0}', inputs.version) || '' }}
+          ref: ${{ inputs.version }}
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node

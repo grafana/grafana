@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
@@ -175,6 +176,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
         fullWidth
         size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+        data-testid={selectors.components.Sidebar.configurePanelButton}
       >
         <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>

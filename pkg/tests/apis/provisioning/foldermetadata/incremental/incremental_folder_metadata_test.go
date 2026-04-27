@@ -853,7 +853,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
-		t.Skip("Disabled due to flaky context deadline exceeded errors during resource insertion")
 		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
@@ -1539,5 +1538,468 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		// Only one folder should exist for this repo.
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"new-empty"})
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder
+// verifies that file renames into a folder whose _folder.json was also renamed
+// in the same commit (without a directory-level rename entry) succeed.
+func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("dashboard renamed into folder whose metadata was also renamed", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-file-rename-into-relocated"
+		const folderUID = "relocated-folder-uid"
+
+		// Seed: a folder with _folder.json (stable UID), two dashboards,
+		// and a second folder with its own dashboard.
+		// The extra dashboard in src/ prevents git from detecting a
+		// directory rename when we partially move files out.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json": folderMetadataJSON(folderUID, "Source Folder"),
+			"src/move.json":    common.DashboardJSON("dash-move", "Moving Dashboard", 1),
+			"src/stay.json":    common.DashboardJSON("dash-stay", "Staying Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "src", "")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-move": {Title: "Moving Dashboard", SourcePath: "src/move.json", Folder: folderUID},
+			"dash-stay": {Title: "Staying Dashboard", SourcePath: "src/stay.json", Folder: folderUID},
+		})
+
+		// Move _folder.json and one dashboard to a new directory, but
+		// leave stay.json behind so git produces file-level renames
+		// instead of a directory rename.
+		require.NoError(t, local.CreateDirPath("dst"))
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "src/move.json", "dst/move.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "partial move: metadata + dashboard to dst")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The incremental sync should succeed (with a warning for the
+		// now-missing _folder.json in src/). The file rename of move.json
+		// into dst/ must not fail with an ID conflict error.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+
+		// dst/ should carry the stable UID.
+		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "dst", "")
+
+		// src/ should still exist with a hash-derived UID (has stay.json).
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "src")
+		require.NotEqual(t, folderUID, srcAutoUID, "src/ should have a hash-derived UID after losing _folder.json")
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-move": {Title: "Moving Dashboard", SourcePath: "dst/move.json", Folder: folderUID},
+			"dash-stay": {Title: "Staying Dashboard", SourcePath: "src/stay.json", Folder: srcAutoUID},
+		})
+	})
+
+	t.Run("dashboard from unrelated folder renamed into relocated metadata folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-cross-folder-rename-reloc"
+		const srcUID = "cross-src-uid"
+
+		// Seed: one folder with _folder.json + a dashboard, and a second
+		// folder with a dashboard that will move into the first folder's
+		// new location.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"teamA/_folder.json": folderMetadataJSON(srcUID, "Team A"),
+			"teamA/own.json":     common.DashboardJSON("dash-own", "Own Dashboard", 1),
+			"teamB/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
+		teamBUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamB")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: srcUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamB/migrate.json", Folder: teamBUID},
+		})
+
+		// Move teamA's _folder.json to teamC/ and move the dashboard
+		// from teamB/ into teamC/ in the same commit. teamA/ keeps its
+		// dashboard (preventing directory rename detection), and teamB/
+		// becomes empty.
+		require.NoError(t, local.CreateDirPath("teamC"))
+		_, err := local.Git("mv", "teamA/_folder.json", "teamC/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "teamB/migrate.json", "teamC/migrate.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to teamC and migrate dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The dashboard rename into teamC/ must not fail with
+		// an ID conflict error for srcUID (registered at teamA/ in the tree).
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+
+		// teamC/ should carry the stable UID from the moved _folder.json.
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
+
+		// teamA/ should still exist with a hash-derived UID.
+		teamAAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamA")
+		require.NotEqual(t, srcUID, teamAAutoUID)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: teamAAutoUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamC/migrate.json", Folder: srcUID},
+		})
+	})
+
+	t.Run("dashboard renamed into nested path under relocated metadata folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-nested-path-rename-reloc"
+		const srcUID = "nested-reloc-src-uid"
+
+		// Seed: teamA with _folder.json (stable UID) and a staying
+		// dashboard, plus teamB/nested/ with a dashboard that will
+		// migrate into teamC/nested/ alongside teamA's metadata.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"teamA/_folder.json":        folderMetadataJSON(srcUID, "Team A"),
+			"teamA/own.json":            common.DashboardJSON("dash-own", "Own Dashboard", 1),
+			"teamB/nested/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
+
+		// Move teamA's _folder.json to teamC/ and move the nested
+		// dashboard from teamB/nested/ into teamC/nested/ in the same
+		// commit. teamA/ keeps own.json so git produces file-level
+		// renames instead of a directory rename.
+		require.NoError(t, local.CreateDirPath("teamC/nested"))
+		_, err := local.Git("mv", "teamA/_folder.json", "teamC/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "teamB/nested/migrate.json", "teamC/nested/migrate.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to teamC and migrate nested dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The file rename into teamC/nested/ triggers EnsureFolderPathExist
+		// which walks all ancestors including teamC/. The relocation
+		// allowlist for srcUID is registered at teamC/ but the immediate
+		// directory lookup in applyIncrementalChanges only checks
+		// teamC/nested/. Without propagating the ancestor relocation,
+		// the ID conflict check rejects the valid move.
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+
+		// teamC/ should carry the stable UID.
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
+
+		// teamA/ still has own.json, so it should exist with a
+		// hash-derived UID.
+		teamAAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamA")
+		require.NotEqual(t, srcUID, teamAAutoUID)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: teamAAutoUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamC/nested/migrate.json"},
+		})
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict verifies that
+// changing a folder's _folder.json to use a UID that already belongs to another
+// folder at a different path is rejected with a warning, not silently allowed.
+func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("updating metadata to steal another folder UID produces a conflict warning", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-conflict"
+		const ownerUID = "owner-folder-uid"
+		const thiefUID = "thief-folder-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"owner/_folder.json": folderMetadataJSON(ownerUID, "Owner Folder"),
+			"owner/dash.json":    common.DashboardJSON("owner-dash", "Owner Dashboard", 1),
+			"thief/_folder.json": folderMetadataJSON(thiefUID, "Thief Folder"),
+			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireFolderState(t, helper.Folders, ownerUID, "Owner Folder", "owner", "")
+		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
+
+		// Change thief's _folder.json to claim owner's UID.
+		require.NoError(t, local.CreateFile("thief/_folder.json", string(folderMetadataJSON(ownerUID, "Thief Stealing UID"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "thief steals owner folder UID")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync should complete with a warning — the UID conflict
+		// must not be silently bypassed.
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"incremental sync should finish with warning when a folder UID conflict is detected")
+
+		foundConflict := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "already used by folder") {
+				foundConflict = true
+				break
+			}
+		}
+		require.True(t, foundConflict,
+			"expected a warning about folder UID conflict, got warnings: %v", jobObj.Status.Warnings)
+
+		// The owner folder must be untouched — still at its original path with its UID.
+		common.RequireFolderState(t, helper.Folders, ownerUID, "Owner Folder", "owner", "")
+
+		// The thief folder's UID conflict was rejected, so it should still
+		// exist under its original UID.
+		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, thiefUID)
+	})
+
+	t.Run("real relocation succeeds while simultaneous UID theft is rejected", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-conflict-dual"
+		const movingUID = "moving-folder-uid"
+		const thiefUID = "thief-dual-uid"
+
+		// Seed: src/ has a folder with movingUID, thief/ has its own UID,
+		// and src/ has a dashboard to keep it visible after the move.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json":   folderMetadataJSON(movingUID, "Moving Folder"),
+			"src/stay.json":      common.DashboardJSON("dash-stay", "Staying Dashboard", 1),
+			"thief/_folder.json": folderMetadataJSON(thiefUID, "Thief Folder"),
+			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireFolderState(t, helper.Folders, movingUID, "Moving Folder", "src", "")
+		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
+
+		// In one commit: move src/_folder.json to dst/ (real relocation),
+		// AND update thief/_folder.json to claim the same UID (theft).
+		require.NoError(t, local.CreateDirPath("dst"))
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		require.NoError(t, local.CreateFile("thief/_folder.json", string(folderMetadataJSON(movingUID, "Thief Stealing UID"))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move folder and steal UID in same commit")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync: the real move should succeed, the theft should
+		// produce a UID conflict warning.
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"incremental sync should warn due to the UID theft, even though the real move succeeded")
+
+		foundConflict := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "already used by folder") {
+				foundConflict = true
+				break
+			}
+		}
+		require.True(t, foundConflict,
+			"expected a UID conflict warning for the thief, got warnings: %v", jobObj.Status.Warnings)
+
+		// The real move should have succeeded — movingUID is now at dst/.
+		common.RequireFolderState(t, helper.Folders, movingUID, "Moving Folder", "dst", "")
+
+		// src/ should still exist (has stay.json) with a hash-derived UID.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "src")
+		require.NotEqual(t, movingUID, srcAutoUID, "src/ should have a hash-derived UID after losing _folder.json")
+
+		// The thief's UID conflict was rejected, so it should retain its original UID.
+		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, thiefUID)
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUIDs
+// verifies that renaming a directory tree where both parent and child folders
+// have stable UIDs (via _folder.json) succeeds even when the child directory
+// rename is processed before the parent directory rename.
+func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUIDs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("parent and nested child folder rename preserves both stable UIDs", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-nested-rename-stable"
+		const parentUID = "nrs-parent-uid"
+		const childUID = "nrs-child-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json":         folderMetadataJSON(parentUID, "Team"),
+			"team/project/_folder.json": folderMetadataJSON(childUID, "Project"),
+			"team/project/dash.json":    common.DashboardJSON("nrs-dash", "Nested Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"team", "team/project"})
+
+		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		parentSnap := common.SnapshotObject(t, parentBefore)
+
+		childBefore, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childSnap := common.SnapshotObject(t, childBefore)
+
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nrs-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
+		// Rename the entire tree: team/ -> squad/
+		_, err = local.Git("mv", "team", "squad")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename team to squad")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+
+		// Parent folder updated in place with new source path.
+		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
+
+		parentSP, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "squad", parentSP)
+
+		// Child folder updated in place and still parented under the renamed parent.
+		childAfter, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
+
+		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "squad/project", childSP)
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentUID, childParent, "child should still be parented under renamed parent")
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"squad", "squad/project"})
+
+		// Dashboard updated in place under the renamed hierarchy.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nrs-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"nrs-dash": {Title: "Nested Dashboard", SourcePath: "squad/project/dash.json", Folder: childUID},
+		})
+	})
+
+	t.Run("three-level folder rename preserves all stable UIDs", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-3level-rename-stable"
+		const grandparentUID = "3l-gp-uid"
+		const parentUID = "3l-parent-uid"
+		const childUID = "3l-child-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"org/_folder.json":              folderMetadataJSON(grandparentUID, "Org"),
+			"org/team/_folder.json":         folderMetadataJSON(parentUID, "Team"),
+			"org/team/project/_folder.json": folderMetadataJSON(childUID, "Project"),
+			"org/team/project/dash.json":    common.DashboardJSON("3l-dash", "Deep Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{
+			"org", "org/team", "org/team/project",
+		})
+
+		gpBefore, err := helper.Folders.Resource.Get(ctx, grandparentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		gpSnap := common.SnapshotObject(t, gpBefore)
+
+		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		parentSnap := common.SnapshotObject(t, parentBefore)
+
+		childBefore, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childSnap := common.SnapshotObject(t, childBefore)
+
+		// Rename the entire tree: org/ -> corp/
+		_, err = local.Git("mv", "org", "corp")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename org to corp")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+
+		// Grandparent updated in place.
+		gpAfter, err := helper.Folders.Resource.Get(ctx, grandparentUID, metav1.GetOptions{})
+		require.NoError(t, err, "grandparent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "grandparent folder", gpSnap, common.SnapshotObject(t, gpAfter))
+
+		gpSP, _, _ := unstructured.NestedString(gpAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp", gpSP)
+
+		// Parent updated in place.
+		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
+
+		parentSP, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp/team", parentSP)
+		parentParent, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, grandparentUID, parentParent)
+
+		// Child updated in place.
+		childAfter, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
+
+		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp/team/project", childSP)
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentUID, childParent)
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{
+			"corp", "corp/team", "corp/team/project",
+		})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"3l-dash": {Title: "Deep Dashboard", SourcePath: "corp/team/project/dash.json", Folder: childUID},
+		})
 	})
 }

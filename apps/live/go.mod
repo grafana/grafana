@@ -1,9 +1,9 @@
 module github.com/grafana/grafana/apps/live
 
-go 1.25.9
+go 1.26.2
 
 require (
-	github.com/grafana/grafana-app-sdk v0.52.1
+	github.com/grafana/grafana-app-sdk v0.53.1
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.35.3
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
@@ -37,7 +37,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.51.4 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.53.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

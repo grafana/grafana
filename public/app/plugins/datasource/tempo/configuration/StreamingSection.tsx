@@ -33,7 +33,7 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       }
     >
       <Alert severity="info" title="Streaming and self-managed Tempo instances">
-        If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will
+        If your Tempo instance is behind a load balancer or proxy that does not support gRPC or HTTP2, streaming will
         probably not work and should be disabled.
       </Alert>
       <InlineFieldRow>

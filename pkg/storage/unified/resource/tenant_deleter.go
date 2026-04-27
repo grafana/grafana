@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"math/rand/v2"
 	"strconv"
 	"time"
@@ -124,6 +125,11 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 			continue
 		}
 
+		if record.DeletedAt != "" {
+			// Already fully deleted; skip.
+			continue
+		}
+
 		deleteAfter, err := time.Parse(time.RFC3339, record.DeleteAfter)
 		if err != nil {
 			td.log.Warn("failed to parse delete-after time", "tenant", tenantName, "value", record.DeleteAfter)
@@ -224,6 +230,20 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		return nil
 	}
 
-	// we delete the pending-delete record at the end to ensure idempotency
-	return td.pendingDeleteStore.Delete(ctx, tenantName)
+	record, err := td.pendingDeleteStore.Get(ctx, tenantName)
+	if err != nil {
+		return fmt.Errorf("reading pending delete record: %w", err)
+	}
+
+	// Orphaned records are manually seeded and won't be recreated by the
+	// tenant watcher, so we can safely remove them after cleanup.
+	if record.Orphaned {
+		return td.pendingDeleteStore.Delete(ctx, tenantName)
+	}
+
+	// Non-orphaned records must be kept with a DeletedAt timestamp to prevent
+	// the tenant watcher from recreating them while the tenant API still has
+	// the tenant with a pending-delete label.
+	record.DeletedAt = time.Now().UTC().Format(time.RFC3339)
+	return td.pendingDeleteStore.Upsert(ctx, tenantName, record)
 }

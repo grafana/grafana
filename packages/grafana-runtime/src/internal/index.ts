@@ -33,15 +33,24 @@ export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
 export {
+  getDatasourcePluginMeta,
+  getDatasourcePluginMetas,
+  setDatasourcePluginMetas,
+  refetchDatasourcePluginMetas,
+  getPluginIdFromDatasourceInstanceType,
+} from '../services/pluginMeta/datasources';
+export {
   useAppPluginMeta,
   useAppPluginMetas,
+  useDatasourcePluginMeta,
+  useDatasourcePluginMetas,
   useListedPanelPluginMetas,
   usePanelPluginMeta,
   usePanelPluginMetas,
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
-export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
-export { getCachedPromise, invalidateCache } from '../utils/getCachedPromise';
+export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export { getCachedPromise, getCachedPromiseWithArgs, invalidateCache } from '../utils/getCachedPromise';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export {
@@ -54,4 +63,4 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
-export { logPluginMetaError } from '../services/pluginMeta/logging';
+export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
