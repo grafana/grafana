@@ -23,10 +23,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagStorage
-	// Configurable storage for dashboards, datasources, and resources
-	FlagStorage = "storage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -957,4 +953,8 @@ const (
 	// FlagReportingAnyPageReporting
 	// Enables reporting for any page in Grafana
 	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagAlertingRulesAPIV2
+	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
 )

@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
@@ -44,6 +45,8 @@ const TeamSettings = ({ team }: Props) => {
       },
     });
   };
+  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
+  const teamResourceUri = newPrefsEnabled ? `team-${team.uid}` : `teams/${team.id}`;
 
   return (
     <Stack direction={'column'} gap={3}>
@@ -97,7 +100,7 @@ const TeamSettings = ({ team }: Props) => {
           <Trans i18nKey="teams.team-settings.save">Save team details</Trans>
         </Button>
       </form>
-      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
+      <SharedPreferences resourceUri={teamResourceUri} disabled={!canWriteTeamSettings} preferenceType="team" />
     </Stack>
   );
 };

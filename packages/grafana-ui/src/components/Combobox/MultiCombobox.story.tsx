@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { type ComponentProps, useId } from 'react';
+import { type ComponentProps } from 'react';
 
 import { Field } from '../Forms/Field';
 
@@ -48,13 +48,11 @@ type Story = StoryObj<typeof MultiCombobox>;
 
 const BasicStory: StoryFn<typeof MultiCombobox> = (args) => {
   const [{ value }, setArgs] = useArgs();
-  const comboboxId = useId();
 
   return (
     <Field label="Country">
       <MultiCombobox
         {...args}
-        id={comboboxId}
         value={value}
         onChange={(val) => {
           onChangeAction(val);
@@ -72,13 +70,11 @@ export const Basic: Story = {
 
 const WithInfoOptionStory: StoryFn<typeof MultiCombobox> = (args) => {
   const [{ value }, setArgs] = useArgs();
-  const comboboxId = useId();
 
   return (
     <Field label="Country">
       <MultiCombobox
         {...args}
-        id={comboboxId}
         value={value}
         onChange={(val) => {
           onChangeAction(val);
@@ -103,13 +99,11 @@ export const WithInfoOption: Story = {
 
 const AutoSizeStory: StoryFn<typeof MultiCombobox> = (args) => {
   const [{ value }, setArgs] = useArgs();
-  const comboboxId = useId();
 
   return (
     <Field label="Country">
       <MultiCombobox
         {...args}
-        id={comboboxId}
         value={value}
         onChange={(val) => {
           action('onChange')(val);
@@ -128,7 +122,6 @@ export const AutoSize: Story = {
 const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...args }) => {
   const [dynamicArgs, setArgs] = useArgs();
   const [options, setOptions] = useState<ComboboxOption[]>([]);
-  const comboboxId = useId();
 
   useEffect(() => {
     setTimeout(async () => {
@@ -144,7 +137,6 @@ const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...
         {...rest}
         {...dynamicArgs}
         options={options}
-        id={comboboxId}
         onChange={(opts) => {
           setArgs({ value: opts });
           onChangeAction(opts);
@@ -166,7 +158,6 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
 const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e5, ...args }) => {
   const [dynamicArgs, setArgs] = useArgs();
   const [options, setOptions] = useState<ComboboxOption[]>([]);
-  const comboboxId = useId();
 
   useEffect(() => {
     setTimeout(async () => {
@@ -180,7 +171,6 @@ const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1
       <MultiCombobox
         {...rest}
         {...dynamicArgs}
-        id={comboboxId}
         options={options}
         onChange={(opts) => {
           setArgs({ value: opts });
@@ -207,7 +197,6 @@ function loadOptionsWithLabels(inputValue: string) {
 
 const AsyncOptionsWithLabelsStory: StoryFn<typeof MultiCombobox> = (args) => {
   const [dynamicArgs, setArgs] = useArgs();
-  const comboboxId = useId();
 
   return (
     <Field
@@ -217,7 +206,6 @@ const AsyncOptionsWithLabelsStory: StoryFn<typeof MultiCombobox> = (args) => {
       <MultiCombobox
         {...args}
         {...dynamicArgs}
-        id={comboboxId}
         onChange={(val) => {
           onChangeAction(val);
           setArgs({ value: val });
@@ -246,7 +234,6 @@ function loadOptionsOnlyValues(inputValue: string) {
 
 const AsyncOptionsWithOnlyValuesStory: StoryFn<typeof MultiCombobox> = (args) => {
   const [dynamicArgs, setArgs] = useArgs();
-  const comboboxId = useId();
 
   return (
     <Field
@@ -256,7 +243,6 @@ const AsyncOptionsWithOnlyValuesStory: StoryFn<typeof MultiCombobox> = (args) =>
       <MultiCombobox
         {...args}
         {...dynamicArgs}
-        id={comboboxId}
         onChange={(val) => {
           onChangeAction(val);
           setArgs({ value: val });

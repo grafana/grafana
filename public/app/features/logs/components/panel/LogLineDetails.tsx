@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Align } from 'react-window';
 
 import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,7 +21,7 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
   containerElement: HTMLDivElement;
-  focusLogLine: (log: LogListModel) => void;
+  focusLogLine: (log: LogListModel, align?: Align) => void;
   logs: LogListModel[];
   timeRange: TimeRange;
   timeZone: string;
@@ -69,7 +70,13 @@ export const LogLineDetails = memo(
         maxWidth={maxWidth}
       >
         <div className={styles.container} ref={containerRef}>
-          <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
+          <LogLineDetailsTabs
+            containerElement={containerElement}
+            focusLogLine={focusLogLine}
+            logs={logs}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         </div>
       </Resizable>
     );
@@ -78,9 +85,24 @@ export const LogLineDetails = memo(
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
-  ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
+  ({
+    containerElement,
+    focusLogLine,
+    logs,
+    timeRange,
+    timeZone,
+  }: Pick<Props, 'containerElement' | 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
-    const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+    const {
+      currentLog,
+      closeDetails,
+      detailsMode,
+      replaceDetails,
+      setCurrentLog,
+      showDetails,
+      setDetailsMode,
+      toggleDetails,
+    } = useLogDetailsContext();
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
 
@@ -101,6 +123,38 @@ const LogLineDetailsTabs = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+      function handleKeydown(e: KeyboardEvent) {
+        if (
+          e.target instanceof Element &&
+          e.target.contains(containerElement) === false &&
+          containerElement.contains(e.target) === false
+        ) {
+          return;
+        }
+        let delta: number;
+        if (e.key === 'ArrowDown') {
+          delta = 1;
+        } else if (e.key === 'ArrowUp') {
+          delta = -1;
+        } else {
+          return;
+        }
+        if (!currentLog || !logs.find((log) => log.uid === currentLog.uid)) {
+          return;
+        }
+        const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+        if (!nextLog) {
+          return;
+        }
+        e.preventDefault();
+        replaceDetails(nextLog);
+        focusLogLine(nextLog, 'auto');
+      }
+      document.addEventListener('keydown', handleKeydown);
+      return () => document.removeEventListener('keydown', handleKeydown);
+    }, [containerElement, currentLog, focusLogLine, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {
       inputRef.current = newSearch;
@@ -142,7 +196,15 @@ const LogLineDetailsTabs = memo(
             })}
           </TabsBar>
         )}
-        <LogLineDetailsHeader focusLogLine={focusLogLine} log={currentLog} search={search} onSearch={handleSearch} />
+        <LogLineDetailsHeader
+          closeDetails={closeDetails}
+          detailsMode={detailsMode}
+          focusLogLine={focusLogLine}
+          log={currentLog}
+          search={search}
+          setDetailsMode={setDetailsMode}
+          onSearch={handleSearch}
+        />
         <ScrollContainer>
           <LogLineDetailsComponent
             log={currentLog}
@@ -168,7 +230,7 @@ export interface InlineLogLineDetailsProps {
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, fontSize, logOptionsStorageKey, noInteractions } = useLogListContext();
-  const { detailsWidth } = useLogDetailsContext();
+  const { closeDetails, detailsMode, detailsWidth, setDetailsMode } = useLogDetailsContext();
   const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState('');
@@ -222,9 +284,12 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.inlineContainer}>
         <LogLineDetailsHeader
+          closeDetails={closeDetails}
+          detailsMode={detailsMode}
+          inlineNoScroll={inlineNoScroll}
           log={log}
           search={search}
-          inlineNoScroll={inlineNoScroll}
+          setDetailsMode={setDetailsMode}
           setInlineNoScroll={setInlineNoScroll}
           onSearch={handleSearch}
         />

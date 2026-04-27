@@ -12,16 +12,18 @@ type OrgListResponse []struct {
 }
 
 type FakeOrgService struct {
-	ExpectedOrgUserID            int64
-	ExpectedError                error
-	ExpectedUserOrgDTO           []*org.UserOrgDTO
-	ExpectedOrgs                 []*org.OrgDTO
-	ExpectedOrg                  *org.Org
-	ExpectedOrgUsers             []*org.OrgUserDTO
-	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
-	ExpectedOrgListResponse      OrgListResponse
-	SearchOrgUsersFn             func(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
-	InsertOrgUserFn              func(context.Context, *org.OrgUser) (int64, error)
+	ExpectedOrgUserID                    int64
+	ExpectedError                        error
+	ExpectedUserOrgDTO                   []*org.UserOrgDTO
+	ExpectedOrgs                         []*org.OrgDTO
+	ExpectedOrg                          *org.Org
+	ExpectedOrgUsers                     []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult         *org.SearchOrgUsersQueryResult
+	ExpectedSearchOrgUsersByEmailsResult []*org.OrgUserDTO
+	ExpectedOrgListResponse              OrgListResponse
+	SearchOrgUsersFn                     func(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmailsFn             func(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
+	InsertOrgUserFn                      func(context.Context, *org.OrgUser) (int64, error)
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -107,6 +109,13 @@ func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOr
 		return f.SearchOrgUsersFn(ctx, query)
 	}
 	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
+}
+
+func (f *FakeOrgService) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	if f.SearchOrgUsersByEmailsFn != nil {
+		return f.SearchOrgUsersByEmailsFn(ctx, query)
+	}
+	return f.ExpectedSearchOrgUsersByEmailsResult, f.ExpectedError
 }
 
 func (f *FakeOrgService) RegisterDelete(query string) {

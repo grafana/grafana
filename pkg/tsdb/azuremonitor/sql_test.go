@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	schemas "github.com/grafana/schemads"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
@@ -28,7 +30,7 @@ func TestNormalizeGrafanaSQLRequest_DisabledToggle(t *testing.T) {
 	s := &Service{}
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 				featuretoggles.EnabledFeatures: "",
 			}),
 		},
@@ -75,7 +77,7 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "ds-1"},
@@ -120,7 +122,7 @@ func TestNormalizeGrafanaSQLRequest_MissingAggregation(t *testing.T) {
 	require.NoError(t, err)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},
@@ -146,7 +148,7 @@ func TestNormalizeGrafanaSQLRequest_MissingResourceGroup(t *testing.T) {
 	require.NoError(t, err)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},
@@ -173,7 +175,7 @@ func TestNormalizeGrafanaSQLRequest_MultiResourceRequiresRegion(t *testing.T) {
 	require.NoError(t, err)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},

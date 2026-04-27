@@ -3627,9 +3627,9 @@
         "declare-incident": "Zadeklaruj incydent",
         "declare-incident-no-permission": "Nie masz uprawnień dostępu do narzędzia Incident",
         "instance-details": "Szczegóły instancji",
+        "section-silence": "",
         "silence-button": "Okres wyciszenia",
-        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia"
       },
       "labels-column-title": "Etykiety",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -5696,6 +5696,7 @@
         "panels": "Panele",
         "row": "Wiersz",
         "rows": "Wiersze",
+        "section-filters-set": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
@@ -6515,7 +6516,6 @@
         "save-library-panel": "Zapisz panel biblioteki",
         "share": {
           "arrow": "Udostępnij",
-          "title": "Udostępnij",
           "tooltip": "Kopiuj link"
         },
         "unlink-library-panel": "Rozłącz panel biblioteki"
@@ -8747,6 +8747,7 @@
         "copy-link": "Kopiuj link do wiersza logu",
         "copy-to-clipboard": "Kopiuj do schowka",
         "inspect-value": "Sprawdź wartość",
+        "show-details": "",
         "view-log-line": "Wyświetl wiersz logu"
       }
     },
@@ -11346,6 +11347,7 @@
       "label-numbers": "Liczby",
       "label-signature": "Podpis"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Funkcja eksperymentalna. Pokazuje komponent do zarządzania wyświetlanymi polami z logów.",
     "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
     "description-enable-logs-highlighting": "Użyj wstępnie zdefiniowanego schematu kolorowania, aby wyróżnić odpowiednie części wierszy logów.",
@@ -11461,6 +11463,8 @@
       "fields-section": "Pola",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Wartość linku",
       "links-section": "Linki",
       "log-attributes-field": "Atrybuty logów",
@@ -11647,6 +11651,7 @@
         "common-labels": "Typowe etykiety:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Częste etykiety",
     "name-deduplication": "Deduplikacja",
     "name-details-mode": "Tryb panelu szczegółów logów",
@@ -11709,13 +11714,13 @@
   "logstable": {
     "category-table": "Tabela logów",
     "description-show-controls": "Wyświetl opcje tabeli",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Włącza/wyłącza przycisk linku do wiersza logu w pierwszej kolumnie każdego wiersza",
       "name": "Pokaż przycisk kopiowania linku do logu"
-    },
-    "show-inspect-button": {
-      "description": "Włącza/wyłącza przycisk sprawdzania wiersza logu w pierwszej kolumnie każdego wiersza",
-      "name": "Pokaż przycisk sprawdzania"
     }
   },
   "manage-dashbaords": {
@@ -13285,6 +13290,7 @@
       "token-user-description": "Nazwa użytkownika, która będzie używana do uzyskiwania dostępu do repozytorium za pomocą tokena API",
       "token-user-required": "Nazwa użytkownika jest wymagana",
       "url-description": "Adres URL repozytorium Bitbucket",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "bootstrap-step": {
@@ -14268,7 +14274,6 @@
       "hide": "Ukryj: {{type}}",
       "hide-help": "Ukryj pomoc dotyczącą źródła danych",
       "hide-transformation-help": "Ukryj pomoc dotyczącą transformacji",
-      "inspector": "Inspektor zapytań",
       "more-actions": "Więcej działań: {{type}}",
       "remove": "Usuń: {{type}}",
       "remove-transformation-filter": "Usuń filtr",
@@ -14280,6 +14285,31 @@
     "alerts": {
       "no-alerts": "Brak reguł alertów dla tego panelu",
       "no-alerts-description": "Utwórz regułę alertów, aby otrzymywać powiadomienia, gdy dane spełniają określone warunki."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Czy na pewno chcesz usunąć to zapytanie?",
@@ -14317,6 +14347,7 @@
     },
     "footer": {
       "edit-option": "Edytuj: {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Odstęp czasu",
         "max-data-points": "Maks. liczba punktów danych",
@@ -14327,6 +14358,7 @@
       "placeholder": {
         "no-limit": "Bez limitu"
       },
+      "query-inspector": "",
       "query-options": "Opcje zapytania"
     },
     "header": {
@@ -14941,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Strona główna pulpitu",
       "home-dashboard-placeholder": "Domyślny pulpit",
@@ -16112,6 +16148,7 @@
           "group-by": "Grupuj według"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorowane",
       "placeholder-select-stats": "Wybierz statystyki"
     },
@@ -16123,6 +16160,16 @@
         "group-by": "Grupuj według"
       },
       "title-calc-alert": "Obliczenia nie będą miały żadnego wpływu, jeśli nie zostaną pogrupowane żadne pola"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {

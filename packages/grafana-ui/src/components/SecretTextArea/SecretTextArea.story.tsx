@@ -1,6 +1,8 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 import { useState, type ChangeEvent } from 'react';
 
+import { Field } from '../Forms/Field';
+
 import { SecretTextArea } from './SecretTextArea';
 
 const meta: Meta<typeof SecretTextArea> = {
@@ -37,15 +39,17 @@ const Template: StoryFn<typeof SecretTextArea> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (
-    <SecretTextArea
-      rows={args.rows}
-      cols={args.cols}
-      value={secret}
-      isConfigured={args.isConfigured}
-      placeholder={args.placeholder}
-      onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setSecret(event.target.value.trim())}
-      onReset={() => setSecret('')}
-    />
+    <Field label="My secret">
+      <SecretTextArea
+        rows={args.rows}
+        cols={args.cols}
+        value={secret}
+        isConfigured={args.isConfigured}
+        placeholder={args.placeholder}
+        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setSecret(event.target.value.trim())}
+        onReset={() => setSecret('')}
+      />
+    </Field>
   );
 };
 

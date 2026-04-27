@@ -183,14 +183,24 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	})
 }
 
-// newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource
-// with a get check on the parent service account resource.
-// This follows the legacy permission pattern where viewing tokens requires serviceaccounts:read on serviceaccounts:id:<id>.
+// newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource.
+// Token operations are mapped to align with the legacy API permissions:
+//   - GET  (get/list) → serviceaccounts:read  (verb "get")
+//   - POST (create)   → serviceaccounts:write  (verb "update")
+//   - DELETE           → serviceaccounts:write  (verb "update")
 func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"tokens": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			// Map verbs to match the legacy API: read operations use "get",
+			// write operations (create/delete) use "update" → serviceaccounts:write.
+			verb := attr.GetVerb()
+			switch verb {
+			case utils.VerbCreate, utils.VerbDelete:
+				verb = utils.VerbUpdate
+			}
+
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
-				Verb:      utils.VerbGet,
+				Verb:      verb,
 				Group:     attr.GetAPIGroup(),
 				Resource:  attr.GetResource(),
 				Namespace: attr.GetNamespace(),
@@ -200,7 +210,7 @@ func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.A
 				return authorizer.DecisionDeny, "", err
 			}
 			if !res.Allowed {
-				return authorizer.DecisionDeny, "requires serviceaccount get", nil
+				return authorizer.DecisionDeny, fmt.Sprintf("requires serviceaccount %s", verb), nil
 			}
 			return authorizer.DecisionAllow, "", nil
 		},
