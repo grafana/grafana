@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,11 +11,10 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
-import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { DashboardInteractions } from '../utils/interactions';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
