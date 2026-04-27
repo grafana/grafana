@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Input data",
+      "loading": "Loading editor...",
       "output-data": "Output data",
       "title-debug-transformation": "Debug transformation"
     },
@@ -16017,6 +16018,9 @@
         "grouping-to-matrix": "Grouping to matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found."
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calculate a histogram from input data."
@@ -16351,6 +16355,9 @@
       "label-time-field": "Time field",
       "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series.",
       "tooltip-time-field": "The time field that will be used for the time series. If not selected the first found will be used."
+    },
+    "transformation-editor": {
+      "loading": "Loading editor..."
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "First field name",

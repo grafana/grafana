@@ -8,7 +8,7 @@ import {
 } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 
-import { GroupToNestedTableTransformerEditor } from './Editor';
+import { GroupToNestedTableTransformerEditor } from '.';
 
 const input = [
   toDataFrame({
