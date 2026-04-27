@@ -47,7 +47,7 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "external_alertmanager_config_sync_total",
-			Help:      "Total number of external Alertmanager config sync attempts, partitioned by slug and status.",
+			Help:      "Total number of external Alertmanager config sync attempts, partitioned by org and status.",
 		}, []string{"org_id", "status"}),
 		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Namespace: Namespace,
