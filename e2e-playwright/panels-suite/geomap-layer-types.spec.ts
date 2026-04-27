@@ -20,9 +20,10 @@ async function setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, pa
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Visualizations')).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Geomap')).click();
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)
-  ).toHaveText('Geomap', { timeout: 10000 });
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
+    'Geomap',
+    { timeout: 10000 }
+  );
 
   // Switch the map layer type to GeoJSON
   const layerTypeField = dashboardPage.getByGrafanaSelector(

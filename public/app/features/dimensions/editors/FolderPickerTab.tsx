@@ -102,7 +102,12 @@ export const FolderPickerTab = (props: Props) => {
   return (
     <>
       <Field>
-        <Combobox options={folders} onChange={setCurrentFolder} value={currentFolder} aria-label={t("dimensions.folder-picker-tab.label-folder", "Folder")} />
+        <Combobox
+          options={folders}
+          onChange={setCurrentFolder}
+          value={currentFolder}
+          aria-label={t('dimensions.folder-picker-tab.label-folder', 'Folder')}
+        />
       </Field>
       <Field>
         <FilterInput
