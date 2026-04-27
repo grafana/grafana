@@ -3,10 +3,11 @@ package appplugin
 import (
 	"context"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	pluginaccesscontrol "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 func (b *AppPluginAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -16,7 +17,7 @@ func (b *AppPluginAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
-			scope := pluginaccesscontrol.ScopeProvider.GetResourceScope(b.pluginID)
+			scope := pluginaccesscontrol.ScopeProvider.GetResourceScope(b.pluginJSON.ID)
 			// Authorize the caller using the same permission as the legacy endpoint:
 			//   ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, plugins:id:<pluginID>)
 			ok, err := b.accessControl.Evaluate(ctx, user, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, scope))

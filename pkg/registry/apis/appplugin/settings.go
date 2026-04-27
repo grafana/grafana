@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -85,10 +86,23 @@ func (s *settingsStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if name != s.pluginID {
+	if name != apppluginV0.INSTANCE_NAME {
 		return nil, apierrors.NewNotFound(s.resourceInfo.GroupResource(), name)
 	}
+	return s.get(ctx)
+}
 
+func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+	obj, err := s.get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &apppluginv0alpha1.SettingsList{
+		Items: []apppluginv0alpha1.Settings{*obj},
+	}, nil
+}
+
+func (s *settingsStorage) get(ctx context.Context) (*apppluginv0alpha1.Settings, error) {
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -96,7 +110,7 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 
 	obj := &apppluginv0alpha1.Settings{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      apppluginV0.INSTANCE_NAME,
 			Namespace: nsInfo.Value,
 		},
 	}
@@ -121,18 +135,7 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		}
 		obj.Secure = secureValues
 	}
-
 	return obj, nil
-}
-
-func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	obj, err := s.Get(ctx, s.pluginID, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &apppluginv0alpha1.SettingsList{
-		Items: []apppluginv0alpha1.Settings{*obj.(*apppluginv0alpha1.Settings)},
-	}, nil
 }
 
 func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
@@ -166,13 +169,11 @@ func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (s *settingsStorage) Delete(_ context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// pluginSettings does not support deletion
-	return nil, false, nil
+	return nil, false, fmt.Errorf("not supported")
 }
 
 func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// pluginSettings does not support deletion
-	return nil, nil
+	return nil, fmt.Errorf("not supported")
 }
 
 func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime.Object, error) {

@@ -1,22 +1,23 @@
-package datasource
+package appplugin
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
-	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
 
 type subHealthREST struct {
-	builder *DataSourceAPIBuilder
+	client          backend.CheckHealthHandler
+	contextProvider func(ctx context.Context) (context.Context, backend.PluginContext, error)
 }
 
 var (
@@ -25,7 +26,7 @@ var (
 )
 
 func (r *subHealthREST) New() runtime.Object {
-	return &datasource.HealthCheckResult{}
+	return &apppluginV0.HealthCheckResult{}
 }
 
 func (r *subHealthREST) Destroy() {
@@ -40,7 +41,7 @@ func (r *subHealthREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subHealthREST) ProducesObject(verb string) interface{} {
-	return &datasource.HealthCheckResult{}
+	return &apppluginV0.HealthCheckResult{}
 }
 
 func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -48,34 +49,30 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	m := newConnectMetric("health", r.builder.pluginJSON.ID)
-
-	pluginCtx, err := r.builder.getPluginContext(ctx, name)
-	if err != nil {
-		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			m.SetNotFound()
-			m.Record()
-			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
-		}
-		m.SetError()
-		m.Record()
-		return nil, err
+	if name != apppluginV0.INSTANCE_NAME {
+		return nil, k8serrors.NewBadRequest("name can only be: " + apppluginV0.INSTANCE_NAME)
 	}
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
-		PluginContext: pluginCtx,
-	})
-	if err != nil {
-		m.SetError()
-		m.Record()
-		return nil, err
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		return nil, k8serrors.NewBadRequest("missing namespace in connect context")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		defer m.Record()
+		ctx, pluginCtx, err := r.contextProvider(request.WithNamespace(req.Context(), ns))
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 
-		rsp := &datasource.HealthCheckResult{}
+		healthResponse, err := r.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+			PluginContext: pluginCtx,
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		rsp := &apppluginV0.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
 		rsp.Message = healthResponse.Message
@@ -83,7 +80,6 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if len(healthResponse.JSONDetails) > 0 {
 			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
-				m.SetError()
 				responder.Error(err)
 				return
 			}
@@ -91,7 +87,6 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
-			m.SetError()
 			statusCode = http.StatusBadRequest
 		}
 		responder.Object(statusCode, rsp)

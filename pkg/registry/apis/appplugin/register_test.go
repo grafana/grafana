@@ -12,6 +12,7 @@ import (
 	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
@@ -95,7 +96,10 @@ func TestGetAppPlugins(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := getAppPlugins(context.Background(), tt.registry)
+			pluginInfos, err := pluginspec.LoadPlugins(context.Background(), tt.registry,
+				func(jsonData plugins.JSONData) bool {
+					return jsonData.Type == plugins.TypeApp
+				}, true)
 
 			if tt.expectedErr {
 				require.Error(t, err)
@@ -104,8 +108,8 @@ func TestGetAppPlugins(t *testing.T) {
 			require.NoError(t, err)
 
 			var ids []string
-			for _, p := range result {
-				ids = append(ids, p.ID)
+			for _, p := range pluginInfos {
+				ids = append(ids, p.JSONData.ID)
 			}
 			require.Equal(t, tt.expectedIDs, ids)
 		})
@@ -144,7 +148,7 @@ func bundle(id string, pluginType plugins.Type) *plugins.FoundBundle {
 func TestApplyDefaultStorageConfig(t *testing.T) {
 	newBuilder := func(pluginID string) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
-			pluginID: pluginID,
+			pluginJSON: plugins.JSONData{ID: pluginID},
 			groupVersion: schema.GroupVersion{
 				Group:   pluginID + ".grafana.app",
 				Version: apppluginv0alpha1.VERSION,

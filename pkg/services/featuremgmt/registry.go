@@ -2669,13 +2669,13 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "appPluginAPIServer",
+			Name:            "appplugin.RegisterAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:         "alertingIgnorePendingForNoDataAndError",
