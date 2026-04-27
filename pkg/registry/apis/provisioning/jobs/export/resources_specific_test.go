@@ -192,7 +192,7 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	}), writeOpts).Return("dash-2.json", nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Name() == "dash-1" && r.Action() == repository.FileActionCreated
 	})).Return()
@@ -226,7 +226,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		// Caller named a dashboard that another manager already owns: the
 		// export cannot fulfil the request, so the result must carry an error
@@ -258,7 +258,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		// Caller named a dashboard that does not exist: the export cannot
 		// fulfil the request, so the job must surface an error rather than
@@ -291,7 +291,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Name() == "boom" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
@@ -345,7 +345,7 @@ func TestExportSpecificResources_UnsupportedKindIsErroredAndSkipped(t *testing.T
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Name() == "panel-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
@@ -390,6 +390,7 @@ func TestExportSpecificResources_FolderRefExportsSubtree(t *testing.T) {
 		Return(dashClient, resources.DashboardResource, nil)
 
 	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-parent"
 	}), mock.Anything).Return("parent/dash-parent.json", nil)
@@ -523,6 +524,7 @@ func TestExportSpecificResources_FolderRefManagedDashboardEscalates(t *testing.T
 		Return(dashClient, resources.DashboardResource, nil)
 
 	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "ok-dash"
 	}), mock.Anything).Return("parent/ok-dash.json", nil)
@@ -569,6 +571,7 @@ func TestExportSpecificResources_MixedDashboardAndFolderRefs(t *testing.T) {
 		Return(dashClient, resources.DashboardResource, nil)
 
 	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "standalone-dash"
 	}), mock.Anything).Return("standalone-dash.json", nil)
@@ -598,6 +601,61 @@ func TestExportSpecificResources_MixedDashboardAndFolderRefs(t *testing.T) {
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "unrelated"
 	}), mock.Anything)
+}
+
+// TestExportSpecificResources_DashboardRefMaterializesAncestorsOnly pins the
+// scoped-materialization contract: when a Dashboard ref lives at parent/child,
+// EnsureFolderTreeExists is called with a tree containing exactly {parent,
+// child} — the unrelated sibling folder is NOT written even though it exists
+// in the namespace.
+func TestExportSpecificResources_DashboardRefMaterializesAncestorsOnly(t *testing.T) {
+	dashClient := &dashGetListClient{
+		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{
+			"target-dash": dashboardObjectInFolder("target-dash", "child"),
+		}},
+		lister: &mockListClient{},
+	}
+	folderClient := &mockListClient{items: []unstructured.Unstructured{
+		folderObject("parent", ""),
+		folderObject("child", "parent"),
+		folderObject("sibling", ""),
+	}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	var ensuredTree resources.FolderTree
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			ensuredTree = args.Get(3).(resources.FolderTree)
+		}).
+		Return(nil)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
+		Return("parent/child/target-dash.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "target-dash", Kind: "Dashboard"}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, folderClient, repoResources, progress, false)
+	require.NoError(t, err)
+
+	require.NotNil(t, ensuredTree, "EnsureFolderTreeExists should have been called for the ancestor chain")
+	assert := require.New(t)
+	assert.Equal(2, ensuredTree.Count(), "scoped tree should contain only parent + child")
+	_, hasParent := ensuredTree.Get("parent")
+	_, hasChild := ensuredTree.Get("child")
+	_, hasSibling := ensuredTree.Get("sibling")
+	require.True(t, hasParent, "parent ancestor should be in scoped tree")
+	require.True(t, hasChild, "immediate parent should be in scoped tree")
+	require.False(t, hasSibling, "sibling folder must NOT be in scoped tree")
 }
 
 // dashGetListClient bridges Get-by-name (used for dashboard refs) and

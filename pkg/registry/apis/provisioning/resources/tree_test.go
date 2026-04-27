@@ -411,6 +411,92 @@ func keysOf(m map[string]struct{}) []string {
 	return out
 }
 
+func TestCollectAncestorIDs(t *testing.T) {
+	build := func() FolderTree {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "root-a", Title: "RootA"}, "")
+		tree.Add(Folder{ID: "mid", Title: "Mid"}, "root-a")
+		tree.Add(Folder{ID: "leaf", Title: "Leaf"}, "mid")
+		return tree
+	}
+
+	t.Run("empty id returns nil", func(t *testing.T) {
+		assert.Nil(t, CollectAncestorIDs(build(), ""))
+	})
+
+	t.Run("leaf walks the full ancestor chain", func(t *testing.T) {
+		got := CollectAncestorIDs(build(), "leaf")
+		assert.Equal(t, []string{"leaf", "mid", "root-a"}, got)
+	})
+
+	t.Run("root walks to itself only", func(t *testing.T) {
+		got := CollectAncestorIDs(build(), "root-a")
+		assert.Equal(t, []string{"root-a"}, got)
+	})
+
+	t.Run("missing id returns empty", func(t *testing.T) {
+		assert.Empty(t, CollectAncestorIDs(build(), "ghost"))
+	})
+
+	t.Run("walk stops when ancestor is not in tree", func(t *testing.T) {
+		// Simulate a managed parent that was filtered out: "mid" stays in
+		// the tree but its parent is "missing-managed-root", which is NOT
+		// added. The walk should still return [leaf, mid] before terminating.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "mid", Title: "Mid"}, "missing-managed-root")
+		tree.Add(Folder{ID: "leaf", Title: "Leaf"}, "mid")
+		got := CollectAncestorIDs(tree, "leaf")
+		assert.Equal(t, []string{"leaf", "mid"}, got)
+	})
+}
+
+func TestProjectSubset(t *testing.T) {
+	build := func() FolderTree {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A"}, "")
+		tree.Add(Folder{ID: "b", Title: "B"}, "a")
+		tree.Add(Folder{ID: "c", Title: "C"}, "b")
+		tree.Add(Folder{ID: "d", Title: "D"}, "")
+		return tree
+	}
+
+	t.Run("subset preserves parent pointers", func(t *testing.T) {
+		out := ProjectSubset(build(), map[string]struct{}{
+			"a": {}, "b": {}, "c": {},
+		})
+		assert.Equal(t, 3, out.Count())
+
+		f, ok := out.Get("c")
+		require.True(t, ok)
+		assert.Equal(t, "b", f.ParentID, "child's parent pointer should be preserved")
+
+		// Walking should produce a/b/c paths (so dashboard writes resolve).
+		paths := map[string]string{}
+		err := out.Walk(context.Background(), func(_ context.Context, folder Folder, _ string) error {
+			paths[folder.ID] = folder.Path
+			return nil
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "A", paths["a"])
+		assert.Equal(t, "A/B", paths["b"])
+		assert.Equal(t, "A/B/C", paths["c"])
+	})
+
+	t.Run("ids missing from src are silently dropped", func(t *testing.T) {
+		out := ProjectSubset(build(), map[string]struct{}{
+			"a": {}, "ghost": {},
+		})
+		assert.Equal(t, 1, out.Count())
+		_, ok := out.Get("ghost")
+		assert.False(t, ok)
+	})
+
+	t.Run("empty include yields empty tree", func(t *testing.T) {
+		out := ProjectSubset(build(), map[string]struct{}{})
+		assert.Equal(t, 0, out.Count())
+	})
+}
+
 func TestFolderTree_Add_SetsParentID(t *testing.T) {
 	tree := NewEmptyFolderTree()
 

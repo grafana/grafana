@@ -236,19 +236,21 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive(t *test
 	helper.DebugState(t, repo, "AFTER FOLDER-RECURSIVE EXPORT")
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	// ExportFolders runs ahead of the selective path so every unmanaged folder
-	// — including the sibling that was NOT requested — has its directory
-	// materialized in the repository. This pin keeps that contract: paths for
-	// any future selective export still resolve regardless of which folders
-	// the caller named.
+	// Selective export materializes only the requested folder + its descendants
+	// (the requested folder is at the namespace root here, so no extra
+	// ancestor chain). Unrelated folders such as `sibling` must NOT be
+	// emitted to the repository.
 	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title"),
 		"requested folder directory should exist")
 	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title"),
 		"descendant folder directory should exist")
 	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title", "grandchild-title"),
 		"deeply-nested descendant folder directory should exist")
-	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "sibling-title"),
-		"sibling folder directory still emitted by ExportFolders even though not requested")
+
+	siblingDir := filepath.Join(helper.ProvisioningPath, "sibling-title")
+	_, err := os.Stat(siblingDir)
+	require.True(t, os.IsNotExist(err),
+		"sibling folder directory must NOT be materialized when not requested: %s", siblingDir)
 
 	// Subtree dashboards land in their natural subdirectories.
 	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "dash-in-parent.json"),
@@ -259,11 +261,68 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive(t *test
 		"dashboard in deeply-nested descendant folder should be exported recursively")
 
 	// The sibling dashboard sits outside the requested subtree and must be
-	// excluded even though the sibling folder dir was emitted.
-	siblingDash := filepath.Join(helper.ProvisioningPath, "sibling-title", "dash-in-sibling.json")
-	_, err := os.Stat(siblingDash)
+	// excluded along with its parent folder dir.
+	siblingDash := filepath.Join(siblingDir, "dash-in-sibling.json")
+	_, err = os.Stat(siblingDash)
 	require.True(t, os.IsNotExist(err),
 		"dashboard outside the requested subtree should not be exported: %s", siblingDash)
+}
+
+// TestIntegrationProvisioning_ExportSpecificResources_DashboardRefMaterializesAncestorsOnly
+// pins the scoped behavior for dashboard refs: when a Dashboard ref lives
+// deep in a hierarchy, only its ancestor folder chain is materialized in the
+// repository. An unrelated sibling folder must NOT have its directory created.
+func TestIntegrationProvisioning_ExportSpecificResources_DashboardRefMaterializesAncestorsOnly(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// Hierarchy:
+	//   parent/   <- ancestor of requested dash (must be materialized)
+	//     child/  <- direct parent of requested dash (must be materialized)
+	//       target-dash  <- the one we ask for
+	//   sibling/  <- unrelated; must NOT appear in the repo
+	//     sibling-dash  <- unrelated; must NOT appear in the repo
+	parent := makeFolder(t, helper, ctx, "anc-parent", "")
+	child := makeFolder(t, helper, ctx, "anc-child", parent.GetName())
+	sibling := makeFolder(t, helper, ctx, "anc-sibling", "")
+
+	target := makeDashboardInFolder(t, helper, ctx, "Target dash", child.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Sibling dash", sibling.GetName())
+
+	const repo = "selective-export-dash-ancestors-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 2,
+		ExpectedFolders:    3,
+	})
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: target.GetName(), Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	// Ancestor chain materialized so the dashboard's natural path resolves.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "anc-parent"),
+		"ancestor folder directory should be materialized")
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "anc-parent", "anc-child"),
+		"immediate parent folder directory should be materialized")
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "anc-parent", "anc-child", "target-dash.json"),
+		"requested dashboard should land at its natural ancestor-rooted path")
+
+	// Sibling folder is unrelated to the requested dashboard — nothing about
+	// it should appear in the repository.
+	siblingDir := filepath.Join(helper.ProvisioningPath, "anc-sibling")
+	_, err := os.Stat(siblingDir)
+	require.True(t, os.IsNotExist(err),
+		"unrelated sibling folder directory must NOT be materialized: %s", siblingDir)
 }
 
 // TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_MultipleRoots

@@ -236,6 +236,50 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	return nil
 }
 
+// CollectAncestorIDs walks the parent chain from id up to the root and
+// returns every folder UID encountered, including id itself, in deepest-first
+// order. UIDs not present in src terminate the walk so a missing or managed
+// ancestor stops collection without returning an error — the caller is
+// responsible for verifying the chain reached an empty parent if it requires
+// a fully-resolvable path.
+func CollectAncestorIDs(src FolderTree, id string) []string {
+	if id == "" {
+		return nil
+	}
+	var ancestors []string
+	visited := make(map[string]struct{})
+	for cur := id; cur != ""; {
+		if _, seen := visited[cur]; seen {
+			break
+		}
+		visited[cur] = struct{}{}
+		f, ok := src.Get(cur)
+		if !ok {
+			break
+		}
+		ancestors = append(ancestors, cur)
+		cur = f.ParentID
+	}
+	return ancestors
+}
+
+// ProjectSubset returns a new FolderTree containing only the folders whose
+// UIDs appear in include. Parent pointers are preserved from src; UIDs not in
+// src are silently dropped. The caller is responsible for ensuring include
+// covers every ancestor of every folder it wants in the result so paths
+// resolve fully when the new tree is walked.
+func ProjectSubset(src FolderTree, include map[string]struct{}) FolderTree {
+	out := NewEmptyFolderTree()
+	for id := range include {
+		f, ok := src.Get(id)
+		if !ok {
+			continue
+		}
+		out.Add(f, f.ParentID)
+	}
+	return out
+}
+
 // CollectSubtreeIDs returns the set of folder UIDs reachable by walking down
 // from any of the requested rootIDs in src (each root and all of its
 // descendants). Roots that are not present in src are reported via the

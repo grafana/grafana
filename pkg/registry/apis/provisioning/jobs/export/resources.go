@@ -59,11 +59,13 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // items via Get rather than listing the namespace.
 //
 // Two ref kinds are supported:
-//   - Dashboard: a single dashboard fetched by UID.
-//   - Folder: the folder is treated as a recursive root — every unmanaged
-//     dashboard whose grafana.app/folder annotation lands inside the folder's
-//     descendant set is exported. The folder hierarchy itself is emitted by
-//     ExportFolders before this function runs, so parent paths resolve.
+//   - Dashboard: a single dashboard fetched by UID. Its ancestor folder chain
+//     is materialized in the repository so the dashboard's natural path
+//     resolves; unrelated folders are NOT emitted.
+//   - Folder: the folder itself, every descendant folder, and every unmanaged
+//     dashboard inside the subtree. The folder's own ancestor chain is
+//     materialized so the subtree lands at its natural path rather than the
+//     repository root.
 //
 // The admission validator restricts Resources to those two kinds; anything
 // else surfaces as a per-resource error so a misconfigured caller fails the
@@ -85,25 +87,100 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		}
 	}
 
-	if len(dashboardRefs) > 0 || len(folderRefs) > 0 {
-		dashboardGVK := schema.GroupVersionKind{
-			Group: resources.DashboardKind.Group,
-			Kind:  resources.DashboardKind.Kind,
-		}
-		dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
-		if err != nil {
-			return fmt.Errorf("get dashboard client: %w", err)
-		}
-		shim := newDashboardConversionShim(dashGVR, clients)
+	if len(dashboardRefs) == 0 && len(folderRefs) == 0 {
+		return nil
+	}
 
-		if err := exportDashboardRefs(ctx, dashboardRefs, options, dashClient, shim, repositoryResources, progress, generateNewUIDs); err != nil {
+	dashboardGVK := schema.GroupVersionKind{
+		Group: resources.DashboardKind.Group,
+		Kind:  resources.DashboardKind.Kind,
+	}
+	dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
+	if err != nil {
+		return fmt.Errorf("get dashboard client: %w", err)
+	}
+	shim := newDashboardConversionShim(dashGVR, clients)
+
+	// Load the unmanaged folder tree once: dashboard refs use it to walk
+	// their ancestor chain, folder refs use it to compute the descendant
+	// subtree. Managed folders are filtered out so we never try to write
+	// over a folder owned by another repository.
+	progress.SetMessage(ctx, "load folder tree for selective export")
+	folderTree, err := loadUnmanagedFolderTree(ctx, folderClient)
+	if err != nil {
+		return err
+	}
+
+	// Resolve dashboard refs into items. Failures are recorded per-ref and
+	// the rest of the export proceeds; ancestor folders of resolved
+	// dashboards are tracked so the materialization step below covers them.
+	dashboardItems, requiredFolders, err := resolveDashboardRefs(ctx, dashboardRefs, folderTree, dashClient, progress)
+	if err != nil {
+		return err
+	}
+
+	// Resolve folder refs into root UIDs. Each ref is verified to exist and
+	// to be unmanaged. The ancestor chain of every accepted root is added to
+	// requiredFolders so the subtree materializes at its natural path; the
+	// subtree itself is collected via CollectSubtreeIDs and tracked separately
+	// so the dashboard scan can filter by membership.
+	folderRootIDs, err := resolveFolderRefs(ctx, folderRefs, folderTree, folderClient, progress, requiredFolders)
+	if err != nil {
+		return err
+	}
+
+	subtreeIDs, missing, err := resources.CollectSubtreeIDs(ctx, folderTree, folderRootIDs)
+	if err != nil {
+		return fmt.Errorf("collect folder subtree: %w", err)
+	}
+	for _, id := range missing {
+		// CollectSubtreeIDs reports roots that fell out between Get and the
+		// BFS walk; record so the job surfaces them rather than dropping.
+		result := jobs.NewGroupKindResult(id, resources.FolderResource.Group, resources.FolderKind.Kind).
+			WithError(fmt.Errorf("folder %q disappeared during export", id))
+		progress.Record(ctx, result.Build())
+		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
+	}
+	for id := range subtreeIDs {
+		requiredFolders[id] = struct{}{}
+	}
 
-		if len(folderRefs) > 0 {
-			if err := exportFolderRefs(ctx, folderRefs, options, dashClient, folderClient, shim, repositoryResources, progress, generateNewUIDs); err != nil {
-				return err
+	// Materialize only the folders required by the requested resources. The
+	// scoped tree carries each folder's original parent pointer, so as long as
+	// requiredFolders covers the full ancestor chain for every UID it includes
+	// (which it does by construction above), the walk produces correct paths.
+	if len(requiredFolders) > 0 {
+		if err := materializeScopedFolders(ctx, folderTree, requiredFolders, options, repositoryResources, progress); err != nil {
+			return err
+		}
+	}
+
+	// Write resolved dashboard refs.
+	for _, item := range dashboardItems {
+		if err := exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
+			return err
+		}
+	}
+
+	// Walk all dashboards once and write any whose folder annotation lands in
+	// a requested subtree. Done after dashboard refs so a dashboard that was
+	// also explicitly named (and already written above) is skipped via the
+	// resources_seen guard implicit in ErrAlreadyInRepository handling.
+	if len(folderRootIDs) > 0 {
+		progress.SetMessage(ctx, "export dashboards in selected folders")
+		if err := resources.ForEach(ctx, dashClient, func(item *unstructured.Unstructured) error {
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				return fmt.Errorf("extract meta accessor: %w", err)
 			}
+			if _, in := subtreeIDs[meta.GetFolder()]; !in {
+				return nil
+			}
+			return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true)
+		}); err != nil {
+			return err
 		}
 	}
 
@@ -128,18 +205,43 @@ func splitExportRefs(refs []provisioning.ResourceRef) (dashboards, folders, unsu
 	return
 }
 
-// exportDashboardRefs handles the per-dashboard Get + exportItem path. Each
-// ref that fails to resolve (not found, transport error, or managed by another
-// repository) records a non-Ignored error so the job state escalates.
-func exportDashboardRefs(ctx context.Context,
+// loadUnmanagedFolderTree lists every unmanaged folder in the namespace and
+// returns a FolderTree keyed on UID. Folders managed by another source are
+// filtered out so the caller never builds a scoped tree that would try to
+// re-write someone else's folder.
+func loadUnmanagedFolderTree(ctx context.Context, folderClient dynamic.ResourceInterface) (resources.FolderTree, error) {
+	tree := resources.NewEmptyFolderTree()
+	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+		if tree.Count() >= resources.MaxNumberOfFolders {
+			return errors.New("too many folders")
+		}
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
+			return nil
+		}
+		return tree.AddUnstructured(item)
+	}); err != nil {
+		return nil, fmt.Errorf("load folder tree: %w", err)
+	}
+	return tree, nil
+}
+
+// resolveDashboardRefs Get-fetches every Dashboard ref. Items that fail to
+// resolve (not found, transport error) are recorded as non-Ignored errors so
+// the job state escalates. For each resolved dashboard the ancestor folder
+// chain is added to the requiredFolders set so the materialization step covers
+// the dashboard's natural path.
+func resolveDashboardRefs(ctx context.Context,
 	refs []provisioning.ResourceRef,
-	options provisioning.ExportJobOptions,
+	folderTree resources.FolderTree,
 	dashClient dynamic.ResourceInterface,
-	shim conversionShim,
-	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
-	generateNewUIDs bool,
-) error {
+) ([]*unstructured.Unstructured, map[string]struct{}, error) {
+	requiredFolders := make(map[string]struct{})
+	resolved := make([]*unstructured.Unstructured, 0, len(refs))
 	for _, ref := range refs {
 		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
 
@@ -152,60 +254,37 @@ func exportDashboardRefs(ctx context.Context,
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
-				return err
+				return nil, nil, err
 			}
 			continue
 		}
 
-		if err := exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
-			return err
+		resolved = append(resolved, item)
+		meta, mErr := utils.MetaAccessor(item)
+		if mErr != nil {
+			// MetaAccessor failure during ancestor collection is non-fatal:
+			// exportItem will surface it on the write attempt.
+			continue
+		}
+		for _, id := range resources.CollectAncestorIDs(folderTree, meta.GetFolder()) {
+			requiredFolders[id] = struct{}{}
 		}
 	}
-	return nil
+	return resolved, requiredFolders, nil
 }
 
-// exportFolderRefs handles each Folder ref by computing its descendant
-// folder UID set and exporting every dashboard whose grafana.app/folder
-// annotation lands in that set. The folder hierarchy itself is emitted by
-// ExportFolders before this runs, so we only need to walk dashboards here.
-//
-// Each ref is verified via Get so a missing or another-repo-managed folder
-// produces a recorded error and escalates the job. Dashboards inside an
-// explicitly-requested folder use the explicitlyRequested=true write path:
-// if a dashboard inside the folder is managed by a different repository, the
-// caller asked for that folder's contents, so it's a per-dashboard failure
-// rather than a silent skip.
-func exportFolderRefs(ctx context.Context,
+// resolveFolderRefs verifies each Folder ref against the loaded tree and via
+// Get for refs missing from the unmanaged listing. Accepted refs return their
+// UIDs so the caller can compute the descendant subtree; the ancestor chain of
+// each accepted root is added to requiredFolders so its subtree materializes
+// at its natural repository path rather than at the repo root.
+func resolveFolderRefs(ctx context.Context,
 	refs []provisioning.ResourceRef,
-	options provisioning.ExportJobOptions,
-	dashClient dynamic.ResourceInterface,
+	folderTree resources.FolderTree,
 	folderClient dynamic.ResourceInterface,
-	shim conversionShim,
-	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
-	generateNewUIDs bool,
-) error {
-	progress.SetMessage(ctx, "load folder tree for selective export")
-
-	tree := resources.NewEmptyFolderTree()
-	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-		if tree.Count() >= resources.MaxNumberOfFolders {
-			return errors.New("too many folders")
-		}
-		meta, err := utils.MetaAccessor(item)
-		if err != nil {
-			return fmt.Errorf("extract meta accessor: %w", err)
-		}
-		// Skip folders managed by any other source so the subtree only contains
-		// folders the caller could legitimately export.
-		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
-			return nil
-		}
-		return tree.AddUnstructured(item)
-	}); err != nil {
-		return fmt.Errorf("load folder tree: %w", err)
-	}
-
+	requiredFolders map[string]struct{},
+) ([]string, error) {
 	rootIDs := make([]string, 0, len(refs))
 	for _, ref := range refs {
 		result := jobs.NewGroupKindResult(ref.Name, resources.FolderResource.Group, resources.FolderKind.Kind)
@@ -213,8 +292,8 @@ func exportFolderRefs(ctx context.Context,
 		// A folder absent from the unmanaged listing is either missing, managed
 		// elsewhere, or an API error: differentiate via Get so the recorded
 		// error is accurate. Folders present in the listing are unmanaged by
-		// construction (the loop above filtered managed ones out).
-		if _, ok := tree.Get(ref.Name); !ok {
+		// construction (loadUnmanagedFolderTree filtered managed ones out).
+		if _, ok := folderTree.Get(ref.Name); !ok {
 			item, gErr := folderClient.Get(ctx, ref.Name, metav1.GetOptions{})
 			if gErr != nil {
 				if apierrors.IsNotFound(gErr) {
@@ -224,7 +303,7 @@ func exportFolderRefs(ctx context.Context,
 				}
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
-					return err
+					return nil, err
 				}
 				continue
 			}
@@ -233,7 +312,7 @@ func exportFolderRefs(ctx context.Context,
 				result.WithError(fmt.Errorf("extract meta accessor for folder %q: %w", ref.Name, mErr))
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
-					return err
+					return nil, err
 				}
 				continue
 			}
@@ -241,58 +320,63 @@ func exportFolderRefs(ctx context.Context,
 				result.WithError(fmt.Errorf("folder %q is managed by %q and cannot be exported", ref.Name, manager.Identity))
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
-					return err
+					return nil, err
 				}
 				continue
 			}
 			// Folder exists and is unmanaged but missed our list (possible if it
 			// was created between ForEach and Get). Treat it as a singleton root
 			// — its descendants would not have appeared in the list either.
-			if err := tree.AddUnstructured(item); err != nil {
+			if err := folderTree.AddUnstructured(item); err != nil {
 				result.WithError(fmt.Errorf("add folder %q to tree: %w", ref.Name, err))
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
-					return err
+					return nil, err
 				}
 				continue
 			}
 		}
 
 		rootIDs = append(rootIDs, ref.Name)
+		for _, id := range resources.CollectAncestorIDs(folderTree, ref.Name) {
+			requiredFolders[id] = struct{}{}
+		}
 	}
+	return rootIDs, nil
+}
 
-	if len(rootIDs) == 0 {
+// materializeScopedFolders writes only the folders in requiredFolders to the
+// repository (and registers them in the FolderManager's tree so subsequent
+// dashboard writes resolve their paths). Each folder write is recorded via
+// progress; a write failure escalates the job through the standard
+// TooManyErrors path.
+func materializeScopedFolders(ctx context.Context,
+	src resources.FolderTree,
+	requiredFolders map[string]struct{},
+	options provisioning.ExportJobOptions,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+) error {
+	scoped := resources.ProjectSubset(src, requiredFolders)
+	if scoped.Count() == 0 {
 		return nil
 	}
-
-	subtree, missing, err := resources.CollectSubtreeIDs(ctx, tree, rootIDs)
-	if err != nil {
-		return fmt.Errorf("collect folder subtree: %w", err)
-	}
-	// CollectSubtreeIDs reports roots that fell out of the tree between Get
-	// and the BFS walk. We already recorded errors for refs that never made
-	// it into rootIDs, so this should normally be empty; record any survivors
-	// so the job still surfaces them rather than silently dropping.
-	for _, id := range missing {
-		result := jobs.NewGroupKindResult(id, resources.FolderResource.Group, resources.FolderKind.Kind).
-			WithError(fmt.Errorf("folder %q disappeared during export", id))
-		progress.Record(ctx, result.Build())
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-	}
-
-	progress.SetMessage(ctx, "export dashboards in selected folders")
-	return resources.ForEach(ctx, dashClient, func(item *unstructured.Unstructured) error {
-		meta, err := utils.MetaAccessor(item)
+	progress.SetMessage(ctx, "write scoped folder tree to repository")
+	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, scoped, func(folder resources.Folder, created bool, err error) error {
+		resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
 		if err != nil {
-			return fmt.Errorf("extract meta accessor: %w", err)
+			resultBuilder.WithError(fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err))
 		}
-		if _, in := subtree[meta.GetFolder()]; !in {
-			return nil
+		if !created {
+			resultBuilder.WithAction(repository.FileActionIgnored)
 		}
-		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true)
+		progress.Record(ctx, resultBuilder.Build())
+		return progress.TooManyErrors()
 	})
+	if err != nil {
+		return fmt.Errorf("write scoped folders to repository: %w", err)
+	}
+	return nil
 }
 
 func exportResource(ctx context.Context,
