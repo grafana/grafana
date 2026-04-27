@@ -3,6 +3,7 @@ import { defineFeatureEvents } from '@grafana/runtime/internal';
 import {
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
+  type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
@@ -20,7 +21,6 @@ const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard
 
 /**
  * Analytics events for the Dashboard Library feature.
- * @owner grafana-dashboards
  */
 
 export const NewDashboardLibraryInteractions = {
@@ -40,6 +40,9 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckTriggered: newDashboardLibraryInteraction<CompatibilityCheckTriggeredProperties>(
     'compatibility_check_triggered'
   ),
+  /** Fired when the user chooses to start a new dashboard from scratch instead of using a library item. */
+  createFromScratchClicked:
+    newDashboardLibraryInteraction<CreateFromScratchClickedProperties>('create_from_scratch_clicked'),
   /** Fired when a dashboard compatibility check finishes and results are ready for display. */
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
@@ -48,12 +51,22 @@ export const NewDashboardLibraryInteractions = {
 
 /**
  * Dashboard Library events scoped to the Template Dashboards variant.
- * @owner grafana-dashboards
  */
 export const NewTemplateDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
   /** Fired when the user selects an item in the Template Dashboards view. */
   itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
   /** Fired when the Template Dashboards view finishes loading. */
+  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
+};
+
+/**
+ * Dashboard Library events scoped to the Suggested Dashboards variant.
+ */
+export const NewSuggestedDashboardInteractions = {
+  ...NewDashboardLibraryInteractions,
+  /** Fired when the user selects an item in the Suggested Dashboards view. */
+  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
+  /** Fired when the Suggested Dashboards view finishes loading. */
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
 };
