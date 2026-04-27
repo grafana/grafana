@@ -198,7 +198,7 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const localPlugins: LocalPlugin[] = await getBackendSrv().get(
     `${API_ROOT}`,
-    accessControlQueryParam({ embedded: 0 })
+    accessControlQueryParam({ embedded: 'include-datasource' })
   );
 
   return localPlugins.filter(isLocalPluginVisibleByConfig);

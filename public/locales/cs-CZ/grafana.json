@@ -3627,9 +3627,9 @@
         "declare-incident": "Nahlásit incident",
         "declare-incident-no-permission": "Nemáte oprávnění k přístupu k incidentu",
         "instance-details": "Podrobnosti o instanci",
+        "section-silence": "",
         "silence-button": "Potlačení",
-        "silence-no-permission": "Nemáte oprávnění k vytváření potlačení",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nemáte oprávnění k vytváření potlačení"
       },
       "labels-column-title": "Štítky",
       "no-firing-or-pending-instances": "Pro vybraný časový rozsah nemáte žádné výskyty výstrah ve stavu spuštění nebo čekání.",
@@ -5696,6 +5696,7 @@
         "panels": "Panely",
         "row": "Řádek",
         "rows": "Řádky",
+        "section-filters-set": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "{{type}} proměnná",
@@ -11346,6 +11347,7 @@
       "label-numbers": "Čísla",
       "label-signature": "Podpis"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentální. Zobrazit komponentu pro správu zobrazených polí z protokolů.",
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
     "description-enable-logs-highlighting": "Použijte předdefinované barevné schéma pro zvýraznění příslušných částí řádků protokolu.",
@@ -11649,6 +11651,7 @@
         "common-labels": "Běžné štítky:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Běžné štítky",
     "name-deduplication": "Deduplikace",
     "name-details-mode": "Režim panelu Podrobnosti protokolu",
@@ -13287,6 +13290,7 @@
       "token-user-description": "Uživatelské jméno, které bude použito pro přístup k úložišti pomocí API tokenu",
       "token-user-required": "Uživatelské jméno je povinné",
       "url-description": "Adresa URL úložiště Bitbucket",
+      "url-pattern": "",
       "url-required": "Adresa URL úložiště je povinná"
     },
     "bootstrap-step": {
@@ -14270,7 +14274,6 @@
       "hide": "Skrýt {{type}}",
       "hide-help": "Skrýt nápovědu pro zdroj dat",
       "hide-transformation-help": "Skrýt nápovědu ktransformaci",
-      "inspector": "Inspektor dotazů",
       "more-actions": "Další akce {{type}}",
       "remove": "Odebrat {{type}}",
       "remove-transformation-filter": "Odebrat filtr",
@@ -14282,6 +14285,31 @@
     "alerts": {
       "no-alerts": "Pro tento panel neexistují žádná pravidla výstrah",
       "no-alerts-description": "Vytvořte pravidlo výstrahy, abyste dostávali upozornění, když vaše data splní určité podmínky."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Opravdu chcete odstranit tento dotaz?",
@@ -14319,6 +14347,7 @@
     },
     "footer": {
       "edit-option": "Upravit {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max. počet datových bodů",
@@ -14329,6 +14358,7 @@
       "placeholder": {
         "no-limit": "Bez limitu"
       },
+      "query-inspector": "",
       "query-options": "Možnosti dotazu"
     },
     "header": {
@@ -14943,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Domácí nástěnka",
       "home-dashboard-placeholder": "Výchozí nástěnka",

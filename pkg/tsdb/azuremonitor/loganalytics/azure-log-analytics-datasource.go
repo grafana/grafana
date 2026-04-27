@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -883,10 +884,17 @@ type LogAnalyticsMeta struct {
 	AzurePortalLink string   `json:"azurePortalLink,omitempty"`
 }
 
+var gzipWriterPool = sync.Pool{
+	New: func() any { return gzip.NewWriter(io.Discard) },
+}
+
 // encodeQuery encodes the query in gzip so the frontend can build links.
 func encodeQuery(rawQuery string) (string, error) {
 	var b bytes.Buffer
-	gz := gzip.NewWriter(&b)
+	gz := gzipWriterPool.Get().(*gzip.Writer)
+	defer gzipWriterPool.Put(gz)
+	gz.Reset(&b)
+
 	if _, err := gz.Write([]byte(rawQuery)); err != nil {
 		return "", err
 	}

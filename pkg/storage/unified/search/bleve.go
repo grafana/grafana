@@ -125,7 +125,8 @@ type bleveBackend struct {
 
 	selectableFields map[string][]string
 
-	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion is empty.
+	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
+	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
 	runningBuildVersion *semver.Version
 
 	bgTasksCancel func()
@@ -158,6 +159,13 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
 		}
 		runningBuildVersion = v
+	}
+
+	// Snapshot selection compares against runningBuildVersion, so we require it
+	// to be set when the feature is enabled. This keeps the snapshot code free
+	// of nil checks.
+	if opts.Snapshot.Store != nil && runningBuildVersion == nil {
+		return nil, fmt.Errorf("bleve backend requires non-empty BuildVersion when snapshot store is configured")
 	}
 
 	l := opts.Logger
@@ -622,7 +630,13 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
-	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	return filepath.Join(b.opts.Root, resourceSubPath(key))
+}
+
+// resourceSubPath returns the namespaced on-disk/object-store path for a resource,
+// for example: default/dashboards.dashboard.grafana.app
+func resourceSubPath(key resource.NamespacedResource) string {
+	return filepath.Join(cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {

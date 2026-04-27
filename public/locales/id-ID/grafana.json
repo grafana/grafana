@@ -3570,9 +3570,9 @@
         "declare-incident": "Nyatakan insiden",
         "declare-incident-no-permission": "Anda tidak memiliki izin untuk mengakses Insiden",
         "instance-details": "Detail instance",
+        "section-silence": "",
         "silence-button": "Mode Senyap",
-        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap"
       },
       "labels-column-title": "Label",
       "no-firing-or-pending-instances": "Anda tidak memiliki instance peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
@@ -5606,6 +5606,7 @@
         "panels": "Panel",
         "row": "Baris",
         "rows": "Baris",
+        "section-filters-set": "",
         "tab": "Tab",
         "tabs": "Tab",
         "variable": "variabel {{type}}",
@@ -11157,6 +11158,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
@@ -11451,6 +11453,7 @@
         "common-labels": "Label umum:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
     "name-details-mode": "Mode panel detail log",
@@ -13080,6 +13083,7 @@
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token API",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
+      "url-pattern": "",
       "url-required": "URL repositori wajib diisi"
     },
     "bootstrap-step": {
@@ -14018,7 +14022,6 @@
       "hide": "Sembunyikan {{type}}",
       "hide-help": "Sembunyikan bantuan sumber data",
       "hide-transformation-help": "Sembunyikan bantuan transformasi",
-      "inspector": "Pemeriksa kueri",
       "more-actions": "Tindakan {{type}} lainnya",
       "remove": "Hapus {{type}}",
       "remove-transformation-filter": "Hapus filter",
@@ -14030,6 +14033,25 @@
     "alerts": {
       "no-alerts": "Tidak ada aturan peringatan untuk panel ini",
       "no-alerts-description": "Buat aturan peringatan untuk mendapatkan notifikasi saat data Anda memenuhi kondisi tertentu."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Yakin ingin menghapus kueri ini?",
@@ -14067,6 +14089,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Titik data maksimum",
@@ -14077,6 +14100,7 @@
       "placeholder": {
         "no-limit": "Tanpa batas"
       },
+      "query-inspector": "",
       "query-options": "Opsi Kueri"
     },
     "header": {
@@ -14673,6 +14697,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",

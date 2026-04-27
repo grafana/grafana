@@ -3589,9 +3589,9 @@
         "declare-incident": "Olay bildir",
         "declare-incident-no-permission": "Olaya erişim izniniz yok",
         "instance-details": "Örnek ayrıntıları",
+        "section-silence": "",
         "silence-button": "Sessize alma",
-        "silence-no-permission": "Sessize alma oluşturma izniniz yok",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Sessize alma oluşturma izniniz yok"
       },
       "labels-column-title": "Etiketler",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
@@ -5636,6 +5636,7 @@
         "panels": "Paneller",
         "row": "Satır",
         "rows": "Satırlar",
+        "section-filters-set": "",
         "tab": "Sekme",
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
@@ -11220,6 +11221,7 @@
       "label-numbers": "Sayılar",
       "label-signature": "İmza"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Deneysel. Günlük kayıtlarında görüntülenen alanları yönetmek için bir bileşen gösterin.",
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili kısımlarını vurgulamak için önceden tanımlanmış bir renklendirme şeması kullanın.",
@@ -11517,6 +11519,7 @@
         "common-labels": "Ortak etiketler:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Ortak etiketler",
     "name-deduplication": "Yinelenenleri kaldırma",
     "name-details-mode": "Günlük kaydı ayrıntı paneli modu",
@@ -13149,6 +13152,7 @@
       "token-user-description": "Depoya API belirteciyle erişmek için kullanılacak kullanıcı adı",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Bitbucket depo URL'si",
+      "url-pattern": "",
       "url-required": "Depo URL'si gereklidir"
     },
     "bootstrap-step": {
@@ -14102,7 +14106,6 @@
       "hide": "{{type}} ögesini gizle",
       "hide-help": "Veri kaynağı yardımını gizle",
       "hide-transformation-help": "Dönüştürme yardımını gizle",
-      "inspector": "Sorgu denetçisi",
       "more-actions": "Diğer {{type}} işlemleri",
       "remove": "{{type}} ögesini kaldır",
       "remove-transformation-filter": "Filtreyi kaldır",
@@ -14114,6 +14117,27 @@
     "alerts": {
       "no-alerts": "Bu panel için uyarı kuralı yok",
       "no-alerts-description": "Verileriniz belirli koşulları karşıladığında bildirim almak için bir uyarı kuralı oluşturun."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Bu sorguyu silmek istediğinizden emin misiniz?",
@@ -14151,6 +14175,7 @@
     },
     "footer": {
       "edit-option": "{{label}} ögesini düzenle",
+      "inspect-queries": "",
       "label": {
         "interval": "Aralık",
         "max-data-points": "Maksimum veri noktaları",
@@ -14161,6 +14186,7 @@
       "placeholder": {
         "no-limit": "Sınır yok"
       },
+      "query-inspector": "",
       "query-options": "Sorgu Seçenekleri"
     },
     "header": {
@@ -14763,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Ana Pano",
       "home-dashboard-placeholder": "Varsayılan pano",

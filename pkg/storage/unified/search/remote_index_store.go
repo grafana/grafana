@@ -43,9 +43,18 @@ type IndexMeta struct {
 	Files map[string]int64 `json:"files"`
 }
 
+// IndexStoreLock represents a distributed lock used to coordinate index store operations.
+type IndexStoreLock interface {
+	Release() error
+	Lost() <-chan struct{}
+}
+
 // RemoteIndexStore manages index snapshots on remote storage.
 // Index keys are immutable: each snapshot uses a unique ULID key.
 type RemoteIndexStore interface {
+	// LockBuildIndex acquires a distributed build lock for namespace/group/resource.
+	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error)
+
 	// UploadIndex uploads a local index directory to remote storage.
 	// It generates a unique, lexicographically sortable ULID key and returns it.
 	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error)
@@ -78,26 +87,55 @@ type RemoteIndexStore interface {
 // meta.json is uploaded last during upload and deleted first during delete,
 // serving as the completion signal.
 type BucketRemoteIndexStore struct {
-	bucket resource.CDKBucket
-	log    log.Logger
+	bucket                resource.CDKBucket
+	lockBackend           lockBackend
+	lockOwner             string
+	lockTTL               time.Duration
+	lockHeartbeatInterval time.Duration
+	log                   log.Logger
 }
 
 // NewBucketRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
-func NewBucketRemoteIndexStore(bucket resource.CDKBucket) *BucketRemoteIndexStore {
+func NewBucketRemoteIndexStore(bucket resource.CDKBucket, lockBackend lockBackend, lockOwner string, lockTTL, lockHeartbeatInterval time.Duration) *BucketRemoteIndexStore {
 	return &BucketRemoteIndexStore{
-		bucket: bucket,
-		log:    log.New("bucket-remote-index-store"),
+		bucket:                bucket,
+		lockBackend:           lockBackend,
+		lockOwner:             lockOwner,
+		lockTTL:               lockTTL,
+		lockHeartbeatInterval: lockHeartbeatInterval,
+		log:                   log.New("bucket-remote-index-store"),
 	}
 }
 
 // indexPrefix returns the object storage prefix for a namespaced resource + index key.
 func indexPrefix(ns resource.NamespacedResource, indexKey string) string {
-	return fmt.Sprintf("%s/%s.%s/%s/", ns.Namespace, ns.Group, ns.Resource, indexKey)
+	return fmt.Sprintf("%s/%s/", resourceSubPath(ns), indexKey)
 }
 
 // nsPrefix returns the object storage prefix for a namespaced resource (without index key).
 func nsPrefix(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
+	return fmt.Sprintf("%s/", resourceSubPath(ns))
+}
+
+func buildIndexLockKey(ns resource.NamespacedResource) string {
+	return fmt.Sprintf("%s/locks/build", resourceSubPath(ns))
+}
+
+func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
+	l, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:           s.lockBackend,
+		Key:               buildIndexLockKey(nsResource),
+		Owner:             s.lockOwner,
+		TTL:               s.lockTTL,
+		HeartbeatInterval: s.lockHeartbeatInterval,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating build lock: %w", err)
+	}
+	if err := l.Acquire(ctx); err != nil {
+		return nil, err
+	}
+	return l, nil
 }
 
 // TODO: caller must hold a namespace/group/resource build lock.
