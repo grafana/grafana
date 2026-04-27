@@ -57,18 +57,18 @@ export function isPluginManaged(ability: AsyncAbility): boolean {
  * regardless of whether the current user can perform it.
  *
  * Use this for the **show-but-disable** pattern: render a button (possibly disabled) only
- * when `isAvailable`, and hide it entirely when `isNotSupported` or `isLoading`.
+ * when `isSupported`, and hide it entirely when `isNotSupported` or `isLoading`.
  *
  * Accepts both {@link Ability} and {@link AsyncAbility}. The `LOADING` check is only
  * meaningful for async abilities; for sync abilities it is always false and optimised away
  * by TypeScript's control-flow analysis.
  *
  * @example
- * {isAvailable(exportAbility) && (
+ * {isSupported(exportAbility) && (
  *   <Button disabled={!isGranted(exportAbility)} onClick={handleExport}>Export</Button>
  * )}
  */
-export function isAvailable(ability: AsyncAbility): boolean {
+export function isSupported(ability: AsyncAbility): boolean {
   if (ability.granted) {
     return true;
   }
