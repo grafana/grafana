@@ -1033,24 +1033,9 @@
     },
     {
       "metadata": {
-        "name": "appPluginAPIServer",
-        "resourceVersion": "1770813648403",
-        "creationTimestamp": "2026-02-11T12:40:48Z",
-        "deletionTimestamp": "2026-04-27T11:23:12Z"
-      },
-      "spec": {
-        "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "appplugin.RegisterAPIServer",
-        "resourceVersion": "1777288992862",
-        "creationTimestamp": "2026-04-27T11:23:12Z"
+        "name": "appplugin.registerAPIServer",
+        "resourceVersion": "1777311686595",
+        "creationTimestamp": "2026-04-27T17:41:26Z"
       },
       "spec": {
         "description": "Registers an API server for each backend app plugin exposing a settings endpoint",

@@ -2669,7 +2669,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "appplugin.RegisterAPIServer",
+			Name:            "appplugin.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
