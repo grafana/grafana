@@ -19,10 +19,7 @@ import (
 const testModel = "test-model"
 const testResource = "dashboards"
 
-var (
-	testSubtree = subtreeName(testResource)
-	testDefault = subtreeDefaultName(testResource)
-)
+var testSubtree = subtreeName(testResource)
 
 // To run: start the pgvector devenv (localhost:5433) and
 //
@@ -60,37 +57,34 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	return backend, engine, ctx
 }
 
-// cleanIntegrationState drops any `integration-test*` leaves, clears DEFAULT
+// cleanIntegrationState drops any `integration-test*` partial indexes, clears
 // rows, and resets the checkpoint.
 func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	t.Helper()
 	ctx := context.Background()
 
-	prefix := fmt.Sprintf("%s_integration_test", testSubtree)
+	indexPrefix := fmt.Sprintf("%s_integration_test", testSubtree)
 	rows, err := engine.DB().QueryContext(ctx, `
-		SELECT c.relname FROM pg_inherits i
-		JOIN pg_class c ON c.oid = i.inhrelid
-		JOIN pg_class p ON p.oid = i.inhparent
-		WHERE p.relname = $1 AND c.relname LIKE $2`,
-		testSubtree, prefix+"%")
+		SELECT c.relname FROM pg_class c
+		JOIN pg_index i ON i.indexrelid = c.oid
+		JOIN pg_class t ON t.oid = i.indrelid
+		WHERE t.relname = $1 AND c.relkind = 'i' AND c.relname LIKE $2`,
+		testSubtree, indexPrefix+"%")
 	require.NoError(t, err)
-	var parts []string
+	var indexes []string
 	for rows.Next() {
 		var n string
 		require.NoError(t, rows.Scan(&n))
-		parts = append(parts, n)
+		indexes = append(indexes, n)
 	}
 	_ = rows.Close()
 
-	for _, p := range parts {
-		// DETACH before DROP so cleanup doesn't lock the parent metadata.
-		_, _ = engine.DB().ExecContext(ctx,
-			fmt.Sprintf(`ALTER TABLE %s DETACH PARTITION %s`, testSubtree, p))
-		_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, p))
+	for _, idx := range indexes {
+		_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, idx))
 	}
 
 	_, _ = engine.DB().ExecContext(ctx,
-		fmt.Sprintf(`DELETE FROM %s WHERE namespace LIKE 'integration-test%%'`, testDefault))
+		fmt.Sprintf(`DELETE FROM %s WHERE namespace LIKE 'integration-test%%'`, testSubtree))
 	_, _ = engine.DB().ExecContext(ctx,
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
@@ -228,19 +222,16 @@ func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
 	}
 	require.NoError(t, backend.Upsert(ctx, vectors))
 
-	// Before: rows in DEFAULT, no leaf.
-	partName := leafName(testResource, ns)
-	require.False(t, partitionAttached(t, engine, testSubtree, partName))
-	require.Equal(t, nRows, countRowsIn(t, engine, testDefault, ns))
+	idxName := partialHNSWName(testResource, ns)
+	require.False(t, indexExists(t, engine, idxName))
+	require.Equal(t, nRows, countRowsIn(t, engine, testSubtree, ns))
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
 	promoter := NewPromoter(database, threshold, 0)
 	require.NoError(t, promoter.Promote(ctx))
 
-	// After: leaf attached, DEFAULT empty for ns, rows landed in the leaf.
-	require.True(t, partitionAttached(t, engine, testSubtree, partName))
-	require.Equal(t, 0, countRowsIn(t, engine, testDefault, ns))
-	require.Equal(t, nRows, countRowsIn(t, engine, partName, ns))
+	require.True(t, indexExists(t, engine, idxName))
+	require.Equal(t, nRows, countRowsIn(t, engine, testSubtree, ns))
 
 	results, err := backend.Search(ctx, ns, testModel, testResource, makeEmbedding(0.5, 0.5), 5)
 	require.NoError(t, err)
@@ -261,21 +252,20 @@ func TestIntegrationPromoterSkipsSmallTenant(t *testing.T) {
 	promoter := NewPromoter(database, 100, 0)
 	require.NoError(t, promoter.Promote(ctx))
 
-	partName := leafName(testResource, ns)
-	require.False(t, partitionAttached(t, engine, testSubtree, partName),
+	idxName := partialHNSWName(testResource, ns)
+	require.False(t, indexExists(t, engine, idxName),
 		"small tenant should not be promoted")
 }
 
-func partitionAttached(t *testing.T, engine *xorm.Engine, parent, partition string) bool {
+func indexExists(t *testing.T, engine *xorm.Engine, idxName string) bool {
 	t.Helper()
 	var exists bool
 	err := engine.DB().QueryRowContext(context.Background(), `
 		SELECT EXISTS (
-			SELECT 1 FROM pg_inherits i
-			JOIN pg_class c ON c.oid = i.inhrelid
-			JOIN pg_class p ON p.oid = i.inhparent
-			WHERE p.relname = $1 AND c.relname = $2
-		)`, parent, partition).Scan(&exists)
+			SELECT 1 FROM pg_class c
+			JOIN pg_index i ON i.indexrelid = c.oid
+			WHERE c.relname = $1 AND c.relkind = 'i' AND i.indisvalid
+		)`, idxName).Scan(&exists)
 	require.NoError(t, err)
 	return exists
 }

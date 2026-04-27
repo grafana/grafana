@@ -146,8 +146,8 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestLeafName(t *testing.T) {
-	require.Equal(t, "embeddings_dashboards_stacks_123", leafName("dashboards", "stacks-123"))
-	require.Equal(t, "embeddings_dashboards_weird__name", leafName("dashboards", "weird!!name"))
-	require.Equal(t, "embeddings_dashboards_upper_ns", leafName("dashboards", "UPPER-NS"))
+func TestPartialHNSWName(t *testing.T) {
+	require.Equal(t, "embeddings_dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
+	require.Equal(t, "embeddings_dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
+	require.Equal(t, "embeddings_dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
 }

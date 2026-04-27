@@ -23,22 +23,21 @@ func sanitizeIdentifier(s string) string {
 	return strings.ToLower(sanitizeRe.ReplaceAllString(s, "_"))
 }
 
+// subtreeName is the per-resource leaf table: `embeddings_<R>`.
 func subtreeName(resource string) string {
 	return fmt.Sprintf("%s_%s", unifiedParent, resource)
 }
 
-func subtreeDefaultName(resource string) string {
-	return fmt.Sprintf("%s_%s_default", unifiedParent, resource)
+// partialHNSWName builds the per-tenant partial HNSW index name. Postgres caps
+// identifiers at 63 chars; long namespaces need a hash-suffix fallback (not
+// yet implemented).
+func partialHNSWName(resource, namespace string) string {
+	return fmt.Sprintf("%s_%s_%s_hnsw", unifiedParent, resource, sanitizeIdentifier(namespace))
 }
 
-// leafName builds `embeddings_<R>_<ns>`. Postgres caps identifiers at 63
-// chars; long namespaces need a hash-suffix fallback (not yet implemented).
-func leafName(resource, namespace string) string {
-	return fmt.Sprintf("%s_%s_%s", unifiedParent, resource, sanitizeIdentifier(namespace))
-}
-
-// Promoter moves over-threshold tenants from each sub-tree's DEFAULT into
-// dedicated leaves with HNSW + GIN. Timer-driven; off the write path.
+// Promoter creates per-tenant partial HNSW indexes on each resource sub-tree
+// for namespaces over the row-count threshold. Timer-driven; off the write
+// path.
 type Promoter struct {
 	db        db.DB
 	threshold int
@@ -92,14 +91,14 @@ func (s *Promoter) Promote(ctx context.Context) error {
 	return nil
 }
 
-// discoverResources returns resource names from sub-trees attached to the
-// unified parent. Filters relkind='p' to skip the top-level DEFAULT.
+// discoverResources returns resource names from leaf tables attached to the
+// unified parent. Filters relkind='r' (regular leaf tables).
 func (s *Promoter) discoverResources(ctx context.Context) ([]string, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.relname FROM pg_inherits i
 		JOIN pg_class c ON c.oid = i.inhrelid
 		JOIN pg_class p ON p.oid = i.inhparent
-		WHERE p.relname = $1 AND c.relkind = 'p'
+		WHERE p.relname = $1 AND c.relkind = 'r'
 	`, unifiedParent)
 	if err != nil {
 		return nil, err
@@ -120,19 +119,16 @@ func (s *Promoter) discoverResources(ctx context.Context) ([]string, error) {
 
 func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
 	subtree := subtreeName(resource)
-	defaultName := subtreeDefaultName(resource)
 
 	if err := s.dropInvalidIndexes(ctx, subtree); err != nil {
 		return err
 	}
 
-	// Promoted tenants live in their own leaves, so DEFAULT is the only
-	// place over-threshold tenants can be hiding.
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(
-		`SELECT namespace FROM %s GROUP BY namespace HAVING COUNT(*) > $1`, defaultName),
+		`SELECT namespace FROM %s GROUP BY namespace HAVING COUNT(*) > $1`, subtree),
 		s.threshold)
 	if err != nil {
-		return fmt.Errorf("enumerate tenants in %s: %w", defaultName, err)
+		return fmt.Errorf("enumerate tenants in %s: %w", subtree, err)
 	}
 	var namespaces []string
 	for rows.Next() {
@@ -163,80 +159,46 @@ func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
 	return nil
 }
 
-// promote moves a tenant's rows from the sub-tree's DEFAULT into a new
-// dedicated leaf with its own HNSW.
+// promote builds a partial HNSW index scoped to (resource, namespace).
+// CREATE INDEX CONCURRENTLY can't run in a transaction. Idempotent — skips
+// when a valid index already exists.
 //
-// In-tx under EXCLUSIVE on DEFAULT: create staging, INSERT, DELETE, ATTACH.
-// Outside tx (CREATE INDEX CONCURRENTLY can't run in one): build HNSW + GIN,
-// ANALYZE. Idempotent via the partitionExists check.
-//
-// The EXCLUSIVE lock blocks only writers still landing in this sub-tree's
-// DEFAULT — small tenants of this resource plus the tenant being promoted.
-// Already-promoted tenants and other resources are unaffected. Duration
-// tracks the INSERT+DELETE, usually sub-second. Optimizations if this hurts:
-// rate-limit the sweeper, or two-phase promote with an updated_at column.
+// Concurrency: CREATE INDEX CONCURRENTLY takes only SHARE UPDATE EXCLUSIVE
+// on the table, so reads and writes proceed during the build. Build cost
+// scales with rows matching the predicate, not the whole table.
 func (s *Promoter) promote(ctx context.Context, resource, namespace string) error {
 	subtree := subtreeName(resource)
-	defaultName := subtreeDefaultName(resource)
-	newLeaf := leafName(resource, namespace)
+	idxName := partialHNSWName(resource, namespace)
 
-	exists, err := s.partitionExists(ctx, subtree, newLeaf)
+	valid, err := s.indexExistsValid(ctx, idxName)
 	if err != nil {
 		return err
 	}
-	if exists {
-		// Leaf exists from a prior run; HNSW may still be INVALID.
-		return s.ensureHNSW(ctx, newLeaf)
+	if valid {
+		return nil
 	}
 
 	nsLit := "'" + strings.ReplaceAll(namespace, "'", "''") + "'"
+	ddl := fmt.Sprintf(
+		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
+			ON %s USING hnsw (embedding halfvec_cosine_ops)
+			WITH (m = 16, ef_construction = 64)
+			WHERE namespace = %s`,
+		idxName, subtree, nsLit,
+	)
 
-	err = s.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(`LOCK TABLE %s IN EXCLUSIVE MODE`, defaultName)); err != nil {
-			return fmt.Errorf("lock %s: %w", defaultName, err)
-		}
-
-		// Standalone staging (no INCLUDING INDEXES — we build HNSW after ATTACH).
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`CREATE TABLE %s (LIKE %s INCLUDING DEFAULTS INCLUDING CONSTRAINTS)`,
-			newLeaf, subtree,
-		)); err != nil {
-			return fmt.Errorf("create staging %s: %w", newLeaf, err)
-		}
-
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`INSERT INTO %s SELECT * FROM %s WHERE namespace = $1`,
-			newLeaf, defaultName,
-		), namespace); err != nil {
-			return fmt.Errorf("move rows into %s: %w", newLeaf, err)
-		}
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`DELETE FROM %s WHERE namespace = $1`, defaultName,
-		), namespace); err != nil {
-			return fmt.Errorf("delete moved rows from %s: %w", defaultName, err)
-		}
-
-		// ATTACH to the sub-tree. DEFAULT must be empty of conflicting rows
-		// — the DELETE above guarantees that.
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(
-			`ALTER TABLE %s ATTACH PARTITION %s FOR VALUES IN (%s)`,
-			subtree, newLeaf, nsLit,
-		)); err != nil {
-			return fmt.Errorf("attach partition %s: %w", newLeaf, err)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
+	s.log.Info("promoting tenant", "resource", resource, "namespace", namespace, "index", idxName)
+	if _, err := s.db.ExecContext(ctx, ddl); err != nil {
+		return fmt.Errorf("create partial index %s: %w", idxName, err)
 	}
 
-	s.log.Info("promoted tenant", "resource", resource, "namespace", namespace, "partition", newLeaf)
-
-	if err := s.ensureHNSW(ctx, newLeaf); err != nil {
-		return err
+	// ANALYZE so the planner's row estimate for the partial index reflects
+	// reality.
+	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, subtree)); err != nil {
+		s.log.Warn("ANALYZE after promote failed", "subtree", subtree, "err", err)
 	}
 
-	// Best-effort observability — pg_inherits is the source of truth.
+	// Best-effort observability — pg_indexes is the source of truth.
 	if _, err := s.db.ExecContext(ctx,
 		`INSERT INTO vector_promoted (namespace, resource, promoted_at)
 		 VALUES ($1, $2, CURRENT_TIMESTAMP)
@@ -246,68 +208,6 @@ func (s *Promoter) promote(ctx context.Context, resource, namespace string) erro
 		s.log.Warn("vector_promoted upsert failed", "err", err)
 	}
 	return nil
-}
-
-// ensureHNSW builds HNSW + GIN indexes on a leaf. Must run outside a tx.
-func (s *Promoter) ensureHNSW(ctx context.Context, partition string) error {
-	hnswName := partition + "_hnsw"
-	if err := s.ensureIndex(ctx, hnswName, fmt.Sprintf(
-		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
-			ON %s USING hnsw (embedding halfvec_cosine_ops)
-			WITH (m = 16, ef_construction = 64)`,
-		hnswName, partition,
-	)); err != nil {
-		return err
-	}
-
-	// Without GIN, a restrictive JSONB filter post-filters HNSW's top-K and
-	// can return fewer than N matches.
-	metadataName := partition + "_metadata"
-	if err := s.ensureIndex(ctx, metadataName, fmt.Sprintf(
-		`CREATE INDEX CONCURRENTLY IF NOT EXISTS %s
-			ON %s USING GIN (metadata)`,
-		metadataName, partition,
-	)); err != nil {
-		return err
-	}
-
-	// Without ANALYZE the planner estimates ~1 row and may skip the HNSW.
-	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, partition)); err != nil {
-		s.log.Warn("ANALYZE after promote failed", "partition", partition, "err", err)
-	}
-	return nil
-}
-
-// ensureIndex runs `ddl` unless `idxName` already exists as a valid index.
-// `ddl` must target `idxName`.
-func (s *Promoter) ensureIndex(ctx context.Context, idxName, ddl string) error {
-	exists, err := s.indexExistsValid(ctx, idxName)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return nil
-	}
-	s.log.Info("creating index on partition", "index", idxName)
-	if _, err := s.db.ExecContext(ctx, ddl); err != nil {
-		return fmt.Errorf("create index %s: %w", idxName, err)
-	}
-	return nil
-}
-
-func (s *Promoter) partitionExists(ctx context.Context, parent, partition string) (bool, error) {
-	var exists bool
-	err := s.db.QueryRowContext(ctx, `
-		SELECT EXISTS (
-			SELECT 1 FROM pg_inherits i
-			JOIN pg_class c ON c.oid = i.inhrelid
-			JOIN pg_class p ON p.oid = i.inhparent
-			WHERE p.relname = $1 AND c.relname = $2
-		)`, parent, partition).Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
 }
 
 func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, error) {
@@ -326,19 +226,17 @@ func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, 
 	return valid, nil
 }
 
-// dropInvalidIndexes drops any INVALID indexes on the sub-tree's leaves —
+// dropInvalidIndexes drops INVALID indexes on the resource sub-tree —
 // leftovers from a prior CREATE INDEX CONCURRENTLY that failed mid-build.
-func (s *Promoter) dropInvalidIndexes(ctx context.Context, parent string) error {
+func (s *Promoter) dropInvalidIndexes(ctx context.Context, subtree string) error {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.relname FROM pg_class c
 		JOIN pg_index i ON i.indexrelid = c.oid
 		JOIN pg_class t ON t.oid = i.indrelid
-		JOIN pg_inherits h ON h.inhrelid = t.oid
-		JOIN pg_class p ON p.oid = h.inhparent
-		WHERE p.relname = $1 AND c.relkind = 'i' AND NOT i.indisvalid
-	`, parent)
+		WHERE t.relname = $1 AND c.relkind = 'i' AND NOT i.indisvalid
+	`, subtree)
 	if err != nil {
-		return fmt.Errorf("list invalid indexes under %s: %w", parent, err)
+		return fmt.Errorf("list invalid indexes on %s: %w", subtree, err)
 	}
 	var names []string
 	for rows.Next() {

@@ -10,14 +10,13 @@ import (
 
 // MigrateVectorStore runs migrations for the vector database.
 //
-// Nested LIST partitioning under one parent:
+// LIST partitioning by resource. Each resource gets a leaf table:
 //
-//	embeddings                               PARTITION BY LIST (resource)
-//	└── embeddings_dashboards                PARTITION BY LIST (namespace)
-//	    ├── embeddings_dashboards_default    un-promoted tenants
-//	    └── embeddings_dashboards_<ns>       per-tenant leaf (HNSW via promoter)
+//	embeddings                  PARTITION BY LIST (resource)
+//	└── embeddings_dashboards   leaf — all dashboard rows live here
+//	    + partial HNSW per namespace for promoted (big) tenants
+//	    + base GIN(metadata)
 //
-// Each leaf holds one (resource, namespace), so its HNSW is single-purpose.
 // Future resource subtrees will be attached at runtime via advisory-lock.
 func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "vector")
@@ -57,26 +56,17 @@ func initVectorTables(mg *migrator.Migrator) {
 			) PARTITION BY LIST (resource);
 		`))
 
-	mg.AddMigration("create embeddings_dashboards sub-tree",
+	mg.AddMigration("create embeddings_dashboards leaf",
 		migrator.NewRawSQLMigration("").Postgres(`
 			CREATE TABLE IF NOT EXISTS embeddings_dashboards
 				PARTITION OF embeddings
-				FOR VALUES IN ('dashboards')
-				PARTITION BY LIST (namespace);
+				FOR VALUES IN ('dashboards');
 		`))
 
-	// Un-promoted tenants. Small-tenant search narrows via the PK prefix
-	// then seq-scans — sub-ms below the promotion threshold.
-	mg.AddMigration("create embeddings_dashboards default partition",
+	mg.AddMigration("create metadata GIN on embeddings_dashboards",
 		migrator.NewRawSQLMigration("").Postgres(
-			`CREATE TABLE IF NOT EXISTS embeddings_dashboards_default
-				PARTITION OF embeddings_dashboards DEFAULT;`,
-		))
-
-	mg.AddMigration("create metadata GIN on embeddings_dashboards_default",
-		migrator.NewRawSQLMigration("").Postgres(
-			`CREATE INDEX IF NOT EXISTS embeddings_dashboards_default_metadata_idx
-				ON embeddings_dashboards_default USING GIN (metadata);`,
+			`CREATE INDEX IF NOT EXISTS embeddings_dashboards_metadata_idx
+				ON embeddings_dashboards USING GIN (metadata);`,
 		))
 
 	// Observability log. pg_inherits is the source of truth for leaf existence.
