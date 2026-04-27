@@ -11,35 +11,30 @@ import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, resourceToSearchResult } from './utils';
 
 /**
- * Caches the deleted-dashboards list and the resolved deleter display names.
+ * Caches the deleted-dashboards `ResourceList` and the resolved deleter display names.
  * `clear()` invalidates the list but keeps `displayNameCache` — display names are
  * identity-scoped, so Restore/Delete actions don't stale them.
+ *
+ * The `SearchHit[]` projection (`get()`) is computed per call — it's an O(items) loop
+ * over the cached `ResourceList` + Map lookups, no network. This lets
+ * `DELETED_BY_UNKNOWN` entries self-heal across calls when IAM retries succeed.
  */
 class DeletedDashboardsCache {
-  private cache: SearchHit[] | null = null;
-  private promise: Promise<SearchHit[]> | null = null;
   private resourceListCache: ResourceList<DashboardDataDTO> | null = null;
   private resourceListPromise: Promise<ResourceList<DashboardDataDTO>> | null = null;
   private displayNameCache: Map<string, string> = new Map();
 
   async get(): Promise<SearchHit[]> {
-    if (this.cache !== null) {
-      return this.cache;
+    const resourceList = await this.getAsResourceList();
+    const uids = new Set<string>();
+    for (const item of resourceList.items) {
+      const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+      if (uid) {
+        uids.add(uid);
+      }
     }
-
-    if (this.promise !== null) {
-      return this.promise;
-    }
-
-    this.promise = this.fetch();
-
-    try {
-      this.cache = await this.promise;
-      return this.cache;
-    } catch (error) {
-      this.promise = null;
-      throw error;
-    }
+    const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
+    return resourceToSearchResult(resourceList, deletedByDisplayMap);
   }
 
   async getAsResourceList(): Promise<ResourceList<DashboardDataDTO>> {
@@ -63,8 +58,6 @@ class DeletedDashboardsCache {
   }
 
   clear(): void {
-    this.cache = null;
-    this.promise = null;
     this.resourceListCache = null;
     this.resourceListPromise = null;
   }
@@ -93,19 +86,6 @@ class DeletedDashboardsCache {
         items: [],
       };
     }
-  }
-
-  private async fetch(): Promise<SearchHit[]> {
-    const resourceList = await this.getAsResourceList();
-    const uids = new Set<string>();
-    for (const item of resourceList.items) {
-      const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
-      if (uid) {
-        uids.add(uid);
-      }
-    }
-    const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
-    return resourceToSearchResult(resourceList, deletedByDisplayMap);
   }
 }
 

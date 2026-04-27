@@ -1,7 +1,8 @@
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
+import { AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 import { dispatch } from 'app/types/store';
 
-import { resolveDeletedByDisplayMap } from './deletedDashboardsCache';
+import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -19,6 +20,13 @@ jest.mock('app/types/store', () => ({
   dispatch: jest.fn(),
 }));
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: jest.fn(),
+}));
+
+jest.mock('app/features/apiserver/guards', () => ({
+  isResourceList: jest.fn(() => true),
+}));
 const mockInitiate = iamAPIv0alpha1.endpoints.getDisplayMapping.initiate as unknown as jest.Mock;
 const mockDispatch = dispatch as unknown as jest.Mock;
 
@@ -356,6 +364,73 @@ describe('resolveDeletedByDisplayMap', () => {
     }
     expect(unsubscribeA).toHaveBeenCalledTimes(1);
     expect(unsubscribeB).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+});
+
+describe('DeletedDashboardsCache', () => {
+  const { getDashboardAPI } = jest.requireMock('app/features/dashboard/api/dashboard_api') as {
+    getDashboardAPI: jest.Mock;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockInitiate.mockReturnValue('initiate-thunk');
+    deletedDashboardsCache.clear();
+  });
+
+  function makeResourceList(uids: string[]) {
+    return {
+      apiVersion: 'v1' as const,
+      kind: 'List' as const,
+      metadata: { resourceVersion: '1' },
+      items: uids.map((uid) => ({
+        metadata: {
+          name: `dash-${uid}`,
+          annotations: { [AnnoKeyUpdatedBy]: uid },
+        },
+        spec: { title: `Dashboard ${uid}` },
+      })),
+    };
+  }
+
+  it('self-heals DELETED_BY_UNKNOWN on subsequent get() without clear()', async () => {
+    const resourceList = makeResourceList(['user:alice']);
+    getDashboardAPI.mockResolvedValue({
+      listDeletedDashboards: jest.fn().mockResolvedValue(resourceList),
+    });
+
+    // First IAM call fails — batch returns an error result.
+    const unsubscribe1 = jest.fn();
+    mockDispatch.mockReturnValueOnce(
+      mockSubscription({ error: { status: 500, data: 'IAM unavailable' } }, unsubscribe1)
+    );
+
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const firstResult = await deletedDashboardsCache.get();
+
+    expect(firstResult).toHaveLength(1);
+    expect(firstResult[0].field.deletedBy).toBe(DELETED_BY_UNKNOWN);
+    // ResourceList fetch was called once.
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+
+    // Second IAM call succeeds — same UID now resolves.
+    const unsubscribe2 = jest.fn();
+    mockDispatch.mockReturnValueOnce(
+      mockSubscription(
+        { data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) },
+        unsubscribe2
+      )
+    );
+
+    const secondResult = await deletedDashboardsCache.get();
+
+    expect(secondResult).toHaveLength(1);
+    expect(secondResult[0].field.deletedBy).toBe('Alice');
+    // ResourceList fetch NOT called again — cached from first get().
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+
     consoleError.mockRestore();
   });
 });
