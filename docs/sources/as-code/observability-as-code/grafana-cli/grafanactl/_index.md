@@ -33,7 +33,7 @@ To migrate from `grafanactl` to `gcx`, search-and-replace `grafanactl` with `gcx
 
 {{< /admonition >}}
 
-The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.
+The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. It's available for Grafana OSS, Enterprise, and Cloud.
 
 ## Install the Grafana CLI `grafanactl`
 
@@ -66,7 +66,7 @@ go install github.com/grafana/grafanactl/cmd/grafanactl@latest
 
 ## Configure `grafanactl`
 
-You can configure Grafana CLI in two ways: using environment variables or through a configuration file.
+You can configure `grafanactl` in two ways: using environment variables or through a configuration file.
 
 - **Environment variables** are ideal for CI environments and support a single context. A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference).
 - **Configuration files** can manage multiple contexts, making it easier to switch between different Grafana instances.
@@ -77,7 +77,7 @@ Configuration items may change depending on your set-up. For example, use `org-i
 
 ### Configure Grafana CLI with environment variables
 
-Grafana CLI communicates with Grafana via its REST API, which requires authentication credentials.
+Grafana CLI communicates with Grafana via the REST API, which requires authentication credentials.
 
 At a minimum, set the URL of your Grafana instance and the organization ID:
 
