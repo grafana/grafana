@@ -415,7 +415,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
   }
 
-  public getOnGetBackCallback() {
+  public getOnGoBackCallback() {
     return this.state.previousState ? () => this.goBackToPrevious() : undefined;
   }
 

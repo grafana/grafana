@@ -137,11 +137,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public renderActions() {
-    return (
-      <Stack grow={1}>
-        <ChangeVariableTypeButton variable={this.variable} />
-      </Stack>
-    );
+    return <ChangeVariableTypeButton variable={this.variable} />;
   }
 
   public onDuplicate() {
@@ -226,12 +222,12 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
   return (
     <Button
       size="sm"
-      fill="text"
       onClick={() => openChangeVariableTypePane(variable)}
       data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
       aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+      variant="secondary"
     >
-      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change</Trans>
+      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change type</Trans>
     </Button>
   );
 }

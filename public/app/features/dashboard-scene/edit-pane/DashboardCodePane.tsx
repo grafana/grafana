@@ -88,7 +88,7 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
     <div className={styles.wrapper}>
       <Sidebar.PaneHeader
         title={t('dashboard.code-pane.header', 'Edit as code')}
-        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+        onGoBack={dashboard.state.editPane.getOnGoBackCallback()}
       />
       <div className={styles.content}>
         {errorAlert}

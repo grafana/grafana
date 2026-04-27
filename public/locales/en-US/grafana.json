@@ -5661,7 +5661,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Change",
+        "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
@@ -5978,7 +5978,7 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy/paste or duplicate",
+        "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
         "layout": "Layout",

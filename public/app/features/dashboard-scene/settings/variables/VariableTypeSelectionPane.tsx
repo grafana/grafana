@@ -81,7 +81,7 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
     <>
       <Sidebar.PaneHeader
         title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')}
-        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+        onGoBack={dashboard.state.editPane.getOnGoBackCallback()}
       />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onAddVariable} />
@@ -149,7 +149,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
     <>
       <Sidebar.PaneHeader
         title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')}
-        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+        onGoBack={dashboard.state.editPane.getOnGoBackCallback()}
       />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onChangeVariableType} />
@@ -164,9 +164,6 @@ export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type:
 
   return (
     <Stack direction="column" gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
       <Stack direction="column" gap={1}>
         {options.map((option) => (
           <Card

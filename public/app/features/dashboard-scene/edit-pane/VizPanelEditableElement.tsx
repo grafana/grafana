@@ -42,13 +42,6 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: '',
-          id: rootId,
-          render: () => <OpenPanelEditViz panel={this.panel} />,
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
           title: t('dashboard.viz-panel.options.title-option', 'Title'),
           id: titleId,
           value: panel.state.title,
@@ -108,6 +101,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
       isHidden,
     };
+  }
+
+  public renderActions() {
+    return <OpenPanelEditViz panel={this.panel} />;
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);

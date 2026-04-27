@@ -145,6 +145,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    onGoBack: editPane.getOnGoBackCallback(),
     defaultIsHidden: isEditing ? false : isMobile,
   });
 

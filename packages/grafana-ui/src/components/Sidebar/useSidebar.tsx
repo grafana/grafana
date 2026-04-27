@@ -24,6 +24,8 @@ export interface SidebarContextValue {
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Open previous pane */
+  onGoBack?: () => void;
   onToggleIsHidden: () => void;
 }
 
@@ -49,6 +51,8 @@ export interface UseSideBarOptions {
   contentMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Open previous pane */
+  onGoBack?: () => void;
   /**
    * Optional key to use for persisting sidebar state (docked / compact / size)
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
@@ -72,6 +76,7 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
+  onGoBack,
   defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
@@ -151,6 +156,7 @@ export function useSidebar({
     contentMargin,
     isHidden,
     onClosePane,
+    onGoBack,
     onToggleIsHidden,
   };
 }
