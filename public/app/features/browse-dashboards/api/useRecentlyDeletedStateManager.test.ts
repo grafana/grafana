@@ -29,8 +29,7 @@ jest.mock('@grafana/runtime', () => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const createTrashStateManager = () =>
-  new TrashStateManager({ ...initialState, includePanels: false, deleted: true });
+const createTrashStateManager = () => new TrashStateManager({ ...initialState, includePanels: false, deleted: true });
 
 describe('TrashStateManager', () => {
   beforeEach(() => {

@@ -110,7 +110,14 @@ describe('SearchStateManager', () => {
       });
 
       it('clears all recently-deleted vocabulary values from the main key', () => {
-        const recentlyDeletedValues = ['alpha-asc', 'alpha-desc', 'deleted-asc', 'deleted-desc', 'deletedby-asc', 'deletedby-desc'];
+        const recentlyDeletedValues = [
+          'alpha-asc',
+          'alpha-desc',
+          'deleted-asc',
+          'deleted-desc',
+          'deletedby-asc',
+          'deletedby-desc',
+        ];
         for (const value of recentlyDeletedValues) {
           store.set(SEARCH_SELECTED_SORT, value);
           const stm = createSearchStateManager();
