@@ -17,6 +17,8 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -2177,6 +2179,35 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
+	})
+
+	t.Run("should return 409 when external alertmanager sync feature flag is enabled", func(t *testing.T) {
+		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAlertingSyncExternalAlertmanager: {
+				DefaultVariant: "on",
+				Variants:       map[string]any{"on": true},
+			},
+		})))
+		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		mockAM := &mockAlertmanager{}
+		srv, _, _ := createConvertPrometheusSrv(t,
+			withAlertmanager(mockAM),
+			withFeatureToggles(ft),
+		)
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusConflict, response.Status())
+		require.Contains(t, string(response.Body()), "external alertmanager sync is enabled")
+		mockAM.AssertNotCalled(t, "SaveAndApplyExtraConfiguration", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }
 

@@ -17,6 +17,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/open-feature/go-sdk/openfeature"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -598,6 +599,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 	}
 
 	logger := srv.logger.FromContext(c.Req.Context())
+
+	// Refuse manual imports when external Alertmanager sync is enabled on the
+	// instance: the sync worker would overwrite the imported config on its next tick.
+	ctx := c.Req.Context()
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+		return response.Error(http.StatusConflict, "alertmanager configuration import is disabled while external alertmanager sync is enabled", nil)
+	}
 
 	dryRun, err := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader)
 	if err != nil {
