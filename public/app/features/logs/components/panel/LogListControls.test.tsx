@@ -154,6 +154,19 @@ describe('LogListControls', () => {
       expect(screen.queryByLabelText(SHOW_TIMESTAMP_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(WRAP_LINES_LABEL_COPY)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+    }
+  );
+
+  test.each([CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer])(
+    'Allows download in Dashboards when enabled',
+    (app: CoreApp) => {
+      render(
+        <LogListContextProvider {...contextProps} app={app} allowDownload>
+          <LogListControls eventBus={new EventBusSrv()} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).toBeInTheDocument();
     }
   );
 

@@ -44,9 +44,12 @@ type ExternalAlertmanager struct {
 }
 
 type ExternalAMcfg struct {
-	URL     string
-	Headers http.Header
-	Timeout time.Duration
+	// DatasourceUID is the UID of the datasource this external Alertmanager was configured from.
+	// Used for logging and error tracking, not included in configuration hashing.
+	DatasourceUID string
+	URL           string
+	Headers       http.Header
+	Timeout       time.Duration
 	// InsecureSkipVerify determines whether the server's TLS certificate should be verified.
 	InsecureSkipVerify bool
 	// TLSClientCert specifies the TLS client certificate used for secure communication.
@@ -182,7 +185,7 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 
 // ApplyConfig syncs a configuration with the sender.
 func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAMcfg) error {
-	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
+	notifierCfg, headers, dataSourceUIDs, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
 	}
@@ -190,7 +193,7 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []Exte
 	s.logger = s.logger.New("org", orgId, "cfg", id)
 
 	s.logger.Info("Synchronizing config with external Alertmanager group")
-	if err := s.manager.ApplyConfig(notifierCfg, headers); err != nil {
+	if err := s.manager.ApplyConfig(notifierCfg, headers, dataSourceUIDs); err != nil {
 		return err
 	}
 
@@ -262,19 +265,26 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, map[string]string, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]http.Header{}
+	dataSourceUIDs := map[string]string{}
 	for i, am := range alertmanagers {
 		amConfig, err := externalAMcfgToAlertmanagerConfig(am)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
+		// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
+		// so we can use it later on when working with the alertmanager config map.
+		key := fmt.Sprintf("config-%d", i)
+
 		if am.Headers != nil {
-			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
-			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.Headers
+			headers[key] = am.Headers
+		}
+
+		if am.DatasourceUID != "" {
+			dataSourceUIDs[key] = am.DatasourceUID
 		}
 
 		amConfigs = append(amConfigs, amConfig)
@@ -286,7 +296,7 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 		},
 	}
 
-	return notifierConfig, headers, nil
+	return notifierConfig, headers, dataSourceUIDs, nil
 }
 
 // externalAMcfgToAlertmanagerConfig converts an ExternalAMcfg to a Prometheus AlertmanagerConfig.

@@ -1,5 +1,4 @@
 import { type StoryFn } from '@storybook/react';
-import { useId } from 'react';
 import { type ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
@@ -57,11 +56,6 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const textId = useId();
-  const checkboxId = useId();
-  const switchId = useId();
-  const radioId = useId();
-  const selectId = useId();
   return (
     <Form
       defaultValues={defaultValues}
@@ -91,33 +85,33 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-              <TextArea {...register('text', { required: true })} placeholder="Long text" id={textId} />
+              <TextArea {...register('text', { required: true })} placeholder="Long text" />
             </Field>
 
             <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
-              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" id={checkboxId} />
+              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" />
             </Field>
 
             <Field label="Switch">
-              <Switch name="switch" {...register} id={switchId} />
+              <Switch name="switch" {...register} />
             </Field>
 
-            <Field label="RadioButton" htmlFor={radioId}>
+            <Field label="RadioButton">
               <InputControl
                 name="radio"
                 control={control}
-                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} id={radioId} />}
+                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} />}
               />
             </Field>
 
-            <Field label="Select" invalid={!!errors.select} error="Select is required" htmlFor={selectId}>
+            <Field label="Select" invalid={!!errors.select} error="Select is required">
               <InputControl
                 name="select"
                 control={control}
                 rules={{
                   required: true,
                 }}
-                render={({ field }) => <Select {...field} options={selectOptions} inputId={selectId} />}
+                render={({ field }) => <Select {...field} options={selectOptions} />}
               />
             </Field>
 

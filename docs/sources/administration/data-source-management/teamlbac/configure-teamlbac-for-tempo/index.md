@@ -135,14 +135,28 @@ Team B → `{ resource.service.name="frontend" }`
 
 ## How LBAC affects returned data
 
-For Trace-by-ID endpoints, unauthorized spans show only minimal intrinsic fields:
+Cloud Traces supports three redaction modes that control how unauthorized spans are handled in trace by ID search responses. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+
+### Attributes mode (default)
+
+Non-matching spans are included in the response but have their attributes and intrinsics redacted. Only the following minimal fields remain visible on redacted spans:
 
 - `traceId`, `spanId`, `parentId`
 - `name`, `kind`
 - `timestamps`
 - `status`
 
-For Search, metrics, autocomplete, only spans matching LBAC rules appear.
+You can extend the set of always-visible fields by configuring `allowed_attributes`, which sets a list of scoped attributes and intrinsics that are never redacted, For example, you can set `span:name`, `resource.service.name`, `event:name`, or `scope.version` so they are never redacted, even from non-matching spans. Contact Grafana Support to configure `allowed_attributes` for your organization.
+
+### Spans mode
+
+Non-matching spans are removed from the response entirely. This can result in broken traces where a returned span has no matching parent, creating gaps in the span tree.
+
+### Error mode
+
+If any span in a requested trace does not match the LBAC policy, the entire request returns a 404 error. This is the strictest mode and is suited for environments where partial trace visibility is not acceptable.
+
+For Search, metrics, and autocomplete endpoints, only spans matching the LBAC rules appear regardless of the configured redaction mode.
 
 ## Manage LBAC rules
 
