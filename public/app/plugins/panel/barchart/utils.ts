@@ -1,18 +1,7 @@
 import uPlot, { type Padding } from 'uplot';
 
-import {
-  type DataFrame,
-  type Field,
-  type FieldConfigSource,
-  FieldType,
-  type GrafanaTheme2,
-  cacheFieldDisplayNames,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  outerJoinDataFrames,
-} from '@grafana/data';
+import { type FieldConfigSource, type GrafanaTheme2, cacheFieldDisplayNames, formattedValueToString, getDisplayProcessor, getFieldColorModeForField, getFieldSeriesColor, outerJoinDataFrames } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { decoupleHideFromState } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {

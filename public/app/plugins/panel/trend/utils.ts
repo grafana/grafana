@@ -1,4 +1,5 @@
-import { type DataFrame, FieldType, isLikelyAscendingVector } from '@grafana/data';
+import { isLikelyAscendingVector } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import config from 'app/core/config';
 import { findFieldIndex } from 'app/features/dimensions/utils';
 

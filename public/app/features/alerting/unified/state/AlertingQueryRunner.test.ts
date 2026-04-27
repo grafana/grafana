@@ -3,16 +3,8 @@ import { type Observable, TimeoutError, lastValueFrom, of, throwError } from 'rx
 import { delay, take, timeout } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import {
-  type DataFrame,
-  type DataFrameJSON,
-  type DataSourceInstanceSettings,
-  type Field,
-  FieldType,
-  LoadingState,
-  getDefaultRelativeTimeRange,
-  rangeUtil,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, LoadingState, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, type Field, FieldType } from '@grafana/data/dataframe';
 import { type DataSourceSrv, DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';

@@ -3,13 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import {
-  applyFieldOverrides,
-  arrayToDataFrame,
-  createDataFrame,
-  createTheme,
-  FieldConfigOptionsRegistry,
-} from '@grafana/data';
+import { applyFieldOverrides, createTheme, FieldConfigOptionsRegistry } from '@grafana/data';
+import { arrayToDataFrame, createDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { type PanelContext, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';

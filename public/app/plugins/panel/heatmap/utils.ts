@@ -1,17 +1,8 @@
 import { type RefObject } from 'react';
 import uPlot, { type Cursor } from 'uplot';
 
-import {
-  DataFrameType,
-  formattedValueToString,
-  getValueFormat,
-  type GrafanaTheme2,
-  incrRoundDn,
-  incrRoundUp,
-  type TimeRange,
-  FieldType,
-  getDisplayProcessor,
-} from '@grafana/data';
+import { DataFrameType, formattedValueToString, getValueFormat, type GrafanaTheme2, incrRoundDn, incrRoundUp, type TimeRange, getDisplayProcessor } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder, type UPlotConfigPrepFn } from '@grafana/ui';
 import {

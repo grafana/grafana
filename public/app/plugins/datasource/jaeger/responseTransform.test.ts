@@ -1,4 +1,4 @@
-import { MutableDataFrame } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data/dataframe';
 
 import { createTraceFrame, transformToJaeger } from './responseTransform';
 import { testResponse, testResponseDataFrameFields } from './testResponse';

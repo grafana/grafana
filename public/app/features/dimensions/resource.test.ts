@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 import { ResourceDimensionMode } from '@grafana/schema';
 
 import { getPublicOrAbsoluteUrl, getResourceDimension } from './resource';

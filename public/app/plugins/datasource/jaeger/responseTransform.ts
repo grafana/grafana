@@ -1,4 +1,5 @@
-import { type DataFrame, FieldType, MutableDataFrame, type TraceLog, type TraceSpanRow } from '@grafana/data';
+import { type TraceLog, type TraceSpanRow } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 import { type JaegerResponse, type Span, type TraceProcess, type TraceResponse } from './types';
 

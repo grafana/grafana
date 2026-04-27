@@ -1,7 +1,7 @@
 import { isArray } from 'lodash';
 import { useState } from 'react';
 
-import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data';
+import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data/dataframe';
 import { toDataQueryResponse } from '@grafana/runtime';
 import { Alert, CodeEditor } from '@grafana/ui';
 

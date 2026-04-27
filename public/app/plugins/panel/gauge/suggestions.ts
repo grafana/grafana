@@ -1,12 +1,7 @@
 import { defaultsDeep } from 'lodash';
 
-import {
-  FieldColorModeId,
-  type FieldConfigSource,
-  FieldType,
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
-} from '@grafana/data';
+import { FieldColorModeId, type FieldConfigSource, type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';

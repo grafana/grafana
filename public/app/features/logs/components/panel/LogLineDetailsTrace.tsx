@@ -2,13 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import {
-  type DataFrame,
-  type DataQueryRequest,
-  type DataSourceApi,
-  type GrafanaTheme2,
-  type TimeRange,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';

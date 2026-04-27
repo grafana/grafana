@@ -1,11 +1,5 @@
-import {
-  FieldColorModeId,
-  type FieldConfigSource,
-  FieldType,
-  ThresholdsMode,
-  type VisualizationPresetsSupplier,
-  type VisualizationSuggestion,
-} from '@grafana/data';
+import { FieldColorModeId, type FieldConfigSource, ThresholdsMode, type VisualizationPresetsSupplier, type VisualizationSuggestion } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import {
   AxisPlacement,

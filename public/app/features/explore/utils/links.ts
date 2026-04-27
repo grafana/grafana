@@ -1,26 +1,8 @@
 import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
-import {
-  type Field,
-  type LinkModel,
-  type TimeRange,
-  mapInternalLinkToExplore,
-  type InterpolateFunction,
-  type ScopedVars,
-  type DataFrame,
-  getFieldDisplayValuesProxy,
-  type SplitOpen,
-  type DataLink,
-  type DisplayValue,
-  DataLinkConfigOrigin,
-  CoreApp,
-  type SplitOpenOptions,
-  type DataLinkPostProcessor,
-  type ExploreUrlState,
-  urlUtil,
-  DataFrameType,
-} from '@grafana/data';
+import { type LinkModel, type TimeRange, mapInternalLinkToExplore, type InterpolateFunction, type ScopedVars, getFieldDisplayValuesProxy, type SplitOpen, type DataLink, type DisplayValue, DataLinkConfigOrigin, CoreApp, type SplitOpenOptions, type DataLinkPostProcessor, type ExploreUrlState, urlUtil, DataFrameType } from '@grafana/data';
+import { type Field, type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction, type VariableInterpolation } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

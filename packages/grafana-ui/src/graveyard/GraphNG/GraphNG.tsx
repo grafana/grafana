@@ -4,18 +4,8 @@ import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
 
-import {
-  DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  Field,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  LegacyGraphHoverEvent,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, FieldMatcherID, fieldMatchers, LegacyGraphHoverEvent, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data/dataframe';
 import { VizLegendOptions } from '@grafana/schema';
 
 import { PanelContext, PanelContextRoot } from '../../components/PanelChrome/PanelContext';

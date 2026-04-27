@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldMatcherID, FieldType, toDataFrame } from '@grafana/data';
+import { FieldMatcherID } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import {
   GroupByOperationID,
   type GroupToNestedTableTransformerOptions,

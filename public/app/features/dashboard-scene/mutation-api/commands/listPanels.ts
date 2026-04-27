@@ -13,7 +13,8 @@
 
 import { type z } from 'zod';
 
-import { type DataFrame, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';

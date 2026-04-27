@@ -3,7 +3,8 @@ import cx from 'classnames';
 import { type MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
+import { getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { Icon, useTheme2 } from '@grafana/ui';
 

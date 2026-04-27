@@ -1,16 +1,5 @@
-import {
-  CoreApp,
-  type DataFrame,
-  type DataLink,
-  DataLinkConfigOrigin,
-  dateTime,
-  type Field,
-  FieldType,
-  type InterpolateFunction,
-  SupportedTransformationType,
-  type TimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { CoreApp, type DataLink, DataLinkConfigOrigin, dateTime, type InterpolateFunction, SupportedTransformationType, type TimeRange } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { setTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';

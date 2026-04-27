@@ -1,14 +1,8 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
 
-import {
-  type AnnotationEvent,
-  type DataFrame,
-  type DataQueryRequest,
-  dateTime,
-  FieldType,
-  MutableDataFrame,
-} from '@grafana/data';
+import { type AnnotationEvent, type DataQueryRequest, dateTime } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 import { type FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__

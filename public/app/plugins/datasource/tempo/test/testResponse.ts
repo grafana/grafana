@@ -1,4 +1,4 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 export const otlpDataFrameFromResponse = new MutableDataFrame({
   meta: {

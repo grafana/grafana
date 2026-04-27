@@ -2,16 +2,8 @@ import { css } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  applyFieldOverrides,
-  type DataFrame,
-  type DataLinkClickEvent,
-  type Field,
-  FieldType,
-  type GrafanaTheme2,
-  MappingType,
-  escapeStringForRegex,
-} from '@grafana/data';
+import { applyFieldOverrides, type DataLinkClickEvent, type GrafanaTheme2, MappingType, escapeStringForRegex } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import {
   IconButton,
   Table,

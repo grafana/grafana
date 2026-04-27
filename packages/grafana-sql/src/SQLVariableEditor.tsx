@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { type DataQueryRequest, type Field } from '@grafana/data';
+import { type DataQueryRequest } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 import { Combobox, type ComboboxOption } from '@grafana/ui';

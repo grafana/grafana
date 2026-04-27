@@ -1,26 +1,8 @@
 import { of } from 'rxjs';
 import { take } from 'rxjs/operators';
 
-import {
-  AbstractLabelOperator,
-  type AnnotationQueryRequest,
-  CoreApp,
-  type CustomVariableModel,
-  type DataFrame,
-  dataFrameToJSON,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  dateTime,
-  FieldType,
-  type QueryFixAction,
-  SupplementaryQueryType,
-  toDataFrame,
-  type TimeRange,
-  type ToggleFilterAction,
-  type DataQueryRequest,
-  type ScopedVars,
-  type AdHocVariableFilter,
-} from '@grafana/data';
+import { AbstractLabelOperator, type AnnotationQueryRequest, CoreApp, type CustomVariableModel, type DataQueryResponse, type DataSourceInstanceSettings, dateTime, type QueryFixAction, SupplementaryQueryType, type TimeRange, type ToggleFilterAction, type DataQueryRequest, type ScopedVars, type AdHocVariableFilter } from '@grafana/data';
+import { type DataFrame, dataFrameToJSON, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import {
   type BackendSrv,
   type BackendSrvRequest,

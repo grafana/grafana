@@ -1,13 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import {
-  type ActionModel,
-  type Field,
-  type GrafanaTheme2,
-  type LinkModel,
-  type ThemeSpacingTokens,
-} from '@grafana/data';
+import { type ActionModel, type GrafanaTheme2, type LinkModel, type ThemeSpacingTokens } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 

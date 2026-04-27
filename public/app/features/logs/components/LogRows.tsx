@@ -1,16 +1,8 @@
 import { cx } from '@emotion/css';
 import { type MouseEvent, type ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 
-import {
-  type TimeZone,
-  LogsDedupStrategy,
-  type LogRowModel,
-  type LogsSortOrder,
-  type CoreApp,
-  type DataFrame,
-  type LogRowContextOptions,
-  type TimeRange,
-} from '@grafana/data';
+import { type TimeZone, LogsDedupStrategy, type LogRowModel, type LogsSortOrder, type CoreApp, type LogRowContextOptions, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, type PopoverContent, useTheme2 } from '@grafana/ui';

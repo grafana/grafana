@@ -1,4 +1,5 @@
-import { type DataFrame, type ExplorePanelsState } from '@grafana/data';
+import { type ExplorePanelsState } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type DataQuery, type DataSourceRef, type Panel } from '@grafana/schema';
 import { type DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';

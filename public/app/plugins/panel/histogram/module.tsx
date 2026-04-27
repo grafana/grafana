@@ -1,14 +1,5 @@
-import {
-  FieldColorModeId,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  PanelPlugin,
-  histogramFieldInfo,
-  buildHistogram,
-  VisualizationSuggestionScore,
-  DataFrameType,
-} from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, PanelPlugin, histogramFieldInfo, buildHistogram, VisualizationSuggestionScore, DataFrameType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';

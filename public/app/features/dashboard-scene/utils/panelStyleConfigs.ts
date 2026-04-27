@@ -1,4 +1,4 @@
-import type { FieldConfig } from '@grafana/data';
+import type { FieldConfig } from '@grafana/data/dataframe';
 
 /**
  * Central registry mapping panel plugin IDs to their style configuration.

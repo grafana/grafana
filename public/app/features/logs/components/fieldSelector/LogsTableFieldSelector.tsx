@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import { type DataFrame, store } from '@grafana/data';
+import { store } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';

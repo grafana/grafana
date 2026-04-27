@@ -1,4 +1,4 @@
-import { dataFrameToJSON, FieldType } from '@grafana/data';
+import { dataFrameToJSON, FieldType } from '@grafana/data/dataframe';
 
 import { frameFromGeoJSON } from './geojson';
 

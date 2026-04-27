@@ -1,12 +1,5 @@
-import {
-  type DataFrame,
-  type Field,
-  FieldType,
-  getFieldDisplayName,
-  type GrafanaTheme2,
-  outerJoinDataFrames,
-  type TimeRange,
-} from '@grafana/data';
+import { getFieldDisplayName, type GrafanaTheme2, outerJoinDataFrames, type TimeRange } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { findField } from 'app/features/dimensions/utils';

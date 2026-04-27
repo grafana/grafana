@@ -3,14 +3,8 @@ import * as React from 'react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import {
-  FieldType,
-  LoadingState,
-  type PanelData,
-  VariableSupportType,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { LoadingState, type PanelData, VariableSupportType, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';

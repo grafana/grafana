@@ -1,4 +1,4 @@
-import { type DataFrame, type Field } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { type ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';

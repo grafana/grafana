@@ -2,43 +2,9 @@ import ansicolor from 'ansicolor';
 import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
-import {
-  type AbsoluteTimeRange,
-  createDataFrame,
-  type DataFrame,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  DataTopic,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
-  type DateTimeInput,
-  type Field,
-  FieldCache,
-  FieldColorModeId,
-  FieldType,
-  findCommonLabels,
-  findUniqueLabels,
-  getTimeField,
-  type Labels,
-  LoadingState,
-  LogLevel,
-  type LogRowModel,
-  LogsDedupStrategy,
-  type LogsMetaItem,
-  LogsMetaKind,
-  type LogsModel,
-  type LogsVolumeCustomMetaData,
-  LogsVolumeType,
-  rangeUtil,
-  type ScopedVars,
-  sortDataFrame,
-  textUtil,
-  toDataFrame,
-  toUtc,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, type DataQuery, type DataQueryRequest, type DataQueryResponse, type DataSourceApi, type DataSourceJsonData, DataTopic, dateTimeFormat, dateTimeFormatTimeAgo, type DateTimeInput, FieldColorModeId, findCommonLabels, findUniqueLabels, type Labels, LoadingState, LogLevel, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type LogsModel, type LogsVolumeCustomMetaData, LogsVolumeType, rangeUtil, type ScopedVars, textUtil, toUtc } from '@grafana/data';
+import { FieldCache } from '@grafana/data/dataframe';
+import { createDataFrame, type DataFrame, type Field, FieldType, getTimeField, sortDataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { SIPrefix } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';

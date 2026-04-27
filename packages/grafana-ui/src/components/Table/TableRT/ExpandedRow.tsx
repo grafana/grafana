@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { type CSSProperties } from 'react';
 import * as React from 'react';
 
-import { type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { type TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';

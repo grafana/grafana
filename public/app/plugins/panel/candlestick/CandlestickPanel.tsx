@@ -4,7 +4,8 @@
 import { useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
-import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {

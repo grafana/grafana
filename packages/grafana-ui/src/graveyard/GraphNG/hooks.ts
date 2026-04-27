@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext } from 'react';
 
-import { DataFrame, DataFrameFieldIndex, Field } from '@grafana/data';
+import { DataFrame, DataFrameFieldIndex, Field } from '@grafana/data/dataframe';
 
 import { XYFieldMatchers } from './types';
 

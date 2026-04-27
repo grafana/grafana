@@ -2,17 +2,8 @@ import { groupBy, partition } from 'lodash';
 import { Observable, type Subscriber, type Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  arrayToDataFrame,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  DataTopic,
-  dateTime,
-  LoadingState,
-  rangeUtil,
-  store,
-  type TimeRange,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, DataTopic, dateTime, LoadingState, rangeUtil, store, type TimeRange } from '@grafana/data';
+import { arrayToDataFrame } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';

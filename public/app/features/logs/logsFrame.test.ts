@@ -1,4 +1,5 @@
-import { FieldType, DataFrameType, type Field, type Labels } from '@grafana/data';
+import { DataFrameType, type Labels } from '@grafana/data';
+import { FieldType, type Field } from '@grafana/data/dataframe';
 
 import { parseLogsFrame, logFrameLabelsToLabels } from './logsFrame';
 

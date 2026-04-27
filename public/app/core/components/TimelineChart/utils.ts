@@ -1,27 +1,5 @@
-import {
-  type DataFrame,
-  FALLBACK_COLOR,
-  type Field,
-  FieldColorModeId,
-  type FieldConfig,
-  FieldType,
-  formattedValueToString,
-  getFieldDisplayName,
-  getValueFormat,
-  type GrafanaTheme2,
-  getActiveThreshold,
-  type Threshold,
-  getFieldConfigWithMinMax,
-  ThresholdsMode,
-  type TimeRange,
-  cacheFieldDisplayNames,
-  outerJoinDataFrames,
-  type ValueMapping,
-  type ThresholdsConfig,
-  applyNullInsertThreshold,
-  nullToValue,
-  SpecialValueMatch,
-} from '@grafana/data';
+import { FALLBACK_COLOR, FieldColorModeId, formattedValueToString, getFieldDisplayName, getValueFormat, type GrafanaTheme2, getActiveThreshold, type Threshold, getFieldConfigWithMinMax, ThresholdsMode, type TimeRange, cacheFieldDisplayNames, outerJoinDataFrames, type ValueMapping, type ThresholdsConfig, applyNullInsertThreshold, nullToValue, SpecialValueMatch } from '@grafana/data';
+import { type DataFrame, type Field, type FieldConfig, FieldType } from '@grafana/data/dataframe';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {

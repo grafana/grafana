@@ -1,15 +1,7 @@
 import { useCallback } from 'react';
 
-import {
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  ReducerID,
-  isReducerID,
-  type SelectableValue,
-  type Field,
-  type FieldType,
-  isTimeSeriesField,
-} from '@grafana/data';
+import { type TransformerRegistryItem, type TransformerUIProps, ReducerID, isReducerID, type SelectableValue } from '@grafana/data';
+import { type Field, type FieldType, isTimeSeriesField } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 

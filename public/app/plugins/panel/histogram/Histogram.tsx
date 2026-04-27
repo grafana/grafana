@@ -1,17 +1,8 @@
 import * as React from 'react';
 import uPlot, { type AlignedData } from 'uplot';
 
-import {
-  type DataFrame,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  type GrafanaTheme2,
-  roundDecimals,
-  histogramBucketSizes,
-  histogramFrameBucketMaxFieldName,
-} from '@grafana/data';
+import { formattedValueToString, getFieldColorModeForField, getFieldSeriesColor, type GrafanaTheme2, roundDecimals, histogramBucketSizes, histogramFrameBucketMaxFieldName } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   type VizLegendOptions,
   ScaleDistribution,

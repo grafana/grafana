@@ -3,17 +3,8 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { createRef, useMemo } from 'react';
 
-import {
-  type Field,
-  type LinkModel,
-  FieldType,
-  type GrafanaTheme2,
-  formattedValueToString,
-  getFieldDisplayName,
-  type ScopedVars,
-  type ValueLinkConfig,
-  type ActionModel,
-} from '@grafana/data';
+import { type LinkModel, type GrafanaTheme2, formattedValueToString, getFieldDisplayName, type ScopedVars, type ActionModel } from '@grafana/data';
+import { type Field, FieldType, type ValueLinkConfig } from '@grafana/data/dataframe';
 import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,

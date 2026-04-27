@@ -1,15 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  createDataFrame,
-  createTheme,
-  FieldType,
-  getDisplayProcessor,
-  type DataFrame,
-  type DisplayValue,
-  type Field,
-  type LinkModel,
-} from '@grafana/data';
+import { createTheme, getDisplayProcessor, type DisplayValue, type LinkModel } from '@grafana/data';
+import { createDataFrame, FieldType, type DataFrame, type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisibilityMode } from '@grafana/schema';
 

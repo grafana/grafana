@@ -3,7 +3,8 @@ import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { memo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

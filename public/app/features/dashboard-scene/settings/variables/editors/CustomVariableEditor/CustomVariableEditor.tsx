@@ -1,7 +1,8 @@
 import { isObject } from 'lodash';
 import { type FormEvent, useCallback, useState } from 'react';
 
-import { type CustomVariableModel, shallowCompare } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
+import { shallowCompare } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CustomVariable, type SceneVariable } from '@grafana/scenes';

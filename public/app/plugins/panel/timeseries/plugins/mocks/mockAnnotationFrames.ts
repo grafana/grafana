@@ -1,4 +1,5 @@
-import { ActionType, type DataFrame, DataTopic, FieldType, HttpRequestMethod } from '@grafana/data';
+import { ActionType, DataTopic, HttpRequestMethod } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 
 /**
  * Due to the integration with mocked uplot, it's important that we test with times that are between 1759388895560 and 1759390250000

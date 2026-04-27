@@ -2,30 +2,8 @@ import { map as _map, cloneDeep, extend, has, isString, omit, pick, reduce } fro
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import {
-  type AdHocVariableFilter,
-  type AnnotationEvent,
-  type DataFrame,
-  type DataQueryError,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceGetTagKeysOptions,
-  type DataSourceGetTagValuesOptions,
-  type DataSourceInstanceSettings,
-  dateMath,
-  type DateTime,
-  escapeRegex,
-  FieldType,
-  type MetricFindValue,
-  type QueryResultMeta,
-  type QueryVariableModel,
-  type RawTimeRange,
-  type ScopedVars,
-  TIME_SERIES_TIME_FIELD_NAME,
-  TIME_SERIES_VALUE_FIELD_NAME,
-  type TimeSeries,
-  toDataFrame,
-} from '@grafana/data';
+import { type AdHocVariableFilter, type AnnotationEvent, type DataQueryError, type DataQueryRequest, type DataQueryResponse, type DataSourceGetTagKeysOptions, type DataSourceGetTagValuesOptions, type DataSourceInstanceSettings, dateMath, type DateTime, escapeRegex, type MetricFindValue, type QueryResultMeta, type QueryVariableModel, type RawTimeRange, type ScopedVars, type TimeSeries } from '@grafana/data';
+import { type DataFrame, FieldType, TIME_SERIES_TIME_FIELD_NAME, TIME_SERIES_VALUE_FIELD_NAME, toDataFrame } from '@grafana/data/dataframe';
 import {
   type BackendDataSourceResponse,
   DataSourceWithBackend,

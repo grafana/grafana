@@ -2,20 +2,8 @@ import { cloneDeep, groupBy } from 'lodash';
 import { distinct, Observable, merge } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  hasSupplementaryQuerySupport,
-  isTruthy,
-  LoadingState,
-  type LogsVolumeCustomMetaData,
-  LogsVolumeType,
-  store,
-  SupplementaryQueryType,
-} from '@grafana/data';
+import { type DataQuery, type DataQueryRequest, type DataQueryResponse, type DataSourceApi, hasSupplementaryQuerySupport, isTruthy, LoadingState, type LogsVolumeCustomMetaData, LogsVolumeType, store, SupplementaryQueryType } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type ExplorePanelData, type SupplementaryQueries } from 'app/types/explore';
 
 import { makeDataFramesForLogs, queryLogsSample, queryLogsVolume } from '../../logs/logsModel';

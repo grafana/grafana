@@ -1,7 +1,8 @@
 import { useState, useLayoutEffect, useMemo, useRef } from 'react';
 import type uPlot from 'uplot';
 
-import { type FieldConfigSource, type ThresholdsConfig, getValueFormat, FieldType } from '@grafana/data';
+import { type FieldConfigSource, type ThresholdsConfig, getValueFormat } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 import { buildScaleKey } from '@grafana/ui/internal';
 

@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
+import { getDefaultTimeRange } from '@grafana/data';
+import { DataFrameView } from '@grafana/data/dataframe';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
 

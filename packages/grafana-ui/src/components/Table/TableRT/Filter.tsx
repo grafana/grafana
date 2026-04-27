@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 import { Popover } from '../../../components/Tooltip/Popover';
 import { useStyles2 } from '../../../themes/ThemeContext';

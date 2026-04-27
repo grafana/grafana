@@ -1,19 +1,8 @@
 import { cloneDeep } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  getFieldDisplayName,
-  type DataFrame,
-  type SelectableValue,
-  FieldType,
-  ValueMatcherID,
-  valueMatchers,
-  TransformerCategory,
-} from '@grafana/data';
+import { DataTransformerID, standardTransformers, type TransformerRegistryItem, type TransformerUIProps, getFieldDisplayName, type SelectableValue, ValueMatcherID, valueMatchers, TransformerCategory } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   type FilterByValueFilter,
   FilterByValueMatch,

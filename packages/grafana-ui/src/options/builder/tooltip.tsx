@@ -1,4 +1,5 @@
-import { type DataFrame, type PanelOptionsEditorBuilder } from '@grafana/data';
+import { type PanelOptionsEditorBuilder } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 

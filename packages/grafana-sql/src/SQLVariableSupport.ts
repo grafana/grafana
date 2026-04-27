@@ -1,7 +1,8 @@
 import { type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse, type DataFrame } from '@grafana/data';
+import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { SQLVariablesQueryEditor } from './SQLVariableEditor';

@@ -6,13 +6,8 @@ import {
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import {
-  arrayToDataFrame,
-  type DataFrame,
-  DataFrameView,
-  getDisplayProcessor,
-  type SelectableValue,
-} from '@grafana/data';
+import { getDisplayProcessor, type SelectableValue } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame, DataFrameView } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';

@@ -1,22 +1,9 @@
 import { isEmpty } from 'lodash';
 import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type DataQueryError,
-  type DataQueryResponse,
-  FieldCache,
-  FieldType,
-  type LogRowModel,
-  type TimeRange,
-  toUtc,
-  LogRowContextQueryDirection,
-  type LogRowContextOptions,
-  dateTime,
-  type ScopedVars,
-  store,
-} from '@grafana/data';
+import { CoreApp, type DataQueryError, type DataQueryResponse, type LogRowModel, type TimeRange, toUtc, LogRowContextQueryDirection, type LogRowContextOptions, dateTime, type ScopedVars, store } from '@grafana/data';
+import { FieldCache } from '@grafana/data/dataframe';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   LabelParser,
   LabelFilter,

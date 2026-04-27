@@ -28,15 +28,8 @@ import {
   type SortColumn,
 } from 'react-data-grid';
 
-import {
-  type DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  FALLBACK_COLOR,
-  type Field,
-  FieldType,
-  getDisplayProcessor,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, FALLBACK_COLOR, getDisplayProcessor } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { t, Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 

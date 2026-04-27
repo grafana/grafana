@@ -3,15 +3,8 @@ import { type ChangeEvent, createRef, type RefObject } from 'react';
 import * as React from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import {
-  type DataFrame,
-  type DataQueryRequest,
-  type DataTransformerConfig,
-  type PanelData,
-  type SelectableValue,
-  standardTransformersRegistry,
-  type TransformerCategory,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataTransformerConfig, type PanelData, type SelectableValue, standardTransformersRegistry, type TransformerCategory } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

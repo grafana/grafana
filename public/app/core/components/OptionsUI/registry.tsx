@@ -1,34 +1,7 @@
 import type { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 
-import {
-  type FieldConfigPropertyItem,
-  FieldType,
-  standardEditorsRegistry,
-  type StandardEditorsRegistryItem,
-  type ThresholdsConfig,
-  type ThresholdsFieldConfigSettings,
-  ThresholdsMode,
-  thresholdsOverrideProcessor,
-  type ValueMapping,
-  type ValueMappingFieldConfigSettings,
-  valueMappingsOverrideProcessor,
-  type DataLink,
-  dataLinksOverrideProcessor,
-  type NumberFieldConfigSettings,
-  numberOverrideProcessor,
-  type StringFieldConfigSettings,
-  stringOverrideProcessor,
-  identityOverrideProcessor,
-  type TimeZone,
-  type FieldColor,
-  type FieldColorConfigSettings,
-  type StatsPickerConfigSettings,
-  displayNameOverrideProcessor,
-  type FieldNamePickerConfigSettings,
-  booleanOverrideProcessor,
-  type Action,
-  type DataLinksFieldConfigSettings,
-} from '@grafana/data';
+import { type FieldConfigPropertyItem, standardEditorsRegistry, type StandardEditorsRegistryItem, type ThresholdsConfig, type ThresholdsFieldConfigSettings, ThresholdsMode, thresholdsOverrideProcessor, type ValueMapping, type ValueMappingFieldConfigSettings, valueMappingsOverrideProcessor, type DataLink, dataLinksOverrideProcessor, type NumberFieldConfigSettings, numberOverrideProcessor, type StringFieldConfigSettings, stringOverrideProcessor, identityOverrideProcessor, type TimeZone, type FieldColor, type FieldColorConfigSettings, type StatsPickerConfigSettings, displayNameOverrideProcessor, type FieldNamePickerConfigSettings, booleanOverrideProcessor, type Action, type DataLinksFieldConfigSettings } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type FieldConfig } from '@grafana/schema';

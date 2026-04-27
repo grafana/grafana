@@ -1,12 +1,5 @@
-import {
-  toDataFrame,
-  type DataFrame,
-  FieldType,
-  toDataFrameDTO,
-  type DataFrameDTO,
-  DataFrameType,
-  getFrameDisplayName,
-} from '@grafana/data';
+import { DataFrameType, getFrameDisplayName } from '@grafana/data';
+import { toDataFrame, type DataFrame, FieldType, toDataFrameDTO, type DataFrameDTO } from '@grafana/data/dataframe';
 
 import { getPrepareTimeSeriesTransformer, type PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 

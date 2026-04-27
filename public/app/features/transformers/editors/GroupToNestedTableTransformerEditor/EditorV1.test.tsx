@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { FieldType, ReducerID, toDataFrame } from '@grafana/data';
+import { ReducerID } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { GroupByOperationID, type GroupToNestedTableTransformerOptions } from '@grafana/data/internal';
 
 import { GroupToNestedTableTransformerEditorV1 } from './EditorV1';

@@ -1,17 +1,8 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 
-import {
-  type FieldConfigOptionsRegistry,
-  type SelectableValue,
-  isSystemOverride as isSystemOverrideGuard,
-  type VariableSuggestionsScope,
-  type DynamicConfigValue,
-  type ConfigOverrideRule,
-  fieldMatchers,
-  type FieldConfigSource,
-  type DataFrame,
-} from '@grafana/data';
+import { type FieldConfigOptionsRegistry, type SelectableValue, isSystemOverride as isSystemOverrideGuard, type VariableSuggestionsScope, type DynamicConfigValue, type ConfigOverrideRule, fieldMatchers, type FieldConfigSource } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type MatcherScope } from '@grafana/schema';

@@ -1,18 +1,5 @@
-import {
-  cacheFieldDisplayNames,
-  type DataFrame,
-  DataFrameType,
-  type Field,
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  getLinksSupplier,
-  type GrafanaTheme2,
-  type InterpolateFunction,
-  outerJoinDataFrames,
-  type TimeRange,
-  type ValueFormatter,
-} from '@grafana/data';
+import { cacheFieldDisplayNames, DataFrameType, formattedValueToString, getDisplayProcessor, getLinksSupplier, type GrafanaTheme2, type InterpolateFunction, outerJoinDataFrames, type TimeRange, type ValueFormatter } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import {
   HeatmapCalculationMode,

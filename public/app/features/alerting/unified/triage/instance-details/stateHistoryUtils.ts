@@ -1,4 +1,5 @@
-import { type AnnotationEvent, type DataFrame, DataTopic, arrayToDataFrame } from '@grafana/data';
+import { type AnnotationEvent, DataTopic } from '@grafana/data';
+import { type DataFrame, arrayToDataFrame } from '@grafana/data/dataframe';
 
 import { type LogRecord } from '../../components/rules/state-history/common';
 

@@ -1,4 +1,5 @@
-import { getMinMaxAndDelta, type DataFrame, type Field } from '@grafana/data';
+import { getMinMaxAndDelta } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { type ScaleDimensionConfig, ScaleDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier, type ScaleDimensionOptions } from './types';

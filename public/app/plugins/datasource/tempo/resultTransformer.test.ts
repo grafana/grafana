@@ -1,6 +1,7 @@
 import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { type Field, PluginType, type DataSourceInstanceSettings, type PluginMetaInfo } from '@grafana/data';
+import { PluginType, type DataSourceInstanceSettings, type PluginMetaInfo } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 import {
   transformToOTLP,

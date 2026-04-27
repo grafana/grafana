@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { type Observable, Subject } from 'rxjs';
 
-import { type Field, locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { locationService } from '@grafana/runtime';
 
 import { type QueryResponse } from '../service/types';

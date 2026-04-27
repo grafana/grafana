@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type DataFrame, DataLinksContext, type SplitOpen, type TimeRange } from '@grafana/data';
+import { DataLinksContext, type SplitOpen, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { PanelChrome, useStyles2 } from '@grafana/ui';
 import { type StoreState, useSelector } from 'app/types/store';

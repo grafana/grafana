@@ -1,15 +1,7 @@
 import { type Observable, scan } from 'rxjs';
 
-import {
-  createDataFrame,
-  type DataFrame,
-  DataFrameType,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  FieldType,
-  LoadingState,
-  type TestDataSourceResponse,
-} from '@grafana/data';
+import { DataFrameType, type DataQueryRequest, type DataQueryResponse, LoadingState, type TestDataSourceResponse } from '@grafana/data';
+import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { RuntimeDataSource, type SceneDataQuery } from '@grafana/scenes';
 

@@ -1,7 +1,7 @@
 import GeoJSON from 'ol/format/GeoJSON';
 import { type Geometry } from 'ol/geom';
 
-import { type DataFrame, type Field, FieldType, getFieldTypeFromValue } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, getFieldTypeFromValue } from '@grafana/data/dataframe';
 
 interface FieldInfo {
   values: Array<string | number | null | undefined>;

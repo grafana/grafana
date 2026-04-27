@@ -1,4 +1,5 @@
-import { FieldType, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 
 export const nodes = {
   fields: [

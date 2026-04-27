@@ -3,15 +3,8 @@ import { useCallback, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type DataQueryRequest,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  dateTime,
-  type TimeZone,
-} from '@grafana/data';
+import { CoreApp, type DataQueryRequest, type DataSourceInstanceSettings, type DataSourceJsonData, dateTime, type TimeZone } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';

@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { type DataFrameView } from '@grafana/data/dataframe';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 

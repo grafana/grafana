@@ -1,6 +1,6 @@
 import { type HeaderGroup, type Column } from 'react-table';
 
-import { type Field } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, type TFunction } from '@grafana/i18n';
 

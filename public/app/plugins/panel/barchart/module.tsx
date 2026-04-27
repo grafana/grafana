@@ -1,12 +1,5 @@
-import {
-  type DataFrame,
-  FieldColorModeId,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  PanelPlugin,
-  VizOrientation,
-} from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, PanelPlugin, VizOrientation } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';

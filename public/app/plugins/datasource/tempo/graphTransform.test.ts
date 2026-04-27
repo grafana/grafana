@@ -1,4 +1,5 @@
-import { dateTime, createDataFrame, FieldType } from '@grafana/data';
+import { dateTime } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { mapPromMetricsToServiceMap } from './graphTransform';
 

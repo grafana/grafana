@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type * as React from 'react';
 import { type VariableSizeList } from 'react-window';
 
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 
 import { type GrafanaTableState } from './types';
 

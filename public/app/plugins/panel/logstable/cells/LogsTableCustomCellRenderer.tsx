@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type Field, formattedValueToString, getDisplayProcessor, type GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, getDisplayProcessor, type GrafanaTheme2 } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { type CustomCellRendererProps, useStyles2, useTheme2 } from '@grafana/ui';
 import { MaybeWrapWithLink } from '@grafana/ui/internal';
 import { type LogsFrame } from 'app/features/logs/logsFrame';

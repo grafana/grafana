@@ -1,10 +1,5 @@
-import {
-  FieldColorModeId,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  type SetFieldConfigOptionsArgs,
-} from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, type SetFieldConfigOptionsArgs } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';

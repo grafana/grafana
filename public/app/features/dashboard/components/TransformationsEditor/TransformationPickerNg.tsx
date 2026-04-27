@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback, useId } from 'react';
 
-import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

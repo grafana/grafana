@@ -1,18 +1,8 @@
 import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
-import {
-  type DataFrame,
-  type FieldConfig,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  getFieldDisplayName,
-  getDisplayProcessor,
-  FieldColorModeId,
-  type DecimalCount,
-} from '@grafana/data';
+import { formattedValueToString, getFieldColorModeForField, getFieldSeriesColor, getFieldDisplayName, getDisplayProcessor, FieldColorModeId, type DecimalCount } from '@grafana/data';
+import { type DataFrame, type FieldConfig, FieldType } from '@grafana/data/dataframe';
 // eslint-disable-next-line import/order
 import {
   AxisPlacement,

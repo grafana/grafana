@@ -1,15 +1,7 @@
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  type FieldNamePickerConfigSettings,
-  PluginState,
-  type StandardEditorsRegistryItem,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  FieldType,
-  TransformerCategory,
-} from '@grafana/data';
+import { DataTransformerID, type FieldNamePickerConfigSettings, PluginState, type StandardEditorsRegistryItem, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

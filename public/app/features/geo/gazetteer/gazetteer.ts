@@ -1,7 +1,8 @@
 import { getCenter } from 'ol/extent';
 import { type Geometry, Point } from 'ol/geom';
 
-import { type DataFrame, type Field, FieldType, type KeyValue, toDataFrame } from '@grafana/data';
+import { type KeyValue } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { frameFromGeoJSON } from '../format/geojson';
 import { pointFieldFromLonLat, pointFieldFromGeohash } from '../format/utils';

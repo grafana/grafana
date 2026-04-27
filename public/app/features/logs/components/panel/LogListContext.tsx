@@ -12,17 +12,8 @@ import {
 } from 'react';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
-import {
-  CoreApp,
-  type DataFrame,
-  type LogLevel,
-  type LogRowModel,
-  LogsDedupStrategy,
-  type LogsMetaItem,
-  LogsSortOrder,
-  shallowCompare,
-  store,
-} from '@grafana/data';
+import { CoreApp, type LogLevel, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, LogsSortOrder, store } from '@grafana/data';
+import { type DataFrame, shallowCompare } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type PopoverContent } from '@grafana/ui';

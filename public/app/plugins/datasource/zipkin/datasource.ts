@@ -1,16 +1,8 @@
 import { type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  FieldType,
-  createDataFrame,
-  type ScopedVars,
-  toDataFrame,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type DataSourceJsonData, type ScopedVars } from '@grafana/data';
+import { FieldType, createDataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { createNodeGraphFrames, type NodeGraphOptions, type SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 

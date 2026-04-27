@@ -1,4 +1,4 @@
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';

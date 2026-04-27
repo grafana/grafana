@@ -1,17 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import {
-  ActionType,
-  createDataFrame,
-  type DataFrame,
-  type FieldConfigSource,
-  FieldType,
-  getDefaultTimeRange,
-  getLinksSupplier,
-  HttpRequestMethod,
-  LoadingState,
-} from '@grafana/data';
+import { ActionType, type FieldConfigSource, getDefaultTimeRange, getLinksSupplier, HttpRequestMethod, LoadingState } from '@grafana/data';
+import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LegendDisplayMode,

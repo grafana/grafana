@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { type DataFrame, type Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
+import { getFieldDisplayName, FieldNamePickerBaseNameMode } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 

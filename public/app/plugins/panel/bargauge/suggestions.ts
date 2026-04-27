@@ -1,12 +1,7 @@
 import { defaultsDeep } from 'lodash';
 
-import {
-  FieldColorModeId,
-  FieldType,
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
-  VizOrientation,
-} from '@grafana/data';
+import { FieldColorModeId, type VisualizationSuggestion, type VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';

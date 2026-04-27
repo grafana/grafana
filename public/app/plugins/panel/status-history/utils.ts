@@ -1,4 +1,5 @@
-import { type DataFrame, type ActionModel, type Field, type InterpolateFunction, type LinkModel } from '@grafana/data';
+import { type ActionModel, type InterpolateFunction, type LinkModel } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { getActions } from 'app/features/actions/utils';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {

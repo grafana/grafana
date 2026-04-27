@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { arrayToDataFrame, type DataFrame, DataTopic } from '@grafana/data';
+import { DataTopic } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame } from '@grafana/data/dataframe';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';

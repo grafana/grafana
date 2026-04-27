@@ -2,16 +2,8 @@ import { type ReactElement, useEffect, useRef, useState, type ReactNode } from '
 import * as React from 'react';
 import uPlot from 'uplot';
 
-import {
-  type ActionModel,
-  type Field,
-  FieldType,
-  formattedValueToString,
-  getFieldDisplayName,
-  type InterpolateFunction,
-  type LinkModel,
-  type PanelData,
-} from '@grafana/data';
+import { type ActionModel, formattedValueToString, getFieldDisplayName, type InterpolateFunction, type LinkModel, type PanelData } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import {

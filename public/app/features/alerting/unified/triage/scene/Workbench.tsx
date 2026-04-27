@@ -1,6 +1,6 @@
 import { useEffect, useState, useTransition } from 'react';
 
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { SceneObjectBase, type SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 

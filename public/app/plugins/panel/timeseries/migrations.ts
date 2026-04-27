@@ -1,21 +1,7 @@
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 
-import {
-  type ConfigOverrideRule,
-  type DynamicConfigValue,
-  FieldColorModeId,
-  type FieldConfig,
-  FieldConfigProperty,
-  type FieldConfigSource,
-  FieldMatcherID,
-  fieldReducers,
-  FieldType,
-  NullValueMode,
-  type PanelTypeChangedHandler,
-  ReducerID,
-  type Threshold,
-  ThresholdsMode,
-} from '@grafana/data';
+import { type ConfigOverrideRule, type DynamicConfigValue, FieldColorModeId, FieldConfigProperty, type FieldConfigSource, FieldMatcherID, fieldReducers, NullValueMode, type PanelTypeChangedHandler, ReducerID, type Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldConfig, FieldType } from '@grafana/data/dataframe';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,

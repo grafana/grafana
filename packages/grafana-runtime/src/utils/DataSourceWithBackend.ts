@@ -1,23 +1,8 @@
 import { lastValueFrom, merge, type Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  dataFrameToJSON,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type TestDataSourceResponse,
-  DataSourceApi,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  getDataSourceRef,
-  makeClassES5Compatible,
-  parseLiveChannelAddress,
-  type ScopedVars,
-  type AdHocVariableFilter,
-} from '@grafana/data';
+import { type DataQuery, type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse, DataSourceApi, type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef, getDataSourceRef, makeClassES5Compatible, parseLiveChannelAddress, type ScopedVars, type AdHocVariableFilter } from '@grafana/data';
+import { type DataFrame, dataFrameToJSON } from '@grafana/data/dataframe';
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';

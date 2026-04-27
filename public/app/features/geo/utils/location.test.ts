@@ -1,7 +1,7 @@
 import { type Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 
-import { toDataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 
 import { getGeometryField, getLocationFields, getLocationMatchers } from './location';

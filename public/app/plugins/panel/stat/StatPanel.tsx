@@ -1,15 +1,8 @@
 import { isNumber } from 'lodash';
 import { memo, useCallback, type JSX } from 'react';
 
-import {
-  type DisplayValueAlignmentFactors,
-  type FieldDisplay,
-  FieldType,
-  getDisplayValueAlignmentFactors,
-  getFieldDisplayValues,
-  type NumericRange,
-  type PanelProps,
-} from '@grafana/data';
+import { type DisplayValueAlignmentFactors, type FieldDisplay, getDisplayValueAlignmentFactors, getFieldDisplayValues, type PanelProps } from '@grafana/data';
+import { FieldType, type NumericRange } from '@grafana/data/dataframe';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
 import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';

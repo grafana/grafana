@@ -1,17 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import {
-  createDataFrame,
-  type DataFrame,
-  type Field,
-  FieldColorModeId,
-  type FieldConfig,
-  FieldType,
-  type ThresholdsConfig,
-  ThresholdsMode,
-  type ValueMapping,
-} from '@grafana/data';
+import { FieldColorModeId, type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
+import { createDataFrame, type DataFrame, type Field, type FieldConfig, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { AxisPlacement, LegendDisplayMode, MappingType } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';

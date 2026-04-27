@@ -1,4 +1,5 @@
-import { FieldType, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LegendDisplayMode } from '@grafana/ui';

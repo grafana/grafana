@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';

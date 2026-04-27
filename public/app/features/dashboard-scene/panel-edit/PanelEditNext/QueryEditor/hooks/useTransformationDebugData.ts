@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { mergeMap } from 'rxjs';
 
-import { type DataFrame, type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
+import { type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type Transformation } from '../types';

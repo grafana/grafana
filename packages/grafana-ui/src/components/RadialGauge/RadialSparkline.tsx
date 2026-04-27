@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 
-import { type FieldDisplay, type GrafanaTheme2, type FieldConfig } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2 } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 import { type GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';

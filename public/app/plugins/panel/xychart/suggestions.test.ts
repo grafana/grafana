@@ -1,10 +1,5 @@
-import {
-  createDataFrame,
-  FieldType,
-  getPanelDataSummary,
-  type PanelDataSummary,
-  VisualizationSuggestionScore,
-} from '@grafana/data';
+import { getPanelDataSummary, type PanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { xychartSuggestionsSupplier } from './suggestions';
 

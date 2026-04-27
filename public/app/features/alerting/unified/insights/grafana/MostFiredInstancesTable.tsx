@@ -1,6 +1,6 @@
 import { type Observable, map } from 'rxjs';
 
-import { type DataFrame, type Field } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import {
   type CustomTransformOperator,
   PanelBuilders,

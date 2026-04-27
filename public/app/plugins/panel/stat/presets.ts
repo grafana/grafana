@@ -1,11 +1,5 @@
-import {
-  FieldColorModeId,
-  type FieldConfigSource,
-  FieldType,
-  type VisualizationPresetsSupplier,
-  type VisualizationSuggestion,
-  VizOrientation,
-} from '@grafana/data';
+import { FieldColorModeId, type FieldConfigSource, type VisualizationPresetsSupplier, type VisualizationSuggestion, VizOrientation } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import {
   BigValueColorMode,

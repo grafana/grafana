@@ -17,7 +17,8 @@ jest.mock('../../utils/date');
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { type DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 import { data } from '@grafana/flamegraph';
 import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 

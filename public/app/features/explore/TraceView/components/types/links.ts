@@ -1,6 +1,7 @@
 import type * as React from 'react';
 
-import { type Field, type LinkModel, type LinkTarget } from '@grafana/data';
+import { type LinkModel, type LinkTarget } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 import { type TraceSpan } from './trace';
 

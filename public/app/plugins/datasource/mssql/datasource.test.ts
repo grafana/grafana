@@ -1,17 +1,7 @@
 import { of } from 'rxjs';
 
-import {
-  createDataFrame,
-  type CustomVariableModel,
-  dataFrameToJSON,
-  type DataSourceInstanceSettings,
-  dateTime,
-  FieldType,
-  getDefaultTimeRange,
-  LoadingState,
-  type MetricFindValue,
-  type TimeRange,
-} from '@grafana/data';
+import { type CustomVariableModel, type DataSourceInstanceSettings, dateTime, getDefaultTimeRange, LoadingState, type MetricFindValue, type TimeRange } from '@grafana/data';
+import { createDataFrame, dataFrameToJSON, FieldType } from '@grafana/data/dataframe';
 import { type BackendSrv, type FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { type SQLQuery } from '@grafana/sql';
 

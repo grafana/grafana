@@ -1,10 +1,5 @@
-import {
-  type FieldConfig,
-  type FieldConfigSource,
-  type PanelPlugin,
-  standardFieldConfigEditorRegistry,
-  ThresholdsMode,
-} from '@grafana/data';
+import { type FieldConfigSource, type PanelPlugin, standardFieldConfigEditorRegistry, ThresholdsMode } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 
 import { setOptionImmutably, supportsDataQuery, updateDefaultFieldConfigValue } from './utils';
 

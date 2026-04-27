@@ -5,20 +5,8 @@ import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
-import {
-  FieldType,
-  type Field,
-  formattedValueToString,
-  type GrafanaTheme2,
-  type DisplayValue,
-  type LinkModel,
-  type DisplayValueAlignmentFactors,
-  type DataFrame,
-  type DisplayProcessor,
-  isDataFrame,
-  type FieldSparkline,
-  type DecimalCount,
-} from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2, type DisplayValue, type LinkModel, type DisplayValueAlignmentFactors, type DisplayProcessor, type FieldSparkline, type DecimalCount } from '@grafana/data';
+import { FieldType, type Field, type DataFrame, isDataFrame } from '@grafana/data/dataframe';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,

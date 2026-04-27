@@ -4,15 +4,8 @@ import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
-import {
-  type MapLayerRegistryItem,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  FieldType,
-  type Field,
-  type MapLayerOptions,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, type GrafanaTheme2, type EventBus, type MapLayerOptions } from '@grafana/data';
+import { FieldType, type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';

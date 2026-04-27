@@ -1,4 +1,5 @@
-import { createDataFrame, FieldType, getPanelDataSummary } from '@grafana/data';
+import { getPanelDataSummary } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { AxisPlacement, GraphDrawStyle, type GraphFieldConfig, StackingMode } from '@grafana/schema';
 
 import { type Options } from './panelcfg.gen';

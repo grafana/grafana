@@ -1,4 +1,4 @@
-import { CircularDataFrame, FieldType } from '@grafana/data';
+import { CircularDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import * as ResultTransformer from './liveStreamsResultTransformer';
 import { type LokiTailResponse } from './types';

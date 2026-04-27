@@ -5,20 +5,8 @@ import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { type Align, VariableSizeList } from 'react-window';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type EventBus,
-  EventBusSrv,
-  type GrafanaTheme2,
-  type LogLevel,
-  type LogRowModel,
-  LogsDedupStrategy,
-  type LogsMetaItem,
-  type LogsSortOrder,
-  store,
-  type TimeRange,
-} from '@grafana/data';
+import { CoreApp, type EventBus, EventBusSrv, type GrafanaTheme2, type LogLevel, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, type LogsSortOrder, store, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';

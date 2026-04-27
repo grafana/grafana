@@ -2,7 +2,7 @@ import Feature from 'ol/Feature';
 import { Point, Polygon } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
 
-import { FieldType, createDataFrame } from '@grafana/data';
+import { FieldType, createDataFrame } from '@grafana/data/dataframe';
 
 import { updateFeaturePropertiesForTooltip } from './geojsonDynamic';
 

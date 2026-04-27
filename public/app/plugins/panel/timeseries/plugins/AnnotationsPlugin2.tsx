@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, type DataFrame, DataTopic, type InterpolateFunction } from '@grafana/data';
+import { colorManipulator, DataTopic, type InterpolateFunction } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame } from '@grafana/data/dataframe';
 import { type TimeZone } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,

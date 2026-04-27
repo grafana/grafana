@@ -1,15 +1,5 @@
-import {
-  createTheme,
-  type DataFrame,
-  DefaultTimeZone,
-  FieldColorModeId,
-  type FieldConfig,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  getDefaultTimeRange,
-  MutableDataFrame,
-} from '@grafana/data';
+import { createTheme, DefaultTimeZone, FieldColorModeId, FieldMatcherID, fieldMatchers, getDefaultTimeRange } from '@grafana/data';
+import { type DataFrame, type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 import {
   BarAlignment,
   GraphDrawStyle,

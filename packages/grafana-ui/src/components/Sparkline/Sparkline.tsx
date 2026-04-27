@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 
-import { type FieldConfig, type FieldSparkline } from '@grafana/data';
+import { type FieldSparkline } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 import { type GraphFieldConfig } from '@grafana/schema';
 
 import { type Themeable2 } from '../../types/theme';

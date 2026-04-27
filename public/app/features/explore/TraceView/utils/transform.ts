@@ -1,4 +1,5 @@
-import { type DataFrame, DataFrameView, type TraceSpanRow } from '@grafana/data';
+import { type TraceSpanRow } from '@grafana/data';
+import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
 
 import transformTraceData from '../components/model/transform-trace-data';
 import { type Trace, type TraceProcess, type TraceResponse } from '../components/types/trace';

@@ -1,4 +1,4 @@
-import { type DataFrameDTO, FieldType } from '@grafana/data';
+import { type DataFrameDTO, FieldType } from '@grafana/data/dataframe';
 
 export const flameGraphData: DataFrameDTO = {
   name: 'response',

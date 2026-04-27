@@ -1,4 +1,4 @@
-import { MutableDataFrame } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data/dataframe';
 
 import { traceFrameFields, zipkinResponse } from './testData';
 import { transformResponse, transformToZipkin } from './transforms';

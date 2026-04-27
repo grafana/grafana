@@ -9,16 +9,8 @@ import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  FrameGeometrySourceMode,
-  type EventBus,
-  type DataFrame,
-  type Field,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, FrameGeometrySourceMode, type EventBus } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';

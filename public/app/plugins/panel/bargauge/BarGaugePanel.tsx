@@ -1,17 +1,8 @@
 import { isNumber } from 'lodash';
 import { PureComponent, type JSX } from 'react';
 
-import {
-  type DisplayProcessor,
-  type DisplayValue,
-  type DisplayValueAlignmentFactors,
-  type FieldConfig,
-  type FieldDisplay,
-  getDisplayValueAlignmentFactors,
-  getFieldDisplayValues,
-  type PanelProps,
-  VizOrientation,
-} from '@grafana/data';
+import { type DisplayProcessor, type DisplayValue, type DisplayValueAlignmentFactors, type FieldDisplay, getDisplayValueAlignmentFactors, getFieldDisplayValues, type PanelProps, VizOrientation } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import { BarGaugeSizing } from '@grafana/schema';
 import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';

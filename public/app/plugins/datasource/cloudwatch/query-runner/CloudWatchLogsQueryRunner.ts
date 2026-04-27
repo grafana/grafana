@@ -16,23 +16,8 @@ import {
   zip,
 } from 'rxjs';
 
-import {
-  type DataFrame,
-  type DataQueryError,
-  DataQueryErrorType,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type Field,
-  FieldType,
-  LoadingState,
-  type LogRowContextOptions,
-  LogRowContextQueryDirection,
-  type LogRowModel,
-  type ScopedVars,
-  getDefaultTimeRange,
-  rangeUtil,
-} from '@grafana/data';
+import { type DataQueryError, DataQueryErrorType, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, LoadingState, type LogRowContextOptions, LogRowContextQueryDirection, type LogRowModel, type ScopedVars, getDefaultTimeRange, rangeUtil } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { type TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema';

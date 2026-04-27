@@ -1,18 +1,7 @@
 import uPlot from 'uplot';
 
-import {
-  DashboardCursorSync,
-  DataFrame,
-  FieldConfig,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  getFieldDisplayName,
-  getDisplayProcessor,
-  FieldColorModeId,
-  DecimalCount,
-} from '@grafana/data';
+import { DashboardCursorSync, formattedValueToString, getFieldColorModeForField, getFieldSeriesColor, getFieldDisplayName, getDisplayProcessor, FieldColorModeId, DecimalCount } from '@grafana/data';
+import { DataFrame, FieldConfig, FieldType } from '@grafana/data/dataframe';
 import {
   AxisPlacement,
   GraphDrawStyle,

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

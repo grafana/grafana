@@ -1,6 +1,7 @@
 import { render, fireEvent } from '@testing-library/react';
 
-import { type DataFrame, FieldType, ValueMatcherID, valueMatchers } from '@grafana/data';
+import { ValueMatcherID, valueMatchers } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { FilterByValueMatch, FilterByValueType } from '@grafana/data/internal';
 
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';

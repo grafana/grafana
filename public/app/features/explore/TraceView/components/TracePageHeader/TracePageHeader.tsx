@@ -16,15 +16,8 @@ import { css, cx } from '@emotion/css';
 import { memo, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import {
-  type CoreApp,
-  type TraceSearchProps,
-  type DataFrame,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
-  type GrafanaTheme2,
-  PluginExtensionPoints,
-} from '@grafana/data';
+import { type CoreApp, type TraceSearchProps, dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import {
   reportInteraction,

@@ -1,4 +1,5 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme } from '@grafana/data';
+import { FieldType, createDataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { LineInterpolation } from '@grafana/ui';
 

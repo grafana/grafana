@@ -1,6 +1,7 @@
 import { each, flatten, groupBy, isArray } from 'lodash';
 
-import { type AnnotationEvent, type DataFrame, FieldType, type QueryResultMeta } from '@grafana/data';
+import { type AnnotationEvent, type QueryResultMeta } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { type BackendDataSourceResponse, type FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 import TableModel from 'app/core/TableModel';
 

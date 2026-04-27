@@ -1,12 +1,7 @@
 import { of } from 'rxjs';
 
-import {
-  dataFrameToJSON,
-  getDefaultTimeRange,
-  type DataSourceInstanceSettings,
-  FieldType,
-  createDataFrame,
-} from '@grafana/data';
+import { getDefaultTimeRange, type DataSourceInstanceSettings } from '@grafana/data';
+import { dataFrameToJSON, FieldType, createDataFrame } from '@grafana/data/dataframe';
 import { type FetchResponse } from '@grafana/runtime';
 import { type SQLQuery, makeVariable } from '@grafana/sql';
 

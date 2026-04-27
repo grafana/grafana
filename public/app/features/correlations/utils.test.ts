@@ -1,12 +1,6 @@
 import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import {
-  type DataFrame,
-  DataFrameType,
-  type DataSourceInstanceSettings,
-  FieldType,
-  SupportedTransformationType,
-  toDataFrame,
-} from '@grafana/data';
+import { DataFrameType, type DataSourceInstanceSettings, SupportedTransformationType } from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { config, type CorrelationData } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema/dist/esm/index';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';

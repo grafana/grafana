@@ -2,17 +2,8 @@ import * as React from 'react';
 import { type CSSProperties } from 'react';
 import { type OnDrag, type OnResize, type OnRotate } from 'react-moveable/declaration/types';
 
-import {
-  FieldType,
-  getLinksSupplier,
-  type LinkModel,
-  type ScopedVars,
-  type ValueLinkConfig,
-  OneClickMode,
-  type ActionModel,
-  type ActionVariableInput,
-  ActionType,
-} from '@grafana/data';
+import { getLinksSupplier, type LinkModel, type ScopedVars, OneClickMode, type ActionModel, type ActionVariableInput, ActionType } from '@grafana/data';
+import { FieldType, type ValueLinkConfig } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';

@@ -1,4 +1,5 @@
-import { ByNamesMatcherMode, createDataFrame, FieldMatcherID, FieldType, type PanelModel } from '@grafana/data';
+import { ByNamesMatcherMode, FieldMatcherID, type PanelModel } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import {

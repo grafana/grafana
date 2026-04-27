@@ -1,19 +1,5 @@
-import {
-  type DataQueryResponse,
-  type KeyValue,
-  LoadingState,
-  type DataQueryError,
-  type TimeSeries,
-  type TableData,
-  toDataFrame,
-  type DataFrame,
-  type MetricFindValue,
-  FieldType,
-  type DataQuery,
-  type DataFrameJSON,
-  dataFrameFromJSON,
-  type QueryResultMetaNotice,
-} from '@grafana/data';
+import { type DataQueryResponse, type KeyValue, LoadingState, type DataQueryError, type TimeSeries, type TableData, type MetricFindValue, type DataQuery, type QueryResultMetaNotice } from '@grafana/data';
+import { toDataFrame, type DataFrame, FieldType, type DataFrameJSON, dataFrameFromJSON } from '@grafana/data/dataframe';
 
 import { type FetchError, type FetchResponse } from '../services';
 

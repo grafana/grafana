@@ -1,25 +1,7 @@
 import { type Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
-import {
-  DataSourceApi,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type TestDataSourceResponse,
-  type ScopedVar,
-  DataTopic,
-  type PanelData,
-  type DataFrame,
-  LoadingState,
-  type Field,
-  FieldType,
-  type AdHocVariableFilter,
-  type MetricFindValue,
-  getValueMatcher,
-  ValueMatcherID,
-  type DataSourceGetDrilldownsApplicabilityOptions,
-  type DrilldownsApplicability,
-} from '@grafana/data';
+import { DataSourceApi, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type TestDataSourceResponse, type ScopedVar, DataTopic, type PanelData, LoadingState, type AdHocVariableFilter, type MetricFindValue, getValueMatcher, ValueMatcherID, type DataSourceGetDrilldownsApplicabilityOptions, type DrilldownsApplicability } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,

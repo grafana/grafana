@@ -14,7 +14,8 @@
 
 import * as React from 'react';
 
-import { type Field, type LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 import { type TraceSpanReference } from '../types/trace';
 

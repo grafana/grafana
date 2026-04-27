@@ -1,4 +1,4 @@
-import { FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { ConnectionDirection, DirectionDimensionMode } from '@grafana/schema';

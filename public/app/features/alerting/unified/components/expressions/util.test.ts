@@ -1,4 +1,4 @@
-import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { mockDataSource } from '../../mocks';

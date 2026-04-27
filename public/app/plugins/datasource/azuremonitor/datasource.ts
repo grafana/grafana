@@ -3,15 +3,8 @@ import { forkJoin, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { type AadCurrentUserCredentials, instanceOfAzureCredential, isCredentialsComplete } from '@grafana/azure-sdk';
-import {
-  type DataFrame,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  LoadingState,
-  type QueryFixAction,
-  type ScopedVars,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, LoadingState, type QueryFixAction, type ScopedVars } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';

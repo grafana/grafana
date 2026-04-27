@@ -1,4 +1,4 @@
-import { FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 
 import { EmptyLabelValue } from '../types';
 

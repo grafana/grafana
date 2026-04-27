@@ -3,7 +3,8 @@ import cx from 'classnames';
 import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 

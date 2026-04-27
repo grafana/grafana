@@ -1,16 +1,5 @@
-import {
-  closestIdx,
-  type DataFrame,
-  DataFrameType,
-  type DataQueryResponse,
-  type DataQueryResponseData,
-  type Field,
-  FieldType,
-  LoadingState,
-  type QueryResultMetaNotice,
-  type QueryResultMetaStat,
-  shallowCompare,
-} from '@grafana/data';
+import { DataFrameType, type DataQueryResponse, type DataQueryResponseData, LoadingState, type QueryResultMetaNotice, type QueryResultMetaStat } from '@grafana/data';
+import { closestIdx, type DataFrame, type Field, FieldType, shallowCompare } from '@grafana/data/dataframe';
 
 import { LOADING_FRAME_NAME } from './querySplitting';
 

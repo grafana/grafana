@@ -9,9 +9,9 @@ import {
   FrameMatcherID,
   FieldMatcherID,
   FieldNamePickerBaseNameMode,
-  FieldType,
   type GrafanaTheme2,
 } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

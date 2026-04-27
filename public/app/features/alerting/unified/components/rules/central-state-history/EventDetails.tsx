@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { type CombinedRule } from 'app/types/unified-alerting';

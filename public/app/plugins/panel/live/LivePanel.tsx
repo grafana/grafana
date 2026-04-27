@@ -3,21 +3,8 @@ import { isEqual } from 'lodash';
 import { PureComponent } from 'react';
 import { type Unsubscribable, type PartialObserver } from 'rxjs';
 
-import {
-  type GrafanaTheme2,
-  type PanelProps,
-  type LiveChannelStatusEvent,
-  isValidLiveChannelAddress,
-  type LiveChannelEvent,
-  isLiveChannelStatusEvent,
-  isLiveChannelMessageEvent,
-  LiveChannelConnectionState,
-  type PanelData,
-  LoadingState,
-  applyFieldOverrides,
-  type LiveChannelAddress,
-  StreamingDataFrame,
-} from '@grafana/data';
+import { type GrafanaTheme2, type PanelProps, type LiveChannelStatusEvent, isValidLiveChannelAddress, type LiveChannelEvent, isLiveChannelStatusEvent, isLiveChannelMessageEvent, LiveChannelConnectionState, type PanelData, LoadingState, applyFieldOverrides, type LiveChannelAddress } from '@grafana/data';
+import { StreamingDataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/ui';

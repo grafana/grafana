@@ -3,7 +3,8 @@ import { autoUpdate, safePolygon, useDismiss, useFloating, useHover, useInteract
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { type DataFrame, type Field, formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { type TimeZone } from '@grafana/schema';
 import { floatingUtils, Portal, type UPlotConfigBuilder, useStyles2 } from '@grafana/ui';

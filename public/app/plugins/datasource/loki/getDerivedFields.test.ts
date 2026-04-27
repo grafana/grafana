@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 
 import { getDerivedFields } from './getDerivedFields';
 

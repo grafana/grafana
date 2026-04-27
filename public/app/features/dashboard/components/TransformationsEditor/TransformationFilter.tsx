@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type DataFrame, type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
+import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';

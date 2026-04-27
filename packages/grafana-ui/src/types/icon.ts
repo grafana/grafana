@@ -1,4 +1,5 @@
-import { availableIconsIndex, type Field, FieldType, type IconName } from '@grafana/data';
+import { availableIconsIndex, type IconName } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 
 import { type ComponentSize } from './size';
 

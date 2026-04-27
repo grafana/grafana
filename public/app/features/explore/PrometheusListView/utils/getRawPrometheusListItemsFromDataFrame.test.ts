@@ -1,4 +1,5 @@
-import { type DataFrame, FieldType, type FormattedValue, toDataFrame } from '@grafana/data';
+import { type FormattedValue } from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { getRawPrometheusListItemsFromDataFrame } from './getRawPrometheusListItemsFromDataFrame';
 

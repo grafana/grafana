@@ -1,4 +1,5 @@
-import { createTheme, toDataFrame } from '@grafana/data';
+import { createTheme } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 
 import { prepareCandlestickFields } from './fields';
 import { type Options, VizDisplayMode } from './panelcfg.gen';

@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { getVisibleLabels, type VisibleExemplarLabels } from './ExemplarsPlugin';

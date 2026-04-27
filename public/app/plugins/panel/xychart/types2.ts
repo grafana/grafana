@@ -1,4 +1,4 @@
-import { type Field } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import type * as common from '@grafana/schema';
 
 import { type PointShape } from './panelcfg.gen';

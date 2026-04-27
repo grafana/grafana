@@ -16,19 +16,8 @@ import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import {
-  type CoreApp,
-  type DataFrame,
-  dateTimeFormat,
-  type GrafanaTheme2,
-  type LinkModel,
-  type TimeRange,
-  type TraceKeyValuePair,
-  type TraceLog,
-  type PluginExtensionResourceAttributesContext,
-  PluginExtensionPoints,
-  type IconName,
-} from '@grafana/data';
+import { type CoreApp, dateTimeFormat, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceKeyValuePair, type TraceLog, type PluginExtensionResourceAttributesContext, PluginExtensionPoints, type IconName } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';

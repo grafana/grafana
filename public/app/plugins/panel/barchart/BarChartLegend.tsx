@@ -1,15 +1,8 @@
 import { includes } from 'lodash';
 import { memo } from 'react';
 
-import {
-  type DataFrame,
-  type Field,
-  FieldColorModeId,
-  getFieldSeriesColor,
-  type ThresholdsConfig,
-  ThresholdsMode,
-  type ValueMapping,
-} from '@grafana/data';
+import { FieldColorModeId, getFieldSeriesColor, type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import {
   type UPlotConfigBuilder,

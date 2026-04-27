@@ -1,17 +1,7 @@
 import type * as H from 'history';
 
-import {
-  CoreApp,
-  type DataQueryRequest,
-  type FieldConfig,
-  type FieldConfigSource,
-  filterFieldConfigOverrides,
-  isStandardFieldProp,
-  locationUtil,
-  type NavIndex,
-  type NavModelItem,
-  store,
-} from '@grafana/data';
+import { CoreApp, type DataQueryRequest, type FieldConfigSource, filterFieldConfigOverrides, isStandardFieldProp, locationUtil, type NavIndex, type NavModelItem, store } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';

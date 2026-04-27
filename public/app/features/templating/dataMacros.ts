@@ -1,12 +1,5 @@
-import {
-  type DisplayProcessor,
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldDisplayValuesProxy,
-  getFrameDisplayName,
-  type ScopedVars,
-} from '@grafana/data';
+import { type DisplayProcessor, formattedValueToString, getDisplayProcessor, getFieldDisplayValuesProxy, getFrameDisplayName, type ScopedVars } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { type VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { getFieldAccessor } from './fieldAccessorCache';

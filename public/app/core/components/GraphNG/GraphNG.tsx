@@ -2,18 +2,8 @@ import * as React from 'react';
 import { Component } from 'react';
 import { type default as uPlot, type AlignedData } from 'uplot';
 
-import {
-  type DataFrame,
-  type DataLinkPostProcessor,
-  type Field,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  getLinksSupplier,
-  type InterpolateFunction,
-  type TimeRange,
-  type TimeZone,
-} from '@grafana/data';
+import { type DataLinkPostProcessor, FieldMatcherID, fieldMatchers, getLinksSupplier, type InterpolateFunction, type TimeRange, type TimeZone } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema';
 import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
 import {

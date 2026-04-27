@@ -3,12 +3,8 @@ import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import {
-  type DataFrame,
-  type FieldNamePickerConfigSettings,
-  type GrafanaTheme2,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { type FieldNamePickerConfigSettings, type GrafanaTheme2, type StandardEditorsRegistryItem } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';

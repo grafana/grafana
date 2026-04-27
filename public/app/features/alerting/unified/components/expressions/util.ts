@@ -1,6 +1,7 @@
 import { dropRight, last } from 'lodash';
 
-import { type DataFrame, type Labels, roundDecimals } from '@grafana/data';
+import { type Labels, roundDecimals } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';

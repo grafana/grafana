@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from '@testing-library/react';
 
-import { createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { usePagination } from './hooks';
 

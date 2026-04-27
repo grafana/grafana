@@ -1,15 +1,8 @@
 import { cloneDeep } from 'lodash';
 import { map } from 'rxjs';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  type SynchronousDataTransformerInfo,
-  getFieldMatcher,
-  type DataTransformContext,
-  type FieldMatcher,
-  cacheFieldDisplayNames,
-} from '@grafana/data';
+import { DataTransformerID, type SynchronousDataTransformerInfo, getFieldMatcher, type DataTransformContext, type FieldMatcher, cacheFieldDisplayNames } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 

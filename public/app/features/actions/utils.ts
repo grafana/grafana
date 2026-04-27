@@ -1,21 +1,5 @@
-import {
-  type Action,
-  type ActionModel,
-  ActionType,
-  type ActionVariableInput,
-  AppEvents,
-  type DataContextScopedVar,
-  type DataFrame,
-  type DataLink,
-  type Field,
-  FieldType,
-  getFieldDataContextClone,
-  type InterpolateFunction,
-  type InfinityOptions,
-  type ScopedVars,
-  textUtil,
-  type ValueLinkConfig,
-} from '@grafana/data';
+import { type Action, type ActionModel, ActionType, type ActionVariableInput, AppEvents, type DataContextScopedVar, type DataLink, getFieldDataContextClone, type InterpolateFunction, type InfinityOptions, type ScopedVars, textUtil } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, type ValueLinkConfig } from '@grafana/data/dataframe';
 import { type BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 

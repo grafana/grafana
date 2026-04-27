@@ -1,13 +1,7 @@
 import { partition } from 'lodash';
 
-import {
-  type DataFrame,
-  type Field,
-  type FieldWithIndex,
-  type LinkModel,
-  type LogRowModel,
-  type ScopedVars,
-} from '@grafana/data';
+import { type LinkModel, type LogRowModel, type ScopedVars } from '@grafana/data';
+import { type DataFrame, type Field, type FieldWithIndex } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { type ExploreFieldLinkModel } from 'app/features/explore/utils/links';

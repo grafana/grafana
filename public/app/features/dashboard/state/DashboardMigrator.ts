@@ -1,31 +1,7 @@
 import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
 
-import {
-  type AnnotationQuery,
-  type ConstantVariableModel,
-  type DataLink,
-  DataLinkBuiltInVars,
-  type DataQuery,
-  type DataSourceRef,
-  type FieldConfigSource,
-  FieldMatcherID,
-  FieldType,
-  getActiveThreshold,
-  getDataSourceRef,
-  isDataSourceRef,
-  isEmptyObject,
-  MappingType,
-  type ReducerID,
-  SpecialValueMatch,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-  type TextBoxVariableModel,
-  type ThresholdsConfig,
-  urlUtil,
-  type ValueMap,
-  type ValueMapping,
-  VariableHide,
-} from '@grafana/data';
+import { type AnnotationQuery, type ConstantVariableModel, type DataLink, DataLinkBuiltInVars, type DataQuery, type DataSourceRef, type FieldConfigSource, FieldMatcherID, getActiveThreshold, getDataSourceRef, isDataSourceRef, isEmptyObject, MappingType, type ReducerID, SpecialValueMatch, standardEditorsRegistry, standardFieldConfigEditorRegistry, type TextBoxVariableModel, type ThresholdsConfig, urlUtil, type ValueMap, type ValueMapping, VariableHide } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataTransformerConfig } from '@grafana/schema';

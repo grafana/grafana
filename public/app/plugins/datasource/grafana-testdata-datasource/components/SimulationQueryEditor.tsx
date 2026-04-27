@@ -1,7 +1,8 @@
 import { type FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataFrameJSON, type SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data/dataframe';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';

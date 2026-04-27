@@ -5,21 +5,8 @@
 import { flatten } from 'lodash';
 import { from, type Observable } from 'rxjs';
 
-import {
-  type DataFrame,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type DataSourceWithSupplementaryQueriesSupport,
-  FieldType,
-  LoadingState,
-  LogLevel,
-  LogsVolumeType,
-  MutableDataFrame,
-  SupplementaryQueryType,
-  type SupplementaryQueryOptions,
-  toDataFrame,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type DataSourceApi, type DataSourceWithSupplementaryQueriesSupport, LoadingState, LogLevel, LogsVolumeType, SupplementaryQueryType, type SupplementaryQueryOptions } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { type ExplorePanelData } from 'app/types/explore';

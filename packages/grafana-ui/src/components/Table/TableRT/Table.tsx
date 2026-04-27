@@ -10,7 +10,8 @@ import {
 } from 'react-table';
 import { type VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
+import { ReducerID, getFieldMatcher } from '@grafana/data';
+import { FieldType, getRowUniqueId } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';

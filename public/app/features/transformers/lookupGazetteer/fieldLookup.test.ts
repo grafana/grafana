@@ -1,4 +1,5 @@
-import { DataTransformerID, toDataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
+import { DataTransformerID, FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
 
 import { addFieldsFromGazetteer } from './fieldLookup';

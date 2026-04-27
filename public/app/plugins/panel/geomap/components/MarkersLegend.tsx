@@ -4,13 +4,8 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import {
-  getMinMaxAndDelta,
-  type DataFrame,
-  formattedValueToString,
-  getFieldColorModeForField,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { getMinMaxAndDelta, formattedValueToString, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, type VizLegendItem } from '@grafana/ui';

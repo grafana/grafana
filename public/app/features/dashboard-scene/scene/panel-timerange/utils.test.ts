@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
-import { dateTime, FieldType, toDataFrame, type DataFrame, type PanelData, type TimeRange } from '@grafana/data';
+import { dateTime, type PanelData, type TimeRange } from '@grafana/data';
+import { FieldType, toDataFrame, type DataFrame } from '@grafana/data/dataframe';
 import { LoadingState } from '@grafana/schema';
 
 import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';

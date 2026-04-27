@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
-import { type Field } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { LayoutAlgorithm } from './panelcfg.gen';

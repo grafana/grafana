@@ -1,4 +1,5 @@
-import { type Field, FieldType, getFieldDisplayName, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { getFieldDisplayName, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type GraphFieldConfig } from '@grafana/schema';

@@ -1,4 +1,5 @@
-import { createDataFrame, FieldType, getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
+import { getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { geomapSuggestionsSupplier } from './suggestions';
 

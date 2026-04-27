@@ -1,16 +1,7 @@
 import { type default as uPlot, type AlignedData, type Options, type PaddingSide } from 'uplot';
 
-import {
-  type DataFrame,
-  type DisplayProcessor,
-  type DisplayValue,
-  type Field,
-  fieldReducers,
-  getDisplayProcessor,
-  type GrafanaTheme2,
-  reduceField,
-  ReducerID,
-} from '@grafana/data';
+import { type DisplayProcessor, type DisplayValue, fieldReducers, getDisplayProcessor, type GrafanaTheme2, reduceField, ReducerID } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import {
   type BarAlignment,
   GraphDrawStyle,

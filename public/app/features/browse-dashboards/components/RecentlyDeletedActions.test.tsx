@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 import { render, screen } from 'test/test-utils';
 
-import { DataFrameView, FieldType, toDataFrame } from '@grafana/data';
+import { DataFrameView, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';

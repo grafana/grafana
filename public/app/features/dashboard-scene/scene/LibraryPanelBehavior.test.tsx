@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
-import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import { LoadingState, type PanelData, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {

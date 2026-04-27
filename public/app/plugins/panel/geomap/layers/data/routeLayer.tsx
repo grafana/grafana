@@ -10,18 +10,8 @@ import FlowLine from 'ol-ext/style/FlowLine';
 import { Subscription, throttleTime } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  type MapLayerRegistryItem,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  DataHoverEvent,
-  DataHoverClearEvent,
-  type DataFrame,
-  FieldType,
-  colorManipulator,
-  type MapLayerOptions,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, type GrafanaTheme2, type EventBus, DataHoverEvent, DataHoverClearEvent, colorManipulator, type MapLayerOptions } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';

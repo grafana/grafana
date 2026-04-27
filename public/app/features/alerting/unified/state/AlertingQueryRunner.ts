@@ -3,17 +3,8 @@ import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscriba
 import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  type DataFrameJSON,
-  LoadingState,
-  type PanelData,
-  type TimeRange,
-  dataFrameFromJSON,
-  getDefaultTimeRange,
-  preProcessPanelData,
-  rangeUtil,
-  withLoadingIndicator,
-} from '@grafana/data';
+import { LoadingState, type PanelData, type TimeRange, getDefaultTimeRange, rangeUtil, withLoadingIndicator } from '@grafana/data';
+import { type DataFrameJSON, dataFrameFromJSON, preProcessPanelData } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { DataSourceWithBackend, type FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';

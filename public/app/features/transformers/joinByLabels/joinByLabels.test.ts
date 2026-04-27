@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, type DataFrame } from '@grafana/data';
+import { toDataFrame, FieldType, type DataFrame } from '@grafana/data/dataframe';
 
 import { joinByLabels } from './joinByLabels';
 

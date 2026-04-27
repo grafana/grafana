@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels, store, shallowCompare } from '@grafana/data';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels, store } from '@grafana/data';
+import { shallowCompare } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 

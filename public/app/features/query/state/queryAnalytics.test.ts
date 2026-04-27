@@ -1,14 +1,5 @@
-import {
-  CoreApp,
-  type DataFrame,
-  type DataQueryError,
-  getDefaultTimeRange,
-  type DataSourceApi,
-  dateTime,
-  LoadingState,
-  type PanelData,
-  type DataQueryRequest,
-} from '@grafana/data';
+import { CoreApp, type DataQueryError, getDefaultTimeRange, type DataSourceApi, dateTime, LoadingState, type PanelData, type DataQueryRequest } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';

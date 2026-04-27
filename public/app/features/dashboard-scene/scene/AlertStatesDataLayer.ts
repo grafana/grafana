@@ -1,6 +1,7 @@
 import { from, map, type Observable, type Unsubscribable } from 'rxjs';
 
-import { AlertState, type AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
+import { AlertState, type AlertStateInfo, DataTopic, LoadingState } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import {
   SceneDataLayerBase,

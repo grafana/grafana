@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { config, reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';

@@ -1,4 +1,5 @@
-import { DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { DataFrame, Field, FieldConfig, FieldType } from '@grafana/data/dataframe';
 import {
   AxisPlacement,
   GraphDrawStyle,

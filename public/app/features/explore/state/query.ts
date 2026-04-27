@@ -4,21 +4,8 @@ import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject 
 import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
-import {
-  type AbsoluteTimeRange,
-  type DataFrame,
-  DataQueryErrorType,
-  type DataQueryResponse,
-  type DataSourceApi,
-  dateTimeForTimeZone,
-  hasQueryExportSupport,
-  hasQueryImportSupport,
-  LoadingState,
-  LogsVolumeType,
-  type QueryFixAction,
-  type ScopedVars,
-  type SupplementaryQueryType,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, DataQueryErrorType, type DataQueryResponse, type DataSourceApi, dateTimeForTimeZone, hasQueryExportSupport, hasQueryImportSupport, LoadingState, LogsVolumeType, type QueryFixAction, type ScopedVars, type SupplementaryQueryType } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

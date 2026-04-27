@@ -1,13 +1,7 @@
 import { isNumber, isString } from 'lodash';
 
-import {
-  type DataFrame,
-  type Field,
-  AppEvents,
-  getFieldDisplayName,
-  PluginState,
-  type SelectableValue,
-} from '@grafana/data';
+import { AppEvents, getFieldDisplayName, PluginState, type SelectableValue } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import { type ConnectionDirection } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';

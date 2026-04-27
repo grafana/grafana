@@ -1,13 +1,7 @@
 import { map } from 'rxjs';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  FieldType,
-  type SynchronousDataTransformerInfo,
-  isTimeSeriesFrame,
-  TransformationApplicabilityLevels,
-} from '@grafana/data';
+import { DataTransformerID, type SynchronousDataTransformerInfo, TransformationApplicabilityLevels } from '@grafana/data';
+import { type DataFrame, FieldType, isTimeSeriesFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 
 import { asapSmooth, type DataPoint } from './asap';

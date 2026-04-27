@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type DataFrame, type SplitOpen } from '@grafana/data';
+import { type SplitOpen } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem } from '@grafana/ui';
 import { type ExploreItemState } from 'app/types/explore';

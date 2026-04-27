@@ -1,4 +1,5 @@
-import { type DataFrame, FieldType, getFieldDisplayName, LogsSortOrder } from '@grafana/data';
+import { getFieldDisplayName, LogsSortOrder } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { type TableSortByFieldState } from '@grafana/schema/dist/esm/common/common.gen';
 import { LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 

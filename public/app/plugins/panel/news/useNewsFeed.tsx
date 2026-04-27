@@ -1,6 +1,6 @@
 import { useAsyncFn } from 'react-use';
 
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView } from '@grafana/data/dataframe';
 
 import { loadFeed } from './feed';
 import { type NewsItem } from './types';

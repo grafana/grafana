@@ -2,21 +2,8 @@ import { css } from '@emotion/css';
 import { type RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type DataLink,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type Field,
-  type GrafanaTheme2,
-  type LinkModel,
-  mapInternalLinkToExplore,
-  type SplitOpen,
-  type TimeRange,
-  type TraceSearchProps,
-  useDataLinksContext,
-} from '@grafana/data';
+import { CoreApp, type DataLink, type DataSourceApi, type DataSourceJsonData, type GrafanaTheme2, type LinkModel, mapInternalLinkToExplore, type SplitOpen, type TimeRange, type TraceSearchProps, useDataLinksContext } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';

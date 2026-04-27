@@ -1,12 +1,5 @@
-import {
-  createTheme,
-  type Field,
-  FieldType,
-  LogLevel,
-  type LogRowModel,
-  LogsSortOrder,
-  toDataFrame,
-} from '@grafana/data';
+import { createTheme, LogLevel, type LogRowModel, LogsSortOrder } from '@grafana/data';
+import { type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';

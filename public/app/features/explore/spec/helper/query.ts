@@ -1,6 +1,7 @@
 import { from, type Observable } from 'rxjs';
 
-import { arrayToDataFrame, type DataQueryResponse, FieldType } from '@grafana/data';
+import { type DataQueryResponse } from '@grafana/data';
+import { arrayToDataFrame, FieldType } from '@grafana/data/dataframe';
 
 export function makeLogsQueryResponse(marker = ''): Observable<DataQueryResponse> {
   const df = arrayToDataFrame([{ ts: Date.now(), line: `custom log line ${marker}` }]);

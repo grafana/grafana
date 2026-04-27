@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { reportInteraction } from '@grafana/runtime';

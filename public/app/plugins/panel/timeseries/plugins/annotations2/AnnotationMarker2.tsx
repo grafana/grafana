@@ -5,13 +5,8 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  type ActionModel,
-  type DataFrame,
-  type GrafanaTheme2,
-  type InterpolateFunction,
-  type LinkModel,
-} from '@grafana/data';
+import { type ActionModel, type GrafanaTheme2, type InterpolateFunction, type LinkModel } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';

@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type DataFrame, type InterpolateFunction, type TimeRange } from '@grafana/data';
+import { type InterpolateFunction, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, useTheme2 } from '@grafana/ui';

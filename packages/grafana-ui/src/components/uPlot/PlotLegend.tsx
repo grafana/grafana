@@ -1,14 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import {
-  type DataFrame,
-  type GrafanaTheme2,
-  extractFacetedLabels,
-  getFieldDisplayName,
-  getFieldSeriesColor,
-  resolveFacetedFilterNames,
-} from '@grafana/data';
+import { type GrafanaTheme2, extractFacetedLabels, getFieldDisplayName, getFieldSeriesColor, resolveFacetedFilterNames } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
 

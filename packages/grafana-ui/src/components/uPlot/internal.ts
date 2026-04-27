@@ -1,4 +1,4 @@
-import { type FieldConfig, type FieldType } from '@grafana/data';
+import { type FieldConfig, type FieldType } from '@grafana/data/dataframe';
 import { AxisPlacement, type GraphFieldConfig, ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
 
 import { FIXED_UNIT } from './types';

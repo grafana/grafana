@@ -1,12 +1,7 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import {
-  DataFrameView,
-  type DataQueryRequest,
-  type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
-  FieldType,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import { DataFrameView, FieldType } from '@grafana/data/dataframe';
 import { type BackendSrv, getBackendSrv, setBackendSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { addNodeGraphFramesToResponse, ZipkinDatasource } from './datasource';

@@ -1,4 +1,5 @@
-import { type DataFrame, type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafana/data';
+import { type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';

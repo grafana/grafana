@@ -7,71 +7,71 @@
 export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 
 // DataFrames
-export { DataFrameView } from './dataframe/DataFrameView';
-export { type FieldWithIndex, FieldCache } from './dataframe/FieldCache';
-export { type MutableField, MISSING_VALUE, MutableDataFrame } from './dataframe/MutableDataFrame';
-export {
-  guessFieldTypeFromNameAndValue,
-  getFieldTypeFromValue,
-  guessFieldTypeFromValue,
-  guessFieldTypeForField,
-  guessFieldTypes,
-  isTableData,
-  isDataFrame,
-  isDataFrameWithValue,
-  toDataFrame,
-  toLegacyResponseData,
-  sortDataFrame,
-  reverseDataFrame,
-  getDataFrameRow,
-  toDataFrameDTO,
-  toFilteredDataFrameDTO,
-  getTimeField,
-  getProcessedDataFrames,
-  preProcessPanelData,
-  type PartialDataFrame,
-  createDataFrame,
-} from './dataframe/processDataFrame';
-export {
-  type Dimension,
-  type Dimensions,
-  createDimension,
-  getColumnsFromDimension,
-  getColumnFromDimension,
-  getValueFromDimension,
-  getAllValuesFromDimension,
-  getDimensionByName,
-} from './dataframe/dimensions';
-export {
-  anySeriesWithTimeField,
-  hasTimeField,
-  isTimeSeriesFrame,
-  isTimeSeriesFrames,
-  isTimeSeriesField,
-  getRowUniqueId,
-  addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
-} from './dataframe/utils';
-export {
-  StreamingDataFrame,
-  StreamingFrameAction,
-  type StreamingFrameOptions,
-  closestIdx,
-} from './dataframe/StreamingDataFrame';
-export { ArrayDataFrame, arrayToDataFrame } from './dataframe/ArrayDataFrame';
-export {
-  type DataFrameJSON,
-  type DataFrameData,
-  type DataFrameSchema,
-  type FieldSchema,
-  type FieldValueEntityLookup,
-  decodeFieldValueEntities,
-  decodeFieldValueEnums,
-  dataFrameFromJSON,
-  dataFrameToJSON,
-} from './dataframe/DataFrameJSON';
-export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
+// export { DataFrameView } from './dataframe/DataFrameView';
+// export { type FieldWithIndex, FieldCache } from './dataframe/FieldCache';
+// export { type MutableField, MISSING_VALUE, MutableDataFrame } from './dataframe/MutableDataFrame';
+// export {
+//   guessFieldTypeFromNameAndValue,
+//   getFieldTypeFromValue,
+//   guessFieldTypeFromValue,
+//   guessFieldTypeForField,
+//   guessFieldTypes,
+//   isTableData,
+//   isDataFrame,
+//   isDataFrameWithValue,
+//   toDataFrame,
+//   toLegacyResponseData,
+//   sortDataFrame,
+//   reverseDataFrame,
+//   getDataFrameRow,
+//   toDataFrameDTO,
+//   toFilteredDataFrameDTO,
+//   getTimeField,
+//   getProcessedDataFrames,
+//   preProcessPanelData,
+//   type PartialDataFrame,
+//   createDataFrame,
+// } from './dataframe/processDataFrame';
+// export {
+//   type Dimension,
+//   type Dimensions,
+//   createDimension,
+//   getColumnsFromDimension,
+//   getColumnFromDimension,
+//   getValueFromDimension,
+//   getAllValuesFromDimension,
+//   getDimensionByName,
+// } from './dataframe/dimensions';
+// export {
+//   anySeriesWithTimeField,
+//   hasTimeField,
+//   isTimeSeriesFrame,
+//   isTimeSeriesFrames,
+//   isTimeSeriesField,
+//   getRowUniqueId,
+//   addRow,
+//   alignTimeRangeCompareData,
+//   shouldAlignTimeCompare,
+// } from './dataframe/utils';
+// export {
+//   StreamingDataFrame,
+//   StreamingFrameAction,
+//   type StreamingFrameOptions,
+//   closestIdx,
+// } from './dataframe/StreamingDataFrame';
+// export { ArrayDataFrame, arrayToDataFrame } from './dataframe/ArrayDataFrame';
+// export {
+//   type DataFrameJSON,
+//   type DataFrameData,
+//   type DataFrameSchema,
+//   type FieldSchema,
+//   type FieldValueEntityLookup,
+//   decodeFieldValueEntities,
+//   decodeFieldValueEnums,
+//   dataFrameFromJSON,
+//   dataFrameToJSON,
+// } from './dataframe/DataFrameJSON';
+// export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
 
 // Query
 export { getNextRefId } from './query/refId';
@@ -882,25 +882,25 @@ export {
   type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
-export {
-  FieldType,
-  type FieldConfig,
-  type FieldTypeConfig,
-  type EnumFieldConfig,
-  type ValueLinkConfig,
-  type Field,
-  type FieldState,
-  type NumericRange,
-  type DataFrame,
-  type DataFrameWithValue,
-  type FieldDTO,
-  type DataFrameDTO,
-  type FieldCalcs,
-  TIME_SERIES_VALUE_FIELD_NAME,
-  TIME_SERIES_TIME_FIELD_NAME,
-  TIME_SERIES_METRIC_FIELD_NAME,
-  type DataFrameFieldIndex,
-} from './types/dataFrame';
+// export {
+//   FieldType,
+//   type FieldConfig,
+//   type FieldTypeConfig,
+//   type EnumFieldConfig,
+//   type ValueLinkConfig,
+//   type Field,
+//   type FieldState,
+//   type NumericRange,
+//   type DataFrame,
+//   type DataFrameWithValue,
+//   type FieldDTO,
+//   type DataFrameDTO,
+//   type FieldCalcs,
+//   TIME_SERIES_VALUE_FIELD_NAME,
+//   TIME_SERIES_TIME_FIELD_NAME,
+//   TIME_SERIES_METRIC_FIELD_NAME,
+//   type DataFrameFieldIndex,
+// } from './types/dataFrame';
 export {
   type KeyValue,
   LoadingState,
@@ -927,7 +927,7 @@ export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from 
 export { CircularVector } from './vector/CircularVector';
 export { vectorator } from './vector/FunctionalVector';
 export { ArrayVector } from './vector/ArrayVector';
-export { CircularDataFrame } from './dataframe/CircularDataFrame';
+// export { CircularDataFrame } from './dataframe/CircularDataFrame';
 export {
   type CurrentUser,
   userHasPermission,

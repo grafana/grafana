@@ -1,4 +1,4 @@
-import { type DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data/dataframe';
 import { type LiveDataFilter } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { type TimeRegionConfig } from 'app/core/utils/timeRegions';

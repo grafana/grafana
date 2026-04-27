@@ -4,16 +4,8 @@ import memoizeOne from 'memoize-one';
 import { PureComponent, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type Field,
-  type GrafanaTheme2,
-  type IconName,
-  type LinkModel,
-  type LogLabelStatsModel,
-  type LogRowModel,
-} from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type IconName, type LinkModel, type LogLabelStatsModel, type LogRowModel } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {

@@ -1,4 +1,4 @@
-import { type FieldDTO } from '@grafana/data';
+import { type FieldDTO } from '@grafana/data/dataframe';
 
 import { type TraceResponse } from './types';
 

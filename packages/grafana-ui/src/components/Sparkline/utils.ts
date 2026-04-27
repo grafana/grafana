@@ -3,18 +3,15 @@ import { type Range } from 'uplot';
 import {
   applyNullInsertThreshold,
   // colorManipulator,
-  type DataFrame,
-  type FieldConfig,
   type FieldSparkline,
-  FieldType,
   getFieldColorModeForField,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
   roundDecimals,
-  sortDataFrame,
 } from '@grafana/data';
+import { type DataFrame, type FieldConfig, FieldType, sortDataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import {
   AxisPlacement,

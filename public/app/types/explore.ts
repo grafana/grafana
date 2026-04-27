@@ -2,7 +2,6 @@ import { type Observable, type SubscriptionLike, type Unsubscribable } from 'rxj
 
 import {
   type AbsoluteTimeRange,
-  type DataFrame,
   type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
@@ -19,6 +18,7 @@ import {
   type ExploreCorrelationHelperData,
   type DataLinkTransformationConfig,
 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type CorrelationData } from '@grafana/runtime';
 import { type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 

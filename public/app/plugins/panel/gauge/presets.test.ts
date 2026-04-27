@@ -1,4 +1,5 @@
-import { createDataFrame, FieldType, getPanelDataSummary } from '@grafana/data';
+import { getPanelDataSummary } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { gaugePresetsSupplier } from './presets';
 

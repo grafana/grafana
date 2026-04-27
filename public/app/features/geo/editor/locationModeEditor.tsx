@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type StandardEditorProps, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { type StandardEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';

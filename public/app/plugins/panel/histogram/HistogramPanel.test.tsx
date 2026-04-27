@@ -1,14 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  createDataFrame,
-  createTheme,
-  type DataFrame,
-  FieldType,
-  getDefaultTimeRange,
-  getDisplayProcessor,
-  LoadingState,
-} from '@grafana/data';
+import { createTheme, getDefaultTimeRange, getDisplayProcessor, LoadingState } from '@grafana/data';
+import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
 

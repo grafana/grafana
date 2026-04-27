@@ -1,4 +1,5 @@
-import { type DataFrame, type PanelData, type Field, getFieldDisplayName, ReducerID } from '@grafana/data';
+import { type PanelData, getFieldDisplayName, ReducerID } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import {
   type ResourceDimensionConfig,

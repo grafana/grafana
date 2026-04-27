@@ -1,4 +1,5 @@
-import { type DataFrame, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
+import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/o11y-ds-frontend';
 
 import { type Span, type TraceResponse } from './types';

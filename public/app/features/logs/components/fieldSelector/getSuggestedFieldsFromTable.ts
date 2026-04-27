@@ -1,4 +1,4 @@
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getDistinctLabels } from 'app/features/transformers/utils';
 
 import { getSuggestedOTelDisplayFormat } from '../otel/formats';

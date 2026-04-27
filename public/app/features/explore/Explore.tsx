@@ -4,20 +4,8 @@ import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import AutoSizer, { type HorizontalSize } from 'react-virtualized-auto-sizer';
 
-import {
-  type AbsoluteTimeRange,
-  type DataFrame,
-  type EventBus,
-  getNextRefId,
-  type GrafanaTheme2,
-  hasToggleableQueryFiltersSupport,
-  LoadingState,
-  type QueryFixAction,
-  type RawTimeRange,
-  type SplitOpenOptions,
-  store,
-  SupplementaryQueryType,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, type EventBus, getNextRefId, type GrafanaTheme2, hasToggleableQueryFiltersSupport, LoadingState, type QueryFixAction, type RawTimeRange, type SplitOpenOptions, store, SupplementaryQueryType } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';

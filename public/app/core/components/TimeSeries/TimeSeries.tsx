@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
-import { type DataFrame, type TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';

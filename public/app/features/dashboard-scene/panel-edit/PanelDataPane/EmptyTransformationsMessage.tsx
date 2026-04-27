@@ -1,13 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  type GrafanaTheme2,
-  standardTransformersRegistry,
-  type TransformerRegistryItem,
-} from '@grafana/data';
+import { DataTransformerID, type GrafanaTheme2, standardTransformersRegistry, type TransformerRegistryItem } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

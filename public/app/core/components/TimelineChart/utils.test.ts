@@ -1,16 +1,5 @@
-import {
-  createTheme,
-  FieldType,
-  ThresholdsMode,
-  type TimeRange,
-  toDataFrame,
-  dateTime,
-  type DataFrame,
-  fieldMatchers,
-  FieldMatcherID,
-  type Field,
-  SpecialValueMatch,
-} from '@grafana/data';
+import { createTheme, ThresholdsMode, type TimeRange, dateTime, fieldMatchers, FieldMatcherID, SpecialValueMatch } from '@grafana/data';
+import { FieldType, toDataFrame, type DataFrame, type Field } from '@grafana/data/dataframe';
 import { LegendDisplayMode, MappingType, type VizLegendOptions } from '@grafana/schema';
 
 import { preparePlotFrame } from '../GraphNG/utils';

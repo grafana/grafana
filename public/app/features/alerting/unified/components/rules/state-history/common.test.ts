@@ -1,4 +1,4 @@
-import { type DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data/dataframe';
 
 import { type Label, extractCommonLabels, historyDataFrameToLogRecords, omitLabels } from './common';
 

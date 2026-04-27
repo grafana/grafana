@@ -1,4 +1,4 @@
-import { type DataFrame, type Field } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 
 export interface BarChartDisplayValues {
   /** All fields joined */

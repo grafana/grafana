@@ -1,15 +1,8 @@
 import { debounce } from 'lodash';
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  type CoreApp,
-  type DataFrame,
-  dateTimeFormat,
-  type LogRowContextOptions,
-  type LogRowModel,
-  type LogsSortOrder,
-  type TimeRange,
-} from '@grafana/data';
+import { type CoreApp, dateTimeFormat, type LogRowContextOptions, type LogRowModel, type LogsSortOrder, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';

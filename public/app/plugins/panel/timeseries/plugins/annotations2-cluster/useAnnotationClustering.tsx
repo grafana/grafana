@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import uPlot from 'uplot';
 
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { type TimeRange2 } from '@grafana/ui/internal';
 

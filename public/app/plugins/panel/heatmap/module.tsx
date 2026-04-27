@@ -1,11 +1,5 @@
-import {
-  type DataFrame,
-  DataFrameType,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  PanelPlugin,
-} from '@grafana/data';
+import { DataFrameType, FieldConfigProperty, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

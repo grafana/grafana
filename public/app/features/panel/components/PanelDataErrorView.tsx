@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 
-import {
-  CoreApp,
-  FieldType,
-  getPanelDataSummary,
-  type GrafanaTheme2,
-  type PanelData,
-  type PanelDataSummary,
-  type PanelPluginVisualizationSuggestion,
-  store,
-} from '@grafana/data';
+import { CoreApp, getPanelDataSummary, type GrafanaTheme2, type PanelData, type PanelDataSummary, type PanelPluginVisualizationSuggestion, store } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';

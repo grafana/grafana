@@ -43,6 +43,9 @@
     "./themes/definitions/*.json": {
       "@grafana-app/source": "./src/themes/themeDefinitions/*.json",
       "default": "./dist/esm/themes/themeDefinitions/*.json"
+    },
+    "./dataframe": {
+      "@grafana-app/source": "./src/dataframe/index.ts"
     }
   },
   "publishConfig": {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 

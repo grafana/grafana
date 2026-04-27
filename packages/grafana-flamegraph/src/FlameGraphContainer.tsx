@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
-import { type DataFrame, type GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
+import { type GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';

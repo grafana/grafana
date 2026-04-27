@@ -1,4 +1,5 @@
-import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
+import { type AnnotationEvent } from '@grafana/data';
+import { type DataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { getBackendSrv } from '@grafana/runtime';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
 

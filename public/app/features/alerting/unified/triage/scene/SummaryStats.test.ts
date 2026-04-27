@@ -1,4 +1,4 @@
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { countInstances, countRules } from './SummaryStats';

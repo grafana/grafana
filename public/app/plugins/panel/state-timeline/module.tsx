@@ -1,10 +1,5 @@
-import {
-  FieldColorModeId,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  PanelPlugin,
-} from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';

@@ -3,28 +3,8 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  type AbsoluteTimeRange,
-  CoreApp,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type DataSourceWithLogsContextSupport,
-  dateTime,
-  EventBusSrv,
-  formattedValueToString,
-  getValueFormat,
-  type GrafanaTheme2,
-  hasLogsContextSupport,
-  LoadingState,
-  type LogRowContextOptions,
-  LogRowContextQueryDirection,
-  type LogRowModel,
-  LogsDedupStrategy,
-  LogsSortOrder,
-  shallowCompare,
-  store,
-  type TimeRange,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, CoreApp, type DataQueryResponse, type DataSourceApi, type DataSourceWithLogsContextSupport, dateTime, EventBusSrv, formattedValueToString, getValueFormat, type GrafanaTheme2, hasLogsContextSupport, LoadingState, type LogRowContextOptions, LogRowContextQueryDirection, type LogRowModel, LogsDedupStrategy, LogsSortOrder, store, type TimeRange } from '@grafana/data';
+import { shallowCompare } from '@grafana/data/dataframe';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';

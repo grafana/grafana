@@ -2,14 +2,8 @@ import { useState, useEffect } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
-import {
-  applyFieldOverrides,
-  type DataFrame,
-  type FieldConfigSource,
-  type TimeZone,
-  transformDataFrame,
-  useDataLinksContext,
-} from '@grafana/data';
+import { applyFieldOverrides, type FieldConfigSource, type TimeZone, transformDataFrame, useDataLinksContext } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';

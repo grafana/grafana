@@ -1,10 +1,5 @@
-import {
-  createDataFrame,
-  DataFrameType,
-  FieldType,
-  getPanelDataSummary,
-  VisualizationSuggestionScore,
-} from '@grafana/data';
+import { DataFrameType, getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { GraphDrawStyle, LegendDisplayMode, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {

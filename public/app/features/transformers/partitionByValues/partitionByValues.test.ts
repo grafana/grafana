@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { getPartitionByValuesTransformer, type PartitionByValuesTransformerOptions } from './partitionByValues';
 

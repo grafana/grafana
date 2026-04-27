@@ -4,7 +4,8 @@ import * as React from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { type DimensionContext } from 'app/features/dimensions/context';

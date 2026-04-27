@@ -3,26 +3,8 @@ import { type collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { isEqual } from 'lodash';
 
-import {
-  createDataFrame,
-  createTheme,
-  type DataFrame,
-  type DataLink,
-  DataLinkConfigOrigin,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type Field,
-  type FieldDTO,
-  FieldType,
-  getDisplayProcessor,
-  MutableDataFrame,
-  toDataFrame,
-  type TraceKeyValuePair,
-  type TraceLog,
-  type TraceSpanReference,
-  type TraceSpanRow,
-} from '@grafana/data';
+import { createTheme, type DataLink, DataLinkConfigOrigin, type DataQueryResponse, type DataSourceInstanceSettings, type DataSourceJsonData, getDisplayProcessor, type TraceKeyValuePair, type TraceLog, type TraceSpanReference, type TraceSpanRow } from '@grafana/data';
+import { createDataFrame, type DataFrame, type Field, type FieldDTO, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { createNodeGraphFrames, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 

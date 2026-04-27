@@ -1,4 +1,5 @@
-import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';

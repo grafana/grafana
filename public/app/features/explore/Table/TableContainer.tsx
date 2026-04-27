@@ -2,16 +2,8 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import {
-  applyFieldOverrides,
-  type SplitOpen,
-  type DataFrame,
-  LoadingState,
-  FieldType,
-  DataLinksContext,
-  type EventBus,
-  EventBusSrv,
-} from '@grafana/data';
+import { applyFieldOverrides, type SplitOpen, LoadingState, DataLinksContext, type EventBus, EventBusSrv } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';

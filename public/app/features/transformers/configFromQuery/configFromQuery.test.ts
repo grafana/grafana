@@ -1,4 +1,5 @@
-import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';

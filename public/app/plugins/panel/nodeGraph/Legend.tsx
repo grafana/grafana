@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type Field, FieldColorModeId, type GrafanaTheme2 } from '@grafana/data';
+import { FieldColorModeId, type GrafanaTheme2 } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { LegendDisplayMode } from '@grafana/schema';
 import { Icon, useStyles2, useTheme2, VizLegend, type VizLegendItem, VizLegendListItem } from '@grafana/ui';
 

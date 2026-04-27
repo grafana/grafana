@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
+import { InternalTimeZones, LoadingState } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';

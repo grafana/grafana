@@ -3,15 +3,8 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { of } from 'rxjs';
 
-import {
-  FieldType,
-  LoadingState,
-  type PanelData,
-  type SelectableValue,
-  VariableSupportType,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { LoadingState, type PanelData, type SelectableValue, VariableSupportType, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setRunRequest } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';

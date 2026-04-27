@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 
 export const mockTraceDataFrame = [
   createDataFrame({

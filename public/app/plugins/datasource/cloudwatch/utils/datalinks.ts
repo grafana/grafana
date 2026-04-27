@@ -1,12 +1,5 @@
-import {
-  type DataFrame,
-  type DataLink,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  FieldType,
-  type ScopedVars,
-  type TimeRange,
-} from '@grafana/data';
+import { type DataLink, type DataQueryRequest, type DataQueryResponse, type ScopedVars, type TimeRange } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { type AwsUrl, encodeUrl } from '../aws_url';

@@ -2,22 +2,9 @@ import { capitalize } from 'lodash';
 import { map, type Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  type DataFrame,
-  dataFrameFromJSON,
-  type DataFrameJSON,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  FieldCache,
-  FieldType,
-  LiveChannelScope,
-  LoadingState,
-  type MutableDataFrame,
-  sortDataFrame,
-  type ThresholdsConfig,
-  ThresholdsMode,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, LiveChannelScope, LoadingState, type ThresholdsConfig, ThresholdsMode } from '@grafana/data';
+import { FieldCache } from '@grafana/data/dataframe';
+import { type DataFrame, dataFrameFromJSON, type DataFrameJSON, FieldType, type MutableDataFrame, sortDataFrame } from '@grafana/data/dataframe';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 

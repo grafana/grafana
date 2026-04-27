@@ -1,4 +1,5 @@
-import { type DataFrameJSON, type Labels, FieldType } from '@grafana/data';
+import { type Labels } from '@grafana/data';
+import { type DataFrameJSON, FieldType } from '@grafana/data/dataframe';
 
 export function newLetterRandomizer(): (v: string) => string {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

@@ -1,4 +1,5 @@
-import { FieldType, getDefaultTimeRange, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { getDefaultTimeRange, LogsSortOrder } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { setTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';

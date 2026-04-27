@@ -3,15 +3,8 @@ import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  CoreApp,
-  type Field,
-  fuzzySearch,
-  type GrafanaTheme2,
-  type IconName,
-  type LinkModel,
-  type LogLabelStatsModel,
-} from '@grafana/data';
+import { CoreApp, fuzzySearch, type GrafanaTheme2, type IconName, type LinkModel, type LogLabelStatsModel } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, type IconSize, useStyles2 } from '@grafana/ui';

@@ -1,13 +1,6 @@
 import { createAssistantContextItem } from '@grafana/assistant';
-import {
-  type DataFrame,
-  type DataQueryResponse,
-  type DataQueryRequest,
-  FieldType,
-  MutableDataFrame,
-  dateTime,
-  type PreferredVisualisationType,
-} from '@grafana/data';
+import { type DataQueryResponse, type DataQueryRequest, dateTime, type PreferredVisualisationType } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
 import { enrichDataFrameWithAssistantContentMapper } from './utils';

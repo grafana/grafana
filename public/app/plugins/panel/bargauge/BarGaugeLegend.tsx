@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
-import { type Field, cacheFieldDisplayNames, type DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
+import { cacheFieldDisplayNames, getFieldSeriesColor } from '@grafana/data';
+import { type Field, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { AxisPlacement, type VizLegendOptions } from '@grafana/schema';
 import { useTheme2, VizLayout, type VizLayoutLegendProps, VizLegend, type VizLegendItem } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';

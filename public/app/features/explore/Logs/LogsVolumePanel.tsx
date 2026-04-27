@@ -2,16 +2,8 @@ import { css } from '@emotion/css';
 import { identity } from 'lodash';
 import * as React from 'react';
 
-import {
-  type AbsoluteTimeRange,
-  type DataQueryResponse,
-  LoadingState,
-  type SplitOpen,
-  type EventBus,
-  type GrafanaTheme2,
-  type DataFrame,
-  type TimeRange,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, type DataQueryResponse, LoadingState, type SplitOpen, type EventBus, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
 import { Icon, type SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';

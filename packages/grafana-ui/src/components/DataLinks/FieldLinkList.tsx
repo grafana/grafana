@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

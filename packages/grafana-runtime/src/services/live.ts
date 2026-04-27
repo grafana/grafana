@@ -1,14 +1,7 @@
 import { type Observable } from 'rxjs';
 
-import {
-  type DataFrameJSON,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type LiveChannelAddress,
-  type LiveChannelEvent,
-  type LiveChannelPresenceStatus,
-  type StreamingFrameOptions,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, type LiveChannelAddress, type LiveChannelEvent, type LiveChannelPresenceStatus } from '@grafana/data';
+import { type DataFrameJSON, type StreamingFrameOptions } from '@grafana/data/dataframe';
 
 /**
  * @alpha -- experimental
@@ -18,7 +11,7 @@ export interface LiveDataFilter {
 }
 
 // StreamingFrameAction and StreamingFrameOptions are now in @grafana/data
-export { StreamingFrameAction, type StreamingFrameOptions } from '@grafana/data';
+export { StreamingFrameAction, type StreamingFrameOptions } from '@grafana/data/dataframe';
 
 /**
  * @alpha

@@ -1,13 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
 
-import {
-  type DataFrame,
-  getFrameDisplayName,
-  FieldMatcherID,
-  fieldMatchers,
-  type SelectableValue,
-  toOption,
-} from '@grafana/data';
+import { getFrameDisplayName, FieldMatcherID, fieldMatchers, type SelectableValue, toOption } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 
 import { MultiSelect, Select } from '../Select/Select';

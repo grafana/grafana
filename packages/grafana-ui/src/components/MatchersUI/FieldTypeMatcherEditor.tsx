@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 
-import { type DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 

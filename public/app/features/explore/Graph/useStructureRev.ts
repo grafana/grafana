@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCounter, usePrevious } from 'react-use';
 
-import { type DataFrame, compareArrayValues, compareDataFrameStructures } from '@grafana/data';
+import { type DataFrame, compareArrayValues, compareDataFrameStructures } from '@grafana/data/dataframe';
 
 export function useStructureRev(frames: DataFrame[]) {
   const [structureRev, { inc }] = useCounter(1);

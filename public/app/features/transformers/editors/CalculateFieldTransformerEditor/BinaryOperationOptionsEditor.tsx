@@ -1,10 +1,5 @@
-import {
-  type BinaryOperationID,
-  binaryOperators,
-  FieldMatcherID,
-  FieldType,
-  type SelectableValue,
-} from '@grafana/data';
+import { type BinaryOperationID, binaryOperators, FieldMatcherID, type SelectableValue } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import {
   type BinaryValue,
   type BinaryOptions,

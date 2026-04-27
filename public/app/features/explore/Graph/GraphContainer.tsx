@@ -1,16 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import {
-  type DataFrame,
-  type EventBus,
-  type AbsoluteTimeRange,
-  type TimeZone,
-  type SplitOpen,
-  type LoadingState,
-  type ThresholdsConfig,
-  type TimeRange,
-} from '@grafana/data';
+import { type EventBus, type AbsoluteTimeRange, type TimeZone, type SplitOpen, type LoadingState, type ThresholdsConfig, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { type GraphThresholdsStyleConfig, PanelChrome, type PanelChromeProps } from '@grafana/ui';
 import { type ExploreGraphStyle } from 'app/types/explore';

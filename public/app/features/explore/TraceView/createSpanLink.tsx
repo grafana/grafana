@@ -1,18 +1,5 @@
-import {
-  type DataFrame,
-  type DataLink,
-  type DataLinkPostProcessor,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  dateTime,
-  type Field,
-  type LinkModel,
-  mapInternalLinkToExplore,
-  rangeUtil,
-  type ScopedVars,
-  type SplitOpen,
-  type TimeRange,
-} from '@grafana/data';
+import { type DataLink, type DataLinkPostProcessor, type DataSourceInstanceSettings, type DataSourceJsonData, dateTime, type LinkModel, mapInternalLinkToExplore, rangeUtil, type ScopedVars, type SplitOpen, type TimeRange } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import {
   type TraceToProfilesOptions,

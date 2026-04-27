@@ -3,7 +3,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { type DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data/dataframe';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import LokiStateHistory from './LokiStateHistory';

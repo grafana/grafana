@@ -4,23 +4,8 @@ import { flatten, groupBy, mapValues, sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
-import {
-  type AbsoluteTimeRange,
-  arrayToDataFrame,
-  type DataFrame,
-  type DataQueryResponse,
-  DataTopic,
-  dateTime,
-  type EventBus,
-  getFrameDisplayName,
-  type GrafanaTheme2,
-  LoadingState,
-  type LogRowModel,
-  shallowCompare,
-  type SplitOpen,
-  type TimeRange,
-  type TimeZone,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, type DataQueryResponse, DataTopic, dateTime, type EventBus, getFrameDisplayName, type GrafanaTheme2, LoadingState, type LogRowModel, type SplitOpen, type TimeRange, type TimeZone } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame, shallowCompare } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, Alert, useStyles2, type SeriesVisibilityChangeMode } from '@grafana/ui';
 

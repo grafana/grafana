@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 

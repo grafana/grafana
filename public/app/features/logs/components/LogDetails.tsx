@@ -1,17 +1,8 @@
 import { cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import {
-  type TimeRange,
-  type CoreApp,
-  type DataFrame,
-  DataFrameType,
-  type IconName,
-  type LinkModel,
-  type LogRowModel,
-  PluginExtensionPoints,
-  type PluginExtensionResourceAttributesContext,
-} from '@grafana/data';
+import { type TimeRange, type CoreApp, DataFrameType, type IconName, type LinkModel, type LogRowModel, PluginExtensionPoints, type PluginExtensionResourceAttributesContext } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { type PopoverContent, useTheme2 } from '@grafana/ui';

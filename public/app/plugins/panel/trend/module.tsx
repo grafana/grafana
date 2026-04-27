@@ -1,4 +1,5 @@
-import { type Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
+import { PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';

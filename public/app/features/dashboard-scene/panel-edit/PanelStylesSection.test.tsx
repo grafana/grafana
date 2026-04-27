@@ -2,17 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { type ReactNode } from 'react';
 
-import {
-  type FieldConfigSource,
-  FieldType,
-  LoadingState,
-  type PanelData,
-  type PanelPlugin,
-  type PanelPluginVisualizationSuggestion,
-  ThresholdsMode,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { type FieldConfigSource, LoadingState, type PanelData, type PanelPlugin, type PanelPluginVisualizationSuggestion, ThresholdsMode, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { reportInteraction } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';

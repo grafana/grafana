@@ -1,21 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import {
-  convertOldAngularValueMappings,
-  FieldColorModeId,
-  type FieldConfig,
-  fieldReducers,
-  type PanelModel,
-  type ReduceDataOptions,
-  ReducerID,
-  sortThresholds,
-  type Threshold,
-  type ThresholdsConfig,
-  ThresholdsMode,
-  validateFieldConfig,
-  type ValueMapping,
-  VizOrientation,
-} from '@grafana/data';
+import { convertOldAngularValueMappings, FieldColorModeId, fieldReducers, type PanelModel, type ReduceDataOptions, ReducerID, sortThresholds, type Threshold, type ThresholdsConfig, ThresholdsMode, validateFieldConfig, type ValueMapping, VizOrientation } from '@grafana/data';
+import { type FieldConfig } from '@grafana/data/dataframe';
 import { LegendDisplayMode, type OptionsWithLegend, type OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {

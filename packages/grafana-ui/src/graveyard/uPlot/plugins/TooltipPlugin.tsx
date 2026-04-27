@@ -4,19 +4,8 @@ import * as React from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
-import {
-  arrayUtils,
-  CartesianCoords2D,
-  DashboardCursorSync,
-  DataFrame,
-  FALLBACK_COLOR,
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  TimeZone,
-} from '@grafana/data';
+import { arrayUtils, CartesianCoords2D, DashboardCursorSync, FALLBACK_COLOR, formattedValueToString, getDisplayProcessor, getFieldDisplayName, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data/dataframe';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 import { Portal } from '../../../components/Portal/Portal';

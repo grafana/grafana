@@ -1,4 +1,5 @@
-import { type DataFrame, DataFrameType, type Field } from '@grafana/data';
+import { DataFrameType } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { isHeatmapCellsDense } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { type HeatmapData } from '../fields';

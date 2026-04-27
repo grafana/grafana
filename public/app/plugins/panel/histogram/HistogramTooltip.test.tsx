@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, createTheme, FieldType, getDisplayProcessor } from '@grafana/data';
+import { createTheme, getDisplayProcessor } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 

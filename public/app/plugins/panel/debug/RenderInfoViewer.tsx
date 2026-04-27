@@ -1,14 +1,7 @@
 import { Component } from 'react';
 
-import {
-  compareArrayValues,
-  compareDataFrameStructures,
-  fieldReducers,
-  getFieldDisplayName,
-  getFrameDisplayName,
-  type PanelProps,
-  ReducerID,
-} from '@grafana/data';
+import { fieldReducers, getFieldDisplayName, getFrameDisplayName, type PanelProps, ReducerID } from '@grafana/data';
+import { compareArrayValues, compareDataFrameStructures } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 

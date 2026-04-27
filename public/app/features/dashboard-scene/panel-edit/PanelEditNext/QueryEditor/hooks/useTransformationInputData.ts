@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { type DataFrame, type DataTransformContext, transformDataFrame } from '@grafana/data';
+import { type DataTransformContext, transformDataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type Transformation } from '../types';

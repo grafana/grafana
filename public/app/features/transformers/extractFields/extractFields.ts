@@ -1,15 +1,8 @@
 import { isString, get } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  type Field,
-  FieldType,
-  getFieldTypeFromValue,
-  getUniqueFieldName,
-  type SynchronousDataTransformerInfo,
-} from '@grafana/data';
+import { DataTransformerID, getUniqueFieldName, type SynchronousDataTransformerInfo } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, getFieldTypeFromValue } from '@grafana/data/dataframe';
 import { findField } from 'app/features/dimensions/utils';
 
 import { fieldExtractors } from './fieldExtractors';

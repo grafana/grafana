@@ -4,33 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import {
-  type AbsoluteTimeRange,
-  CoreApp,
-  type DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  type DataQueryResponse,
-  type DataSourceApi,
-  dateTimeForTimeZone,
-  type GrafanaTheme2,
-  hasLogsContextSupport,
-  hasLogsContextUiSupport,
-  type Labels,
-  type LogRowContextOptions,
-  type LogRowModel,
-  LogsSortOrder,
-  type PanelData,
-  type PanelProps,
-  type TimeRange,
-  type TimeZone,
-  toUtc,
-  LogSortOrderChangeEvent,
-  LoadingState,
-  rangeUtil,
-  transformDataFrame,
-  store,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, CoreApp, DataHoverClearEvent, DataHoverEvent, type DataQueryResponse, type DataSourceApi, dateTimeForTimeZone, type GrafanaTheme2, hasLogsContextSupport, hasLogsContextUiSupport, type Labels, type LogRowContextOptions, type LogRowModel, LogsSortOrder, type PanelData, type PanelProps, type TimeRange, type TimeZone, toUtc, LogSortOrderChangeEvent, LoadingState, rangeUtil, transformDataFrame, store } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';

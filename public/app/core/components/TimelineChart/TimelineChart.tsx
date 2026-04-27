@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
-import { type DataFrame, FALLBACK_COLOR, FieldType, type TimeRange } from '@grafana/data';
+import { FALLBACK_COLOR, type TimeRange } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   type TimelineValueAlignment,
   TooltipDisplayMode,

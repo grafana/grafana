@@ -3,7 +3,7 @@ import { type Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
 
-import { type Field, FieldType } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 
 import { SpatialCalculation, type SpatialCalculationOption } from './models.gen';
 

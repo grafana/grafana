@@ -1,11 +1,5 @@
-import {
-  type AnnotationEvent,
-  arrayToDataFrame,
-  DataTopic,
-  getDefaultTimeRange,
-  type PanelData,
-  type LoadingState,
-} from '@grafana/data';
+import { type AnnotationEvent, DataTopic, getDefaultTimeRange, type PanelData, type LoadingState } from '@grafana/data';
+import { arrayToDataFrame } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import { dataLayers } from '@grafana/scenes';
 import { type AnnotationQuery } from '@grafana/schema';

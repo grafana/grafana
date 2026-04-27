@@ -1,15 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {
-  type DataTransformerConfig,
-  FieldType,
-  type LoadingState,
-  type PanelData,
-  type TimeRange,
-  standardTransformersRegistry,
-  toDataFrame,
-} from '@grafana/data';
+import { type DataTransformerConfig, type LoadingState, type PanelData, type TimeRange, standardTransformersRegistry } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';

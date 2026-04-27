@@ -1,4 +1,4 @@
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView } from '@grafana/data/dataframe';
 
 import { type Feed, type NewsItem } from './types';
 import { feedToDataFrame } from './utils';

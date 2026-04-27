@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 import { Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 

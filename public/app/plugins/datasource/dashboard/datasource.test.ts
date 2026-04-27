@@ -1,17 +1,7 @@
 import { first } from 'rxjs';
 
-import {
-  arrayToDataFrame,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  getDefaultTimeRange,
-  LoadingState,
-  standardTransformersRegistry,
-  FieldType,
-  type DataFrame,
-  type AdHocVariableFilter,
-  DataTopic,
-} from '@grafana/data';
+import { type DataQueryResponse, type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, standardTransformersRegistry, type AdHocVariableFilter, DataTopic } from '@grafana/data';
+import { arrayToDataFrame, FieldType, type DataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {

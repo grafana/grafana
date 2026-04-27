@@ -1,16 +1,5 @@
-import {
-  type DataFrame,
-  type Field,
-  FieldType,
-  getDisplayProcessor,
-  type GrafanaTheme2,
-  isBooleanUnit,
-  type TimeRange,
-  type PanelData,
-  cacheFieldDisplayNames,
-  applyNullInsertThreshold,
-  nullToValue,
-} from '@grafana/data';
+import { getDisplayProcessor, type GrafanaTheme2, isBooleanUnit, type TimeRange, type PanelData, cacheFieldDisplayNames, applyNullInsertThreshold, nullToValue } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { convertFieldType } from '@grafana/data/internal';
 import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
 import { type AdHocFilterItem } from '@grafana/ui';

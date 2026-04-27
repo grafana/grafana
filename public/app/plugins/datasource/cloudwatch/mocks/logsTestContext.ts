@@ -1,19 +1,7 @@
 import { type Observable, of } from 'rxjs';
 
-import {
-  type DataFrame,
-  createDataFrame,
-  dataFrameToJSON,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  type ScopedVars,
-  type DataSourceApi,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type TestDataSourceResponse,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef, type ScopedVars, type DataSourceApi, type DataQuery, type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse } from '@grafana/data';
+import { type DataFrame, createDataFrame, dataFrameToJSON } from '@grafana/data/dataframe';
 import { type GetDataSourceListFilters, setDataSourceSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryStatus } from '../types';

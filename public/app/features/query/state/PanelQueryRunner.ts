@@ -2,34 +2,8 @@ import { cloneDeep, isEqual } from 'lodash';
 import { forkJoin, type Observable, of, ReplaySubject, type Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
-import {
-  applyFieldOverrides,
-  compareArrayValues,
-  compareDataFrameStructures,
-  CoreApp,
-  type DataConfigSource,
-  type DataFrame,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  type DataTransformContext,
-  type DataTransformerConfig,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelData,
-  rangeUtil,
-  type ScopedVars,
-  type TimeRange,
-  type TimeZone,
-  toDataFrame,
-  transformDataFrame,
-  preProcessPanelData,
-  type ApplyFieldOverrideOptions,
-  type StreamingDataFrame,
-  DataTopic,
-} from '@grafana/data';
+import { applyFieldOverrides, CoreApp, type DataConfigSource, type DataQuery, type DataQueryRequest, type DataSourceApi, type DataSourceJsonData, type DataSourceRef, type DataTransformContext, type DataTransformerConfig, getDefaultTimeRange, LoadingState, type PanelData, rangeUtil, type ScopedVars, type TimeRange, type TimeZone, transformDataFrame, type ApplyFieldOverrideOptions, DataTopic } from '@grafana/data';
+import { compareArrayValues, compareDataFrameStructures, type DataFrame, toDataFrame, preProcessPanelData, type StreamingDataFrame } from '@grafana/data/dataframe';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';

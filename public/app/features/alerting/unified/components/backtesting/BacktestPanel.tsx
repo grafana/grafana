@@ -3,7 +3,8 @@ import { fromPairs, isEmpty, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type DataFrameJSON, type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,

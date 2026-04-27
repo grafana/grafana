@@ -1,13 +1,7 @@
 import { css } from '@emotion/css';
 
-import {
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  type GrafanaTheme2,
-  type QueryResultMetaStat,
-  type TimeZone,
-} from '@grafana/data';
+import { formattedValueToString, getDisplayProcessor, type GrafanaTheme2, type QueryResultMetaStat, type TimeZone } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface InspectStatsTableProps {

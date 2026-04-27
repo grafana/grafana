@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 
-import { FieldType, toDataFrame } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { GroupByTransformerEditorBase } from './editors/GroupByTransformerEditor';
 import {

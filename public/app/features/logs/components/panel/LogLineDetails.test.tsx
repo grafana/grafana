@@ -2,20 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
-import {
-  createDataFrame,
-  type DataFrame,
-  DataFrameType,
-  dateTime,
-  type Field,
-  FieldType,
-  LogLevel,
-  type LogRowModel,
-  LogsSortOrder,
-  PluginExtensionPoints,
-  type ScopedVars,
-  toDataFrame,
-} from '@grafana/data';
+import { DataFrameType, dateTime, LogLevel, type LogRowModel, LogsSortOrder, PluginExtensionPoints, type ScopedVars } from '@grafana/data';
+import { createDataFrame, type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';

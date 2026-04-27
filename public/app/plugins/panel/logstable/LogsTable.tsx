@@ -1,16 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  LoadingState,
-  LogsSortOrder,
-  type PanelData,
-  type PanelProps,
-} from '@grafana/data';
+import { CoreApp, type FieldConfigSource, type GrafanaTheme2, LoadingState, LogsSortOrder, type PanelData, type PanelProps } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';

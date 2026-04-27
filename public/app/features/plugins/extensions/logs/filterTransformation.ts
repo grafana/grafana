@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash';
 import { type Observable, scan } from 'rxjs';
 
-import { createDataFrame, type CustomTransformOperator, type DataFrame, type PartialDataFrame } from '@grafana/data';
+import { type CustomTransformOperator } from '@grafana/data';
+import { createDataFrame, type DataFrame, type PartialDataFrame } from '@grafana/data/dataframe';
 
 import { type LogFilter } from './LogViewFilters';
 

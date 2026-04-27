@@ -1,11 +1,5 @@
-import {
-  applyFieldOverrides,
-  createTheme,
-  DataFrameView,
-  dateTime,
-  type FieldDisplay,
-  toDataFrame,
-} from '@grafana/data';
+import { applyFieldOverrides, createTheme, dateTime, type FieldDisplay } from '@grafana/data';
+import { DataFrameView, toDataFrame } from '@grafana/data/dataframe';
 
 import { TemplateSrv } from '../../templating/template_srv';
 

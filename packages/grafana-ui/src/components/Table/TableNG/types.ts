@@ -1,19 +1,8 @@
 import { type FC, type SyntheticEvent } from 'react';
 import { type CellRendererProps, type Column } from 'react-data-grid';
 
-import {
-  type DataFrame,
-  type Field,
-  type GrafanaTheme2,
-  type KeyValue,
-  type TimeRange,
-  type FieldConfigSource,
-  type ActionModel,
-  type FieldType,
-  type DataFrameWithValue,
-  type SelectableValue,
-  type FieldState,
-} from '@grafana/data';
+import { type GrafanaTheme2, type KeyValue, type TimeRange, type FieldConfigSource, type ActionModel, type SelectableValue } from '@grafana/data';
+import { type DataFrame, type Field, type FieldType, type DataFrameWithValue, type FieldState } from '@grafana/data/dataframe';
 import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';

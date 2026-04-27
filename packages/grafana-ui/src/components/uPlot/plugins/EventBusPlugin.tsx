@@ -3,14 +3,8 @@ import { useLayoutEffect, useRef } from 'react';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  type DataHoverPayload,
-  type EventBus,
-  LegacyGraphHoverEvent,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, type DataHoverPayload, type EventBus, LegacyGraphHoverEvent } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 

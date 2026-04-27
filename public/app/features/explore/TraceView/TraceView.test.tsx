@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, MutableDataFrame } from '@grafana/data/dataframe';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 

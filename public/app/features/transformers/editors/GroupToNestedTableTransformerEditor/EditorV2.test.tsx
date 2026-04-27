@@ -1,6 +1,7 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 
-import { FieldMatcherID, FieldType, ReducerID, toDataFrame } from '@grafana/data';
+import { FieldMatcherID, ReducerID } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { GroupByOperationID, type GroupToNestedTableTransformerOptionsV2 } from '@grafana/data/internal';
 
 import { GroupToNestedTableTransformerEditorV2 } from './EditorV2';

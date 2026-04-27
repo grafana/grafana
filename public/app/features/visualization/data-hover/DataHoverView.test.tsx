@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { arrayToDataFrame } from '@grafana/data';
+import { arrayToDataFrame } from '@grafana/data/dataframe';
 
 import { DataHoverView } from './DataHoverView';
 import { isHttpUrl } from './renderValue';

@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 
-import { type DataFrame, type TraceLog } from '@grafana/data';
+import { type TraceLog } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 
 import DetailState from './components/TraceTimelineViewer/SpanDetail/DetailState';
 import { type TraceSpanReference } from './components/types/trace';

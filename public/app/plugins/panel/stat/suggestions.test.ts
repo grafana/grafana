@@ -1,4 +1,5 @@
-import { createDataFrame, type Field, FieldType, getPanelDataSummary } from '@grafana/data';
+import { getPanelDataSummary } from '@grafana/data';
+import { createDataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 
 import { statSuggestionsSupplier } from './suggestions';
 

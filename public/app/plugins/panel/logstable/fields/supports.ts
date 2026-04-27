@@ -1,4 +1,5 @@
-import { type Field, getFieldDisplayName } from '@grafana/data';
+import { getFieldDisplayName } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 
 export function doesFieldSupportAdHocFiltering(field: Field, timeFieldName: string, bodyFieldName: string): boolean {
   const unsupportedFields = [timeFieldName, bodyFieldName];

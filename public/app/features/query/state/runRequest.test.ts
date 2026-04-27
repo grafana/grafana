@@ -1,16 +1,7 @@
 import { Observable, type Subscriber, type Subscription } from 'rxjs';
 
-import {
-  type CoreApp,
-  type DataFrame,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  DataTopic,
-  dateTime,
-  LoadingState,
-  type PanelData,
-} from '@grafana/data';
+import { type CoreApp, type DataQueryRequest, type DataQueryResponse, type DataSourceApi, DataTopic, dateTime, LoadingState, type PanelData } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { setEchoSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';

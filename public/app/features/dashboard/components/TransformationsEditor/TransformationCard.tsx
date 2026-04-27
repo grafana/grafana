@@ -1,11 +1,7 @@
 import { cx } from '@emotion/css';
 
-import {
-  type DataFrame,
-  type TransformerRegistryItem,
-  TransformationApplicabilityLevels,
-  standardTransformersRegistry,
-} from '@grafana/data';
+import { type TransformerRegistryItem, TransformationApplicabilityLevels, standardTransformersRegistry } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, Card, IconButton, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';

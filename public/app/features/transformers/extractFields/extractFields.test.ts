@@ -1,12 +1,5 @@
-import {
-  type DataFrame,
-  type DataTransformerConfig,
-  DataTransformerID,
-  type Field,
-  FieldType,
-  transformDataFrame,
-  toDataFrame,
-} from '@grafana/data';
+import { type DataTransformerConfig, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { mockTransformationsRegistry, type SortByTransformerOptions, sortByTransformer } from '@grafana/data/internal';
 
 import { extractFieldsTransformer } from './extractFields';

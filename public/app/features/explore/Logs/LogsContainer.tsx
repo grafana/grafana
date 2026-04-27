@@ -2,25 +2,8 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import {
-  type AbsoluteTimeRange,
-  hasLogsContextSupport,
-  hasLogsContextUiSupport,
-  type LoadingState,
-  type LogRowModel,
-  type RawTimeRange,
-  type EventBus,
-  type SplitOpen,
-  type DataFrame,
-  SupplementaryQueryType,
-  type DataQueryResponse,
-  type LogRowContextOptions,
-  type DataSourceWithLogsContextSupport,
-  type DataSourceApi,
-  hasToggleableQueryFiltersSupport,
-  type DataSourceWithQueryModificationSupport,
-  hasQueryModificationSupport,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, hasLogsContextSupport, hasLogsContextUiSupport, type LoadingState, type LogRowModel, type RawTimeRange, type EventBus, type SplitOpen, SupplementaryQueryType, type DataQueryResponse, type LogRowContextOptions, type DataSourceWithLogsContextSupport, type DataSourceApi, hasToggleableQueryFiltersSupport, type DataSourceWithQueryModificationSupport, hasQueryModificationSupport } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

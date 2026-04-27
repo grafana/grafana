@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
-import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

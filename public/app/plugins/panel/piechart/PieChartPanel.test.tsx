@@ -2,16 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import {
-  type FieldConfigSource,
-  type FieldDisplay,
-  toDataFrame,
-  FieldType,
-  VizOrientation,
-  LoadingState,
-  getDefaultTimeRange,
-  EventBusSrv,
-} from '@grafana/data';
+import { type FieldConfigSource, type FieldDisplay, VizOrientation, LoadingState, getDefaultTimeRange, EventBusSrv } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';

@@ -1,16 +1,5 @@
-import {
-  ByNamesMatcherMode,
-  type ConfigOverrideRule,
-  type DataFrame,
-  type DynamicConfigValue,
-  type FieldConfigSource,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  getFieldDisplayName,
-  isSystemOverrideWithRef,
-  type SystemConfigOverrideRule,
-} from '@grafana/data';
+import { ByNamesMatcherMode, type ConfigOverrideRule, type DynamicConfigValue, type FieldConfigSource, FieldMatcherID, fieldMatchers, getFieldDisplayName, isSystemOverrideWithRef, type SystemConfigOverrideRule } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';

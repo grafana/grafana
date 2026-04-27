@@ -1,6 +1,7 @@
 import { TestScheduler } from 'rxjs/testing';
 
-import { AlertState, DataTopic, getDefaultTimeRange, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { AlertState, DataTopic, getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 

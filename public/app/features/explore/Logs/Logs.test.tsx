@@ -3,18 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
-import {
-  type DataFrame,
-  EventBusSrv,
-  type ExplorePanelsState,
-  LoadingState,
-  LogLevel,
-  type LogRowModel,
-  toUtc,
-  createDataFrame,
-  type ExploreLogsPanelState,
-  type DataQuery,
-} from '@grafana/data';
+import { EventBusSrv, type ExplorePanelsState, LoadingState, LogLevel, type LogRowModel, toUtc, type ExploreLogsPanelState, type DataQuery } from '@grafana/data';
+import { type DataFrame, createDataFrame } from '@grafana/data/dataframe';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';

@@ -1,14 +1,7 @@
 import type { JsonTree } from '@react-awesome-query-builder/ui';
 
-import {
-  type DataFrame,
-  type DataQuery,
-  type DataSourceJsonData,
-  type MetricFindValue,
-  type SelectableValue,
-  type TimeRange,
-  toOption as toOptionFromData,
-} from '@grafana/data';
+import { type DataQuery, type DataSourceJsonData, type MetricFindValue, type SelectableValue, type TimeRange, toOption as toOptionFromData } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type CompletionItemKind, type EditorMode, type LanguageDefinition } from '@grafana/plugin-ui';
 
 import { type QueryWithDefaults } from './defaults';

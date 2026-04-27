@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
+import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data/dataframe';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,

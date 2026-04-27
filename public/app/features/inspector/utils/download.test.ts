@@ -1,13 +1,7 @@
 import saveAs from 'file-saver';
 
-import {
-  dataFrameFromJSON,
-  type DataFrameJSON,
-  dateTimeFormat,
-  FieldType,
-  type LogRowModel,
-  LogsMetaKind,
-} from '@grafana/data';
+import { dateTimeFormat, type LogRowModel, LogsMetaKind } from '@grafana/data';
+import { dataFrameFromJSON, type DataFrameJSON, FieldType } from '@grafana/data/dataframe';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './download';

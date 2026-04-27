@@ -14,7 +14,8 @@ import type ImageSource from 'ol/source/Image';
 import type TileSource from 'ol/source/Tile';
 import type VectorSource from 'ol/source/Vector';
 
-import { type DataFrame, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getColorDimension } from 'app/features/dimensions/color';

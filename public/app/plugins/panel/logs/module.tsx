@@ -1,4 +1,5 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
+import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';

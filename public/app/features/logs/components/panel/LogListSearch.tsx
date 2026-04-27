@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { type ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type VariableSizeList } from 'react-window';
 
-import { escapeRegex, type GrafanaTheme2, shallowCompare } from '@grafana/data';
+import { escapeRegex, type GrafanaTheme2 } from '@grafana/data';
+import { shallowCompare } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { FieldType, type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, type ScalarDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';

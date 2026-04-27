@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldType, toDataFrame } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { ModelType } from './regression';
 import { RegressionTransformerEditor } from './regressionEditor';

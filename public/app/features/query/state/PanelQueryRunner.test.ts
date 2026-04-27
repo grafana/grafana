@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
+import * as grafanaDataDataframe from '@grafana/data/dataframe';
 import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
 import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
@@ -453,11 +454,11 @@ describe('PanelQueryRunner', () => {
     }
   );
 
-  const snapshotData: grafanaData.DataFrameDTO[] = [
+  const snapshotData: grafanaDataDataframe.DataFrameDTO[] = [
     {
       fields: [
-        { name: 'time', type: grafanaData.FieldType.time, values: [1000] },
-        { name: 'value', type: grafanaData.FieldType.number, values: [1] },
+        { name: 'time', type: grafanaDataDataframe.FieldType.time, values: [1000] },
+        { name: 'value', type: grafanaDataDataframe.FieldType.number, values: [1] },
       ],
     },
   ];

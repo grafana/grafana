@@ -1,14 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  createDataFrame,
-  createTheme,
-  DataFrameType,
-  FieldType,
-  getDefaultTimeRange,
-  getDisplayProcessor,
-  LoadingState,
-} from '@grafana/data';
+import { createTheme, DataFrameType, getDefaultTimeRange, getDisplayProcessor, LoadingState } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { HeatmapCellLayout, TooltipDisplayMode } from '@grafana/schema';
 

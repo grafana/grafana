@@ -1,4 +1,4 @@
-import { type Field, type FieldType } from '@grafana/data';
+import { type Field, type FieldType } from '@grafana/data/dataframe';
 import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 export interface DimensionSupplier<T = any> {

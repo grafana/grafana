@@ -1,13 +1,7 @@
 import uPlot, { type Axis, type AlignedData, type Scale } from 'uplot';
 
-import {
-  colorManipulator,
-  type DataFrame,
-  dateTimeFormat,
-  type GrafanaTheme2,
-  systemDateFormats,
-  type TimeZone,
-} from '@grafana/data';
+import { colorManipulator, dateTimeFormat, type GrafanaTheme2, systemDateFormats, type TimeZone } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import {
   StackingMode,
   VisibilityMode,

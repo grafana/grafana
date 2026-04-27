@@ -1,13 +1,8 @@
 import pluralize from 'pluralize';
 import * as React from 'react';
 
-import {
-  type QueryEditorProps,
-  type SelectableValue,
-  rangeUtil,
-  type DataQueryRequest,
-  type Field,
-} from '@grafana/data';
+import { type QueryEditorProps, type SelectableValue, rangeUtil, type DataQueryRequest } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   InlineField,

@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import { type DataFrame, type DataQueryResponse, type Field, FieldType } from '@grafana/data';
+import { type DataQueryResponse } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 
 import { transformBackendResult } from './backendResultTransformer';
 

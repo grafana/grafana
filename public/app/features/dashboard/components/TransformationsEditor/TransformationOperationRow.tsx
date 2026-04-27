@@ -2,15 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 import { mergeMap } from 'rxjs';
 
-import {
-  type DataTransformerConfig,
-  type TransformerRegistryItem,
-  FrameMatcherID,
-  type DataTransformContext,
-  getFrameMatchers,
-  transformDataFrame,
-  type DataFrame,
-} from '@grafana/data';
+import { type DataTransformerConfig, type TransformerRegistryItem, FrameMatcherID, type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';

@@ -1,26 +1,8 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  type DataConfigSource,
-  type DataFrameDTO,
-  type DataLink,
-  type DataQuery,
-  type DataTransformerConfig,
-  EventBusSrv,
-  type FieldConfigSource,
-  type PanelPlugin,
-  type PanelPluginDataSupport,
-  type ScopedVars,
-  type PanelModel as IPanelModel,
-  type DataSourceRef,
-  CoreApp,
-  filterFieldConfigOverrides,
-  getPanelOptionsWithDefaults,
-  isStandardFieldProp,
-  restoreCustomOverrideRules,
-  getNextRefId,
-} from '@grafana/data';
+import { type DataConfigSource, type DataLink, type DataQuery, type DataTransformerConfig, EventBusSrv, type FieldConfigSource, type PanelPlugin, type PanelPluginDataSupport, type ScopedVars, type PanelModel as IPanelModel, type DataSourceRef, CoreApp, filterFieldConfigOverrides, getPanelOptionsWithDefaults, isStandardFieldProp, restoreCustomOverrideRules, getNextRefId } from '@grafana/data';
+import { type DataFrameDTO } from '@grafana/data/dataframe';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';

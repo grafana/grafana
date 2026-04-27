@@ -1,14 +1,5 @@
-import {
-  type DataFrame,
-  DataFrameType,
-  type DataQueryResponse,
-  type DataQueryResponseData,
-  type Field,
-  FieldType,
-  type PanelData,
-  type QueryResultMetaStat,
-  shallowCompare,
-} from '@grafana/data';
+import { DataFrameType, type DataQueryResponse, type DataQueryResponseData, type PanelData, type QueryResultMetaStat } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, shallowCompare } from '@grafana/data/dataframe';
 
 export function combinePanelData(currentData: PanelData, newData: PanelData): PanelData {
   const series = combineResponses({ data: currentData.series }, { data: newData.series }).data;

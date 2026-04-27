@@ -1,4 +1,4 @@
-import { createDataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { prepSeries } from './utils';
 

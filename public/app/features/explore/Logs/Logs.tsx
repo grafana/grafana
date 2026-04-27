@@ -5,37 +5,8 @@ import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
-import {
-  type AbsoluteTimeRange,
-  compareArrayValues,
-  CoreApp,
-  type DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  type DataQueryResponse,
-  type EventBus,
-  type ExploreLogsPanelState,
-  type ExplorePanelsState,
-  type GrafanaTheme2,
-  LoadingState,
-  type LogLevel,
-  type LogRowContextOptions,
-  type LogRowModel,
-  LogsDedupStrategy,
-  type LogsMetaItem,
-  LogsSortOrder,
-  type PanelData,
-  rangeUtil,
-  type RawTimeRange,
-  serializeStateToUrlParam,
-  shallowCompare,
-  type SplitOpen,
-  store,
-  type TimeRange,
-  type TimeZone,
-  toUtc,
-  urlUtil,
-} from '@grafana/data';
+import { type AbsoluteTimeRange, CoreApp, DataHoverClearEvent, DataHoverEvent, type DataQueryResponse, type EventBus, type ExploreLogsPanelState, type ExplorePanelsState, type GrafanaTheme2, LoadingState, type LogLevel, type LogRowContextOptions, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, LogsSortOrder, type PanelData, rangeUtil, type RawTimeRange, serializeStateToUrlParam, type SplitOpen, store, type TimeRange, type TimeZone, toUtc, urlUtil } from '@grafana/data';
+import { compareArrayValues, type DataFrame, shallowCompare } from '@grafana/data/dataframe';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';

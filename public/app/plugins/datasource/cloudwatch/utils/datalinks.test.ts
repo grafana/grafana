@@ -1,4 +1,5 @@
-import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, dateMath } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { config, setDataSourceSrv } from '@grafana/runtime';
 import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';
 

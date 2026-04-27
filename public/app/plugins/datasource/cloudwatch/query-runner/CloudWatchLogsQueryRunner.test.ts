@@ -1,14 +1,7 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type Field,
-  FieldType,
-  LogLevel,
-  LogRowContextQueryDirection,
-  type LogRowModel,
-} from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, LogLevel, LogRowContextQueryDirection, type LogRowModel } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 
 import {
   type CloudWatchLogsAnomaliesQuery,

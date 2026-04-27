@@ -1,4 +1,4 @@
-import { FieldType, toDataFrame } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { dataFrameToLabelMaps } from './dataFrameUtils';
 

@@ -1,12 +1,6 @@
 /* istanbul ignore file */
-import {
-  FieldColorModeId,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  type SetFieldConfigOptionsArgs,
-  type Field,
-} from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, type SetFieldConfigOptionsArgs } from '@grafana/data';
+import { FieldType, type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,

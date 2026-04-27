@@ -1,4 +1,5 @@
-import { DataFrameType, type DataQueryRequest, dateTime, FieldType } from '@grafana/data';
+import { DataFrameType, type DataQueryRequest, dateTime } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 
 import { randomWalk } from './randomWalk';
 import { type GrafanaQuery, GrafanaQueryType } from './types';

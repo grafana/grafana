@@ -3,12 +3,8 @@ import { get as lodashGet } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
-import {
-  type DataFrame,
-  type GrafanaTheme2,
-  type PanelOptionsEditorBuilder,
-  type StandardEditorContext,
-} from '@grafana/data';
+import { type GrafanaTheme2, type PanelOptionsEditorBuilder, type StandardEditorContext } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { type NestedValueAccess, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';

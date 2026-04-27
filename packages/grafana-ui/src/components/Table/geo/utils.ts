@@ -1,6 +1,6 @@
 import { type Geometry } from 'ol/geom';
 
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 
 /**
  * Type guard to check if a value is an OpenLayers Geometry object.

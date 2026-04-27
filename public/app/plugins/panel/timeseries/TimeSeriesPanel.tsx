@@ -1,15 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import {
-  alignTimeRangeCompareData,
-  DashboardCursorSync,
-  type DataFrame,
-  DataFrameType,
-  FieldType,
-  type PanelProps,
-  shouldAlignTimeCompare,
-  useDataLinksContext,
-} from '@grafana/data';
+import { DashboardCursorSync, DataFrameType, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { alignTimeRangeCompareData, type DataFrame, FieldType, shouldAlignTimeCompare } from '@grafana/data/dataframe';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {

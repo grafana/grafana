@@ -2,21 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
-import {
-  CoreApp,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataSourceApi,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  FieldType,
-  LoadingState,
-  type PanelData,
-  PluginType,
-  type TimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { CoreApp, type DataQuery, type DataQueryRequest, type DataSourceApi, type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef, LoadingState, type PanelData, PluginType, type TimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';

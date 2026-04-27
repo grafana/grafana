@@ -1,14 +1,7 @@
 import { type Geometry } from 'ol/geom';
 
-import {
-  type FieldMatcher,
-  getFieldMatcher,
-  FieldMatcherID,
-  type DataFrame,
-  type Field,
-  getFieldDisplayName,
-  FieldType,
-} from '@grafana/data';
+import { type FieldMatcher, getFieldMatcher, FieldMatcherID, getFieldDisplayName } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 

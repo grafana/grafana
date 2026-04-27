@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, type DataFrame, DataFrameType, FieldType } from '@grafana/data';
+import { DataFrameType } from '@grafana/data';
+import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 

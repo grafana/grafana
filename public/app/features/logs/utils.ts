@@ -3,34 +3,9 @@ import { countBy, chain } from 'lodash';
 import { type MouseEvent } from 'react';
 import { lastValueFrom, map, type Observable } from 'rxjs';
 
-import {
-  LogLevel,
-  type LogRowModel,
-  type LogLabelStatsModel,
-  type LogsModel,
-  LogsSortOrder,
-  type DataFrame,
-  type FieldConfig,
-  FieldCache,
-  FieldType,
-  MutableDataFrame,
-  type QueryResultMeta,
-  LogsVolumeType,
-  NumericLogLevel,
-  getFieldDisplayName,
-  getDefaultTimeRange,
-  locationUtil,
-  urlUtil,
-  dateTime,
-  dateTimeFormat,
-  type DataTransformerConfig,
-  type CustomTransformOperator,
-  transformDataFrame,
-  getTimeField,
-  type Field,
-  type LogsMetaItem,
-  store,
-} from '@grafana/data';
+import { LogLevel, type LogRowModel, type LogLabelStatsModel, type LogsModel, LogsSortOrder, type QueryResultMeta, LogsVolumeType, NumericLogLevel, getFieldDisplayName, getDefaultTimeRange, locationUtil, urlUtil, dateTime, dateTimeFormat, type DataTransformerConfig, type CustomTransformOperator, transformDataFrame, type LogsMetaItem, store } from '@grafana/data';
+import { FieldCache } from '@grafana/data/dataframe';
+import { type DataFrame, type FieldConfig, FieldType, MutableDataFrame, getTimeField, type Field } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
 

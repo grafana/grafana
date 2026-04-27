@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { toDataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { type Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
 

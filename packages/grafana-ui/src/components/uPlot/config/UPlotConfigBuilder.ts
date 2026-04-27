@@ -9,15 +9,8 @@ import uPlot, {
   type Series,
 } from 'uplot';
 
-import {
-  type DataFrame,
-  DefaultTimeZone,
-  type Field,
-  getTimeZoneInfo,
-  type GrafanaTheme2,
-  type TimeRange,
-  type TimeZone,
-} from '@grafana/data';
+import { DefaultTimeZone, getTimeZoneInfo, type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { AxisPlacement, type VizOrientation } from '@grafana/schema';
 
 import { type FacetedData, type PlotConfig } from '../types';

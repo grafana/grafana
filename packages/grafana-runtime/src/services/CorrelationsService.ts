@@ -1,10 +1,5 @@
-import {
-  type DataFrame,
-  type DataLinkPostProcessor,
-  type DataLinkTransformationConfig,
-  type DataSourceInstanceSettings,
-  type TimeRange,
-} from '@grafana/data';
+import { type DataLinkPostProcessor, type DataLinkTransformationConfig, type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 
 export type CorrelationConfigQuery = {
   field: string;

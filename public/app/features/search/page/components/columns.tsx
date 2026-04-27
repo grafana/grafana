@@ -2,14 +2,8 @@ import { cx } from '@emotion/css';
 import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
-import {
-  type DisplayProcessor,
-  type Field,
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldDisplayName,
-} from '@grafana/data';
+import { type DisplayProcessor, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';

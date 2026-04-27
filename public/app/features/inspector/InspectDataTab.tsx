@@ -2,17 +2,8 @@ import { cloneDeep } from 'lodash';
 import { PureComponent } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import {
-  applyFieldOverrides,
-  applyRawFieldOverrides,
-  type CoreApp,
-  type DataFrame,
-  DataTransformerID,
-  type FieldConfigSource,
-  type SelectableValue,
-  type TimeZone,
-  transformDataFrame,
-} from '@grafana/data';
+import { applyFieldOverrides, applyRawFieldOverrides, type CoreApp, DataTransformerID, type FieldConfigSource, type SelectableValue, type TimeZone, transformDataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';

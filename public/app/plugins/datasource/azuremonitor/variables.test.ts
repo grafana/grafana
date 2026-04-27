@@ -1,6 +1,7 @@
 import { from, lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest, toDataFrame } from '@grafana/data';
+import { type DataQueryRequest } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 
 import { AzureQueryType } from './dataquery.gen';
 import createMockDatasource from './mocks/datasource';

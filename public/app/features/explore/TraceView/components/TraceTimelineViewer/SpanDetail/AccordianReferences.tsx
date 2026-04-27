@@ -15,7 +15,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type Field } from '@grafana/data/dataframe';
 import { Trans, t } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 

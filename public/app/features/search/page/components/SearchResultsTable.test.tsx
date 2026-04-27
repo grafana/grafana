@@ -1,15 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { Subject } from 'rxjs';
 
-import {
-  applyFieldOverrides,
-  createTheme,
-  type DataFrame,
-  DataFrameView,
-  FieldType,
-  type PanelPluginMeta,
-  toDataFrame,
-} from '@grafana/data';
+import { applyFieldOverrides, createTheme, type PanelPluginMeta } from '@grafana/data';
+import { type DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';

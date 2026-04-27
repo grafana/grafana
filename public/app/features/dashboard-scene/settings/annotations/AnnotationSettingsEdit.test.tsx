@@ -2,15 +2,8 @@ import { act, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
-import {
-  type AnnotationQuery,
-  FieldType,
-  LoadingState,
-  type PanelData,
-  VariableSupportType,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
+import { type AnnotationQuery, LoadingState, type PanelData, VariableSupportType, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

@@ -1,4 +1,5 @@
-import { type DataFrame, FieldType, createDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { type DataFrame, FieldType, createDataFrame } from '@grafana/data/dataframe';
 
 import { type Options as NodeGraphOptions } from './panelcfg.gen';
 import { type NodeDatum } from './types';

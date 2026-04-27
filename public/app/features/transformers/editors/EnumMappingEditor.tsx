@@ -3,7 +3,8 @@ import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { type DataFrame, type EnumFieldConfig, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type EnumFieldConfig } from '@grafana/data/dataframe';
 import { type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';

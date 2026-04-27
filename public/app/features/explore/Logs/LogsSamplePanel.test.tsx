@@ -2,14 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import {
-  FieldType,
-  LoadingState,
-  SupplementaryQueryType,
-  type DataSourceApi,
-  createDataFrame,
-  getDefaultTimeRange,
-} from '@grafana/data';
+import { LoadingState, SupplementaryQueryType, type DataSourceApi, getDefaultTimeRange } from '@grafana/data';
+import { FieldType, createDataFrame } from '@grafana/data/dataframe';
 import { type DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';

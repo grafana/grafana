@@ -3,19 +3,8 @@ import * as React from 'react';
 import { of, type OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  FieldType,
-  getFieldDisplayName,
-  type KeyValue,
-  type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-  FieldMatcherID,
-} from '@grafana/data';
+import { DataTransformerID, getFieldDisplayName, type KeyValue, type SelectableValue, standardTransformers, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory, FieldMatcherID } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   CalculateFieldMode,
   type CalculateFieldTransformerOptions,

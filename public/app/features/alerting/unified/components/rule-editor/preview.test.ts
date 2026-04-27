@@ -1,4 +1,4 @@
-import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 import { mapDataFrameToAlertPreview } from './preview';
 

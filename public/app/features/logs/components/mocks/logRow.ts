@@ -1,6 +1,7 @@
 import type { Grammar } from 'prismjs';
 
-import { FieldType, LogLevel, type LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { LogLevel, type LogRowModel, LogsSortOrder } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 
 import { type LogListModel, preProcessLogs, type PreProcessOptions } from '../panel/processing';
 

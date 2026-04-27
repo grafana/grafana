@@ -15,13 +15,8 @@
 import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {
-  type IconName,
-  MutableDataFrame,
-  type PluginExtensionLink,
-  PluginExtensionPoints,
-  PluginExtensionTypes,
-} from '@grafana/data';
+import { type IconName, type PluginExtensionLink, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data/dataframe';
 import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 

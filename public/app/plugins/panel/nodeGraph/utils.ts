@@ -1,13 +1,6 @@
-import {
-  type DataFrame,
-  type Field,
-  FieldCache,
-  FieldColorModeId,
-  type FieldConfig,
-  FieldType,
-  MutableDataFrame,
-  NodeGraphDataFrameFieldNames,
-} from '@grafana/data';
+import { FieldColorModeId, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { FieldCache } from '@grafana/data/dataframe';
+import { type DataFrame, type Field, type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 import { nodeR } from './Node';
 import { type Options as NodeGraphOptions } from './panelcfg.gen';

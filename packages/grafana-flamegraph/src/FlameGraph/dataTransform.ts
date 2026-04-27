@@ -1,12 +1,5 @@
-import {
-  createTheme,
-  type DataFrame,
-  type DisplayProcessor,
-  type Field,
-  FieldType,
-  getDisplayProcessor,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { createTheme, type DisplayProcessor, getDisplayProcessor, type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 
 import { SampleUnit } from '../types';
 

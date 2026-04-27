@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2, type PanelData, type ThresholdsConfig, isTimeSeriesFrames } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, type ThresholdsConfig } from '@grafana/data';
+import { isTimeSeriesFrames } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 import { type GraphThresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';

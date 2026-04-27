@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
-import { FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import {
   GrafanaAlertStateDecision,
   type PromRulesResponse,

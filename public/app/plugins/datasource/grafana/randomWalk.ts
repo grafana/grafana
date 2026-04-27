@@ -1,4 +1,5 @@
-import { type DataFrame, DataFrameType, type DataQueryRequest, FieldType } from '@grafana/data';
+import { DataFrameType, type DataQueryRequest } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { type GrafanaQuery } from './types';
 

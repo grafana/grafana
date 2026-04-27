@@ -1,16 +1,5 @@
-import {
-  type DataLink,
-  type DisplayValue,
-  type FieldDisplay,
-  formattedValueToString,
-  getFieldDisplayValuesProxy,
-  getTimeField,
-  type InterpolateFunction,
-  type Labels,
-  type LinkModelSupplier,
-  type ScopedVar,
-  type ScopedVars,
-} from '@grafana/data';
+import { type DataLink, type DisplayValue, type FieldDisplay, formattedValueToString, getFieldDisplayValuesProxy, type InterpolateFunction, type Labels, type LinkModelSupplier, type ScopedVar, type ScopedVars } from '@grafana/data';
+import { getTimeField } from '@grafana/data/dataframe';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

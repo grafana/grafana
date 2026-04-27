@@ -1,4 +1,4 @@
-import { FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
 import { type BackendDataSourceResponse, type FetchResponse } from '@grafana/runtime';
 
 export const mockInfluxFetchResponse = (

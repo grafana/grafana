@@ -2,18 +2,8 @@ import { isEmpty } from 'lodash';
 import { createElement } from 'react';
 import { catchError, map, type Observable, of } from 'rxjs';
 
-import {
-  AppEvents,
-  type DataFrame,
-  type DataQueryError,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  dateTimeFormat,
-  FieldType,
-  rangeUtil,
-  type ScopedVars,
-} from '@grafana/data';
+import { AppEvents, type DataQueryError, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, dateTimeFormat, rangeUtil, type ScopedVars } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { type TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';

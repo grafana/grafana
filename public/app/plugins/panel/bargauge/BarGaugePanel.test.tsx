@@ -1,15 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
-import {
-  dateMath,
-  dateTime,
-  type EventBus,
-  LoadingState,
-  type TimeRange,
-  toDataFrame,
-  VizOrientation,
-} from '@grafana/data';
+import { dateMath, dateTime, type EventBus, LoadingState, type TimeRange, VizOrientation } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   BarGaugeDisplayMode,

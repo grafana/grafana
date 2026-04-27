@@ -2,27 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import {
-  urlUtil,
-  applyFieldOverrides,
-  type CustomTransformOperator,
-  type DataFrame,
-  DataFrameType,
-  type DataTransformerConfig,
-  type Field,
-  FieldType,
-  guessFieldTypeForField,
-  LogsSortOrder,
-  sortDataFrame,
-  type SplitOpen,
-  type TimeRange,
-  transformDataFrame,
-  type ValueLinkConfig,
-  type ExploreLogsPanelState,
-  type AbsoluteTimeRange,
-  type LogRowModel,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { urlUtil, applyFieldOverrides, type CustomTransformOperator, DataFrameType, type DataTransformerConfig, LogsSortOrder, type SplitOpen, type TimeRange, transformDataFrame, type ExploreLogsPanelState, type AbsoluteTimeRange, type LogRowModel, type GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, guessFieldTypeForField, sortDataFrame, type ValueLinkConfig } from '@grafana/data/dataframe';
 import { config, locationService } from '@grafana/runtime';
 import {
   type AdHocFilterItem,

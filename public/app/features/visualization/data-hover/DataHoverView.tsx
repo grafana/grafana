@@ -1,13 +1,7 @@
 import { css } from '@emotion/css';
 
-import {
-  type DataFrame,
-  type Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  type GrafanaTheme2,
-  type LinkModel,
-} from '@grafana/data';
+import { formattedValueToString, getFieldDisplayName, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data/dataframe';
 import { Trans } from '@grafana/i18n';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';

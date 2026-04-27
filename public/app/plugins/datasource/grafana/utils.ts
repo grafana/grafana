@@ -1,4 +1,4 @@
-import { type DataFrame, type DataFrameJSON, dataFrameToJSON } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, dataFrameToJSON } from '@grafana/data/dataframe';
 import { appEvents } from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
