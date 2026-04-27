@@ -35,6 +35,8 @@ export interface FieldProps extends HTMLAttributes<HTMLElement> {
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
   validationMessageHorizontalOverflow?: boolean;
+  /** Whether to use a <fieldset> + <legend> for rendering the label. Only use for RadioButtonGroup */
+  useFieldset?: boolean;
 
   className?: string;
   /**
@@ -68,13 +70,14 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       validationMessageHorizontalOverflow,
       htmlFor,
       noMargin,
+      useFieldset: useFieldsetProp,
       ...otherProps
     }: FieldProps,
     ref
   ) => {
     const styles = useStyles2(getFieldStyles, noMargin);
     const labelStyles = useStyles2(getLabelStyles);
-    const useFieldset = children.type === RadioButtonGroup;
+    const useFieldset = useFieldsetProp ?? children.type === RadioButtonGroup;
     const label = typeof labelProp === 'string' ? `${labelProp}${required ? ' *' : ''}` : labelProp;
     const fieldId = useId();
     const errorId = useId();
@@ -82,8 +85,8 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
 
     let labelElement = label;
 
-    if (typeof label === 'string') {
-      if (useFieldset) {
+    if (useFieldset) {
+      if (typeof label === 'string') {
         labelElement = (
           <legend className={labelStyles.label}>
             <div className={labelStyles.labelContent}>{label}</div>
@@ -91,12 +94,14 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
           </legend>
         );
       } else {
-        labelElement = (
-          <Label htmlFor={inputId} description={description}>
-            {label}
-          </Label>
-        );
+        labelElement = <legend>{label}</legend>;
       }
+    } else if (typeof label === 'string') {
+      labelElement = (
+        <Label htmlFor={inputId} description={description}>
+          {label}
+        </Label>
+      );
     }
 
     // @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead

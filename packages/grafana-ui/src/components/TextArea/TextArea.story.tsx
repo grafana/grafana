@@ -1,5 +1,7 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
+import { Field } from '../Forms/Field';
+
 import { TextArea } from './TextArea';
 import mdx from './TextArea.mdx';
 
@@ -22,7 +24,9 @@ const meta: Meta = {
 export const Basic: StoryFn = (args) => {
   return (
     <div style={{ width: args.containerWidth }}>
-      <TextArea invalid={args.invalid} placeholder={args.placeholder} cols={args.cols} disabled={args.disabled} />
+      <Field label="My TextArea" invalid={args.invalid} disabled={args.disabled}>
+        <TextArea placeholder={args.placeholder} cols={args.cols} />
+      </Field>
     </div>
   );
 };

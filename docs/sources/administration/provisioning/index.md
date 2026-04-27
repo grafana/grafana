@@ -514,7 +514,11 @@ To use `foldersFromFilesStructure`, you must unset the `folder` and `folderUid` 
 To provision dashboards to the root level, store them in the root of your `path`.
 
 {{< admonition type="note" >}}
-This feature doesn't let you create nested folder structures, where you have folders within folders.
+Nested folder structures are supported: the folder hierarchy on disk is recreated in Grafana.
+
+For example, `folderTwo/folderThree/dashboard3.json` creates a folder `folderTwo` containing a folder `folderThree` that contains the dashboard.
+
+The folder depth is limited to `4` levels.
 {{< /admonition >}}
 
 ## Alerting
