@@ -1534,10 +1534,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
 	}
 
-	// Record the RV at the start of the stream: only events emitted *after* this RV
-	// will be used when reporting watch delay metrics.
-	streamStartRV := s.mostRecentRV.Load()
-
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
@@ -1712,7 +1708,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				lastEmittedRV = event.ResourceVersion
 
-				if s.storageMetrics != nil && event.ResourceVersion > streamStartRV {
+				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
 					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
 					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
