@@ -427,7 +427,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
-        onBlur={onBlur}
         prefix={icon && <Icon name={icon} />}
         disabled={disabled}
         invalid={invalid}
@@ -446,6 +445,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               event.stopPropagation();
             }
           },
+          onBlur,
         })}
       />
       <Portal>

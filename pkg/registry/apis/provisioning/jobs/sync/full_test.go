@@ -20,6 +20,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -149,6 +150,55 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "create root folder: folder creation failed")
+}
+
+// Unmanaged-root collisions happen when a previous repository with the same
+// name was deleted via "Delete and keep resources" and a new repository is
+// created with the same name. The orphaned root folder blocks the sync. We
+// surface this as a per-resource validation warning in the pull job rather
+// than failing the whole job, so operators can see the actual cause.
+func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Sync: provisioning.SyncOptions{
+				Target: provisioning.SyncTargetTypeFolder,
+			},
+		},
+	})
+
+	conflictErr := resources.NewResourceUnmanagedConflictError("test-repo", utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test-repo",
+	})
+	repoResources.On("EnsureFolderExists", mock.Anything, resources.Folder{
+		ID:    "test-repo",
+		Title: "Test Repo",
+		Path:  "",
+	}, "").Return(conflictErr)
+
+	var recorded jobs.JobResourceResult
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		recorded = r
+		return r.Name() == "test-repo"
+	})).Return()
+	progress.On("SetFinalMessage", mock.Anything, "root folder cannot be claimed by this repository").Return()
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	require.NoError(t, err, "unmanaged-root conflict should not fail the whole job")
+
+	require.Nil(t, recorded.Error(), "conflict should be stored as warning, not error")
+	require.NotNil(t, recorded.Warning(), "conflict should be stored as warning")
+	require.Equal(t, provisioning.ReasonResourceInvalid, recorded.WarningReason())
 }
 
 func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {

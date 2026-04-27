@@ -3627,9 +3627,9 @@
         "declare-incident": "Сообщить об инциденте",
         "declare-incident-no-permission": "У вас нет разрешения на доступ к инциденту",
         "instance-details": "Сведения об экземпляре",
+        "section-silence": "",
         "silence-button": "Временное отключение",
-        "silence-no-permission": "У вас нет разрешения на создание временных отключений",
-        "silence-title-with-name": ""
+        "silence-no-permission": "У вас нет разрешения на создание временных отключений"
       },
       "labels-column-title": "Метки",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -11347,6 +11347,7 @@
       "label-numbers": "Номера",
       "label-signature": "Подпись"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Экспериментальная функция. Показывает компонент для управления отображаемыми полями из журналов.",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала.",
@@ -11650,6 +11651,7 @@
         "common-labels": "Общие метки:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Общие метки",
     "name-deduplication": "Дедупликация",
     "name-details-mode": "Сведения о журналах на панели",
@@ -14971,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",

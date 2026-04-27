@@ -3,7 +3,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
 2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
-2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/data-sources-plugins,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
@@ -200,7 +199,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2025-03-04,assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
+2026-04-24,grafana.assetSriChecks,experimental,@grafana/frontend-ops,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-03-14,alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
@@ -353,6 +352,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-04-23,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
+2026-04-23,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-04-17,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
 2026-04-14,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false
-2026-04-24,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
+2026-04-23,assistant.frontend.tools.dashboardTemplates,experimental,@grafana/sharing-squad,false,false,true
+2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
