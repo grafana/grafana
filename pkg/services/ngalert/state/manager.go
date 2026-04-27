@@ -218,8 +218,6 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore.
 func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
-	logger.Debug("Resetting state of the rule")
-
 	states := st.ForgetStateByRuleUID(ctx, ruleKey)
 
 	if len(states) == 0 {
@@ -258,7 +256,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		}
 	}
 
-	logger.Info("Rules state was reset", "states", len(states))
+	logger.Info("Rules state was reset", "reason", reason, "states", len(states))
 
 	return transitions
 }
@@ -341,7 +339,6 @@ func (st *Manager) ProcessEvalResults(
 		}
 	}
 
-	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
 	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
