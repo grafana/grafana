@@ -2,13 +2,10 @@ package appplugin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -82,7 +79,8 @@ func RegisterAPIService(
 
 	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
 		func(jsonData plugins.JSONData) bool {
-			return jsonData.Type == plugins.TypeApp
+			// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
+			return jsonData.Type == plugins.TypeApp && strings.HasSuffix(jsonData.ID, "-app")
 		}, true)
 
 	if err != nil {
@@ -91,10 +89,6 @@ func RegisterAPIService(
 
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginInfos {
-		if !strings.HasSuffix(plugin.JSONData.ID, "-app") {
-			continue // this should not happen, but ensures we can safely use the raw plugin ID as the API group
-		}
-
 		b := &AppPluginAPIBuilder{
 			pluginJSON: plugin.JSONData,
 			schemas:    plugin.Schemas,
@@ -179,34 +173,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	b.getter = storage[settingsRI.StoragePath()].(rest.Getter)
 	apiGroupInfo.VersionedResourcesStorageMap[b.groupVersion.Version] = storage
 	return nil
-}
-
-// Gets plugin context with decrypted settings
-func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
-	raw, err := b.getter.Get(ctx, apppluginV0.INSTANCE_NAME, &v1.GetOptions{})
-	if err != nil {
-		return ctx, backend.PluginContext{}, err
-	}
-	settings, ok := raw.(*apppluginV0.Settings)
-	if !ok {
-		return ctx, backend.PluginContext{}, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
-	}
-
-	if !settings.Spec.Enabled {
-		return ctx, backend.PluginContext{}, k8serrors.NewBadRequest("plugin is not enabled")
-	}
-
-	instance := &backend.AppInstanceSettings{
-		APIVersion: b.groupVersion.Version,
-	}
-	instance.JSONData, err = json.Marshal(settings.Spec.JsonData)
-	if err != nil {
-		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)
-	}
-
-	// TODO! get decrypted secrets!!!!
-
-	return b.contextProvider.PluginContextForApp(ctx, b.pluginJSON.ID, instance)
 }
 
 // appPluginSettingsWildcard is a config key that applies to all app plugin settings

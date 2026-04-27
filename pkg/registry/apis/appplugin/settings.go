@@ -11,13 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -46,7 +45,7 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 	result := map[string]string{}
 	for k, v := range secure {
 		if !v.Create.IsZero() {
-			result[k] = v.Create.DangerouslyExposeAndConsumeValue()
+			result[k] = v.Create.DangerouslyExposeAndConsumeValue() // ?????? for dual write, I don't think we can do the dangerous one
 		}
 		if v.Remove {
 			result[k] = "" // best effort with the legacy API
@@ -97,18 +96,18 @@ func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptio
 	if err != nil {
 		return nil, err
 	}
-	return &apppluginv0alpha1.SettingsList{
-		Items: []apppluginv0alpha1.Settings{*obj},
+	return &apppluginV0.SettingsList{
+		Items: []apppluginV0.Settings{*obj},
 	}, nil
 }
 
-func (s *settingsStorage) get(ctx context.Context) (*apppluginv0alpha1.Settings, error) {
+func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error) {
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	obj := &apppluginv0alpha1.Settings{
+	obj := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      apppluginV0.INSTANCE_NAME,
 			Namespace: nsInfo.Value,
@@ -123,8 +122,14 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginv0alpha1.Settings,
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
+		shim, ok := shimFromContext(ctx)
+		if ok {
+			shim.dto = ps // passes the raw values back for decryption
+		}
+
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(fmt.Sprintf("%d", ps.Updated.UnixMicro()))
+		obj.SetUID(types.UID(getFastHash(nsInfo.Value + "/" + s.pluginID)))
 
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.Pinned = ps.Pinned
@@ -179,8 +184,8 @@ func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObj
 	return nil, fmt.Errorf("not supported")
 }
 
-func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*apppluginv0alpha1.Settings, error) {
-	p, ok := obj.(*apppluginv0alpha1.Settings)
+func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*apppluginV0.Settings, error) {
+	p, ok := obj.(*apppluginV0.Settings)
 	if !ok {
 		return nil, fmt.Errorf("expected Settings object")
 	}
@@ -201,4 +206,9 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*appplu
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
 	}
 	return s.get(ctx)
+}
+
+func getFastHash(data string) string {
+	sum := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(sum[:])
 }

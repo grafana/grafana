@@ -11,12 +11,12 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 func newTestStorage(plugins map[string]*pluginsettings.DTO) *settingsStorage {
-	ri := apppluginv0alpha1.SettingsResourceInfo.WithGroupAndShortName("test-app.grafana.app", "test-app")
+	ri := apppluginV0.SettingsResourceInfo.WithGroupAndShortName("test-app", "test-app")
 	return &settingsStorage{
 		pluginID:       "test-app",
 		pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
@@ -41,7 +41,7 @@ func TestSettingsGet_NoPersistedSettings(t *testing.T) {
 	obj, err := storage.Get(ctx, "instance", nil)
 	require.NoError(t, err)
 
-	settings := obj.(*apppluginv0alpha1.Settings)
+	settings := obj.(*apppluginV0.Settings)
 	require.Equal(t, "instance", settings.Name)
 	require.Equal(t, "default", settings.Namespace)
 	require.False(t, settings.Spec.Enabled)
@@ -64,7 +64,7 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 	obj, err := storage.Get(ctx, "instance", nil)
 	require.NoError(t, err)
 
-	settings := obj.(*apppluginv0alpha1.Settings)
+	settings := obj.(*apppluginV0.Settings)
 	require.True(t, settings.Spec.Enabled)
 	require.True(t, settings.Spec.Pinned)
 	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)
@@ -85,7 +85,7 @@ func TestSettingsList(t *testing.T) {
 	obj, err := storage.List(ctx, nil)
 	require.NoError(t, err)
 
-	list := obj.(*apppluginv0alpha1.SettingsList)
+	list := obj.(*apppluginV0.SettingsList)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "instance", list.Items[0].Name)
 	require.True(t, list.Items[0].Spec.Enabled)
@@ -96,9 +96,9 @@ func TestSettingsCreate(t *testing.T) {
 	storage := newTestStorage(map[string]*pluginsettings.DTO{})
 
 	ctx := request.WithNamespace(context.Background(), "default")
-	input := &apppluginv0alpha1.Settings{
+	input := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-		Spec: apppluginv0alpha1.SettingsSpec{
+		Spec: apppluginV0.SettingsSpec{
 			Enabled: true,
 			Pinned:  true,
 		},
@@ -107,7 +107,7 @@ func TestSettingsCreate(t *testing.T) {
 	obj, err := storage.Create(ctx, input, nil, nil)
 	require.NoError(t, err)
 
-	settings := obj.(*apppluginv0alpha1.Settings)
+	settings := obj.(*apppluginV0.Settings)
 	require.True(t, settings.Spec.Enabled)
 	require.True(t, settings.Spec.Pinned)
 }
@@ -116,7 +116,7 @@ func TestSettingsCreate_WithValidation(t *testing.T) {
 	storage := newTestStorage(map[string]*pluginsettings.DTO{})
 
 	ctx := request.WithNamespace(context.Background(), "default")
-	input := &apppluginv0alpha1.Settings{
+	input := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
 	}
 
@@ -143,9 +143,9 @@ func TestSettingsUpdate(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 
 	updater := rest.DefaultUpdatedObjectInfo(
-		&apppluginv0alpha1.Settings{
+		&apppluginV0.Settings{
 			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-			Spec: apppluginv0alpha1.SettingsSpec{
+			Spec: apppluginV0.SettingsSpec{
 				Enabled: false,
 				Pinned:  true,
 			},
@@ -156,7 +156,7 @@ func TestSettingsUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, created)
 
-	settings := obj.(*apppluginv0alpha1.Settings)
+	settings := obj.(*apppluginV0.Settings)
 	require.False(t, settings.Spec.Enabled)
 	require.True(t, settings.Spec.Pinned)
 }

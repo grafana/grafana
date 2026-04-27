@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
@@ -152,13 +152,13 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 			pluginJSON: plugins.JSONData{ID: pluginID},
 			groupVersion: schema.GroupVersion{
 				Group:   pluginID,
-				Version: apppluginv0alpha1.VERSION,
+				Version: apppluginV0.VERSION,
 			},
 		}
 	}
 
 	newRI := func(pluginID string) utils.ResourceInfo {
-		return apppluginv0alpha1.SettingsResourceInfo.WithGroupAndShortName(
+		return apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 			pluginID, pluginID,
 		)
 	}
