@@ -46,9 +46,6 @@ func TestIntegrationUserTeams(t *testing.T) {
 					"teams.iam.grafana.app": {
 						DualWriterMode: mode,
 					},
-					"teambindings.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
@@ -81,12 +78,6 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		GVR:       gvrTeams,
 	})
 
-	tbClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: orgNS,
-		GVR:       gvrTeamBindings,
-	})
-
 	// Create u1 - will be bound to all 5 teams
 	u1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -102,7 +93,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NoError(t, err)
 	require.NotNil(t, u2)
 
-	// Create 5 teams
+	// Create 5 teams and add u1 as an admin member via spec.members.
 	teams := make([]*unstructured.Unstructured, 0, 5)
 	for i := 1; i <= 5; i++ {
 		teamObj := createTeamObject(helper,
@@ -113,14 +104,18 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		team, err := teamClient.Resource.Create(ctx, teamObj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, team)
-		teams = append(teams, team)
-	}
 
-	// Create team bindings: u1 -> all 5 teams
-	for _, team := range teams {
-		tbObj := createTeamBindingObject(helper, u1.GetName(), team.GetName())
-		_, err := tbClient.Resource.Create(ctx, tbObj, metav1.CreateOptions{})
+		require.NoError(t, unstructured.SetNestedSlice(team.Object, []interface{}{
+			map[string]interface{}{
+				"kind":       "User",
+				"name":       u1.GetName(),
+				"permission": "admin",
+				"external":   false,
+			},
+		}, "spec", "members"))
+		team, err = teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
 		require.NoError(t, err)
+		teams = append(teams, team)
 	}
 
 	t.Run("returns the bound team for the user", func(t *testing.T) {
@@ -266,13 +261,6 @@ func getUserTeamsWithPaging(t *testing.T, helper *apis.K8sTestHelper, userName s
 
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
 	return res
-}
-
-func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
-	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
-	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
-	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
-	return obj
 }
 
 func getUserTeamsWithOffset(t *testing.T, helper *apis.K8sTestHelper, userName string, offset, limit int) userTeamsResponse {
