@@ -49,8 +49,6 @@ export interface Props {
    * (e.g. having a split pane with independent scrolling)
    **/
   scrollableContent?: boolean;
-  /** Overrides the DOM element the drawer is portaled into. Defaults to `.main-view`. */
-  container?: Element;
   /** Callback for closing the drawer */
   onClose: () => void;
 }
@@ -76,7 +74,6 @@ export function Drawer({
   width,
   size = 'md',
   tabs,
-  container,
 }: Props) {
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
@@ -106,7 +103,7 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      getContainer={container ?? '.main-view'}
+      getContainer={'.main-view'}
       className={styles.drawerContent}
       rootClassName={styles.drawer}
       classNames={{

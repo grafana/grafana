@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Combobox, ComboboxOption, Icon, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { StaticOptionsOrderType } from 'app/features/variables/query/QueryVariableStaticOptions';
+import { Combobox, type ComboboxOption, Icon, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type StaticOptionsOrderType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 type SortValue = NonNullable<StaticOptionsOrderType>;
 

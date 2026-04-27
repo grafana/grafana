@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { QueryVariable } from '@grafana/scenes';
+import { type QueryVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { ModalEditor } from './ModalEditor';

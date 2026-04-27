@@ -76,20 +76,20 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
       </Stack>
       <Modal.ButtonRow>
         <Button
-          variant="secondary"
-          fill="outline"
-          onClick={onCloseModal}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
-        </Button>
-        <Button
           variant="primary"
           onClick={onSaveOptions}
           disabled={Boolean(queryValidationError)}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
         >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
+        </Button>
+        <Button
+          variant="secondary"
+          fill="outline"
+          onClick={onCloseModal}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
+        >
+          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

@@ -1,4 +1,4 @@
-import { SceneVariable, QueryVariable } from '@grafana/scenes';
+import { type SceneVariable, QueryVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { PaneItem } from './PaneItem';

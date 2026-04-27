@@ -2,24 +2,16 @@ import { css, cx } from '@emotion/css';
 import { useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { QueryVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
-import {
-  Alert,
-  Button,
-  Drawer,
-  getPortalContainer,
-  Spinner,
-  Stack,
-  Tab,
-  TabsBar,
-  useSplitter,
-  useStyles2,
-} from '@grafana/ui';
+import { QueryVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
+import { Alert, Button, Modal, Spinner, Stack, Tab, TabsBar, useSplitter, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
-import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
+import {
+  type StaticOptionsOrderType,
+  type StaticOptionsType,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { getPropertiesFromOptions, VariableValuesPreview } from '../../components/VariableValuesPreview';
 
@@ -31,7 +23,6 @@ type ModalEditorProps = {
   onClose: () => void;
 };
 
-// TODO: rename
 export function ModalEditor(props: ModalEditorProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<'query' | 'staticOptions'>('query');
@@ -56,133 +47,129 @@ export function ModalEditor(props: ModalEditorProps) {
   });
 
   return (
-    <Drawer
-      size="lg"
-      container={getPortalContainer()}
-      title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query variable editor')}
-      subtitle={
-        <Stack direction="row" gap={2} justifyContent="space-between">
-          <div className={styles.variableName}>{draftVariable.state.name}</div>
-          <Stack direction="row" gap={1} justifyContent="space-between">
-            <Button
-              variant="primary"
-              onClick={onClickApply}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
-            >
-              <Trans i18nKey="dashboard-scene.modal-editor.apply">Apply</Trans>
-            </Button>
-            <Button
-              variant="secondary"
-              fill="outline"
-              onClick={onCloseModal}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
-            >
-              <Trans i18nKey="dashboard-scene.modal-editor.discard">Discard</Trans>
-            </Button>
-          </Stack>
-        </Stack>
-      }
-      closeOnMaskClick={false}
-      onClose={onCloseModal}
-      scrollableContent={false}
+    <Modal
+      title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query variable: {{name}}', {
+        name: draftVariable.state.name,
+      })}
+      isOpen={true}
+      onDismiss={onCloseModal}
+      closeOnBackdropClick={false}
+      closeOnEscape={false}
+      className={styles.modal}
+      contentClassName={styles.modalContent}
     >
-      <div className={styles.wrapper}>
-        <div className={styles.buttonsRow}>
-          <Stack direction="row" gap={1} justifyContent="space-between">
-            <div className={styles.previewTitle}>
-              <Trans i18nKey="dashboard-scene.modal-editor.preview-of-values" values={{ optionsCount: options.length }}>
-                Preview of values ({'{{ optionsCount }}'})
-              </Trans>
-            </div>
-            {options.length > 0 && (
-              <Button
-                variant={isLoading ? 'secondary' : 'primary'}
-                fill="outline"
-                size="sm"
-                onClick={previewValues}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-              >
-                {isLoading ? (
-                  <Spinner inline />
-                ) : (
-                  <Trans i18nKey="dashboard-scene.modal-editor.refresh-preview">Refresh preview</Trans>
-                )}
-              </Button>
-            )}
-          </Stack>
-        </div>
-        <div className={styles.content}>
-          <div {...containerProps}>
-            <div {...primaryProps} style={{ ...primaryProps.style, minHeight: 0 }}>
-              <div className={styles.splitContainer}>
-                {!options.length ? (
-                  <div className={styles.noOptions}>
-                    <Button
-                      variant="secondary"
-                      fill="outline"
-                      onClick={previewValues}
-                      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-                    >
-                      {isLoading ? (
-                        <Spinner inline />
-                      ) : (
-                        <Trans i18nKey="dashboard-scene.modal-editor.show-preview">Show preview</Trans>
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} noPagination hideTitle />
-                )}
-              </div>
-            </div>
-            <div
-              {...splitterProps}
-              className={cx(splitterProps.className, styles.splitter)}
-              title={t('dashboard-scene.modal-editor.content-drag-to-resize', 'Drag to resize')}
+      <div className={styles.buttonsRow}>
+        <Stack direction="row" gap={1} justifyContent="space-between">
+          <div className={styles.previewTitle}>
+            <Trans i18nKey="dashboard-scene.modal-editor.preview-of-values" values={{ optionsCount: options.length }}>
+              Preview of values ({'{{ optionsCount }}'})
+            </Trans>
+          </div>
+          {options.length > 0 && (
+            <Button
+              variant={isLoading ? 'secondary' : 'primary'}
+              fill="outline"
+              size="sm"
+              onClick={previewValues}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
             >
-              <div className={styles.fadeOverlay} />
-            </div>
-            <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
-              <div className={styles.splitContainer}>
-                <TabsBar>
-                  <Tab
-                    label={t('dashboard.edit-pane.variable.query-options.tabs.query', 'Query')}
-                    active={activeTab === 'query'}
-                    onChangeTab={() => setActiveTab('query')}
-                  />
-                  <Tab
-                    label={t(
-                      'dashboard-scene.modal-editor.label-static-options',
-                      'Static options ({{staticOptionsCount}})',
-                      { staticOptionsCount: staticOptions.length }
+              {isLoading ? (
+                <Spinner inline />
+              ) : (
+                <Trans i18nKey="dashboard-scene.modal-editor.refresh-preview">Refresh preview</Trans>
+              )}
+            </Button>
+          )}
+        </Stack>
+      </div>
+      <div className={styles.content}>
+        <div {...containerProps}>
+          <div {...primaryProps} style={{ ...primaryProps.style, minHeight: 0 }}>
+            <div className={styles.splitContainer}>
+              {!options.length ? (
+                <div className={styles.noOptions}>
+                  <Button
+                    variant="secondary"
+                    fill="outline"
+                    onClick={previewValues}
+                    data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+                  >
+                    {isLoading ? (
+                      <Spinner inline />
+                    ) : (
+                      <Trans i18nKey="dashboard-scene.modal-editor.show-preview">Show preview</Trans>
                     )}
-                    active={activeTab === 'staticOptions'}
-                    onChangeTab={() => setActiveTab('staticOptions')}
-                  />
-                </TabsBar>
-                <div className={styles.tabContent}>
-                  {activeTab === 'query' && (
-                    <>
-                      {queryError && <Alert title={queryError.message} severity="error" />}
-                      <Editor variable={draftVariable} />
-                    </>
-                  )}
-                  {activeTab === 'staticOptions' && (
-                    <VariableOptionsSpreadsheet
-                      options={options}
-                      staticOptions={staticOptions}
-                      staticOptionsOrder={staticOptionsOrder}
-                      onStaticOptionsChange={onStaticOptionsChange}
-                      onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-                    />
-                  )}
+                  </Button>
                 </div>
+              ) : (
+                <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} noPagination hideTitle />
+              )}
+            </div>
+          </div>
+          <div
+            {...splitterProps}
+            className={cx(splitterProps.className, styles.splitter)}
+            title={t('dashboard-scene.modal-editor.content-drag-to-resize', 'Drag to resize')}
+          >
+            <div className={styles.fadeOverlay} />
+          </div>
+          <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
+            <div className={styles.splitContainer}>
+              <TabsBar>
+                <Tab
+                  label={t('dashboard.edit-pane.variable.query-options.tabs.query', 'Query')}
+                  active={activeTab === 'query'}
+                  onChangeTab={() => setActiveTab('query')}
+                />
+                <Tab
+                  label={t(
+                    'dashboard-scene.modal-editor.label-static-options',
+                    'Static options ({{staticOptionsCount}})',
+                    { staticOptionsCount: staticOptions.length }
+                  )}
+                  active={activeTab === 'staticOptions'}
+                  onChangeTab={() => setActiveTab('staticOptions')}
+                />
+              </TabsBar>
+              <div className={styles.tabContent}>
+                {activeTab === 'query' && (
+                  <>
+                    {queryError && <Alert title={queryError.message} severity="error" />}
+                    <Editor variable={draftVariable} />
+                  </>
+                )}
+                {activeTab === 'staticOptions' && (
+                  <VariableOptionsSpreadsheet
+                    options={options}
+                    staticOptions={staticOptions}
+                    staticOptionsOrder={staticOptionsOrder}
+                    onStaticOptionsChange={onStaticOptionsChange}
+                    onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+                  />
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </Drawer>
+      <Modal.ButtonRow>
+        <Button
+          variant="primary"
+          onClick={onClickApply}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
+        >
+          <Trans i18nKey="dashboard-scene.modal-editor.apply">Apply</Trans>
+        </Button>
+        <Button
+          variant="secondary"
+          fill="outline"
+          onClick={onCloseModal}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
+        >
+          <Trans i18nKey="dashboard-scene.modal-editor.discard">Discard</Trans>
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
   );
 }
 
@@ -191,12 +178,10 @@ function useDraftVariable(variable: QueryVariable) {
   if (!draftVariableRef.current) {
     draftVariableRef.current = new QueryVariable(variable.state);
   }
-  // ensure optional static options are removed when undo
-  const initialStateRef = useRef({ staticOptions: [], ...variable.state });
+  const initialStateRef = useRef({ ...variable.state });
   return { draftVariable: draftVariableRef.current, initialState: initialStateRef.current };
 }
 
-// Rename
 function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const { draftVariable, initialState } = useDraftVariable(variable);
   const { options, staticOptions = [], staticOptionsOrder } = draftVariable.useState();
@@ -291,11 +276,17 @@ function reconcileStaticOptionsProperties(
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    wrapper: css({
+    modal: css({
+      width: '90vw',
+      height: '90vh',
+      maxWidth: '90vw',
+    }),
+    modalContent: css({
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
-      margin: theme.spacing(0),
+      flex: 1,
+      minHeight: 0,
+      overflow: 'hidden',
     }),
     content: css({
       display: 'flex',

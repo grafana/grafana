@@ -5684,7 +5684,7 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "modal-title": "Query variable editor",
+          "modal-title": "Query variable: {{name}}",
           "tabs": {
             "query": "Query"
           }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { firstValueFrom } from 'rxjs';
 
-import { CustomVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { CustomVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 
 export type ClipboardTextFormat = 'tsv' | 'json' | 'csv' | undefined;
 
