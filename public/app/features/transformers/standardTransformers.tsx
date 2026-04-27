@@ -106,6 +106,24 @@ function makeRegistryItemFromTransformer<T>(
   };
 }
 
+// Lazy entries can't auto-hoist defaultOptions / isApplicable / isApplicableDescription
+// from the resolver because the resolver is a dynamic import that is not awaited at
+// registration time. To prevent silent divergence from the underlying DataTransformerInfo,
+// this helper requires those fields to be specified explicitly at the call site.
+// Pass `undefined` when there is intentionally no value, to document the decision.
+type LazyRegistryItem<TOptions> = Omit<
+  TransformerRegistryItem<TOptions>,
+  'defaultOptions' | 'isApplicable' | 'isApplicableDescription'
+> & {
+  defaultOptions: TransformerRegistryItem<TOptions>['defaultOptions'];
+  isApplicable: TransformerRegistryItem<TOptions>['isApplicable'];
+  isApplicableDescription: TransformerRegistryItem<TOptions>['isApplicableDescription'];
+};
+
+function makeLazyRegistryItem<TOptions>(item: LazyRegistryItem<TOptions>): TransformerRegistryItem<TOptions> {
+  return item;
+}
+
 function hiddenTransformer(id: DataTransformerID, transformer: DataTransformerInfo): TransformerRegistryItem {
   return {
     id,
@@ -353,7 +371,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: histogramDark,
       imageLight: histogramLight,
     }),
-    {
+    makeLazyRegistryItem({
       id: DataTransformerID.rowsToFields,
       editor: lazy(() =>
         import('./rowsToFields/RowsToFieldsTransformerEditor').then((m) => ({
@@ -361,6 +379,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./rowsToFields/rowsToFields').then((m) => m.getRowsToFieldsTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.get-rows-to-fields-transformer.name.rows-to-fields', 'Rows to fields'),
       description: t(
         'transformers.get-rows-to-fields-transformer.description.convert-field-dynamic-config',
@@ -370,8 +391,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: rowsToFieldsDark,
       imageLight: rowsToFieldsLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.configFromData,
       editor: lazy(() =>
         import('./configFromQuery/ConfigFromQueryTransformerEditor').then((m) => ({
@@ -379,6 +400,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./configFromQuery/configFromQuery').then((m) => m.getConfigFromDataTransformer()),
+      // Keep in sync with getConfigFromDataTransformer().defaultOptions in ./configFromQuery/configFromQuery.ts.
+      // Without this, FieldToConfigMappingEditor receives mappings=undefined and crashes on first render.
+      defaultOptions: { configRefId: 'config', mappings: [] },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t(
         'transformers.get-config-from-data-transformer.name.config-from-query-results',
         'Config from query results'
@@ -391,8 +417,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.CalculateNewFields]),
       imageDark: configFromDataDark,
       imageLight: configFromDataLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.prepareTimeSeries,
       editor: lazy(() =>
         import('./prepareTimeSeries/PrepareTimeSeriesEditor').then((m) => ({
@@ -401,6 +427,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./prepareTimeSeries/prepareTimeSeries').then((m) => m.getPrepareTimeSeriesTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.prepare-time-series.name.prepare-time-series', 'Prepare time series'),
       description: t(
         'transformers.prepare-time-series.description.stretch-data-frames',
@@ -409,7 +438,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: prepareTimeSeriesDark,
       imageLight: prepareTimeSeriesLight,
-    },
+    }),
     makeRegistryItemFromTransformer(standardTransformers.convertFieldTypeTransformer, {
       id: DataTransformerID.convertFieldType,
       editor: lazy(() =>
@@ -427,12 +456,15 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: convertFieldTypeDark,
       imageLight: convertFieldTypeLight,
     }),
-    {
+    makeLazyRegistryItem({
       id: DataTransformerID.spatial,
       editor: lazy(() =>
         import('./spatial/SpatialTransformerEditor').then((m) => ({ default: m.SetGeometryTransformerEditor }))
       ),
       transformation: () => import('./spatial/spatialTransformer').then((m) => m.getSpatialTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.get-spatial-transformer.name.spatial-operations', 'Spatial operations'),
       description: t(
         'transformers.get-spatial-transformer.description.apply-spatial-operations-to-query-results',
@@ -442,8 +474,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.PerformSpatialOperations]),
       imageDark: spatialDark,
       imageLight: spatialLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.fieldLookup,
       editor: lazy(() =>
         import('./lookupGazetteer/FieldLookupTransformerEditor').then((m) => ({
@@ -451,6 +483,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./lookupGazetteer/fieldLookup').then((m) => m.fieldLookupTransformer),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t(
         'transformers.field-lookup-transformer-editor.name.lookup-fields-from-resource',
         'Lookup fields from resource'
@@ -463,8 +498,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.PerformSpatialOperations]),
       imageDark: fieldLookupDark,
       imageLight: fieldLookupLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.extractFields,
       editor: lazy(() =>
         import('./extractFields/ExtractFieldsTransformerEditor').then((m) => ({
@@ -472,6 +507,10 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./extractFields/extractFields').then((m) => m.extractFieldsTransformer),
+      // Keep in sync with extractFieldsTransformer.defaultOptions in ./extractFields/extractFields.ts.
+      defaultOptions: { delimiter: ',' },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
       description: t(
         'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
@@ -480,8 +519,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: extractFieldsDark,
       imageLight: extractFieldsLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.heatmap,
       editor: lazy(() =>
         import('./calculateHeatmap/HeatmapTransformerEditor').then((m) => ({
@@ -489,6 +528,12 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./calculateHeatmap/heatmap').then((m) => m.getHeatmapTransformer()),
+      defaultOptions: {},
+      isApplicable: isHeatmapApplicable,
+      isApplicableDescription: t(
+        'transformers.heatmap.is-applicable-description',
+        'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.'
+      ),
       name: t('transformers.get-heatmap-transformer.name.create-heatmap', 'Create heatmap'),
       description: t(
         'transformers.get-heatmap-transformer.description.generate-heatmap-data-from-source',
@@ -496,14 +541,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       state: PluginState.alpha,
       categories: new Set([TransformerCategory.CreateNewVisualization]),
-      isApplicable: isHeatmapApplicable,
-      isApplicableDescription: t(
-        'transformers.heatmap.is-applicable-description',
-        'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.'
-      ),
       imageDark: heatmapDark,
       imageLight: heatmapLight,
-    },
+    }),
     makeRegistryItemFromTransformer(standardTransformers.groupingToMatrixTransformer, {
       id: DataTransformerID.groupingToMatrix,
       editor: lazy(() =>
@@ -534,7 +574,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: limitDark,
       imageLight: limitLight,
     }),
-    {
+    makeLazyRegistryItem({
       id: DataTransformerID.joinByLabels,
       editor: lazy(() =>
         import('./joinByLabels/JoinByLabelsTransformerEditor').then((m) => ({
@@ -542,6 +582,9 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => import('./joinByLabels/joinByLabels').then((m) => m.getJoinByLabelsTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.get-join-by-labels-transformer.name.join-by-labels', 'Join by labels'),
       description: t(
         'transformers.get-join-by-labels-transformer.description.flatten-labeled-results-table-joined-labels',
@@ -551,13 +594,16 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Combine]),
       imageDark: joinByLabelsDark,
       imageLight: joinByLabelsLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.regression,
       editor: lazy(() =>
         import('./regression/regressionEditor').then((m) => ({ default: m.RegressionTransformerEditor }))
       ),
       transformation: () => import('./regression/regression').then((m) => m.getRegressionTransformer()),
+      defaultOptions: {},
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.regression.name.trendline', 'Trendline'),
       description: t(
         'transformers.regression.description.create-new-data-frame',
@@ -567,8 +613,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
       imageDark: regressionDark,
       imageLight: regressionLight,
-    },
-    {
+    }),
+    makeLazyRegistryItem({
       id: DataTransformerID.partitionByValues,
       editor: lazy(() =>
         import('./partitionByValues/PartitionByValuesEditor').then((m) => ({
@@ -577,6 +623,10 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./partitionByValues/partitionByValues').then((m) => m.getPartitionByValuesTransformer()),
+      // Keep in sync with getPartitionByValuesTransformer().defaultOptions in ./partitionByValues/partitionByValues.ts.
+      defaultOptions: { keepFields: false },
+      isApplicable: undefined,
+      isApplicableDescription: undefined,
       name: t('transformers.get-partition-by-values-transformer.name.partition-by-values', 'Partition by values'),
       description: t(
         'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
@@ -586,7 +636,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       categories: new Set([TransformerCategory.Reformat]),
       imageDark: partitionByValuesDark,
       imageLight: partitionByValuesLight,
-    },
+    }),
     makeRegistryItemFromTransformer(standardTransformers.formatStringTransformer, {
       id: DataTransformerID.formatString,
       editor: lazy(() =>
@@ -630,27 +680,28 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     }),
     ...(config.featureToggles.smoothingTransformation
       ? [
-          {
+          makeLazyRegistryItem({
             id: DataTransformerID.smoothing,
             editor: lazy(() =>
               import('./smoothing/smoothingEditor').then((m) => ({ default: m.SmoothingTransformerEditor }))
             ),
             transformation: () => import('./smoothing/smoothing').then((m) => m.getSmoothingTransformer()),
+            defaultOptions: {},
+            isApplicable: isSmoothingApplicable,
+            isApplicableDescription: t(
+              'transformers.smoothing.is-applicable-description',
+              'The Smoothing transformation requires at least one time series frame to function. You currently have none.'
+            ),
             name: t('transformers.smoothing.name', 'Smoothing'),
             description: t(
               'transformers.smoothing.description',
               'Reduce noise in time series data through adaptive downsampling.'
             ),
             categories: new Set([TransformerCategory.CalculateNewFields]),
-            isApplicable: isSmoothingApplicable,
-            isApplicableDescription: t(
-              'transformers.smoothing.is-applicable-description',
-              'The Smoothing transformation requires at least one time series frame to function. You currently have none.'
-            ),
             tags: new Set(['ASAP', 'Autosmooth']),
             imageDark: smoothingDark,
             imageLight: smoothingLight,
-          },
+          }),
         ]
       : []),
     makeRegistryItemFromTransformer(standardTransformers.formatTimeTransformer, {
@@ -668,7 +719,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: formatTimeDark,
       imageLight: formatTimeLight,
     }),
-    {
+    makeLazyRegistryItem({
       id: DataTransformerID.timeSeriesTable,
       editor: lazy(() =>
         import('./timeSeriesTable/TimeSeriesTableTransformEditor').then((m) => ({
@@ -677,20 +728,21 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./timeSeriesTable/timeSeriesTableTransformer').then((m) => m.getTimeSeriesTableTransformer()),
+      defaultOptions: {},
+      isApplicable: isTimeSeriesTableApplicable,
+      isApplicableDescription: t(
+        'transformers.time-series-table.is-applicable-description.requires-time-series-frame',
+        'The Time series to table transformation requires at least one time series frame to function. You currently have none.'
+      ),
       name: t('transformers.time-series-table.name.time-series-to-table', 'Time series to table'),
       description: t(
         'transformers.time-series-table.description.convert-to-table-rows',
         'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
       ),
       state: PluginState.beta,
-      isApplicable: isTimeSeriesTableApplicable,
-      isApplicableDescription: t(
-        'transformers.time-series-table.is-applicable-description.requires-time-series-frame',
-        'The Time series to table transformation requires at least one time series frame to function. You currently have none.'
-      ),
       imageDark: timeSeriesTableDark,
       imageLight: timeSeriesTableLight,
-    },
+    }),
     makeRegistryItemFromTransformer(standardTransformers.transposeTransformer, {
       id: DataTransformerID.transpose,
       editor: lazy(() =>
