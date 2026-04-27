@@ -27,7 +27,7 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx). The `grafanactl` repository in GitHub will be archived on June 1st, 2026.
+`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx). The `grafanactl` repository in GitHub will be archived on June 1, 2026.
 
 To migrate from `grafanactl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
 
@@ -72,7 +72,7 @@ You can configure `grafanactl` in two ways: using environment variables or throu
 - **Configuration files** can manage multiple contexts, making it easier to switch between different Grafana instances.
 
 {{< admonition type="note" >}}
-Configuration items may change depending on your set-up. For example, use `org-id` for Grafana on-prem, but use `stack-id` for Grafana Cloud.
+Configuration items may change depending on your set-up. For example, use `org-id` for self-managed Grafana, but use `stack-id` for Grafana Cloud.
 {{< /admonition >}}
 
 ### Configure Grafana CLI with environment variables
