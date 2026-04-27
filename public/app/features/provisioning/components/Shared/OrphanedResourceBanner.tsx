@@ -74,11 +74,10 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   // Job in progress or finished with warning/error.
   // Success navigates away immediately, so we only render results for warning and error.
   if (job && actionType) {
-    const showResult = result && !hideJobStatus;
     return (
       <>
         {!hideJobStatus && <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />}
-        {showResult && (
+        {result && !hideJobStatus && (
           <Alert
             severity={result.severity}
             title={result.title}

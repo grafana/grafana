@@ -4,7 +4,7 @@ import { render, screen } from 'test/test-utils';
 import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type JobStatusProps } from '../../Job/JobStatus';
+import { JobStatus } from '../../Job/JobStatus';
 import { type StepStatusInfo } from '../../Wizard/types';
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
 
@@ -18,13 +18,11 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-let capturedOnStatusChange: ((statusInfo: StepStatusInfo) => void) | undefined;
 jest.mock('../../Job/JobStatus', () => ({
-  JobStatus: jest.fn((props: JobStatusProps) => {
-    capturedOnStatusChange = props.onStatusChange;
-    return <div data-testid="job-status">Job Status</div>;
-  }),
+  JobStatus: jest.fn(() => <div data-testid="job-status">Job Status</div>),
 }));
+
+const MockJobStatus = jest.mocked(JobStatus);
 
 const mockUseOrphanedResourceActions = jest.mocked(useOrphanedResourceActions);
 
@@ -46,7 +44,7 @@ describe('OrphanedResourceBanner', () => {
     contextSrv.isGrafanaAdmin = false;
     mockHook();
     mockNavigate.mockReset();
-    capturedOnStatusChange = undefined;
+    MockJobStatus.mockClear();
   });
 
   afterEach(() => {
@@ -134,7 +132,7 @@ describe('OrphanedResourceBanner', () => {
       const dialog = screen.getByRole('dialog');
       await user.click(within(dialog).getByRole('button', { name: 'Convert to local' }));
 
-      expect(capturedOnStatusChange).toBeDefined();
+      const onStatusChange = MockJobStatus.mock.lastCall![0].onStatusChange!;
 
       const statusInfo: StepStatusInfo =
         status === 'success'
@@ -143,7 +141,7 @@ describe('OrphanedResourceBanner', () => {
             ? { status: 'warning', warning: 'partial' }
             : { status: 'error', error: 'something failed' };
       act(() => {
-        capturedOnStatusChange!(statusInfo);
+        onStatusChange(statusInfo);
       });
 
       return { user };
@@ -173,8 +171,7 @@ describe('OrphanedResourceBanner', () => {
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(screen.queryByRole('button', { name: 'Go to dashboards' })).not.toBeInTheDocument();
 
-      const alert = screen.getByRole('alert');
-      const closeButton = within(alert).getByRole('button');
+      const closeButton = screen.getByRole('button', { name: /close alert/i });
       await user.click(closeButton);
 
       expect(screen.getByText('This resource is managed by a repository that no longer exists')).toBeInTheDocument();
