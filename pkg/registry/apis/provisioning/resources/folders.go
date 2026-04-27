@@ -245,7 +245,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 		if !ok {
-			return fmt.Errorf("target folder is not managed by a repository")
+			return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: cfg.Name,
+			})
 		}
 		if current != cfg.Name {
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
@@ -344,7 +347,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 			if !ok {
-				return fmt.Errorf("target folder is not managed by a repository")
+				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.Name,
+				})
 			}
 			if current != cfg.Name {
 				return fmt.Errorf("target folder is managed by a different repository (%s)", current)

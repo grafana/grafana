@@ -54,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	storesrv "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -167,9 +166,6 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
 	require.NoError(t, err)
 	require.Equal(t, cfg.Quota.Global.AlertRule, defaultGlobalLimits[tag])
-	tag, err = quota.NewTag(storesrv.QuotaTargetSrv, storesrv.QuotaTarget, scope)
-	require.NoError(t, err)
-	require.Equal(t, cfg.Quota.Global.File, defaultGlobalLimits[tag])
 
 	// fetch default limit/usage for org
 	defaultOrgLimits := make(map[quota.Tag]int64)
@@ -564,7 +560,5 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 	)
-	require.NoError(t, err)
-	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), cfg, quotaService, storesrv.ProvideSystemUsersService())
 	require.NoError(t, err)
 }

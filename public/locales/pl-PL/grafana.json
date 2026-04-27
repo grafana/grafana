@@ -3627,9 +3627,9 @@
         "declare-incident": "Zadeklaruj incydent",
         "declare-incident-no-permission": "Nie masz uprawnień dostępu do narzędzia Incident",
         "instance-details": "Szczegóły instancji",
+        "section-silence": "",
         "silence-button": "Okres wyciszenia",
-        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia"
       },
       "labels-column-title": "Etykiety",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -11347,6 +11347,7 @@
       "label-numbers": "Liczby",
       "label-signature": "Podpis"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Funkcja eksperymentalna. Pokazuje komponent do zarządzania wyświetlanymi polami z logów.",
     "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
     "description-enable-logs-highlighting": "Użyj wstępnie zdefiniowanego schematu kolorowania, aby wyróżnić odpowiednie części wierszy logów.",
@@ -11650,6 +11651,7 @@
         "common-labels": "Typowe etykiety:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Częste etykiety",
     "name-deduplication": "Deduplikacja",
     "name-details-mode": "Tryb panelu szczegółów logów",
@@ -14971,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Strona główna pulpitu",
       "home-dashboard-placeholder": "Domyślny pulpit",

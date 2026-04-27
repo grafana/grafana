@@ -10120,6 +10120,12 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "code-mirror": {
+      "error-label": "CodeMirror editor failed to load",
+      "language-load-failed": "Syntax highlighting failed to load",
+      "language-load-failed-description": "The editor will continue without language-specific features.",
+      "loading-placeholder": "Loading editor"
+    },
     "color-picker": {
       "input-label": "RGBA value"
     },
@@ -10465,6 +10471,7 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "go-back": "Go back",
       "hide": "Hide",
       "show": "Show",
       "undock": "Undock"
@@ -11908,8 +11915,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All",
-      "title-filtered": "All (filtered)"
+      "title-deselect": "Deselect all",
+      "title-deselect-filtered": "Deselect all (filtered)",
+      "title-select": "Select all",
+      "title-select-filtered": "Select all (filtered)"
     },
     "clear": {
       "title": "Clear all"
@@ -14790,6 +14799,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "Error loading preferences",
+      "update-preferences": "Error updating preferences"
+    },
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
