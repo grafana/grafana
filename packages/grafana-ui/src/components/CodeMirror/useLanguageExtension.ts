@@ -3,14 +3,15 @@ import { useEffect, useState } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 
-import { loadLanguageExtension, type CodeEditorLanguage } from './languageLoader';
+import { loadLanguageExtension } from './languageLoader';
+import { type CodeMirrorEditorLanguage } from './types';
 
 export interface LanguageExtensionState {
   extension: Extension | null;
   error: Error | null;
 }
 
-export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExtensionState {
+export function useLanguageExtension(language?: CodeMirrorEditorLanguage): LanguageExtensionState {
   const [languageExtension, setLanguageExtension] = useState<Extension | null>(null);
   const [error, setError] = useState<Error | null>(null);
 

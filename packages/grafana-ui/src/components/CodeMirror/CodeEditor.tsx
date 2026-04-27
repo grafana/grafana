@@ -1,4 +1,4 @@
-import { acceptCompletion, autocompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
@@ -10,56 +10,12 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
-import { type CodeEditorLanguage } from './languageLoader';
+import { type CodeMirrorCompletionMode, type CodeMirrorCompletionSource, type CodeMirrorEditorProps } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 
-export type CodeEditorCompletionMode = 'override' | 'merge';
-
-export interface CodeEditorProps {
-  /**
-   * The current editor contents.
-   */
-  value: string;
-  /**
-   * Syntax highlighting and language-aware behavior to enable.
-   */
-  language?: CodeEditorLanguage;
-  /**
-   * Editor height, such as `'200px'` or `'100%'`.
-   */
-  height?: string;
-  /**
-   * Called whenever the editor contents change.
-   */
-  onChange: (value: string) => void;
-  /**
-   * Accessible label applied to the editor input.
-   */
-  'aria-label'?: string;
-  /**
-   * Accessible label reference applied to the editor input.
-   */
-  'aria-labelledby'?: string;
-  /**
-   * Autocomplete sources. When provided, enables autocompletion with the given sources.
-   */
-  completionSources?: readonly CompletionSource[];
-  /**
-   * Controls how `completionSources` integrate with language-default completions:
-   * - `'merge'` (default) — add the sources alongside any language defaults.
-   * - `'override'` — replace any language-default completions with just these sources.
-   */
-  completionMode?: CodeEditorCompletionMode;
-  /**
-   * Additional CodeMirror extensions to layer on top of the defaults.
-   * Use this for linting, custom keymaps, themes, etc.
-   */
-  extensions?: Extension[];
-}
-
 const getCompletionExtensions = (
-  sources: readonly CompletionSource[] | undefined,
-  mode: CodeEditorCompletionMode
+  sources: readonly CodeMirrorCompletionSource[] | undefined,
+  mode: CodeMirrorCompletionMode
 ): Extension[] => {
   if (!sources || sources.length === 0) {
     return [];
@@ -107,7 +63,7 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
-}: CodeEditorProps) {
+}: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
 
